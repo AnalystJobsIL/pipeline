@@ -54,7 +54,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `registry_health.py` | daily-digest, listing-hunt | read-only registry census + row-deletion guard, recomputed re-check ownership matrix, per-tool pool floors, and the unsupported-ATS build queue. `--census` and `--ladder` are the only things it writes; `alarms_state()` is what the daily mail prints; `--explain "<name>"` answers "why was this row activated/refused" offline |
 | `repair_dead_urls.py` | listing-hunt | replaces stored URLs whose hostname does not resolve - runs BEFORE the hunt on purpose |
 | `repair_extract_gap.py` | listing-hunt | re-scrapes rows triage marked `extract-gap`; the cheapest recovery class |
-| `research_firmographics.py` | firmographics | bulk firmographics research + `--export`. Was the Windows task `IsraeliJobs-Firmographics`; that task is DISABLED and the production pass now runs in the cloud at 10:00 UTC |
+| `research_firmographics.py` | daily-digest, firmographics | bulk firmographics research + `--export`. Was the Windows task `IsraeliJobs-Firmographics`; that task is DISABLED and the production pass now runs in the cloud at 10:00 UTC |
 | `resolve_broken.py` | self-heal | 06:00 self-heal: re-resolves boards that went stale, throttled weekly, 5 strikes |
 | `retry_unreachable.py` | retry-unreachable | 02:30 Bright Data retry of flaky endpoints |
 | `scan_dead_domains.py` | audit-coverage, daily-digest | liveness scan over parked rows; a revived domain clears its flag automatically |
@@ -132,7 +132,7 @@ Kept, not run. Nothing scheduled and nothing in `pipeline/` imports any of these
 
 ## `pipeline/` - the digest-run library
 
-12 of these are **shared plumbing**: every lane imports them and no lane owns them.
+13 of these are **shared plumbing**: every lane imports them and no lane owns them.
 Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 
 | module | what it does |
@@ -166,6 +166,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/roles.py` | **the role ledger** (lane `roles`): cloud_state/roles.jsonl + roles_text.jsonl, one line per role - status / episodes / reposts / class / tags / attribution / sent - reconciled with the sqlite store at open |
 | `pipeline/run.py` | **the orchestrator.** Owned by `infra`; any lane may need a hook in it - propose it, do not smuggle it |
 | `pipeline/secrethunter.py` | the secrethunter.io company catalog, read from its SITEMAP - 2,703 names plus a candidate LinkedIn handle, keyless and free. The company pages carry the own-domain and every open job title but serve it only to named crawler UAs, so they are deliberately not read (docs/decisions/2026-08-27-secrethunter-company-catalog.md) |
+| `pipeline/secretsenv.py` | **shared** - the ONE loader for the gitignored `secrets.env` (BACKLOG 438): `AJIL_SECRETS=<path>` or the main checkout's file; a git worktree gets nothing and says so on stderr, so a mass-zero from a worktree cannot pass as evidence. `setdefault` only, which is what keeps `tests/conftest.py`'s empty-string disarm working |
 | `pipeline/seniority.py` | relevance + experience classification; the LLM tier for ambiguous titles |
 | `pipeline/sources.py` | **shared** - per-discovery-source liveness |
 | `pipeline/stages.py` | **shared** - which nightly stage last finished, and how much it did |

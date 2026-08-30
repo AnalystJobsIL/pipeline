@@ -7136,10 +7136,10 @@ def test_the_failure_notice_names_the_step_the_phase_and_what_survived(tmp_path,
     assert "already marked sent and will NOT be re-mailed" in n3
     # wave 1 (2026-08-25): an exception message can carry a scraped page -- markdown, tags
     # and @mentions must not survive into an issue body the relay posts
-    evil = {"phase": "fetch", "exc_type": "ValueError", "message": "bad `page`\n\n# Fired\n@shailiv [x](http://e) <img src=x>",
+    evil = {"phase": "fetch", "exc_type": "ValueError", "message": "bad `page`\n\n# Fired\n@someone [x](http://e) <img src=x>",
             "traceback_tail": ["```", "x"]}
     n4 = P.build_notice({"pipeline": {"outcome": "failure"}}, "failure", evil, "", "javascript:alert(1)", "2026-08-26", False, 0)
-    assert "\\@shailiv" in n4 and "@shailiv" not in n4.replace("\\@shailiv", ""), "the mention is escaped"
+    assert "\\@someone" in n4 and "@someone" not in n4.replace("\\@someone", ""), "the mention is escaped"
     assert "\n# Fired" not in n4 and "\\<img" in n4 and " <img" not in n4 and "[x](" not in n4
     assert "[run log]" not in n4 and n4.count("```") == 2
     # a good digest is never overwritten: a failed publish or mark_sent is tomorrow's line
@@ -20845,3 +20845,363 @@ def test_finding_a_companys_own_SITE_is_not_finding_its_board(tmp_path, monkeypa
         "company_name,ats_platform,token,api_url,active,notes\n"
         "Other Co,scrape,,https://acme.example/,true,x\n", encoding="utf-8")
     assert QP.covered_by_row("Acme", QS.load(), QP._board_index(QP.rows())) == ("", "")
+# --- infra 2026-08-30: CI produces a verdict, and a cron that did not fire is visible --------
+
+
+def _tests_yml_jobs():
+    """{job name: (timeout-minutes or None, job text)} from tests.yml, by indentation."""
+    wf = open(os.path.join(_REPO, ".github", "workflows", "tests.yml"), encoding="utf-8").read()
+    body = wf.split("\njobs:\n", 1)[1]
+    jobs = {}
+    for m in re.finditer(r"^  ([\w-]+):\n(.*?)(?=^  [\w-]+:\n|\Z)", body, re.M | re.S):
+        t = re.search(r"^\s+timeout-minutes:\s*(\d+)", m.group(2), re.M)
+        jobs[m.group(1)] = (int(t.group(1)) if t else None, m.group(2))
+    return jobs
+
+
+def test_every_long_tests_step_has_a_named_budget_below_its_job_timeout():
+    """Eleven consecutive `tests.yml` runs on 2026-08-30 were CANCELLED at the `guard` job's
+    `timeout-minutes: 10` -- the suite passed inside each, the rehearsals outgrew the budget --
+    and a cancelled job names nothing (BACKLOG 442). Every step that runs the suite, a
+    rehearsal or a mutation shard now runs under GNU `timeout` with a budget BELOW its job's
+    timeout, so an overrun is a FAILED STEP that says what it was running. This pins that a
+    lane adding a long step cannot quietly reintroduce the cancelled shape."""
+    jobs = _tests_yml_jobs()
+    assert {"guard", "rehearse", "mutation-gate"} <= set(jobs), sorted(jobs)
+    # wave 1 (2026-08-30) got past the first version six ways: the budget words in a
+    # comment, `python3`, two budgets summing past the job, a job with no timeout, a second
+    # long step without the handler, an `if:` that skips a whole job. Hence: comments are
+    # stripped, the budget must START the command, budgets are summed per job, every job
+    # needs a timeout, the handler is checked per STEP, and no `if:` exists in the file.
+    long = re.compile(r"python3? (?:-u )?(?:-m pytest|tests/rehearse_registry\.py|tools/mutate\.py)")
+    budget_re = re.compile(r"^timeout --signal=INT --kill-after=\d+ (\d+)m python3? ")
+    checked = 0
+    for name, (job_timeout, text) in jobs.items():
+        assert job_timeout, f"{name}: every job in tests.yml carries timeout-minutes"
+        total = 0
+        for step in re.split(r"^\s+- name:", text, flags=re.M)[1:]:
+            code = "\n".join(l.split("#", 1)[0] for l in step.splitlines())   # comments are not code
+            lines = [l.strip() for l in code.splitlines() if long.search(l)]
+            if not lines:
+                continue
+            for line in lines:
+                checked += 1
+                b = budget_re.match(line)
+                assert b, f"{name}: a long step whose command does not START with a named `timeout` budget:\n  {line}"
+                assert int(b.group(1)) < job_timeout, \
+                    f"{name}: budget {b.group(1)}m is not below the job's {job_timeout} -- the job would be cancelled first"
+                total += int(b.group(1))
+                assert line.endswith("|| rc=$?"), f"{name}: the exit code must be captured under bash -e:\n  {line}"
+            assert '"$rc" -eq 124' in code and '"$rc" -eq 137' in code and "::error::" in code \
+                and 'exit "$rc"' in code, \
+                f"{name}: THIS step must turn rc 124 (budget) and 137 (killed after the INT grace) into a NAMED ::error:: and still exit non-zero"
+        assert total < job_timeout, f"{name}: the step budgets sum to {total}m, the job allows {job_timeout}"
+    assert checked >= 3, f"only {checked} long steps found; the extractor stopped matching"
+    wf = open(os.path.join(_REPO, ".github", "workflows", "tests.yml"), encoding="utf-8").read()
+    assert not re.search(r"^\s+if:", wf, re.M), "an `if:` in tests.yml is a job that can silently not run"
+    # the rehearsals are one job each: `worst` once, `mixed` under seeds 1..5, never fewer
+    reh = jobs["rehearse"][1]
+    pairs = re.findall(r"\{\s*policy:\s*(\w+),\s*seed:\s*(\d+)\s*\}", reh)
+    assert sorted(pairs) == [("mixed", "1"), ("mixed", "2"), ("mixed", "3"), ("mixed", "4"),
+                             ("mixed", "5"), ("worst", "1")], pairs
+    assert "fail-fast: false" in reh and "name: rehearse (${{ matrix.policy }}, seed ${{ matrix.seed }})" in reh
+    assert not re.search(r"^\s*continue-on-error:", wf, re.M), "tests.yml is meant to block"
+    assert not re.search(r"^\s+fetch-depth:", jobs["guard"][1], re.M), \
+        "a full-history guard checkout makes test_ci_itself_confirms_why_the_tree_check_cannot_run_there red on a non-master ref (wave 1); 439 lands with its docs half or not at all"
+
+
+def test_persist_run_provenance_names_the_run_in_the_subject():
+    """`cloud run: state + digest for <date> [skip ci]` said nothing about WHICH run made it,
+    so "unattended" was provable only by `gh run view` against a run record that is sometimes
+    deleted (BACKLOG 436). The layer adds `(<event> run <id>)` before `[skip ci]` from the
+    runner's own env; a local run leaves the message untouched; the tag is never doubled."""
+    ps = _ps()
+    env = {"GITHUB_RUN_ID": "33250362574", "GITHUB_EVENT_NAME": "schedule"}
+    out = ps.run_provenance("cloud run: state + digest for 2026-08-30 [skip ci]", env)
+    assert out == "cloud run: state + digest for 2026-08-30 (schedule run 33250362574) [skip ci]", out
+    assert out.endswith("[skip ci]"), "the skip token must stay where GitHub reads it"
+    assert re.search(r"\brun\s+\d{9,}\b", out), "docs/check_docs.py's RUN_ID regex must match it"
+    assert ps.run_provenance(out, env) == out, "idempotent"
+    assert ps.run_provenance("company intel: x", env) == "company intel: x (schedule run 33250362574)"
+    assert ps.run_provenance("cloud run [skip ci]", {}) == "cloud run [skip ci]", "no run id: untouched"
+    assert ps.run_provenance("m [skip ci]", {"GITHUB_RUN_ID": "abc"}) == "m [skip ci]", "a non-numeric id is not a run"
+    assert ps.run_provenance("m [skip ci]", {"GITHUB_RUN_ID": "1"}) == "m (unknown run 1) [skip ci]"
+    # wave 1: a re-run keeps `schedule` as its event -- the attempt number is what says a
+    # human re-ran it; the tag goes on the SUBJECT line only; a second call with another
+    # event name does not double it; the outcome commit is tagged too
+    assert ps.run_provenance("m [skip ci]", dict(env, GITHUB_RUN_ATTEMPT="2")) == "m (schedule run 33250362574 attempt 2) [skip ci]"
+    assert ps.run_provenance("m [skip ci]", dict(env, GITHUB_RUN_ATTEMPT="1")) == "m (schedule run 33250362574) [skip ci]"
+    assert ps.run_provenance("subject [skip ci]\n\nbody [skip ci]", env) == "subject (schedule run 33250362574) [skip ci]\n\nbody [skip ci]"
+    assert ps.run_provenance(out, dict(env, GITHUB_EVENT_NAME="workflow_dispatch")) == out
+    src = open(os.path.join(_REPO, "persist_state.py"), encoding="utf-8").read()
+    assert 'run_provenance(f"run outcome {run_date}' in src, "the failure-notice commit is a state commit too"
+    assert src.index("a.message = run_provenance(a.message)") < src.index("report_deltas(key_deltas("), \
+        "the audit line must record the tagged message"
+
+
+def test_stages_stamp_refuses_to_rebase_on_an_unreadable_file(tmp_path, monkeypatch, capsys):
+    """`stages._load()` answers `{}` for a corrupt file, and `stamp()` wrote that `{}` plus one
+    key back -- every other workflow's night erased, and the next mail said `collect never ran`
+    about crons that ran (BACKLOG 451). A writer over an existing file that does not parse now
+    refuses, loudly, and leaves the bytes exactly as they were; an ABSENT file still gets
+    created, and a healthy file still gets the stamp."""
+    from pipeline import stages
+    p = tmp_path / "cloud_state" / "pipeline_stages.json"
+    monkeypatch.setattr(stages, "PATH", str(p))
+    stages.stamp("collect", n=1)                      # absent -> created
+    assert json.load(open(p, encoding="utf-8"))["collect"]["n"] == 1
+    p.write_text('{"collect": {"date": "2026-08-29", "n": 7}, "firmo": {"date": "2026-08-29"', encoding="utf-8")
+    before = p.read_bytes()
+    stages.stamp("cron", dropped=1)
+    assert p.read_bytes() == before, "a stamp over a half-written file must not touch it"
+    assert "NOT stamping 'cron'" in capsys.readouterr().out
+    p.write_text('{"collect": {"date": "2026-08-29", "n": 7}}', encoding="utf-8")
+    stages.stamp("cron", dropped=1)
+    d = json.load(open(p, encoding="utf-8"))
+    assert d["collect"]["n"] == 7 and d["cron"]["dropped"] == 1, "a healthy file keeps its keys and gains the stamp"
+    p.write_text("[]", encoding="utf-8")
+    assert stages.stamp("cron", dropped=2) is False
+    assert p.read_text(encoding="utf-8") == "[]", "not an object: refused too"
+    # wave 1: a BOM-prefixed but valid file, and a zero-byte file, are not corruption
+    p.write_bytes(b"\xef\xbb\xbf" + b'{"collect": {"date": "2026-08-29", "n": 7}}')
+    assert stages.stamp("cron", dropped=3) is True
+    d = json.load(open(p, encoding="utf-8"))
+    assert d["collect"]["n"] == 7 and d["cron"]["dropped"] == 3, "a BOM must not cost a night's stamps"
+    p.write_bytes(b"")
+    assert stages.stamp("cron", dropped=4) is True and json.load(open(p, encoding="utf-8"))["cron"]["dropped"] == 4
+    assert "ci" in stages.ORDER and "cron" in stages.ORDER, "summary() shows only ORDER; the two new stages must be in it"
+
+
+def test_llm_error_envelope_without_result_names_its_subtype_and_error(monkeypatch):
+    """Claude Code 2.1.x's ERROR result variant carries no `result` and no `api_error_status`;
+    its cause is in `errors[]` (BACKLOG 449). `_invoke` read `result` first and printed its own
+    placeholder, so two mornings' mails said `is_error (api_error_status=None)` and nothing
+    else. The envelope's own words now travel; the auth pins are untouched."""
+    import subprocess as _sp2
+    from pipeline import llm
+    def cli(payload, rc=1):
+        monkeypatch.setattr(llm.subprocess, "run", lambda cmd, **kw: _sp2.CompletedProcess(
+            cmd, rc, stdout=json.dumps(payload), stderr=""))
+    kw = dict(system="s", schema={"type": "object"}, model="sonnet", timeout=5)
+    cli({"is_error": True, "subtype": "error_max_structured_output_retries",
+         "errors": ["Structured output failed after 2 retries: refusal"]})
+    with pytest.raises(llm.LLMUnavailable) as ei:
+        llm.call("p", **kw)
+    assert "error_max_structured_output_retries: Structured output failed" in str(ei.value)
+    assert "api_error_status=None" not in str(ei.value)
+    # wave 1: an envelope with no words of its own must not hand its raw JSON to `_kind` --
+    # `"duration_ms": 401` read as an auth failure, which opens the breaker on ONE strike
+    cli({"is_error": True, "subtype": "error_during_execution", "errors": [],
+         "duration_ms": 401, "cwd": "/login"}, rc=0)
+    with pytest.raises(llm.LLMUnavailable) as ei:
+        llm.call("p", **kw)
+    assert str(ei.value).startswith("error_during_execution: no result and no errors in the envelope (keys: cwd,duration_ms,errors,is_error,subtype)"), str(ei.value)
+    assert ei.value.kind != "auth", "a number in the envelope is not an HTTP status"
+    cli({"is_error": True, "api_error_status": 401, "result": "Failed to authenticate"})
+    with pytest.raises(llm.LLMUnavailable) as ei:
+        llm.call("p", **kw)
+    assert ei.value.kind == "auth" and str(ei.value).startswith("Failed to authenticate")
+
+
+def test_secretsenv_arms_only_the_main_checkout_or_an_explicit_path(tmp_path, capsys):
+    """Four copies of `_load_secrets` each resolved `secrets.env` against their own tree, so a
+    git worktree had no credentials, every paid rung silently disarmed, and a mass-zero from
+    there read as a finding (BACKLOG 438). One loader: `AJIL_SECRETS=<path>` arms any tree; the
+    main checkout arms from its root as before; a worktree with neither gets NOTHING and one
+    stderr line saying so. `setdefault` only -- an EMPTY value already present must win, which
+    is how tests/conftest.py keeps pytest from spending."""
+    from pipeline import secretsenv as S
+    main = tmp_path / "main"; (main / ".git").mkdir(parents=True)
+    (main / "secrets.env").write_bytes(b"\xef\xbb\xbf# comment\r\nBRIGHTDATA_API_KEY = k1\r\nOTHER=v\r\n\r\nbad line\r\n")   # a BOM + CRLF, as Notepad writes it
+    wt = tmp_path / "wt"; wt.mkdir(); (wt / ".git").write_text("gitdir: ../main/.git/worktrees/x\n", encoding="utf-8")
+    (wt / "secrets.env").write_text("BRIGHTDATA_API_KEY=copied\n", encoding="utf-8")   # the banned copy
+
+    env = {}
+    assert S.load(str(main), env) == str(main / "secrets.env") and env == {"BRIGHTDATA_API_KEY": "k1", "OTHER": "v"}
+    env = {"BRIGHTDATA_API_KEY": ""}
+    S.load(str(main), env)
+    assert env["BRIGHTDATA_API_KEY"] == "", "an empty value already present is the disarm sentinel and must survive"
+    env = {}
+    assert S.load(str(wt), env) == "" and env == {}, "a worktree is never armed implicitly, even with a copy beside it"
+    err = capsys.readouterr().err
+    assert "WORKTREE" in err and "DISARMED" in err and "AJIL_SECRETS" in err
+    S.load(str(wt), env)
+    assert capsys.readouterr().err == "", "the warning is printed once per tree"
+    env = {"AJIL_SECRETS": str(main / "secrets.env")}
+    assert S.load(str(wt), env) == str(main / "secrets.env") and env["OTHER"] == "v"
+    env = {"AJIL_SECRETS": str(tmp_path / "missing.env")}
+    assert S.load(str(wt), env) == "" and "OTHER" not in env
+    assert "not a file" in capsys.readouterr().err
+    env = {"GITHUB_ACTIONS": "true"}
+    assert S.load(str(wt), env) == "" and capsys.readouterr().err == "", "silent on a runner"
+    assert S.parse("A=1\n#x\nB = 2 \n=nokey\nC\n") == {"A": "1", "B": "2"}
+
+
+def _census():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "schedule_census_under_test", os.path.join(_REPO, "tests", "schedule_census.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_cron_watch_alarms_on_a_dropped_or_late_slot_and_on_nothing_else():
+    """Nothing in this repo noticed a cron that never fired (BACKLOG 292/308: 4 of 5 crons on
+    2026-08-27, firmographics +293..+662 min on every run it has had). `schedule_census
+    --alarm` scores the census rows the fortnightly tool already computes and says ONE clause
+    per workflow with a dropped slot or one past the grace -- a pending slot, a slot that
+    arrived inside the grace, and a workflow with nothing to say produce no alarm key at all,
+    so `stages.alarms("cron", 1)` stays quiet on a clean night. A `gh` failure is an alarm
+    about the WATCH, never a false drop."""
+    C = _census()
+    d = dt.date(2026, 8, 28)
+    at = lambda h, m=0: dt.datetime(2026, 8, 28, h, m, tzinfo=dt.timezone.utc)
+    rows = [(d, "auto-expand", at(8), "dropped", None),
+            (d, "auto-expand", at(20), "fired", 12),
+            (d, "daily-digest", at(5), "fired", 734),
+            (d, "self-heal", at(6), "fired", 30),
+            (d, "jd-archive", at(12, 30), "pending", None)]
+    clauses = C.alarm_clauses(rows, 720)
+    assert [s for s, _ in clauses] == ["auto-expand", "daily-digest"]
+    assert clauses[0][1] == "auto-expand: 08:00 on 08-28 not seen"
+    assert clauses[1][1] == "daily-digest: 05:00 on 08-28 arrived +734 min late"
+    slots = {"auto-expand": [], "daily-digest": [], "self-heal": [], "jd-archive": []}
+    st = C.alarm_stamp(rows, slots, 720, 3, undatable=[("firmographics", "17 10 * * *")])
+    assert st["dropped"] == 1 and st["late"] == 1 and st["pending"] == 1 and st["workflows"] == 4
+    assert st["alarm"] == "auto-expand: 08:00 on 08-28 not seen; daily-digest: 05:00 on 08-28 arrived +734 min late"
+    assert st["undatable"] == "firmographics"
+    clean = C.alarm_stamp([(d, "self-heal", at(6), "fired", 30)], slots, 720, 3)
+    assert "alarm" not in clean and clean["dropped"] == 0, "a clean night stamps counts and no alarm"
+    broken = C.alarm_stamp([], slots, 720, 3, fetch_error="gh run list failed: 403")
+    assert broken["alarm"].startswith("watch could not read the run list (gh run list failed: 403)")
+    assert broken["dropped"] == 0, "a watch that could not look never reports a drop"
+    # wave 1: auto-expand's 20:00 dropped, its 08:00 the next morning ON TIME -- the first
+    # census looked for "the next slot" within the same day only, consumed the 08:00 run as
+    # a +720 20:00 and reported the 08:00 `not seen`. The next slot of a 20:00 is tomorrow's 08:00.
+    now = dt.datetime(2026, 8, 30, 5, 10, tzinfo=dt.timezone.utc)
+    ae = {"auto-expand": [(8 * 60, None, "0 8,20 * * *"), (20 * 60, None, "0 8,20 * * *")]}
+    since = {("auto-expand", "0 8,20 * * *"): dt.datetime(2026, 8, 1, tzinfo=dt.timezone.utc)}
+    runs = [(dt.datetime(2026, 8, 28, 8, 2, tzinfo=dt.timezone.utc), "auto-expand"),
+            (dt.datetime(2026, 8, 29, 8, 5, tzinfo=dt.timezone.utc), "auto-expand"),
+            (dt.datetime(2026, 8, 29, 20, 1, tzinfo=dt.timezone.utc), "auto-expand")]
+    got = {(r[0].isoformat(), r[2].strftime("%H:%M")): (r[3], r[4]) for r in C.census(runs, ae, 3, now, 720, since)}
+    assert got[("2026-08-28", "20:00")] == ("dropped", None), got
+    assert got[("2026-08-29", "08:00")] == ("fired", 5), got
+    assert got[("2026-08-29", "20:00")] == ("fired", 1), got
+    assert [c for _, c in C.alarm_clauses(C.census(runs, ae, 3, now, 720, since), 720)] == \
+        ["auto-expand: 20:00 on 08-28 not seen"]
+
+
+def test_daily_digest_alarm_steps_stamp_before_persist_and_reach_the_mail():
+    """The filed diff for BACKLOG 444 placed the ci_health step AFTER persist, where its stamp
+    would have landed in the tree and never in the commit. Both alarm steps (ci_health, the
+    cron watch) sit before `persist`, carry ids (continue-on-error rule), the token and the
+    `actions: read` grant they need, and run.py reads both stages onto the Stages: line."""
+    dd = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"), encoding="utf-8").read()
+    for sid in ("id: ci_health", "id: cron_watch", "id: firmo_drain"):
+        # BEFORE the pipeline step, which reads the stamps at the top of run() -- after it
+        # the mail carries yesterday's verdict (wave 1); and before persist, which commits them
+        assert dd.index("id: stamp_enrich") < dd.index(sid) < dd.index("id: pipeline") < dd.index("id: persist"), sid
+        step = dd.split(sid, 1)[1].split("      - name:", 1)[0]
+        assert "continue-on-error: true" in step, sid
+        if sid != "id: firmo_drain":
+            assert "if: always()" in step and "GH_TOKEN: ${{ github.token }}" in step, sid
+    assert re.search(r"^permissions:\n  contents: write.*\n  actions: read", dd, re.M), "gh run list needs actions: read"
+    assert "fetch-depth: 0" in dd.split("- uses: actions/setup-python", 1)[0], "cron_since needs history"
+    assert "--status completed --limit 200" in dd, "an in-progress run has no conclusion and must not read as unknown"
+    ci = dd.split("id: ci_health", 1)[1].split("      - name:", 1)[0]
+    assert "gh could not read" in ci and '"none" if not r' in ci and '"%d+" % len(r)' in ci, \
+        "a gh failure is an honest stamp, an empty list is `none`, a streak longer than the window is `N+` (wave 1: it fabricated 50)"
+    drain = dd.split("id: firmo_drain", 1)[1].split("      - name:", 1)[0]
+    assert "timeout --signal=INT --kill-after=60 23m python research_firmographics.py" in drain \
+        and "--budget-min 20" in drain and "stamp firmo \"alarm=step-failed(rc $rc)\"" in drain and "timeout-minutes: 25" in drain
+    assert 'node-version: "22"' in dd
+    assert "python tests/schedule_census.py --alarm --stamp --days 3" in dd
+    run_py = open(os.path.join(_REPO, "pipeline", "run.py"), encoding="utf-8").read()
+    assert 'stages.alarms("ci", 1)' in run_py and 'stages.alarms("cron", 1)' in run_py
+    assert "THIS LINE IS BLIND" in run_py and "BACKLOG 474" in run_py, \
+        "the digest's own drain stamps `firmo` today, so the 2-day alarm cannot fire; company-intel's tests pin the 2, so run.py must at least say so (wave 1, 474)"
+    # the public dataset beside the board, and never an empty file over a good one
+    pub = dd.split("id: publish", 1)[1].split("      - name:", 1)[0]
+    for f in ("cloud_state/roles.csv", "cloud_state/roles.csv.meta.json", "cloud_state/funnel.csv", "docs/archive.html"):
+        assert f in pub, f
+    assert 'if [ -s "$f" ]; then cp "$f"' in pub and "::warning::$f is empty" in pub
+    assert "[ -s docs/index.html ] ||" in pub, "the board itself keeps its hard guard"
+    assert 'ROLES_PAGES_URL: "https://analystjobsil.github.io/board/roles.csv"' in dd
+
+
+def test_board_publish_copies_only_non_empty_optional_files(tmp_path):
+    """The shell of the publish step's optional-file loop, run for real: a non-empty file is
+    copied, an empty one is skipped with a warning and the board's copy survives, an absent one
+    is silent. The static test above pins the text; this pins the behaviour."""
+    bash = _shutil.which("bash")
+    if not bash:
+        pytest.skip("no bash on this machine")
+    dd = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"), encoding="utf-8").read()
+    loop = re.search(r"(          for f in docs/archive\.html .*?\n          done\n)", dd, re.S).group(1)
+    src, board = tmp_path / "src", tmp_path / "board"
+    (src / "docs").mkdir(parents=True); (src / "cloud_state").mkdir(); board.mkdir()
+    (src / "docs" / "archive.html").write_text("<html>new</html>", encoding="utf-8")
+    (src / "cloud_state" / "roles.csv").write_text("", encoding="utf-8")            # empty: keep the board's
+    (board / "roles.csv").write_text("old,good\n", encoding="utf-8")
+    script = "set -e\n" + "\n".join(l[10:] for l in loop.splitlines()).replace("/tmp/board", str(board).replace("\\", "/"))
+    r = _sp.run([bash, "-c", script], cwd=str(src), capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr + r.stdout
+    assert (board / "archive.html").read_text(encoding="utf-8") == "<html>new</html>"
+    assert (board / "roles.csv").read_text(encoding="utf-8") == "old,good\n", "an empty artefact must never replace a good dataset"
+    assert "::warning::cloud_state/roles.csv is empty" in r.stdout
+    assert not (board / "funnel.csv").exists() and "funnel" not in r.stdout, "absent is silent"
+
+
+def test_firmographics_workflow_carries_its_budget_its_failure_stamp_and_an_off_minute_cron():
+    """BACKLOG 450: (a) `--budget-min` existed and no workflow passed it; (c) a step killed
+    from outside stamped nothing, so the digest read yesterday's stamp as a drained night;
+    (d) the pinned CLI ran on node 20 against a `>=22` engine. (b), the second cron, was
+    REJECTED: every run this cron ever had was late, not absent, and a second slot carries
+    the same lag; the one mechanism with a measurable hypothesis is moving off the `:00`
+    minute GitHub names as congested (BACKLOG 305), which the 09-06 morning check reads."""
+    fw = open(os.path.join(_REPO, ".github", "workflows", "firmographics.yml"), encoding="utf-8").read()
+    crons = re.findall(r'^\s*-\s*cron:\s*"([^"]+)"', fw, re.M)
+    assert crons == ["17 10 * * *"], crons
+    assert "--budget-min 60" in fw
+    stamp = fw.split("Stamp the stage when the research step died", 1)[1].split("      - name:", 1)[0]
+    assert "if: failure()" in stamp and "python -m pipeline.stages stamp firmo alarm=step-failed" in stamp
+    assert fw.index("node-version: \"22\"") < fw.index("npm install -g @anthropic-ai/claude-code@2.1.241")
+
+
+def test_a_queue_name_the_hunt_never_touched_is_refused_even_when_the_search_read_a_page():
+    """A drain-only name -- pages from `queue_drain_search`, no hunt attempt at all -- must
+    come back `no-hunt-attempt`, because retiring it records "nothing findable" about a
+    company the deepest rung never looked for. The record `qdisp-retire-unhunted` was filed
+    (00062ef) without a test reaching this line: the end-to-end fixture supplies an empty
+    drain, so the NEXT guard (`no-evidence-to-read`) caught its "Never Hunted" name and the
+    mutant survived on every CI run since 08-29. Written by infra 2026-08-30 so the mutation
+    gate can produce a verdict; registry owns it and may move it to tests/test_registry.py.
+    Kills `qdisp-retire-unhunted`."""
+    import queue_disposition as QD
+    drain = {"X": {"evidence": {"search_pages": ["https://x.example/careers"]}}}
+    assert QD.retirable("X", {}, {}, {}, drain, have=set()) == (False, "no-hunt-attempt")
+    assert QD.retirable("X", {}, {}, {"X": {"evidence": {"url": ""}}}, drain, have=set())[1] != "no-hunt-attempt"
+
+
+def test_the_prune_refuses_a_recorded_verdict_that_carries_no_evidence(tmp_path, monkeypatch):
+    """`queue_disposition.main --apply` asserts a persisted record WITH evidence for every name
+    it prunes. Every in-run write sets `evidence`, so the assert can only fire on a record
+    that reached `cloud_state/queue_disposition.json` some other way -- an older schema, a hand
+    edit -- which is exactly the defence-in-depth the record `qdisp-prune-unrecorded` names
+    and the reason its designed killer (which asserts the record is WRITTEN) never reached it.
+    Seed such a record; the prune must refuse rather than delete the name. Written by infra
+    2026-08-30; registry owns it. Kills `qdisp-prune-unrecorded`."""
+    import queue_disposition as QD
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir(); (tmp_path / "out").mkdir()
+    names = ["Recorded Without Evidence"] + ["Co%d" % i for i in range(9)]
+    (tmp_path / QD.QUEUE).write_text(json.dumps([{"name": n, "slug": n.lower()} for n in names]), encoding="utf-8")
+    (tmp_path / QD.PATH).write_text(json.dumps({"Recorded Without Evidence": {
+        "date": "2026-08-20", "verdict": "no-board", "why": "an older schema"}}), encoding="utf-8")
+    (tmp_path / "out" / "queue_drain_search.json").write_text(json.dumps({"proposals": []}), encoding="utf-8")
+    with pytest.raises(AssertionError, match="pruning 'Recorded Without Evidence' with no record"):
+        QD.main(["--apply"])
+    left = {e["name"] for e in json.loads((tmp_path / QD.QUEUE).read_text(encoding="utf-8"))}
+    assert "Recorded Without Evidence" in left, "the name must survive a refused prune"

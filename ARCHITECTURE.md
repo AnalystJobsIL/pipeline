@@ -1980,15 +1980,15 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | `0 0 * * *` | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
 | `30 12 * * *` | jd-archive | a job description for the cards the TITLE gate drops (the corpus, not the board): `enrich_scrape_jd.py --archive-only`, 90-min budget, `repo-state` group, no `continue-on-error` |
 | `30 2 * * *` | retry-unreachable | Bright Data re-fetch of flaky endpoints |
-| `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** → report the run's outcome |
+| `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → **company-intel drain (20 min, since 2026-08-30: the queue the `Company intel:` line measures is drained in the run that measures it)** → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** → report the run's outcome |
 | — `17 6,7,8,10 * * *` | inbox relay (private repo `AnalystJobsIL/inbox`, not this repo's crons) | **the BACKUP since 2026-08-28.** The relay's real trigger is now `on: push` to `receipts/**`, which `daily-digest`'s last step writes the moment a digest has landed — digest → email via issue+mention, content-hash dedup |
 | `0 6 * * *` | self-heal | re-resolve stale/rotted boards |
-| `0 10 * * *` | firmographics | company intel for registry rows with no facts (the digest's own hook stays as the same-day fast path for today's board) |
+| `17 10 * * *` | firmographics | company intel for registry rows with no facts (the digest's own hook stays as the same-day fast path for today's board). `:17`, the one cron off the `:00` minute (2026-08-30): its lag was +293..+662 min on every run, and the 09-06 morning check reads whether an off-minute slot arrives inside 180 min before any other cron moves (BACKLOG 305/450) |
 | `0 8,20 * * *` | auto-expand | drain resolution queue (deterministic + LLM tiers) |
 | `0 18 * * *` | triage-dark | classify every parked row by failure mode (`dark-triage <date>: <mode>`) |
 | `0 19 * * *` | listing-hunt | repair-extract-gap (35 min) → re-hunt woken/eligible dark rows (200 min) → walled-ATS re-crack (60 min) |
 | `0 4 * * 0` | audit-coverage | Sunday: wayback rescue, empty cross-validation, full parked-row re-audit (cheap rung, then `deep_validate`'s Chromium rung over what stayed dark — the Saturday cron until 2026-08-26), **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
-| on push | tests | `pytest` (which runs `docs/check_docs.py`), `check_invariants.py`, `pipeline.platform_check`, the mutation gate — the only workflow with no `continue-on-error` step |
+| on push | tests | three jobs, no `continue-on-error` anywhere: `guard` (`pytest`, which runs `docs/check_docs.py`; `check_invariants.py`; `pipeline.platform_check`), `rehearse` (six jobs, one per registry rehearsal: `worst` and `mixed` seeds 1–5, 14 nights each), `mutation-gate` (three shards). **Every long step runs under `timeout` with a budget below its job's `timeout-minutes`**, so an overrun is a failed step that names what it was running, never a cancelled job that names nothing (2026-08-30, below) |
 
 **When the email actually arrives — and it is not ~06:20.** The 05:00 cron is queued by
 GitHub for ~35 min and the job runs ~30 (05:38→06:04 on 2026-08-26, run 32934864207), so the
@@ -2142,7 +2142,7 @@ residue of the outbound dead-man's-switch ping being declined — the one mechan
 neither this machine nor GitHub's scheduler. `292@infra` stays open for that reason, and
 `308@infra` records the decision so it can be revisited rather than re-derived.
 
-**Concurrency:** eight of the nine scheduled workflows share the `repo-state` group, so a
+**Concurrency:** nine of the ten scheduled workflows share the `repo-state` group, so a
 long run makes the next one queue or be superseded with no error. `daily-digest.yml` has its
 own group on purpose, so a digest CAN overlap an audit/hunt run; both re-read before writing,
 so verdicts survive (§2, the single-writer rule).
@@ -2158,7 +2158,31 @@ Latency: active API rows — **same-day**; active scrape rows — **~1 day** (00
 05:00 digest); monitored candidates — **~1–2 days** (probe wake → 19:00 hunt verify → next
 digest); deep re-hunt every 14 days and the weekend audits are backstops only.
 
-### The delivery path: one script, nine workflows (2026-08-25)
+### A cancelled gate names nothing (2026-08-30)
+
+`tests.yml` was cancelled at the `guard` job's `timeout-minutes: 10` on eleven consecutive
+pushes on 2026-08-30 — the suite passed inside every one; six 14-night registry rehearsals
+had outgrown the budget — and for a morning six lanes reasoned about master's colour from a
+signal that carries no information (BACKLOG 442; 195 had already ruled the same way for the
+mutation gate). Two rules follow, both pinned by
+`test_every_long_tests_step_has_a_named_budget_below_its_job_timeout`:
+
+1. **One verdict per thing.** The suite, each rehearsal (`rehearse (mixed, seed 3)` is a
+   job of its own) and each mutation shard are separate jobs, so a unit failure is never
+   hidden behind a rehearsal and a red or a cancel names what it belongs to.
+2. **A budget fails, a timeout cancels — so every long step carries a budget.** Each runs
+   under `timeout --signal=INT --kill-after=N <budget>m …`, the budget below its job's
+   `timeout-minutes`; exit 124 becomes `::error::rehearsal (policy mixed, seed 3) exceeded
+   its 12-minute budget` and the step is red, not the job cancelled. Raising a number is
+   not a fix here; adding a shard or a job is.
+
+The same day every state commit gained its provenance: `persist_state.py commit` appends
+`(<event> run <id>)` before `[skip ci]` from the runner's own `GITHUB_EVENT_NAME` /
+`GITHUB_RUN_ID` (`cloud run: state + digest for 2026-08-31 (schedule run 33301234567)
+[skip ci]`), so "this was unattended" is a `git log` away and survives the deletion of the
+run record (BACKLOG 436). A local run leaves the subject untouched.
+
+### The delivery path: one script, ten workflows (2026-08-25)
 
 Every workflow that commits state ends in the same step —
 
@@ -2212,9 +2236,20 @@ yesterday's file in place. Four mechanisms, all in `daily-digest.yml` + `pipelin
    → `- **Stages:** workflow step 'liveness' failure before the pipeline ran — its output
    is missing from this digest; see the run log`, above the fold.
 2. **Every stage alarms, not two.** `run.py` reads `stages.alarms` for `collect`,
-   `enrich`, `repair` (1 day), `expand` (1 day) and `publish` (1 day — *yesterday's digest
-   never completed*), closing BACKLOG 114; the health and registry excepts append an alarm
-   instead of only writing stderr.
+   `enrich`, `repair` (1 day), `expand` (1 day), `firmo` (2 days) and `publish` (1 day —
+   *yesterday's digest never completed*), closing BACKLOG 114; the health and registry
+   excepts append an alarm instead of only writing stderr. **Since 2026-08-30 two stamps
+   are about the machinery itself**, written by two `continue-on-error` steps that run
+   after the pipeline and *before* `persist` (so they land in the night's commit):
+   `ci` — `tests.yml`'s newest completed conclusion on master and the length of the
+   non-green streak (`tests.yml on master is failure - 100 consecutive non-green runs`;
+   BACKLOG 444, which had no line anywhere a human reads) — and `cron` — `tests/
+   schedule_census.py --alarm --stamp --days 3`, one clause per workflow whose slot was
+   not seen past the 720-minute grace or arrived after it (`auto-expand: 08:00 on 08-28
+   not seen; daily-digest: 05:00 on 08-28 arrived +734 min late`). Both read as `never
+   ran` until the first digest carrying the steps, which is the honest state. The cron
+   watch is the **alarm**, not the recovery: the recovery-cron decision stays with the
+   2026-09-10 morning check.
 3. **A lost digest becomes a mailed notice.** The last step, `persist_state.py outcome
    --commit` (`if: always()`), reads `toJSON(steps)`, `job.status`, out/crash.json (written
    by `run.py main()` with the phase — fetch / classify / board health / role record /
@@ -2383,7 +2418,7 @@ alarm lines (2026-08-25 against `dcca442`: exactly `+ - **Stages:** repair never
 | `cloud_state/scrape_rot.json` | consecutive empty/error days per scrape row, with the last error code / HTTP status (§5a) | refresh_scrape_cache.py |
 | `cloud_state/scan_seen.json` | the liveness re-scan's rotation | scan_dead_domains (digest; the Sunday audit commits it since 2026-08-25 — BACKLOG 17) |
 | `cloud_state/firmographics.json` | **the shared, git-mergeable export of the `firmographics` table.** sqlite cannot be merged, so this text file is what the local and cloud stores converge through; the digest reads sqlite ∪ this file (fresher `as_of` wins) and writes the union back | `research_firmographics.py --export`, `pipeline/run.py` — merged per company on a conflict |
-| `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest alarms in the mail when a prerequisite stage did not run today | listing-hunt (`repair`), scrape-refresh (`collect`, with its counts), auto-expand (`expand`), the digest (`enrich` via `jdfill.record_enrich`, `publish`) — **merged per stage key on a conflict** (§4; until 2026-08-25 a conflict deleted other jobs' stamps) |
+| `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest alarms in the mail when a prerequisite stage did not run today. A stamp over a file that exists and does not parse is REFUSED with a `::warning::` (BACKLOG 451): a writer never rebases on `{}` | listing-hunt (`repair`, `queue`), scrape-refresh (`collect`, with its counts), auto-expand (`expand`), firmographics (`firmo`, `alarm=step-failed` when the step died from outside), the digest (`enrich` via `jdfill.record_enrich`, `intel`, `publish`, and since 2026-08-30 `ci` and `cron` from its two alarm steps) — **merged per stage key on a conflict** (§4; until 2026-08-25 a conflict deleted other jobs' stamps) |
 | `cloud_state/last_run.json` | the digest job's outcome **when something failed**: date, status, failed steps, run URL (§4). Written ONLY on an unhealthy run, so a healthy day leaves yesterday's or last week's in place — that is correct, not stale, and `_last_run_alarms` returns early on a healthy record without reading the date. It is **not** a heartbeat; `last_delivered.json` is | `persist_state.py outcome`, from the digest's last step |
 | `cloud_state/last_delivered.json` | the receipt for what actually reached the mail: date, sha256 of the `digests/latest.md` bytes, role count, first line, and why it was allowed through (§4). Written only on a successful delivery, in the SAME commit as the file it describes; `run.py::_receipt_alarms` alarms in the next mail when it is two days or more behind | `persist_state.py deliver`, from the digest's pipeline step |
 | `cloud_state/bd_spend.jsonl` | **what each process bought from Bright Data**: one line per interpreter that touched the account (`bd_rescue._report_spend`, on the way out) with credits, whether the cap bit, and the cap. Added 2026-08-28 because the `[bd-spend]` line and the step summary both die with the run record -- and this repo deletes run records on purpose (`CLAUDE.local.md` §3). Note it is per PROCESS: a pooled run writes one line per worker. **Never written by a test process** — `_report_spend` refuses when `pytest` is in `sys.modules` and `ROOT` holds a `.git`, because the suite used to append credits nobody bought (BACKLOG 374). Carries `ci: true|false` for provenance and deliberately **not** the path, which under a home directory would put a personal username in a public repo. **Nothing reads this file yet**: the monthly throttle reads the LIVE account via `pipeline/bd_budget.py`, not this ledger | `bd_rescue`, from every workflow; committed by `persist_state.py commit`, which owns it without any workflow naming it |
@@ -2404,7 +2439,7 @@ alarm lines (2026-08-25 against `dcca442`: exactly `+ - **Stages:** repair never
 | `cloud_state/persist_log.jsonl` | the **union of the lines**, oldest first, capped at 400. An append-only log has no conflict to resolve — two runs that appended different lines both said something true — which is why it can have many writers and needs no single-writer claim. Identical lines dedupe, so a replayed rebase does not double one |
 | `cloud_state/bd_spend.jsonl` | the same union: many processes append, no two of them disagree about anything |
 | `discovered_cache.json`, `research_companies.json` | JSON lists merged by `(company, title)` / `name` (BACKLOG 10/30) |
-| everything else the job owns (`seen.db`, `roles*.jsonl`, `digests/latest.md`, `docs/*.html`, the per-workflow state files) | the run's bytes — one cloud writer each; an unlisted path is taken the same way with a `::warning::`. **Since 2026-08-27, a run that did not TOUCH the file (`ours == base`) yields to origin instead**: it has no opinion, and `ours` winning unconditionally meant a run that deliberately declined to write a path still pushed its checkout-era copy over a newer one — silently, because the overwrite warning is suppressed for exactly these paths (BACKLOG `160@infra`) |
+| everything else the job owns (`seen.db`, `roles*.jsonl`, the roles lane's CSV dataset and its two sidecars — copied beside the board by the publish step when non-empty — `digests/latest.md`, `docs/*.html`, the per-workflow state files) | the run's bytes — one cloud writer each; an unlisted path is taken the same way with a `::warning::`. **Since 2026-08-27, a run that did not TOUCH the file (`ours == base`) yields to origin instead**: it has no opinion, and `ours` winning unconditionally meant a run that deliberately declined to write a path still pushed its checkout-era copy over a newer one — silently, because the overwrite warning is suppressed for exactly these paths (BACKLOG `160@infra`) |
 
 The writers column is the `--own` list of each workflow's persist step (`grep -n -- --own
 .github/workflows/*.yml`); `test_every_path_a_workflow_owns_has_a_persist_strategy` fails
@@ -3523,8 +3558,8 @@ printed a plausible line and exited 0 regardless.
 `tests/fixtures/company_intel/mutations.json` holds **60** records. It used to hold 18 and
 **could never have run**: it keyed the class as `cls` where `tools/mutate.py` reads
 `m["class"]`, which is why four records that no longer matched any code went unnoticed. It is
-also in no CI path — `tests.yml` runs `tools/mutate.py --class` under a 3-shard matrix, whose default catalogue is
-`tests/mutations.json` — so `test_every_company_intel_mutation_still_aims_at_real_code` is
+also in no CI path — `tests.yml` runs `tools/mutate.py --class <classes>` under a three-shard
+matrix over the default catalogue `tests/mutations.json` — so `test_every_company_intel_mutation_still_aims_at_real_code` is
 that path, at zero cost: a mutation whose `find` no longer occurs is a comment, not a guard.
 
 ### Known limitations

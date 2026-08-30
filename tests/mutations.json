@@ -2018,7 +2018,8 @@
   "find": "            elif verdict == \"found\" and not _gate.identity_ok(name, q_url):",
   "replace": "            elif False:",
   "why": "the intake-queue arm ACTIVATES a row for a company that had none, off a URL a search engine returned -- the CyberArk->PANW / Lili->Eli Lilly shape. It carries its own copy of the gate because the AST completeness check does not follow calls.",
-  "must_be_killed_by_behavioural": true
+  "must_be_killed_by_behavioural": false,
+  "equivalent_why": "EQUIVALENT MUTANT (BACKLOG 368, adjudicated by registry): the same predicate gates the address seven lines later (`keep = q_url if ... identity_ok`), so removing this branch changes no behaviour; the AST guard `test_every_registry_writer_consults_an_identity_predicate` is the RIGHT killer. Flag flipped by infra 2026-08-30 after the gate re-reported the adjudicated finding on every run since 08-28."
  },
  {
   "id": "hunt-queue-identity-invert",
@@ -2085,9 +2086,9 @@
   "file": "confirm_zero.py",
   "symbol": "_write",
   "class": "M3-branch-narrowing",
-  "find": "            if parks:\n                r[4] = \"false\"\n                off += 1",
-  "replace": "        if parks:\n            r[4] = \"false\"\n            off += 1",
-  "why": "deactivating regardless of whether the note was written parks a row carrying no zero-confirm segment at all: invisible twice over, and `_assert_routed_rows_are_owned` filtered on the OTHER branch's wording so it could not see it.",
+  "find": "        if evicts and not parks:\n            skipped.append(r[0])",
+  "replace": "        if evicts:\n            skipped.append(r[0])",
+  "why": "a PROVEN park (a wrong-url verdict, the model naming another employer) must not be skipped because the row's note is saturated: skipping the note AND the park leaves a wrong address ACTIVE and re-audited nightly. RE-AIMED by infra 2026-08-30: the original record (dedenting the `if parks:` block out of the `else:`) was born equivalent in 4ed4cf8 -- with `and not parks` above it, the `else:` runs unconditionally whenever `parks`, so the nesting is inert and no test could kill it; it SURVIVED on every CI run since 08-29. This is the guard that line actually carries.",
   "must_be_killed_by_behavioural": true
  },
  {

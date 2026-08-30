@@ -8,6 +8,20 @@ list`) and writes nothing.
     python tests/schedule_census.py                 # the last 7 days, this repo
     python tests/schedule_census.py --days 21       # a longer window
     python tests/schedule_census.py --repo AnalystJobsIL/inbox --days 7
+    python tests/schedule_census.py --alarm --days 3          # one clause per workflow whose
+                                                             #   slot was dropped or arrived
+                                                             #   past the grace; nothing else
+    python tests/schedule_census.py --alarm --stamp --days 3  # ...and stamp the `cron` stage
+                                                             #   (daily-digest's cron_watch step)
+
+THE ALARM MODE (infra, 2026-08-30). The census answers a once-a-fortnight question; `--alarm`
+answers tomorrow morning's: which cron did not fire, or fired hours late, since the last
+digest. It scores the same rows with the same grace and the same `cron_since` rule, and
+says ONE clause per workflow -- `firmographics: 10:17 on 08-29 not seen (+19h past its
+grace); auto-expand: 08:00 on 08-28 arrived +734 min late` -- or nothing. `--stamp` writes
+that as `stages.stamp("cron", alarm=...)`, which `pipeline/run.py` reads onto the mail's
+bold `Stages:` line: the alarm, not the recovery. A slot inside the grace is `pending` and
+is never alarmed; a `gh` failure is a `::warning::` and an empty stamp, never a false drop.
 
 WHY THIS EXISTS (2026-08-27). The 05:00 digest was not dispatched, nor were the 02:30,
 06:00 and 08:00 crons; the 00:00 refresh arrived at 05:41. No board, no email, and no
@@ -166,14 +180,28 @@ def census(runs, slots, days, now, grace_min, since=None):
         by_wf[stem].append(when)
     rows = []
     start = (now - dt.timedelta(days=days - 1)).date()
+
+    def _due_at(day, minute):
+        return dt.datetime.combine(day, dt.time(minute // 60, minute % 60), dt.timezone.utc)
+
     for stem, wf_slots in sorted(slots.items()):
         pool = sorted(by_wf.get(stem, []))
+        # every due moment of this workflow across the window AND the day after it, so the
+        # "next slot" of a 20:00 is tomorrow's 08:00 and not tomorrow's 20:00 -- the first
+        # version looked only within the same day, so a run that arrived on time for the
+        # 08:00 was consumed by the previous evening's dropped 20:00 and the 08:00 was then
+        # reported `not seen` (wave 1, 2026-08-30)
+        timeline = sorted(
+            _due_at(start + dt.timedelta(days=k), m)
+            for k in range(days + 1)
+            for m, d, _ in wf_slots
+            if d is None or (start + dt.timedelta(days=k)).weekday() == (6 if d == 0 else d - 1))
         for n in range(days):
             day = start + dt.timedelta(days=n)
             for minute, dow, cron in wf_slots:
                 if dow is not None and day.weekday() != (6 if dow == 0 else dow - 1):
                     continue                       # cron 0=Sunday; weekday() 6=Sunday
-                due = dt.datetime.combine(day, dt.time(minute // 60, minute % 60), dt.timezone.utc)
+                due = _due_at(day, minute)
                 if due > now:
                     continue
                 born = since.get((stem, cron))
@@ -183,10 +211,8 @@ def census(runs, slots, days, now, grace_min, since=None):
                     continue               # the cron did not exist yet: not a missed dispatch
                 hit = next((w for w in pool if w >= due), None)
                 # a run belongs to the LAST slot it is after, so 22:53 is auto-expand's
-                # 20:00 and not a five-hour-late 08:00
-                nxt = [d for d in (dt.datetime.combine(day, dt.time(m // 60, m % 60), dt.timezone.utc)
-                                   for m, _, _ in wf_slots) if d > due]
-                nxt = min(nxt) if nxt else due + dt.timedelta(days=1)
+                # 20:00 and not a five-hour-late 08:00 -- and 08:03 is tomorrow's 08:00
+                nxt = next((d for d in timeline if d > due), due + dt.timedelta(days=1))
                 if hit is not None and hit < nxt:
                     pool.remove(hit)
                     rows.append((day, stem, due, "fired", int((hit - due).total_seconds() // 60)))
@@ -230,11 +256,44 @@ def report(rows, grace_min):
     return isolated
 
 
+def alarm_clauses(rows, grace_min):
+    """[(stem, clause)] -- one per workflow with a dropped slot or a fired-late one in
+    `rows`; a workflow with neither contributes nothing. `rows` is `census()`'s output."""
+    per = collections.defaultdict(list)
+    for day, stem, due, state, lag in rows:
+        if state == "dropped":
+            per[stem].append(f"{due:%H:%M} on {day:%m-%d} not seen")
+        elif state == "fired" and lag is not None and lag > grace_min:
+            per[stem].append(f"{due:%H:%M} on {day:%m-%d} arrived +{lag} min late")
+    return [(stem, "%s: %s" % (stem, ", ".join(items))) for stem, items in sorted(per.items())]
+
+
+def alarm_stamp(rows, slots, grace_min, days, undatable=(), fetch_error=""):
+    """The detail dict for `stages.stamp("cron", ...)`: counts a reader can grep, and the
+    `alarm` key only when there is something to say (an empty alarm is no alarm)."""
+    clauses = alarm_clauses(rows, grace_min)
+    detail = {"window_days": days, "workflows": len(slots), "grace_min": grace_min,
+              "dropped": sum(1 for r in rows if r[3] == "dropped"),
+              "late": sum(1 for r in rows if r[3] == "fired" and r[4] is not None and r[4] > grace_min),
+              "pending": sum(1 for r in rows if r[3] == "pending")}
+    if undatable:
+        detail["undatable"] = ",".join(sorted(set(s for s, _ in undatable)))
+    if fetch_error:
+        detail["alarm"] = "watch could not read the run list (%s) -- no verdict on any slot" % fetch_error
+    elif clauses:
+        detail["alarm"] = "; ".join(c for _, c in clauses)
+    return detail
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--repo", default=DEFAULT_REPO)
     ap.add_argument("--days", type=int, default=7)
+    ap.add_argument("--alarm", action="store_true",
+                    help="print one clause per workflow with a dropped or late slot, nothing else")
+    ap.add_argument("--stamp", action="store_true",
+                    help="with --alarm: write the `cron` stage stamp the digest reads (never exits non-zero)")
     ap.add_argument("--grace", type=int, default=720,
                     help="minutes after a slot before a missing run counts as dropped (default "
                          "720 -- on 2026-08-27 a slot arrived +627 min late, so anything "
@@ -248,10 +307,39 @@ def main(argv=None):
     since = {}
     for stem, wf_slots in slots.items():
         for _, _, cron in wf_slots:
-            since.setdefault((stem, cron), cron_since(stem, cron))
+            try:
+                born = cron_since(stem, cron)
+            except Exception as e:  # noqa: BLE001 -- no git on PATH is a warning, not a red step
+                born = None
+                print(f"::warning::schedule_census: cron_since({stem}) failed: {type(e).__name__}", flush=True)
+            since.setdefault((stem, cron), born)
     idx = name_index()
-    runs = [(when, idx.get(name, name)) for when, name in fetch_runs(a.repo)]
     now = dt.datetime.now(dt.timezone.utc)
+    if a.alarm and not slots:
+        print("::warning::schedule_census: no expandable cron in .github/workflows -- nothing to watch")
+    if a.alarm:
+        # the digest's cron_watch step: a failure here must be a WARNING and an honest stamp,
+        # never a red step and never a false "dropped" -- whatever raised (gh missing, a
+        # JSON the CLI changed, a timestamp shape), not only the SystemExit fetch_runs uses
+        fetch_error = ""
+        try:
+            runs = [(when, idx.get(name, name)) for when, name in fetch_runs(a.repo)]
+        except (SystemExit, Exception) as e:  # noqa: BLE001
+            fetch_error, runs = f"{type(e).__name__}: {str(e)[:140]}", []
+            print(f"::warning::schedule_census: {fetch_error}", flush=True)
+        rows = census(runs, slots, a.days, now, a.grace, since) if not fetch_error else []
+        undatable = [(s, c) for (s, c), born in since.items() if born is None]
+        detail = alarm_stamp(rows, slots, a.grace, a.days, undatable, fetch_error)
+        for _, clause in alarm_clauses(rows, a.grace):
+            print(f"::warning::cron {clause}", flush=True)
+        print("cron watch: " + " ".join(f"{k}={v}" for k, v in detail.items() if k != "alarm"))
+        print("cron watch alarm: " + (detail.get("alarm") or "none"))
+        if a.stamp:
+            sys.path.insert(0, ROOT)
+            from pipeline import stages
+            stages.stamp("cron", **detail)
+        return 0
+    runs = [(when, idx.get(name, name)) for when, name in fetch_runs(a.repo)]
     print(f"# scheduled dispatches, {a.repo}, last {a.days} days (now {now:%Y-%m-%dT%H:%MZ})")
     print("# a slot counts as due only from the moment its cron reached the branch")
     for (stem, cron), born in sorted(since.items()):

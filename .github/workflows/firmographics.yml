@@ -57,12 +57,19 @@ name: Company intel — registry backlog (cloud)
 
 on:
   schedule:
-    - cron: "0 10 * * *"       # daily 10:00 UTC ~ 13:00 Israel. Deliberately clear of every
+    - cron: "17 10 * * *"      # daily 10:17 UTC ~ 13:17 Israel. Deliberately clear of every
                                # other cron on the shared `repo-state` group: 00:00
                                # scrape-refresh, 02:30 retry-unreachable, 04:00 Sun audit,
                                # 05:00 digest, 06:00 self-heal, 08:00+20:00 auto-expand,
                                # 18:00 triage, and 19:00 listing-hunt whose 200-minute
                                # budget can run to 22:20. Daylight, so a bad run is seen.
+                               # :17, not :00 (infra 2026-08-30, BACKLOG 450b/305): every
+                               # run this cron ever had arrived +293..+662 min late, and the
+                               # measured failure is LATENESS, not absence -- a second slot
+                               # would carry the same lag, so none was added. Every cron in
+                               # this repo sat on :00/:30, the minute GitHub names as its
+                               # congested one; this is the one cron moved off it, and the
+                               # 09-06 morning check reads its lag to decide the rest.
   workflow_dispatch:
     inputs:
       limit:
@@ -88,6 +95,11 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          # the pinned CLI wants node >= 22 (`npm warn EBADENGINE` on every run at 20.x);
+          # an unpinned runtime under a pinned CLI is drift with a name (BACKLOG 450d)
+          node-version: "22"
       - name: Install the Claude CLI
         # pinned, exactly as daily-digest.yml pins it: the seam's flags (--tools,
         # --allowedTools, --json-schema, --effort) are version-surface, and a silent CLI
@@ -103,9 +115,17 @@ jobs:
         run: |
           python research_firmographics.py \
             --workers 2 \
+            --budget-min 60 \
             --limit "${{ github.event.inputs.limit || '150' }}" \
             --refresh-days "${{ github.event.inputs.refresh_days || '180' }}"
           python research_firmographics.py --export
+
+      - name: Stamp the stage when the research step died from outside (BACKLOG 450c)
+        # the script stamps `crashed(<Type>)` from inside Python; a step killed by the job
+        # timeout or an OOM stamps nothing and leaves yesterday's stamp, which the digest
+        # then reads as a drained night. Only `failure()` -- a healthy night keeps its counts.
+        if: failure()
+        run: python -m pipeline.stages stamp firmo alarm=step-failed
 
       - name: What the run produced
         # A green workflow proves nothing here (CLAUDE.md rule 1): say what it PRODUCED.

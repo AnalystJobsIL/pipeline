@@ -124,7 +124,26 @@ def _invoke(prompt, *, system, schema, model, timeout, cwd=None, effort="low", t
     data = _envelope(proc.stdout)
     if data is not None and data.get("is_error"):
         status = data.get("api_error_status")
-        msg = _ascii(data.get("result") or f"is_error (api_error_status={status})")
+        # Claude Code 2.1.x has TWO result variants (BACKLOG 449): the ERROR one (`subtype`
+        # error_during_execution | error_max_turns | error_max_budget_usd |
+        # error_max_structured_output_retries) carries no `result` and no `api_error_status`,
+        # and its only human-readable cause is `errors[]`. Reading `result` first and printing
+        # our own placeholder made two mornings say `is_error (api_error_status=None)` and
+        # nothing else. Order: the CLI's `result` (keeps every `Failed to authenticate` pin),
+        # else `<subtype>: <errors[0]>`, else the envelope's own words.
+        # NEVER the raw stdout: wave 1 (2026-08-30) showed `"duration_ms": 401` in the
+        # envelope reading as an auth failure through `_kind`, which opens the breaker on the
+        # first strike and turns the tier off for the whole morning. The words `_kind` sees
+        # are the CLI's `result`, else `<subtype>: <errors[0]>`, else the subtype alone and
+        # the envelope's KEY NAMES (so a schema change is at least visible).
+        detail = str(data.get("result") or "").strip()
+        if not detail:
+            errs = data.get("errors")
+            first = next((str(e) for e in errs if e), "") if isinstance(errs, list) else ""
+            detail = f"{data.get('subtype') or 'is_error'}: " + (
+                first or "no result and no errors in the envelope (keys: %s)"
+                % ",".join(sorted(str(k) for k in data)))
+        msg = _ascii(detail)
         kind = "auth" if status in (401, 403) else _kind(msg)
         raise LLMUnavailable(msg, kind=kind)
     if proc.returncode != 0:

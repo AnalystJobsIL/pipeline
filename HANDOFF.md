@@ -47,6 +47,8 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 |---|---|---|---|---|
 | 2026-08-31 | classifier | the scope rule is **live and draining** in an UNATTENDED run: the `classify:` line names a contract that is NOT `v3.a517bb77` and `re-judged` is above 0. `re-judged 0` with the breaker closed means the `drain did NOT move this run` alarm fired and it has stalled | | not yet due (first 05:00 slot after the push + 180 min) |
 | 2026-09-10 | infra | `python tests/schedule_census.py --days 14` — **≥ 3 isolated single-slot drops ⇒ build the recovery digest cron; otherwise it stays rejected.** It was 0 on 2026-08-27 | — | not yet due |
+| 2026-09-01 | infra | first scheduled digest after 08-30: log `cron watch: window_days=3`, subject `(schedule run <id>)`, `Stages:` `ci …`/`cron …` or silent with green master; a `tests.yml` run on another lane's commit: 10 jobs, verdicts on all, none cancelled | | not yet due |
+| 2026-09-07 | infra | 7 mornings from 09-01: `Company intel:` backlog **median <= 10**, delta **<= 0 on >= 5 of 7**, `firmo` **left = 0, age <= 1** (`450`); `10:17` slots **< 180 min** late (305) | | not yet due |
 | 2026-08-29 | registry | `publish.scanned` **>=1,000** (was 969) and the board carries Mixtiles *VP Data*, RealPlay, lab42, Alma Lasers; and `grep -c 'needs re-resolution' companies.csv` falls below **36** — still 36 on 08-30 means the hunt owns the routed rows but does not act (`375`) | 2026-08-29 | PARTIAL - scanned **1000** PASS (08-28 run). Board has RealPlay, Alma Lasers, withfaye; **Mixtiles and lab42 absent**. `needs re-resolution` **FAIL: 120** - the zero audit routed ~85 rows in; re-check 08-31 |
 | 2026-09-27 | registry | of rows stamped `zero-confirm 2026-08-28: confirmed`, **<=5%** have `health_baseline > 0`; above that, strip that run's verdicts | | |
 | 2026-08-30 | registry | digest scans **>=1,015** (was 1,000), `collect:` under **55** min (cap 110); **>=35 of the 56** `queue-drain 2026-08-29` rows produce a posting | 2026-08-30 | PARTIAL - `minutes=35` PASS; queue-drain PASS **128 of 138**. scans N/A: no 05:00 digest by 06:28Z; run `33250362574` had `scanned=1000` |
@@ -81,13 +83,7 @@ the command that re-derives it, because that is the only thing that keeps this h
 
 ## Watch list for the next session
 
-0. **RUN THIS, OR TOMORROW LOOKS EXACTLY LIKE TODAY: `python digest_watchdog.py`.**
-   2026-08-27 was not dropped crons, it was **absurdly late** ones: the 00:00 slot landed at
-   05:41 and the 02:30 slot at **12:57, +627 min**. For the digest that is the same thing —
-   the relay's last poll is 10:17, so late past it is no mail. Nothing in the repo said so;
-   a human looking was the only detection. The watchdog is the one tripwire not on GitHub's
-   scheduler — read-only, no credential, no dispatch — but it is **not installed**:
-   registering the task is an operator action, command in its docstring. `292@infra`.
+0. **`python digest_watchdog.py` is still not installed** (`292@infra`, operator action). Since 2026-08-30 a dropped or +720-min-late slot is a `cron …` line in the NEXT mail; the watchdog is the only tripwire off GitHub's scheduler.
 
 0b. **A patch script wrote a literal backslash-n into `daily-digest.yml` where a
    continuation was meant.** It would have broken every run: bash reads the `n` as an
@@ -130,12 +126,7 @@ the command that re-derives it, because that is the only thing that keeps this h
    tenant's does not. Broadcom's note says "Tel Aviv postings confirmed live" while its
    all-time high is 0; one free POST settles which.
 
-5. **GitHub dispatches these crons when it feels like it, and nothing notices a run that
-   never started.** On 2026-08-27 the 00:00 scrape refresh ran at **05:41**, and the 02:30,
-   05:00 and 06:00 crons had not fired at all by 07:41 — so no board, no mail, and no alarm,
-   because every "the run broke" path fires from *inside* a later digest. `firmographics.yml`
-   (added 08-26, cron `0 10 * * *`) has **never once fired**. `docs/AUTOMATION.md` has the
-   measured drift; the fix is `infra`'s (`docs/BACKLOG.md`).
+5. **GitHub dispatches these crons when it feels like it.** Since 2026-08-30 a dropped or +720-min-late slot is a `cron …` clause on the mail's `Stages:` line (`schedule_census.py --alarm`); the recovery-cron decision is the 09-10 row.
 
 ## Open items — highest value first
 
@@ -193,3 +184,4 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-30 `roles`** - `seniority` was computed and dropped (**0 of 154**), the funnel printed once and discarded, retention unguarded. Now **`cloud_state/roles.csv`, 143 rows**, 60-day window on `last_seen`; seniority **154/154**; `funnel.csv`; `dump()` refuses to shrink. **NOT on Pages** (`453@infra`). Run **33299098476** (tip `a1033c3`): `Unit guards` + `Registry invariants` PASSED. **NOT finished:** 453-455, proof due 08-31. `docs/sessions/2026-08-30-roles.md`.
 - **2026-08-30 `classifier`** - scope is QUANTITATIVE analyst work now. The stale alarm invited a cap raise that buys nothing: most of that pool no cap reaches. Condition (5) plus a demote-only hint (**0 FN of 96**); strong+senior with a JD is READ (**5 of 19 rejected**, `373`/`121` closed). **NOT finished:** 461-466, the unattended run. Record: `docs/sessions/2026-08-30-classifier.md`.
 - **2026-08-30 `registry`** - a retirement was only an ABSENCE and the merge rescues origin's deletions (`458@infra`); it is a STATE now, re-applied nightly by lookup: queue **276 -> 210**. `--reopen` reverses one. **NOT finished:** 458-462. Record: `docs/sessions/2026-08-30-registry.md`.
+- **2026-08-30 `infra`** — the suite was green, the GATE was broken: 11 runs cancelled at `guard`'s 10 min; 4 surviving mutants = 2 equivalent + 2 unkilled records. Three jobs with named budgets, `ci`/`cron` on the mail, run provenance, `secretsenv`. **NOT finished:** 467-475, 448, history rewrite. `docs/sessions/2026-08-30-infra.md`.

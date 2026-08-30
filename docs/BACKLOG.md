@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**517 filed · 380 open · 137 closed · 7 half · 38 numbers name more than one item · 0 items name no lane.**
+**526 filed · 382 open · 144 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 467.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 476.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@scraper` **open** · `462@registry` **open** |
 
-### registry — 122 open
+### registry — 125 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -216,8 +216,11 @@ closure convention in the header.
 - **459** `459@registry` **41-ish ACTIVE rows are named after a URL slug rather than an employer, and renaming
 - **461** `461@registry` **The `no-board` re-open cadence expires a verdict but nothing puts the name back, and
 - **462** `462@registry` **`--reopen` cannot reverse the two verdicts a human is most likely to disagree with** —
+- **468** `468@registry` **Three modules still carry their own `_load_secrets`, so a worktree session of those
+- **470** `470@registry` **Two mutation records were filed with no test that reaches the mutated line, and two more
+- **472** `472@registry` **`_load_secrets` callers in seven root tools still resolve through `bd_rescue`'s copy** —
 
-### infra — 107 open
+### infra — 102 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -312,20 +315,15 @@ closure convention in the header.
 - **388** `388@infra` **`persist_state.shrank()` cannot see the loss it was written for, on the store where it
 - **407** `407@infra` **`check_invariants` check D and `registry_health.orphans()` only range over PARKED rows,
 - **433** `433@infra` **`BD_RUN_CAP=0`
-- **435** `435@infra` **The `guard` job's 10-minute timeout cannot fit the registry rehearsals, and nobody knew
-- **436** `436@infra` **Nothing in the tree records which RUN produced a state commit, so "unattended" is not
-- **438** `438@infra` **`_load_secrets` is copied into FOUR modules and resolves `secrets.env` against its own tree ro
+- **438** `438@infra` **`_load_secrets` is copied into FOUR modules and resolves `secrets.env` against its own tree ro *(half closed)*
 - **439** `439@infra` **`check_unattended_proof` cannot run in CI, where the push it should judge lands** —
-- **440** `440@infra` **A test fixture spells the operator's personal GitHub handle**
-- **442** `442@infra` **The `guard` job no longer fits its 10-minute timeout, and a cancelled gate names
-- **444** `444@infra` **Nothing anywhere reports that master's own test gate is red**
 - **448** `448@infra` **The inline JD filler's paid rung is armed by default and CANNOT SPEND, because the step
 - **450** `450@infra` **`firmographics.yml`: the budget is not wired, one slot a day measures the gap before
-- **451** `451@infra` **`stages.stamp` rebases on `{}` when it cannot read the file, and the digest now writes
 - **453** `453@infra` **`cloud_state/roles.csv` is committed and public by raw URL, but it is not on Pages** —
 - **455** `455@infra` **A `bd_rescue` test fails whenever another `bd_rescue` test runs first**
 - **458** `458@infra` **`merge_json_cache.merge` resurrects a key the ORIGIN deleted, so a deletion committed
 - **463** `463@infra` **The drain's counters exist only in the mail**
+- **471** `471@infra` **`schedule_census.py` reports the isolated-drop count and then exits 0**
 
 ### scraper — 28 open
 
@@ -385,7 +383,7 @@ closure convention in the header.
 - **441** `441@discovery` **Intake re-adds names that were retired with evidence, so the queue can never stay
 - **456** `456@discovery` **The inline JD filler re-buys the same postings every night, because it has no cooldown
 
-### docs — 21 open
+### docs — 24 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
 - **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
@@ -408,6 +406,9 @@ closure convention in the header.
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
 - **445** `445@docs` **The two workflow COUNTS in prose want a structural check, not a registered fact** —
 - **461** `461@docs` **No visitor-facing surface states the quantitative boundary**
+- **467** `467@docs` **`check_unattended_proof` still returns silently on a runner**
+- **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
+- **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 
 ### ats-fetch — 18 open
 
@@ -430,7 +431,7 @@ closure convention in the header.
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 
-### company-intel — 17 open
+### company-intel — 18 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -449,6 +450,7 @@ closure convention in the header.
 - **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
 - **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
+- **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 
 ### jd-text — 14 open
 
@@ -467,7 +469,7 @@ closure convention in the header.
 - **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
 - **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
 
-### roles — 13 open
+### roles — 14 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
 - **3** `3@roles` **`pipeline/dates.py`**
@@ -482,8 +484,9 @@ closure convention in the header.
 - **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
 - **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
 - **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+- **473** `473@roles` **`roles.csv.meta.json` says `published_on_pages: false` on the very page that publishes
 
-### classifier — 9 open
+### classifier — 8 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -491,7 +494,6 @@ closure convention in the header.
 - **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
 - **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
 - **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
-- **449** `449@classifier` **`pipeline/llm.py` discards the CLI's error envelope, so two mornings said `is_error
 - **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
 - **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
 
@@ -7800,6 +7802,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     a job description**, whatever this lane does.
 
 435. **The `guard` job's 10-minute timeout cannot fit the registry rehearsals, and nobody knew
+    **CLOSED 2026-08-30 (`infra`):** with 442 — the rehearsals are their own six-job matrix; see 442.
     because the suite was failing before it** — lane: `infra` (it owns `tests.yml`) with
     `registry` (it owns `tests/rehearse_registry.py`). Found by `jd-text` 2026-08-29, from the
     first run in which `Unit guards` passed.
@@ -7827,6 +7830,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
 ## From the `docs` lane, 2026-08-30 (the production clause)
 
 436. **Nothing in the tree records which RUN produced a state commit, so "unattended" is not
+    **CLOSED 2026-08-30 (`infra`):** `persist_state.run_provenance` appends `(<event> run <id>)` before `[skip ci]` for every workflow; `test_persist_run_provenance_names_the_run_in_the_subject`. First proof: the next scheduled digest's subject (morning check 09-01).
      greppable offline** — lane: `infra`. `docs/AGENT_BRIEF.md`'s definition of done now
      requires an unattended run's number, and the only way to prove `event: schedule` today
      is `gh run view <id> --json event,headSha` — an online call, against a run record that
@@ -7855,6 +7859,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     (10 due, 2 worked, 0 filled, 0 credits), now says
     `matched:jd-zero-fill(2 worked, 0 filled: no-markers x2)`.
 438. **`_load_secrets` is copied into FOUR modules and resolves `secrets.env` against its own tree root, so there
+    **HALF CLOSED 2026-08-30 (`infra`):** the count is FOUR, not ten (`bd_rescue`, `bd_employees`, `pipeline/jdfill`, `pipeline/run`). `pipeline/secretsenv.py` is the one loader (`AJIL_SECRETS=<path>`; the main checkout's file; a worktree gets nothing and one stderr line); `pipeline/run.py` delegates. The three foreign copies are item 468.
      is no honest way to arm a paid rung from a worktree** — lane: `infra`. `bd_rescue.py:46`,
      `bd_employees.py:41`, `pipeline/jdfill.py:89` and `pipeline/run.py:185` each resolve the
      file relative to their own tree — **FOUR, not the ten this item claimed** until `infra`
@@ -7867,6 +7872,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      the shared checkout. One loader honouring `AJIL_SECRETS=<path>` gives the third.
 
 439. **`check_unattended_proof` cannot run in CI, where the push it should judge lands** —
+    **NOT closed 2026-08-30 (`infra`), and the shape is now known:** a first draft added `fetch-depth: 0` + `AJIL_PUSH_BASE` to `tests.yml`; wave 1 showed a full-history checkout of a NON-master ref makes `test_ci_itself_confirms_why_the_tree_check_cannot_run_there` red (`origin/master` is then the real tip) while nothing in the job consumed the history. Reverted. The two halves — the checkout depth and the `docs/check_docs.py` read of `github.event.before` (item 467) — land in ONE commit or not at all.
      lane: `infra`, opened by `docs`. The check compares `merge-base HEAD origin/master` with
      HEAD, and on a CI push build those are the same commit, so it returns silently. GitHub
      hands the previous tip to the workflow as `github.event.before`; passing it through as an
@@ -7875,7 +7881,8 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      until it is.
 
 440. **A test fixture spells the operator's personal GitHub handle** — lane: `infra`.
-     `tests/test_units.py` uses `shailiv` as a literal in one fixture. It is not a secret and
+    **CLOSED in the TREE 2026-08-30 (`infra`, operator-approved for the one word in this file too):** both occurrences replaced. NOT closed in HISTORY: the string is reachable from 2026-08-22 (`c0f7635`) in the public repo; the rewrite procedure is in `docs/sessions/2026-08-30-infra.md` and waits for the operator to name a window.
+     `tests/test_units.py` used the operator's personal handle as a literal in one fixture (removed 2026-08-30 by `infra`; it stays in the public repo's HISTORY from 2026-08-22, which only a rewrite closes). It is not a secret and
      not a leak of anything the repo does not already know, but the public repo's whole
      anonymity rests on that handle never appearing (`CLAUDE.local.md`), and any other string
      would do the same job. Changing it touches a test this lane does not own.
@@ -7918,6 +7925,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
 ## From the `docs` lane, 2026-08-30 (CI truth)
 
 442. **The `guard` job no longer fits its 10-minute timeout, and a cancelled gate names
+    **CLOSED 2026-08-30 (`infra`):** three jobs (`guard` / `rehearse` ×6 / `mutation-gate` ×3) and every long step under `timeout` with a budget below its job's, so an overrun is a NAMED failed step (ARCHITECTURE §4 "A cancelled gate names nothing"). Verdict run id in `HANDOFF.md`.
      nothing** — lane: `infra` (the workflow) with `registry` (the rehearsal cost). On run
      **33293548117** steps 1-8 took **3m13s** and `Five mixed-policy rehearsals` was cut off
      after **6m59s** at `timeout-minutes: 10`. `Unit guards`, `Registry invariants` and the
@@ -7993,6 +8001,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      under 200 characters, 33 cards on a shared JD page — and say the flow is unmeasured.
 
 444. **Nothing anywhere reports that master's own test gate is red** — lane: `infra`, filed by
+    **CLOSED 2026-08-30 (`infra`):** applied with two corrections — the step sits BEFORE `persist` (after it the stamp is never committed) and reads `--status completed` (an in-progress run has no conclusion). `stages.alarms("ci", 1)` in run.py. Proof: morning check 09-01.
      `docs` 2026-08-30 as the exact diff its clause 2 requires. `tests.yml` was non-green on
      **100 consecutive runs** and not one line of the daily mail, the run log or any state
      file said so; every lane read its own terminal and reported a passing suite. `docs`'s
@@ -8186,6 +8195,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     `discovered_cache.json` is `discovery`'s file and a new state file is an `infra` strategy —
     so it is filed as **456** rather than built half.
 449. **`pipeline/llm.py` discards the CLI's error envelope, so two mornings said `is_error
+    **CLOSED 2026-08-30 (`infra`, shared plumbing — classifier, company-intel, jd-text, registry all call it):** the filed diff, verbatim in spirit: `result`, else `<subtype>: <errors[0]>`, else the envelope's own stdout; `test_llm_error_envelope_without_result_names_its_subtype_and_error`.
      (api_error_status=None)` and nothing else** — lane: `classifier` (shared plumbing; every
      lane calls it). Claude Code 2.1.x has TWO result variants: the success one always carries
      `result`; the ERROR one (`subtype` ∈ `error_during_execution | error_max_turns |
@@ -8204,6 +8214,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      ' '.join((proc.stdout or '').split())[:200]}"`. Record:
      `docs/sessions/2026-08-30-company-intel.md` section 3.
 450. **`firmographics.yml`: the budget is not wired, one slot a day measures the gap before
+    **(a)(c)(d) CLOSED, (b) RECLASSIFIED 2026-08-30 (`infra`):** `--budget-min 60`, `if: failure()` stamp, node 22. No second cron: every run this cron ever had was LATE, not absent, and each landed before the next digest; a `0 23` slot carries the same lag and can land after the digest it feeds. The mechanism (operator's choice, infra's judgement on the bound): the same bounded drain runs INSIDE `daily-digest.yml` before the step that measures the gap, `--budget-min 20` (the mail's critical path; the number infra would not exceed there is 30), with the `17 10 * * *` cron keeping `--budget-min 60` as the backlog backstop; the `:17` minute tests 305 on the side. Proof (company-intel's number): morning check 09-07.
      it can drain, a failed job stamps nothing, and the CLI runs on an unsupported Node** —
      lane: `infra`. (a) `research_firmographics.py --budget-min` exists since 2026-08-30 and
      no workflow passes it; proposed `--budget-min 60` beside the kept `--limit 150`. (b) The
@@ -8226,6 +8237,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      `setup-node@v4 with node-version: 22` before the npm install.
      Same text in `docs/sessions/2026-08-30-company-intel.md` section 5.
 451. **`stages.stamp` rebases on `{}` when it cannot read the file, and the digest now writes
+    **CLOSED 2026-08-30 (`infra`):** a stamp over an existing file that does not parse is refused with a `::warning::` and the bytes are untouched (`test_stages_stamp_refuses_to_rebase_on_an_unreadable_file`); §4/§5 writer lists updated.
      it daily** — lane: `infra` (`pipeline/stages.py` is shared). `_load()` swallows every
      read error; a half-written `cloud_state/pipeline_stages.json` followed by any stamp
      writes a file holding only that stamp, and the next mail says `collect never ran`,
@@ -8613,3 +8625,92 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     (an append-log has no delete, by design), or `is_settled` learns to read `overturned-*`
     from the disposition ledger — which couples two files that are deliberately independent
     today (`queue_state` records what a RUNG did; `queue_disposition` records a judgement).
+## From the `infra` lane, 2026-08-30 (a verdict, and a cron that did not fire)
+
+Numbered 467–475: filed as 456–464 in a worktree while master took 459–466; renumbered on
+the rebase (a collision is what 241–246 are).
+
+467. **`check_unattended_proof` still returns silently on a runner** — lane: `docs`. `tests.yml`
+     now hands it the pushed range (`AJIL_PUSH_BASE=${{ github.event.before }}`, full history
+     via `fetch-depth: 0`); the check ignores it. The hunk: in `check_unattended_proof`, before
+     the `GITHUB_ACTIONS` early return, `base = os.environ.get("AJIL_PUSH_BASE") or base`, and
+     skip only when that is unset or all zeros (a branch creation). Same for
+     `check_tree_is_current` if it wants the runner's verdict. Until then 439 is half done and
+     local pre-push is the only enforcement point.
+
+468. **Three modules still carry their own `_load_secrets`, so a worktree session of those
+     lanes is still silently disarmed** — lanes: `registry` (`bd_rescue.py:46`; `bd_employees.py:41`
+     imports nobody's — treat as registry's), `jd-text` (`pipeline/jdfill.py:89`, public name
+     `load_secrets`). The exact diff for each, three lines, behaviour-preserving (`setdefault`
+     stays, so `tests/conftest.py`'s disarm still holds):
+
+     ```python
+     def _load_secrets():                      # bd_rescue.py / bd_employees.py
+         from pipeline import secretsenv
+         secretsenv.load(ROOT)
+     def load_secrets():                       # pipeline/jdfill.py
+         from pipeline import secretsenv
+         secretsenv.load(_REPO_ROOT)
+     ```
+     `tests/conftest.py:73`'s comment enumerating four copies is `infra`'s to trim when the
+     last copy goes. Closes 438 when applied.
+
+469. **The brief's lane table does not name the files the mutation gate failed on** — lane:
+     `docs`. `confirm_zero.py`, `queue_disposition.py`, `queue_state.py`, `apply_proposals.py`,
+     `tests/rehearse_registry.py`, `tools/mutate.py` and `tests/mutations.json` all carry
+     `lane: registry` in their docstrings (or are read only by registry's tools) and appear in
+     no row of `docs/AGENT_BRIEF.md`'s table. On 2026-08-30 the gate's four surviving mutants
+     were all registry's and the diagnosis had to start from ownership. Add them to the
+     registry row; `tests.yml` (which invokes the last three) stays `infra`'s.
+
+470. **Two mutation records were filed with no test that reaches the mutated line, and two more
+     are equivalent mutants the harness kept re-reporting** — lane: `registry`, applied by
+     `infra` 2026-08-30 so CI could produce a verdict. `qdisp-retire-unhunted` (no ``Kills``
+     anywhere; the fixture's empty drain let `no-evidence-to-read` catch the name first) and
+     `qdisp-prune-unrecorded` (its named killer asserts the record is WRITTEN; the deleted
+     assert fires only on a pre-existing record with no `evidence`) now have killers at the end
+     of `tests/test_units.py` — move them into `tests/test_registry.py` at leisure.
+     `hunt-queue-identity-remove` (368's own finding) and `zero-park-when-skipped` (born
+     equivalent in `4ed4cf8`: `if evicts and not parks:` makes the `else:` unconditional when
+     `parks`) carry `must_be_killed_by_behavioural: false` and an `equivalent_why`; retire or
+     re-aim them. Rule for the lane: `python tools/mutate.py --id <new record> --skip-baseline`
+     before filing a record, in the commit that files it.
+
+471. **`schedule_census.py` reports the isolated-drop count and then exits 0** — lane: `infra`.
+     `main()` discards `report()`'s value; a CI use of the census mode (not the `--alarm` mode,
+     which must never fail a digest) would have nothing to gate on. Return it from the census
+     mode only; the 09-10 morning check reads the number by hand today.
+
+473. **`roles.csv.meta.json` says `published_on_pages: false` on the very page that publishes
+     it, and `ROLES_PAGES_URL` is read by nothing** — lane: `roles`. The board now serves
+     `/roles.csv` and `/roles.csv.meta.json` (infra applied 453 with a non-empty guard), but
+     `pipeline/roles.py:1614` hard-codes `False` and `tests/test_units.py:19285` pins it. The
+     digest's pipeline step exports `ROLES_PAGES_URL=https://analystjobsil.github.io/board/roles.csv`;
+     read it: `published_on_pages = bool(os.environ.get("ROLES_PAGES_URL"))` and put the URL
+     in `download_url`. Found by wave 1, 2026-08-30.
+
+474. **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
+     digest now writes that stamp itself** — lane: `company-intel`. Since 2026-08-30 the
+     digest runs a 20-minute drain (`daily-digest.yml` `firmo_drain`) before the measurement,
+     and `research_firmographics.py` stamps `firmo` on every exit, so
+     `pipeline/company_intel.py:830-845` labels the digest's own drain as the 10:17 cron's,
+     `:860`'s `_age >= 3` growth alarm can never fire (age is 0 every morning), and `:786` /
+     `pipeline/run.py:226` still say "the 10:00 UTC cron". Two drains write one key: either
+     the script takes the stage key from env (`FIRMO_STAGE`, default `firmo`; the digest would
+     pass `firmo-digest`) or the label reads "the last drain". The cron's LIVENESS is the
+     `cron` watch's job now, not this line's. `run.py` keeps `stages.alarms("firmo", 2)`
+     because four of this lane's tests pin it (`test_the_cron_alarm_tolerates_one_dropped_slot
+     _but_not_two` and three siblings) -- infra tried `1` and reverted; the line now carries a
+     comment saying it is blind. Decide what the key means and re-pin. Found by wave 1.
+
+475. **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
+     longer does** — lane: `docs`. `docs/check_docs.py:1726` ("MEASURED on run 33294213125:
+     `shallow='true'`"), `:1516` and `tests/test_units.py:12844`. `daily-digest.yml` checks out
+     with `fetch-depth: 0` since 2026-08-30 (the cron watch's `cron_since` needs `git log`);
+     `tests.yml` still does not (439). Found by wave 1.
+
+472. **`_load_secrets` callers in seven root tools still resolve through `bd_rescue`'s copy** —
+     lane: `registry` (`audit_empty_rows.py:337`, `crack_walled.py:308`, `deep_validate.py:451`
+     …) and `discovery` (`discovery_daily.py:917`, `bd_discover.py:80`). They import
+     `bd_rescue._load_secrets`, so 468's diff fixes them for free — listed so nobody counts
+     them as separate copies again (the "ten modules" in 438 was this list).

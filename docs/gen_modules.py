@@ -148,6 +148,7 @@ PIPELINE = {
  "notes": "**shared** - the companies.csv notes append-log. Never hand-roll a trim",
  "verdicts": "**shared** - the single source of truth for verdict tokens and re-check pools",
  "stages": "**shared** - which nightly stage last finished, and how much it did",
+ "secretsenv": "**shared** - the ONE loader for the gitignored `secrets.env` (BACKLOG 438): `AJIL_SECRETS=<path>` or the main checkout's file; a git worktree gets nothing and says so on stderr, so a mass-zero from a worktree cannot pass as evidence. `setdefault` only, which is what keeps `tests/conftest.py`'s empty-string disarm working",
  "sources": "**shared** - per-discovery-source liveness",
  "discovery_queue": "the research_companies.json queue, read and written safely (ABSENT is not CORRUPT; atomic writes) - written only by the two discovery bridges",
  "secrethunter": "the secrethunter.io company catalog, read from its SITEMAP - 2,703 names plus a candidate LinkedIn handle, keyless and free. The company pages carry the own-domain and every open job title but serve it only to named crawler UAs, so they are deliberately not read (docs/decisions/2026-08-27-secrethunter-company-catalog.md)",

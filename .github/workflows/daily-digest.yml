@@ -37,6 +37,7 @@ on:
 
 permissions:
   contents: write             # to commit updated cloud_state back to the repo
+  actions: read               # BACKLOG 444: tests.yml's conclusion on master; the cron watch's run list
 
 concurrency:
   group: daily-digest
@@ -62,6 +63,10 @@ jobs:
     timeout-minutes: 285
     steps:
       - uses: actions/checkout@v5
+        with:
+          # the cron watch dates every cron from `git log` (a slot is only due once its
+          # cron reached the branch); a depth-1 checkout dates nothing and scores nothing
+          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
@@ -69,7 +74,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # the pinned CLI wants node >= 22 (`npm warn EBADENGINE` on every run at 20.x);
+          # the same bump as firmographics.yml, in the file that runs the CLI most (450d)
+          node-version: "22"
 
       - name: Install Claude Code CLI (pinned — the classifier's flags are checked against this version)
         id: cli
@@ -142,6 +149,91 @@ jobs:
         run: python -c "from pipeline.jdfill import record_enrich; print(record_enrich())"
         continue-on-error: true
 
+      - name: Alarm when master's own test gate is red (BACKLOG 444)
+        id: ci_health
+        # tests.yml was non-green on 100 consecutive runs and nothing said so anywhere a
+        # human reads daily. Stamps `ci` in pipeline_stages.json; run.py puts it on the
+        # mail's Stages: line. BEFORE the pipeline step (which reads the stamps) and before
+        # persist (which commits them) -- the filed diff placed it after persist, where the
+        # stamp would never have been committed, and a first draft placed it after the
+        # pipeline, where the mail would have carried YESTERDAY's verdict (wave 1).
+        # `--status completed`: an in-progress run has no conclusion and must not read as
+        # "unknown". A `gh` failure is an honest `ci` stamp, never a red step: this runs
+        # ahead of the pipeline and a red step here would be a Stages: line about the watch.
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # one read of the last 200 completed runs: the newest conclusion, and how many
+          # non-green precede the first green (`200+` when none of the 200 is green; `none`
+          # when there are no completed runs at all -- never a fabricated streak)
+          J=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow tests.yml --branch master \
+                --status completed --limit 200 --json conclusion 2>/dev/null || echo '')
+          if [ -z "$J" ]; then
+            echo "::warning::ci_health: gh could not read tests.yml's runs"
+            python -m pipeline.stages stamp ci "alarm=watch could not read tests.yml's runs (gh failed)"
+            exit 0
+          fi
+          CONC=$(printf '%s' "$J" | python -c 'import json,sys; r=json.load(sys.stdin); print(r[0]["conclusion"] if r else "none")')
+          RED=$(printf '%s' "$J" | python -c 'import json,sys; r=[x["conclusion"] for x in json.load(sys.stdin)]; print("none" if not r else (str(r.index("success")) if "success" in r else "%d+" % len(r)))')
+          echo "tests.yml on master: $CONC ($RED consecutive non-green)"
+          if [ "$CONC" != "success" ]; then
+            echo "::warning::master test gate $CONC, $RED consecutive non-green"
+            python -m pipeline.stages stamp ci "alarm=tests.yml on master is $CONC - $RED consecutive non-green runs" "red_streak=$RED"
+          else
+            python -m pipeline.stages stamp ci red_streak=0
+          fi
+
+      - name: Cron watch (a slot that did not fire, or fired hours late, is a line in the mail)
+        id: cron_watch
+        # GitHub drops and delays scheduled slots (4 of 5 crons on 2026-08-27; firmographics
+        # +293..+662 min on every run it has had) and nothing in this repo noticed a cron
+        # that never fired. `tests/schedule_census.py --alarm` scores the last 3 days of
+        # every cron in this repo against `gh run list` and `--stamp` writes the `cron`
+        # stage; run.py puts it on the Stages: line -- THIS run's, because the step runs
+        # before the pipeline. The alarm, not the recovery: the recovery-cron decision is
+        # the 2026-09-10 morning check and is not pre-empted here. Under the 720-min grace
+        # an evening slot (18:00-20:00) dropped last night reads `pending` this morning and
+        # `not seen` tomorrow's: two mornings, by the grace's own rule, never zero.
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tests/schedule_census.py --alarm --stamp --days 3
+
+      - name: Company intel drain, bounded (the queue the 05:00 line measures, drained in the run that measures it)
+        id: firmo_drain
+        # The gap is READ at 05:00; the intake that creates it lands 19:00-22:20 (hunt) and
+        # 20:00 (expand); the 10:17 cron at every lag it has ever had (+293..+662 min)
+        # finishes BEFORE that intake, so the morning number was structurally a day stale
+        # (BACKLOG 450, company-intel's arithmetic, operator 2026-08-30). A second cron was
+        # odds, not a mechanism; this is the mechanism: the same drain, in this file, before
+        # the step that measures. TWENTY minutes, not sixty -- this is the mail's critical
+        # path (the whole job measured 27-32 min); the 10:17 cron keeps `--budget-min 60`
+        # as the backlog backstop. continue-on-error: a research failure is a Stages: line
+        # (the script stamps `firmo`), never a lost digest. Spends the subscription token
+        # only; no Bright Data. `--budget-min` stops LAUNCHING at 20; a call in flight may
+        # run 4 more, so the inner budget is 23 under the step's 25, and a killed drain
+        # stamps `firmo alarm=step-failed` itself (450c; the same rule as firmographics.yml).
+        timeout-minutes: 25
+        continue-on-error: true
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          FIRMO_RESEARCH_MODEL: sonnet
+          FIRMO_RESEARCH_EFFORT: low
+        run: |
+          rc=0
+          timeout --signal=INT --kill-after=60 23m python research_firmographics.py --workers 2 --budget-min 20 --limit 150 --refresh-days 180 || rc=$?
+          if [ "$rc" -ne 0 ]; then
+            echo "::warning::company intel drain exited $rc (124/137 = its 23-minute budget)"
+            python -m pipeline.stages stamp firmo "alarm=step-failed(rc $rc)"
+          fi
+          python research_firmographics.py --export
+          exit "$rc"
+
       - name: Run the pipeline (Claude classification via subscription token)
         id: pipeline
         # fetch ~880 boards (~8 min) + classify (60 min budget) + company intel (15) + render
@@ -152,6 +244,9 @@ jobs:
           # gl=il, location=Israel returns 0). Aggregator left OFF (AGGREGATOR_ENABLED unset).
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           BOARD_URL: "https://analystjobsil.github.io/board/"
+          # the publish step copies cloud_state/roles.csv beside the board (roles lane, 453);
+          # the meta file may read this instead of a hard-coded `published_on_pages: false`
+          ROLES_PAGES_URL: "https://analystjobsil.github.io/board/roles.csv"
           # inline JD fetch for roles whose ATS list response carries no description —
           # the LLM tier reads the description, so this happens BEFORE classification
           JDFILL: "1"
@@ -260,13 +355,21 @@ jobs:
           fi
           rm -rf /tmp/board && git clone -q "$BOARD_URL_GIT" /tmp/board
           cp docs/index.html /tmp/board/index.html
-          cp docs/archive.html /tmp/board/archive.html 2>/dev/null || true
+          # optional files: copied only when NON-EMPTY, so a zero-byte artefact from a broken
+          # step never overwrites the board's good copy (roles lane, BACKLOG 453)
+          for f in docs/archive.html cloud_state/roles.csv cloud_state/roles.csv.meta.json cloud_state/funnel.csv; do
+            if [ -s "$f" ]; then cp "$f" "/tmp/board/$(basename "$f")"
+            elif [ -e "$f" ]; then echo "::warning::$f is empty; the board keeps its previous copy"
+            fi
+          done
           cd /tmp/board
           BR=$(git symbolic-ref --short HEAD)     # board repo's default branch is main, not master
           git config user.name  "board-bot"
           git config user.email "board@users.noreply.github.com"
           git add index.html
-          [ -f archive.html ] && git add archive.html
+          for f in archive.html roles.csv roles.csv.meta.json funnel.csv; do
+            [ -f "$f" ] && git add "$f"
+          done
           git commit -m "board $(date -u +%F)" || { echo "no change"; exit 0; }
           for i in 1 2 3 4 5; do
             git pull --rebase --autostash origin "$BR" && git push origin "HEAD:$BR" && exit 0

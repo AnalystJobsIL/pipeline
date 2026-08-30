@@ -27,19 +27,42 @@ import os
 
 PATH = os.path.join(os.path.dirname(__file__), "..", "cloud_state", "pipeline_stages.json")
 
-ORDER = ["repair", "collect", "expand", "firmo", "enrich", "publish"]
+ORDER = ["repair", "collect", "expand", "firmo", "enrich", "publish", "ci", "cron"]
 
 
 def _load() -> dict:
     try:
-        with open(PATH, encoding="utf-8") as f:
+        with open(PATH, encoding="utf-8-sig") as f:      # -sig: a BOM is not corruption
             return json.load(f)
     except Exception:  # noqa: BLE001
         return {}
 
 
-def stamp(stage: str, **detail) -> None:
-    """Record that `stage` completed, with whatever counts the caller wants to keep."""
+def _unreadable() -> str:
+    """Why the stamp file cannot be read, or '' when it is absent or parses (BACKLOG 451).
+
+    `_load()` answers `{}` for a missing file AND for a half-written or corrupt one, and a
+    stamp over that `{}` used to rewrite the file holding only the new key -- every other
+    workflow's night erased, and the next mail saying `collect never ran` about crons that
+    ran. Readers may degrade to `{}`; a WRITER must not."""
+    if not os.path.exists(PATH) or os.path.getsize(PATH) == 0:
+        return ""                                        # absent or empty: nothing to erase
+    try:
+        with open(PATH, encoding="utf-8-sig") as f:
+            return "" if isinstance(json.load(f), dict) else "not a JSON object"
+    except Exception as e:  # noqa: BLE001
+        return f"{type(e).__name__}: {str(e)[:80]}"
+
+
+def stamp(stage: str, **detail) -> bool:
+    """Record that `stage` completed, with whatever counts the caller wants to keep.
+    Returns False (and says why) when the file exists and cannot be read -- a writer never
+    rebases on `{}`."""
+    why = _unreadable()
+    if why:
+        print(f"::warning::stages: NOT stamping '{stage}' -- {PATH} exists and did not parse "
+              f"({why}); writing would erase every other stage's stamp (BACKLOG 451)", flush=True)
+        return False
     data = _load()
     data[stage] = {"finished_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                    "date": dt.date.today().isoformat(), **detail}
@@ -48,6 +71,7 @@ def stamp(stage: str, **detail) -> None:
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=1, sort_keys=True)
     os.replace(tmp, PATH)
+    return True
 
 
 def age_days(stage: str):

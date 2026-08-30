@@ -5,6 +5,25 @@ name: Unit guards
 # corresponds to a bug that actually shipped; see tests/test_units.py.
 #
 # This workflow does NOT use continue-on-error anywhere. It is meant to block.
+#
+# THREE JOBS, AND EVERY LONG STEP CARRIES ITS OWN NAMED BUDGET (lane: infra, 2026-08-30,
+# BACKLOG 442/435). Until today `guard` ran the suite AND six 14-night registry rehearsals
+# under one `timeout-minutes: 10`; the rehearsals outgrew it (steps 1-8 = 3m35s, the five
+# seeded rehearsals cut off at 6m38s on run 33294986316) and the job was CANCELLED on every
+# push from 04:55Z -- eleven runs, no verdict, while `Unit guards` itself passed inside each.
+# A cancelled job names nothing: six lanes spent a morning reading master's colour from a
+# signal that carries no information. Raising the number was rejected for the same reason
+# BACKLOG 195 rejected it for the mutation gate ("buys a week, fixes nothing").
+#
+# So: `guard` is the suite alone; `rehearse` is one job per rehearsal (a matrix, so a red
+# or a cancel NAMES the policy and seed); `mutation-gate` is unchanged. And each long step
+# runs under GNU `timeout` with a budget BELOW its job's `timeout-minutes`, so an overrun is
+# a FAILED STEP that says what it was running ("rehearsal (mixed, seed 3) exceeded its
+# 12-minute budget") instead of a cancelled job that says nothing. `--signal=INT` so pytest
+# gets a chance to print its summary; `--kill-after` so a hung interpreter cannot outlive
+# the budget -- and when THAT fires, `timeout` itself dies with the group and the shell sees
+# 137, not 124 (wave 1 measured it), so both codes are read as the budget.
+# `test_every_long_tests_step_has_a_named_budget_below_its_job_timeout` pins the shape.
 
 on:
   push:
@@ -20,6 +39,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
+        # depth 1, on purpose: `test_ci_itself_confirms_why_the_tree_check_cannot_run_there`
+        # asserts the runner is never "behind origin/master", which a full-history checkout
+        # of a non-master ref would be (wave 1, 2026-08-30). BACKLOG 439's `fetch-depth: 0`
+        # + `github.event.before` land TOGETHER with the docs/check_docs.py change that
+        # reads them, or not at all -- history nothing consumes is a red guard waiting.
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -28,18 +52,56 @@ jobs:
       - name: Compile everything (catches the syntax-error class instantly)
         run: python -m compileall -q . -x '(\.venv|out|state)'
       - name: Unit guards
-        run: python -m pytest
+        run: |
+          rc=0
+          timeout --signal=INT --kill-after=30 7m python -m pytest || rc=$?
+          if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+            echo "::error::Unit guards: pytest exceeded its 7-minute budget (job timeout 10; rc $rc, 137 = killed after the INT grace) -- the suite grew; shard or trim it, do not raise the number"
+          fi
+          exit "$rc"
       - name: Registry invariants
         run: python check_invariants.py
-      - name: Fourteen rehearsed nights keep every re-check pool (registry lane, BACKLOG 52)
-        # every scheduled registry tool's real main() over a copy of the registry with the
-        # network forbidden; exit 1 on the first pool that loses a row it should keep
-        run: python tests/rehearse_registry.py --nights 14 --policy worst
-      - name: Five mixed-policy rehearsals (seeded; the truncation seed 1 found on 2026-08-26)
-        run: |
-          for s in 1 2 3 4 5; do python tests/rehearse_registry.py --nights 14 --policy mixed --seed $s || exit 1; done
       - name: Platform wiring report (informational)
         run: python -m pipeline.platform_check || true
+
+  # Every scheduled registry tool's real main() over a copy of the registry with the network
+  # forbidden, fourteen nights; exit 1 on the first pool that loses a row it should keep
+  # (registry lane, BACKLOG 52). `worst` once and `mixed` under five seeds (the truncation
+  # seed 1 found on 2026-08-26). The rehearsals are independent by construction -- one seed
+  # per process (`tests/rehearse_registry.py --seed`) -- so each is its own job: a unit
+  # failure is never hidden behind a rehearsal, and a failing or cancelled rehearsal names
+  # its policy and seed in the job title. `fail-fast: false` for the same reason as the
+  # mutation gate: one seed's finding must not hide another's.
+  rehearse:
+    name: rehearse (${{ matrix.policy }}, seed ${{ matrix.seed }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { policy: worst, seed: 1 }
+          - { policy: mixed, seed: 1 }
+          - { policy: mixed, seed: 2 }
+          - { policy: mixed, seed: 3 }
+          - { policy: mixed, seed: 4 }
+          - { policy: mixed, seed: 5 }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Fourteen rehearsed nights keep every re-check pool
+        env:
+          POLICY: ${{ matrix.policy }}
+          SEED: ${{ matrix.seed }}
+        run: |
+          rc=0
+          timeout --signal=INT --kill-after=30 12m python tests/rehearse_registry.py --nights 14 --policy "$POLICY" --seed "$SEED" || rc=$?
+          if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+            echo "::error::rehearsal (policy $POLICY, seed $SEED) exceeded its 12-minute budget (job timeout 15; rc $rc, 137 = killed after the INT grace) -- a night got slower; measure which tool, do not raise the number"
+          fi
+          exit "$rc"
 
   # The suite alone proved insufficient FIVE times this rebuild: a one-token edit on an
   # activating path stayed green until tools/mutate.py said otherwise, and the catalogue
@@ -59,7 +121,8 @@ jobs:
   # The split is computed FROM THE CATALOGUE at run time by least-loaded bin-packing over
   # the `M<n>` class prefixes `--class` selects on, so a class the registry lane adds
   # tomorrow lands in a shard by itself -- there is no list here to fall out of date, which
-  # is the silent-exclusion shape this repo keeps paying for. Today: 74 / 66 / 64 records.
+  # is the silent-exclusion shape this repo keeps paying for. 2026-08-30: 86 / 71 / 69
+  # records, walls 25 / 22 / 21 min; the cost driver is full-suite fallbacks, not records.
   # `test_the_mutation_shards_partition_the_whole_catalogue` runs this exact script over
   # the real catalogue and fails if the shards ever stop covering it exactly once.
   # `fail-fast: false`: one shard's surviving mutant must not hide another's.
@@ -101,4 +164,9 @@ jobs:
             exit 1
           fi
           echo "shard $SHARD of $SHARDS -> classes $CLS"
-          python tools/mutate.py --class "$CLS"
+          rc=0
+          timeout --signal=INT --kill-after=60 40m python tools/mutate.py --class "$CLS" || rc=$?
+          if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+            echo "::error::mutation shard $SHARD (classes $CLS) exceeded its 40-minute budget (job timeout 45; rc $rc, 137 = killed after the INT grace) -- the per-record lines above say how far it got; add a shard (SHARDS) rather than minutes"
+          fi
+          exit "$rc"

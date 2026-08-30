@@ -183,19 +183,12 @@ def _write_step_summary(summary, run_date, docs_dir):
 
 
 def _load_secrets_env():
-    """Load KEY=VALUE lines from a gitignored secrets.env into the environment (local runs).
-    Lets the pipeline pick up JSEARCH_API_KEY etc. without exporting shell vars. In GitHub
-    Actions the same names come from repo secrets instead, so this file is simply absent."""
-    path = os.path.join(REPO_ROOT, "secrets.env")
-    if not os.path.exists(path):
-        return
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip())
+    """The one loader (`pipeline/secretsenv.py`, BACKLOG 438): `AJIL_SECRETS=<path>` or the
+    MAIN checkout's gitignored `secrets.env`; a worktree gets nothing and says so. In GitHub
+    Actions the same names are repo secrets and the file is simply absent. Kept under this
+    name because `verify_jsearch.py` imports it."""
+    from pipeline import secretsenv
+    secretsenv.load(REPO_ROOT)
 
 
 def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, db_path=None):
@@ -239,7 +232,21 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                      # routine here -- `infra` measured 4 of 5 crons dropped on 2026-08-27.
                      # Two consecutive misses is not routine, and is the shape that let the
                      # backlog go 74 -> 139 in silence.
+                     #
+                     # SINCE 2026-08-30 THIS LINE IS BLIND (infra, wave 1): daily-digest.yml
+                     # runs its own bounded drain (`firmo_drain`) BEFORE this point and the
+                     # script stamps `firmo` on every exit, so the stamp is today's on every
+                     # healthy morning and age 2 is unreachable. The 10:17 cron's liveness
+                     # is the `cron` watch's now; what THIS key should mean with two drains
+                     # writing it is company-intel's call (BACKLOG 474) -- four of its tests
+                     # pin the `2`, so it is left as they wrote it.
                      + stages.alarms("firmo", 2)
+                     # `ci`: daily-digest's ci_health step (BACKLOG 444) -- master's own test
+                     # gate was red on 100 consecutive runs and no line anywhere said so.
+                     # `cron`: its cron_watch step -- a slot GitHub dropped or delivered hours
+                     # late (infra, 2026-08-30). Both stamp every morning, so 1; `never ran`
+                     # until the first digest carrying those steps is the correct reading.
+                     + stages.alarms("ci", 1) + stages.alarms("cron", 1)
                      # `publish` is this run's own stage: a stamp older than yesterday means
                      # yesterday's digest never reached its stamp (a crash or a timeout)
                      + [a.replace("— the digest read stale input", "— yesterday's digest never completed")

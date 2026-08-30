@@ -356,6 +356,9 @@ STRATEGY = {
 SINGLE_WRITER = {   # documented `ours` paths (one cloud writer each); anything else warns
     "cloud_state/seen.db": "daily-digest", "cloud_state/roles.jsonl": "daily-digest",
     "cloud_state/roles_text.jsonl": "daily-digest",
+    # the public dataset beside the board (roles lane, 2026-08-30): rewritten whole each digest
+    "cloud_state/roles.csv": "daily-digest", "cloud_state/roles.csv.meta.json": "daily-digest",
+    "cloud_state/funnel.csv": "daily-digest",
     "cloud_state/source_health.json": "daily-digest", "cloud_state/telegram_seen.json": "daily-digest",
     "cloud_state/candidate_probe.json": "daily-digest", "cloud_state/registry_census.json": "daily-digest",
     "cloud_state/registry_alarms.json": "daily-digest", "cloud_state/last_run.json": "daily-digest",
@@ -662,6 +665,30 @@ def report_deltas(deltas, cwd, message="", base=""):
         print(f"  [deltas] {PERSIST_LOG} not written: {e}", flush=True)
 
 
+def run_provenance(message, env=None):
+    """`<msg> (schedule run 33250362574) [skip ci]` -- WHICH run produced a state commit,
+    in the subject, for ever (BACKLOG 436). "Unattended" used to be provable only by
+    `gh run view <id> --json event` against a run record CLAUDE.local.md sometimes asks be
+    deleted; now it is a `git log` away, and `docs/check_docs.py`'s `run <digits>` regex
+    already reads the shape. One place for all ten workflows: no `-m` is edited, and a
+    local run (no GITHUB_RUN_ID) leaves the message exactly as given."""
+    env = os.environ if env is None else env
+    run_id = (env.get("GITHUB_RUN_ID") or "").strip()
+    if not run_id.isdigit():
+        return message
+    # a RE-RUN keeps the original event name (a human re-running the 05:00 digest from the
+    # UI is still `schedule`); only GITHUB_RUN_ATTEMPT tells them apart, so it travels too
+    attempt = (env.get("GITHUB_RUN_ATTEMPT") or "").strip()
+    tag = f"({env.get('GITHUB_EVENT_NAME') or 'unknown'} run {run_id}" + (
+        f" attempt {attempt})" if attempt.isdigit() and int(attempt) > 1 else ")")
+    subject, nl, body = message.partition("\n")
+    if f"run {run_id}" in subject:
+        return message
+    head, sep, tail = subject.rpartition("[skip ci]")
+    subject = f"{head.rstrip()} {tag} {sep}{tail}".strip() if sep else f"{subject} {tag}"
+    return subject + nl + body
+
+
 def commit(a):
     cwd = a.cwd or ROOT
     branch = a.branch or os.environ.get("GITHUB_REF_NAME") or "master"
@@ -672,6 +699,7 @@ def commit(a):
         _log("notice", "nothing owned exists; nothing to commit")
         return 0
     failures = run_gates(owned, base, a.gate, cwd)
+    a.message = run_provenance(a.message)     # before the audit line, so the log matches the commit
     # AFTER the gates: a path a gate restored is back to base, and reporting a loss the
     # commit is not going to make would be a false alarm. The log is owned by this layer,
     # not by the caller -- every workflow gets the audit line without naming it in `--own`,
@@ -1268,7 +1296,7 @@ def outcome(a):
         if not git("status", "--porcelain", "--", *wrote, cwd=into).strip():
             print("persist_state: outcome already recorded on origin", flush=True)
             return 0
-        _commit(into, a.as_name, f"run outcome {run_date}: {last['status']} [skip ci]")
+        _commit(into, a.as_name, run_provenance(f"run outcome {run_date}: {last['status']} [skip ci]"))
         for i in range(1, 4):
             if git_ok("pull", "--rebase", "origin", branch, cwd=into) and git_ok("push", "origin", f"HEAD:{branch}", cwd=into):
                 print("persist_state: outcome pushed", flush=True)
