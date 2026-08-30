@@ -152,6 +152,17 @@ queue change is a lookup over records already on disk.
   stayed unverifiable; `audit_query_urls.py` is `operator` until infra schedules it.
 * `discovery`'s intake still re-adds retired names; the registry side is now a lookup
   either way.
+* **Wave 2 (confirmation) took the first eight fixes apart and found five more, all taken:**
+  the cleanup's PRUNE path still looked the ledger up by exact key (classified `Natasha
+  Denona Il` every night, never pruned it — `record_for` there too); `--stamp` died in
+  `census` before the new UNREADABLE alarm could print (caught in `main`, stamped instead);
+  the title-tail rule captured `VA` and not `Reston, VA` (a comma opens the tail and no longer
+  ends it, plus a US state-code pattern); `has_location_query` matched `locale=` / `lang=` /
+  `block=` and `il_jobs` fails CLOSED, so a benign query could refuse a genuine board (a
+  not-a-filter list); the disposition ledger failed OPEN on a corrupt file while the drain
+  now depends on it (a hard stop, like the attempt log). Hunter Douglas had been parked under
+  the first draft's absolute floor (4 of 116); under the shipped 10% floor its grounded read
+  decided instead: 136 postings, 123 abroad, 0 Israeli — the park stands on that evidence.
 * **Wave findings not taken**, deliberately: the digest still publishes the scraper's
   stamped cards on `honoured` rows (right, since the filter works) and on the 19
   unverifiable ones (unknown) — the publication-side fix is the scraper's (`462@scraper`);

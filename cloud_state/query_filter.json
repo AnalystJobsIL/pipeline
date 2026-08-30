@@ -906,18 +906,50 @@
    ],
    "foreign": 4,
    "il": 0,
-   "via": "cache"
+   "read": {
+    "grounded": 136,
+    "page_chars": 20000,
+    "pairs": 136,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Banding",
+      "Augusta, GA, United States"
+     ],
+     [
+      "Drapery Cutter 1",
+      "Augusta, GA, United States"
+     ],
+     [
+      "Fabric Cutter",
+      "Augusta, GA, United States"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 136,
+    "examples": [
+     "united states",
+     "united states",
+     "united states"
+    ],
+    "foreign": 123,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
   },
   "tally": {
-   "cards": 116,
+   "cards": 136,
    "examples": [
-    "australia",
-    "colombia",
-    "mexico"
+    "united states",
+    "united states",
+    "united states"
    ],
-   "foreign": 4,
+   "foreign": 123,
    "il": 0,
-   "via": "cache"
+   "via": "read"
   },
   "url": "https://jobs.hunterdouglas.com/search/?q=&locationsearch=Israel",
   "verdict": "ignored"

@@ -54,12 +54,6 @@ import re
 import sys
 import urllib.parse as _up
 
-for _s in (sys.stdout, sys.stderr):
-    try:
-        _s.reconfigure(encoding="utf-8", errors="replace")
-    except (AttributeError, ValueError):
-        pass
-
 TODAY = dt.date.today().isoformat()
 CSV_PATH = "companies.csv"
 CACHE = "scraped_cache.json"
@@ -78,6 +72,9 @@ _PARKED_THIS_RUN = set()      # names this run turned off, for the ownership ass
 # registry holds (`location=Israel`, `locationsearch=Israel`, `country=ISR`, `lc=Israel`,
 # `offices[0]=Tel Aviv, Israel`, `keywords=Israel`, `loc=IL`, `optionsFacetsDD_country=IL`)
 _LOC_PARAM = re.compile(r"loc|country|region|city|where|office|^lc$", re.I)
+# `locale=en_US`, `lang=il`, `block=2` are not filters; `il_jobs` fails CLOSED on a query URL,
+# so a false positive here would refuse a genuine board whose cards name no city
+_NOT_A_FILTER = re.compile(r"^(locale|lang|language|block|blocks|blockid|page|pageid)$", re.I)
 _IL_VALUE = re.compile(r"israel|tel[\s+-]?aviv|^isr$|^il$|he_il", re.I)
 
 # ---------------------------------------------------------------- what a card can say
@@ -94,6 +91,9 @@ _US_STATES = (
     "new[ -]jersey|new[ -]mexico|new[ -]york|north[ -]carolina|north[ -]dakota|ohio|oklahoma|"
     "oregon|pennsylvania|rhode[ -]island|south[ -]carolina|south[ -]dakota|tennessee|texas|utah|"
     "vermont|virginia|washington|west[ -]virginia|wisconsin|wyoming")
+_US_STATE_CODE = re.compile(
+    r",\s*(A[LKZR]|C[AOT]|DE|FL|GA|HI|I[DLNA]|K[SY]|LA|M[EDAINSOT]|N[EVHJMYCD]|O[HKR]|PA|RI|"
+    r"S[CD]|T[NX]|UT|V[TA]|W[AVIY])\b")
 _FOREIGN_PLACE = re.compile(
     r"\b(" + _US_STATES + r"|houston|plano|dallas|austin|seattle|chicago|boston|denver|atlanta|"
     r"phoenix|san[ -]jose|san[ -]francisco|sunnyvale|santa[ -]clara|reston|philadelphia|"
@@ -123,6 +123,8 @@ def query_values(url):
         return out
     for k, v in _up.parse_qsl(q, keep_blank_values=True):
         k = k.replace("amp;", "")
+        if _NOT_A_FILTER.match(k):
+            continue
         if (_LOC_PARAM.search(k) and v) or _IL_VALUE.search(v or ""):
             out.append((v or "").strip())
     return out
@@ -139,6 +141,8 @@ def has_location_query(url):
         return False
     for k, v in _up.parse_qsl(q, keep_blank_values=True):
         k = k.replace("amp;", "")
+        if _NOT_A_FILTER.match(k):
+            continue
         if _LOC_PARAM.search(k) and v:
             return True
         if _IL_VALUE.search(v or ""):
@@ -183,9 +187,13 @@ def card_signal(job, page_url, platform="scrape", company=""):
     # the title's own tail (`Data Analyst - Reston, VA`), never the whole title: a role
     # called "Israel Sales Manager" in Houston is a title, not a place -- and never a tail
     # that is the company's own name (`Data Analyst, Boston Scientific` is not in Boston)
-    m = re.search(r"[-–|,(]\s*([^-–|,(]{2,60})$", title)
+    # the tail may itself carry a comma (`Reston, VA`), so a comma opens it but does not end it
+    m = re.search(r"[-–|,(]\s*([^-–|(]{2,60})$", title)
     if m and not (_name_tokens(company) & set(re.findall(r"[a-z]{4,}", m.group(1).lower()))):
-        fields.append(m.group(1))
+        tail = m.group(1)
+        fields.append(tail)
+        if _US_STATE_CODE.search(tail):
+            fields.append("foreign-cc:US")
     cc = str(job.get("country_code") or "").strip().upper()
     if cc:
         if country_is_israel(cc):
@@ -547,6 +555,11 @@ def _assert_parked_rows_are_owned(rows):
 
 
 def main(argv=None):
+    for _s in (sys.stdout, sys.stderr):        # here, not at import: six tools import this
+        try:
+            _s.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--no-read", action="store_true", help="cache evidence only")

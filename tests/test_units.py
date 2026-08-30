@@ -21604,11 +21604,19 @@ def test_drain_skips_a_name_whose_retirement_is_live(tmp_path, monkeypatch):
     # ...the cleanup's own verdicts count too (`covered-by-row`: Faye's board is read by a
     # row named `withfaye`), and the ledger key's casing does not matter
     disp["Faye"] = {"date": "2026-08-30", "verdict": "covered-by-row"}
-    disp["NATASHA DENONA IL"] = {"date": "2026-08-30", "verdict": "duplicate-of"}
+    disp["NATASHA DENONA IL"] = {"date": "2026-08-30", "verdict": "duplicate-of",
+                                 "evidence": {"x": 1}}
     _r830c_tree(tmp_path, monkeypatch, queue=["Faye", "Natasha Denona Il", "Fresh Co"], disp=disp)
     assert QRS.targets(today=today) == ["Fresh Co"]
     import queue_disposition as QD
     assert QD.is_retired("natasha denona il", disp) and not QD.is_retired("Fresh Co", disp)
+    # ...and the cleanup PRUNES it under the other casing, instead of classifying it every
+    # night and keeping it (the prune path looked the record up by the exact key)
+    import queue_pipeline as QP
+    assert QP.retire_settled(apply=True) >= 1
+    left = {e["name"] for e in _json.loads(
+        (tmp_path / "research_companies.json").read_text(encoding="utf-8"))}
+    assert "Natasha Denona Il" not in left, left
 
 
 def test_drain_targets_never_tried_first_then_stalest(tmp_path, monkeypatch):
@@ -21723,6 +21731,16 @@ def test_the_stamp_separates_intake_from_resurrection(tmp_path, monkeypatch):
     (tmp_path / "cloud_state" / "queue_state.json").write_text("{\"A\": [", encoding="utf-8")
     live = QP._drain_liveness()
     assert "UNREADABLE" in live.get("drain_alarm", ""), live
+    # ...all the way up: `--stamp` writes the alarm into the stage instead of dying in census
+    from pipeline import stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "cloud_state" / "pipeline_stages.json"))
+    assert QP.main(["--stamp"]) == 0
+    assert "UNREADABLE" in (stages._load().get("queue") or {}).get("drain_alarm", "")
+    # and the disposition ledger fails CLOSED too: the drain reads it to know what not to buy
+    import queue_disposition as QD
+    (tmp_path / "cloud_state" / "queue_disposition.json").write_text("[1,", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        QD.load()
 
 
 def test_queue_state_load_refuses_a_corrupt_log_and_tolerates_an_absent_one(tmp_path, monkeypatch):
@@ -21765,8 +21783,9 @@ def test_has_location_query_names_the_class():
         assert AQ.has_location_query(u), u
     for u in ("https://www.comeet.com/careers-api/2.0/company/60.002/positions?token=abc",
               "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs", "", None,
-              "https://x.com/careers?page=2"):
-        assert not AQ.has_location_query(u), u
+              "https://x.com/careers?page=2", "https://x.com/jobs?locale=en_US",
+              "https://x.com/jobs?lang=il", "https://x.com/careers?block=2&blockId=7"):
+        assert not AQ.has_location_query(u), u          # `il_jobs` fails CLOSED on a query URL
 
 
 def test_query_filter_verdict_needs_card_level_majority():
@@ -21799,6 +21818,13 @@ def test_query_filter_verdict_needs_card_level_majority():
                           company="Boston Scientific") == ""
     assert AQ.card_signal({"url": "", "country_code": "ISR"}, _COMCAST_URL) == "il"
     assert AQ.card_signal({"url": "", "country_code": "972"}, _COMCAST_URL) == ""
+    # a title tail may carry a comma of its own: `Reston, VA` is a place, `VA` alone was not
+    for t in ("Data Analyst - Reston, VA", "Senior Analyst, Houston, TX", "Analyst - Philadelphia, PA",
+              "BI Analyst - Springfield, MO"):
+        assert AQ.card_signal({"url": "", "title": t}, _COMCAST_URL) == "foreign", t
+    assert AQ.card_signal({"url": "", "title": "Data Analyst - Tel Aviv, Israel"}, _COMCAST_URL) == "il"
+    assert AQ.card_signal({"url": "", "title": "Data Analyst, Boston Scientific"}, _COMCAST_URL,
+                          company="Boston Scientific") == ""
     leaks = _cards("/job/houston/x/1", "/job/tel-aviv/x/2", "/job/houston/x/3", "/job/plano/x/4")
     assert AQ.verdict_from(AQ.tally(leaks, _COMCAST_URL)) == "leaks", "1 IL among 3 abroad parks"
     mixed = _cards("/job/houston/x/1", "/job/tel-aviv/x/2", "/job/haifa/x/3", "/job/plano/x/4",

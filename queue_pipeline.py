@@ -283,7 +283,12 @@ def census(stamp=False):
         # was two instruments disagreeing about one name (`461@registry`). The verdicts
         # `--retire-settled` writes (`already-a-row`, `settled-by-a-rung`, `covered-by-row`)
         # are facts about a ROW or a RUNG and do not expire.
-        if n in retired or is_retired(n, disp):
+        if n in retired or is_retired(n, disp) or (
+                n not in set(queue) and (disp.get(n) or {}).get("verdict") in RETIRED_VERDICTS):
+            # the last arm: a `no-board` past its 90 days that is NOT in the queue file. The
+            # expiry makes it owed again, but nothing re-adds a pruned name (`461`), so
+            # counting it "owed, a nightly rung retries it" would be a lie -- 49 such
+            # records reach that state on 2026-11-27
             b["retired with evidence"] += 1
             continue
         # OWED is two states. A name a nightly rung will retry is not a problem -- the
@@ -1139,15 +1144,15 @@ def retire_settled(apply=False):
         on_disk = {}
     ok_verdicts = set(RETIRED_VERDICTS)
     dropped = [n for n in settled
-               if str((on_disk.get(n) or {}).get("verdict") or "") not in ok_verdicts
-               or not (on_disk.get(n) or {}).get("evidence")]
+               if str((record_for(n, on_disk) or {}).get("verdict") or "") not in ok_verdicts
+               or not (record_for(n, on_disk) or {}).get("evidence")]
     for n in dropped:
         print("   [keep] %-30s the record that survived the merge does not retire it (%s)"
-              % (n[:30], (on_disk.get(n) or {}).get("verdict") or "no record"))
+              % (n[:30], (record_for(n, on_disk) or {}).get("verdict") or "no record"))
         settled.pop(n, None)
     kept = [e for e in queue if (e.get("name") or "").strip() not in settled]
     for n in settled:                          # the assertion every prune here carries
-        assert (on_disk.get(n) or {}).get("evidence"), "pruning %r with no record" % n
+        assert (record_for(n, on_disk) or {}).get("evidence"), "pruning %r with no record" % n
     write_json(QUEUE, kept)
     print("retire-settled: queue %d -> %d (%d covered by an answer already on disk: %s)"
           % (len(queue), len(kept), len(queue) - len(kept),
@@ -1343,7 +1348,15 @@ def main(argv=None):
         dispose(limit=a.limit, apply=a.apply, shard=a.shard, read_pages=not a.no_page_reads)
     if a.census or a.stamp or not (a.verify_existing or a.dispose or a.apply_proposals
                                    or a.retire_settled or a.addressless or a.reopen):
-        census(stamp=a.stamp)
+        import queue_state as QS
+        try:
+            census(stamp=a.stamp)
+        except QS.QueueStateUnreadable as e:
+            # the stamp READS; a hard stop here loses the `queue:` mail line entirely
+            from pipeline import stages
+            stages.stamp("queue", drain_alarm="queue_state.json UNREADABLE: %s" % str(e)[:120])
+            print("::warning::queue stamp: %s" % e)
+            return 0
     return 0
 
 

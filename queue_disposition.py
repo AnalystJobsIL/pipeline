@@ -77,12 +77,20 @@ SCHEMA = json.dumps({
 
 
 def load(path=PATH):
+    """The ledger, or {} when there is none yet. A corrupt one is a HARD STOP: the drain reads
+    this to know what NOT to buy, and an empty answer would re-buy every retirement."""
     try:
         with open(path, encoding="utf-8") as f:
             d = json.load(f)
-        return d if isinstance(d, dict) else {}
-    except Exception:                                             # noqa: BLE001
+    except FileNotFoundError:
         return {}
+    except Exception as e:                                        # noqa: BLE001
+        raise SystemExit("queue_disposition: %s is unreadable (%s: %s) -- refusing to treat a "
+                         "corrupt ledger as an empty one" % (path, type(e).__name__, str(e)[:80]))
+    if not isinstance(d, dict):
+        raise SystemExit("queue_disposition: %s holds a %s, not the name -> record map"
+                         % (path, type(d).__name__))
+    return d
 
 
 def save(state, path=PATH):
