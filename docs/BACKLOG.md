@@ -8513,10 +8513,18 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     note so `registry_health.census_diff` does not report it as a vanished row. Doing (3)
     first is what orphans the other two.
 
-    Creating NEW ones has stopped: `queue_pipeline.row_name_for` prefers the queue's name,
-    then the board's own title, then the slug, and `apply_proposals` calls it on both the
-    slug-probe path (using `board_employer`) and every other rung (using the Comeet
-    `board_asserts_company` the drain already recorded and nothing read).
+    **No RUNG derives a row name from a URL slug** — checked 2026-08-30: `listing_hunt`
+    (`listing_hunt.py:718`), `auto_expand._row_for_ats`/`_row_for_scrape` and
+    `drain_queue.walk_one` all name the row from the queue's own `name`. The slug arrives
+    from INTAKE, which put `withfaye` in the queue as a company name on 2026-08-26. So the
+    residual fix is either intake-side (`discovery`) or a board-title read in the two tools
+    that do not have one.
+
+    Creating NEW ones has stopped where a better signal is already in hand:
+    `queue_pipeline.row_name_for` prefers the queue's name, then the board's own title,
+    then the slug, and `apply_proposals` calls it on the slug-probe path (using
+    `board_employer`) and on every other rung (using the Comeet `board_asserts_company`
+    the drain already recorded and nothing read).
 
 460. **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
     different answer** — lane: `roles` (they own the purge and the join), verdicts by
