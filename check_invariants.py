@@ -13,10 +13,17 @@ damage that actually shipped in this repo:
   F  truncation   — appends at the 220-char cap eat the pool keywords themselves
   G  list drift   — the scraper's city regex must stay derived from pipeline.israel
   H  attribution  — a board row whose URL names a different company
+  S  strict       — `--strict` (or INVARIANTS_STRICT=1): B2 and C2 become violations. The
+                    COMMIT gate (`persist_state.py --gate`) runs strict, so a writer that
+                    activates a twin of an active row, or a native-ATS row off its host,
+                    has that file restored and the step red; the digest's blocking pre-gate
+                    and every step-level call stay lenient, because there one row must
+                    never withhold the day's mail (2026-08-23; BACKLOG 64 policy).
 """
 from __future__ import annotations
 
 import csv
+import os
 import re
 
 from pipeline.verdicts import TERMINAL as _VERDICTS_TERMINAL, TERM_RX as _VERDICTS_TERM_RX
@@ -67,12 +74,31 @@ POOL = (r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host
 # commits now, and a private narrower copy here is exactly what registry_health
 # records producing 4 of 5 false-positive orphans.
 TERMINAL = _VERDICTS_TERM_RX.pattern   # the shared regex verbatim (word-bounded `recruiter`)
-# the modes triage_dark.py may write. A truncated one ("page-emp") matches no pool.
-TRIAGE_MODES = {"page-empty", "extract-gap", "wrong-page", "url-dead", "js-shell",
-                "blocked", "acquired"}
+# the modes triage_dark.py may write. A truncated one ("page-emp") matches no pool. The
+# tool's OWN set, never a retyped copy: the copy had 7 of the 8 and warned on 109 legitimate
+# `no-url` rows a night (BACKLOG 282/492). `triage_dark` does no work at import.
+from triage_dark import MODES as TRIAGE_MODES
 
 err = []
 warnings = []
+strict_hits = []   # what S promotes to a violation under --strict
+
+
+def shared_boards(rows):
+    """Active rows that read ONE board under ONE identity: {(identity_key, netloc, path,
+    query): [names]} with more than one name. The key `test_no_two_active_rows_scan_the_same_board`
+    uses, shared so the suite and this gate cannot drift (the Sunday audit re-activated
+    `JPMorgan Chase` beside `JPMorganChase` on 2026-08-30 and only the suite noticed).
+    `rows` are 6-field lists (company_name, ats_platform, token, api_url, active, notes)."""
+    import urllib.parse
+    from pipeline.firmographics import identity_key
+    seen = {}
+    for r in rows:
+        if len(r) < 5 or r[4] != "true":
+            continue
+        u = urllib.parse.urlsplit((r[3] or "").strip().lower().rstrip("/"))
+        seen.setdefault((identity_key(r[0]), u.netloc, u.path, u.query), []).append(r[0])
+    return {k: v for k, v in seen.items() if len(v) > 1}
 
 
 def bad(msg):
@@ -84,7 +110,10 @@ def warn(msg):
     warnings.append(msg)
 
 
-def main():
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else list(argv)
+    strict = "--strict" in argv or os.environ.get("INVARIANTS_STRICT", "") == "1"
+    del err[:], warnings[:], strict_hits[:]     # a second in-process call starts clean (wave B)
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
     body = [r for r in rows if r]
 
@@ -98,6 +127,15 @@ def main():
     dupes = [n for n, c in Counter(r[0] for r in body).items() if c > 1]
     if dupes:
         bad(f"duplicate company_name — merge_csv_rows silently drops edits: {dupes[:8]}")
+
+    # B2. two ACTIVE rows on one board. A warning here (this script is also the digest's
+    # blocking pre-gate); under --strict, section S refuses the file.
+    twins = shared_boards(body)
+    if twins:
+        warn(f"{len(twins)} board(s) read by more than one active row of the same company "
+             f"(park all but one `alias-of`): {list(twins.values())[:6]}")
+        strict_hits.append(f"B2: {len(twins)} board(s) read by two active rows: "
+                           f"{list(twins.values())[:6]}")
 
     # C. active rows must be scannable. A WARNING, not a violation: `pipeline/run.py` drops
     # aggregator and recruiter rows at runtime anyway, so one bad row costs one company's
@@ -124,6 +162,7 @@ def main():
         if pat and not re.search(pat, r[3] or "", re.I):
             warn(f"{r[0]}: ats_platform={r[1]} but the endpoint is not on that host "
                  f"({(r[3] or '')[:50]}) — every fetch will fail")
+            strict_hits.append(f"C2: {r[0]}: ats_platform={r[1]} off its host ({(r[3] or '')[:50]})")
 
     # C3. an ATS row whose TENANT SLUG names someone else. Rebrands and acquisitions look
     # exactly like this (Momentis still posts under `memic`, OTORIO under `armissecurity`,
@@ -242,6 +281,17 @@ def main():
                  f"(mis-attribution): {wrong[:5]}")
     except Exception:  # noqa: BLE001
         pass
+
+    # S. strict: the commit gate. `persist_state.py commit` restores the file and lands
+    # everything else, so the cost of refusing is one writer's night of registry writes,
+    # never the mail. The Sunday audit (`7319f85`, 2026-08-30) activated `JPMorgan Chase`
+    # on `JPMorganChase`'s board and `Renesas Electronics` as `smartrecruiters` on a
+    # company site; C2 warned, B2 did not exist, the commit landed, and master was red for
+    # two hours on the tests that hold the same predicates. A gate weaker than the suite is
+    # the shape this repo keeps paying for.
+    if strict and strict_hits:
+        for h in strict_hits:
+            bad(f"strict: {h}")
 
     active = sum(1 for r in body if len(r) > 4 and r[4] == "true")
     for w in warnings:

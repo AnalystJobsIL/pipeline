@@ -2139,9 +2139,9 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | `17 10 * * *` | firmographics | company intel for registry rows with no facts (the digest's own hook stays as the same-day fast path for today's board). `:17`, the one cron off the `:00` minute (2026-08-30): its lag was +293..+662 min on every run, and the 09-06 morning check reads whether an off-minute slot arrives inside 180 min before any other cron moves (BACKLOG 305/450) |
 | `0 8,20 * * *` | auto-expand | drain resolution queue (deterministic + LLM tiers) |
 | `0 18 * * *` | triage-dark | classify every parked row by failure mode (`dark-triage <date>: <mode>`) |
-| `0 19 * * *` | listing-hunt | repair-extract-gap (35 min) → re-hunt woken/eligible dark rows (200 min) → walled-ATS re-crack (60 min) |
+| `0 19 * * *` | listing-hunt | repair dead hostnames (30 min) → repair-extract-gap (35) → re-hunt woken/eligible dark rows (140) → retire queue names a rung already settled (a lookup, BEFORE the drain since 2026-08-30) → queue drain by search (4 shards, 30) → **ingest its attempt log in its own `if: always()` step** → verify + apply proposals (30) → re-verify aged addresses (20) → walled-ATS re-crack (30). The budgets sum to 327 against a job cap of 350 (GitHub's ceiling is 360; they summed to 365 against 330 until 2026-08-30, BACKLOG 491) |
 | `0 4 * * 0` | audit-coverage | Sunday: wayback rescue, empty cross-validation, full parked-row re-audit (cheap rung, then `deep_validate`'s Chromium rung over what stayed dark — the Saturday cron until 2026-08-26), **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
-| on push | tests | three jobs, no `continue-on-error` anywhere: `guard` (`pytest`, which runs `docs/check_docs.py`; `check_invariants.py`; `pipeline.platform_check`), `rehearse` (six jobs, one per registry rehearsal: `worst` and `mixed` seeds 1–5, 14 nights each), `mutation-gate` (three shards). **Every long step runs under `timeout` with a budget below its job's `timeout-minutes`**, so an overrun is a failed step that names what it was running, never a cancelled job that names nothing (2026-08-30, below) |
+| on push | tests | three jobs, no `continue-on-error` anywhere: `guard` (`pytest`, which runs `docs/check_docs.py`; `check_invariants.py`; `pipeline.platform_check`), `rehearse` (six jobs, one per registry rehearsal: `worst` and `mixed` seeds 1–5, 14 nights each), `mutation-gate` (five shards, **by record**: `tools/mutate.py --all --shard I/N`, every N-th id -- the class-packed split of 08-28 could not divide `M1-gate-removal`, one class of 89 records, and shard 0 was killed at its budget on every push until 2026-08-30, BACKLOG 476). **Every long step runs under `timeout` with a budget below its job's `timeout-minutes`**, so an overrun is a failed step that names what it was running, never a cancelled job that names nothing (2026-08-30, below) |
 
 **When the email actually arrives — and it is not ~06:20.** The 05:00 cron is queued by
 GitHub for ~35 min and the job runs ~30 (05:38→06:04 on 2026-08-26, run 32934864207), so the
@@ -3711,7 +3711,7 @@ printed a plausible line and exited 0 regardless.
 `tests/fixtures/company_intel/mutations.json` holds **60** records. It used to hold 18 and
 **could never have run**: it keyed the class as `cls` where `tools/mutate.py` reads
 `m["class"]`, which is why four records that no longer matched any code went unnoticed. It is
-also in no CI path — `tests.yml` runs `tools/mutate.py --class <classes>` under a three-shard
+also in no CI path — `tests.yml` runs `tools/mutate.py --all --shard I/N` under a five-shard
 matrix over the default catalogue `tests/mutations.json` — so `test_every_company_intel_mutation_still_aims_at_real_code` is
 that path, at zero cost: a mutation whose `find` no longer occurs is a comment, not a guard.
 
@@ -5853,7 +5853,7 @@ is the most reusable page in the repo: **a green workflow means nothing here.**
 | guard | runs | catches |
 |---|---|---|
 | `tests/test_units.py` | `pytest`, on every push and before every commit | 123 cases from 54 functions, **every one a bug that shipped**. Add one for every bug you fix. |
-| `check_invariants.py` | blocking gate inside the digest, and in `tests.yml` | registry-shape violations: alias rows, an ATS row whose endpoint is not on that ATS, eroded verdicts. Some checks are warnings on purpose — see §K in `docs/sessions/2026-08-23.md` for why a blocking check once discarded a whole run. |
+| `check_invariants.py` | blocking gate inside the digest, and in `tests.yml`; **`--strict` inside `persist_state.py commit`'s gate only** | registry-shape violations: alias rows, an ATS row whose endpoint is not on that ATS, eroded verdicts. Some checks are warnings on purpose — see §K in `docs/sessions/2026-08-23.md` for why a blocking check once discarded a whole run. Since 2026-08-30 two of those warnings are violations **in the commit gate**, where the cost is one writer's registry file restored and never the mail: two active rows of one company on one board (B2) and a native-ATS row off its host (C2) — the Sunday audit shipped both on 2026-08-30 with this script green and the suite red for two hours. |
 | `pipeline/platform_check.py` | `tests.yml` | an ATS platform wired into some of its ~22 sites and not the others |
 | `docs/check_docs.py` | `tests.yml`, via `test_docs_are_consistent_with_the_code` | a document that names a file that no longer exists, a dead link or a §N pointer left behind by a renumber, a cron table that disagrees with the crons, a root module nobody classified, a `HANDOFF.md` growing back past 250 lines |
 

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**551 filed · 403 open · 148 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**553 filed · 404 open · 149 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 501.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 503.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@scraper` **open** · `462@registry` **open** |
 
-### registry — 132 open
+### registry — 134 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -226,8 +226,10 @@ closure convention in the header.
 - **493** `493@registry` **A protected tombstone on an ACTIVE row blocks every later verdict from reaching the cell**
 - **495** `495@registry` **`queue_pipeline.py --census` WRITES `cloud_state/queue_receipt.json` for a read-only
 - **499** `499@registry` **`Port` and `Port.io` are two ACTIVE registry rows for one employer**
+- **501** `501@registry` **A writer can still activate a twin of an active row or a native-ATS row off its host
+- **502** `502@registry` **A shard killed mid-write leaves an unparsable proposal file, and the ingest skips it in silenc
 
-### infra — 108 open
+### infra — 107 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -334,7 +336,6 @@ closure convention in the header.
 - **481** `481@infra` **`guard_kill` reads a skip as NOT-RUN and cannot tell it from an uncollected test** —
 - **490** `490@infra` **`run.py:803` prints `email (last 48h): N roles` for a count that includes the
 - **491** `491@infra` **The drain's capacity lives in `listing-hunt.yml` and is below intake; four workflow diffs**
-- **492** `492@infra` **`check_invariants` F2 fires on 109 legitimate `no-url` rows
 - **494** `494@infra` **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
 - **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
 
@@ -934,8 +935,22 @@ outside the `discovery` lane and are NOT fixed.
     4. **The 330-minute job cap is over-subscribed once the env-var budgets are counted**: repair 30 + extract-gap 35 + hunt 140 + drain 30 + apply 40 + verify 20 + crack 60 + commit 10 = **365**. A job-level timeout kills `if: always()` steps too, so `persist_state.py commit` would not run and the whole night is discarded — the BACKLOG 39/128 failure one level up. `test_the_queue_drain_is_actually_scheduled` counts the step timeouts and `HUNT_TIME_BUDGET_MIN` but not `REPAIR_URL_TIME_BUDGET_MIN` (30), `REPAIR_TIME_BUDGET_MIN` (35) or `CRACK_TIME_BUDGET_MIN` (60); tighten it to parse every `*_TIME_BUDGET_MIN`.
     5. **`tests.yml` `SHARDS: "3"` -> `"4"`.** Shard 0 is class M1 alone (86 records, 25-min wall on the morning of 2026-08-30); this session added three M1 records whose import-graph subset is 936 tests (~6 min each), and run 33312937940's shard 0 hit its 40-minute budget with the baseline done and no per-record line printed -- red on every push until the catalogue is split four ways. The workflow's own error text names this fix; `test_the_mutation_shards_partition_the_whole_catalogue` re-checks the split.
     Also a nightly `python audit_query_urls.py --apply` step (ledger `cloud_state/query_filter.json` added to `--own`) so the query-URL class (`ARCHITECTURE.md` §2) is re-read monthly without a session; it is `operator` until then.
+    **Items 1, 2, 4 CLOSED, item 5 superseded, item 3 DEFERRED — 2026-08-30 (`infra`).**
+    (1) `Ingest the drain's attempt log` is its own `if: always()` step (`timeout-minutes: 2`);
+    (2) `--retire-settled` runs before the drain; (4) the cap is **350** — GitHub's ceiling is
+    360, so 365 could never be bought — with crack 60→30 and apply 40→30 on measurement
+    (crack walled 5–14 min, apply ~0, on the four scheduled runs to 08-29), budgets now sum to
+    **327**, and `test_the_queue_drain_is_actually_scheduled` sums every `*_TIME_BUDGET_MIN`,
+    asserts `< cap <= 360`, and pins the step order. (5) was the wrong fix: M1 is ONE class
+    (`476`), so the split is by record instead. (3) by its own rule: the `s/name over K scored`
+    figure does not exist yet — the last scheduled run (33276177460, 08-29 21:28Z, pre-capacity
+    code) drained **1 name** — so the first reading is the 19:00 run on this commit (HANDOFF
+    morning check, due 2026-08-31); choose 6 shards vs a 45-minute step from two nights, and
+    the cap now leaves 23 minutes for a 45-minute drain without touching it again. The
+    `audit_query_urls.py --apply` step is NOT built: a new nightly registry writer needs its
+    ledger in `persist_state`'s table and `registry` to say what `--apply` may write.
 
-492. **`check_invariants` F2 fires on 109 legitimate `no-url` rows — decision taken: import the mode set** — lane: `infra` (`282`), decided by `registry` 2026-08-30. The message "no pool matches it" is right for a TRUNCATED mode and wrong for `no-url`, which four pools own. The one-line fix in `282` (`from triage_dark import MODES as TRIAGE_MODES`) is the decision; the message text can stay because it stops firing on the false class. Until it lands, every reader of the invariants output must know the 109 are noise, which is the cost.
+492. **`check_invariants` F2 fires on 109 legitimate `no-url` rows — decision taken: import the mode set** — lane: `infra` (`282`), decided by `registry` 2026-08-30. The message "no pool matches it" is right for a TRUNCATED mode and wrong for `no-url`, which four pools own. The one-line fix in `282` (`from triage_dark import MODES as TRIAGE_MODES`) is the decision; the message text can stay because it stops firing on the false class. Until it lands, every reader of the invariants output must know the 109 are noise, which is the cost. **CLOSED 2026-08-30 (`infra`)** with `282`: the import landed; F2 fires on a truncated mode only.
 
 493. **A protected tombstone on an ACTIVE row blocks every later verdict from reaching the cell** — lane: `registry`, found 2026-08-30 while parking Comcast. Its note held `dark-triage 2026-08-23: url-dead — the Workday tenant returns 410 Gone` (protected by `notes._PROTECTED_EXTRA`) beside `no open Israel roles` twice (protected) on a row that was ACTIVE with a live address answering 14 postings — 215 chars of a 220 cap, every segment protected, so `notes.append` dropped the audit's park segment whole. Same class as `Ride Vision` (`docs/sessions/2026-08-30-registry.md`): a tombstone that a later activation made false, kept for ever because protection has no expiry. Count them: active rows whose note carries `url-dead`, `domain-dead` or `defunct` — a protected segment contradicted by `active=true`. The fix belongs with whoever activates a row: an activation should strip the tombstones its own evidence refutes, through `notes` (a `strip_refuted(note, tokens)` helper), never by hand. A second cost of the same class, accepted for now: a query-URL row whose postings print only "Israel" and no city can no longer wake through `probe_candidates` (`il_signal` strikes the echoed value).
 
@@ -4625,6 +4640,10 @@ Each was confirmed with a reproduction and deliberately NOT fixed; the reason is
     ARCHITECTURE.md §2, "never retype a pool, import the tool's own predicate". Reproduce:
     `python -c "import triage_dark as T, check_invariants as C; print(sorted(set(T.MODES) - C.TRIAGE_MODES))"`
     → `['no-url']`.
+    **CLOSED 2026-08-30 (`infra`).** The one line, as decided in `492`:
+    `from triage_dark import MODES as TRIAGE_MODES` (`triage_dark` does no work at import and
+    imports nothing heavy at module level). `test_the_invariants_triage_modes_are_the_classifiers_own_set`
+    pins `C.TRIAGE_MODES is T.MODES`; the repro now prints `[]`.
 
 283. ~~**`tests.yml` is red for every lane on the 14-night rehearsal: a wake is evicted before
     its receiver ever sees it**~~ — **CLOSED 2026-08-27 (`registry`), and it was two bugs, not
@@ -7175,6 +7194,14 @@ Record: `docs/sessions/2026-08-28-registry-evening.md`. Numbers re-derived again
     counts only when the segment that carried the pool's token was replaced by a segment under
     **the same marker**, i.e. by the tool that wrote the fact. Erosion — the cap, or a different
     tool's marker — must still fail.
+    **Re-fired 2026-08-30, adjudicated by `infra` (still `registry`'s).** `rehearse (worst,
+    seed 1)` was red on runs 33305567382, 33312345558, 33312937940 and 33313228458 with
+    `FAIL night 1: pool validate_empty (Sun 04:00) lost 1 rows it should keep: ['Syte']`:
+    Syte's only `empty_class` token sat inside `retry`'s own segment (`retry 2026-08-30:
+    scanned; no open Israel roles now`), which night 1's `still unreachable` replaced. It went
+    green at `7319f85` because the Sunday audit added an independent `empty-but-suspect`
+    segment — data, not a fix; the next row of that shape (0 today, `Salvador Technologies`
+    is the near-miss) turns every lane's push red again. The narrow exit above is still the fix.
 
 404. **`replace_own`'s marker test is a bare prefix, so `retry` deletes `retry-resolved`** —
     lane: `registry`, filed 2026-08-28 by an adversarial pass. `p.lower().startswith(marker)`,
@@ -8842,6 +8869,15 @@ the rebase (a collision is what 241–246 are).
      than minutes"; that is false for M1 until the packer can split a class by record (stable:
      sort ids, take every k-th) and `test_the_mutation_shards_partition_the_whole_catalogue`
      asserts records rather than classes. Measured on the first green gate since 08-24.
+     **CLOSED 2026-08-30 (`infra`, evening).** `tools/mutate.py --shard I/N` (0-based, sorted
+     ids, every N-th) replaces the class packer; `tests.yml` runs five matrix entries with
+     `--all --shard "$SHARD/$SHARDS"`, and the partition test runs `shard()` over the real
+     catalogue (233 records → 47/47/47/46/46). The last finished M1 shard walled 1,983 s
+     with 4 workers (7,320 s pytest, run 33312345558); since `56901b8` (+3 M1 records) shard 0
+     was killed at 40 min on every push — and the killed log carried NO per-record line,
+     because `main()` collected every verdict before printing one (now printed as each
+     lands, `python -u`). Rule kept in the workflow comment: a shard past ~1,800 s wall
+     ⇒ add a matrix entry AND bump SHARDS, never the budget.
 
 472. **`_load_secrets` callers in seven root tools still resolve through `bd_rescue`'s copy** —
      lane: `registry` (`audit_empty_rows.py:337`, `crack_walled.py:308`, `deep_validate.py:451`
@@ -8919,6 +8955,14 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      `test_ci_itself_confirms_why_the_tree_check_cannot_run_there` (skipped outside CI) is
      reported, not judged. `--junitxml` would name both; not done because the first
      measurement needed the tool more than the tool needed the distinction.
+
+## From the `infra` lane, 2026-08-30 (b) (the shard that could not be split; the drain's step order)
+
+*Record: `docs/sessions/2026-08-30-infra-b.md`. Closed here: 282, 476, 492, 491 items 1/2/4 (5 superseded, 3 deferred to the 08-31 morning check).*
+
+501. **A writer can still activate a twin of an active row or a native-ATS row off its host — the commit gate now refuses the FILE, which costs the writer its night** — lane: `registry`, filed by `infra` 2026-08-30. The Sunday audit (`7319f85`, run 33304997204) activated `JPMorgan Chase` on the board `JPMorganChase` already read (via `deep_validate.apply_verdict:340` / `audit_empty_rows.py:486-500`) and `Renesas Electronics` as `smartrecruiters` pointing at `https://jobs.renesas.com/`; `crack_walled.py:381-386` has the same shape. All three re-read `companies.csv` only to find their own row, and `identity_gate` never opens the registry, so nothing asks "does an ACTIVE row already read this address?" or "is this api_url on the platform I just wrote into column 2?". Since 2026-08-30 `persist_state.py commit`'s gate runs `check_invariants.py --strict` (B2 = `check_invariants.shared_boards`, the `identity_key` + normalised-url key; C2 = `PLATFORM_HOST`), so the next such activation restores the whole night's `companies.csv` from the checkout and lands the rest — the twin never reaches master, and the cost moves from "master red for two hours" to "one writer's registry night discarded". The row-level fix belongs with the activator: before `fr[4] = "true"`, refuse (note-only, like the gate's other refusals) when `shared_boards(rows + [row])` is non-empty or `PLATFORM_HOST[plat]` does not match `api`. Put the check in ONE helper both call, not two copies. The alarm today is the writer step's `::error::` + persist's `restored from … NOT persisted` line on the run page; a `Stages:` clause for "a writer's registry file was refused" is `infra`'s and not built.
+
+502. **A shard killed mid-write leaves an unparsable proposal file, and the ingest skips it in silence** — lane: `registry`, found by `infra`'s wave B 2026-08-30. `queue_resolve_search.py:562-563` rewrites the whole proposal file per name with a plain `open(a.propose, "w")` + `json.dump`, not `pipeline.atomic`; `queue_state.ingest()` (`queue_state.py:222-226`) does `except Exception: continue` on the parse, and the step still prints `ingested N new attempts` and exits 0. The 08-30 workflow change (the ingest in its own `if: always()` step, 491 item 1) makes three of four shards' logs survive a step timeout instead of none, so this is the one level down of the same failure: the paid searches of the shard the kill landed in are re-bought the next night with no line saying so. Fix: write via `pipeline.atomic.write_json` (or `.tmp` + `os.replace`) so the file on disk is always the last complete one, and in `ingest()` replace the bare `continue` with a `::warning::ingest: <file> unreadable (<err>) -- that shard's attempts are NOT recorded`.
 
 ## From the `discovery` lane, 2026-08-30 (the own-domain research session)
 

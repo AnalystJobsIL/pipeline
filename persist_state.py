@@ -1321,7 +1321,10 @@ def main(argv=None):
     c.add_argument("--branch")
     c.add_argument("--retries", type=int, default=5)
     c.add_argument("--sleep", type=float, default=15.0, help="seconds, times the attempt number")
-    c.add_argument("--gate", default=f'"{sys.executable}" check_invariants.py',
+    # `--strict` (2026-08-30): the COMMIT gate refuses a twin of an active row and a
+    # native-ATS row off its host (check_invariants B2/C2) -- here the cost is this run's
+    # registry file, restored; on the digest's pre-gate the same checks stay warnings.
+    c.add_argument("--gate", default=f'"{sys.executable}" check_invariants.py --strict',
                    help="command run when companies.csv is owned; '' disables")
     c.add_argument("--cwd", help=argparse.SUPPRESS)
     o = sub.add_parser("outcome", help="record the run's outcome; a failure notice reaches the mail")

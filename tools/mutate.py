@@ -94,6 +94,28 @@ Baseline = namedtuple("Baseline", "red_ids red_names seconds summary")
 _NO_BASELINE = Baseline(frozenset(), frozenset(), 0.0, "baseline skipped")
 
 
+def shard(muts, spec):
+    """The records shard `i` of `n` runs, for `spec` = "i/n" (0-based i, like the
+    `mutation-gate` matrix; the registry's `QRS_SHARD` is 1-based -- say which you mean).
+
+    By RECORD, not by class: `tests.yml` used to bin-pack the `M<n>` classes, and the
+    fattest class (`M1-gate-removal`, 89 of 233 on 2026-08-30) is one class, so a fourth
+    shard changed nothing while shard 0 was killed at its 40-minute budget on every push
+    (BACKLOG 476). Sorted by id and strided, so the split is a function of the catalogue
+    alone -- no list here to fall out of date -- and every record lands in exactly one
+    shard (`test_the_mutation_shards_partition_the_whole_catalogue` proves that over the
+    real catalogue). An EMPTY shard is refused by the caller: fewer records than shards
+    means a matrix entry that goes green having run nothing."""
+    m = re.fullmatch(r"\s*(\d+)\s*/\s*(\d+)\s*", spec or "")
+    if not m:
+        raise ValueError("--shard wants I/N (0-based), got %r" % (spec,))
+    i, n = int(m.group(1)), int(m.group(2))
+    if n < 1 or not 0 <= i < n:
+        raise ValueError("--shard %d/%d: I must be in 0..N-1 and N >= 1" % (i, n))
+    ordered = sorted(muts, key=lambda r: r["id"])
+    return ordered[i::n]
+
+
 def _load(paths=None):
     """The catalogue(s). Several may be passed (`--catalogue`, docs/BACKLOG.md 104); the
     coverage check runs over their union."""
@@ -768,6 +790,9 @@ def main():
     ap.add_argument("--coverage", action="store_true")
     ap.add_argument("--catalogue", action="append", default=None,
                     help="catalogue file(s); default tests/mutations.json")
+    ap.add_argument("--shard", default="",
+                    help="I/N (0-based): run only every N-th record from the I-th, by id; "
+                         "applied after --all/--class")
     ap.add_argument("--jobs", type=int, default=min(4, os.cpu_count() or 1))
     ap.add_argument("--skip-baseline", action="store_true",
                     help="local iteration only: no baseline run, no red-test filtering")
@@ -793,6 +818,17 @@ def main():
         muts = [m for m in muts if m["class"].split("-")[0] in want]
     elif not a.all:
         ap.error("pass --all, --id, --class or --coverage")
+    if a.shard:
+        try:
+            muts = shard(muts, a.shard)
+        except ValueError as e:
+            ap.error(str(e))
+        if not muts:
+            print("** FAIL ** shard %s selected no records -- fewer records than shards, so "
+                  "this matrix entry would go green having run nothing; lower SHARDS" % a.shard)
+            return 1
+        print("shard %s: %d record(s), %s .. %s" % (a.shard.strip(), len(muts),
+                                                    muts[0]["id"], muts[-1]["id"]))
 
     # Per-PROCESS, and cleaned up on the way out. The path was a fixed `ajil_mutants` that
     # every run `rmtree`d at startup, so two concurrent runs deleted each other's mutant
@@ -821,19 +857,28 @@ def main():
     print("%-30s %-22s %-11s %-42s %-16s %s" % ("id", "class", "result", "killed by", "mode", "secs"))
     print("-" * 124)
     jobs = max(1, a.jobs)
-    with ThreadPoolExecutor(max_workers=jobs) as ex:
-        results = list(ex.map(lambda m: run_one(m, work_root, baseline), muts))
     bad = 0
-    for m, r in zip(muts, results):
-        mode = "%s%s" % (r["mode"], " %d" % r["subset"] if r["subset"] else "")
-        if r["status"] == "FAIL":
-            bad += 1
-            print("%-30s %-22s %-11s %-42s %-16s %.0f" % (
-                m["id"], m["class"], "** FAIL **", r["detail"][:42], mode, r["secs"]))
-        else:
-            print("%-30s %-22s %-11s %-42s %-16s %.0f" % (
-                m["id"], m["class"], "killed",
-                "%s (%s)" % (r["killer"].split("::")[-1][:30], r["detail"]), mode, r["secs"]))
+    results = []
+    # Each row is printed the moment its verdict is in (catalogue order, so a slow record
+    # holds the rows behind it, never the rows before it). `list(ex.map(...))` used to
+    # collect every verdict first, so a shard killed at its budget left NOTHING on the run
+    # page -- "the per-record lines above say how far it got" was false on the one path it
+    # was written for (2026-08-30, run 33320619890: 40 minutes, no line). Flushed, because
+    # a runner's stdout is a pipe and the kill drops the buffer.
+    with ThreadPoolExecutor(max_workers=jobs) as ex:
+        for m, r in zip(muts, ex.map(lambda m: run_one(m, work_root, baseline), muts)):
+            results.append(r)
+            mode = "%s%s" % (r["mode"], " %d" % r["subset"] if r["subset"] else "")
+            if r["status"] == "FAIL":
+                bad += 1
+                print("%-30s %-22s %-11s %-42s %-16s %.0f" % (
+                    m["id"], m["class"], "** FAIL **", r["detail"][:42], mode, r["secs"]),
+                    flush=True)
+            else:
+                print("%-30s %-22s %-11s %-42s %-16s %.0f" % (
+                    m["id"], m["class"], "killed",
+                    "%s (%s)" % (r["killer"].split("::")[-1][:30], r["detail"]), mode, r["secs"]),
+                    flush=True)
     for w, missing in gaps:
         bad += 1
         print("%-30s %-22s %-11s missing %s" % (w, "coverage", "** FAIL **", ",".join(missing)))

@@ -7359,14 +7359,35 @@ def test_the_queue_drain_is_actually_scheduled():
         "listing_hunt's own queue arm resolves 2-3% where this rung resolves 56%, and both "
         "draw from the same file: leaving it on pays twice for the worse answer")
 
-    # the minutes have to add up, or the job dies before persist_state runs
+    # the minutes have to add up, or the job dies before persist_state runs. EVERY budget
+    # (2026-08-30, BACKLOG 491 item 4): this summed the hunt's and the step timeouts only,
+    # and the three it did not read (repair 30, extract-gap 35, crack 60) took the real
+    # total to 365 against a 330 cap with this test green. GitHub's ceiling is 360.
     job = wf.split("jobs:", 1)[1]
     cap = int(re.search(r"timeout-minutes:\s*(\d+)", job).group(1))
-    hunt = int(re.search(r'HUNT_TIME_BUDGET_MIN:\s*"(\d+)"', wf).group(1))
+    budgets = {k: int(v) for k, v in re.findall(r'(\w*_TIME_BUDGET_MIN):\s*"(\d+)"', wf)}
+    assert budgets.keys() >= {"HUNT_TIME_BUDGET_MIN", "REPAIR_URL_TIME_BUDGET_MIN",
+                              "REPAIR_TIME_BUDGET_MIN", "CRACK_TIME_BUDGET_MIN"}, budgets
     steps = sum(int(m) for m in re.findall(r"timeout-minutes:\s*(\d+)", job)[1:])
-    assert hunt + steps < cap, (
-        "hunt %d + steps %d >= job cap %d: the job would be killed mid-flight, and on this "
-        "workflow that means persist_state never commits the night's work" % (hunt, steps, cap))
+    total = sum(budgets.values()) + steps
+    assert total < cap <= 360, (
+        "budgets %s + steps %d = %d against job cap %d: the job would be killed mid-flight, "
+        "and on this workflow that means persist_state never commits the night's work"
+        % (budgets, steps, total, cap))
+
+    # step ORDER (491 items 1 and 2): the attempt log is its own `if: always()` step after
+    # the drain -- inside the drain step, one shard past the timeout erased every shard's
+    # attempts and the same names were re-bought the next night -- and the retire-settled
+    # lookup runs BEFORE the drain, so a re-added retired name never costs a paid search
+    i_retire = wf.index("--retire-settled")
+    i_drain = wf.index("queue_resolve_search.py")
+    i_ingest = wf.index("queue_state.py --ingest")
+    assert i_retire < i_drain < i_ingest, "retire-settled, then the drain, then the ingest"
+    drain_step = wf[wf.rfind("- name:", 0, i_drain):i_drain]
+    assert "queue_state.py --ingest" not in wf[i_drain:wf.index("- name:", i_drain)], (
+        "the ingest must not share the drain's step (its timeout would take the log with it)")
+    ingest_step = wf[wf.rfind("- name:", 0, i_ingest):i_ingest]
+    assert "if: always()" in ingest_step and "timeout-minutes:" in ingest_step, ingest_step
 
     # every new state file must be committed, or the verdicts die with the runner
     own = wf.split("--own", 1)[1]

@@ -150,21 +150,24 @@ jobs:
   # out names nothing. 195 rejected simply raising the timeout ("buys a week, fixes
   # nothing") and named sharding, which is what this is.
   #
-  # The split is computed FROM THE CATALOGUE at run time by least-loaded bin-packing over
-  # the `M<n>` class prefixes `--class` selects on, so a class the registry lane adds
-  # tomorrow lands in a shard by itself -- there is no list here to fall out of date, which
-  # is the silent-exclusion shape this repo keeps paying for. 2026-08-30: 86 / 71 / 69
-  # records, walls 25 / 22 / 21 min; the cost driver is full-suite fallbacks, not records.
-  # `test_the_mutation_shards_partition_the_whole_catalogue` runs this exact script over
-  # the real catalogue and fails if the shards ever stop covering it exactly once.
-  # `fail-fast: false`: one shard's surviving mutant must not hide another's.
+  # BY RECORD, NOT BY CLASS (2026-08-30, BACKLOG 476/491). The first split bin-packed the
+  # `M<n>` classes, and `M1-gate-removal` is ONE class of 89 records: shard 0 was M1 alone,
+  # walled 1,983 s with 4 workers (7,320 s of pytest) on the last run that finished
+  # (33312345558), and three more M1 records later it was KILLED at its 40-minute budget
+  # on every push -- "add a shard" was false advice, a fourth shard still held M1 whole.
+  # `tools/mutate.py --shard I/N` takes every N-th record by id, so the split is a
+  # function of the catalogue alone; there is no list here to fall out of date.
+  # `test_the_mutation_shards_partition_the_whole_catalogue` runs the same function over
+  # the real catalogue and fails if the shards ever stop covering it exactly once. When a
+  # shard's `timing wall` passes ~1,800 s, add a matrix entry AND bump SHARDS -- never the
+  # budget (195). `fail-fast: false`: one shard's surviving mutant must not hide another's.
   mutation-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2]
+        shard: [0, 1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -175,30 +178,11 @@ jobs:
       - name: Every mutation dies and every writer is covered
         env:
           SHARD: ${{ matrix.shard }}
-          SHARDS: "3"
+          SHARDS: "5"
         run: |
-          CLS="$(python - <<'PY'
-          import collections, json, os
-          n, i = int(os.environ["SHARDS"]), int(os.environ["SHARD"])
-          muts = json.load(open("tests/mutations.json", encoding="utf-8"))
-          size = collections.Counter(m["class"].split("-")[0] for m in muts)
-          bins, load = [[] for _ in range(n)], [0] * n
-          for cls, k in sorted(size.items(), key=lambda x: (-x[1], x[0])):   # deterministic
-              j = load.index(min(load))
-              bins[j].append(cls)
-              load[j] += k
-          print(",".join(sorted(bins[i])))
-          PY
-          )"
-          if [ -z "$CLS" ]; then
-            echo "::error::shard $SHARD drew no classes -- there are fewer classes than shards,"
-            echo "::error::so some mutations would run in NO shard. Lower SHARDS in this file."
-            exit 1
-          fi
-          echo "shard $SHARD of $SHARDS -> classes $CLS"
           rc=0
-          timeout --signal=INT --kill-after=60 40m python tools/mutate.py --class "$CLS" || rc=$?
+          timeout --signal=INT --kill-after=60 40m python -u tools/mutate.py --all --shard "$SHARD/$SHARDS" || rc=$?
           if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
-            echo "::error::mutation shard $SHARD (classes $CLS) exceeded its 40-minute budget (job timeout 45; rc $rc, 137 = killed after the INT grace) -- the per-record lines above say how far it got; add a shard (SHARDS) rather than minutes"
+            echo "::error::mutation shard $SHARD of $SHARDS exceeded its 40-minute budget (job timeout 45; rc $rc, 137 = killed after the INT grace) -- the per-record lines above say how far it got; add a matrix entry and bump SHARDS rather than minutes"
           fi
           exit "$rc"

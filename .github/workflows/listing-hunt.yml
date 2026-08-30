@@ -35,7 +35,16 @@ env:
 jobs:
   hunt:
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    # 350, not 330 (2026-08-30, BACKLOG 491 item 4): the budgets below summed to 365 --
+    # repair 30 + extract-gap 35 + hunt 140 + drain 30 + apply 40 + verify 20 + crack 60
+    # + commit 10 -- against a 330 cap, and GitHub's own ceiling is 360, so 365 could never
+    # be bought. A job-level timeout ends the `if: always()` commit step with the rest, so
+    # an over-subscribed cap is the BACKLOG 39/128 failure one level up: a whole night's
+    # verdicts discarded. Now 327 of 350 (crack 60 -> 30 and apply 40 -> 30 on
+    # measurement: crack walled 5-14 min and apply ~0 on the last four scheduled runs), and
+    # `test_the_queue_drain_is_actually_scheduled` sums EVERY `*_TIME_BUDGET_MIN` and step
+    # timeout against this number, not only the hunt's.
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -91,8 +100,8 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           HUNT_LIMIT: ${{ github.event.inputs.limit || '0' }}
-          # 200 -> 140: the 60 minutes go to the queue drain below (BACKLOG 427). The job cap
-          # is 330 and 140 + 95 (drain) + ~90 (re-crack, ladder, invariants, commit) = 325.
+          # 200 -> 140: the 60 minutes go to the queue drain below (BACKLOG 427). The whole
+          # budget arithmetic is at the job's `timeout-minutes` above.
           HUNT_TIME_BUDGET_MIN: "140"
           # This arm is SUPERSEDED, and 0 means OFF (not unlimited). It resolved 2 of 57
           # queue names on 2026-08-29 -- 3.5% -- where `queue_resolve_search` resolves 56%,
@@ -116,6 +125,17 @@ jobs:
       # not reproduce is UNVERIFIABLE, never ok) before `apply_proposals` sees it -- because
       # the four QA passes on 2026-08-29 refused 10%, 9%, 15% and 19% of proposals as another
       # company's board, and one that slipped through went ACTIVE on a VC's portfolio page.
+      # A name a rung already settled must not sit in the queue looking owed: nothing can
+      # reach it, so it reads as STUCK for ever. Discovery re-adds such names nightly --
+      # `Infrastructure Team` (junk) and `Residenthome` (resolved) came back the same night
+      # they were retired -- because intake does not consult the disposition record (filed).
+      # A LOOKUP: no model, no fetch, no credit. BEFORE the drain (2026-08-30, BACKLOG
+      # 491 item 2): here a re-added retired name costs a lookup; three steps later it
+      # had already cost a paid search, and the stamp counted it as owed.
+      - name: Retire queue names a rung already settled
+        run: python queue_pipeline.py --retire-settled --apply
+        continue-on-error: true
+
       - name: Resolve intake names by search (queue drain)
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -135,7 +155,17 @@ jobs:
               --propose "out/qrs_$i.json" --cap 30 &
           done
           wait
-          python queue_state.py --ingest "out/qrs_[0-9].json" || true
+        continue-on-error: true
+      # The attempt log is written by ITS OWN step, `if: always()` (2026-08-30, BACKLOG 491
+      # item 1). It used to follow `wait` inside the 30-minute step above, so one shard past
+      # the step timeout erased every shard's attempts: the same names re-selected and
+      # re-bought the next night, every refusal lost, the IDLE alarm firing with the wrong
+      # causes, every step green. A shard flushes its proposals per name, so a killed
+      # drain still leaves the paid searches on disk for this step to record.
+      - name: Ingest the drain's attempt log
+        if: always()
+        timeout-minutes: 2
+        run: python queue_state.py --ingest "out/qrs_[0-9].json"
         continue-on-error: true
 
       # Verify EVERY proposal before it can become a row, then apply only what passed.
@@ -144,7 +174,7 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
-        timeout-minutes: 40
+        timeout-minutes: 30
         run: python queue_pipeline.py --apply-proposals "out/qrs_[0-9].json" --apply
         continue-on-error: true
 
@@ -158,15 +188,6 @@ jobs:
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
         timeout-minutes: 20
         run: python queue_pipeline.py --verify-existing --limit 60 --apply
-        continue-on-error: true
-
-      # A name a rung already settled must not sit in the queue looking owed: nothing can
-      # reach it, so it reads as STUCK for ever. Discovery re-adds such names nightly --
-      # `Infrastructure Team` (junk) and `Residenthome` (resolved) came back the same night
-      # they were retired -- because intake does not consult the disposition record (filed).
-      # A LOOKUP: no model, no fetch, no credit.
-      - name: Retire queue names a rung already settled
-        run: python queue_pipeline.py --retire-settled --apply
         continue-on-error: true
 
       # The queue's DIRECTION, not its size: a queue of 500 that is falling is healthy and a
@@ -184,7 +205,7 @@ jobs:
           SCRAPE_LLM: "1"
           SCRAPE_VIA_UNLOCKER: ${{ (github.event.inputs.unlocker || vars.BD_PAID_RUNGS || 'on') != 'off' && '1' || '' }}
           CRACK_LIMIT: "400"            # 61 companies sit on walled ATSes; 25 never cleared it
-          CRACK_TIME_BUDGET_MIN: "60"
+          CRACK_TIME_BUDGET_MIN: "30"    # 60 -> 30 (2026-08-30): walled 5-14 min on the last four scheduled runs
         run: python crack_walled.py --apply || echo "re-crack skipped"
         continue-on-error: true
 

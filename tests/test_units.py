@@ -594,19 +594,15 @@ def test_no_two_active_rows_scan_the_same_board():
     `merge_key` normalizes only a trailing corporate suffix, the roles did not collapse:
     the board listed every Intel opening three times, and three fetches paid for it."""
     import csv
-    import collections
     import os
-    import urllib.parse
-    from pipeline.firmographics import identity_key
+    import check_invariants as C
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    rows = [r for r in csv.DictReader(open(os.path.join(repo, "companies.csv"),
-                                           encoding="utf-8")) if r["active"] == "true"]
-    seen = collections.defaultdict(list)
-    for r in rows:
-        u = urllib.parse.urlsplit((r["api_url"] or "").strip().lower().rstrip("/"))
-        seen[(identity_key(r["company_name"]), u.netloc, u.path, u.query)].append(
-            r["company_name"])
-    dupes = {k: v for k, v in seen.items() if len(v) > 1}
+    rows = list(csv.reader(open(os.path.join(repo, "companies.csv"), encoding="utf-8")))[1:]
+    # the GATE's predicate, not a retyped copy: on 2026-08-30 the Sunday audit activated
+    # `JPMorgan Chase` beside `JPMorganChase` and only this test noticed, because
+    # `check_invariants` had no such check. `--strict` refuses it in the commit gate now,
+    # and sharing the function is what keeps the two from drifting apart again.
+    dupes = C.shared_boards(rows)
     assert not dupes, f"same company, same board, more than one active row: {list(dupes.values())[:6]}"
 
 
@@ -6958,43 +6954,59 @@ def test_no_workflow_expression_has_a_falsy_true_branch():
                      "branch:\n  " + "\n  ".join(bad))
 
 
+def _mutate_module_for_tests():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "_mutate_under_test", os.path.join(_REPO, "tools", "mutate.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def test_the_mutation_shards_partition_the_whole_catalogue():
     """The mutation gate is sharded across a matrix, and a shard split that quietly stops
-    covering a class is the exact silent-exclusion shape this repo keeps paying for: every
+    covering a record is the exact silent-exclusion shape this repo keeps paying for: every
     shard would go green while nothing ran the mutations that matter.
 
-    So this does not re-implement the split -- it EXTRACTS the workflow's own script and runs
-    it, once per shard, over the real catalogue, and asserts the shards partition the class
-    set exactly once with no shard empty. Change the packing in `tests.yml` and this follows
-    it; drop a class from it and this goes red.
+    By RECORD since 2026-08-30 (BACKLOG 476/491): the first split bin-packed the `M<n>`
+    classes, and `M1-gate-removal` is one class of 89 records, so shard 0 was killed at its
+    40-minute budget on every push while "add a shard" changed nothing. The split is now
+    `tools/mutate.shard` -- sorted ids, every N-th -- and this runs THAT function over the
+    real catalogue with the matrix `tests.yml` declares, and asserts the shards cover every
+    record exactly once, none empty, within one record of each other, and that the workflow
+    hands the matrix value to the selector unchanged (0-based, `$SHARD/$SHARDS`).
 
     Context: the catalogue grew 105 -> 204 records between 2026-08-24 and 2026-08-28 while
     `timeout-minutes: 45` stood still, and the job was CANCELLED on 40 consecutive pushes
     (BACKLOG 195). A cancelled gate names no surviving mutant at all."""
-    import collections, subprocess, textwrap
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    wf = open(os.path.join(root, ".github", "workflows", "tests.yml"), encoding="utf-8").read()
+    wf = open(os.path.join(_REPO, ".github", "workflows", "tests.yml"), encoding="utf-8").read()
     n = int(re.search(r'SHARDS:\s*"(\d+)"', wf).group(1))
     ids = re.search(r"shard:\s*\[([^\]]+)\]", wf).group(1)
     assert sorted(int(x) for x in ids.split(",")) == list(range(n)), \
         f"the matrix is {ids} but SHARDS says {n} -- a shard would never run"
-    script = textwrap.dedent(re.search(r"python - <<'PY'\n(.*?)\n\s*PY\n", wf, re.S).group(1))
-
-    muts = json.load(open(os.path.join(root, "tests", "mutations.json"), encoding="utf-8"))
-    every = {m["class"].split("-")[0] for m in muts}
-    seen, sizes = [], collections.Counter(m["class"].split("-")[0] for m in muts)
+    assert re.search(r'python -u tools/mutate\.py --all --shard "\$SHARD/\$SHARDS"', wf), \
+        "the step must hand the matrix value to the selector unchanged, 0-based"
+    import io
+    import json
+    M = _mutate_module_for_tests()
+    muts = M._load([os.path.join(_REPO, "tests", "mutations.json")])
+    seen, sizes = [], []
     for i in range(n):
-        env = dict(os.environ, SHARDS=str(n), SHARD=str(i))
-        out = subprocess.run([sys.executable, "-c", script], cwd=root, env=env,
-                             capture_output=True, text=True)
-        assert out.returncode == 0, out.stderr
-        got = [c for c in out.stdout.strip().split(",") if c]
-        assert got, f"shard {i} of {n} drew no classes: some mutations would run nowhere"
+        got = [m["id"] for m in M.shard(muts, f"{i}/{n}")]
+        assert got, f"shard {i} of {n} drew no records: some mutations would run nowhere"
         seen += got
-    assert sorted(seen) == sorted(every), \
-        f"the {n} shards cover {sorted(seen)}, the catalogue has {sorted(every)}"
-    assert len(seen) == len(set(seen)), f"a class runs in two shards: {seen}"
-    assert sum(sizes[c] for c in seen) == len(muts), "every record is in exactly one shard"
+        sizes.append(len(got))
+    assert sorted(seen) == sorted(m["id"] for m in muts), \
+        f"the {n} shards cover {len(seen)} records, the catalogue has {len(muts)}"
+    assert len(seen) == len(set(seen)), "a record runs in two shards"
+    assert max(sizes) - min(sizes) <= 1, f"the stride is not balanced: {sizes}"
+    # over IDS, not file order (wave A, 2026-08-30): a catalogue-order stride still partitions,
+    # so nothing above would notice -- and then shard membership depends on merge order
+    first = [m["id"] for m in M.shard(muts, f"0/{n}")]
+    assert first == sorted(m["id"] for m in muts)[::n], "the stride must be over ids, not file order"
+    for bad in (f"{n}/{n}", "0/0", "1", "-1/2", "a/b"):
+        with pytest.raises(ValueError):
+            M.shard(muts, bad)
 
 
 def test_the_bright_data_ceiling_changes_itself_on_2026_09_01():
@@ -22611,3 +22623,145 @@ def test_the_meta_is_written_last_so_a_failed_csv_leaves_a_stale_meta_the_alarm_
     with pytest.raises(OSError):
         roles.write_dataset(cp, mp, rows2, meta2, archive_path=ap, archive_rows=[])
     assert json.load(open(mp, encoding="utf-8"))["run_date"] == "2026-08-30", "the meta is the stale half"
+
+
+# ------------------------------------------------------------------ lane: infra, 2026-08-30 (b)
+
+def test_a_mutation_shard_prints_each_verdict_as_it_lands(tmp_path, monkeypatch):
+    """Run 33320619890: `mutation-gate (0)` was killed at its 40-minute budget and the log
+    held NOT ONE per-record line -- `shard 0 of 3 -> classes M1` at 15:47:27, `Killed` at
+    16:28:27 -- while the `::error::` text promised "the per-record lines above say how far
+    it got". `main()` collected every verdict (`list(ex.map(...))`) before printing any.
+    Now each row is printed as its verdict lands: when the SECOND record runs, the first
+    record's row is already on stdout."""
+    import threading
+    import time
+    import io
+    import json
+    M = _mutate_module_for_tests()
+    cat = tmp_path / "cat.json"
+    recs = [{"id": "a-first", "file": "x.py", "symbol": "f", "class": "M1-gate-removal",
+             "find": "a", "replace": "b", "why": "", "must_be_killed_by_behavioural": False},
+            {"id": "b-second", "file": "x.py", "symbol": "f", "class": "M1-gate-removal",
+             "find": "a", "replace": "b", "why": "", "must_be_killed_by_behavioural": False}]
+    cat.write_text(json.dumps(recs), encoding="utf-8")
+    out = io.StringIO()
+    monkeypatch.setattr(sys, "stdout", out)
+    monkeypatch.setattr(M, "coverage", lambda muts: [])
+    seen = {}
+
+    def fake_run_one(m, work_root, baseline):
+        if m["id"] == "b-second":
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and "a-first" not in out.getvalue():
+                time.sleep(0.02)
+            seen["first_row_printed"] = "a-first" in out.getvalue()
+        return {"status": "KILLED", "mode": "subset", "subset": 1, "secs": 0.01,
+                "killer": "tests/test_x.py::test_y", "detail": "direct"}
+    monkeypatch.setattr(M, "run_one", fake_run_one)
+    monkeypatch.setattr(sys, "argv", ["mutate", "--all", "--catalogue", str(cat),
+                                      "--skip-baseline", "--jobs", "1"])
+    assert M.main() == 0, out.getvalue()
+    assert seen.get("first_row_printed") is True, (
+        "the first record's row must be on stdout before the second record runs -- a shard "
+        "killed mid-way must show how far it got:\n" + out.getvalue())
+    assert "2 mutation(s): 2 killed" in out.getvalue()
+
+
+def test_an_empty_or_malformed_mutation_shard_fails_instead_of_passing_vacuously(tmp_path, monkeypatch):
+    """`--shard` composes with the selection, and the two ways it can select nothing are both
+    loud: a malformed spec is an argparse error, and a shard with no records (more matrix
+    entries than records) exits 1 -- a matrix entry that goes green having run nothing is
+    the silent-exclusion shape."""
+    import io
+    import json
+    M = _mutate_module_for_tests()
+    cat = tmp_path / "cat.json"
+    recs = [{"id": f"r-{i}", "file": "x.py", "symbol": "f", "class": "M1-gate-removal",
+             "find": "a", "replace": "b", "why": "", "must_be_killed_by_behavioural": False}
+            for i in range(2)]
+    cat.write_text(json.dumps(recs), encoding="utf-8")
+    out = io.StringIO()
+    monkeypatch.setattr(sys, "stdout", out)
+    monkeypatch.setattr(M, "coverage", lambda muts: [])
+    ran = []
+    monkeypatch.setattr(M, "run_one", lambda m, w, b: (ran.append(m["id"]) or {
+        "status": "KILLED", "mode": "subset", "subset": 1, "secs": 0.0,
+        "killer": "t.py::t", "detail": "direct"}))
+    base = ["mutate", "--all", "--catalogue", str(cat), "--skip-baseline", "--jobs", "1"]
+    monkeypatch.setattr(sys, "argv", base + ["--shard", "2/3"])
+    assert M.main() == 1 and ran == [], out.getvalue()
+    assert "selected no records" in out.getvalue()
+    monkeypatch.setattr(sys, "argv", base + ["--shard", "1/2"])
+    assert M.main() == 0 and ran == ["r-1"], out.getvalue()
+    monkeypatch.setattr(sys, "argv", base + ["--shard", "2/2"])
+    with pytest.raises(SystemExit):
+        M.main()
+
+
+def test_the_commit_gate_refuses_a_twin_or_an_off_host_row_only_under_strict(tmp_path):
+    """The Sunday audit (`7319f85`, run 33304997204) activated `JPMorgan Chase` on the board
+    `JPMorganChase` already read, and `Renesas Electronics` as `smartrecruiters` pointing at
+    a company site. `check_invariants` warned on the second and had no check for the first;
+    the commit landed and master was red for two hours on the two tests that hold exactly
+    these predicates. A gate weaker than the suite is the shape this repo keeps paying for.
+
+    So: the same script, two severities. Plain (the digest's blocking pre-gate, every
+    step-level call) keeps both as warnings -- there one row must never withhold the mail
+    (2026-08-23). `--strict` / `INVARIANTS_STRICT=1` -- what `persist_state.py commit` runs
+    -- refuses the file, and persist restores it and lands everything else."""
+    import csv
+    import subprocess
+    root = _REPO
+    (tmp_path / "cloud_state").mkdir()
+
+    def run(extra_rows, argv=(), env=None):
+        rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"]]
+        rows += [[f"Live {i}", "greenhouse", f"live{i}",
+                  f"https://boards-api.greenhouse.io/v1/boards/live{i}/jobs", "true", ""]
+                 for i in range(60)]
+        rows += [[f"Parked {i}", "scrape", "", f"https://www.p{i}.example/careers", "false",
+                  "no listing found"] for i in range(60)]
+        rows += extra_rows
+        with open(tmp_path / "companies.csv", "w", encoding="utf-8", newline="") as fh:
+            csv.writer(fh).writerows(rows)
+        e = dict(os.environ, INVARIANTS_STRICT="")
+        e.update(env or {})
+        r = subprocess.run([sys.executable, os.path.join(root, "check_invariants.py"), *argv],
+                           cwd=tmp_path, capture_output=True, text=True, timeout=120, env=e)
+        return r.returncode, r.stdout + r.stderr
+    url = "https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?siteNumber=CX_1001"
+    twin = [["JPMorganChase", "oraclehcm", "", url, "true", ""],
+            ["JPMorgan Chase", "oraclehcm", "", url, "true", ""]]
+    offhost = [["Renesas Electronics", "smartrecruiters", "RenesasElectronics",
+                "https://jobs.renesas.com/", "true", ""]]
+    rc, out = run(twin + offhost)
+    assert rc == 0, out[-800:]
+    assert "read by more than one active row" in out and "not on that host" in out, out[-800:]
+    rc, out = run(twin + offhost, ["--strict"])
+    assert rc != 0 and "strict: B2" in out and "JPMorgan Chase" in out, out[-800:]
+    assert "strict: C2: Renesas Electronics" in out, out[-800:]
+    rc, out = run(twin, env={"INVARIANTS_STRICT": "1"})
+    assert rc != 0 and "strict: B2" in out and "strict: C2" not in out, out[-800:]
+    rc, out = run(offhost, ["--strict"])
+    assert rc != 0 and "strict: C2" in out and "strict: B2" not in out, out[-800:]
+    rc, out = run([], ["--strict"])
+    assert rc == 0, out[-800:]
+    # the commit gate IS the strict one, and only the commit gate
+    src = open(os.path.join(root, "persist_state.py"), encoding="utf-8").read()
+    assert 'check_invariants.py --strict' in src, "persist_state's default --gate must run strict"
+    for w in glob.glob(os.path.join(root, ".github", "workflows", "*.yml")):
+        txt = open(w, encoding="utf-8").read()
+        assert "check_invariants.py --strict" not in txt and "INVARIANTS_STRICT" not in txt, \
+            f"{os.path.basename(w)}: a step-level strict gate would withhold a whole run for one row"
+
+
+def test_the_invariants_triage_modes_are_the_classifiers_own_set():
+    """BACKLOG 282/492: `check_invariants.TRIAGE_MODES` was a hand copy with 7 of the 8
+    modes `triage_dark` writes, so F2 warned on every legitimate `no-url` row -- 109 a night
+    by 2026-08-30 -- and a real truncation would have drowned in them. The gate imports the
+    tool's own set (ARCHITECTURE section 2: never retype a pool)."""
+    import check_invariants as C
+    import triage_dark as T
+    assert C.TRIAGE_MODES is T.MODES
+    assert "no-url" in C.TRIAGE_MODES
