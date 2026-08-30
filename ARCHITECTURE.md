@@ -3315,22 +3315,30 @@ dates Microsoft's founding to 1989, the year its Israeli R&D centre opened.
 **The employer's own name — `display_name`, evidence only (2026-08-30).** Some registry keys
 are ATS slugs (`withfaye` where the employer is Faye), and the key cannot change: it joins
 this file, the roles ledger and the public CSV, so a rename orphans intel and role history at
-once (`docs/BACKLOG.md` 459). The record instead carries an optional `display_name`, and
-render (§7d) shows it over the registry name when present. It is written by exactly one
+once (`docs/BACKLOG.md` 459). The record instead carries an optional `display_name`; the
+contracted consumer is render (§7d — "show it over the registry name when present",
+landing in a parallel session), and **until that lands the field renders nowhere**:
+`rolecard.firmo_facts` and `roles._FIRMO_COLS` both select explicit keys that do not
+include it. It is written by exactly one
 pass — `firmographics.apply_display_names`, run by `research_firmographics.py --export` on
 both cron paths — from two evidence arms and nothing else: `cloud_state/board_verify.json`'s
 `employer_named` (an LLM's read of the company's own careers page) where
 `display_name_from_evidence` judges the page's name recognisably the *same* company
-(shared stem, containment, acronym — **72 records** on 2026-08-31, after an adversarial
-audit of the first cut removed 32: parent-umbrella words, casing degradations, identity
-collisions — the session record's §3), and the 4-row `DISPLAY_NAME_OVERRIDES` table whose
+(shared stem, EDGE containment, acronym — **71 records** on 2026-08-31, after two
+adversarial audits cut 33 of the first 104: parent-umbrella words, casing degradations,
+identity collisions — the session record's sections 3b and 3c), and the 4-row
+`DISPLAY_NAME_OVERRIDES` table whose
 slugs fail containment by construction but carry first-party JD/tenant evidence in the
 comment beside each. A page naming a *different* string — a parent, a product, a mis-read,
-a name whose `identity_key` is another record's — is printed as `divergent: ... — not
-written` (**55** that day; `python research_firmographics.py --display-report` is the full
-triage), because a confidently wrong name is worse than a slug. Three rules the tests pin: the pass
-sets **and clears** from current evidence each run, so withdrawn evidence retracts a name
-(the retraction `merge`'s fill-forward cannot express — an unreadable verify clears
+a name whose `identity_key` is another company's (a record's or a registry row's) — is
+printed as `divergent: ... — not
+written` (**56** that day; `python research_firmographics.py --display-report` is the full
+triage), because a confidently wrong name is worse than a slug. The NEWEST verify row per
+name decides whatever its verdict: an ok a later refusal superseded is evidence withdrawn.
+Three rules the tests pin: the pass runs inside **every `save_shared`** on a copy, so
+evidence is the authority at every file write whoever the publisher is — withdrawn
+evidence retracts a name and no publisher can resurrect one from a stale sqlite copy (the
+flip-loop wave 1b measured; an unreadable verify clears
 nothing); `display_name` is in `_EVIDENCE_EXEMPT`, so a cosmetic key never flips `newer()`
 ties or which record answers for an identity group (the AWS-over-Amazon class); and the
 model can never supply it — `_coerce` drops the key, `_RESEARCH_SCHEMA` forbids it. A

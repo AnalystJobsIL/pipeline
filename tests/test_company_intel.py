@@ -2239,3 +2239,56 @@ def test_wave1a_defect_classes_are_refused_parent_casing_israel_and_collisions()
         "verdict": "ok", "employer_named": "Trigo", "date": TODAY}})
     assert "display_name" not in recs["Trigo Retail"]
     assert rep["divergent"] == [("Trigo Retail", "Trigo", "identity-collision(Trigo)")]
+
+
+def test_wave1b_verdicts_edges_and_boundaries_hold():
+    """2026-08-31 wave 1b: the survivors it named. The newest verify row decides whatever
+    its verdict; containment counts only at an edge; every numeric boundary is pinned so
+    the mutation that widens it dies here."""
+    # a NOT_THEIRS page whose name WOULD pass the rules must still write nothing — the
+    # verdict filter, not the name rule, is what refuses it (wave 1b's strongest mutation)
+    recs = {"Acme Ltd": {"sector": "s", "as_of": TODAY}}
+    F.apply_display_names(recs, {"acme ltd|u": {
+        "verdict": "NOT_THEIRS", "employer_named": "Acme", "date": TODAY}})
+    assert "display_name" not in recs["Acme Ltd"]
+    # a newer refusal SUPERSEDES an old ok — evidence withdrawn is not evidence
+    recs = {"Zeta": {"sector": "s", "as_of": TODAY, "display_name": "Zeta Systems"}}
+    F.apply_display_names(recs, {
+        "zeta|b-new": {"verdict": "NOT_THEIRS", "employer_named": "", "date": "2026-08-30"},
+        "zeta|a-old": {"verdict": "ok", "employer_named": "Zeta Systems", "date": "2026-08-01"}})
+    assert "display_name" not in recs["Zeta"]
+    # an ambiguous case-twin is HELD: neither written nor cleared
+    recs = {"Vega": {"sector": "s", "as_of": TODAY, "display_name": "Vega"},
+            "vega": {"sector": "s", "as_of": TODAY}}
+    rep = F.apply_display_names(recs, {"vega|u": {
+        "verdict": "ok", "employer_named": "VEGA Ltd", "date": TODAY}})
+    assert recs["Vega"]["display_name"] == "Vega" and rep["removed"] == 0
+    # containment only at an EDGE — a mid-string hit is an accident, not a brand
+    assert F.display_name_from_evidence("Facebook", "Ace") == ("report", "different-name")
+    assert F.display_name_from_evidence("withfaye", "Faye")[0] == "write"  # suffix edge stays
+    # boundary pins (each kills the mutation that widens it)
+    assert F.display_name_from_evidence("Ivix", "IVIX") == ("write", "IVIX")          # 4 < the 5-letter cap
+    assert F.display_name_from_evidence("Acme", "A") == ("report", "unusable-after-clean")   # min 2
+    long = "Acme Excessively Long Corporate Denomination Padding Words Here"          # > 60 chars
+    assert F.display_name_from_evidence("Acme", long) == ("report", "unusable-after-clean")
+    assert F.display_name_from_evidence("A", "Alpha") == ("report", "different-name")  # acronym needs 2+
+    assert F.display_name_from_evidence("eyesAtop", "Eyesatop") == ("absent", "casing-not-richer")  # strict >
+    assert F.display_name_from_evidence("Acme", "Acme International") == ("report", "corporate-umbrella")
+    assert F.display_name_from_evidence("Acme", "Acme Worldwide") == ("report", "corporate-umbrella")
+
+
+def test_save_shared_applies_the_display_pass_so_no_publisher_can_resurrect(env, monkeypatch, tmp_path):
+    """Wave 1b: the digest's publish (which never ran the pass) resurrected a cleared name
+    from the sqlite side via merge's fill-forward — two committed flips a day. save_shared
+    now re-runs the pass on every write, so evidence is the authority for EVERY publisher."""
+    st, export, _, _ = env
+    (tmp_path / "board_verify.json").write_text("{}", encoding="utf-8")
+    # verify is EMPTY -> skipped mode: a stale name survives (a corrupt read never clears)
+    F.save_shared({"X Corp": {**REC, "display_name": "Stale"}})
+    assert json.load(open(export, encoding="utf-8"))["X Corp"]["display_name"] == "Stale"
+    # verify present, no ok row for the name -> the publish itself clears it
+    (tmp_path / "board_verify.json").write_text(json.dumps(
+        {"other co|u": {"verdict": "ok", "employer_named": "Other Co", "date": TODAY}}),
+        encoding="utf-8")
+    F.save_shared({"X Corp": {**REC, "display_name": "Stale"}})
+    assert "display_name" not in json.load(open(export, encoding="utf-8"))["X Corp"]

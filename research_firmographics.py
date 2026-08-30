@@ -185,33 +185,35 @@ def main():
         ap.error("--budget-min must be a finite number >= 0 (0 means no bound)")
     t0 = time.time()        # the RUN's clock, from here: `minutes` in the stamp is wall time
 
-    st = SeenStore()
-    today = dt.date.today().isoformat()
-
     if a.display_report:
-        # The operator's review channel for the divergent pile: every ok+named verify row
-        # resolved to its record key (the join --export applies) and put through the same
-        # rule, grouped by verdict, nothing written.
+        # The operator's review channel for the divergent pile: the NEWEST verify row per
+        # name (any verdict — a later refusal supersedes an old ok) resolved to its record
+        # key and put through the same rule --export applies. Nothing written, no store
+        # opened (a report must have zero side effects, wave 1b).
         verify = BV.load(os.path.join(HERE, BV.PATH))
         recs, _status = load_shared_status()
-        index, idents = {}, {}
+        index = {}
         for k in recs:
             index.setdefault(str(k).lower(), []).append(k)
-            idents.setdefault(identity_key(k), []).append(k)
+        idents = F._identity_index(recs)
         rows = {}
         for key, row in verify.items():
-            if isinstance(row, dict) and row.get("verdict") == "ok" \
-                    and str(row.get("employer_named") or "").strip():
+            if isinstance(row, dict):
                 name = str(key).split("|", 1)[0]
                 stamp = (str(row.get("date") or ""), str(key))
                 if name not in rows or stamp > rows[name][0]:
-                    rows[name] = (stamp, str(row["employer_named"]).strip())
+                    rows[name] = (stamp, row)
         buckets = {"write": [], "absent": [], "report": []}
         unmatched = 0
-        for name, (_s, named) in sorted(rows.items()):
+        for name, (_s, row) in sorted(rows.items()):
             keys = index.get(name.lower(), [])
             if len(keys) != 1:
-                unmatched += 1
+                unmatched += bool(row.get("verdict") == "ok")
+                continue
+            named = str(row.get("employer_named") or "").strip()
+            if row.get("verdict") != "ok" or not named:
+                buckets["absent"].append(
+                    (keys[0], named or "(no name)", "newest-verdict-%s" % row.get("verdict")))
                 continue
             verdict, payload = F.display_name_from_evidence(keys[0], named)
             if verdict == "write":
@@ -227,6 +229,9 @@ def main():
         print(f"overrides: {len(F.DISPLAY_NAME_OVERRIDES)} "
               f"({', '.join(sorted(F.DISPLAY_NAME_OVERRIDES))})")
         return
+
+    st = SeenStore()
+    today = dt.date.today().isoformat()
 
     if a.export:
         # the UNION, atomically — the local table alone overwrote the file and deleted

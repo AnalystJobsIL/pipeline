@@ -33,7 +33,10 @@ import os
 import re
 import unicodedata as _ud
 
+from pipeline import board_verify as _board_verify
 from pipeline.company_identity import _acronym
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # "growth-private" means venture/growth-STAGE — Bosch and EY are private but not that;
 # without "private-enterprise" the by_stage axis folds century-old giants into startup stats
@@ -979,9 +982,12 @@ def display_name_from_evidence(registry_name, employer_named):
         return "report", "empty-stem"
     if sc == sr:
         return "write", cand             # case/punct/suffix-only: Abbvie -> AbbVie
-    if len(sc) >= 3 and sc in sr:
+    # containment counts only at an EDGE: 'faye' ends 'withfaye', 'bluewhite' starts
+    # 'bluewhiterobotics'; a mid-string hit is an accident ('ace' is inside 'facebook')
+    edge = lambda sub, whole: whole.startswith(sub) or whole.endswith(sub)  # noqa: E731
+    if len(sc) >= 3 and sc in sr and edge(sc, sr):
         return "write", cand             # brand-shorter: Faye <- withfaye
-    if len(sr) >= 3 and sr in sc:
+    if len(sr) >= 3 and sr in sc and edge(sr, sc):
         extra = len(identity_key(cand).split()) - len(identity_key(reg).split())
         if extra <= 1:
             return "write", cand         # Leumit Health -> Leumit Health Services
@@ -1002,38 +1008,47 @@ def apply_display_names(records, verify):
     board_verify keys its rows by a LOWERCASED name and this store is keyed by the cased
     registry string, so the join resolves through a lowercase index of `records` — the
     verdict must judge the real registry name, or every case-only difference reads as a
-    fix. A lowercase collision between two record keys is skipped, never guessed."""
+    fix. A lowercase collision between two record keys is HELD (neither written nor
+    cleared — an ambiguous read must not become a destructive write, wave 1b). The NEWEST
+    verify row per name decides, whatever its verdict: an `ok` that a later `NOT_THEIRS`
+    superseded is evidence withdrawn, not evidence (wave 1b found `Y-Axis` written off a
+    page that now refuses the row)."""
     rep = {"written": 0, "added": 0, "removed": 0, "divergent": [], "unmatched": 0,
            "skipped": not verify}
-    derived = {}
+    derived, hold = {}, set()
     if verify:
-        index, idents = {}, {}
+        index = {}
         for k in records:
             index.setdefault(str(k).lower(), []).append(k)
-            idents.setdefault(identity_key(k), []).append(k)
+        idents = _identity_index(records)
         latest = {}
         for key, row in verify.items():
-            if not isinstance(row, dict) or row.get("verdict") != "ok":
-                continue
-            named = str(row.get("employer_named") or "").strip()
-            if not named:
+            if not isinstance(row, dict):
                 continue
             name = str(key).split("|", 1)[0]
             stamp = (str(row.get("date") or ""), str(key))
             if name not in latest or stamp > latest[name][0]:
-                latest[name] = (stamp, named)
-        for name, (_stamp, named) in sorted(latest.items()):
+                latest[name] = (stamp, row)
+        for name, (_stamp, row) in sorted(latest.items()):
             keys = index.get(name.lower(), [])
-            if len(keys) != 1:
-                rep["unmatched"] += 1    # no record yet (self-heals), or an ambiguous twin
+            if not keys:
+                rep["unmatched"] += 1        # no record yet — self-heals as research grows
                 continue
+            if len(keys) > 1:
+                hold.update(keys)            # ambiguous case-twin: touch neither record
+                rep["unmatched"] += 1
+                continue
+            named = str(row.get("employer_named") or "").strip()
+            if row.get("verdict") != "ok" or not named:
+                continue                     # newest word is a refusal: nothing to claim
             verdict, payload = display_name_from_evidence(keys[0], named)
             if verdict == "write":
-                # a derived name whose identity is ANOTHER record's is the impersonation
-                # shape (wave 1a: 'Trigo Retail' -> 'Trigo' beside the active row `Trigo`,
-                # 'kelasys' -> 'Kela Technologies' beside `KELA`): refuse it here; the
-                # duplicate row itself is registry's to park (487's class). Overrides are
-                # exempt on purpose — hand-curated, and render's identity guard backstops.
+                # a derived name whose identity is ANOTHER company's — a firmographics
+                # record's or a registry row's — is the impersonation shape (wave 1a:
+                # 'Trigo Retail' -> 'Trigo' beside the active row `Trigo`; wave 1b: Teva,
+                # whose row has no record). Refuse it here; the duplicate row itself is
+                # registry's to park (487's class). Overrides are exempt on purpose —
+                # hand-curated, and render's identity guard backstops.
                 ik = identity_key(payload)
                 if ik != identity_key(keys[0]) and ik in idents:
                     rep["divergent"].append(
@@ -1045,8 +1060,9 @@ def apply_display_names(records, verify):
     for name, val in DISPLAY_NAME_OVERRIDES.items():
         if name in records:
             derived[name] = val
+            hold.discard(name)
     for name, rec in records.items():
-        if not isinstance(rec, dict):
+        if not isinstance(rec, dict) or name in hold:
             continue
         want = derived.get(name)
         if want:
@@ -1058,6 +1074,25 @@ def apply_display_names(records, verify):
             del rec[DISPLAY_NAME_KEY]
             rep["removed"] += 1
     return rep
+
+
+def _identity_index(records):
+    """identity_key -> [names], over the firmographics records AND every registry row —
+    a collision with a row that has no record yet is still a collision (wave 1b: `Teva
+    Pharmaceutical` deriving `Teva Pharmaceutical Industries`, a parked registry row)."""
+    idents = {}
+    for k in records:
+        idents.setdefault(identity_key(k), []).append(k)
+    try:
+        import csv
+        with open(os.path.join(_ROOT, "companies.csv"), encoding="utf-8-sig") as f:
+            for r in csv.DictReader(f):
+                n = (r.get("company_name") or "").strip()
+                if n and n not in records:
+                    idents.setdefault(identity_key(n), []).append(n)
+    except Exception:  # noqa: BLE001 — no registry beside the store: records-only index
+        pass
+    return idents
 
 
 def fold_sectors(records):
@@ -1089,12 +1124,26 @@ def sync_store(st, run_date, shared=None):
 
 def save_shared(records):
     """Write the union back to the committed export (sorted, so the diff is readable).
-    Returns True iff the file on disk now holds `records`. The temp name carries the pid:
+    Returns True iff the file on disk now holds `records` (plus the display-name pass —
+    see below). The temp name carries the pid:
     the digest and the local chain both write this file on the laptop, and a shared
     `.tmp` let one publish the other's half-written buffer; a failed `os.replace` (Windows
-    refuses it while any reader holds the file) must not leave a `.tmp` in a tracked dir."""
+    refuses it while any reader holds the file) must not leave a `.tmp` in a tracked dir.
+
+    Every write re-runs `apply_display_names` on a copy, so EVIDENCE is the authority at
+    every file write, whoever the publisher is. Without this the digest's own publish
+    (which never ran the pass) resurrected a cleared name from the sqlite side via
+    `merge`'s fill-forward, and the 10:17 cron cleared it again — two committed flips a
+    day, forever (wave 1b). A caller that already ran the pass loses nothing: the pass is
+    idempotent on the same evidence."""
     if not records:
         return False
+    records = {k: (dict(v) if isinstance(v, dict) else v) for k, v in records.items()}
+    try:
+        verify = _board_verify.load(os.path.join(_ROOT, _board_verify.PATH))
+    except Exception:  # noqa: BLE001 — an unreadable verify must never block a publish
+        verify = {}
+    apply_display_names(records, verify)
     path = os.path.abspath(SHARED_EXPORT)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = f"{path}.{os.getpid()}.tmp"

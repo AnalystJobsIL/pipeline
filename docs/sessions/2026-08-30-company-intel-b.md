@@ -24,13 +24,14 @@ consequence.
 ## 2. What shipped
 
 - `pipeline/firmographics.py`: `display_name_from_evidence` (the rule),
-  `apply_display_names` (the single writer), `DISPLAY_NAME_OVERRIDES` (4 rows),
+  `apply_display_names` (the single writer — re-run inside every `save_shared`, 3c),
+  `DISPLAY_NAME_OVERRIDES` (4 rows), `_identity_index` (records ∪ registry rows),
   `fold_sectors`, `_EVIDENCE_EXEMPT`, and `_coerce` lower-casing `sector`.
 - `research_firmographics.py`: the pass runs in `--export` after the superset guard and
   before both writes; `--display-report` prints the full write/absent/report triage;
   the export prints `display_names=N (+A/-R) divergent=D sectors_folded=S`.
 - `cloud_state/firmographics.json` materialized in the same commit.
-- 8 guards in `tests/test_company_intel.py`, all KILLS under `tools/guard_kill.py`.
+- 10 guards in `tests/test_company_intel.py`, all KILLS under `tools/guard_kill.py`.
 
 **Evidence arms, and only these.** (1) `cloud_state/board_verify.json`'s `employer_named`
 — an LLM's read of the company's OWN careers page, quote-required, `verdict == "ok"` only
@@ -45,19 +46,22 @@ reported, never written: a confidently wrong name is worse than a slug.
 
 **Counts, measured at the fold (re-derive with `--display-report`):** 908 verify rows →
 559 ok+named → 341 resolve to a record (267 have no record yet — the pass self-heals as
-coverage and research grow) → after wave 1a's cuts (§3b) **72 written · 55 reported ·
-the rest absent** (identical / all-caps styling / casing-not-richer). The first cut wrote
-104; the audit removed 32, and the SAME pass retracted them — the clear-on-no-evidence
-semantics doing exactly its job on its first day. Sector case-fold: **565** records
-changed; 0 mixed-case sectors remain.
+coverage and research grow) → after both waves' cuts (sections 3b/3c below) **71 written ·
+56 reported · the rest absent** (identical / all-caps styling / casing-not-richer /
+newest-verdict-not-ok). The first cut wrote 104; the audits removed 33, and the SAME pass
+retracted every one — the clear-on-no-evidence semantics doing exactly its job on its
+first day. Sector case-fold: **565** records changed; 0 mixed-case sectors remain.
 
 ## 3. Three behaviours the tests pin, and why
 
-1. **Set AND clear.** `merge` fills the winner's empties from the loser, so a wrong
-   display_name could never be retracted by re-research (render's wave found this). The
-   pass is authoritative at export: evidence withdrawn → field withdrawn next run. An
-   unreadable verify (`load` → `{}`) applies overrides only and clears NOTHING — a corrupt
-   read must never become a destructive write.
+1. **Set AND clear, at EVERY publish.** `merge` fills the winner's empties from the
+   loser, so a wrong display_name could never be retracted by re-research (render's wave
+   found this) — and wave 1b then measured that an export-only pass loses anyway: the
+   digest's own publish resurrects a cleared name from the sqlite side, two committed
+   flips a day. So `save_shared` itself re-runs the pass on a copy: evidence is the
+   authority at every file write, whoever the publisher. An unreadable verify (`load` →
+   `{}`) applies overrides only and clears NOTHING — a corrupt read must never become a
+   destructive write.
 2. **`_EVIDENCE_EXEMPT`.** `_evidence` feeds `newer()` ties, `merge` winners and
    `display_index` rank; a record gaining a cosmetic key must not switch which record
    answers for an identity group (the AWS-over-Amazon class, already in the module's own
@@ -99,6 +103,38 @@ and fixed the same evening, each with a rule and a pinned test
 Clean under attack: zero Hebrew leakage, zero domain-shaped writes, all 4 overrides
 verified against their evidence, and the report bucket's direction of error is right (it
 correctly held `QuantLR`←`HEQA Security`, `UserWay`←`Level Access`, `Outbrain`←`Teads`).
+
+## 3c. Wave 1b — an opus code attack found the structural ones
+
+Each fixed the same evening, pinned by `test_wave1b_verdicts_edges_and_boundaries_hold`
+and `test_save_shared_applies_the_display_pass_so_no_publisher_can_resurrect`:
+
+- **The flip loop** (MED-HIGH): the digest's publish path never ran the pass, so a
+  cleared name resurrected from sqlite via `merge`'s fill-forward at ~05:30 and the
+  10:17 cron cleared it again — two committed flips a day, structurally certain once a
+  named record is re-researched. Fix: `save_shared` re-runs the pass on a copy at every
+  write. Rejected alternatives: exempting `display_name` from fill-forward (breaks
+  legitimate survival across re-research) and stripping it in `_record` (leaves the
+  digest's union resurrecting mid-run anyway).
+- **A stale ok out-ranked a newer refusal**: `Y Axis Global`→`Y-Axis` was written off a
+  page whose newest verdict is NOT-THEIRS. The newest row per name now decides whatever
+  its verdict. The mirror (transient UNVERIFIABLE clears for ≤7 days) is accepted:
+  absent is honest, wrong is not.
+- **The twin skip was destructive**: an ambiguous case-twin's records lost their
+  existing name in the pop loop. Twins are now HELD — neither written nor cleared.
+- **Registry rows without records escaped the collision index**: `Teva Pharmaceutical`
+  derived the parked `Teva Pharmaceutical Industries` row's identity. `_identity_index`
+  now unions `companies.csv` names in.
+- **Mid-string containment** (`("Facebook","Ace")` would write): containment now counts
+  only at an edge (`faye` ends `withfaye`).
+- **The strongest surviving mutation** — deleting the `verdict == "ok"` filter kept all
+  8 tests green (the one test that looked like it pinned it was refusing via the name
+  rule instead). Now pinned directly, plus every numeric boundary the wave listed as
+  silently widenable (min/max length, the 5-letter all-caps cap, containment ≥ 3,
+  acronym ≥ 2, strict casing `>`, both umbrella words).
+- Report hygiene: `--display-report` no longer opens `state/seen.db`.
+- Accepted, documented: `BV.load`'s default arg binds at def time — call sites must pass
+  the path (a bare `BV.load()` would silently read the tracked file in tests).
 
 ## 4. The 8 rows, one by one
 
@@ -146,8 +182,8 @@ was already in board_verify). Claude LLM calls 0. SerpApi 0. `companies.csv` unt
 
 ## 8. Verification
 
-Local from the worktree at `deb030c`: lane suite 148 passed; `tools/guard_kill.py --base
-origin/master` → 7 of 7 KILLS; full gates + CI verdict recorded in HANDOFF.md's line and
-the morning-check row due 2026-09-01 (`display_names=104 (+0/-0) divergent=43
+Local from the worktree at `deb030c`: lane suite 151 passed; `tools/guard_kill.py --base
+origin/master` → 10 of 10 KILLS; full gates + CI verdict recorded in HANDOFF.md's line and
+the morning-check row due 2026-09-01 (`display_names=71 (+0/-0) divergent=56
 sectors_folded=0` expected in the unattended `firmo_drain` log — the delivery-bar proof).
 The pass is idempotent: a second `--export` produced a byte-identical file.
