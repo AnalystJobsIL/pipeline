@@ -44,7 +44,7 @@ from pipeline import stages
 from pipeline.atomic import write_csv_rows, write_json
 from pipeline.companies import load_companies
 from pipeline.notes import append as _note_append, replace_own as _note_replace
-from scrape_universal import COMPANY_BUDGET_S, scrape_result
+from scrape_universal import COMPANY_BUDGET_S, _ip_shaped, scrape_result
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the
@@ -150,11 +150,10 @@ def _code(res):
     return str(res.get("error") or "").removeprefix("partial:")
 
 
-def _ip_shaped(code):
-    """The runner's ADDRESS was refused, not the page: a wall, a 403/429, or a listing whose
-    position pages could not be opened. The listing-hunt runs on the same address, so parking
-    such a row only re-finds the same URL and re-parks it a week later (design critic, 2026-08-25)."""
-    return code.startswith(("links:", "block:")) or code in ("http:403", "http:429")
+
+# `_ip_shaped` lives in `scrape_universal` (imported above): `_classify` and this file's
+# shape/park logic must agree on what "the ADDRESS was refused" means, and two copies
+# drifting is how a wall got booked as an empty page (lakeFS http:403, 2026-08-30).
 
 
 def _runner_shaped(code):
@@ -590,6 +589,16 @@ def _apply_result(row, res, old, rot, today, st: RunState):
     st.spend["llm_skipped"] += int(res.get("llm_skipped") or 0)
     st.spend["unlock_calls"] += int(res.get("unlock_calls") or 0)
     st.spend["unlock_ok"] += int(res.get("unlock_ok") or 0)
+    if res["status"] == "empty" and _ip_shaped(_code(res)):
+        # the belt to `_classify`'s own fix: an "empty" that carries an ip-shaped refusal
+        # code is a wall that answered the plain client a decoy 200 (lakeFS, Nokia,
+        # Schneider Electric on 2026-08-30 — 5 nights each as `why: empty` while
+        # `health.overnight_verdict` had the fetch-error verdict waiting on the word
+        # "error"). An unread board is an error night, whatever a stale or foreign
+        # scrape_universal said; ip-shaped never parks, so this can only make rows LOUDER.
+        # (dict(...) and not a literal: `_never_ran` is the ONE builder of error results,
+        # and a source assertion holds it to that — this line flips a status, builds nothing.)
+        res = dict(res, status="error")
     jobs = None if res["status"] == "error" else res["jobs"]   # ERROR != confirmed-empty
     il = [j for j in (jobs or []) if israel.is_israel_job(j)]
     # a partial read: yesterday's fuller list stays and tonight is an error — for at most

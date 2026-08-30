@@ -2698,6 +2698,23 @@ blind spots no health rule can see: a `site` that moved to another business unit
 Eightfold `?domain=` that serves a different tenant with real postings — both are
 registry-validation problems.
 
+**The rot entry is the scraper's verdict — the seam** (lane: `scraper`, 2026-08-30). A
+`cloud_state/scrape_rot.json` entry is `{since, why, n, last, error, found, http}` plus
+optionally `shape` (`links|ip|weak|runner|page`), `ip_since`, `partial_n`, `embed`,
+`ip_announced`: `why` ∈ {`empty`, `error`}; `n` is observed nights of THIS shape;
+`since`/`last` are ISO dates; `error` is the last machine code; `found` is jobs seen before
+the Israel filter; `http` the main document's status. Four invariants a reader (the
+board-freshness verdict `ats-fetch` is building included) may rely on: **(1)** a
+`why: error` row was NOT read — no verdict about the board's content, staleness or
+emptiness may be derived from its absence from `scraped_cache.json`; **(2)** `why: empty`
+never coexists with an ip-shaped `error` code (`http:403`/`429`, `block:*`, `links:*`) —
+enforced since 2026-08-30 by `scrape_universal._plain_proves_empty` and a belt in
+`_apply_result` (before that, lakeFS sat 5 nights as `why: empty` beside `error: http:403`
+— a wall booked as a measurement; entries written earlier may still violate this until
+their row is re-scraped); **(3)** absent from the cache AND from rot = never visited (the
+`unvisited` construction); **(4)** an entry older than 2 days (`health._ROT_FRESH_DAYS`)
+is not a verdict — the two lanes agree on that number in `pipeline/health.py`.
+
 **And one the rot file cannot answer either: the baseline is an all-time high, so a change in
 what the scraper can EXTRACT latches as a regression.** On 2026-08-26 thirty scrape rows
 flipped to `regressed-to-zero` in one night, all with a rot entry saying `empty, found 0` —

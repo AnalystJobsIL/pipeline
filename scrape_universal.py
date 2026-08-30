@@ -1914,6 +1914,27 @@ def _readable(html):
     return len(html or "") >= 2000 and not _blocked_by(html)
 
 
+def _ip_shaped(code):
+    """The runner's ADDRESS was refused, not the page: a wall, a 403/429, or a listing whose
+    position pages could not be opened. The listing-hunt runs on the same address, so parking
+    such a row only re-finds the same URL and re-parks it a week later (design critic,
+    2026-08-25). One home — `refresh_scrape_cache` imports it back: `_classify` and the
+    refresh's shape/park logic must agree on what "ip-shaped" means."""
+    return code.startswith(("links:", "block:")) or code in ("http:403", "http:429")
+
+
+def _plain_proves_empty(r):
+    """May the un-rendered page stand in for a refused render? Only when it shows a jobs
+    section — or says outright there are none. A WAF that refuses the browser answers the
+    plain client 200 too, with a decoy or a JS shell `_readable` cannot tell from a page:
+    lakeFS rendered http:403, plain 200 marketing shell, and the row was booked "empty" for
+    5 nights while `health.overnight_verdict` had a `fetch-error` verdict waiting on the
+    word "error" (2026-08-30)."""
+    return (r.plain_status == 200 and _readable(r.plain_html)
+            and bool(_JOBS_SIGNAL.search(r.plain_html or "")
+                     or _NO_JOBS.search(r.plain_html or "")))
+
+
 def _classify(r: Rendered, jobs):
     """(status, error) for a finished bundle — see the table in ARCHITECTURE.md §5a."""
     if jobs:
@@ -1928,12 +1949,14 @@ def _classify(r: Rendered, jobs):
         code = r.error or f"http:{r.http_status}"
         # the render failed but the un-rendered server answered 200 with a real page: the page
         # is reachable and (as far as plain HTML can tell) has no roles. A JS shell that needs
-        # the failed browser is still possible; documented as the one judgement call.
-        if r.plain_status == 200 and _readable(r.plain_html) and not r.unlocker_ok:
+        # the failed browser is still possible; documented as the one judgement call — and an
+        # ip-shaped refusal no longer gets it on `_readable` alone (`_plain_proves_empty`).
+        if r.plain_status == 200 and _readable(r.plain_html) and not r.unlocker_ok \
+                and (not _ip_shaped(code) or _plain_proves_empty(r)):
             return "empty", code
         return "error", code
     wall = _blocked_by(r.page_html)
-    if wall and not (r.plain_status == 200 and _readable(r.plain_html)):
+    if wall and not _plain_proves_empty(r):
         return "error", f"block:{wall}"
     if not (r.page_html or r.blobs or r.bodies or r.dom or r.plain_html):
         return "error", "render:blank"          # a 200 with nothing in it is not a page we read

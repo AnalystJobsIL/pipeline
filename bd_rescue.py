@@ -44,12 +44,10 @@ def _reached_note(base):
 
 
 def _load_secrets():
-    p = os.path.join(ROOT, "secrets.env")
-    if os.path.exists(p):
-        for line in open(p, encoding="utf-8"):
-            if "=" in line and not line.strip().startswith("#"):
-                k, v = line.strip().split("=", 1)
-                os.environ.setdefault(k, v)
+    # BACKLOG 468 applied 2026-08-30 (`scraper` lane, cross-lane debt rule): the one loader,
+    # so `AJIL_SECRETS` arms a worktree run too. `setdefault` semantics preserved inside.
+    from pipeline import secretsenv
+    secretsenv.load(ROOT)
 
 
 # what the LAST unlock reported: "" on success, else `policy_20140` (the host is closed to

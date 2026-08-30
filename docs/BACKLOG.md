@@ -79,7 +79,7 @@ closure convention in the header.
 | 242 | `242@company-intel` closed · `242@registry` **open** · `242@registry` **open** |
 | 243 | `243@roles` **open** · `243@ats-fetch` **open** · `243@scraper` **open** |
 | 244 | `244@company-intel` closed · `244@ats-fetch` **open** · `244@scraper` **open** |
-| 245 | `245@company-intel` closed · `245@ats-fetch` **open** · `245@scraper` **open** |
+| 245 | `245@company-intel` closed · `245@ats-fetch` **open** · `245@scraper` closed |
 | 246 | `246@company-intel` closed · `246@registry` **open** |
 | 311 | `311@infra` **open** · `311@ats-fetch` **open** |
 | 368 | `368@registry` **open** · `368@infra` **open** |
@@ -340,12 +340,11 @@ closure convention in the header.
 - **494** `494@infra` **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
 - **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
 
-### scraper — 30 open
+### scraper — 28 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
 - **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **154** `154@scraper` **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
 - **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
 - **219** `219@scraper` **Strategy 5's model, measured once**
 - **220** `220@scraper` **A `links:` carry has no ceiling**
@@ -355,7 +354,6 @@ closure convention in the header.
 - **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
 - **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
 - **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
-- **245** `245@scraper` **The synthetic worker dicts do not carry the fields the real one does**
 - **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
 - **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
 - **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
@@ -428,6 +426,28 @@ closure convention in the header.
 - **467** `467@docs` **`check_unattended_proof` still returns silently on a runner**
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
+
+### ats-fetch — 19 open
+
+- **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
+- **1** `1@ats-fetch` **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
+- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
+- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
+- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
+- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
+- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
+- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
+- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
+- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
+- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded**
+- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** —
+- **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
+- **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
+- **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
+- **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
+- **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
+- **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
+- **503** `503@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 
 ### company-intel — 19 open
 
@@ -2819,7 +2839,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     `except OSError: pass`; a kill mid-write leaves a truncated baseline, `_load` reads `{}`,
     every board's high-water mark resets to 0 and `regressed-to-zero` can never fire again.
     `pipeline.atomic.write_json` is three lines away. Found by the 2026-08-25 hand-over audit.
-154. **`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the
+154. ~~**`cloud_state/scrape_rot.json` has no reader, so a scrape ERROR reads as `empty` in the**~~ — struck 2026-08-30 (`scraper`): the closure below landed on 08-26 (`health.record` reads the rot file, `pipeline/health.py`) but the title was never struck, so the per-lane index kept listing it open.
     **Measured 2026-08-26 (`scraper`):** the `ats-fetch` lane is adding the reader in `pipeline/health.py` (`overnight_verdict` from the rot entry's `{why, n, last, error, found, http}` — uncommitted in the same tree as this note was written); the fields are unchanged and the new `links:*` codes arrive through `error`. The rot file now also carries `links:*` codes for rows whose positions could not be opened, and the `collect` stamp carries `links_unread=N`, so the `Boards` line's `regressed-to-zero` for a scrape row can be checked against `errors=`/`links_unread=` on the same mail. The reader is still `ats-fetch`/`infra`'s.
     `Boards` lines** — lane: `scraper` + `ats-fetch`. `fetch_scrape` returns `[]` for
     **CLOSED 2026-08-26 (`ats-fetch`; nothing left for `scraper`):** `health.record` reads the rot file for scrape rows with an empty cache (`overnight_verdict`): a fresh `why: error` relabels a `regressed-to-zero` as `fetch-error` with the scraper's reason (`scrape: http:403 (1 night)`), `why: empty` with `found > 0` withdraws it (never announced as `cleared`), entries older than 2 days are ignored, and a row with baseline 0 gets no flag (18 such rows on 08-26 — item 208). Replay of the committed 08-25 files: 59 → 56 stale rows (Akamai, Bright Security relabelled; Wiliot withdrawn; Questar, myInterview via item 79). No run.py change.
@@ -3942,12 +3962,14 @@ re-derive again before acting.
     exactly the rows BACKLOG 215 (`scraper` 2026-08-26) asks the operator to read. Pre-existing, and reachable more
     often now that 23 of 81 boards run strategy 4 (wave-1 attacker A).
 
-245. **The synthetic worker dicts do not carry the fields the real one does** — lane:
-    `scraper`. `_result_of`'s `pool:` dict and the inline `hang:` dict omit `weak_read`,
-    `llm_skipped` and `rescued`; `_worker`'s `except` branch omits `weak_read`. Nothing breaks
-    today because every consumer uses `.get()`, and the next reader who uses `[]` will get a
-    `KeyError` on exactly the paths that fire only in the cloud (wave-1 attacker C). One
-    shared builder for "a result that never ran" would end the class.
+245. ~~**The synthetic worker dicts do not carry the fields the real one does**~~ — **CLOSED
+    2026-08-30 (`scraper`): already done on 2026-08-26 evening and the item never struck** —
+    `refresh_scrape_cache._never_ran` is the one builder (its docstring cites this number),
+    used by `_worker`'s except, the hang path and `_result_of`, and
+    `test_refresh_a_company_that_never_ran_has_one_shape` pins the shape. Lane:
+    `scraper`. `_result_of`'s `pool:` dict and the inline `hang:` dict omitted `weak_read`,
+    `llm_skipped` and `rescued`; `_worker`'s `except` branch omitted `weak_read` (wave-1
+    attacker C). One shared builder for "a result that never ran" ended the class.
 
 247. **The foreign-place vocabulary is a list, and a list is never finished** — lane:
     `scraper`. `_FOREIGN_PAGE_RX` is what tells a global board from an Israeli one, and it
@@ -8813,6 +8835,10 @@ the rebase (a collision is what 241–246 are).
      ```
      `tests/conftest.py:73`'s comment enumerating four copies is `infra`'s to trim when the
      last copy goes. Closes 438 when applied.
+     **Applied to `bd_rescue.py` 2026-08-30 (`scraper`, cross-lane debt rule)** — a worktree
+     scrape run now arms under `AJIL_SECRETS` (and `validate_bd`, which imports
+    `bd_rescue._load_secrets`, with it). `bd_employees.py:41` and `pipeline/jdfill.py:89`
+     remain — their lanes' three-line diffs above still stand.
 
 469. **The brief's lane table does not name the files the mutation gate failed on** — lane:
      `docs`. `confirm_zero.py`, `queue_disposition.py`, `queue_state.py`, `apply_proposals.py`,
@@ -9216,3 +9242,16 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      translation is a product choice. If decided, it is a separate field with its own
      meaning (e.g. `display_name_en`), never `display_name` overwriting the original —
      and the render fallback chain is `render`'s to extend.
+
+507. **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
+     judging the row stale or empty** — lane: `ats-fetch`. Filed 2026-08-30 (`scraper`),
+     carrying 208 forward with tonight's census. A fresh `why: error` entry means the board
+     was NOT READ — surface it as `fetch-error`/unreadable, never as stale or empty; today
+     `health.overnight_verdict` consults rot only for a row whose cache is empty AND whose
+     baseline is > 0, so the 21 rows at `why: error` with no cache entry (2026-08-30:
+     `http:404` x9, `http:403` x9, `goto:TimeoutError` x2, `http:429` x1) surface nowhere
+     but `collect: errors=`. Field semantics and the four invariants a reader may rely on:
+     ARCHITECTURE.md §5a, "The rot entry is the scraper's verdict — the seam" (invariant 2
+     is enforced from 2026-08-30; three older entries — lakeFS, Nokia, Schneider Electric —
+     violated it and self-correct on their next scraped night). Do not build the reader in
+     the scraper lane.

@@ -2118,9 +2118,11 @@ def test_scrape_never_raises_and_scrape_result_reports_the_failure(monkeypatch):
     (dict(http_status=None, error="goto:TimeoutError", plain_status=403, plain_html=""), [], "error"),
     # walls that answer 200: Akamai "Access Denied" (Nokia's and Akamai's own careers pages,
     # captured 2026-08-24), a Cloudflare challenge — unless plain HTTP got a readable page
+    # that SHOWS a jobs section (2026-08-30: `_readable` alone let a decoy shell through)
     (dict(http_status=200, page_html="<html><head><title>Access Denied</title></head><h1>Access Denied</h1></html>"), [], "error"),
     (dict(http_status=200, page_html='<title>Just a moment...</title><div class="cf-browser-verification">'), [], "error"),
-    (dict(http_status=200, page_html="<h1>Access Denied</h1>", plain_status=200, plain_html="<html>" + "x" * 3000), [], "empty"),
+    (dict(http_status=200, page_html="<h1>Access Denied</h1>", plain_status=200, plain_html="<html>Current openings:" + "x" * 3000), [], "empty"),
+    (dict(http_status=200, page_html="<h1>Access Denied</h1>", plain_status=200, plain_html="<html>" + "x" * 3000), [], "error"),
     (dict(http_status=None, error="goto:TimeoutError", plain_status=200, plain_html="<h1>Access Denied</h1>" + "x" * 3000), [], "error"),
     # a 200 with nothing captured at all is not a page we read
     (dict(http_status=200, page_html="", blobs=[], bodies=[], dom=[]), [], "error"),
@@ -23269,3 +23271,47 @@ def test_next_reads_origin_master_and_the_gate_refuses_a_collision_this_branch_a
     got = bl.new_collisions(rebased, base)
     assert list(got) == [5] and {i.title for i in got[5]} == {"**theirs**", "**mine**"}, got
     assert bl.new_collisions(rebased, None) == {}, "no base: nothing to judge, never red"
+
+
+# --- scraper lane, 2026-08-30: a location is the posting's own or nothing; error != empty ---
+
+
+def test_scrape_a_wall_serving_a_decoy_page_is_an_error_not_an_empty_board():
+    """lakeFS on 2026-08-30: the render was refused http:403, plain HTTP got a 200 marketing
+    shell, and `_classify` booked the night "empty" — so `scrape_rot.json` read `why: empty`
+    beside `error: http:403`, and `health.overnight_verdict` (which relabels an error night
+    `fetch-error`) never fired. An ip-shaped refusal may read as empty only when the plain
+    page SHOWS a jobs section, or says outright there are no openings."""
+    import scrape_universal as N
+    shell = "<html><body><h1>Data, versioned</h1>" + "x" * 3000 + "</body></html>"
+    r = _rendered(http_status=403, plain_status=200, plain_html=shell)
+    assert N._classify(r, []) == ("error", "http:403")
+    honest = "<html><body>We have no open positions at this time.</body></html>" + "y" * 3000
+    r2 = _rendered(http_status=403, plain_status=200, plain_html=honest)
+    assert N._classify(r2, []) == ("empty", "http:403")
+    # a non-ip refusal (a slow site, honestly empty in plain HTML) keeps the old judgement
+    r3 = _rendered(http_status=None, error="goto:TimeoutError", plain_status=200,
+                   plain_html=shell)
+    assert N._classify(r3, []) == ("empty", "goto:TimeoutError")
+
+
+def test_refresh_a_rot_entry_never_reads_empty_with_an_ip_shaped_code():
+    """The artefact behind BACKLOG 228's lakeFS note: `why: "empty"` beside
+    `error: "http:403"` — a wall misfiled as a measurement (lakeFS, Nokia, Schneider
+    Electric, 5 nights each). The belt in `_apply_result` — independent of `_classify`,
+    which a stale worker tree could bypass — books such a night as an error: rot
+    `why: error`, the stamp counts it in `errors`, and, ip-shaped never parking, the row
+    is not parked."""
+    import refresh_scrape_cache as R
+    st, rot = R.RunState(), {}
+    res = {"name": "lakeFS", "jobs": [], "status": "empty", "error": "http:403",
+           "http_status": 403, "strategy": "", "seconds": 1.0}
+    R._apply_result({"company_name": "lakeFS"}, res, {}, rot, "2026-08-30", st)
+    assert rot["lakeFS"]["why"] == "error" and rot["lakeFS"]["shape"] == "ip"
+    assert st.counts["errors"] == 1 and st.counts["empty"] == 0 and not st.parked
+    # a goto-timeout empty (Aquarius Engines) is NOT ip-shaped and stays a measurement
+    st2, rot2 = R.RunState(), {}
+    R._apply_result({"company_name": "Aquarius Engines"},
+                    {**res, "name": "Aquarius Engines", "error": "goto:TimeoutError",
+                     "http_status": None}, {}, rot2, "2026-08-30", st2)
+    assert rot2["Aquarius Engines"]["why"] == "empty" and st2.counts["empty"] == 1
