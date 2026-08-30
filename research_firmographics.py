@@ -4,6 +4,7 @@
     python research_firmographics.py --limit 25         # research a batch
     python research_firmographics.py                    # research all missing
     python research_firmographics.py --refresh-days 365 # also re-research stale records
+    python research_firmographics.py --budget-min 60    # launch no new call after 60 min
 
 Each company is one `claude -p` call (web search allowed, ~1-3 min), run on a small
 thread pool and saved to the store as each finishes — safe to Ctrl-C and rerun; already-
@@ -20,8 +21,10 @@ import argparse
 import datetime as dt
 import json
 import os
+import math
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 
 # the 6-hourly chain redirects stdout to a log file, which makes Python pick cp1252 on
 # Windows — a Hebrew company name in a print then kills the whole run (UnicodeEncodeError)
@@ -158,11 +161,26 @@ def main():
                     help="also re-research records older than this many days")
     ap.add_argument("--dry-run", action="store_true", help="only report, no research")
     ap.add_argument("--export", action="store_true", help="write the union to cloud_state/firmographics.json and exit")
+    # A wall-clock bound beside the count bound (2026-08-30). `--limit` is a proxy for the
+    # thing the 120-minute job actually runs out of, and a proxy misses in both directions:
+    # 08-28 added 155 active rows in one day against a cap of 150, and a queue of 40 that
+    # times out per call costs 40 x 240 s regardless of the cap. Names are LAUNCHED only
+    # while the budget lasts; a call already in flight finishes and is saved. Everything
+    # left is counted in the stamp as `left`, which is what makes a late or truncated run
+    # legible the next morning instead of a green step.
+    ap.add_argument("--budget-min", type=float, default=0.0,
+                    help="stop launching new research calls after this many minutes (0 = no bound)")
     a = ap.parse_args()
     if a.limit is not None and a.limit < 0:
         # argparse accepts `--limit -5`, and the workflow_dispatch input is free text.
         # `todo[:-5]` then attempts 152 of 157 names while the run announces "-5 to do".
         ap.error("--limit must be >= 0 (0 means unbounded)")
+    if not (a.budget_min >= 0) or math.isinf(a.budget_min):
+        # `nan < 0` is False, so a plain sign check let `--budget-min nan` through: it
+        # launched nothing, stamped `budget_min: NaN` into a committed JSON file (not JSON),
+        # and wrote the health heartbeat (wave-1)
+        ap.error("--budget-min must be a finite number >= 0 (0 means no bound)")
+    t0 = time.time()        # the RUN's clock, from here: `minutes` in the stamp is wall time
 
     st = SeenStore()
     today = dt.date.today().isoformat()
@@ -313,8 +331,20 @@ def main():
             # the 08-29 cron does its job, returns here, and the 08-30 mail would have said
             # `firmo never ran`. That is the false alarm this lane rejected two commits
             # earlier, rebuilt in the replacement for it.
-            stages.stamp("firmo", researched=0, failed=0, records=len(have))
+            # ...and in the SAME shape as the main stamp, or a drained queue reads as the
+            # dead-cron shape the numbers were added to tell apart. An empty NAME list
+            # against a non-empty store is not a drained queue, it is a registry that read
+            # as nothing (CLAUDE.md rule 2) -- and it used to stamp as a healthy night.
+            # `not names` alone: companies.csv always has rows, and requiring a non-empty
+            # store as well disarmed this on the double mass-zero -- registry AND export
+            # both unreadable -- which is the worst morning, not the exempt one (wave-2)
+            _empty = ({"alarm": f"empty-registry(0 names read, {len(have)} records held)"}
+                      if not names else {})
+            stages.stamp("firmo", researched=0, failed=0, records=len(have),
+                         todo=0, attempted=0, left=0, gated=len(gated), names=len(names),
+                         minutes=round((time.time() - t0) / 60, 1), **_empty)
         return
+    queued = len(todo)          # the whole queue this run set out to clear, BEFORE any cap
     if a.limit:
         todo = todo[: a.limit]
 
@@ -329,61 +359,116 @@ def main():
     done_names = set()
     infra_streak = infra_errors = 0
     failed_names = []
-    with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
-        futs = {ex.submit(research_company, name, "", 240, meta): name for name in todo}
-        for fut in as_completed(futs):
-            name = futs[fut]
-            try:
-                rec = fut.result()
-            except ResearchUnavailable as e:
-                # infrastructure outage (CLI logged out, network): NOT the name's fault —
-                # no firmo_failed stamp, and 3 in a row means everything else will fail
-                # too, so stop burning the queue and let the next chain run retry cleanly
-                infra_streak += 1
-                infra_errors += 1
-                print(f"UNAVAILABLE {name}: {e} (no failure recorded)", flush=True)
-                if infra_streak >= 3:
-                    print("3 consecutive infrastructure errors — aborting run; nothing was gated", flush=True)
-                    ex.shutdown(cancel_futures=True)
-                    break
-                continue
-            infra_streak = 0
-            if rec:
-                if name in have:
-                    # FIELD-GENERIC merge-preserve: a degraded re-research (out-of-enum
-                    # stage coerced to "", founded not re-found) must never regress a
-                    # validated value to empty — for ANY field, not just employee counts.
-                    # A fresh non-empty value always wins; only empties inherit.
-                    old = have[name]
-                    fresh_count = bool(rec.get("employees_global"))
-                    for k, ov in old.items():
-                        if ov in ("", None) or k == "as_of":
-                            continue
-                        if fresh_count and k in ("employees_lookup_miss", "employees_linkedin_miss",
-                                                 "employees_source", "employees_as_of",
-                                                 "employees_range", "size_band_pre_linkedin"):
-                            continue  # companions describe the OLD count; a fresh count
-                            # clears the gates and supersedes the old provenance
-                        if rec.get(k) in ("", None):
-                            rec[k] = ov
-                    if rec.get("employees_global"):
-                        # the one bypass left: an INHERITED count next to the fresh record's
-                        # own band — re-derive so the band/count invariant holds everywhere
-                        rec["size_band"] = band_for(rec["employees_global"])
-                st.save_firmographics({name: rec}, today)  # main thread owns sqlite
-                done += 1
-                done_names.add(name)
-                print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}", flush=True)
-            else:
-                failed += 1
-                failed_names.append(name)
-                print(f"FAIL {name} (strike pending)", flush=True)
+    launch_t0 = time.time()
+    deadline = launch_t0 + a.budget_min * 60 if a.budget_min else None
+    pending, queue, attempted, aborted = {}, list(todo), 0, False
+
+    def _record(rec, name):
+        """One finished call -> the store, the counters, one `ok`/`FAIL` line."""
+        nonlocal done, failed
+        if rec:
+            if name in have:
+                # FIELD-GENERIC merge-preserve: a degraded re-research (out-of-enum
+                # stage coerced to "", founded not re-found) must never regress a
+                # validated value to empty — for ANY field, not just employee counts.
+                # A fresh non-empty value always wins; only empties inherit.
+                old = have[name]
+                fresh_count = bool(rec.get("employees_global"))
+                for k, ov in old.items():
+                    if ov in ("", None) or k == "as_of":
+                        continue
+                    if fresh_count and k in ("employees_lookup_miss", "employees_linkedin_miss",
+                                             "employees_source", "employees_as_of",
+                                             "employees_range", "size_band_pre_linkedin"):
+                        continue  # companions describe the OLD count; a fresh count
+                        # clears the gates and supersedes the old provenance
+                    if rec.get(k) in ("", None):
+                        rec[k] = ov
+                if rec.get("employees_global"):
+                    # the one bypass left: an INHERITED count next to the fresh record's
+                    # own band — re-derive so the band/count invariant holds everywhere
+                    rec["size_band"] = band_for(rec["employees_global"])
+            st.save_firmographics({name: rec}, today)  # main thread owns sqlite
+            done += 1
+            done_names.add(name)
+            print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}", flush=True)
+        else:
+            failed += 1
+            failed_names.append(name)
+            print(f"FAIL {name} (strike pending)", flush=True)
+
+    def _stamp_kwargs():
+        return dict(researched=done, failed=failed, records=len(have) + done, todo=queued,
+                    attempted=attempted, left=queued - attempted, unavailable=infra_errors,
+                    gated=len(gated), minutes=round((time.time() - t0) / 60, 1),
+                    budget_min=a.budget_min)
+
+    try:
+        with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
+            # LAZY submission: the old `{ex.submit(...) for name in todo}` handed the whole
+            # queue to the pool at once, so a budget could only be enforced by cancelling
+            # futures, and `--limit` was the only thing standing between a 155-name night and
+            # the job's own 120-minute timeout. Keep `workers` calls in flight, launch the next
+            # only while the clock allows, and let whatever is in flight finish and save.
+            def _launch():
+                nonlocal attempted
+                while queue and not aborted and len(pending) < max(1, a.workers) \
+                        and (deadline is None or time.time() < deadline):
+                    name = queue.pop(0)
+                    pending[ex.submit(research_company, name, "", 240, meta)] = name
+                    attempted += 1
+            _launch()
+            while pending:
+                ready, _ = wait(list(pending), return_when=FIRST_COMPLETED)
+                for fut in ready:
+                    name = pending.pop(fut)
+                    try:
+                        rec = fut.result()
+                    except ResearchUnavailable as e:
+                        # infrastructure outage (CLI logged out, network): NOT the name's
+                        # fault -- no firmo_failed stamp, and 3 in a row means everything
+                        # else will fail too, so launch nothing more. What is IN FLIGHT is
+                        # still collected: `shutdown(cancel_futures=True)` here waited for
+                        # those calls anyway and then threw their paid answers away (wave-1).
+                        infra_streak += 1
+                        infra_errors += 1
+                        print(f"UNAVAILABLE {name}: {e} (no failure recorded)", flush=True)
+                        if infra_streak >= 3 and not aborted:
+                            print("3 consecutive infrastructure errors -- no more launches; "
+                                  "calls already in flight are kept", flush=True)
+                            aborted = True
+                        continue
+                    # sticky past the abort line: a late success must not un-abort the
+                    # run's verdict about its own infrastructure
+                    infra_streak = 0 if infra_streak < 3 else infra_streak
+                    _record(rec, name)
+                _launch()
+    except KeyboardInterrupt:
+        raise                   # an operator stopping the run is not a crash (wave-2): the
+                                # docstring promises "safe to Ctrl-C", and a stamp here would
+                                # put `crashed(KeyboardInterrupt)` into a TRACKED file
+    except BaseException as e:  # noqa: BLE001 -- the stamp is the only trace a crash leaves
+        # A crash between the first launch and the stamp used to leave YESTERDAY's stamp in
+        # place, and `stages.alarms("firmo", 2)` reads a one-day-old stamp as healthy: the
+        # 120-minute job timeout, an OOM, a locked sqlite in `_record` -- each silent for
+        # three mornings. Stamp what was done with the crash named, then re-raise.
+        stages.stamp("firmo", alarm=f"crashed({type(e).__name__})", **_stamp_kwargs())
+        raise
+    left = queued - attempted
+    minutes = (time.time() - t0) / 60
     # strikes are recorded only once the run proves it wasn't broken: neither an infra
     # abort nor an all-fail run (soft outage: exit-0 prose, broken WebSearch grant) is
     # evidence about company names
     struck, mass_failure = [], False
     if infra_streak >= 3:
         print(f"infra abort: {failed} soft failures NOT recorded")
+    elif done == 0 and attempted < queued and failed:
+        # the budget (or the cap) stopped the run BELOW the mass-failure guard: four refusals
+        # out of a 40-name soft outage are not four bad names, they are the first four of
+        # forty. This is the objection the 08-28 record raised against `--budget-min` and
+        # the lazy pool answered only half of (wave-1). No strikes, names retry next run.
+        print(f"truncated run produced nothing: {failed} failure(s) NOT recorded "
+              f"({attempted} of {queued} attempted -- below the mass-failure guard by construction)")
     elif failed >= 5 and done == 0:
         mass_failure = True
         print(f"mass-failure guard: {failed} failures, 0 successes — no strikes recorded "
@@ -426,9 +511,30 @@ def main():
     # field would have been silent on the exact morning it was built for.
     _alarm = ("infra-abort" if infra_streak >= 3 else
               "mass-failure" if mass_failure else "")
+    # A queue that was NOT empty and a run that produced NOTHING, for a reason neither guard
+    # above has a name for: a budget of zero, a cap that let nothing through, one or two
+    # unavailable calls below the abort line. Without this the stamp read exactly like a
+    # healthy zero-todo night (2026-08-30) -- the shape jd-text's enricher wore for four
+    # green nights. Wave 1 carved out "a handful of junk names all refused with every call
+    # answered" as routine; wave 2 showed that carve-out is exactly the soft-outage shape on
+    # the steady-state queue (strike-gated names never reach `todo`, so a 1-4 name queue is
+    # NEW rows, and 4 of 4 refused is an outage that also strikes 4 real names). Every
+    # all-fail night alarms; the text says "N failed", and a reader can tell one leftover
+    # junk name from a dead morning by the number.
+    if not _alarm and done == 0:
+        _alarm = (f"zero-produce({queued} to do, 0 researched, {failed} failed, "
+                  f"{infra_errors} unavailable, {left} unattempted)")
+    # `todo` is what the run set out to clear before any cap, `attempted` what it launched,
+    # `left` what it did not reach. The three are what the next morning's digest reads to
+    # tell "the cron drained the queue" from "the cron ran and left 99 behind" (08-28) --
+    # a run that starts twelve hours late, or not at all, has to be legible by its stamp.
     stages.stamp("firmo", researched=done, failed=failed, records=len(have) + done,
+                 todo=queued, attempted=attempted, left=left, unavailable=infra_errors,
+                 gated=len(gated), minutes=round(minutes, 1), budget_min=a.budget_min,
                  **({"alarm": _alarm} if _alarm else {}))
-    print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store")
+    print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store; "
+          f"{queued} to do, {attempted} attempted, {left} left ({minutes:.1f} min"
+          + (f" of a {a.budget_min:g}-min budget" if a.budget_min else "") + ")")
     if meta.get("calls"):
         models = ", ".join(
             "%s%s" % (m, "" if n == 1 else " x%d" % n)
@@ -446,7 +552,12 @@ def main():
     # errors) and it wasn't an all-fail soft outage. A 1-2 name run where EVERY attempt
     # was an infra failure never trips the 3-streak abort, so gating the stamp on the
     # abort alone let a dead login stamp "trustworthy" forever.
-    if done > 0 or (infra_errors == 0 and not (failed >= 5 and done == 0)):
+    # ...and zero attempts is not "every attempt reached the model": a budget already spent
+    # at the first launch check wrote the heartbeat with nothing proven (wave-1).
+    # ...nor is a truncated all-fail run: the no-strike branch above sits ahead of the
+    # mass-failure guard, so `mass_failure` stays False there and the old predicate wrote
+    # "proved good" over an 8-name night that failed 6 of 6 under a cap (wave-2)
+    if done > 0 or (attempted > 0 and infra_errors == 0 and failed < 5 and attempted == queued):
         _stamp_ok()
 
 

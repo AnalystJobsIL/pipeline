@@ -20,6 +20,7 @@ import re
 import sys
 
 from . import firmographics as _F
+from . import stages as _stages
 from .firmographics import (ResearchUnavailable, all_failures, display_index,  # noqa: F401
                             identity_key, load_shared_status, not_a_company, save_shared,
                             sync_store, union_store)
@@ -77,6 +78,7 @@ _RESEARCH_RESERVE_S = RESEARCH_MIN_S
 BLURB_RETRY_DAYS = 30      # a company the blurb model could not identify is asked again monthly
 STRIKE_RETRY_DAYS = 7      # a name research failed on is retried weekly
 SOFT_OUTAGE_MIN_FAILS = 3  # this many name-failures and no success in one run = not the names
+PURGE_MIN, PURGE_SHARE = 3, 0.05   # the purge's ceiling: more than max(3, 5 %) hits is a gate change
 # the classifier builds this string at seniority.py:531 as `llm-unavailable(<kind>: ...)`;
 # only the kind is load-bearing. Asking `classifier` for a `Classifier.off_kind` would
 # retire the regex -- filed, not assumed.
@@ -98,7 +100,50 @@ def _report():
             "unavailable_kind": "",
             "registry_backlog": 0, "llm_off_upstream": "", "failed_reasons": [],
             "cap": _knob("FIRMO_MAX_PER_RUN"), "budget_min": _knob("FIRMO_TIME_BUDGET_MIN", float),
-            "blurb_cap": _knob("BLURB_MAX_PER_RUN")}
+            "blurb_cap": _knob("BLURB_MAX_PER_RUN"),
+            # 2026-08-30: the gap with a DIRECTION, and the bulk cron's last stamp
+            "stopped_outage": 0, "blurbs_purged": 0,
+            "backlog_prev": None, "backlog_prev_date": "", "backlog_delta": None,
+            "cron": {}, "direction_unreadable": False}
+
+
+# ---- the two stamps this lane reads and writes -------------------------------------- #
+# `firmo` is written by the 10:00 UTC bulk cron (research_firmographics.py) and READ here;
+# `intel` is written here, every unscoped digest, so that tomorrow's digest can say which
+# way the gap moved. Both live in cloud_state/pipeline_stages.json, which the digest already
+# commits and persist_state merges per key. A `_meta` key in firmographics.json was
+# rejected (load_shared_status would flag the file `partial` and every writer would refuse
+# it); a new cloud_state file was rejected (it needs a persist_state.STRATEGY entry, which
+# is infra's); yesterday's digests/latest.md was rejected (parsing prose is how numbers
+# drift). The stamp file is the one place a per-run number already survives its runner.
+INTEL_STAGE = "intel"
+
+
+def _stage_detail(stage):
+    """The stamp for `stage` as a dict; {} when the key is absent (a first measurement); None
+    when the FILE is unreadable -- never raises. `stages.py` exposes age and alarms but not
+    the detail a stamp carries, and this lane needs the numbers. The two empty answers are
+    kept apart because they read differently in the mail: an absent key is "first
+    measurement", a corrupt file is a direction that cannot be known -- and a corrupt file
+    read as "first measurement" every morning would also disarm the one warning (wave-1)."""
+    try:
+        with open(_stages.PATH, encoding="utf-8") as f:
+            d = json.load(f)
+    except FileNotFoundError:
+        return {}
+    except Exception:  # noqa: BLE001 — bad JSON, a half-written file, permissions
+        return None
+    if not isinstance(d, dict):
+        return None
+    e = d.get(stage)
+    return e if isinstance(e, dict) else {}
+
+
+def _int(v, default=None):
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return default
 
 
 def _load_profiles(path):
@@ -173,9 +218,10 @@ class _Clock:
         return self.budget_s - (self.now() - self.t0)
 
 
-def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
+def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None, scoped=True):
     from . import company_info as _ci
-    company_info = {**st.load_company_info(), **_load_profiles(profiles_path)}
+    cached = st.load_company_info()
+    company_info = {**cached, **_load_profiles(profiles_path)}
     # A blurb ALREADY CACHED under a name that is not a company still renders: gating the
     # loop only stops us buying another one. cloud_state/seen.db holds
     # company_info['Tel Aviv'] = "Alma, a Sisram Medical company, ..." (cached 2026-08-25,
@@ -194,6 +240,36 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
         print(f"  [company-intel] blurb dropped, not a company: "
               f"{_ascii(', '.join(sorted(poisoned)), 200)}",
               file=sys.stderr, flush=True)
+    # ...and PURGED, once, where the writer is. The read-time drop printed `Tel Aviv` on
+    # every digest from 2026-08-25 to 2026-08-30 (a line a reader learns to skim, section
+    # 8), because nothing was allowed to delete the row. This hook runs INSIDE daily-digest,
+    # which IS seen.db's single writer -- the blurb-outage rollback below already deletes
+    # from this table. Only rows the STORE holds (company_profiles.json is not a store and
+    # keeps supplying its text either way), and never on a scoped run, which must leave
+    # every store alone. CEILING: `not_a_company` is built from two other lanes' lists
+    # (`looks_like_junk` is the registry's, `_IL_PLACES` the classifier's), and a widened
+    # predicate used to be a read-time drop that reverted with it -- now it is a DELETE
+    # of paid text. So the purge refuses a mass hit, like every merge in persist_state
+    # refuses a mass key drop, and prints the text it deletes so the step log can restore
+    # it (wave-1). One row on 2026-08-30 (`Tel Aviv`, of 121); the ceiling is 3 or 5 %.
+    purge = [c for c in poisoned if c in cached]
+    if purge and not scoped:
+        cap = max(PURGE_MIN, int(PURGE_SHARE * len(cached)))
+        if len(purge) > cap or len(purge) >= len(cached):     # never the whole store (wave-2)
+            print(f"  [company-intel] blurb purge REFUSED: {len(purge)} of {len(cached)} cached "
+                  f"names read as non-companies (ceiling {cap}) -- the gate, not the store, "
+                  f"is what changed", file=sys.stderr, flush=True)
+        else:
+            try:
+                for c in sorted(purge):
+                    print(f"  [company-intel] blurb purged, not a company: {_ascii(c, 60)} "
+                          f"| {_ascii(cached.get(c), 200)}", file=sys.stderr, flush=True)
+                st.conn.execute("DELETE FROM company_info WHERE company IN (%s)"
+                                % ",".join("?" * len(purge)), purge)
+                st.conn.commit()
+                rep["blurbs_purged"] = len(purge)
+            except Exception as e:  # noqa: BLE001 — a locked store must not cost the digest
+                print(f"  [company-intel] blurb purge skipped: {e!r}", file=sys.stderr, flush=True)
     board = {j["company"] for j in board_jobs}
     # one blurb per identity: "Meta" and "Meta Israel" are one company (both had paid)
     by_key = {}
@@ -257,6 +333,10 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None):
             rep["unavailable_after"] = i
             rep["unavailable_in"] = "blurbs"
             rep["unavailable_reason"] = str(e)
+            # the KIND was recorded for the research loop only, so the two consecutive
+            # `is_error (api_error_status=None)` mornings (08-28, 08-29) reached the mail
+            # with no word on whether the seam thought it was auth, drift or a blip
+            rep["unavailable_kind"] = getattr(e, "kind", "") or "transient"
             break
         company_info[company] = summ
         st.save_company_info({company: summ}, run_date)
@@ -332,9 +412,12 @@ def _research(st, targets, board_jobs, run_date, rep, clock=None):
             break
         if not done and len(failed_names) >= SOFT_OUTAGE_MIN_FAILS:
             # exit-0 prose, a revoked WebSearch grant: every answer so far failed and none
-            # succeeded — evidence about the infrastructure, not about three company names
+            # succeeded — evidence about the infrastructure, not about three company names.
+            # `stopped_outage`, not `skipped_budget`: the mail read the names this stop
+            # left as "skipped (budget 8m spent)" on a morning the budget was untouched,
+            # and the key the line was written to read was never written anywhere.
             rep["soft_outage"] = True
-            rep["skipped_budget"] = len(todo) - i
+            rep["stopped_outage"] = len(todo) - i
             break
         try:
             rec, why = research_company_detail(
@@ -429,7 +512,7 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
     rep["board_companies"] = len(board)
 
     company_info, still_missing = _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path,
-                                          clock)
+                                          clock, scoped=scoped)
     holder["company_info"] = company_info
 
     targets, rep["gated"], rep["gated_junk"] = _research_targets(
@@ -499,7 +582,64 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
     if rep["published"]:
         rep["export_records"] = len(firmo)
         rep["export_newest"] = max((str(r.get("as_of") or "") for r in firmo.values()), default="")
+    _direction(rep, scoped)     # last: a stamp that cannot be written must cost nothing above
     return company_info, firmo_display, rep
+
+
+def _direction(rep, scoped):
+    """The gap's DIRECTION, and the bulk cron's last word -- both from the stamp file.
+
+    "84" is a level; "84, +28 since yesterday" is the line that would have caught the
+    2026-08-30 morning a week earlier. The registry (`--census`) and jd-text both stamp a
+    direction; this lane printed a level. Yesterday's value is this lane's own `intel`
+    stamp, written at the end of every unscoped digest, so the comparison is against the
+    last DIGEST that counted -- which is what "since yesterday" means to a reader of the
+    mail, and survives a morning with no digest (the delta then spans two days and says
+    so by its date).
+
+    The `firmo` stamp is read here for its NUMBERS (`todo`/`attempted`/`left`, since
+    2026-08-30); its AGE is judged by `stages.alarms("firmo", 2)` in run.py and is not
+    re-judged here. Never raises: a gauge must never cost the mail."""
+    try:
+        prev = _stage_detail(INTEL_STAGE)
+        if prev is None:
+            # a corrupt stamp file: say so, and write NOTHING over it -- `stages.stamp`
+            # rebases on `{}` when it cannot read the file, and a digest writing daily
+            # would turn one truncated write into "collect never ran" about every stage
+            rep["direction_unreadable"] = True
+            return
+        cur = rep.get("registry_backlog")
+        today = _dt.date.today().isoformat()      # the stamp's own calendar (stages.py)
+        if isinstance(cur, int) and cur >= 0:
+            p = _int(prev.get("backlog"))
+            if p is not None:
+                rep["backlog_prev"] = p
+                rep["backlog_prev_date"] = str(prev.get("date") or "")
+                rep["backlog_delta"] = cur - p
+            # The day's FIRST measurement is the baseline; a second digest the same day
+            # (08-28 ran at 07:08 and 17:40 with the 10:00 cron between them) must not
+            # re-base it, or the next morning reports +27 for a day that moved -11 and
+            # arms the warning on a drain (wave-1). The delta still reads `prev`, so the
+            # second run reports the whole day's move against the morning.
+            if not scoped and str(prev.get("date") or "") != today:
+                _stages.stamp(INTEL_STAGE, backlog=cur, board=rep.get("board_companies", 0),
+                              researched=rep.get("researched", 0),
+                              blurbs=rep.get("blurbs_written", 0))
+        f = _stage_detail("firmo") or {}
+        if f:
+            rep["cron"] = {"age": _stages.age_days("firmo"), "date": str(f.get("date") or ""),
+                           "todo": _int(f.get("todo")), "attempted": _int(f.get("attempted")),
+                           "left": _int(f.get("left")), "researched": _int(f.get("researched"), 0),
+                           "failed": _int(f.get("failed"), 0), "alarm": str(f.get("alarm") or "")}
+    except Exception as e:  # noqa: BLE001
+        print(f"  [company-intel] gap direction not stamped: {e!r}", file=sys.stderr, flush=True)
+        # `stages.stamp` writes PATH + ".tmp" then `os.replace`s it; a replace that fails
+        # (Windows, while a reader holds the file) leaves the .tmp in a TRACKED directory
+        try:
+            if os.path.exists(_stages.PATH + ".tmp"):
+                os.remove(_stages.PATH + ".tmp")
+        except OSError:
+            pass
 
 
 def _ascii(s, n=80):
@@ -569,8 +709,9 @@ def _audit_lines(rep):
         k = rep["unavailable_after"]
         loop = rep.get("unavailable_in") or "research"
         left = c - rep["researched"] - rep["failed"]
+        kind = rep.get("unavailable_kind") or ""
         msg = (f"claude unavailable after {k} {loop} call{'' if k == 1 else 's'} "
-               f"({_ascii(rep['unavailable_reason'])}) — {left} unprofiled board "
+               f"({kind + ': ' if kind else ''}{_ascii(rep['unavailable_reason'])}) — {left} unprofiled board "
                f"compan{'y waits' if left == 1 else 'ies wait'} for the next run")
         parts.append(msg)
         warn.append(msg)
@@ -590,6 +731,8 @@ def _audit_lines(rep):
         b.append(f"{rep['blurbs_dropped']} cached under a non-company name, dropped")
     if rep.get("blurbs_refused"):
         b.append(f"{rep['blurbs_refused']} refused (not a company)")
+    if rep.get("blurbs_purged"):
+        b.append(f"{rep['blurbs_purged']} purged from the store (not a company)")
     parts.append("blurbs: " + ", ".join(b))
     llm = rep.get("llm") or {}
     if llm.get("calls"):
@@ -628,6 +771,16 @@ def _audit_lines(rep):
         _rb = rep.get("registry_backlog", 0)
         e += (f", registry backlog {_rb}" if isinstance(_rb, int) and _rb >= 0
               else ", registry backlog not counted")
+        # THE DIRECTION. A level is not a measurement: 74 -> 139 (08-28) and 25 -> 84
+        # (08-30) each read as a single plausible number on the morning they happened.
+        delta = rep.get("backlog_delta")
+        if isinstance(_rb, int) and _rb >= 0:
+            if isinstance(delta, int):
+                e += f" ({delta:+d} since {rep.get('backlog_prev_date') or '?'})"
+            elif rep.get("direction_unreadable"):
+                e += " (direction unknown: the stage stamp file is unreadable)"
+            else:
+                e += " (first measurement)"
         parts.append(e)
         # NOT "backlog > 0 and researched == 0": the digest researches BOARD companies, and
         # the registry backlog is drained by the 10:00 UTC cron, so that fired on every
@@ -672,4 +825,41 @@ def _audit_lines(rep):
                 if rep["export_status"] in ("corrupt", "partial") else ""))
         parts.append(e)
         warn.append(e)
+    delta = rep.get("backlog_delta")
+    _rb = rep.get("registry_backlog", 0)
+    cron = rep.get("cron") or {}
+    if cron:
+        # the bulk cron's last stamp, as FACTS: its age is `stages.alarms("firmo", 2)`'s
+        # to judge, but "61 researched of 67 to do, 6 left" is what tells a drained
+        # queue from a cap that let 99 names through untouched (run 33210826528)
+        age = cron.get("age")
+        when = f"{cron.get('date') or '?'} ({'today' if age == 0 else f'{age}d ago' if isinstance(age, int) else 'age unknown'})"
+        bits = [f"{cron.get('researched', 0)} researched"]
+        if isinstance(cron.get("todo"), int):
+            bits[0] += f" of {cron['todo']} to do"
+            if isinstance(cron.get("left"), int):
+                bits.append(f"{cron['left']} left")
+        if cron.get("failed"):
+            bits.append(f"{cron['failed']} failed")
+        if cron.get("alarm"):
+            bits.append(f"alarm {cron['alarm']}")
+        parts.append(f"bulk cron: last ran {when}, " + ", ".join(bits))
+    # The one warning this direction earns -- OUTSIDE the `export ok` branch: a corrupt
+    # export is a bad morning, and a bad morning is when the cron is likeliest to be dead
+    # too; wave 2 found the warning silenced by exactly that. The gap GREW and the only
+    # thing that drains it has not run since the day before yesterday. Either half alone is routine --
+    # every evening's intake grows the gap before the 10:00 cron sees it, and the cron
+    # firing eleven hours late is measured normal (+293..+662 min over its whole life).
+    # Not an absolute threshold: "backlog > N" was rejected twice as a warning that is
+    # always on.
+    # 3, to agree with `stages.alarms("firmo", 2)` on what "two consecutive misses"
+    # means: the freshest healthy stamp at 05:00 is yesterday's (age 1), one dropped
+    # slot is age 2 and routine, two is age 3. An unknown age (a stamp with no date) is
+    # not evidence of anything and warns nothing; the sentence above says "age unknown".
+    _age = cron.get("age") if cron else None
+    if isinstance(delta, int) and delta > 0 and (not cron or (isinstance(_age, int) and _age >= 3)):
+        warn.append(f"registry backlog grew {delta:+d} to {_rb} since "
+                    f"{rep.get('backlog_prev_date') or '?'} and the bulk cron "
+                    + ("has never run" if not cron else f"last ran {_age}d ago")
+                    + " — nothing is draining it")
     return [" · ".join(parts)], warn

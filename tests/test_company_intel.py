@@ -40,6 +40,10 @@ def env(tmp_path, monkeypatch):
     export = tmp_path / "firmographics.json"
     export.write_text("{}", encoding="utf-8")   # present and empty; tests that want it absent delete it
     monkeypatch.setattr(F, "SHARED_EXPORT", str(export))
+    # an unscoped run stamps `intel` (2026-08-30): the stamp file must be scratch too, or
+    # every test here writes the tracked cloud_state/pipeline_stages.json
+    from pipeline import stages as _stages
+    monkeypatch.setattr(_stages, "PATH", str(tmp_path / "stages.json"))
     calls = []
 
     def fake_claude(prompt, *, system="", schema="", model="", effort="", tools=(),
@@ -567,7 +571,10 @@ def test_a_blurb_outage_names_its_loop(env):
     fake.script = lambda p, t: F.ResearchUnavailable("timed out")
     _, _, rep = _run(st, [_job("A"), _job("B")])
     line = CI.audit_lines(rep)[0][0]
-    assert "claude unavailable after 0 blurbs calls (timed out)" in line and "0 research calls" not in line
+    # the KIND travels too since 2026-08-30: two mornings of `is_error (api_error_status=None)`
+    # reached the mail with no word on whether the seam thought it was auth or a blip
+    assert "claude unavailable after 0 blurbs calls (transient: timed out)" in line and "0 research calls" not in line
+    assert rep["unavailable_kind"] == "transient"
 
 
 def test_an_all_fail_research_run_warns_even_below_the_outage_threshold(env):
@@ -993,6 +1000,8 @@ def test_enrich_for_run_survives_a_malformed_budget_env(monkeypatch, tmp_path):
     is reachable from one line of secrets.env."""
     st = store.SeenStore(str(tmp_path / "t.db"))
     monkeypatch.setattr(F, "SHARED_EXPORT", str(tmp_path / "f.json"))
+    from pipeline import stages as _stages
+    monkeypatch.setattr(_stages, "PATH", str(tmp_path / "stages.json"))  # unscoped: it stamps
     for bad in ("8m", "", "abc", "5.0"):
         monkeypatch.setenv("FIRMO_TIME_BUDGET_MIN", bad)
         monkeypatch.setenv("FIRMO_MAX_PER_RUN", bad)
@@ -1736,3 +1745,350 @@ def test_a_partly_readable_export_is_not_described_as_sqlite_only():
     r["export_status"] = "corrupt"
     line = CI.audit_lines(r)[0][0]
     assert "sqlite only" in line and "file left untouched" in line
+
+
+# --- 2026-08-30: a run that starts twelve hours late, and a gap with a direction ---------
+def _bulk_env(tmp_path, monkeypatch, names, answer):
+    """`_stamp_env` with a non-empty queue: `names` are registry rows the export lacks and
+    `answer(name)` is what the fake researcher returns for each."""
+    R, stages = _stamp_env(tmp_path, monkeypatch, {})
+    monkeypatch.setattr(R, "load_companies",
+                        lambda **kw: [{"company_name": n, "ats_platform": "greenhouse"} for n in names])
+    monkeypatch.setattr(R, "research_company", lambda name, *a, **k: answer(name))
+    return R, stages
+
+
+def _firmo_stamp(stages):
+    return json.loads(open(stages.PATH, encoding="utf-8").read())["firmo"]
+
+
+def test_the_bulk_stamp_says_what_was_asked_not_only_what_was_done(tmp_path, monkeypatch):
+    """`researched=38` on 2026-08-28 read as a healthy night; the run had seen `139 to do`
+    and left 99 behind under the old cap, and nothing downstream could tell. The stamp now
+    carries the queue (`todo`), what was launched (`attempted`) and what was not (`left`)."""
+    R, stages = _bulk_env(tmp_path, monkeypatch, ["A", "B", "C"], lambda n: dict(REC))
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--limit", "2", "--workers", "1"])
+    R.main()
+    s = _firmo_stamp(stages)
+    assert (s["todo"], s["attempted"], s["left"], s["researched"]) == (3, 2, 1, 2)
+    assert "alarm" not in s and stages.alarms("firmo", 2) == []
+
+
+def test_a_wall_clock_budget_stops_launching_and_counts_what_it_left(tmp_path, monkeypatch):
+    """`--limit` is a proxy for the thing the job runs out of. A budget of ~30 ms with one
+    worker launches the first name, sees the clock spent, and leaves the rest -- and the
+    call already in flight still lands in the store."""
+    import time as _t
+    R, stages = _bulk_env(tmp_path, monkeypatch, ["A", "B", "C"],
+                          lambda n: (_t.sleep(0.05), dict(REC))[1])
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "1",
+                                      "--budget-min", "0.0005"])
+    R.main()
+    s = _firmo_stamp(stages)
+    assert s["researched"] == 1 and s["attempted"] == 1 and s["left"] == 2 and s["todo"] == 3
+    assert s["budget_min"] == 0.0005 and "alarm" not in s
+    # a negative budget is refused like a negative limit, not silently inverted
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--budget-min", "-1"])
+    with pytest.raises(SystemExit):
+        R.main()
+
+
+def test_a_non_empty_queue_that_produced_nothing_is_an_alarm_not_a_quiet_night(tmp_path, monkeypatch):
+    """The lane's own instance of the repo's signature defect (2026-08-30): a hypothetical
+    `researched=0` on a 67-name night was the same shape as a healthy zero-todo run. Two
+    names both refused is below the mass-failure guard (5), so no existing alarm named it."""
+    # a cap (or a budget) that stopped the run with nothing produced: an alarm -- and NO
+    # strikes, because a truncated run proved nothing about the names (wave-1, critical)
+    R, stages = _bulk_env(tmp_path, monkeypatch, ["A", "B", "C"], lambda n: None)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "1", "--limit", "2"])
+    R.main()
+    s = _firmo_stamp(stages)
+    assert s["alarm"] == "zero-produce(3 to do, 0 researched, 2 failed, 0 unavailable, 1 unattempted)"
+    assert stages.alarms("firmo", 2) == ["firmo " + s["alarm"]], "it must reach the Stages line"
+    assert F.load_failures()[0] == {}, "a truncated all-fail run struck names below the mass-failure guard"
+    # one or two unavailable calls, below the abort line, are named as such
+    R, stages = _bulk_env(tmp_path, monkeypatch, ["A", "B"],
+                          lambda n: (_ for _ in ()).throw(F.ResearchUnavailable("boom")))
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "1"])
+    R.main()
+    assert _firmo_stamp(stages)["alarm"] == "zero-produce(2 to do, 0 researched, 0 failed, 2 unavailable, 0 unattempted)"
+    # a small queue refused in full, every call answered: wave 1 called it routine, wave 2
+    # showed it is the soft-outage shape on the steady-state queue -- it alarms, and the
+    # names ARE struck (below the mass-failure guard, as before)
+    R, stages = _bulk_env(tmp_path, monkeypatch, ["A", "B"], lambda n: None)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "1"])
+    R.main()
+    assert _firmo_stamp(stages)["alarm"] == "zero-produce(2 to do, 0 researched, 2 failed, 0 unavailable, 0 unattempted)"
+    assert set(F.load_failures()[0]) == {"A", "B"}
+    # ...and the existing names keep their own alarm; zero-produce never overwrites them
+    R, stages = _bulk_env(tmp_path, monkeypatch, list("GHIJKLM"), lambda n: None)  # A, B are strike-gated now
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "1"])
+    R.main()
+    assert _firmo_stamp(stages)["alarm"] == "mass-failure"
+    # a healthy zero-todo night still stamps with no alarm (the guard two commits back)
+    R, stages = _stamp_env(tmp_path, monkeypatch, {"Wix": REC})
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
+    R.main()
+    assert "alarm" not in _firmo_stamp(stages)
+
+
+def test_the_backlog_line_carries_a_direction_and_a_scoped_run_never_stamps(env):
+    """"84" is a level; "84, +28 since yesterday" is the line that would have caught the
+    2026-08-30 morning a week earlier. Yesterday's value is this lane's own `intel` stamp."""
+    from pipeline import stages
+    st, _, _, _ = env
+    _, _, rep = _run(st, [_job("Wix")], all_companies={"Wix", "Ghost Co"}, use_llm=False)
+    assert rep["backlog_delta"] is None and "(first measurement)" in CI.audit_lines(rep)[0][0]
+    stamped = json.loads(open(stages.PATH, encoding="utf-8").read())[CI.INTEL_STAGE]
+    real_today = __import__("datetime").date.today().isoformat()   # the stamp's date, not TODAY's fixture
+    assert stamped["backlog"] == rep["registry_backlog"] and stamped["date"] == real_today
+    _, _, rep2 = _run(st, [_job("Wix")], all_companies={"Wix", "Ghost Co", "Other Co"},
+                      use_llm=False)
+    assert rep2["backlog_delta"] == 1 and rep2["backlog_prev_date"] == real_today
+    assert f"registry backlog {rep2['registry_backlog']} (+1 since {real_today})" in CI.audit_lines(rep2)[0][0]
+    # a scoped run reads the direction but writes nothing -- the same rule as the export.
+    # Against a FRESH stamp file, or the same-day first-writer rule would pass this for it
+    # (wave-2): no stamp file at all is a first measurement, never an error, and stays absent
+    os.remove(stages.PATH)
+    _, _, rep4 = _run(st, [_job("Wix")], use_llm=False, scoped=True)
+    assert rep4["backlog_delta"] is None and not rep4.get("error")
+    assert not os.path.exists(stages.PATH), "a scoped run stamped"
+
+
+def test_the_bulk_crons_last_stamp_is_read_as_facts_and_grew_plus_stale_is_the_one_warning(env):
+    """The cron's AGE is `stages.alarms("firmo", 2)`'s to judge (run.py, pinned). This line
+    reports its NUMBERS, and warns on exactly one shape: the gap grew AND the cron has not
+    run since the day before yesterday. Either half alone is routine."""
+    from pipeline import stages
+    st, _, _, _ = env
+    stages.stamp("firmo", researched=61, failed=6, records=1247, todo=67, attempted=67, left=0)
+    _, _, rep = _run(st, [_job("Wix")], all_companies={"Wix", "Ghost Co"}, use_llm=False)
+    line, warn = CI.audit_lines(rep)
+    real_today = __import__("datetime").date.today().isoformat()
+    assert f"bulk cron: last ran {real_today} (today), 61 researched of 67 to do, 0 left, 6 failed" in line[0]
+    assert not [w for w in warn if "nothing is draining" in w]
+
+    def warns(delta, age, cron=True):   # the pure truth table: (delta, age) -> warns?
+        r = {**CI._report(), "registry_backlog": 84, "backlog_delta": delta,
+             "backlog_prev_date": "2026-08-29", "published": True,
+             "cron": {"age": age, "date": "x", "researched": 0} if cron else {}}
+        return any("nothing is draining" in w for w in CI.audit_lines(r)[1])
+    # age 3, not 2: one dropped slot is age 2 and routine (run.py's `alarms("firmo", 2)`
+    # says the same); an unknown age is not evidence (wave-1)
+    assert warns(28, 3) and warns(28, 9) and warns(1, 5, cron=False)
+    assert not warns(28, 2) and not warns(28, 1) and not warns(28, None)
+    assert not warns(0, 3) and not warns(-5, 9) and not warns(None, 3)
+    r = {**CI._report(), "registry_backlog": 3, "published": True,
+         "cron": {"age": None, "date": "", "researched": 1}}
+    assert "bulk cron: last ran ? (age unknown), 1 researched" in CI.audit_lines(r)[0][0]
+    # an old-shape stamp (no `todo`) still renders, without inventing a queue
+    r = {**CI._report(), "registry_backlog": 3, "published": True,
+         "cron": {"age": 1, "date": "2026-08-29", "researched": 19, "failed": 4,
+                  "todo": None, "left": None, "alarm": "infra-abort"}}
+    assert "bulk cron: last ran 2026-08-29 (1d ago), 19 researched, 4 failed, alarm infra-abort" in CI.audit_lines(r)[0][0]
+
+
+def test_a_poisoned_blurb_is_purged_where_the_writer_is_and_never_on_a_scoped_run(env):
+    """`blurb dropped, not a company: Tel Aviv` printed on every digest from 2026-08-25 to
+    2026-08-30 because the read-time drop was not allowed to delete. This hook runs inside
+    daily-digest, seen.db's single writer, so the row is ours to remove -- once."""
+    st, _, _, _ = env
+    st.save_company_info({"Tel Aviv": "Alma, a Sisram Medical company, ...", "Wix": "Wix does X."}, TODAY)
+    _, _, rep = _run(st, [_job("Wix")], use_llm=False, scoped=True)
+    assert rep["blurbs_dropped"] == 1 and rep["blurbs_purged"] == 0
+    assert "Tel Aviv" in st.load_company_info(), "a scoped run must leave every store alone"
+    ci, _, rep = _run(st, [_job("Wix")], use_llm=False)
+    assert rep["blurbs_purged"] == 1 and "Tel Aviv" not in st.load_company_info()
+    assert "Tel Aviv" not in ci and ci["Wix"] == "Wix does X."
+    assert "1 purged from the store (not a company)" in CI.audit_lines(rep)[0][0]
+    _, _, rep = _run(st, [_job("Wix")], use_llm=False)
+    assert rep["blurbs_dropped"] == 0 and rep["blurbs_purged"] == 0, "once"
+
+
+def test_a_soft_outage_stop_is_reported_as_stopped_not_as_budget_spent(env):
+    """`stopped_outage` was read by the audit line and written nowhere: the names a soft
+    outage left unattempted were booked as `skipped (budget 8m spent)` on a morning the
+    budget was untouched."""
+    st, _, _, fake = env
+    fake.script = lambda p, t: "I'm not sure which company you mean." if t else "Co does X. It earns Y."
+    _, _, rep = _run(st, [_job(n) for n in "ABCDE"])
+    assert rep["soft_outage"] and rep["stopped_outage"] == 2 and rep["skipped_budget"] == 0
+    line = CI.audit_lines(rep)[0][0]
+    assert "2 not attempted (stopped)" in line and "skipped (budget" not in line
+
+
+def test_a_zero_attempt_run_writes_no_heartbeat_and_a_crash_still_stamps(tmp_path, monkeypatch):
+    """Two wave-1 criticals. A budget already spent at the first launch check satisfied
+    `infra_errors == 0` vacuously and wrote `state/firmo_last_ok.txt` -- the operator's
+    "infrastructure proved good" -- having proved nothing. And a crash anywhere between the
+    first launch and the stamp left YESTERDAY's stamp in place, which `alarms("firmo", 2)`
+    reads as healthy for three mornings."""
+    import time as _t
+    R, stages = _bulk_env(tmp_path, monkeypatch, ["A", "B"], lambda n: dict(REC))
+    beats = []
+    monkeypatch.setattr(R, "_stamp_ok", lambda: beats.append(1))
+    real_time = _t.time
+    tick = [real_time()]
+
+    def fast_clock():                     # +100 s per reading: the deadline set at one reading
+        tick[0] += 100                    # is already past at the next
+        return tick[0]
+    monkeypatch.setattr(R.time, "time", fast_clock)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--budget-min", "1"])
+    R.main()
+    s = _firmo_stamp(stages)
+    assert s["attempted"] == 0 and s["left"] == 2 and not beats, "zero attempts wrote the heartbeat"
+    assert s["alarm"].startswith("zero-produce(2 to do, 0 researched, 0 failed, 0 unavailable, 2 unattempted)")
+    monkeypatch.setattr(R.time, "time", real_time)
+    # a crash: the stamp names it and carries the counts so far, then the crash propagates
+    R, stages = _bulk_env(tmp_path, monkeypatch, ["A"], lambda n: (_ for _ in ()).throw(MemoryError("x")))
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "1"])
+    with pytest.raises(MemoryError):
+        R.main()
+    s = _firmo_stamp(stages)
+    assert s["alarm"] == "crashed(MemoryError)" and s["todo"] == 1 and s["attempted"] == 1
+    assert stages.alarms("firmo", 2) == ["firmo crashed(MemoryError)"]
+    # nan / inf budgets are refused, not written into a committed JSON file
+    for bad in ("nan", "inf"):
+        monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--budget-min", bad])
+        with pytest.raises(SystemExit):
+            R.main()
+
+
+def test_an_empty_registry_read_is_not_a_drained_queue(tmp_path, monkeypatch):
+    """`load_companies()` returning nothing (CLAUDE.md rule 2, the mass-zero) took the
+    healthy zero-todo early return and stamped a night indistinguishable from a drained
+    backlog. The early return now stamps the same shape as the main path, plus `names`."""
+    R, stages = _stamp_env(tmp_path, monkeypatch, {"Wix": REC})
+    monkeypatch.setattr(R, "load_companies", lambda **kw: [])
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
+    R.main()
+    s = _firmo_stamp(stages)
+    assert s["names"] == 0 and s["todo"] == 0 and s["alarm"] == "empty-registry(0 names read, 1 records held)"
+    assert stages.alarms("firmo", 2) == ["firmo " + s["alarm"]]
+    R, stages = _stamp_env(tmp_path, monkeypatch, {"Wix": REC})     # the healthy drained night
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
+    R.main()
+    s = _firmo_stamp(stages)
+    assert s["names"] == 1 and (s["todo"], s["attempted"], s["left"]) == (0, 0, 0) and "alarm" not in s
+
+
+def test_an_infra_abort_keeps_the_answers_already_in_flight(tmp_path, monkeypatch):
+    """`ex.shutdown(cancel_futures=True)` waited for the in-flight calls anyway and then
+    threw their paid answers away, while `attempted` had already counted them -- so `left`
+    under-reported by exactly the work that was lost (wave-1)."""
+    import threading
+    import time as _t
+    gate = threading.Event()
+
+    def answer(name):
+        if name == "D":
+            gate.wait(5)            # the slow success, in flight when the third failure lands
+            return dict(REC)
+        _t.sleep(0.01)
+        raise F.ResearchUnavailable("down")
+    R, stages = _bulk_env(tmp_path, monkeypatch, list("ABCDEFGH"), answer)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "4"])
+    timer = threading.Timer(0.3, gate.set)
+    timer.start()
+    R.main()
+    timer.cancel()
+    s = _firmo_stamp(stages)
+    assert s["researched"] == 1, "D's paid answer was thrown away by the abort"
+    assert s["alarm"] == "infra-abort" and s["unavailable"] >= 3 and s["left"] >= 1
+    # every launched call has a recorded outcome, and `left` is exactly what was never launched
+    assert s["attempted"] == s["researched"] + s["failed"] + s["unavailable"]
+    assert s["left"] == s["todo"] - s["attempted"]
+
+
+def test_a_second_digest_the_same_day_does_not_rebase_the_direction(env):
+    """08-28 ran at 07:08 and 17:40 with the 10:00 cron between them. Re-basing at 17:40
+    made the next morning read +27 for a day that moved -11 -- and armed the warning on a
+    DRAIN (wave-1). The day's first measurement is the baseline."""
+    from pipeline import stages
+    st, _, _, _ = env
+    _, _, rep = _run(st, [_job("Wix")], all_companies={"Wix", "A", "B", "C"}, use_llm=False)
+    first = json.loads(open(stages.PATH, encoding="utf-8").read())[CI.INTEL_STAGE]
+    _, _, rep2 = _run(st, [_job("Wix")], all_companies={"Wix", "A"}, use_llm=False)
+    assert rep2["backlog_delta"] == rep2["registry_backlog"] - first["backlog"] < 0
+    again = json.loads(open(stages.PATH, encoding="utf-8").read())[CI.INTEL_STAGE]
+    assert again == first, "the second run of the day re-based the baseline"
+
+
+def test_an_unreadable_stamp_file_is_said_and_never_overwritten(env):
+    """A corrupt stamp file read as `{}` printed `(first measurement)` forever and disarmed
+    the warning; and `stages.stamp` rebases on `{}`, so a digest writing daily would turn
+    one truncated write into "collect never ran" about every stage (wave-1)."""
+    from pipeline import stages
+    st, _, _, _ = env
+    open(stages.PATH, "w", encoding="utf-8").write('{"collect": {"date": "2026-08-3')
+    _, _, rep = _run(st, [_job("Wix")], all_companies={"Wix", "A"}, use_llm=False)
+    assert rep["direction_unreadable"] and rep["backlog_delta"] is None
+    assert "(direction unknown: the stage stamp file is unreadable)" in CI.audit_lines(rep)[0][0]
+    assert open(stages.PATH, encoding="utf-8").read() == '{"collect": {"date": "2026-08-3'
+
+
+def test_the_purge_has_a_ceiling_and_prints_what_it_deletes(env, capsys):
+    """`not_a_company` is built from two other lanes' lists; a widened predicate used to be a
+    read-time drop that reverted with it, now it is a DELETE of paid text. More than
+    max(3, 5 %) hits is a gate change, not a store problem: refuse, and say so (wave-1)."""
+    st, _, _, _ = env
+    rows = {f"Co{i}": f"Co{i} does things." for i in range(10)}
+    rows.update({"Tel Aviv": "Alma...", "Petah Tikva": "x", "Ramat Gan": "y", "Beer Sheva": "z"})
+    st.save_company_info(rows, TODAY)
+    _, _, rep = _run(st, [_job("Co1")], use_llm=False)
+    assert rep["blurbs_dropped"] == 4 and rep["blurbs_purged"] == 0
+    assert "blurb purge REFUSED: 4 of 14" in capsys.readouterr().err
+    assert len(st.load_company_info()) == 14, "a mass hit deleted paid text"
+    st.conn.execute("DELETE FROM company_info WHERE company IN ('Petah Tikva','Ramat Gan','Beer Sheva')")
+    st.conn.commit()
+    _, _, rep = _run(st, [_job("Co1")], use_llm=False)
+    assert rep["blurbs_purged"] == 1
+    assert "blurb purged, not a company: Tel Aviv | Alma..." in capsys.readouterr().err
+
+
+def test_wave_two_the_heartbeat_the_interrupt_the_empty_export_and_the_tiny_store(tmp_path, monkeypatch, env, capsys):
+    """Four wave-2 findings, one assertion each. (a) The no-strike branch for a truncated
+    all-fail run sits ahead of the mass-failure guard, so `not mass_failure` wrote the health
+    heartbeat over an 8-name night that failed 6 of 6 under a cap. (b) Ctrl-C is "safe" by
+    the docstring, and a `crashed(KeyboardInterrupt)` stamp in a TRACKED file is not. (c) The
+    empty-registry alarm required a non-empty store, which disarmed it on the double
+    mass-zero. (d) The purge ceiling let a 3-row store be emptied."""
+    R, stages = _bulk_env(tmp_path, monkeypatch, list("ABCDEFGH"), lambda n: None)
+    beats = []
+    monkeypatch.setattr(R, "_stamp_ok", lambda: beats.append(1))
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "1", "--limit", "6"])
+    R.main()
+    s = _firmo_stamp(stages)
+    assert s["alarm"].startswith("zero-produce(8 to do, 0 researched, 6 failed") and not beats
+    assert F.load_failures()[0] == {}, "a truncated all-fail run struck names"
+    # (b)
+    R, stages = _bulk_env(tmp_path, monkeypatch, ["Z"], lambda n: (_ for _ in ()).throw(KeyboardInterrupt()))
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "1"])
+    before = open(stages.PATH, encoding="utf-8").read()
+    with pytest.raises(KeyboardInterrupt):
+        R.main()
+    assert open(stages.PATH, encoding="utf-8").read() == before, "Ctrl-C stamped a crash"
+    # (c)
+    R, stages = _stamp_env(tmp_path, monkeypatch, {})
+    monkeypatch.setattr(R, "load_companies", lambda **kw: [])
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
+    R.main()
+    assert _firmo_stamp(stages)["alarm"] == "empty-registry(0 names read, 0 records held)"
+    # (d)
+    st, _, _, _ = env
+    st.save_company_info({"Tel Aviv": "a", "Petah Tikva": "b", "Ramat Gan": "c"}, TODAY)
+    _, _, rep = _run(st, [_job("Wix")], use_llm=False)
+    assert rep["blurbs_purged"] == 0 and len(st.load_company_info()) == 3
+    assert "blurb purge REFUSED: 3 of 3" in capsys.readouterr().err
+    assert CI.PURGE_MIN == 3 and CI.PURGE_SHARE == 0.05
+
+
+def test_the_grew_and_stale_warning_survives_a_corrupt_export():
+    """The warning sat inside the `export ok` branch, so the morning the export was corrupt
+    -- a bad morning, when the cron is likeliest to be dead too -- said nothing (wave-2)."""
+    r = {**CI._report(), "registry_backlog": 84, "backlog_delta": 28, "backlog_prev_date": "2026-08-29",
+         "export_status": "corrupt", "store_records": 5, "cron": {"age": 5, "date": "2026-08-25", "researched": 0}}
+    lines, warn = CI.audit_lines(r)
+    assert any("nothing is draining it" in w for w in warn)
+    assert "bulk cron: last ran 2026-08-25 (5d ago), 0 researched" in lines[0]

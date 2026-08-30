@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**496 filed · 363 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
+**500 filed · 367 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 449.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 453.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -210,7 +210,7 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 101 open
+### infra — 103 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -313,6 +313,8 @@ closure convention in the header.
 - **442** `442@infra` **The `guard` job no longer fits its 10-minute timeout, and a cancelled gate names
 - **444** `444@infra` **Nothing anywhere reports that master's own test gate is red**
 - **448** `448@infra` **The inline JD filler's paid rung is armed by default and CANNOT SPEND, because the step
+- **450** `450@infra` **`firmographics.yml`: the budget is not wired, one slot a day measures the gap before
+- **451** `451@infra` **`stages.stamp` rebases on `{}` when it cannot read the file, and the digest now writes
 
 ### scraper — 27 open
 
@@ -413,7 +415,7 @@ closure convention in the header.
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 
-### company-intel — 16 open
+### company-intel — 17 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -431,6 +433,7 @@ closure convention in the header.
 - **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
 - **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
+- **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
 
 ### jd-text — 13 open
 
@@ -463,7 +466,7 @@ closure convention in the header.
 - **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
 - **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
 
-### classifier — 8 open
+### classifier — 9 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **121** `121@classifier` **CLI start-up dominates the LLM tier's wall time**
@@ -473,6 +476,7 @@ closure convention in the header.
 - **373** `373@classifier` **A `strong` + `senior` title is accepted without ever being read, and the seam disagrees
 - **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
 - **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
+- **449** `449@classifier` **`pipeline/llm.py` discards the CLI's error envelope, so two mornings said `is_error
 
 ### render — 7 open
 
@@ -7978,3 +7982,66 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     `inline jd-fill: the paid rung is configured and UNUSABLE (no-key) with N postings the free
     rungs could not read` into the mail's bold `Stages:` line, so the first digest after this
     lands will say so itself.
+
+## From the `company-intel` lane, 2026-08-30 (the gap's direction)
+
+449. **`pipeline/llm.py` discards the CLI's error envelope, so two mornings said `is_error
+     (api_error_status=None)` and nothing else** — lane: `classifier` (shared plumbing; every
+     lane calls it). Claude Code 2.1.x has TWO result variants: the success one always carries
+     `result`; the ERROR one (`subtype` ∈ `error_during_execution | error_max_turns |
+     error_max_budget_usd | error_max_structured_output_retries`) carries **no `result` and
+     no `api_error_status` at all** and puts its only human-readable cause in `errors[]`
+     (read from the 2.1.251 bundle's zod schema; 2.1.241 not verified). `_invoke`
+     (`pipeline/llm.py:125-129`) reads `result` first and prints its own placeholder, so the
+     blurb loop's failures on the 08-28 (run 33193786610, after 2 good calls) and 08-29 (run
+     33250362574, call 0) digests are unknowable from the logs. Both took ~9.7 s ≈ 2× a normal
+     blurb — one attempt plus one fallback retry — which fits a structured-output retraction
+     on a refusal best; the classifier's 67 calls succeeded minutes earlier, so not auth.
+     Diff (compatible with every `startswith("Failed to authenticate")` pin):
+     `detail = str(data.get("result") or "").strip(); if not detail: errs =
+     data.get("errors"); first = next((str(e) for e in errs if e), "") if isinstance(errs,
+     list) else ""; detail = f"{data.get('subtype') or 'is_error'}: {first or 'stdout: ' +
+     ' '.join((proc.stdout or '').split())[:200]}"`. Record:
+     `docs/sessions/2026-08-30-company-intel.md` section 3.
+450. **`firmographics.yml`: the budget is not wired, one slot a day measures the gap before
+     it can drain, a failed job stamps nothing, and the CLI runs on an unsupported Node** —
+     lane: `infra`. (a) `research_firmographics.py --budget-min` exists since 2026-08-30 and
+     no workflow passes it; proposed `--budget-min 60` beside the kept `--limit 150`. (b) The
+     digest measures the gap at 05:00 and the only bulk producer fires once, 15:00–21:00 UTC
+     (+293…+662 min over its three runs), so every morning's `registry backlog` is the previous
+     evening's intake (08-30: 0 produced, +28 added); proposed second slot `0 23 * * *` after
+     the 19:00 hunt (+200 min) and 20:00 expand, ending before the 00:00 refresh wants
+     `repo-state`. (c) A research step that dies (the 120-min timeout, an OOM) now stamps
+     `crashed(<Type>)` from inside Python, but a step killed from outside still leaves
+     yesterday's stamp; proposed `if: failure()` step: `python -m pipeline.stages stamp firmo
+     alarm=step-failed`. (d) Both digest logs carry `npm warn EBADENGINE
+     '@anthropic-ai/claude-code@2.1.241' required node >=22.0.0, current v20.20.2` — not the
+     cause of 443, but an unpinned runtime under a pinned CLI. **Until this lands nothing
+     about the gap is automatic beyond one late slot a day**: the exact diff, so it is a
+     paste and not a design —
+     `on.schedule: + - cron: "0 23 * * *"`;
+     `research step: + --budget-min 60` (keep `--limit 150`);
+     `+ - name: Stamp the stage when the step died / if: failure() / run: python -m
+     pipeline.stages stamp firmo alarm=step-failed`;
+     `setup-node@v4 with node-version: 22` before the npm install.
+     Same text in `docs/sessions/2026-08-30-company-intel.md` section 5.
+451. **`stages.stamp` rebases on `{}` when it cannot read the file, and the digest now writes
+     it daily** — lane: `infra` (`pipeline/stages.py` is shared). `_load()` swallows every
+     read error; a half-written `cloud_state/pipeline_stages.json` followed by any stamp
+     writes a file holding only that stamp, and the next mail says `collect never ran`,
+     `firmo never ran` about crons that ran. The `intel` stamp (2026-08-30) refuses to write
+     when its own read failed, but every other writer does not; proposed: refuse to stamp when
+     the file exists and did not parse, print a `::warning::`. Also stale: the §4 writer table
+     for this file (`ARCHITECTURE.md` "one dict of independent stage keys") lists five keys and
+     the digest now writes a sixth, `intel`; and `docs/AGENT_BRIEF.md`'s lane table omits
+     `pipeline/company_intel.py`, which §7 names as one of the lane's three files (`docs`).
+452. **The blurb call hands up to 600 chars of scraped job text to a factual-identification
+     prompt, which is the shape most likely to draw a refusal or a fallback** — lane:
+     `company-intel`. `_context_for` → `firmographics._DATA` puts a posting's description
+     into the tool-less blurb call; 449's timing evidence (two calls at 2× the normal cost,
+     intermittent, same token that served 67 classifier calls) fits a structured-output
+     retraction on a refusal better than any outage. Decide with 449's diff landed and one
+     week of `subtype`s in the mail: if `error_max_structured_output_retries` /
+     `error_during_execution` dominate on blurbs, drop the context for blurbs (the facts
+     record already supplies `sub_sector`/`business_model`, and `derive_blurb` renders them
+     for free) or cap it to the first sentence. Not before the evidence exists.

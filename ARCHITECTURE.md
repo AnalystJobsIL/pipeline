@@ -2946,6 +2946,20 @@ false gaps today (20 against 4), because `display_index` already answers for "De
 python -c "import json,csv;from pipeline.firmographics import identity_key as k,display_index;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));i=display_index(d);a=[r['company_name'] for r in csv.DictReader(open('companies.csv',encoding='utf-8-sig')) if r['active'].strip().lower()=='true'];m=[n for n in a if not (d.get(n) or i.get(k(n)))];print(len(a),len(m),sorted(m))"
 ```
 
+**The gap, 2026-08-30 — a direction, not a level.** The active-rows gap was **84 by exact
+name and 68 through `identity_key`** that morning (the second is the join the workflow's own
+summary and the mail's `registry backlog` use), against **56 / 41** the morning before —
+and the 59 quoted as "yesterday" that day was 08-27's figure. Re-derived per day from the
+state commits, 08-23 → 08-30, exact / identity: 31/20 · 30/19 · 37/26 · 15/4 · 59/46 · 21/7
+· 56/41 · 84/68; profiles added vs active rows added per day, 08-24 → 08-30: 18/15 · 2/9 ·
+31/5 · 22/64 · 191/155 · 61/99 · 0/28. **The number is a schedule artefact before it is a
+capacity one**: the digest measures at 05:00 and the only bulk producer fires once a day at
+15:00–21:00 UTC (+293 … +662 min late over its whole life), so every morning's gap is the
+previous evening's intake (19:00 hunt, 20:00 expand) waiting for a cron that has not fired
+yet. The 08-29 cron cleared 61 of its 67-name queue; 150 a run against a 92-a-day median
+intake holds. What the number *cannot* say alone is which of the two it is, which is why the
+mail now prints the delta beside it and the cron's own stamp under it (below).
+
 Field gaps are small and named: `founded` null on 17, `employees_global` null on 24,
 `il_center` empty on 4 (7 / 4 / 4 before the 08-28 drain added 136 records). Every record has sector, sub_sector, stage, stage_note,
 business_model, customer_type and size_band.
@@ -3104,7 +3118,8 @@ used 2m22s). In order:
    share, never launches a call below `RESEARCH_MIN_S` (120 s, against 18–40 s measured), and
    a clamp-killed call is counted as budget, not as an outage;
 2. **blurbs** for board companies without one, one per identity, refusing any name that
-   `not_a_company` rejects and dropping any blurb already cached under such a name:
+   `not_a_company` rejects, dropping any blurb already cached under such a name and — on
+   an unscoped run — **purging** it from the store, once, under a ceiling (the gate section):
    `company_profiles.json` (hand-written, same junk rule) > sqlite > one call each, at most
    `BLURB_MAX_PER_RUN` (30). An empty answer is cached as `''` and retried **monthly**; three
    empties in a row stop the loop, and if nothing was written at all that is a blurb outage —
@@ -3124,24 +3139,29 @@ rehearsal that set them afterwards silently tested the defaults): `FIRMO_MAX_PER
 `FIRMO_TIME_BUDGET_MIN`, `BLURB_MAX_PER_RUN`.
 
 **Tier 2 — `.github/workflows/firmographics.yml`, 10:00 UTC daily, the bulk.** Runs
-`research_firmographics.py --workers 2 --refresh-days 180` on a runner and commits
+`research_firmographics.py --workers 2 --limit 150 --refresh-days 180` on a runner and commits
 `cloud_state/firmographics.json` and `cloud_state/firmo_failed.json` — never
 `cloud_state/seen.db`, which is
 `SINGLE_WRITER: daily-digest` in `persist_state.STRATEGY`, so a second writer would replace
 the runner's `matched` / `roles` / `llm_cache` tables wholesale; the digest's own `sync_store`
-seeds sqlite from the export next morning. It has its own job and nothing waits on it, so it
-needs no meaningful cap. `--workers 2`, not 3: `docs/BACKLOG.md` 97 records `529 Overloaded`
+seeds sqlite from the export next morning. It has its own job and nothing waits on it, so its bounds exist to keep it *inside the
+120-minute job*, not to protect a mail: `--limit 150` (a count) and, since 2026-08-30,
+`--budget-min` (a wall clock; the workflow does not pass it yet — the proposed
+`--budget-min 60` and a second `0 23 * * *` slot are `infra`'s, `docs/BACKLOG.md`).
+`--workers 2`, not 3: `docs/BACKLOG.md` 97 records `529 Overloaded`
 on 2 of 3 calls at 3. Research is one-time per company — nothing re-researches before
 **2027-02** at `--refresh-days 180` — so this drains a backlog rather than running a treadmill.
 **Whether this cron RAN at all is measured by `stages.stamp("firmo", ...)`, not by anything
-in the export.** `run.py` reads it back with `stages.alarms("firmo", 1)`, which puts it on the
+in the export.** `run.py` reads it back with `stages.alarms("firmo", 2)`, which puts it on the
 mail's alarm block beside `collect`, `repair` and `expand`. An earlier attempt read the
 export's newest `as_of` instead and was blind: the digest hook researches board companies too
 and `_coerce` stamps them with today's date, so that field moves on most mornings whether or
 not this job fired — on 2026-08-28, the day it did not fire, the 08:54 digest added two
-records dated 08-28 and carried `export_newest` from 08-27 to 08-28. 1 day, not 0, because the
-digest runs at 05:00 and this cron at 10:00, so the freshest possible stamp on any morning is
-yesterday's. It reports its own spend the way the digest hook does (`seam: <model> | N calls, Ns, N
+records dated 08-28 and carried `export_newest` from 08-27 to 08-28. 2, not 0 or 1: the digest runs at 05:00 and
+this cron at 10:00, so the freshest possible stamp on any morning is yesterday's, and one
+dropped slot is routine here (`infra` measured 4 of 5 crons dropped on 08-27) — two in a row
+is not. **A stamp's `alarm` key is surfaced whatever its age**, which is what every alarm
+below rides on. It reports its own spend the way the digest hook does (`seam: <model> | N calls, Ns, N
 searches[, N SEARCHLESS]`, and a `::warning::` on a searchless answer): it is the **main**
 spender now, and a job that spends the shared subscription invisibly is how the search mandate
 quietly stops holding. **Its failure memory is a committed file, `cloud_state/firmo_failed.json`, because a
@@ -3164,6 +3184,46 @@ the ledger says "researched since"; `persist_state.s_company_dict` is base-aware
 deliberate drop is honoured while a concurrent add by the digest is kept. It is written by
 read-modify-write and **refuses to write at all when the read was corrupt or partial**, since
 a snapshot written after a failed read deletes from origin every entry it failed to read.
+
+**What the stamp says since 2026-08-30 — what was asked, not only what was done.** Until
+then `stages.stamp("firmo", researched, failed, records)` read the same for a drained queue,
+a dead login and a cap that let 99 names through untouched (run 33210826528: `139 to do`,
+40 spent, `researched=38`). Now every path stamps one shape — `todo` (the queue before any
+cap), `attempted`, `left = todo − attempted`, `unavailable`, `gated`, `names`, `minutes`
+(the run's wall clock, not the pool's), `budget_min` — and names its own failure in `alarm`:
+
+| `alarm` | when | what it means |
+|---|---|---|
+| `infra-abort` | three consecutive infrastructure failures | no more launches; what was in flight is kept and saved (it used to be waited for and thrown away) |
+| `mass-failure` | ≥ 5 failures, 0 researched, every name attempted | a soft outage; no strikes |
+| `zero-produce(N to do, 0 researched, F failed, U unavailable, L unattempted)` | a non-empty queue and nothing produced, for a reason neither of the above names — a budget of zero, a cap or budget that cut the run short (then no strikes either: four refusals out of forty prove nothing about four names), one or two unavailable calls, or a small queue refused in full | wave 1 exempted "≤ 4 junk names all refused" as routine; wave 2 showed that is the soft-outage shape on the steady-state queue (strike-gated names never reach `todo`, so a small queue is *new* rows). Every all-fail night alarms; the number tells one leftover junk name from a dead morning |
+| `crashed(<Type>)` | any exception between the first launch and the stamp | a crash used to leave *yesterday's* stamp in place, which `alarms("firmo", 2)` reads as healthy for three mornings; the counts so far are stamped, then it re-raises |
+| `empty-registry(0 names read, N records held)` | `load_companies()` returned nothing against a non-empty store | CLAUDE.md rule 2; it used to take the healthy zero-todo early return |
+
+Three rules moved with it. **The pool is fed lazily** — at most `--workers` calls in flight,
+the next launched only while `--budget-min` allows — so a budget stops *launching* and
+never cancels a paid call. **A truncated run that produced nothing records no strikes**:
+four refusals out of a 40-name soft outage cut off by a budget are the first four of forty,
+not four bad names (the objection `docs/sessions/2026-08-28-company-intel.md` raised against
+`--budget-min`, answered in full this time). **The health heartbeat needs `attempted > 0`, every name attempted and fewer than five
+failures**: zero attempts satisfied "no infrastructure error" vacuously, and a truncated
+all-fail run sat ahead of the mass-failure guard, so both wrote "proved good" (waves 1, 2).
+
+**The digest reads the stamp back as facts, and stamps its own.** `company_intel._direction`
+puts the cron's numbers on the `Company intel:` line — `bulk cron: last ran 2026-08-29 (1d
+ago), 61 researched of 67 to do, 0 left, 6 failed` — and writes an `intel` stamp
+(`backlog`, `board`, `researched`, `blurbs`) so that *tomorrow's* digest can print the gap's
+direction: `registry backlog 68 (+27 since 2026-08-29)`. Only the day's **first**
+measurement is the baseline (08-28 ran at 07:08 and 17:40 with the cron between them; a
+re-base would have reported +27 for a day that moved −11). A scoped run reads and never
+writes; a corrupt stamp file is said (`direction unknown`) and never written over, because
+`stages.stamp` rebases on `{}` when it cannot read. One warning, for one shape: the gap
+**grew** and the cron's stamp is **≥ 3 days** old or absent — either half alone is routine.
+Rejected carriers for "yesterday's number": a `_meta` key in `firmographics.json`
+(`load_shared_status` would read it `partial` and every writer would refuse), a new
+`cloud_state` file (needs a `persist_state.STRATEGY` entry — `infra`'s), yesterday's
+`digests/latest.md`. `pipeline_stages.json` already travels with the digest's `--own
+cloud_state` and merges per key.
 
 Two more steps run there, both read-only, both because a tool nobody runs is a tool that
 rots — `company_type_analysis.py` was hand-run only and silently kept working against a
@@ -3263,8 +3323,19 @@ secrettelaviv job's text as context and profiled a company mentioned *inside* th
 `company_info['Tel Aviv']` came back as Alma / Sisram Medical, was cached, and rendered under
 `### Tel Aviv` on the board. The research prompt forbids exactly that; the blurb prompt did
 not. Widening `looks_like_junk` alone — which is all the backlog items asked for — **would not
-have prevented it**. A blurb already cached under such a name is now dropped at **read** time
-(exactly one today), which fixes every machine at once without writing `seen.db`.
+have prevented it**. A blurb already cached under such a name is dropped at **read** time on
+every machine — and since 2026-08-30 **purged** from `seen.db` by the next unscoped digest,
+which is legitimate there and nowhere else: the hook runs *inside* daily-digest, the store's
+single writer. The read-time drop had printed `blurb dropped, not a company: Tel Aviv` on
+every digest from 08-25 to 08-30, a line a reader learns to skim. The purge has a
+**ceiling** — more than `max(3, 5 %)` of cached names reading as non-companies is the gate
+having changed, not the store (`not_a_company` is built from the registry's `looks_like_junk`
+and the classifier's `_IL_PLACES`), so it refuses and says so — and it prints the text it
+deletes, so the step log can restore a false positive. Measured before shipping: 1 of 121
+cached names flagged (`Tel Aviv`), 8 of 2,045 registry names, 0 of 40 hand-written
+profiles. The rest of that name is not this lane's: the seed is one `discovery-telegram`
+post, and the 7 ledger records that still render a `### Tel Aviv` section are `roles`'
+(`docs/BACKLOG.md` 223).
 
 **Every refusal prints the name it refused** (§1a: *"every rejection prints the name, so a
 wrong one can be appealed from the step log"*). A count alone makes a false positive
@@ -3278,20 +3349,26 @@ The board section itself outlives this: it is rendered from 7 open ledger record
 
 `audit_lines(report)` is one `- **Company intel:** …` line in the run audit (markdown, text
 and HTML) plus a `::warning::company-intel …` for anything abnormal. The arithmetic
-reconciles: `researched + failed + skipped + waiting = candidates`. It is called in `run.py`
+reconciles: `researched + failed + skipped + stopped + waiting = candidates` (`stopped` was
+read by the line and written nowhere until 2026-08-30; a soft-outage stop was booked as
+"budget spent"). It is called in `run.py`
 **outside** `enrich_for_run`'s never-raises guard, so every key it reads is read with `.get`
 and `test_audit_lines_never_raises_on_a_legacy_report` proves it over a report missing every
 key added since.
 
 | state | line |
 |---|---|
-| work done | `2 of 59 board companies unprofiled (cap 5/run, budget 8m): 2 researched, 0 failed (1 research failed, weekly retry + 1 not a company — unprofiled) · blurbs: … · seam: sonnet-5 x2 · 2 calls, 41s, 2 searches · export 968 records, newest 2026-08-26, registry backlog 7` |
+| work done | `2 of 59 board companies unprofiled (cap 5/run, budget 8m): 2 researched, 0 failed (1 research failed, weekly retry + 1 not a company — unprofiled) · blurbs: … · seam: sonnet-5 x2 · 2 calls, 41s, 2 searches · export 968 records, newest 2026-08-26, registry backlog 7 (+3 since 2026-08-25) · bulk cron: last ran 2026-08-25 (1d ago), 19 researched of 23 to do, 0 left, 4 failed` |
+| the gap has a direction | `registry backlog 68 (+27 since 2026-08-29)`; `(first measurement)` when no `intel` stamp exists yet; `(direction unknown: the stage stamp file is unreadable)` on a corrupt stamp file, which is never written over |
+| the cron's last word | `bulk cron: last ran 2026-08-28 (2d ago), 38 researched of 139 to do, 99 left, 2 failed, alarm zero-produce(…)` — the stamp's numbers as facts; its age is judged by `Stages:` |
+| the gap grew and nothing drains it | `::warning::company-intel registry backlog grew +28 to 84 since 2026-08-29 and the bulk cron last ran 3d ago — nothing is draining it` (or `has never run`); never on a level, never on a single dropped slot |
+| a blurb purged | `… blurbs: …, 1 purged from the store (not a company)`; above the ceiling the step log says `blurb purge REFUSED: N of M …` and nothing is deleted |
 | a name is not a company | `… (1 research failed, weekly retry + 1 not a company — unprofiled)` — one counter used to call both "weekly retry", which a job title never gets |
 | a name failed | `… why failed: Nowhere Ltd: model could not identify the name` — the cause used to exist only in stderr, while the strike gated the name for 7 days |
 | **search silently off** | `… 0 searches, 2 SEARCHLESS` + a warning that those records are parametric guesses |
 | model drift | `::warning::company-intel model drift: asked ['sonnet'], served …` |
-| the backlog stalls | `::warning::company-intel N active registry rows still have no facts and this run researched none — the backlog is not draining` |
-| CLI down | `claude unavailable after 0 research calls (Failed to authenticate. API Error: 401) — 2 unprofiled board companies wait` + warning, **no strikes** (this exit-0 shape used to strike real companies) |
+| the digest attempted nothing it should have | `::warning::company-intel N board companies needed facts and this run attempted none, with no outage or budget reported` |
+| CLI down | `claude unavailable after 0 research calls (auth: Failed to authenticate. API Error: 401) — 2 unprofiled board companies wait` + warning, **no strikes** (this exit-0 shape used to strike real companies). The kind travels since 2026-08-30: two mornings (08-28, 08-29) said `(is_error (api_error_status=None))` and nothing more, because the CLI's *error* envelope carries no `result` and no `api_error_status` at all — its cause is in `subtype`/`errors[]`, which `pipeline/llm.py` discards (shared plumbing; the diff is in `docs/BACKLOG.md`) |
 | export | `export MISSING at …` / `export CORRUPT at … — cards render from sqlite only; file left untouched` / `export NOT written (…)` |
 | hook crashed | `company intel FAILED (OperationalError: database is locked) — cards render from whatever was assembled` |
 
@@ -3314,8 +3391,10 @@ into separate rows and halving both counts.
 
 ### Guards and how to rehearse
 
-`tests/test_company_intel.py` (**106** cases, one per shipped bug or claim above; no test
-spawns `claude` or touches `cloud_state/`). To rehearse tomorrow's digest without spending
+`tests/test_company_intel.py` (**141** cases on 2026-08-30 — `python -m pytest
+tests/test_company_intel.py --collect-only -q | tail -1` — one per shipped bug or claim
+above; no test spawns `claude` or touches `cloud_state/`: the `env` fixture redirects the
+export, the strike ledger *and* `stages.PATH`, because an unscoped run stamps). To rehearse tomorrow's digest without spending
 anything:
 
 ```
@@ -3335,7 +3414,7 @@ an argv it cannot classify writes to stderr and exits 3, which the seam reports 
 printed a plausible line and exited 0 regardless.
 `test_the_rehearsal_shim_can_classify_every_argv_the_real_seam_builds` goes red instead.
 
-`tests/fixtures/company_intel/mutations.json` holds **58** records. It used to hold 18 and
+`tests/fixtures/company_intel/mutations.json` holds **60** records. It used to hold 18 and
 **could never have run**: it keyed the class as `cls` where `tools/mutate.py` reads
 `m["class"]`, which is why four records that no longer matched any code went unnoticed. It is
 also in no CI path — `tests.yml` runs `tools/mutate.py --all`, whose default catalogue is

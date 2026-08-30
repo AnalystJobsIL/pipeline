@@ -524,8 +524,8 @@
   {
     "id": "ci-healthy-empty-run-never-stamps",
     "file": "research_firmographics.py",
-    "find": "            stages.stamp(\"firmo\", researched=0, failed=0, records=len(have))\n",
-    "replace": "            pass\n",
+    "find": "            stages.stamp(\"firmo\", researched=0, failed=0, records=len(have),\n",
+    "replace": "            _ = (lambda *a, **k: None)(\"firmo\", researched=0, failed=0, records=len(have),\n",
     "class": "M1",
     "symbol": "healthy_empty_run_never_stamps",
     "why": "company-intel guard 2026-08-28 wave 2"
