@@ -1481,6 +1481,35 @@ def _morning_rows(doc_rel: str, text: str = None, quiet: bool = False):
     return rows
 
 
+ZERO_SHA = "0" * 40
+
+
+def _baseline_ref():
+    """The commit this branch is judged against, or None when there is nothing to judge.
+
+    `AJIL_PUSH_BASE` is `github.event.before` - the tip master had before this push - and it
+    is the only way a runner can name the range it is being asked about: on a push build HEAD
+    IS origin/master, so a merge-base against it is HEAD and every diff is empty. With the
+    variable set (and `fetch-depth: 0`, or the parent is not in the clone) these checks judge
+    the push itself.
+
+    An all-zero sha means BRANCH CREATION - there is no `before` - and is a skip, not an
+    error: the first push of a branch has no predecessor to have deleted a row from."""
+    push_base = (os.environ.get("AJIL_PUSH_BASE") or "").strip()
+    if push_base:
+        if push_base == ZERO_SHA or set(push_base) == {"0"}:
+            return None
+        if _git("rev-parse", "-q", "--verify", push_base + "^{commit}") is None:
+            return None            # a shallow clone that does not reach it: nothing to do
+        return push_base
+    base = _git("merge-base", "HEAD", "origin/master")
+    base = base.strip() if base else None
+    if base is None and _git("rev-parse", "-q", "--verify", "HEAD~1"):
+        base = "HEAD~1"
+    return base
+
+
+
 def _rows_at(ref: str, doc_rel: str):
     """The morning-check rows a document carried at `ref`, or None if it cannot be read."""
     text = _git("show", "%s:%s" % (ref, doc_rel))
@@ -1515,13 +1544,8 @@ def check_morning_rows_survive() -> None:
     `check_unattended_proof` are LOCAL, pre-push guards. `actions/checkout@v5` clones one
     commit deep and this repo pushes straight to master, so on CI the merge-base IS HEAD
     and all three return silently. A green CI run is not proof that a row survived."""
-    # The MERGE-BASE, never origin/master's tip. A row another lane ADDED after this branch
-    # was cut has never existed here and cannot have been deleted here - the guard reported
-    # exactly that on its first run, against a row `jd-text` pushed the same morning.
-    base = _git("merge-base", "HEAD", "origin/master")
-    base = base.strip() if base else None
-    if base is None and _git("rev-parse", "-q", "--verify", "HEAD~1"):
-        base = "HEAD~1"
+    # `AJIL_PUSH_BASE` (github.event.before) when CI set it, the merge-base otherwise.
+    base = _baseline_ref()
     if base is None:
         return
     # Moving an unanswered row to the archive is the one way left to retire a prediction
@@ -1822,10 +1846,12 @@ def check_unattended_proof() -> None:
     morning-check table existed (2026-08-27), 4 added a row in the same commit and 7 did
     not - and one of those 7 is the 19:00 drain whose own HANDOFF entry says "the cron has
     not run"."""
-    base = _git("merge-base", "HEAD", "origin/master")
-    if base is None or os.environ.get("GITHUB_ACTIONS"):
+    # In CI this is `github.event.before`: the push itself is the range to judge. Without
+    # it a push build has HEAD == origin/master and every diff below is empty.
+    base = _baseline_ref()
+    if base is None or (os.environ.get("GITHUB_ACTIONS")
+                        and not os.environ.get("AJIL_PUSH_BASE")):
         return
-    base = base.strip()
     changed = _git("diff", "--name-only", "%s...HEAD" % base)
     if changed is None:
         return
@@ -1917,6 +1943,50 @@ def check_no_conflict_markers() -> None:
 
 
 
+# ------------------------------------------------- 6g. "workflow X runs command Y"
+# `ARCHITECTURE.md` said `tests.yml` runs `tools/mutate.py --all` after the job was sharded
+# to `--class` under a 3-shard matrix. The flag still exists, so a flag-existence check would
+# have passed it; the number of shards is not what the sentence claims. What is false is the
+# RELATIONSHIP - the same thing the section-4 cron table checks, one level down.
+RUNS_CLAIM = re.compile(r"`([a-z0-9_.-]+\.ya?ml)`[^`\n]{0,60}?\bruns\b[^`\n]{0,30}?`([^`\n]+)`")
+
+
+def check_workflow_command_claims() -> None:
+    """A doc that says a workflow runs a command, where the workflow does not run it.
+
+    Only claims naming a REAL workflow file and a command that mentions a `.py` are judged,
+    so ordinary prose ("the digest runs at 05:00") is not swept in. The command is matched
+    token by token: the script must appear in the workflow, and so must every `--flag` the
+    sentence attributes to it. A flag the workflow passes and the doc omits is fine - the
+    doc is allowed to be shorter than the truth, just not different from it."""
+    # docs/BACKLOG.md is excluded for the same reason it is not a fact SITE: it is a record
+    # of defects, so it quotes false claims on purpose - including this check's own
+    # founding example. A history that goes red for describing history is a history
+    # somebody edits.
+    for doc in docs(LIVE_DOC_GLOBS):
+        if rel(doc) == "docs/BACKLOG.md":
+            continue
+        text = read(doc)
+        for m in RUNS_CLAIM.finditer(text):
+            wf, cmd = m.group(1), m.group(2).strip()
+            path = os.path.join(ROOT, ".github", "workflows", os.path.basename(wf))
+            if not os.path.exists(path) or ".py" not in cmd:
+                continue
+            body = read(path)
+            script = next((t for t in cmd.split() if t.endswith(".py")), None)
+            if script and script not in body:
+                err("workflow-claims", "%s says `%s` runs `%s`, and that workflow never "
+                                       "names %s." % (rel(doc), wf, cmd[:50], script))
+                continue
+            missing = [t for t in cmd.split() if t.startswith("--") and t not in body]
+            if missing:
+                err("workflow-claims", "%s says `%s` runs `%s`, but that workflow does not "
+                                       "pass %s. A flag that still exists in the script is "
+                                       "not a flag the workflow uses."
+                    % (rel(doc), wf, cmd[:50], ", ".join(missing)))
+
+
+
 # ---------------------------------------------------------------- 7. entry points exist
 def check_entry_docs() -> None:
     for name in ("CLAUDE.md", "README.md", "ARCHITECTURE.md", "HANDOFF.md",
@@ -1925,11 +1995,17 @@ def check_entry_docs() -> None:
             err("entry", "%s is missing - it is one of the seven docs every reader is sent to" % name)
 
 
-CHECKS = [check_tree_is_current, check_entry_docs, check_paths_exist, check_links, check_section_refs,
-          check_module_registry,
-          check_schedule_table, check_derived_facts, check_scope_claims, check_handoff,
-          check_morning_checks, check_morning_rows_survive, check_session_record_dates,
-          check_backlog]
+# Every `check_*` below runs. `test_every_check_is_registered` proves it, because three
+# of them - unattended proof, home paths, conflict markers - were shipped to master
+# DEFINED AND UNREGISTERED, and were dead code until 2026-08-30. They were registered
+# with `str.replace`, which does nothing when its anchor is absent and says nothing when
+# it does nothing. A check that never runs is the exact failure this file exists to catch.
+CHECKS = [check_tree_is_current, check_entry_docs, check_paths_exist, check_links,
+          check_section_refs, check_module_registry, check_schedule_table,
+          check_derived_facts, check_scope_claims, check_handoff, check_morning_checks,
+          check_morning_rows_survive, check_unattended_proof, check_no_home_paths,
+          check_no_conflict_markers, check_workflow_command_claims,
+          check_session_record_dates, check_backlog]
 
 
 def main(argv=None) -> int:

@@ -12809,6 +12809,72 @@ def test_a_checkout_behind_only_on_code_never_goes_red(tmp_path):
     assert any("code and state only" in w for w in warns), warns
 
 
+def test_a_push_base_from_ci_is_the_range_these_checks_judge(tmp_path, monkeypatch):
+    """`AJIL_PUSH_BASE` is the one thing a runner cannot work out for itself.
+
+    On a push build HEAD **is** origin/master, so a merge-base against it is HEAD and every
+    diff is empty — which is why `check_morning_rows_survive` and `check_unattended_proof`
+    could only ever skip there. `infra` exports `github.event.before` (the tip master had
+    BEFORE the push) with `fetch-depth: 0`; with it these two judge the push itself.
+
+    Written and tested against a synthetic variable before infra's side landed, so the two
+    halves cannot be waiting on each other. Until infra exports it the variable is absent
+    and `_baseline_ref()` falls through to the merge-base, which is the behaviour these
+    guards already pin elsewhere."""
+    import subprocess
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "docs").mkdir(exist_ok=True)
+    env = dict(os.environ)
+    env.pop("GITHUB_ACTIONS", None)
+
+    def git(*a):
+        return subprocess.run(["git"] + list(a), cwd=str(tmp_path), capture_output=True,
+                              text=True, encoding="utf-8", errors="replace", env=env)
+    git("init", "-q")
+    git("config", "user.email", "guard@example.invalid")
+    git("config", "user.name", "guard")
+    git("config", "commit.gpgsign", "false")
+    (tmp_path / "HANDOFF.md").write_text("## Morning checks" + chr(10) * 2 + HDR
+                                         + GOOD % ("2026-01-01", "2026-01-02"), encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-q", "-m", "before")
+    before = git("rev-parse", "HEAD").stdout.strip()
+    (tmp_path / "HANDOFF.md").write_text("## Morning checks" + chr(10) * 2 + HDR, encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-q", "-m", "after: the row is gone")
+
+    cd = _cd()
+    cd.ROOT = str(tmp_path)
+    # 1. the push base names the range, and the deleted row is caught — in CI
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("AJIL_PUSH_BASE", before)
+    assert cd._baseline_ref() == before
+    cd.check_morning_rows_survive()
+    assert any("is now in neither" in e for e in cd.ERRORS), cd.ERRORS
+    # 2. branch creation has no `before`: an all-zero sha is a SKIP, never an error
+    cd2 = _cd()
+    cd2.ROOT = str(tmp_path)
+    monkeypatch.setenv("AJIL_PUSH_BASE", "0" * 40)
+    assert cd2._baseline_ref() is None
+    cd2.check_morning_rows_survive()
+    cd2.check_unattended_proof()
+    assert cd2.ERRORS == [], cd2.ERRORS
+    # 3. a sha this clone cannot reach is a skip too, not a crash
+    cd3 = _cd()
+    cd3.ROOT = str(tmp_path)
+    monkeypatch.setenv("AJIL_PUSH_BASE", "d" * 40)
+    assert cd3._baseline_ref() is None
+    cd3.check_morning_rows_survive()
+    assert cd3.ERRORS == [], cd3.ERRORS
+    # 4. without it, CI still skips the unattended check — the old behaviour, unchanged
+    cd4 = _cd()
+    cd4.ROOT = str(tmp_path)
+    monkeypatch.delenv("AJIL_PUSH_BASE", raising=False)
+    cd4.check_unattended_proof()
+    assert cd4.ERRORS == [], cd4.ERRORS
+
+
+
 def test_ci_itself_confirms_why_the_tree_check_cannot_run_there():
     """The documented reason for skipping in CI, asserted BY CI - and corrected by it.
 
@@ -12881,6 +12947,67 @@ def test_the_tree_check_is_silent_in_ci_and_never_fetches(tmp_path, monkeypatch)
     main = src.split("def main(")[1]
     assert main.index('"--fetch"') > main.index('"--tree"'), \
         "--fetch must be reachable only from the --tree branch"
+
+
+
+def test_every_check_that_exists_is_registered_and_therefore_runs():
+    """Three checks were shipped to master DEFINED AND UNREGISTERED and never ran at all.
+
+    `check_unattended_proof`, `check_no_home_paths` and `check_no_conflict_markers` were all
+    dead code on `origin/master` until 2026-08-30. The cause is worth the sentence: they were
+    added to `CHECKS` with `line.replace("check_x,", "check_x, check_y,")`, and `str.replace`
+    does nothing when its anchor is absent and reports nothing when it does nothing. Every
+    other edit in that session asserted its anchor; the registrations did not.
+
+    It is also precisely the defect the whole file exists to catch — a check that is green
+    because it never ran — shipped three times inside the work that was writing the guard
+    against it. This is that guard: a `check_*` that is not in `CHECKS` fails the build the
+    commit it appears."""
+    cd = _cd()
+    registered = {f.__name__ for f in cd.CHECKS}
+    defined = {n for n in dir(cd)
+               if n.startswith("check_") and callable(getattr(cd, n))}
+    orphans = sorted(defined - registered)
+    assert not orphans, (
+        "defined but never run: %s. Add it to CHECKS - a check nobody calls is a check that "
+        "is green because it did nothing." % orphans)
+    assert not sorted(registered - defined), "CHECKS names something that is not a function"
+    assert len(registered) >= 18, "checks vanished from CHECKS: %d" % len(registered)
+
+
+def test_a_doc_may_not_say_a_workflow_runs_a_command_it_does_not_run(tmp_path):
+    """`ARCHITECTURE.md` said `tests.yml` runs `tools/mutate.py --all` after the job was
+    sharded to `--class` under a matrix. Neither the fact registry nor a flag-existence check
+    would have caught it: it is not a number, and `--all` is still a real flag of
+    `mutate.py` — it is simply not the flag that workflow passes. What was false is the
+    RELATIONSHIP between the doc and the workflow, which is what this checks."""
+    cd = _cd()
+    (tmp_path / ".github" / "workflows").mkdir(parents=True)
+    (tmp_path / ".github" / "workflows" / "tests.yml").write_text(
+        "run: python tools/mutate.py --class M1" + chr(10), encoding="utf-8")
+    (tmp_path / "README.md").write_text(
+        "and `tests.yml` runs `tools/mutate.py --all` nightly." + chr(10), encoding="utf-8")
+    cd.ROOT = str(tmp_path)
+    cd.check_workflow_command_claims()
+    assert len(cd.ERRORS) == 1 and "--all" in cd.ERRORS[0], cd.ERRORS
+    # the truthful sentence is silent, and a doc shorter than the truth is fine
+    cd2 = _cd()
+    cd2.ROOT = str(tmp_path)
+    (tmp_path / "README.md").write_text(
+        "and `tests.yml` runs `tools/mutate.py` under a matrix." + chr(10), encoding="utf-8")
+    cd2.check_workflow_command_claims()
+    assert cd2.ERRORS == [], cd2.ERRORS
+    # and the BACKLOG is exempt: it quotes false claims on purpose, including this
+    # check's own founding example, and a history that goes red for describing
+    # history is a history somebody edits.
+    cd3 = _cd()
+    cd3.ROOT = str(tmp_path)
+    (tmp_path / "docs").mkdir(exist_ok=True)
+    (tmp_path / "docs" / "BACKLOG.md").write_text(
+        "1. it said `tests.yml` runs `tools/mutate.py --all`, which was false." + chr(10),
+        encoding="utf-8")
+    cd3.check_workflow_command_claims()
+    assert cd3.ERRORS == [], cd3.ERRORS
 
 
 

@@ -3417,7 +3417,7 @@ printed a plausible line and exited 0 regardless.
 `tests/fixtures/company_intel/mutations.json` holds **60** records. It used to hold 18 and
 **could never have run**: it keyed the class as `cls` where `tools/mutate.py` reads
 `m["class"]`, which is why four records that no longer matched any code went unnoticed. It is
-also in no CI path — `tests.yml` runs `tools/mutate.py --all`, whose default catalogue is
+also in no CI path — `tests.yml` runs `tools/mutate.py --class` under a 3-shard matrix, whose default catalogue is
 `tests/mutations.json` — so `test_every_company_intel_mutation_still_aims_at_real_code` is
 that path, at zero cost: a mutation whose `find` no longer occurs is a comment, not a guard.
 

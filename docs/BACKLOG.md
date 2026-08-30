@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**510 filed · 374 open · 136 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
+**512 filed · 375 open · 137 closed · 7 half · 36 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -87,6 +87,8 @@ closure convention in the header.
 | 375 | `375@ats-fetch` **open** · `375@classifier` closed |
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
+| 445 | `445@jd-text` **open** · `445@docs` **open** |
+| 446 | `446@classifier` **open** · `446@docs` closed |
 
 ### registry — 119 open
 
@@ -307,7 +309,7 @@ closure convention in the header.
 - **433** `433@infra` **`BD_RUN_CAP=0`
 - **435** `435@infra` **The `guard` job's 10-minute timeout cannot fit the registry rehearsals, and nobody knew
 - **436** `436@infra` **Nothing in the tree records which RUN produced a state commit, so "unattended" is not
-- **438** `438@infra` **`_load_secrets` is copied into ten modules and resolves `secrets.env` against its own tree roo
+- **438** `438@infra` **`_load_secrets` is copied into FOUR modules and resolves `secrets.env` against its own tree ro
 - **439** `439@infra` **`check_unattended_proof` cannot run in CI, where the push it should judge lands** —
 - **440** `440@infra` **A test fixture spells the operator's personal GitHub handle**
 - **442** `442@infra` **The `guard` job no longer fits its 10-minute timeout, and a cancelled gate names
@@ -377,7 +379,7 @@ closure convention in the header.
 - **441** `441@discovery` **Intake re-adds names that were retired with evidence, so the queue can never stay
 - **456** `456@discovery` **The inline JD filler re-buys the same postings every night, because it has no cooldown
 
-### docs — 20 open
+### docs — 21 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
 - **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
@@ -398,6 +400,7 @@ closure convention in the header.
 - **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
 - **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
 - **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
+- **445** `445@docs` **The two workflow COUNTS in prose want a structural check, not a registered fact** —
 - **461** `461@docs` **No visitor-facing surface states the quantitative boundary**
 
 ### ats-fetch — 18 open
@@ -7844,10 +7847,13 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     `jd-massfail` has always had it. The run that made the case, 33250362574's matched driver
     (10 due, 2 worked, 0 filled, 0 credits), now says
     `matched:jd-zero-fill(2 worked, 0 filled: no-markers x2)`.
-438. **`_load_secrets` is copied into ten modules and resolves `secrets.env` against its own tree root, so there
-     is no honest way to arm a paid rung from a worktree** — lane: `infra`. `bd_employees.py`,
-     `bd_rescue.py`, `pipeline/run.py` and seven more each resolve the file relative to their
-     own tree. A worktree therefore has no credentials, every paid rung is DISARMED, and a
+438. **`_load_secrets` is copied into FOUR modules and resolves `secrets.env` against its own tree root, so there
+     is no honest way to arm a paid rung from a worktree** — lane: `infra`. `bd_rescue.py:46`,
+     `bd_employees.py:41`, `pipeline/jdfill.py:89` and `pipeline/run.py:185` each resolve the
+     file relative to their own tree — **FOUR, not the ten this item claimed** until `infra`
+     counted them on 2026-08-30. The smaller number does not weaken the item: four copies is
+     still four trees that cannot be armed, and the fix is the same single loader taking a
+     path. A worktree therefore has no credentials, every paid rung is DISARMED, and a
      disarmed rung does not error — it returns a refusal that reads as evidence (one such
      pass wrote 57 of 57 rows `dead`). `docs/AGENT_BRIEF.md` rule 5 now names the trap, but
      the only two ways out are copying the file (an uncapped spender, banned) or working in
@@ -7984,8 +7990,19 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      nothing reports another workflow's health. Two hunks, both in files this lane may not
      write. **Until `infra` applies them, nothing about CI health is automatic.**
 
-     **Hunk 1** — `.github/workflows/daily-digest.yml`, immediately before the existing
-     `- name: Report the run's outcome` step (line ~277):
+     **CORRECTED BY `infra` 2026-08-30, and the correction is right — I checked it against
+     the code before agreeing.** This diff first placed the step before `Report the run's
+     outcome`, which is *after* `Persist state back to the repo`. `persist_state.py outcome
+     --commit` commits a FIXED list — `cloud_state/last_run.json`, plus `digests/latest.md`
+     when it writes a notice — from a fresh worktree of origin/master, so a stamp written
+     after the general persist would never have been committed and the alarm would have been
+     lost every night, silently. Infra also adds `--status completed` to the `gh run list`
+     call: without it an in-progress run returns a null conclusion, reads as `unknown`, and
+     alarms every single day, because the digest and `tests.yml` overlap constantly. Both
+     mistakes are mine; infra's placement and filter are what should land.
+
+     **Hunk 1** — `.github/workflows/daily-digest.yml`, immediately before
+     `- name: Persist state back to the repo` (line ~218) — NOT before the outcome step:
 
      ```yaml
            - name: Alarm when master's own test gate is red (docs lane, BACKLOG 444)
@@ -7997,7 +8014,8 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
                GH_TOKEN: ${{ github.token }}
              run: |
                CONC=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow tests.yml \
-                        --branch master --limit 1 --json conclusion --jq ".[0].conclusion")
+                        --branch master --status completed --limit 1 \\
+                        --json conclusion --jq ".[0].conclusion")
                RED=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow tests.yml \
                         --branch master --limit 50 --json conclusion \
                         --jq "[.[].conclusion] | (index(\"success\") // 50)")
@@ -8323,3 +8341,44 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     (`ARCHITECTURE.md` §7b). Whoever takes this takes both halves — put the slice geometry in
     the contract, then change it — and a head+TAIL slice for a JD with no requirements header
     is the shape to try. Latent today: 0 live titles reach the demotion (§7b).
+
+445. **The two workflow COUNTS in prose want a structural check, not a registered fact** —
+     lane: `docs`, decided 2026-08-30 after `infra` found three stale claims in
+     `ARCHITECTURE.md` section 4. "eight of the nine share `repo-state`" and "one script,
+     nine workflows" are counts, so the fact registry is the obvious tool. **The measurement
+     says no.** The workflow count changed **8 times in 10 days** (6→7→8→9→10→9→10→11), which
+     is the `coe_ratio` cadence exactly — and when a pinned count breaks it turns `Unit
+     guards` red, which SKIPS `Registry invariants` and the fourteen rehearsed nights below
+     it in the same job. A floor is no better here: `9+ of 10+` is not a claim about
+     anything, because the ratio is the point.
+
+     What is durable is the STRUCTURE both sentences are really asserting, and neither drifts
+     when a workflow is added:
+
+     * **every scheduled workflow shares `concurrency: group: repo-state` except
+       `daily-digest.yml`, which has its own.** Measured today: 11 workflow files, 10 with a
+       `schedule:`, 9 sharing the group. The hazard it catches is the real one — a new cron
+       that forgets the group and stops serialising against the others — and that hazard is
+       invisible to any count.
+     * **no workflow commits state except through `persist_state.py`.** That is what "one
+       script, N workflows" means; the number is decoration on it.
+
+     Both are ~20 lines in `docs/check_docs.py`, both go green on today's tree, and both let
+     the prose drop the count entirely rather than pin it. Not written here because this
+     session had already spent its budget on `check_workflow_command_claims` (446) and a
+     structural check that is wrong is worse than a number that is stale.
+
+446. **A doc may claim a workflow runs a command it does not run, and nothing noticed** —
+     lane: `docs`, **CLOSED 2026-08-30**. The third of `infra`'s three claims:
+     `ARCHITECTURE.md` said `tests.yml` runs `tools/mutate.py --all` after the job was sharded
+     to `--class` under a 3-shard matrix. The instructive part is that the two obvious tools
+     both miss it — it is not a number, so the fact registry cannot hold it, and `--all` is
+     still a real flag of `mutate.py`, so a flag-existence check passes it. What is false is
+     the RELATIONSHIP between a document and a workflow file, which is what the section-4 cron
+     table already checks one level up. `check_workflow_command_claims` reads every
+     "`<workflow>.yml` runs `<command>`" sentence in a live doc and holds it to that
+     workflow's text: the script must appear, and so must every `--flag` the sentence
+     attributes to it. A doc shorter than the truth is fine; a doc different from it is not.
+     It found the live instance on its first run, and the clause is corrected (a disclosed
+     one-clause touch in section 7, which `company-intel` owns).
+
