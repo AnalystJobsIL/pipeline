@@ -83,7 +83,7 @@ the command that re-derives it, because that is the only thing that keeps this h
 |---|---|---|
 | registry | **2,045 rows · 1,099 active · 946 parked · 0 orphans** | `python check_invariants.py` (it prints 2,046: it counts the header) |
 | by tier | **525 native-ATS · 573 scrape · 1 discovery** | `python registry_health.py` |
-| intake queue | **557 owed of 572** (210 at 09:xx; re-derived by `docs` 18:00Z) | `python queue_state.py` |
+| intake queue | **557 owed of 572** (210 at 09:xx) | `python queue_state.py` |
 | last digest | **2026-08-29**, `scanned=1000`, **4 emailed** (no 05:00 slot has fired at 05:00 since 08-26) | `digests/latest.md` |
 | guards | **1,469 passed · 12 skipped · 0 failed** locally at `06f07cd` | `python -m pytest` (not `-q`) |
 
@@ -167,4 +167,4 @@ One line per session, in the shape at the top of this file. The long version is 
 
 - **2026-08-24 → 2026-08-30, 51 session lines across ten lanes** — folded to pointers (338, 361), last by `docs` (c). Records: `docs/sessions/2026-08-2[4-9]-*.md`, `docs/sessions/2026-08-30-*.md`; `registry` (d) is in `2026-08-30-infra-b.md` §0. CI runs no record holds: 33298814000, 33299353269, 33298892195.
 - **2026-08-30 `infra` (b)** — `mutation-gate (0)` killed at 40 min (M1 is ONE class): split by RECORD, 5 shards, verdicts printed as they land. Drain: ingest its own `always()` step, retire-settled first, cap 350/budgets 327. Commit gate `--strict` refuses twins/off-host rows; `dry_run` digest dispatch; the 08-27 lag is GitHub's (§4). **NOT finished:** 491 item 3, 501, 502. Record: `docs/sessions/2026-08-30-infra-b.md`.
-- **2026-08-30 `docs` (c)** — clause 4 (evidence, not adjectives); cross-lane debt: unify across lanes; a filed diff is applied by the next lane to touch the file (`check_debt_on_touched_files`, 5 of 66 commits today). Lane table re-derived 18:00Z; `next` reads master, the gate refuses new collisions. CI: `dc3a787` run 33328309775 `success` 13/13; `a13045a` RED (HANDOFF 6 words over cap, mine). Record: `docs/sessions/2026-08-30-docs-craft.md`.
+- **2026-08-30 `docs` (c)** — clause 4 (evidence, not adjectives); cross-lane debt: a filed diff is applied by the next lane in the file (`check_debt_on_touched_files`, 5 of 66 commits today); `next` reads master, the gate refuses new collisions. CI: `dc3a787` run 33328309775 `success` 13/13; `a13045a`, `6ef03c9` RED — HANDOFF over cap, mine. Record: `docs/sessions/2026-08-30-docs-craft.md`.

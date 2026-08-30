@@ -164,5 +164,8 @@ the time, since it is the same number this table re-derives.
 * **The follow-up `a13045a` was pushed red, by me.** Recording the verdict put `HANDOFF.md`
   at 3,206 words against the 3,200 cap; I read the lint's last line, not its error line, and
   pushed. Run 33329556885 is expected to fail `guard` on `test_docs_are_consistent_with_the_code`.
-  Fixed in the next commit by trimming the line; the same cap three lanes hit today, and the
-  same misread clause 3 warns about — the step you care about is not the verdict.
+  Then `6ef03c9` repeated it: I chained `commit && push` behind a lint I had not read, and
+  pushed 3,211 words and a 62-word line. Two red pushes from one lane in ten minutes, both
+  on the cap three other lanes hit today. The fix is the commit after this sentence, gated on
+  the lint's exit code rather than my reading of it — the miss clause 3 warns about, in the
+  lane that wrote clause 3.
