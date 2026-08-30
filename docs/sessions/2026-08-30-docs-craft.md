@@ -157,5 +157,7 @@ the time, since it is the same number this table re-derives.
 
 * Whether a lane will read the new ERROR and apply the diff rather than write "not applied"
   in HANDOFF. The rule allows the second; the count `--debt` prints is what tells us.
-* The CI verdict on this commit: quoted in the follow-up line in `HANDOFF.md` after the push,
-  in the words the run gives.
+* The CI verdict on `dc3a787`: run **33328309775**, `success` on all 13 jobs (`guard`,
+  `guard-kill`, five `mutation-gate` shards, six rehearsals). The run before it, on
+  `a476f24`, was `success` too, so nothing red was inherited. The three guards added here
+  ran under `guard-kill` there and passed it: each fails with its target reverted to base.
