@@ -6800,6 +6800,204 @@ def test_the_email_blurb_never_describes_an_agencys_client():
     assert rolecard.company_about("Fireblocks", jd, {}).startswith("digital-asset custody platform")
 
 
+def test_an_evidenced_display_name_names_the_cell_and_the_blob_never_the_join_key(monkeypatch):
+    """2026-08-30: 8 of 161 published rows carried a URL slug as the employer's name
+    (`withfaye` for Faye). The evidenced brand on the firmographics record now names the
+    cell; anything short of evidence — absent, empty, whitespace, non-str, over-long —
+    leaves every field byte-identical, because `company` is the join key for the ledger,
+    the facts and the public CSV and only what the READER sees may change."""
+    from pipeline import rolecard
+    firmo = {"withfaye": {"display_name": "Faye"}}
+    card = rolecard.build(_job(company="withfaye"), "2026-08-30", firmographics=firmo)
+    assert card["company"] == "withfaye"                      # the join key never moves
+    assert card["display_company"] == "Faye" and card["display_name"] == "Faye"
+    assert " Faye" in card["blob"] and card["blob"].startswith("withfaye ")
+    # no evidence, in every shape it arrives → the card equals the no-firmographics build
+    plain = rolecard.build(_job(company="withfaye"), "2026-08-30")
+    for rec in (None, {}, {"display_name": ""},
+                {"display_name": "   "}, {"display_name": 42}, {"display_name": ["Faye"]},
+                {"display_name": "x" * 61}):
+        got = rolecard.build(_job(company="withfaye"), "2026-08-30",
+                             firmographics={"withfaye": rec} if rec is not None else {})
+        assert got == plain, rec
+    # a record with facts but no display_name feeds the chips and nothing name-shaped
+    facts_only = rolecard.build(_job(company="withfaye"), "2026-08-30",
+                                firmographics={"withfaye": {"sector": "insurtech"}})
+    assert facts_only["facts"] == ["insurtech"]
+    assert (facts_only["display_company"], facts_only["display_name"], facts_only["blob"]) == \
+           (plain["display_company"], plain["display_name"], plain["blob"])
+    # a stray newline collapses, and bidi/zero-width controls are stripped, not rendered
+    assert rolecard.display_name({"display_name": " Bounce\nAI "}, "finbounce") == "Bounce AI"
+    assert rolecard.display_name({"display_name": "Fa\u202e\u200bye"}, "withfaye") == "Faye"
+    assert rolecard.display_name(
+        {"display_name": chr(0xFEFF) + "Fa" + chr(0x061C) + "ye" + chr(0xAD)}, "withfaye") == "Faye"
+    # an LLM non-answer, entity-shaped text (GitHub renders `&rlm;` AFTER `_md_esc`),
+    # a styled/homoglyph name (NFKC rewrites it) or a letterless string is junk, not a name
+    for junk in ("N/A", "unknown", "null", "the company", "Acme &rlm; Ltd", "!!! ???", "\u2014",
+                 chr(0xFF37) + chr(0xFF49) + chr(0xFF58),          # \uff46\uff55\uff4c\uff4c\uff57\uff49\uff44\uff54\uff48 "Wix"
+                 "W" + chr(0x0456) + "x",                           # Cyrillic \u0456: identity {w,x}
+                 "M" + chr(0x043E) + "nday.com",                    # Cyrillic \u043e mid-Latin (wave 2)
+                 "Wi" + chr(0x0445)):                               # Cyrillic \u0445 keeps a 2-char token
+        assert rolecard.display_name({"display_name": junk}, "withfaye") == "", junk
+    # every degradation path carries the key the renderers read (a keyless card would
+    # KeyError the whole product): the stub keeps the registry name, and a fill that
+    # dies AFTER the derivation keeps the brand (it depends only on the record)
+    from pipeline import jdtext, roleprofile
+    monkeypatch.setattr(roleprofile, "extract", lambda *a, **k: (_ for _ in ()).throw(ValueError("x")))
+    degraded = rolecard.build(_job(company="withfaye"), "2026-08-30", firmographics=firmo)
+    assert degraded["display_name"] == "Faye" and "card degraded (ValueError)" in degraded["issues"]
+    monkeypatch.setattr(jdtext, "_norm_location", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
+    stub = rolecard.build(_job(company="withfaye"), "2026-08-30", firmographics=firmo)
+    assert stub["display_name"] == "" and stub["display_company"] == "withfaye"
+
+
+def test_a_display_name_that_is_another_companys_identity_is_refused_at_the_source():
+    """A record carrying ANOTHER employer's name is the wrong-facts failure shape
+    (`Bounce`, 489) — rendered, it would impersonate that employer on every surface with
+    only the tooltip carrying the truth, and the display-collision guard cannot catch it
+    (per-product and case-sensitive). Refused in `display_name` itself, so finbounce
+    renders `finbounce` in mail, board and archive alike until 487 parks the row."""
+    from pipeline import rolecard
+    firmo = {"finbounce": {"display_name": "Bounce AI"}, "Bounce AI": {"sector": "Fintech"}}
+    cards = [rolecard.build(_job(company="finbounce", title="Data Analyst",
+                                 url="https://f.io/jobs/1", mkey="f|1"), "2026-08-30",
+                            firmographics=firmo),
+             rolecard.build(_job(company="Bounce AI", title="BI Developer",
+                                 url="https://b.ai/jobs/2", mkey="b|2"), "2026-08-30",
+                            firmographics=firmo)]
+    assert cards[0]["display_company"] == "finbounce" and cards[0]["display_name"] == ""
+    assert not any(i.startswith("display-collision") for i in rolecard.cross_check(cards))
+    # case does not launder the spoof: identity_key folds it — and neither does one
+    # extra token ("Wix Analytics" is still Wix, either direction of the subset)
+    assert rolecard.display_name({"display_name": "wix"}, "Acme Analytics",
+                                 {"Acme Analytics": {}, "Wix": {}}) == ""
+    assert rolecard.display_name({"display_name": "Wix Analytics"}, "Acme Analytics",
+                                 {"Acme Analytics": {}, "Wix": {}}) == ""
+    assert rolecard.display_name({"display_name": "WIX.com"}, "Acme Analytics",
+                                 {"Acme Analytics": {}, "Wix": {}}) == ""
+    # the brand is this employer's own other spelling: `Port` shown as `Port.io` must
+    # not also print `(also listed as Port.io)` — the one live claimant shape
+    ported = rolecard.build(_job(company="Port", url="https://p.io/1", mkey="p|1",
+                                 _claimed_by=["Port.io"]), "2026-08-30",
+                            firmographics={"Port": {"display_name": "Port.io"}})
+    assert ported["display_company"] == "Port.io" and ported["also_listed_as"] == []
+    unbranded = rolecard.build(_job(company="Port", url="https://p.io/1", mkey="p|1",
+                                    _claimed_by=["Port.io"]), "2026-08-30")
+    assert unbranded["also_listed_as"] == ["Port.io"]
+    # one brand folding TWO registry rows onto one cell is a collision even when the raw
+    # names fold too (a registry duplicate must not render as if it were one employer) —
+    # while the same case-twin WITHOUT a brand stays silent, as always
+    twin = {"helfy": {"display_name": "Helfy"}, "Helfy": {"display_name": "Helfy"}}
+    merged = [rolecard.build(_job(company="helfy", url="https://h.io/1", mkey="h|1"),
+                             "2026-08-30", firmographics=twin),
+              rolecard.build(_job(company="Helfy", title="BI Developer",
+                                  url="https://h.io/2", mkey="H|2"), "2026-08-30",
+                             firmographics=twin)]
+    assert "display-collision Helfy/helfy" in rolecard.cross_check(merged)
+    assert all(c["display_name"] == "" and c["display_company"] == c["company"] for c in merged)
+    silent = [rolecard.build(_job(company="helfy", url="https://h.io/1", mkey="h|1"), "2026-08-30"),
+              rolecard.build(_job(company="Helfy", title="BI Developer",
+                                  url="https://h.io/2", mkey="H|2"), "2026-08-30")]
+    assert not any(i.startswith("display-collision") for i in rolecard.cross_check(silent))
+    # the company's own identity under another casing is NOT a spoof (helfy/Helfy twin)
+    assert rolecard.display_name({"display_name": "Helfy"}, "helfy",
+                                 {"helfy": {}, "Helfy": {}}) == "Helfy"
+    # two employers handed one fabricated brand still collide, revert — and the revert
+    # clears display_name too, so every surface (heading, About, sort) reverts with the cell
+    fab = {"Acme Data Ltd": {"display_name": "Nova"}, "Beta Analytics": {"display_name": "Nova"}}
+    pair = [rolecard.build(_job(company="Acme Data Ltd", url="https://a.io/1", mkey="a|1"),
+                           "2026-08-30", firmographics=fab),
+            rolecard.build(_job(company="Beta Analytics", url="https://b.io/2", mkey="b|2"),
+                           "2026-08-30", firmographics=fab)]
+    issues = rolecard.cross_check(pair)
+    assert "display-collision Acme Data Ltd/Beta Analytics" in issues
+    assert [c["display_company"] for c in pair] == ["Acme Data Ltd", "Beta Analytics"]
+    assert all(c["display_name"] == "" for c in pair)
+
+
+def test_the_mail_heading_shows_the_evidenced_brand_and_survives_a_collision():
+    """The 2026-08-30 mail rendered `### helfy` as an employer heading. The heading now
+    reads the card's display_name — AFTER cross_check ran, which required building every
+    block before emitting any (cross_check is not idempotent: its collision revert erases
+    its own trigger, so it runs exactly once, above the headings)."""
+    from pipeline import digest as D
+    jobs = [{"company": "withfaye", "title": "Data Analyst", "location": "Tel Aviv",
+             "url": "https://f.io/jobs/1", "posted_date": "2026-08-30", "description": "x"}]
+    firmo = {"withfaye": {"display_name": "Faye"}}
+    _, body = D.build_markdown(jobs, "2026-08-30", {"new": 1}, firmographics=firmo)
+    assert "### Faye" in body and "### withfaye" not in body
+    # a record without the field changes nothing
+    _, plain = D.build_markdown(jobs, "2026-08-30", {"new": 1},
+                                firmographics={"withfaye": {"sector": "insurtech"}})
+    assert "### withfaye" in plain and "Faye" not in plain
+    # one fabricated brand on two employers: the collision revert wins in the headings
+    fab = {"Acme Data Ltd": {"display_name": "Nova"}, "Beta Analytics": {"display_name": "Nova"}}
+    two = [{"company": "Acme Data Ltd", "title": "Data Analyst", "location": "Tel Aviv",
+            "url": "https://a.io/1", "posted_date": "2026-08-30", "description": "x"},
+           {"company": "Beta Analytics", "title": "BI Developer", "location": "Haifa",
+            "url": "https://b.io/2", "posted_date": "2026-08-30", "description": "x"}]
+    title2, body2 = D.build_markdown(two, "2026-08-30", {"new": 2}, firmographics=fab)
+    assert "### Acme Data Ltd" in body2 and "### Beta Analytics" in body2
+    assert "### Nova" not in body2 and "display-collision" in body2
+    # the H1 still counts the bullets, and a company whose only card is mangled emits no
+    # heading and does not crash the block loop
+    blob = "Data Analyst Tel Aviv Full-time Apply now " * 5
+    mangled = two + [{"company": "Blobco", "title": blob, "location": "Haifa",
+                      "url": "https://c.io/3", "posted_date": "2026-08-30", "description": "x"}]
+    t3, b3 = D.build_markdown(mangled, "2026-08-30", {"new": 3}, firmographics=fab)
+    assert t3.startswith("🎯 2 ") and "### Blobco" not in b3 and D._subject_vs_body(t3, b3) == ""
+    # ...and a NEWCO company whose only card is mangled is not COUNTED either — the
+    # section heading counts emitted blocks, not the input list
+    mixed = two + [{"company": "Blobco", "title": blob, "location": "Haifa",
+                    "url": "https://c.io/3", "posted_date": "", "description": "x",
+                    "_new_company": True},
+                   {"company": "Zeta", "title": "Data Analyst", "location": "Haifa",
+                    "url": "https://z.io/4", "posted_date": "", "description": "x",
+                    "_new_company": True}]
+    t4, b4 = D.build_markdown(mixed, "2026-08-30", {"new": 4}, firmographics=fab)
+    assert "## Newly covered companies (1)" in b4 and "### Zeta" in b4 and "### Blobco" not in b4
+    assert t4.startswith("🎯 3 ") and D._subject_vs_body(t4, b4) == ""
+
+
+def test_the_board_searches_sorts_and_says_about_by_the_brand_but_keys_on_the_registry_name():
+    """The cell showed `withfaye` where the employer is Faye — and a cell that says Faye
+    must sort under F, say `About Faye`, and be findable by typing "faye", while the
+    tooltip and the data joins keep the registry name."""
+    from pipeline import digest as D
+    jobs = [{"company": "withfaye", "title": "Data Analyst", "location": "Tel Aviv",
+             "url": "https://f.io/jobs/1", "posted_date": "2026-08-30", "description": "x"}]
+    info = {"withfaye": "Travel-insurance platform for consumers."}
+    html = D.build_board_html(jobs, "2026-08-30", {"companies_scanned": 1}, info,
+                              firmographics={"withfaye": {"display_name": "Faye"}})
+    assert ">Faye</td>" in html and 'title="withfaye"' in html
+    assert 'data-company="faye"' in html and "About Faye" in html
+    assert "faye" in html.split('data-blob="', 1)[1].split('"', 1)[0]
+    plain = D.build_board_html(jobs, "2026-08-30", {"companies_scanned": 1}, info,
+                               firmographics={"withfaye": {"sector": "insurtech"}})
+    assert 'data-company="withfaye"' in plain and "About withfaye" in plain and "Faye" not in plain
+
+
+def test_the_boards_brand_verdict_reaches_the_mail_that_renders_last():
+    """A fabricated brand on two employers collides on the BOARD and both revert — but
+    the mail's 48h list is a subset, its own cross_check may hold only one of the pair,
+    and it would print the fabricated `### Nova` under an audit line that says the raw
+    names. The board renders first; its demotion travels (`display_demoted` on the
+    shared render report) so one morning shows one verdict on every surface."""
+    from pipeline import digest as D
+    fab = {"Acme Data Ltd": {"display_name": "Nova"}, "Beta Analytics": {"display_name": "Nova"}}
+    j1 = {"company": "Acme Data Ltd", "title": "Data Analyst", "location": "Tel Aviv",
+          "url": "https://a.io/1", "posted_date": "2026-08-31", "description": "x"}
+    j2 = {"company": "Beta Analytics", "title": "BI Developer", "location": "Haifa",
+          "url": "https://b.io/2", "posted_date": "2026-08-31", "description": "x"}
+    out = D.render_all([j1], [j1, j2], [], "2026-08-31", {"new": 1}, firmographics=fab)
+    assert "### Nova" not in out["md_body"] and "### Acme Data Ltd" in out["md_body"]
+    assert "display-collision Acme Data Ltd/Beta Analytics" in out["md_body"]
+    # the wiring is live end to end: an unchallenged brand still reaches the mail
+    solo = D.render_all([j1], [j1], [], "2026-08-31", {"new": 1},
+                        firmographics={"Acme Data Ltd": {"display_name": "Nova"}})
+    assert "### Nova" in solo["md_body"] and "### Acme Data Ltd" not in solo["md_body"]
+
+
 # ======================================================================================
 # lane: infra (2026-08-25) — the delivery path: persist_state.py, the merges, the failure
 # notice, the run's alarms. Every guard is a proven loss or a shipped bug (the session

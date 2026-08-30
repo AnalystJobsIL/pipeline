@@ -123,17 +123,20 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     lines = []
     email_hidden = [0]
 
-    def _render(company, jobs_c, out, sink, dated=True):
-        """Append one company's block to `out`; the cards it emitted go to `sink`."""
+    def _cards(jobs_c):
         cards = [rolecard.build(j, run_date, ledger_rec=ledger.get(j.get("mkey")),
                                 company_info=company_info, firmographics=firmographics) for j in jobs_c]
         email_hidden[0] += sum(1 for c in cards if c["mangled"])
-        cards = [c for c in cards if not c["mangled"]]     # a card blob is not a role, in the mail either
-        if not cards:
-            return
+        return [c for c in cards if not c["mangled"]]      # a card blob is not a role, in the mail either
+
+    def _render(company, cards, out, sink, dated=True):
+        """Append one company's block to `out` (never called empty); its cards go to `sink`."""
         sink.extend(cards)
         about = cards[0]["about"]
-        heading = f"### {_md_esc(company)}"
+        # the evidenced brand (rolecard.display_name, stored on the card in _fill) — read
+        # AFTER cross_check ran, so a collision revert wins here as it does in the cell
+        dn = next((c["display_name"] for c in cards if c["display_name"]), "")
+        heading = f"### {_md_esc(dn or company)}"
         also = sorted({n for c in cards for n in c["also_listed_as"]})
         if also:
             heading += f" _(also listed as {_md_esc(', '.join(also))})_"
@@ -164,19 +167,34 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
             out.append(f"- {bullet} · {' · '.join(meta)}")        # THE role-bullet shape: `_ROLE_BULLET`
         out.append("")
 
-    for company in companies:
-        _render(company, by_company[company], lines, fresh_cards)
+    # Build every card first, cross-check ONCE over the whole mail, then emit: the
+    # collision revert mutates display_company/display_name, the headings read them, and
+    # cross_check is not idempotent — the revert erases its own trigger, so a second call
+    # would silently drop every display-collision from the Render line.
+    by_new = {}
+    for j in new_co_jobs:
+        by_new.setdefault(j["company"], []).append(j)
+    fresh_blocks = [(c, _cards(by_company[c])) for c in companies]
+    new_blocks = [(c, _cards(by_new[c])) for c in sorted(by_new)]
+    # the board rendered first and may have reverted a brand this mail's subset cannot
+    # see collide — its verdict wins here, before this product's own cross_check
+    _demoted = set(render_issues.get("display_demoted") or ())
+    if _demoted:
+        for _, _cs in fresh_blocks + new_blocks:
+            for c in _cs:
+                if c["company"] in _demoted and c["display_name"]:
+                    c["display_company"], c["display_name"] = c["company"], ""
+    _email_issues = rolecard.cross_check([c for _, cs in fresh_blocks + new_blocks for c in cs])
+    for company, cs in fresh_blocks:
+        if cs:
+            _render(company, cs, lines, fresh_cards)
 
     # The newly-covered section is rendered into its own list first, so its heading can
     # count the companies that actually produced a bullet — not the input list.
     newco_lines, newco_companies = [], 0
-    by_new = {}
-    for j in new_co_jobs:
-        by_new.setdefault(j["company"], []).append(j)
-    for company in sorted(by_new):
-        before = len(newco_cards)
-        _render(company, by_new[company], newco_lines, newco_cards, dated=False)
-        if len(newco_cards) > before:
+    for company, cs in new_blocks:
+        if cs:
+            _render(company, cs, newco_lines, newco_cards, dated=False)
             newco_companies += 1
     if newco_cards:
         lines += ["---", "",
@@ -244,7 +262,7 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     # still sees it (docs/BACKLOG.md 127); the counts stay collapsed below
     s = stats
     alarms = []
-    _email_issues = rolecard.cross_check(email_cards)
+    # _email_issues was computed above, before the headings were written (see the note there)
     _email_frag, _email_alarms = rolecard.report(email_cards, email_hidden[0])
     if _email_issues:
         _email_frag += ", " + _capped(_email_issues, 6)
@@ -380,7 +398,11 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
                             firmographics=firmographics, archived=archived) for j in jobs]
     hidden = sum(1 for c in cards if c["mangled"])
     cards = [c for c in cards if not c["mangled"]]
+    branded = {c["company"] for c in cards if c["display_name"]}
     issues = rolecard.cross_check(cards)
+    # who lost their brand to the collision revert — the mail (a SUBSET of this page,
+    # rendered last) demotes the same companies so one morning shows one verdict
+    demoted = branded - {c["company"] for c in cards if c["display_name"]}
     frag, alarms = rolecard.report(cards, hidden)
     if issues:
         frag += ", " + _capped(issues, 6)
@@ -397,6 +419,11 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
                   "plus": "Marked as an advantage — nice to have, not required"}
     for c in ordered:
         company, rtitle = c["company"], c["title"]
+        # what the reader is shown for this employer: the evidenced brand when the card
+        # carries one (post-cross-check), else the registry name exactly as before (for a
+        # tagline row the cell shows the shortened form and About/sort keep the full name
+        # — unchanged); the `title=` tooltip keeps the raw registry name as provenance
+        shown_co = c["display_name"] or company
         about, loc, pdate, age = c["about"], c["loc"], c["posted"], c["age"]
         chip, emp, skill_names = c["chip"], c["emp"], c["skill_names"]
         resp_parts, req_parts = c["resp"], c["req"]
@@ -420,7 +447,7 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
         # --- two-column detail card: company + day-to-day (left) | demands (right) ---
         left = ""
         if about:
-            left += f'<p class="about" dir="auto"><b>About {esc(company)}</b> — {esc(about)}</p>'
+            left += f'<p class="about" dir="auto"><b>About {esc(shown_co)}</b> — {esc(about)}</p>'
         facts = c["facts"]
         if facts:
             left += ('<p class="cofacts">'
@@ -520,7 +547,7 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
             deg_cell = '<span class="nd">—</span>'
         rows.append(
             f'<tr class="row" tabindex="0" role="button" aria-expanded="false" '
-            f'data-blob="{blob}" data-company="{esc(company).lower()}" '
+            f'data-blob="{blob}" data-company="{esc(shown_co).lower()}" '
             f'data-role="{esc(rtitle).lower()}" data-loc="{esc(loc).lower()}" '
             f'data-date="{esc(pdate)}" data-years="{c["years"] or 99}" '
             f'data-deg="{c["deg_rank"]}" data-skills="{esc(" ".join(skill_names)).lower()}">'
@@ -926,7 +953,8 @@ if(ds&&window.fetch){fetch('roles.csv.meta.json').then(function(r){if(!r.ok)thro
     page = (head + top + insights + table + legend + foot + '</div>' + js
             + analytics_html + '</body></html>')
     if isinstance(report, dict):        # only once the page exists: a raise above leaves it empty
-        report.update(cards=cards, hidden=hidden, issues=issues, frag=frag, alarms=alarms)
+        report.update(cards=cards, hidden=hidden, issues=issues, frag=frag, alarms=alarms,
+                      display_demoted=demoted)
     return page
 
 
@@ -1127,6 +1155,11 @@ def render_all(email_jobs, board_jobs, arch_jobs, run_date, stats, company_info=
         if rep:
             issues["lines"].append(f"{label} {rep['frag']}")
             issues["alarms"] += [a for a in rep["alarms"] if a not in issues["alarms"]]
+    # a company whose brand the board/archive reverted renders its registry name in the
+    # mail too — the mail's population is a subset, so its own cross_check can miss the
+    # collision the board saw (wave 1: `### Nova` over a board that says the raw names)
+    issues["display_demoted"] = sorted((rep_b.get("display_demoted") or set())
+                                       | (rep_a.get("display_demoted") or set()))
     # a product that failed is NOT written: run.py keeps yesterday's file on disk, so the
     # public board never shows an apology page (the failure is in the mail and the log)
     out["board_ok"], out["archive_ok"] = board is not None, archive is not None

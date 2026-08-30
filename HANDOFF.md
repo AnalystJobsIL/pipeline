@@ -71,13 +71,13 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-08-31 | docs | **the three tree/row/unattended guards pass ON A RUNNER.** `gh run list -R AnalystJobsIL/pipeline --workflow tests.yml --limit 1 --json headSha,conclusion` shows this session's sha and `success`, and the run log carries the `CI checkout: shallow=... origin/master=... commits=...` line from `test_ci_itself_confirms_why_the_tree_check_cannot_run_there`. They passed on every laptop and failed on every push until now, which is the only reason `tests.yml` had this session's name on it | 2026-08-30 | PASS, early - `Unit guards` = **success** on runs 33293548117, 33294213125, 33294986316 and 33295877346 (all four cancelled LATER, at step 9). The runner reported `CI checkout: shallow='true' origin/master='61bbc99a' commits='1'`, which corrected the reason: origin/master IS the built commit, so `behind` is 0 by construction |
 | 2026-08-31 | company-intel | the first unattended digest after this push prints `registry backlog N (±D since 2026-08-30)` and `bulk cron: … of N to do` on `Company intel:`, and its step log has no `blurb dropped, not a company: Tel Aviv`. `(first measurement)` on 08-31 means the `intel` stamp did not survive persist (`451`); once 449 lands, any `claude unavailable` on that line names a `subtype` | | not yet due |
 | 2026-08-31 | render | the first unattended mail's H1 number == `grep -cE '^- \*\*[^*]*\*\*( — [^ ]+)? · 📍 ' digests/latest.md` no `email subject says` line; `same-posting` names both 08-30 pairs unless `registry` parked them (`487`) | | not yet due |
+| 2026-09-01 | render | first digest after company-intel's `display_name` commit: mail heading shows the brand (`### Faye`-class), board cell agrees (tooltip = registry name); finbounce stays `finbounce`, NO `display-collision` (refused at source) | | not yet due |
 | 2026-09-06 | docs | **the three checks are still meaningful SOMEWHERE.** They skip in CI by design (a depth-1 checkout has nothing to be behind), so the only place they fire is a lane's own pre-push run. Evidence they still do: `git log --since=2026-08-30 --grep='tree\|morning check\|unattended'` finds a session that hit one, or ask the orchestrator whether any lane was stopped by one. If nothing in a week, they are decoration and belong in `docs/BACKLOG.md` as such | | not yet due |
 
 ## State at handoff — 2026-08-30 ~09:30 UTC, every number re-derived
 
-The 2026-08-27 table that stood here said registry **1,266 rows · 893 active** (it is 2,045 ·
-1,099) and *"`tests.yml` is red ... 3 failed"* (1,469 pass, 0 fail). Every cell below carries
-the command that re-derives it, because that is the only thing that keeps this honest.
+Every cell below carries the command that re-derives it — the 08-27 table here was wrong
+in two cells; the command is what keeps this honest.
 
 | | | how |
 |---|---|---|
@@ -91,14 +91,12 @@ the command that re-derives it, because that is the only thing that keeps this h
 
 ## Watch list for the next session
 
-0. **`python digest_watchdog.py` is still not installed** (`292@infra`, operator action). Since 2026-08-30 a dropped or +720-min-late slot is a `cron …` line in the mail; the watchdog is the only tripwire off GitHub's scheduler.
+0. **`python digest_watchdog.py` is still not installed** (`292@infra`, operator action) — the only tripwire off GitHub's scheduler; a dropped slot is otherwise just a `cron …` mail line.
 
 0b. **A patch script wrote a literal backslash-n into `daily-digest.yml` where a
-   continuation was meant.** It would have broken every run: bash reads the `n` as an
-   argument, the pipeline step goes red, no board and no mail — daily. It is
-   *syntactically valid*, so `bash -n` misses it. Guard:
-   `test_no_workflow_run_block_fakes_a_line_continuation`. **Read it before writing a patch
-   script that emits YAML.**
+   continuation was meant** — syntactically valid (`bash -n` misses it), and it would have
+   broken every run, daily. Guard: `test_no_workflow_run_block_fakes_a_line_continuation`;
+   **read it before writing a patch script that emits YAML.**
 
 0. **Active rows with an all-time-high of ZERO — this item has been wrong five times and is
    now a COMMAND plus a record.** `python confirm_zero.py --scrape-only` audits the pool and
@@ -115,13 +113,11 @@ the command that re-derives it, because that is the only thing that keeps this h
 2. **`mark_sent` still records intent, not delivery.** `daily-digest.yml` runs it at step
    `Mark digested roles as sent`, before `Persist state back to the repo` and long before the
    06:17 relay. A role can still be burned unsent.
-3. **`cloud_state/seen.db` is 1.54 MB** (`ls -l`, not the ~1.2 MB this said) and still holds a
-   946-row `firmographics` table that also travels as a 973-record JSON. Dropping it and
-   VACUUMing is the biggest single win on the daily binary.
-4. **iCIMS is the only unsupported ATS left.** `eightfold`, `phenom`, `successfactors` and
-   `jobvite` all have fetchers now; `jazzhr` was deliberately retired. `registry_health.py
-   --ats` is derived and correct — run it instead of trusting a list. HiBob is down to **1**
-   active row, not 2, so it is moving away from the 3-row trigger, not toward it.
+3. **`cloud_state/seen.db` is 1.54 MB** and still holds a `firmographics` table that also
+   travels as JSON; dropping it and VACUUMing is the biggest single win on the daily binary.
+4. **iCIMS is the only unsupported ATS left** — see Open items 2; `registry_health.py
+   --ats` is derived and correct. HiBob is at **1** active row, moving away from the
+   3-row trigger.
 6. **~24 active rows are re-checked by NOTHING, and `ARCHITECTURE.md` §2's headline claim
    ("every state except `defunct:` and `domain-dead` is re-checked on some cadence") is
    false because of it.** Found by `registry` on 2026-08-27.
@@ -134,7 +130,7 @@ the command that re-derives it, because that is the only thing that keeps this h
    tenant's does not. Broadcom's note says "Tel Aviv postings confirmed live" while its
    all-time high is 0; one free POST settles which.
 
-5. **GitHub dispatches these crons when it feels like it.** Since 2026-08-30 a dropped or +720-min-late slot is a `cron …` clause on the mail's `Stages:` line (`schedule_census.py --alarm`); the recovery-cron decision is the 09-10 row.
+5. **GitHub dispatches these crons when it feels like it** — a dropped or +720-min-late slot is a `cron …` clause on the mail's `Stages:` line (`schedule_census.py --alarm`); the recovery-cron decision is the 09-10 row.
 
 ## Open items — highest value first
 
@@ -165,3 +161,4 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-30 `infra` (b)** — `mutation-gate (0)` killed at 40 min (M1 is ONE class): split by RECORD, 5 shards, verdicts printed as they land. Drain: ingest its own `always()` step, retire-settled first, cap 350/budgets 327. Commit gate `--strict` refuses twins/off-host rows; `dry_run` digest dispatch; the 08-27 lag is GitHub's (§4). **NOT finished:** 491 item 3, 501, 502. Record: `docs/sessions/2026-08-30-infra-b.md`.
 - **2026-08-30 `docs` (c)** — clause 4 (evidence, not adjectives); cross-lane debt: a filed diff is applied by the next lane in the file (`check_debt_on_touched_files`, 5 of 66 commits today); `next` reads master, the gate refuses new collisions. CI: `dc3a787` 33328309775 and `3453a2a` 33329623016 both `success` 13/13; `a13045a`/`6ef03c9` `failure` (HANDOFF over cap, mine). Record: `docs/sessions/2026-08-30-docs-craft.md`.
 - **2026-08-30 `classifier` (b)** — drain fits one run: `LLM_CAP` 450 (the real bound), `REJUDGE_CAP` 250, fresh-reserve 80; bare-Israel rule REJECTED (10/11 FN). **NOT finished:** the 05:00 run; 464, 116, 503. Record: `docs/sessions/2026-08-30-classifier-b.md`.
+- **2026-08-30 `render` (b)** — slug rows now prefer the firmographics `display_name` (contract agreed live with `company-intel` (b)) on every reader surface; identity guard blocks impersonation (finbounce until `487`). Inert today: `--golden` 6/6, cards diff only the new key; KILLS 5. **NOT finished:** waits on their field; `504`. Record: `docs/sessions/2026-08-30-render-b.md`.

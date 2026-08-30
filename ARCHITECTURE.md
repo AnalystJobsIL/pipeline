@@ -5704,6 +5704,41 @@ Cards are built **board and archive first, then the email** (`render_all`; the h
 `pipeline/run.py`, approved out-of-lane 2026-08-25, replaced four `build_*` calls with one) —
 that order is what lets a board-render problem reach the mail that is written last.
 
+### The name on the cell (2026-08-30, the second render session)
+
+`card["company"]` is always the registry name — the join key for firmographics, the roles
+ledger and `roles.csv`, and the `title=` tooltip on the Company cell. The brand is the
+**`display_name`** company-intel evidenced on the firmographics record
+(`rolecard.display_name` — optional, brand-only, never invented; the 2026-08-30 contract
+agreed live with that session), derived **once** in `_fill` and stored as
+`card["display_name"]`. Where it lands when present, and what each surface shows without
+it: the Company **cell** renders `display_company` (= the brand, else
+`jdtext._display_company`'s shortened registry name, exactly as before); the mail's
+`### heading`, the board's About label and the Company sort key show the brand, else the
+**raw registry name** (never the shortened form — that fallback would have changed
+existing mails); the search blob gains the brand as one more token. No surface does a
+second lookup, so a company with no evidenced brand renders byte-identically to the day
+before this existed (measured: `--golden` 6/6 byte-identical, `--cards-golden` differing
+only by the new key).
+
+Refused, not rendered (each shape is a measured attack from the session's waves): a name
+whose identity token-matches a **different** company the renderer knows this morning (the
+handed dict = board + role companies, not the whole registry — an off-board victim is
+caught the morning it appears, and company-intel's write-time check is the wider net); a
+styled or homoglyph name — NFKC rewrites it, or a Greek/Cyrillic letter sits inside a
+Latin brand, or its identity keys to nothing; an LLM non-answer ("N/A", "unknown"); text shaped
+like an HTML entity (GitHub renders `&rlm;` after `_md_esc`); anything over 60 chars
+(refused, never truncated — a cut brand is a wrong name); control/bidi/invisible
+characters are stripped. `cross_check`'s display-collision revert clears the brand too —
+and a brand folding **two registry rows** onto one cell alarms even when the raw names
+only differ by case. `build_markdown` builds every block first and runs `cross_check`
+once, above the headings (it is not idempotent: the revert erases its own trigger), and a
+brand the board reverted is demoted in the mail as well (`display_demoted` on the shared
+render report) — one morning, one verdict. Deliberate residue: the search blob keeps a
+reverted brand (as `also_listed_as` does — the loser's name still finds the card), and a
+claimant that IS the brand is dropped from `also_listed_as` (`Port` shown as `Port.io`
+must not read "also listed as Port.io").
+
 ### What the mail says
 
 **The subject is the H1, and it counts every role bullet the mail carries.** `build_markdown`

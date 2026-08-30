@@ -21,7 +21,9 @@ degraded and why.
 from __future__ import annotations
 
 import datetime as _dt
+import functools
 import re
+import unicodedata
 from collections import Counter
 from urllib.parse import urlparse, parse_qsl, urlencode
 
@@ -89,6 +91,79 @@ def firmo_facts(rec):
     return [c for c in out if c][:5]
 
 
+# characters no employer name legitimately carries: controls, zero-width, bidi marks
+# and the invisible fillers/joiners (wave 1: U+061C is the third bidi mark next to
+# LRM/RLM, and soft hyphen, word joiners, Hangul fillers, BOM and TAG characters all
+# survive both `str.split()` and every escaper on the render path)
+_DN_JUNK = re.compile(r"[\x00-\x1f\x7f-\x9f\xad\u061c\u115f-\u1160\u180b-\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2064\u3164\ufeff\U000e0000-\U000e007f]")
+# an LLM's non-answer must never become an employer's public name
+_DN_NON_ANSWER = {"n/a", "na", "null", "none", "unknown", "unclear", "tbd", "the company"}
+# `&rlm;`-shaped text survives `_md_esc` (it escapes `#`, not `&`) and GitHub renders
+# the entity — re-introducing downstream exactly what `_DN_JUNK` strips at the source
+_DN_ENTITY = re.compile(r"&#|&[a-zA-Z][a-zA-Z0-9]*;")
+_DN_LETTER = re.compile(r"[^\W\d_]", re.UNICODE)
+# Greek and Cyrillic: legitimate here only as a WHOLE-script name (then the identity
+# is empty and already refused), never mixed into a Latin brand
+_DN_FOREIGN = re.compile("[\u0370-\u03ff\u0400-\u04ff]")
+
+
+@functools.lru_cache(maxsize=8)
+def _id_token_index(keys):
+    """Identity token set per firmographics key, once per dict — the per-card scan was
+    ~5.5 ms against the full 1,313-key export (vs ~0.6 µs cached), and a brand that
+    leaves its company's identity group is the NORMAL case, not the exception."""
+    return tuple((k, frozenset(identity_key(unicodedata.normalize("NFKC", str(k))).split()))
+                 for k in keys)
+
+
+def display_name(rec, company="", firmographics=None):
+    """The brand company-intel evidenced for this company ('' when it did not).
+
+    `display_name` on a firmographics record is optional, brand-only, never the registry
+    slug (the 2026-08-30 contract with company-intel). "No evidence" — absent, empty,
+    whitespace, non-str, over 60 chars (a truncated brand would be a WRONG name, so junk
+    length is refused, never cut; the cell's CSS ellipsis handles width), an LLM
+    non-answer ("N/A", "unknown"), entity-shaped text, or no letter at all — leaves
+    every caller at today's behaviour byte for byte.
+
+    The impersonation guard: a brand whose identity leaves this company's group and
+    token-matches (equal or subset, either way — "Wix Analytics" is still Wix) another
+    company the renderer knows THIS MORNING is refused. The `firmographics` dict is the
+    board + role companies, not the whole registry, so an off-board victim is caught the
+    morning it appears; company-intel's write-time check is the wider net. A record
+    carrying another employer's name is the wrong-facts failure shape (`Bounce`, 489);
+    rendered, it would impersonate that employer with only the board tooltip carrying
+    the truth. A brand whose identity keys to nothing (homoglyph scripts — NFKC folds
+    the compatibility ones first) or only to single letters is unverifiable: refused."""
+    v = rec.get("display_name") if isinstance(rec, dict) else None
+    if not isinstance(v, str):
+        return ""
+    # whitespace collapses BEFORE the junk strip (a newline is a separator, not junk —
+    # stripping it first would glue a two-word brand together), and again after it
+    # (deleting a zero-width between two spaces would leave a double space)
+    dn = _s(_DN_JUNK.sub("", _s(v)))
+    if (not dn or len(dn) > 60 or dn.lower() in _DN_NON_ANSWER
+            or _DN_ENTITY.search(dn) or not _DN_LETTER.search(dn)
+            # a name NFKC rewrites (fullwidth, math-bold, ligatures) is styled to look
+            # like a name, not to be one — the homoglyph shapes an escaper can't catch
+            or unicodedata.normalize("NFKC", dn) != dn
+            # ...and a Latin name carrying a Cyrillic or Greek letter is the homoglyph
+            # NFKC keeps: identity_key silently DELETES the foreign letter, so a
+            # Cyrillic-o "Monday.com" keys to tokens that match nothing while reading
+            # as the victim's name (wave 2)
+            or bool(re.search("[a-zA-Z]", dn) and _DN_FOREIGN.search(dn))):
+        return ""
+    its = frozenset(identity_key(dn).split())
+    if not its or all(len(t) < 2 for t in its):
+        return ""
+    mine = frozenset(identity_key(unicodedata.normalize("NFKC", company)).split())
+    if its != mine:
+        for k, o in _id_token_index(tuple(firmographics or ())):
+            if k != company and o and (o <= its or its <= o):
+                return ""
+    return dn
+
+
 def company_about(company, desc, company_info):
     """The company one-liner for a card: the researched blurb, else a sentence anchored on the
     company's own name in the JD ("<Company> is a …"); never the first "X is a …" of the
@@ -133,7 +208,7 @@ def sen_canon(chip, title):
 
 
 _LAST_RESORT = {
-    "company": "", "display_company": "", "title": "(untitled)", "hebrew_title": False, "mangled": False,
+    "company": "", "display_company": "", "display_name": "", "title": "(untitled)", "hebrew_title": False, "mangled": False,
     "url": "", "loc": "Israel (unspecified)", "posted": "", "age": "", "rel_date": "—", "first_seen": "",
     "raw_chip": "", "chip": "—", "rank": 99, "emp": "", "about": "", "facts": [], "skills": [],
     "skill_names": [], "family": "Other", "years": None, "degree": None, "deg_txt": "", "deg_rank": 0,
@@ -187,6 +262,13 @@ def build(job, run_date, *, ledger_rec=None, company_info=None, firmographics=No
 
 def _fill(card, job, run_date, company_info, firmographics):
     company, rtitle = card["company"], card["title"]
+    # the evidenced brand, when company-intel recorded one — derived HERE and only here
+    # (stored on the card so every surface reads one verdict), and it depends only on the
+    # firmographics record: a poisoned description cannot cost the name
+    dn = display_name(firmographics.get(company), company, firmographics)
+    card["display_name"] = dn
+    if dn:
+        card["display_company"] = dn
     desc = job.get("description")
     desc = desc if isinstance(desc, str) else _s(desc)
     prof = roleprofile.extract(rtitle, desc)
@@ -246,7 +328,10 @@ def _fill(card, job, run_date, company_info, firmographics):
                  + " ".join(tok for _, tok in tasks) + " "
                  + " ".join(tok for _, tok in ai_day) + " "
                  + " ".join(tok + "-req" for _, tok in ai_req) + " "
-                 + " ".join(tok for _, tok in soft)),
+                 + " ".join(tok for _, tok in soft)
+                 # the brand joins the blob so the filter finds the row by the name its
+                 # cell shows (the registry name stays in the blob's first token)
+                 + ((" " + dn) if dn else "")),
     })
 
 
@@ -266,9 +351,12 @@ def _from_ledger(card, job, rec, archived):
             card["new"] = False
         if archived and rec.get("status") == "closed" and isinstance(rec.get("closed_on"), str):
             card["closed_on"] = rec["closed_on"][:10]
-    mine = identity_key(card["company"])
+    # the brand is this employer's own name too: `Port` shown as `Port.io` must not
+    # print `### Port.io _(also listed as Port.io)_` (wave 1, the one live claimant)
+    mine = {identity_key(card["company"]), identity_key(card["display_name"])} - {""}
     card["also_listed_as"] = sorted({_s(c, 120) for c in claimed
-                                     if _s(c) and identity_key(_s(c)) != mine and _s(c) != card["company"]})
+                                     if _s(c) and identity_key(_s(c)) not in mine
+                                     and _s(c) not in (card["company"], card["display_name"])})
     if card["also_listed_as"]:
         card["blob"] += " " + " ".join(card["also_listed_as"])
 
@@ -493,11 +581,17 @@ def cross_check(cards):
         by_display.setdefault(c["display_company"], set()).add(c["company"])
     for short, ns in by_display.items():
         folded = {" ".join(n.lower().split()) for n in ns}
-        if len(folded) > 1:
+        # a BRAND folding two registry rows onto one cell is a collision even when the
+        # raw names fold too (helfy/Helfy both shown "Helfy" would render a registry
+        # duplicate as if it were fine — wave 1); a no-brand case-twin stays silent
+        branded_merge = len(ns) > 1 and any(
+            c.get("display_name") == short for c in cards if c["company"] in ns)
+        if len(folded) > 1 or branded_merge:
             issues.append(f"display-collision {_names(ns)}")
             for c in cards:
                 if c["company"] in ns:
                     c["display_company"] = c["company"]
+                    c["display_name"] = ""      # the revert must win on EVERY surface
     # (c) the About text names a different rendered employer, and not this one
     tokens = {}
     for n in names:

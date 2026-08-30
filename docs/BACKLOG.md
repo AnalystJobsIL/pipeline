@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**554 filed · 405 open · 149 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**555 filed · 406 open · 149 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 504.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 505.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -471,7 +471,7 @@ closure convention in the header.
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 
-### roles — 16 open
+### roles — 17 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
 - **3** `3@roles` **`pipeline/dates.py`**
@@ -489,6 +489,7 @@ closure convention in the header.
 - **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
 - **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
 - **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
+- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
 
 ### jd-text — 15 open
 
@@ -8642,6 +8643,14 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     `board_employer`) and on every other rung (using the Comeet `board_asserts_company`
     the drain already recorded and nothing read).
 
+    2026-08-30, `render`: a fourth option this item did not consider now exists — the
+    board and mail prefer the firmographics `display_name` where `company-intel`
+    evidences one, so the slug rows above are DISPLAY-fixed without touching any join
+    key (`rolecard.display_name`, ARCHITECTURE §7d "The name on the cell"). The rename
+    and its three-lane sequencing remain this item; render's identity guard refuses a
+    `display_name` that names a different registered company (the `487`
+    finbounce/Bounce AI pair renders its registry name until that row is parked).
+
 460. **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
     different answer** — lane: `roles` (they own the purge and the join), verdicts by
     `registry`, measured 2026-08-30. **Partly drained 2026-08-30 (`roles`, evening):** class
@@ -9160,3 +9169,17 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      inline (a stale YES is on the board NOW) — an inline-YES/deferred-NO hybrid. Take it
      only with a rehearsal (`tests/rehearse_classifier.py`) proving the flush runs after the
      second `classify_grouped` call and the cache diff matches the queue.
+
+504. **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
+     lane: `roles`. Filed by `render` 2026-08-30 (evening). Since the display change
+     (ARCHITECTURE §7d "The name on the cell"), a company with an evidenced firmographics
+     `display_name` renders its brand on every reader surface — but `roles.csv`'s `company`
+     column is the join key and stays the registry name BY DESIGN, so the one surface still
+     showing the slug is the downloadable dataset. Proposal: an optional, additive
+     `display_name` column filled from firmographics at export (`roles.build_rows` already
+     holds `firmographics.get(company)` at `pipeline/roles.py:1841`), empty when
+     unevidenced; `company` keeps its meaning and every existing join survives. Document
+     both columns in `roles.csv.meta.json` — and note the `company` column doc
+     ("Employer name as it appears on the board we read", `pipeline/roles.py:1391`) is
+     stale either way now that the board can show the brand: reword it to "registry name —
+     the join key; the board may display the evidenced brand instead".
