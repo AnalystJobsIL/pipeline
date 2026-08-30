@@ -168,4 +168,16 @@ queue change is a lookup over records already on disk.
   unverifiable ones (unknown) — the publication-side fix is the scraper's (`462@scraper`);
   a query-URL row whose postings print only "Israel" with no city can no longer wake through
   the probe (a coverage cost, accepted and written into §2).
-* {{CI_LINE}}
+* **CI on the landed commit `56901b8`: run 33312937940, conclusion `failure`** — `guard`,
+  `guard-kill`, `mutation-gate (1)`, `mutation-gate (2)` and all five `rehearse (mixed)`
+  green; `rehearse (worst, seed 1)` red exactly as on the two runs before mine (33312345558,
+  33305567382 — `rehearsal FAILED: 14 night(s), policy worst`, inherited); and
+  **`mutation-gate (0)` timed out at its 40-minute budget** — that shard is class M1 alone
+  (86 records, 25 min on 2026-08-30 morning) and this session added three M1 records whose
+  import-graph subset is 936 tests (~6 min each locally; the shard printed the baseline and
+  no per-record line). The workflow's own error says `add a shard (SHARDS) rather than
+  minutes`; `tests.yml` is infra's, so that is `491` item 5. Until it lands every push is red
+  on that shard. The records themselves are proven killed by this lane's own tests in a
+  mutated `git archive` copy (rc=1 mutated / rc=0 unmutated, all four), and `guard_kill
+  --base c1fda51` reports KILLS 16, CANNOT-FAIL 0. Full suite on the pushed tree: 1,526
+  passed, 12 skipped, 0 failed.
