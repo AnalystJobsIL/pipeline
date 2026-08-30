@@ -250,7 +250,7 @@ def queue_targets(rows, cap):
         if _days > 0:
             _st = _qs.load()
             out = [n for n in out if not _qs.tried_within(_st, n, "hunt", _days)]
-    except Exception:                                             # noqa: BLE001
+    except (Exception, SystemExit):                                             # noqa: BLE001
         pass                                   # no state file is not an error, it is night one
     sh = os.environ.get("HUNT_QUEUE_SHARD", "")
     if sh and "/" in sh:
@@ -283,6 +283,27 @@ def _consume_wake(note):
     return SEP.join(p for p in split(note) if not p.lower().startswith("probe-woken"))
 
 
+def _il_jobs(url, jobs):
+    """The Israel roles on a page -- unless the page is a QUERY that stamped them itself.
+
+    `jobs.comcast.com/search-jobs?location=Israel` returned 14 US postings and
+    `scrape_universal._page_is_il` stamped every card `location='Israel'` because the URL
+    said so; this function then counted 14, `is_foreign` is False on the company's own host,
+    and the row activated as `verified 14 IL`. Two Houston/Pennsylvania roles reached the
+    email. On such a URL a stamped location is our own assumption, so activation needs a
+    card that names ITS OWN place (its url path, its title tail, its `country_code`) --
+    `audit_query_urls.independent_il_evidence`, the same rule the audit parks on. Without
+    this the audit's park was undone by the next night's hunt on the same 14 cards.
+    """
+    from pipeline.israel import is_israel_job
+    from audit_query_urls import il_jobs
+    il = il_jobs(url, jobs)
+    if not il and any(is_israel_job(j) for j in jobs):
+        print(f"       (query URL: {len(jobs)} cards, none carries its own Israel signal "
+              f"-> not evidence: {url[:60]})", flush=True)
+    return il
+
+
 def hunt_one(name, seed, documented=False, mode=""):
     """`mode` comes from triage_dark.py and selects the strategy:
        url-dead / no-url  -> ignore the stored seed (it 404s), search first
@@ -296,9 +317,8 @@ def hunt_one(name, seed, documented=False, mode=""):
     # just pull it (scrape + verify); the full search dance only runs if that fails
     if documented and seed and seed.startswith("http"):
         from scrape_universal import scrape
-        from pipeline.israel import is_israel_job
         try:
-            il = [j for j in (scrape(name, seed) or []) if is_israel_job(j)]
+            il = _il_jobs(seed, scrape(name, seed) or [])
         except Exception:  # noqa: BLE001
             il = []
         # NOTE: `is_foreign` is a constant False on every ATS host, so this is a weak gate
@@ -366,7 +386,6 @@ def hunt_one(name, seed, documented=False, mode=""):
     ordered += [cands[0]] if cands else []
     tried = []
     from scrape_universal import scrape
-    from pipeline.israel import is_israel_job
     for u in dict.fromkeys(ordered).keys():
         if len(tried) >= 2:
             break
@@ -375,7 +394,7 @@ def hunt_one(name, seed, documented=False, mode=""):
             jobs = scrape(name, u) or []
         except Exception:  # noqa: BLE001
             jobs = []
-        il = [j for j in jobs if is_israel_job(j)]
+        il = _il_jobs(u, jobs)
         if il and not is_aggregator(u):
             # "Real Israel jobs are here" is NOT "these are THIS company's jobs". Without
             # this check the search happily activated FairFly off fireflyspace.com (25

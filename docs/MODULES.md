@@ -16,9 +16,9 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 |---|---|---|
 | `scheduled` | a workflow invokes it | 32 |
 | `library` | no workflow runs it; live code imports it | 9 |
-| `operator` | a human or agent runs it; nothing in CI does | 13 |
+| `operator` | a human or agent runs it; nothing in CI does | 14 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **79** |
+| | **total root modules** | **80** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -85,6 +85,7 @@ Live and documented, and nothing in CI runs them - `docs/check_docs.py` fails if
 | module | what it does |
 |---|---|
 | `apply_proposals.py` | applies `drain_queue`'s proposals to companies.csv in reviewed batches, dry-run by default, through `activation_verdict`. Six de-dup keys lower-cased on both sides (the sixth is the Comeet uid read from BOTH url shapes -- the twin no string key sees). Idempotent by holding no run state, which is also what makes it survive a rebase that drops its append |
+| `audit_query_urls.py` | audits the ACTIVE rows whose address is a SEARCH with a location filter (`?location=Israel`, 60 rows on 2026-08-30) -- a QUERY, trustworthy only if the site honours its own filter. `scrape_universal._page_is_il` stamps `location='Israel'` on every card such a URL returns, so `verified N IL` on these rows counted our own assumption; Comcast answered 14 US postings and two reached the email. Evidence is CARD-LEVEL and independent of the query (the card's own url path, title tail, `country_code`; a description is never evidence alone); rows that ignore their filter are parked `needs re-resolution` into the hunt's pool, and `listing_hunt` imports `independent_il_evidence` so the same stamped cards can never re-activate them. Rows the cache cannot judge get one RENDERED read whose (title, location) pairs must literally occur in the page text -- extraction the code then counts, never a model's verdict. Ledger: `cloud_state/query_filter.json` |
 | `bd_employees.py` | LinkedIn employee-count fill via the Web Unlocker, 1 credit/page. Hand-run only - the Windows chain that drove it is disabled and no workflow runs it |
 | `cache_new_rows.py` | superseded shim: delegates to `refresh_scrape_cache.py --only-missing` (docs/BACKLOG.md 87 retires it) |
 | `confirm_zero.py` | audits every ACTIVE row whose all-time high is 0 and refuses to let "no Israeli roles" be a tool's output. A native row is judged by WALKING its board (an `israel_scoped` fetcher asks for a word, which is a question, not a census -- 24 Workday boards, 11,000+ postings, only Broadcom carries Israel roles) and a scrape row by a local Playwright render; then an LLM reads what was found and answers in words, including whether the page STATES it has no openings or merely fails to show any. Only the first can become `confirmed`. **Unresolved is not an end state**: a board answering with nothing is a wrong ADDRESS, so the row is parked `needs re-resolution` into listing_hunt's nightly pool rather than stamped. Complements validate_empty (parked rows, no browser, no LLM); never activates |

@@ -80,7 +80,32 @@ def probe(url):
     except Exception:  # noqa: BLE001
         return None
     body = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
-    return {"sig": len(_JOB_SIG.findall(body)), "il": len(_IL_SIG.findall(body))}
+    return {"sig": len(_JOB_SIG.findall(body)), "il": il_signal(url, body)}
+
+
+def il_signal(url, body):
+    """Israel mentions on the page that are NOT the page echoing our own query back.
+
+    `search-jobs?location=Israel` prints `Israel` in a filter chip, a breadcrumb, the
+    `<title>` and a hidden input -- signal from OUR query string, which a rising count then
+    turned into a wake, `probe-woken` promoted the row to `listing_hunt`'s fast path, and a
+    query URL whose filter the site ignores re-activated on stamped cards. On a query URL
+    the value we asked for is struck from the page before counting; a real Israeli posting
+    still counts through its city (Haifa, Herzliya, Petah Tikva ...) and through any Israel
+    mention that is not the echoed value. `audit_query_urls.has_location_query` decides
+    what a query URL is.
+    """
+    try:
+        from audit_query_urls import has_location_query
+        import urllib.parse as _up
+        if has_location_query(url):
+            for _k, v in _up.parse_qsl(_up.urlsplit(url).query, keep_blank_values=True):
+                v = (v or "").strip()
+                if len(v) >= 3 and _IL_SIG.search(v):
+                    body = re.sub(re.escape(v), " ", body, flags=re.I)
+    except Exception:  # noqa: BLE001
+        pass
+    return len(_IL_SIG.findall(body))
 
 
 def in_probe_pool(r):

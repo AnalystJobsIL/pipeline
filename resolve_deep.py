@@ -200,10 +200,11 @@ def resolve(name, careers_url, budget_s=None):
         if v and v[0]:
             return ("ats", (name, plat, tok, api, v[0], v[1]))
         reachable = True                     # a real ATS board (even if 0 Israel) = reached
+    from audit_query_urls import il_jobs
     jobs = _bounded_scrape(name, careers_url, _left(RESOLVE_SCRAPE_S))
     if jobs:
         reachable = True
-    il = [j for j in jobs if israel.is_israel_job(j)]
+    il = il_jobs(careers_url, jobs)                # a query URL's stamps are not Israel
     if il:
         return ("scrape", il)
     # follow a jobs link: the strong call-to-action anywhere, then a plain `Careers` nav link
@@ -216,7 +217,7 @@ def resolve(name, careers_url, budget_s=None):
         jobs = _bounded_scrape(name, h, _left(RESOLVE_SCRAPE_S))
         if jobs:
             reachable = True
-        il = [j for j in jobs if israel.is_israel_job(j)]
+        il = il_jobs(h, jobs)
         if il:
             return ("scrape", (il, h))              # keep the followed URL that worked
     return ("empty", None) if reachable else ("unreachable", None)

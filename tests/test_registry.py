@@ -5800,7 +5800,6 @@ def test_no_two_active_rows_share_a_board():
     # two can only shrink. Do not add to this list: park the row instead.
     from urllib.parse import urlparse
     KNOWN_TWINS_2026_08_27 = {
-        ("Microsoft (Xbox/Gaming)", "Microsoft Israel"),
         ("AWS", "Amazon Web Services (AWS)"),
     }
     def _hp(u):

@@ -90,26 +90,120 @@ def _reopened_since_search(state, name):
     return "reopen" in last and last["reopen"] > last.get("search", -1)
 
 
-def targets(cap=0, shard=""):
-    """Queue names with no row and no settled verdict, newest rung first."""
+# What one shard can do in a night. The workflow runs NIGHT_SHARDS processes with
+# `--cap NIGHT_CAP` inside a step that GitHub kills at 30 minutes -- and the kill lands on
+# `queue_state.py --ingest`, which sits after `wait` in the same step, so one slow shard
+# past the line erases every shard's attempt log for the night: the same names are selected
+# and re-bought tomorrow, every refusal is lost, and every step is green. So a shard budgets
+# ITSELF: it selects only as many names as `QRS_TIME_BUDGET_MIN` can score at
+# `QRS_SEC_PER_NAME` (the workflow's own measured figure), and stops between names when the
+# clock says so. `tests` pin these two against `listing-hunt.yml`.
+NIGHT_SHARDS = 4
+NIGHT_CAP = 30
+TIME_BUDGET_MIN = float(os.environ.get("QRS_TIME_BUDGET_MIN", "26") or 0)
+SEC_PER_NAME = float(os.environ.get("QRS_SEC_PER_NAME", "55") or 55)
+
+
+def budgeted(cap, budget_min=None, sec_per_name=None):
+    """How many names a shard may SELECT: the cap, or fewer if the clock cannot fit them."""
+    budget = TIME_BUDGET_MIN if budget_min is None else budget_min
+    sec = SEC_PER_NAME if sec_per_name is None else sec_per_name
+    if not budget or budget <= 0:
+        return cap
+    fit = max(1, int(budget * 60 // max(1.0, sec)))
+    return min(cap, fit) if cap else fit
+
+
+def nightly_capacity():
+    """Names the cloud drain can take in one night, from the same constants it runs on."""
+    return NIGHT_SHARDS * budgeted(NIGHT_CAP)
+
+
+def _last_search(state, name):
+    """The date of this rung's newest attempt on `name`, or "" if it never searched it."""
     import queue_state as QS
-    st, have = QS.load(), QS.registry_names()
+    return max((str(a.get("date") or "") for a in QS.attempts(state, name, "search-llm")),
+               default="")
+
+
+def _never_searched(state, name):
+    """Never searched by this rung -- or re-opened since, which counts as never."""
+    return _reopened_since_search(state, name) or not _last_search(state, name)
+
+
+STALE_SHARE = 5          # one in five slots goes to the stalest re-try when both classes wait
+
+
+def select(ranked, n):
+    """The `n` names a shard takes from its ranked list: the new first, but never ONLY the new.
+
+    Intake (161/day median) outruns capacity (112/night), so "never-searched first" alone
+    means the re-try class is never reached: a name refused once stays refused for ever.
+    One slot in `STALE_SHARE` is reserved for the stalest re-try whenever one is waiting.
+    """
+    if not n or n <= 0 or len(ranked) <= n:
+        return list(ranked)
+    new = [t for t in ranked if t[0] == 0]
+    stale = [t for t in ranked if t[0] == 1]
+    k = min(len(stale), n // STALE_SHARE) if stale else 0      # a 1-slot cap is all new
+    take_new = new[:max(0, n - k)]
+    take_stale = stale[:n - len(take_new)]
+    return take_new + take_stale
+
+
+def targets(cap=0, shard="", today=None):
+    """Queue names still OWED an answer -- the never-tried first, then the stalest.
+
+    Three files decide, and each answers a different question:
+      * `companies.csv`            -- is it a ROW already? (then nothing is owed)
+      * `queue_state.json`         -- did a RUNG settle it, or search it inside 14 days?
+      * `queue_disposition.json`   -- did a JUDGE retire it, and is that retirement LIVE?
+    The third was never read here. Intake re-adds a retired name every morning (189 of the
+    362 names two digest runs added on 2026-08-30 carried a retirement), `--retire-settled`
+    runs three steps AFTER this rung, so from the night the 14-day cadence lapsed every one of
+    them would have bought a paid search to re-learn an answer already on disk. A
+    `cannot-tell`, an `overturned-*` (a human said "look again") and a `no-board` past its
+    `REOPEN_DAYS` are NOT live retirements and stay selectable; a `covered-by-row` /
+    `already-a-row` / `settled-by-a-rung` the cleanup wrote IS one (`Faye`, `Strauss Group`
+    and seven more were being re-selected while the census counted them retired) --
+    `queue_disposition.is_retired` is the one place that rule lives, and it reads the ledger
+    case-insensitively, because intake re-adds `NATASHA DENONA IL` as `Natasha Denona Il`.
+
+    ORDER: names this rung has never searched come first, then the oldest search first.
+    The file is append-ordered, so file order is oldest-intake-first and a day's new names
+    waited behind every older residue; a night that cannot do everything should do the
+    names that arrived today. The sort is stable, so ties keep file order, and it happens
+    BEFORE the shard stride so every shard sees the same ranking.
+    """
+    return [n for _, _, n in ranked_targets(shard, today, cap)]
+
+
+def ranked_targets(shard="", today=None, cap=0):
+    """`targets()` with the rank kept: (0 never-searched | 1 stale, last date, name)."""
+    import queue_state as QS
+    import queue_disposition as QD
+    st, have, disp = QS.load(), QS.registry_names(), QD.load()
     with open("research_companies.json", encoding="utf-8") as f:
         queue = json.load(f)
-    out = []
+    ranked = []
     for e in queue:
         n = (e.get("name") or "").strip()
         if not n or n.strip().lower() in have:
             continue
         if QS.is_settled(st, n, have):
             continue
-        if QS.tried_within(st, n, "search-llm", 14) and not _reopened_since_search(st, n):
+        if QD.is_retired(n, disp, today):
+            continue                       # a LIVE answer is already on disk
+        reopened = _reopened_since_search(st, n)
+        if QS.tried_within(st, n, "search-llm", 14) and not reopened:
             continue                       # this rung's own cadence, like every other pool
-        out.append(n)
+        last = "" if reopened else _last_search(st, n)
+        ranked.append((1 if last else 0, last, n))
+    ranked.sort(key=lambda t: (t[0], t[1]))
     if shard and "/" in shard:
         i, k = (int(x) for x in shard.split("/", 1))
-        out = out[i - 1::k]                # 1-based, to match HUNT_QUEUE_SHARD
-    return out[:cap] if cap else out
+        ranked = ranked[i - 1::k]          # 1-based, to match HUNT_QUEUE_SHARD
+    return select(ranked, cap) if cap else ranked
 
 
 def choose(name, urls, timeout=120):
@@ -231,14 +325,14 @@ def _score(name, url, gate, is_aggregator, looks_like_a_job_listing_page):
     if not _is_ours(name, url, page, gate):
         return None                            # (a thin shell carries no title to rescue it)
     try:
-        from pipeline.israel import is_israel_job
         from scrape_universal import scrape
         jobs = scrape(name, _encode(url)) or []
     except Exception:                                             # noqa: BLE001
         jobs = []
     if thin and not jobs:
         return None                            # a shell that renders nothing is not a board
-    n_il = len([j for j in jobs if is_israel_job(j)]) if jobs else 0
+    from audit_query_urls import il_jobs
+    n_il = len(il_jobs(url, jobs)) if jobs else 0       # a query URL's stamps are not Israel
     return (n_il, len(jobs), 1 if looks_like_a_job_listing_page(url) else 0)
 
 
@@ -315,7 +409,12 @@ def search_one(name):
         except Exception as e:                                    # noqa: BLE001
             urls = []
             if attempt == 2:
-                return "refused", "", 0, "search-error %s" % str(e)[:40]
+                # the DICT shape, like every other exit. A 4-tuple here (the old code)
+                # raised `TypeError` in `main` on the next line, killed the shard, and had
+                # already been persisted into the search cache -- so the re-run died on the
+                # same name. Three consecutive unlocker exceptions (a bad key, a 5xx) is a
+                # transport outcome, recorded as a refusal and never as a crash.
+                return {"urls": [], "picked": "", "why": "search-error %s" % str(e)[:40]}
         if urls:
             break
         time.sleep(4 * (attempt + 1))          # bursts fail after heavy rendering; back off
@@ -334,6 +433,7 @@ def score_one(name, found):
     from pipeline.aggregators import is_aggregator
     from pipeline.company_identity import looks_like_a_job_listing_page
 
+    found = found if isinstance(found, dict) else {}
     urls = found.get("urls") or []
     picked, why = found.get("picked") or "", found.get("why") or ""
     if not urls:
@@ -381,25 +481,46 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--propose", required=True, metavar="PATH")
     ap.add_argument("--cache", default="", help="phase-1 search cache (default: <propose>.search)")
-    ap.add_argument("--cap", type=int, default=0)
+    ap.add_argument("--cap", type=int, default=0,
+                    help="names per shard; the time budget may lower it (0 = the budget alone)")
     ap.add_argument("--shard", default=os.environ.get("QRS_SHARD", ""))
+    ap.add_argument("--budget-min", type=float, default=None,
+                    help="wall-clock budget for this shard (default QRS_TIME_BUDGET_MIN)")
     a = ap.parse_args(argv)
     cache_path = a.cache or (a.propose + ".search")
+    budget_min = TIME_BUDGET_MIN if a.budget_min is None else a.budget_min
 
-    names = targets(a.cap, a.shard)
-    print("queue-resolve-search: %d names%s" % (len(names), " (shard %s)" % a.shard if a.shard else ""),
-          flush=True)
+    ranked = ranked_targets(a.shard)
+    selectable = [n for _, _, n in ranked]
+    n_take = budgeted(a.cap, budget_min) if (a.cap or budget_min) else 0
+    names = [n for _, _, n in select(ranked, n_take)] if n_take else selectable
+    print("queue-resolve-search: %d names%s%s" % (
+        len(names), " (shard %s)" % a.shard if a.shard else "",
+        " of %d selectable" % len(selectable) if len(selectable) > len(names) else ""),
+        flush=True)
     try:
         with open(cache_path, encoding="utf-8") as f:
             cache = json.load(f)
     except Exception:                                             # noqa: BLE001
         cache = {}
+    # a malformed entry (the old tuple-shaped error return) is re-searched, not re-crashed on
+    cache = ({k: v for k, v in cache.items() if isinstance(v, dict)}
+             if isinstance(cache, dict) else {})
+    t_start = time.monotonic()
+    deadline = t_start + budget_min * 60 if budget_min and budget_min > 0 else None
+
+    def _over():
+        return deadline is not None and time.monotonic() >= deadline
 
     # ---- PHASE 1: every paid search first, with NO browser in this process ----------------
     todo = [n for n in names if n not in cache]
     print("phase 1 - searching %d names (%d already cached)" % (len(todo), len(names) - len(todo)),
           flush=True)
+    unsearched = []
     for i, name in enumerate(todo, 1):
+        if _over():
+            unsearched = todo[i - 1:]
+            break
         cache[name] = search_one(name)
         with open(cache_path, "w", encoding="utf-8") as f:        # a paid search is never
             json.dump(cache, f, ensure_ascii=False)                # repeated after a kill
@@ -408,9 +529,20 @@ def main(argv=None):
                                              (cache[name]["picked"] or "")[:52]), flush=True)
 
     # ---- PHASE 2: fetch and scrape --------------------------------------------------------
+    # NEVER a proposal for a name that was not scored: `queue_state.ingest` would record it
+    # as a `search-llm` attempt and start a 14-day cadence on a name nobody judged. Left
+    # unrecorded, it is still never-tried and sorts first tomorrow.
+    skip = set(unsearched)
+    names = [n for n in names if n not in skip]
     props, stats, t0 = [], collections.Counter(), time.time()
+    unscored = []
+    with open(a.propose, "w", encoding="utf-8") as f:            # the file exists even if
+        json.dump({"generated": TODAY, "proposals": props}, f)   # nothing gets scored
     print("\nphase 2 - scoring %d names" % len(names), flush=True)
     for i, name in enumerate(names, 1):
+        if _over():
+            unscored = names[i - 1:]
+            break
         kind, url, n_il, why = score_one(name, cache.get(name) or {})
         stats[kind if kind != "refused" else "refused: %s" % why[:30]] += 1
         if kind == "refused":
@@ -431,8 +563,30 @@ def main(argv=None):
             json.dump({"generated": TODAY, "proposals": props}, f, ensure_ascii=False, indent=1)
         print("  [%s] %d/%d %-30s %s" % ({"scrape": "OK", "monitor": "..", "refused": "XX"}[kind],
                                          i, len(names), name[:30], url or why), flush=True)
-    print("\n=== queue-resolve-search %s: %s (%d min)"
-          % (TODAY, dict(stats), (time.time() - t0) / 60))
+    left = len(unsearched) + len(unscored)
+    if unscored:
+        # A SEARCH WAS PAID for these and the clock ran out before the page was read. Left
+        # unrecorded they sort first tomorrow and buy the search again (`out/` does not
+        # survive the run); recorded as a refusal they wait out the 14-day cadence like any
+        # refusal. One credit lost either way -- but only once, and said in the log.
+        for name in unscored:
+            props.append({"name": name, "kind": "refused", "rung": "search-llm",
+                          "why": "budget hit: searched, not scored",
+                          "evidence": {"url": "", "n_il": 0,
+                                       "searched": len((cache.get(name) or {}).get("urls") or [])}})
+            stats["refused: budget hit"] += 1
+        with open(a.propose, "w", encoding="utf-8") as f:
+            json.dump({"generated": TODAY, "proposals": props}, f, ensure_ascii=False, indent=1)
+    if left:
+        # said ONCE and in the shard's own words, so a night that stopped early reads as
+        # "stopped early" and never as "these names have no board"
+        print("queue-resolve-search: budget hit (%.0f min), %d names not searched/scored "
+              "(%d searched and recorded as such, %d untouched)"
+              % (budget_min, left, len(unscored), len(unsearched)), flush=True)
+    attempted = max(1, len(names) - len(unscored))
+    print("\n=== queue-resolve-search %s: %s (%d min, %.0f s/name over %d scored, %d left)"
+          % (TODAY, dict(stats), (time.time() - t0) / 60,
+             (time.monotonic() - t_start) / attempted, attempted, left))
     print("wrote %s (%d proposals)" % (a.propose, len(props)))
     return 0
 

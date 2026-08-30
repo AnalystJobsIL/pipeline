@@ -237,7 +237,8 @@ def crack_one(name, seed, platform):
                 jobs = scrape(name, lu) or []
             except Exception:  # noqa: BLE001
                 jobs = []
-            il = [j for j in jobs if is_israel_job(j)]
+            from audit_query_urls import il_jobs
+            il = il_jobs(lu, jobs)                 # a query URL's stamps are not Israel
             if il:
                 names_us = _gate.page_names_company(name, lu)
                 if names_us is False:

@@ -1002,7 +1002,34 @@ def explain(name, rows=None, fetch=False, out=print):
     return 0
 
 
-_FLAGS = ("--explain", "--fetch", "--resources", "--ats", "--census", "--ladder", "--json", "--regions", "--stale-boards", "--active-orphans")
+def query_url_report(rows, out=print):
+    """`--query-urls`: every ACTIVE row whose address is a SEARCH with a location filter,
+    with the audit's verdict for it. A query is a board only if the site honours its own
+    filter (`audit_query_urls`); `region_variants` deliberately exempts an Israel token in
+    the URL as "already pointed at the right place", which is exactly the class this
+    report exists to keep visible (Comcast: 14 US postings under `?location=Israel`)."""
+    import audit_query_urls as AQ
+    ledger = AQ._ledger()
+    pool = [r for r in rows if AQ.in_query_pool(r)]
+    from collections import Counter
+    c = Counter((ledger.get(r[0]) or {}).get("verdict", "(never audited)") for r in pool)
+    out(f"query-url rows (ACTIVE, address filters by place): {len(pool)}")
+    for k, v in c.most_common():
+        out(f"  {v:4}  {k}")
+    parked = [r for r in rows if r[4] == "false"
+              and str((ledger.get(r[0]) or {}).get("verdict", "")).split(" ")[0] in AQ.PARKING]
+    out(f"  parked by the audit (in the hunt's pool): {len(parked)}"
+        + (": " + ", ".join(r[0] for r in parked[:8]) if parked else ""))
+    for r in pool:
+        rec = ledger.get(r[0]) or {}
+        t = rec.get("tally") or {}
+        out(f"  {rec.get('verdict', '(never audited)')[:18]:18} {r[0][:34]:34} "
+            f"cards={t.get('cards', '?')} il={t.get('il', '?')} foreign={t.get('foreign', '?')} "
+            f"{rec.get('date', '')}")
+    return pool
+
+
+_FLAGS = ("--explain", "--fetch", "--resources", "--ats", "--census", "--ladder", "--json", "--regions", "--stale-boards", "--active-orphans", "--query-urls")
 
 
 def main():
@@ -1020,6 +1047,9 @@ def main():
         return 0
     if "--active-orphans" in argv:
         active_orphan_report(rows)
+        return 0
+    if "--query-urls" in argv:
+        query_url_report(rows)
         return 0
     if "--regions" in argv:
         region_report(rows, fetch="--fetch" in argv)

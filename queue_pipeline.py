@@ -277,7 +277,13 @@ def census(stamp=False):
                     b["ROW, no address, IN NO POOL"] += 1
                     stuck.append(r[0])
             continue
-        if n in retired or (disp.get(n) or {}).get("verdict") in RETIRED_VERDICTS:
+        v = (disp.get(n) or {}).get("verdict")
+        # TTL-AWARE, like the drain. `no-board` expires (`REOPEN_DAYS`), and a census that
+        # counted an expired one as "retired with evidence" while `targets()` selected it
+        # was two instruments disagreeing about one name (`461@registry`). The verdicts
+        # `--retire-settled` writes (`already-a-row`, `settled-by-a-rung`, `covered-by-row`)
+        # are facts about a ROW or a RUNG and do not expire.
+        if n in retired or is_retired(n, disp):
             b["retired with evidence"] += 1
             continue
         # OWED is two states. A name a nightly rung will retry is not a problem -- the
@@ -354,64 +360,16 @@ DISPOSE_SCHEMA = json.dumps({
         "why": {"type": "string"},
     }})
 
-# what may leave the queue, and what the record calls it
-RETIRABLE = {"acquired": "acquired-by", "duplicate": "duplicate-of",
-             "not-an-employer": "not-an-employer", "defunct": "defunct",
-             "real-company-no-board": "no-board"}
-
-# Every disposition verdict that means "this name left the queue WITH an answer". The census
-# listed only the four `RETIRABLE` ones, so a name retired by `--retire-settled` fell through
-# to the owed/stuck branch, where `_on_a_cadence` correctly says no rung will retry a settled
-# name -- and it was reported as STUCK for ever. `Infrastructure Team` and `Residenthome` are
-# the only two names the stuck alarm has ever fired on (`docs/BACKLOG.md` 441 says so), and
-# both were this: retired, out of the queue file, bookkeeping rather than research.
-# `overturned-*` is deliberately NOT here -- a re-opened name IS owed an answer again.
-RETIRED_VERDICTS = frozenset(set(RETIRABLE.values()) |
-                             {"already-a-row", "settled-by-a-rung", "covered-by-row"})
-
-# How long a retirement holds before the name is owed an answer again. `no-board` is the one
-# verdict that is a statement about a MOMENT -- a real employer with no board in August may
-# have one in November -- so it expires and the name returns to the drain by itself. The
-# other four are statements about identity (this is not an employer / it is another company /
-# it is gone), and a re-ask would buy the same answer for ever, so they do not expire.
-# `docs/BACKLOG.md` 441 asked for "a cadence, not a tombstone"; this is that cadence.
-REOPEN_DAYS = {"no-board": 90}
-
-
-def _days_since(day):
-    try:
-        return (dt.date.today() - dt.date.fromisoformat(str(day)[:10])).days
-    except Exception:                                             # noqa: BLE001
-        return 10 ** 6                     # an unreadable date is an EXPIRED one, never a fresh
-
-
-def is_reopened(name, disp):
-    """Has a human overruled the retirement on this name? Then nothing may re-retire it.
-
-    `--reopen` writes `overturned-<verdict>` and keeps the judge's record under
-    `overturned_from`. That prefix is the only durable trace of the disagreement, so every
-    write path has to respect it, not just the one that reads it.
-    """
-    return str(((disp or {}).get(name) or {}).get("verdict") or "").startswith("overturned-")
-
-
-def disposition_verdict(name, disp):
-    """The retirement on file for this name, or "" — expired and overturned ones do not count.
-
-    Read by `retire_settled`, which is a LOOKUP: it may re-apply a verdict that is already on
-    disk and it may never invent one. An `overturned-` record is a human disagreeing with the
-    judge (`--reopen`), and it must survive every later run of the cleanup, or re-opening a
-    name would mean nothing after one night.
-    """
-    rec = (disp or {}).get(name) or {}
-    v = str(rec.get("verdict") or "")
-    if v not in set(RETIRABLE.values()):
-        return ""                          # cannot-tell, already-a-row, settled-by-a-rung,
-                                           # overturned-* -- none of them retires a name
-    ttl = REOPEN_DAYS.get(v)
-    if ttl is not None and _days_since(rec.get("date")) >= ttl:
-        return ""                          # the re-open cadence: it is owed an answer again
-    return v
+# The five names below are the LEDGER's own vocabulary and live with the ledger
+# (`queue_disposition.py`), because the DRAIN has to read them too: `queue_resolve_search.
+# targets()` never consulted the disposition file, so 174 names retired on evidence and
+# re-added by intake were due to re-buy a paid search the night their 14-day cadence lapsed
+# (2026-09-12). The drain importing this 1,300-line orchestrator would be the wrong
+# dependency; both import the ledger's module instead. Re-exported here unchanged so
+# `QP.RETIRABLE`, `QP.disposition_verdict` ... keep meaning what they meant.
+from queue_disposition import (RETIRABLE, RETIRED_VERDICTS, REOPEN_DAYS, SETTLED_VERDICTS,  # noqa: E402
+                               _days_since, is_reopened, disposition_verdict, is_retired,
+                               record_for)
 
 
 def _search_cache():
@@ -670,17 +628,43 @@ def dispose(limit=0, apply=False, shard="", read_pages=True):
 
 
 
-# a night's capacity: `listing-hunt.yml` runs 4 shards x `--cap 30`
-DRAIN_NIGHTLY_CAP = 120
+def _nightly_cap():
+    """A night's capacity, from the drain's OWN constants (shards x the budgeted cap)."""
+    import queue_resolve_search as QRS
+    return QRS.nightly_capacity()
+
+
+# derived, never a literal: 4 shards x 30 was 120 until the shard learned to stop before the
+# step's 30-minute kill, which makes it 4 x 28 = 112 (`queue_resolve_search.budgeted`)
+DRAIN_NIGHTLY_CAP = _nightly_cap()
 
 
 def _drain_liveness():
-    """`selectable` / `searched` / `drain_alarm` — did the arm that drains the queue RUN?"""
+    """`selectable` / `searched` / `drain_alarm` — did the arm that drains the queue RUN?
+
+    Also `new_intake` (selectable names this rung never searched -- today's arrivals) and
+    `retired_in_queue` (queue names carrying a LIVE retirement, which `--retire-settled`
+    will remove by lookup and the drain now never buys): the two halves of "the queue grew"
+    that the GROWING alarm could not tell apart.
+    """
     import queue_state as QS
+    import queue_disposition as QD
     out = {}
     try:
         import queue_resolve_search as QRS
-        selectable = len(QRS.targets())
+        sel = QRS.targets()
+        selectable = len(sel)
+        st0 = QS.load()
+        out["new_intake"] = sum(1 for n in sel if QRS._never_searched(st0, n))
+        disp = QD.load()
+        queue = [(e.get("name") or "").strip()
+                 for e in json.load(open(QUEUE, encoding="utf-8"))]
+        out["retired_in_queue"] = sum(1 for n in queue if n and QD.is_retired(n, disp))
+    except QS.QueueStateUnreadable as e:
+        # a corrupt attempt log is a hard stop for every WRITER; the stamp only reads, and a
+        # stamp that dies takes the whole `queue:` mail line with it -- say it instead
+        out["drain_alarm"] = "queue_state.json UNREADABLE: %s" % str(e)[:120]
+        return out
     except Exception:                                             # noqa: BLE001
         return out
     # NOT "dated today". The drain and this stamp are two steps of one 330-minute job: the

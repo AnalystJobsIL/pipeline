@@ -83,7 +83,8 @@ def main():
         except Exception as e:  # noqa: BLE001
             jobs = []
             print(f"  [ERR] {r[0][:26]}: {str(e)[:50]}", flush=True)
-        il = [j for j in jobs if is_israel_job(j)]
+        from audit_query_urls import il_jobs
+        il = il_jobs(r[3], jobs)                   # a query URL's stamps are not Israel
         # "There are Israel jobs on this page" is not "these are THIS company's jobs".
         # The stored URL of a dark row is often the hunt's BEST GUESS, deliberately kept so
         # a human can check where we looked — FairFly's was fireflyspace.com, and this

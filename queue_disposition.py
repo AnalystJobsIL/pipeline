@@ -91,6 +91,90 @@ def save(state, path=PATH):
     write_json(path, state)
 
 
+# ---------------------------------------------------------------- the ledger's vocabulary
+# Moved here from `queue_pipeline.py` on 2026-08-30 so the DRAIN can read a retirement
+# without importing the orchestrator (see `queue_resolve_search.targets`). `queue_pipeline`
+# re-exports every name below.
+# what may leave the queue, and what the record calls it
+RETIRABLE = {"acquired": "acquired-by", "duplicate": "duplicate-of",
+             "not-an-employer": "not-an-employer", "defunct": "defunct",
+             "real-company-no-board": "no-board"}
+
+# Every disposition verdict that means "this name left the queue WITH an answer". The census
+# listed only the four `RETIRABLE` ones, so a name retired by `--retire-settled` fell through
+# to the owed/stuck branch, where `_on_a_cadence` correctly says no rung will retry a settled
+# name -- and it was reported as STUCK for ever. `Infrastructure Team` and `Residenthome` are
+# the only two names the stuck alarm has ever fired on (`docs/BACKLOG.md` 441 says so), and
+# both were this: retired, out of the queue file, bookkeeping rather than research.
+# `overturned-*` is deliberately NOT here -- a re-opened name IS owed an answer again.
+RETIRED_VERDICTS = frozenset(set(RETIRABLE.values()) |
+                             {"already-a-row", "settled-by-a-rung", "covered-by-row"})
+
+# How long a retirement holds before the name is owed an answer again. `no-board` is the one
+# verdict that is a statement about a MOMENT -- a real employer with no board in August may
+# have one in November -- so it expires and the name returns to the drain by itself. The
+# other four are statements about identity (this is not an employer / it is another company /
+# it is gone), and a re-ask would buy the same answer for ever, so they do not expire.
+# `docs/BACKLOG.md` 441 asked for "a cadence, not a tombstone"; this is that cadence.
+REOPEN_DAYS = {"no-board": 90}
+
+
+def _days_since(day, today=None):
+    try:
+        return ((today or dt.date.today()) - dt.date.fromisoformat(str(day)[:10])).days
+    except Exception:                                             # noqa: BLE001
+        return 10 ** 6                     # an unreadable date is an EXPIRED one, never a fresh
+
+
+def record_for(name, disp):
+    """The ledger entry for a queue name, by exact key first, then case-insensitively.
+
+    The judge keys the ledger on the name it was handed and intake re-adds the same name
+    under another casing (`NATASHA DENONA IL` / `Natasha Denona Il`): an exact `dict.get`
+    saw no record, the drain bought a search and the cleanup could never prune it.
+    """
+    disp = disp or {}
+    rec = disp.get(name)
+    if rec is not None:
+        return rec
+    key = (name or "").strip().lower()
+    if not key:
+        return {}
+    for k, v in disp.items():
+        if (k or "").strip().lower() == key:
+            return v or {}
+    return {}
+
+
+def is_reopened(name, disp):
+    """Has a human overruled the retirement on this name? Then nothing may re-retire it.
+
+    `--reopen` writes `overturned-<verdict>` and keeps the judge's record under
+    `overturned_from`. That prefix is the only durable trace of the disagreement, so every
+    write path has to respect it, not just the one that reads it.
+    """
+    return str((record_for(name, disp) or {}).get("verdict") or "").startswith("overturned-")
+
+
+def disposition_verdict(name, disp, today=None):
+    """The retirement on file for this name, or "" — expired and overturned ones do not count.
+
+    Read by `retire_settled`, which is a LOOKUP: it may re-apply a verdict that is already on
+    disk and it may never invent one. An `overturned-` record is a human disagreeing with the
+    judge (`--reopen`), and it must survive every later run of the cleanup, or re-opening a
+    name would mean nothing after one night.
+    """
+    rec = record_for(name, disp) or {}
+    v = str(rec.get("verdict") or "")
+    if v not in set(RETIRABLE.values()):
+        return ""                          # cannot-tell, already-a-row, settled-by-a-rung,
+                                           # overturned-* -- none of them retires a name
+    ttl = REOPEN_DAYS.get(v)
+    if ttl is not None and _days_since(rec.get("date"), today) >= ttl:
+        return ""                          # the re-open cadence: it is owed an answer again
+    return v
+
+
 def evidence_for(name, hunt, drain):
     """Everything we know we LOOKED at for this name. Empty means we never managed to."""
     ev = {"search_pages": [], "hunt": {}}
@@ -326,6 +410,24 @@ def main(argv=None):
     print("queue %d -> %d (%d retired, each with a persisted verdict and its evidence)"
           % (len(queue), len(kept), len(retire)))
     return 0
+
+# A retirement the CLEANUP wrote rather than the judge: the name IS a row, a rung settled it,
+# or a row already reads its board. None of these expire and none is a claim about our reach.
+SETTLED_VERDICTS = frozenset({"already-a-row", "settled-by-a-rung", "covered-by-row"})
+
+
+def is_retired(name, disp, today=None):
+    """Is there ANY live answer on disk for this name? The drain's question, in one place.
+
+    `disposition_verdict` answers only for the judge's five verdicts (with their TTLs).
+    `retire_settled` also writes `covered-by-row` / `already-a-row` / `settled-by-a-rung`,
+    and a drain that read only the first re-selected `Faye`, `Strauss Group` and seven more
+    names whose board a row already reads -- while the census counted them retired. Both
+    instruments ask this.
+    """
+    if disposition_verdict(name, disp, today):
+        return True
+    return str((record_for(name, disp) or {}).get("verdict") or "") in SETTLED_VERDICTS
 
 
 if __name__ == "__main__":

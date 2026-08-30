@@ -2270,5 +2270,45 @@
   "replace": "    r\"\\b(recruit(ing|ment|x)?|staffing|headhunt(ing|ers?)?|manpower|\"",
   "why": "discovery 2026-08-30: reverting `ers?` re-admits `Sales Experts Executive Recruiters` (a live queue entry) to the names funnel, one auto_expand run from a registry row.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "dispose-rejudges-overruled",
+  "file": "queue_pipeline.py",
+  "symbol": "dispose",
+  "class": "M1-gate-removal",
+  "find": "\n            and not is_reopened(n, state)]",
+  "replace": "]",
+  "why": "`reopen` clears `raw_verdict`, so without this conjunct the judge re-admits every name a human overruled, writes `state[name]` wholesale and `overturned_from` is gone. At the guard_kill range base (bfdff0f) the todo filter was the stricter `n not in state`, so the guard could not fail there; this record is what makes it provable.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "hunt-query-url-stamped-il",
+  "file": "audit_query_urls.py",
+  "symbol": "il_jobs",
+  "class": "M1-gate-removal",
+  "find": "    if il and has_location_query(url) and not independent_il_evidence(url, jobs):\n        return []",
+  "replace": "    if False:\n        return []",
+  "why": "on a `?location=Israel` URL every card is stamped Israel by the scraper; without this gate the hunt activates Comcast on 14 US postings and undoes the audit's park the next night.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "query-audit-park-on-description",
+  "file": "audit_query_urls.py",
+  "symbol": "card_signal",
+  "class": "M5-population-widening",
+  "find": "    text = \" \".join(fields)\n    if _IL_PLACE.search(text) or _IL_SQUASHED.search(squashed):",
+  "replace": "    fields.append(str(job.get(\"description\") or \"\")[:400])\n    text = \" \".join(fields)\n    if _IL_PLACE.search(text) or _IL_SQUASHED.search(squashed):",
+  "why": "a description is JD boilerplate (ASML: 'China, Connecticut' on a filter it honours); reading it as the card's place parks honest rows.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "drain-targets-ignore-disposition",
+  "file": "queue_resolve_search.py",
+  "symbol": "targets",
+  "class": "M1-gate-removal",
+  "find": "        if QD.is_retired(n, disp, today):\n            continue",
+  "replace": "        if False:\n            continue",
+  "why": "174 names retired on evidence and re-added by intake would each buy a paid search the night their 14-day cadence lapsed (2026-09-12); the retirement is on disk and the drain must read it.",
+  "must_be_killed_by_behavioural": true
  }
 ]

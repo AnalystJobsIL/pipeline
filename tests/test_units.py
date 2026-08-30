@@ -20939,7 +20939,12 @@ def test_a_reopen_survives_every_class_of_the_nightly_cleanup(tmp_path, monkeypa
 
 
 def test_the_judge_never_re_judges_a_name_a_human_overruled(tmp_path, monkeypatch):
-    """`reopen` clears `raw_verdict`, so `--dispose`'s todo filter re-admitted the name.
+    """Kills `dispose-rejudges-overruled`.
+
+    `reopen` clears `raw_verdict`, so `--dispose`'s todo filter re-admitted the name.
+    CANNOT-FAIL under `tools/guard_kill.py` over `bfdff0f..d01213f` -- correctly: at that
+    base the filter was the stricter `n not in state`, the hole opened at `6c16026` and
+    closed at `861050d`, both inside the range. The mutation record is what makes it provable.
 
     The judge then writes `state[name] = {...}` wholesale and `overturned_from` is gone with
     no warning. One hand-run `--dispose --apply` would have erased every re-open of
@@ -21546,3 +21551,391 @@ def test_guard_kill_runs_in_ci_against_the_pushed_range_with_history_to_see_it()
     assert "fetch-depth: 0" in text, "without history the tool cannot see the base"
     assert "github.event.before" in text and "HEAD~1" in text
     assert "python tools/guard_kill.py" in text
+
+
+# --------------------------------------------------------------------------- registry, 2026-08-30 (c)
+# The drain reads the ledger, reaches today's intake first, and stops before the step kills
+# it; a query URL is a QUERY, and a park on one holds. `docs/sessions/2026-08-30-registry-c.md`.
+
+def _r830c_tree(tmp_path, monkeypatch, queue, csv_rows=(), qstate=None, disp=None):
+    _r830_tree(tmp_path, monkeypatch, queue, csv_rows=csv_rows, qstate=qstate, disp=disp)
+    import queue_disposition as QD
+    monkeypatch.setattr(QD, "PATH", str(tmp_path / "cloud_state" / "queue_disposition.json"))
+
+
+def test_disposition_helpers_live_in_queue_disposition_and_are_reexported():
+    """The drain must read a retirement without importing the orchestrator. The ledger's
+    vocabulary moved to the ledger's module; `queue_pipeline` re-exports it unchanged."""
+    import queue_pipeline as QP
+    import queue_disposition as QD
+    for name in ("RETIRABLE", "RETIRED_VERDICTS", "REOPEN_DAYS", "is_reopened",
+                 "disposition_verdict"):
+        assert getattr(QP, name) is getattr(QD, name), name
+    assert QD.disposition_verdict("x", {"x": {"verdict": "no-board", "date": "2026-08-29"}},
+                                  today=_dtm.date(2026, 8, 30)) == "no-board"
+    assert QD.disposition_verdict("x", {"x": {"verdict": "no-board", "date": "2026-05-01"}},
+                                  today=_dtm.date(2026, 8, 30)) == ""
+    assert QD.disposition_verdict("x", {"x": {"verdict": "overturned-no-board"}}) == ""
+    assert QD.disposition_verdict("x", {"x": {"verdict": "cannot-tell"}}) == ""
+
+
+def test_drain_skips_a_name_whose_retirement_is_live(tmp_path, monkeypatch):
+    """Kills `drain-targets-ignore-disposition`.
+
+    Intake re-adds a retired name every morning (189 of 362 on 2026-08-30) and
+    `--retire-settled` runs three steps AFTER the drain, so a name retired on evidence was a
+    paid search away from being re-bought the night its 14-day cadence lapsed. `targets()`
+    now reads the ledger: a LIVE retirement is skipped; `cannot-tell`, an overturned
+    verdict and an expired `no-board` stay owed.
+    """
+    import queue_resolve_search as QRS
+    today = _dtm.date(2026, 8, 30)
+    disp = {"Retired Co": {"date": "2026-08-29", "verdict": "no-board"},
+            "Dup Co": {"date": "2024-01-01", "verdict": "duplicate-of"},   # never expires
+            "Old NoBoard": {"date": "2026-05-01", "verdict": "no-board"},   # past 90 days
+            "Reopened Co": {"date": "2026-08-30", "verdict": "overturned-no-board"},
+            "Unsure Co": {"date": "2026-08-30", "verdict": "cannot-tell"}}
+    _r830c_tree(tmp_path, monkeypatch,
+                queue=["Retired Co", "Dup Co", "Old NoBoard", "Reopened Co", "Unsure Co",
+                       "Fresh Co"], disp=disp)
+    got = QRS.targets(today=today)
+    assert "Retired Co" not in got and "Dup Co" not in got, got
+    assert {"Old NoBoard", "Reopened Co", "Unsure Co", "Fresh Co"} <= set(got), got
+    # ...the cleanup's own verdicts count too (`covered-by-row`: Faye's board is read by a
+    # row named `withfaye`), and the ledger key's casing does not matter
+    disp["Faye"] = {"date": "2026-08-30", "verdict": "covered-by-row"}
+    disp["NATASHA DENONA IL"] = {"date": "2026-08-30", "verdict": "duplicate-of"}
+    _r830c_tree(tmp_path, monkeypatch, queue=["Faye", "Natasha Denona Il", "Fresh Co"], disp=disp)
+    assert QRS.targets(today=today) == ["Fresh Co"]
+    import queue_disposition as QD
+    assert QD.is_retired("natasha denona il", disp) and not QD.is_retired("Fresh Co", disp)
+
+
+def test_drain_targets_never_tried_first_then_stalest(tmp_path, monkeypatch):
+    """The file is append-ordered (oldest intake first), so a day's new names waited behind
+    every older residue. Never-searched names come first, then the oldest search; the
+    stride is applied to the RANKED list, so every shard sees the same ranking."""
+    import queue_resolve_search as QRS
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Searched Aug 1", "search-llm", "no-proposal", day="2026-08-01")
+    QS.record(st, "Searched Jul 1", "search-llm", "no-proposal", day="2026-07-01")
+    _r830c_tree(tmp_path, monkeypatch,
+                queue=["Searched Aug 1", "Searched Jul 1", "New A", "New B"], qstate=st)
+    assert QRS.targets() == ["New A", "New B", "Searched Jul 1", "Searched Aug 1"]
+    assert QRS.targets(shard="2/2") == ["New B", "Searched Aug 1"]
+    assert QRS.targets(cap=1) == ["New A"]
+    # never ONLY the new: intake outruns capacity, so a re-try class no one reaches is a
+    # name frozen at its first refusal for ever -- one slot in five is the stalest re-try
+    ranked = [(0, "", "N%d" % i) for i in range(20)] + [(1, "2026-07-0%d" % d, "S%d" % d)
+                                                         for d in range(1, 4)]
+    got = QRS.select(ranked, 10)
+    assert len(got) == 10 and [t[2] for t in got][-2:] == ["S1", "S2"], got
+    assert QRS.select(ranked, 30) == ranked and QRS.select(ranked[:5], 10) == ranked[:5]
+
+
+def test_the_drain_capacity_constants_match_the_workflow():
+    """`nightly_capacity()` is derived from the constants the cloud runs on; if the workflow
+    changes its shard count, cap or step timeout, this is the test that says so."""
+    import queue_resolve_search as QRS
+    wf = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           ".github", "workflows", "listing-hunt.yml"), encoding="utf-8").read()
+    step = wf[wf.index("Resolve intake names by search"):wf.index("Verify and apply queue proposals")]
+    shards = _re.search(r"for i in ((?:\d+ ?)+); do", step).group(1).split()
+    assert len(shards) == QRS.NIGHT_SHARDS, shards
+    assert int(_re.search(r"--cap (\d+)", step).group(1)) == QRS.NIGHT_CAP
+    timeout = int(_re.search(r"timeout-minutes: (\d+)", step).group(1))
+    assert QRS.budgeted(QRS.NIGHT_CAP, 26, 55) == 28
+    assert QRS.TIME_BUDGET_MIN < timeout, "the shard's own budget must end before GitHub's kill"
+    assert QRS.budgeted(QRS.NIGHT_CAP) * QRS.SEC_PER_NAME / 60 < timeout, (
+        "the names a shard selects must fit the step at the assumed pace")
+    assert QRS.nightly_capacity() == QRS.NIGHT_SHARDS * QRS.budgeted(QRS.NIGHT_CAP)
+    assert QRS.budgeted(30, 0, 55) == 30, "budget 0 means no clock"
+
+
+def test_drain_stops_scoring_at_the_budget_and_records_nothing_for_the_rest(
+        tmp_path, monkeypatch, capsys):
+    """One shard past the step's 30 minutes loses EVERY shard's attempt log (the ingest
+    runs after `wait` in the same step). So a shard stops itself between names -- and never
+    writes a proposal for a name it did not score: ingested, that would start a 14-day
+    cadence on a name nobody judged."""
+    import queue_resolve_search as QRS
+    _r830c_tree(tmp_path, monkeypatch, queue=["A", "B", "C"])
+    clock = iter([0, 0, 10, 20, 30, 40, 70, 100, 130, 200, 300, 400, 500, 600, 700])
+    monkeypatch.setattr(QRS.time, "monotonic", lambda: next(clock))
+    monkeypatch.setattr(QRS, "SEC_PER_NAME", 10.0)      # 1 min fits all three by estimate...
+    monkeypatch.setattr(QRS, "search_one", lambda n: {"urls": ["https://%s.example/careers" % n],
+                                                      "picked": "", "why": ""})
+    monkeypatch.setattr(QRS, "score_one", lambda n, f: ("monitor", f["urls"][0], 0, ""))
+    out = tmp_path / "qrs.json"
+    assert QRS.main(["--propose", str(out), "--cap", "3", "--budget-min", "1"]) == 0
+    props = _json.loads(out.read_text(encoding="utf-8"))["proposals"]
+    text = capsys.readouterr().out
+    assert "budget hit" in text and "not searched/scored" in text
+    scored = [p["name"] for p in props if p["kind"] == "monitor"]
+    paid = [p for p in props if p["kind"] == "refused"]
+    assert 0 < len(scored) < 3 and paid, (scored, paid)
+    # a name whose search WAS paid is recorded (or it is re-bought tomorrow)
+    assert all(p["why"].startswith("budget hit") for p in paid)
+    assert len(scored) + len(paid) == 3
+    # ...and one that tripped in PHASE 1 (never searched) is written nowhere
+    clock = iter([0, 100, 200, 300, 400, 500, 600, 700, 800, 900])   # over before the 1st search
+    monkeypatch.setattr(QRS.time, "monotonic", lambda: next(clock))
+    out2 = tmp_path / "qrs2.json"
+    assert QRS.main(["--propose", str(out2), "--cap", "3", "--budget-min", "1"]) == 0
+    props2 = _json.loads(out2.read_text(encoding="utf-8"))["proposals"]
+    assert props2 == [], props2
+    assert "3 untouched" in capsys.readouterr().out
+
+
+def test_search_one_returns_a_dict_when_every_search_raises(monkeypatch):
+    """Every other exit is a dict; the error path returned a 4-tuple, `main` did
+    `cache[name]["urls"]` on it, the shard died and the malformed entry was already in the
+    search cache so the re-run died on the same name."""
+    import queue_resolve_search as QRS
+    import deep_validate as DV
+
+    def boom(name):
+        raise RuntimeError("unlocker 502")
+    monkeypatch.setattr(DV, "google_via_unlocker", boom)
+    monkeypatch.setattr(QRS.time, "sleep", lambda s: None)
+    got = QRS.search_one("Acme")
+    assert isinstance(got, dict) and got["urls"] == [] and got["why"].startswith("search-error")
+    # ...and a malformed cached entry is scored as "no-search-results", never a crash
+    assert QRS.score_one("Acme", ["refused", "", 0, "search-error x"])[0] == "refused"
+
+
+def test_the_stamp_separates_intake_from_resurrection(tmp_path, monkeypatch):
+    """`queue GREW by N` could not tell today's arrivals from retired names intake put back.
+    The stamp now carries both halves, and the BEHIND alarm counts only what the drain will
+    actually select."""
+    import queue_pipeline as QP
+    import queue_state as QS
+    st = {}
+    QS.record(st, "Searched Co", "search-llm", "no-proposal", day="2026-07-01")
+    _r830c_tree(tmp_path, monkeypatch, queue=["Fresh Co", "Retired Co", "Searched Co"],
+                qstate=st, disp={"Retired Co": _r830_disp("no-board", QP.TODAY)})
+    live = QP._drain_liveness()
+    assert live["selectable"] == 2, live
+    assert live["new_intake"] == 1 and live["retired_in_queue"] == 1, live
+    assert QP.DRAIN_NIGHTLY_CAP == __import__("queue_resolve_search").nightly_capacity()
+    # a corrupt attempt log is a HARD STOP for writers; the stamp says so instead of dying
+    (tmp_path / "cloud_state" / "queue_state.json").write_text("{\"A\": [", encoding="utf-8")
+    live = QP._drain_liveness()
+    assert "UNREADABLE" in live.get("drain_alarm", ""), live
+
+
+def test_queue_state_load_refuses_a_corrupt_log_and_tolerates_an_absent_one(tmp_path, monkeypatch):
+    """`load` answered {} to every exception and `save` writes what it is handed: a truncated
+    file plus one `--ingest` would have persisted ~120 names over 6,589 attempts."""
+    import queue_state as QS
+    missing = tmp_path / "none.json"
+    assert QS.load(str(missing)) == {}
+    bad = tmp_path / "bad.json"
+    bad.write_text("{\"A\": {\"tried\": [", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        QS.load(str(bad))
+    wrong = tmp_path / "list.json"
+    wrong.write_text("[]", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        QS.load(str(wrong))
+    assert bad.read_text(encoding="utf-8").startswith("{\"A\""), "nothing was written over it"
+
+
+# ---- the query-URL class ---------------------------------------------------------------
+
+_COMCAST_URL = "https://jobs.comcast.com/search-jobs?location=Israel"
+
+
+def _cards(*paths, page=_COMCAST_URL, title="Analyst", **extra):
+    return [dict({"title": title, "location": "Israel", "country_code": "",
+                  "url": ("https://jobs.comcast.com" + p) if p else page}, **extra)
+            for p in paths]
+
+
+def test_has_location_query_names_the_class():
+    import audit_query_urls as AQ
+    for u in (_COMCAST_URL, "https://x.com/jobs?locationsearch=Israel",
+              "https://x.com/careers#location=Israel", "https://x.com/s%3Flocation%3DIsrael",
+              "https://www.amazon.jobs/en/search.json?country=ISR",
+              "https://careers.snap.com/jobs?location=Tel%20Aviv%2C%20Israel",
+              "https://jobs.careers.microsoft.com/global/en/search?lc=Israel",
+              "https://xtra-mile.co/careers-result-page/?nam=&dep=&loc=IL&submit=Search",
+              "https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel"):
+        assert AQ.has_location_query(u), u
+    for u in ("https://www.comeet.com/careers-api/2.0/company/60.002/positions?token=abc",
+              "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs", "", None,
+              "https://x.com/careers?page=2"):
+        assert not AQ.has_location_query(u), u
+
+
+def test_query_filter_verdict_needs_card_level_majority():
+    """Kills `query-audit-park-on-description`.
+
+    A park stands on the board's OWN routing (the card's url path, title tail, country
+    code), never on a description: ASML's cards say "China, Connecticut" in JD boilerplate
+    on a filter it honours."""
+    import audit_query_urls as AQ
+    comcast = _cards("/job/pennsylvania/analyst/1", "/job/houston/manager/2",
+                     "/job/plano/pm/3", "/job/colorado/pm/4", "", "")
+    assert AQ.verdict_from(AQ.tally(comcast, _COMCAST_URL)) == "ignored"
+    asml = _cards(*["/en/careers/job/%d" % i for i in range(25)],
+                  page="https://www.asml.com/en/careers/find-your-job?location=Israel",
+                  description="ASML has offices in China, Connecticut and Veldhoven")
+    t = AQ.tally(asml, "https://www.asml.com/en/careers/find-your-job?location=Israel")
+    assert t["foreign"] == 0 and AQ.verdict_from(t) == "no-signal", t
+    two = _cards("/job/houston/x/1", "/job/plano/x/2", *[""] * 18)
+    assert AQ.verdict_from(AQ.tally(two, _COMCAST_URL)) == "leaning-foreign"
+    # 4 foreign of 116 (Hunter Douglas) is 3.4%: not evidence about the other 112
+    thin = _cards("/job/sydney/1", "/job/bogota/2", "/job/mexico/3", "/job/berlin/4", *[""] * 112)
+    assert AQ.verdict_from(AQ.tally(thin, _COMCAST_URL)) == "leaning-foreign"
+    # a squashed slug is still a place; a company's own name in a title tail is not one
+    assert AQ.card_signal({"url": "https://x.wd3.myworkdayjobs.com/job/Ness-ZionaIsrael/x_R1",
+                           "title": "Engineer"}, _COMCAST_URL) == "il"
+    assert AQ.card_signal({"url": "https://jobs.sw.siemens.com/ra-anana-isr/x/9", "title": "x"},
+                          _COMCAST_URL) == "il"
+    assert AQ.card_signal({"url": "https://jobs.bostonscientific.com/job/512345/",
+                           "title": "Data Analyst, Boston Scientific"}, _COMCAST_URL,
+                          company="Boston Scientific") == ""
+    assert AQ.card_signal({"url": "", "country_code": "ISR"}, _COMCAST_URL) == "il"
+    assert AQ.card_signal({"url": "", "country_code": "972"}, _COMCAST_URL) == ""
+    leaks = _cards("/job/houston/x/1", "/job/tel-aviv/x/2", "/job/houston/x/3", "/job/plano/x/4")
+    assert AQ.verdict_from(AQ.tally(leaks, _COMCAST_URL)) == "leaks", "1 IL among 3 abroad parks"
+    mixed = _cards("/job/houston/x/1", "/job/tel-aviv/x/2", "/job/haifa/x/3", "/job/plano/x/4",
+                   "/job/herzliya/x/5")
+    assert AQ.verdict_from(AQ.tally(mixed, _COMCAST_URL)) == "mixed", "Israel the majority stays"
+    assert AQ._seg("leaks", AQ.tally(leaks, _COMCAST_URL)).endswith(AQ.POOL_TOKEN)
+    honoured = _cards("/job/tel-aviv/x/2", "/job/haifa/x/3")
+    assert AQ.verdict_from(AQ.tally(honoured, _COMCAST_URL)) == "honoured"
+    assert AQ.verdict_from(AQ.tally([], _COMCAST_URL)) == "no-cards"
+    # a card whose url IS the page url says nothing, whatever the page url says
+    assert AQ.card_signal({"url": _COMCAST_URL, "title": "Filter Results"}, _COMCAST_URL) == ""
+    # a native row's location field is the API's answer, not our stamp
+    assert AQ.card_signal({"url": "", "location": "Petah Tikva, Israel"}, "https://api/x?country=ISR",
+                          platform="custom_json") == "il"
+    assert AQ.card_signal({"url": "", "location": "Petah Tikva, Israel"}, "https://api/x?country=ISR",
+                          platform="scrape") == ""
+
+
+def test_a_query_url_never_activates_on_stamped_locations(capsys):
+    """Kills `hunt-query-url-stamped-il`.
+
+    On `?location=Israel` every card is stamped Israel by the scraper, so `len(il) >= 1`
+    was our own assumption counted back; the park was undone by the next hunt on the same
+    14 US cards. A card that names its own city still activates, and a plain URL is untouched.
+    """
+    import listing_hunt as L
+    stamped = _cards("/job/houston/x/1", "/job/pennsylvania/y/2")
+    assert L._il_jobs(_COMCAST_URL, stamped) == []
+    assert "not evidence" in capsys.readouterr().out
+    own_city = _cards("/job/tel-aviv/x/9")
+    assert len(L._il_jobs("https://jobs.comcast.com/search-jobs?location=Israel", own_city)) == 1
+    assert len(L._il_jobs("https://jobs.comcast.com/careers", stamped)) == 2, "positive control"
+
+
+def test_the_probe_does_not_wake_on_its_own_query_echo():
+    import probe_candidates as P
+    body = "Jobs in Israel <input value='Israel'> Filter: Israel | Houston, TX | Haifa role"
+    assert P.il_signal(_COMCAST_URL, body) == 1          # Haifa, not the three echoes
+    assert P.il_signal("https://jobs.comcast.com/careers", body) == 4
+
+
+def test_query_filter_park_lands_in_the_hunt_pool(tmp_path, monkeypatch):
+    """The park writes the pool token BEFORE turning the row off; a full cell of protected
+    segments (Comcast's) cannot take it, so the park stands on the tokens the row already
+    has -- and the write aborts if nothing would own the parked row."""
+    import audit_query_urls as AQ
+    import listing_hunt as L
+    import check_invariants as CI
+    from pipeline.verdicts import in_pool
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir()
+    full = ("dark-triage 2026-08-23: url-dead -- the Workday tenant returns 410 Gone; no listing "
+            "found | scanned via brightdata; no open Israel roles now - monitored candidate | "
+            "retry 2026-08-28: scanned; no open Israel roles now")
+    assert len(full) > 190
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Comcast,scrape,,%s,true,\"%s\"\n"
+        "Shortnote,scrape,,https://x.com/search?location=Israel,true,listing-hunt 2026-08-22: verified 3 IL\n"
+        "Honest,scrape,,https://y.com/search?location=Israel,true,\n"
+        % (_COMCAST_URL, full), encoding="utf-8")
+    t = AQ.tally(_cards("/job/houston/1", "/job/plano/2", "/job/pennsylvania/3"), _COMCAST_URL)
+    results = {"Comcast": {"verdict": "ignored", "tally": t, "ev": {}},
+               "Shortnote": {"verdict": "ignored", "tally": t, "ev": {}},
+               "Honest": {"verdict": "honoured", "tally": AQ.tally(_cards("/job/haifa/1"), ""), "ev": {}}}
+    ledger = {}
+    assert AQ.write(results, ledger, apply=True, out=lambda *a: None) == 0
+    rows = {r[0]: r for r in _csv.reader(open("companies.csv", encoding="utf-8"))}
+    assert rows["Shortnote"][4] == "false" and AQ.POOL_TOKEN in rows["Shortnote"][5]
+    assert L.in_hunt_pool(rows["Shortnote"]) and _re.search(CI.POOL, rows["Shortnote"][5])
+    assert rows["Comcast"][4] == "false", "parked on its existing pool tokens"
+    assert L.in_hunt_pool(rows["Comcast"]) or in_pool(rows["Comcast"][5])
+    assert ledger["Comcast"]["verdict"].startswith("ignored (note full")
+    assert rows["Honest"][4] == "true" and "honoured 1/1 IL" in rows["Honest"][5]
+    assert set(_json.loads((tmp_path / "cloud_state" / "query_filter.json").read_text(
+        encoding="utf-8"))) == {"Comcast", "Shortnote", "Honest"}
+
+
+def test_a_grounded_read_names_places_the_page_contains(monkeypatch):
+    """The model may EXTRACT (title, location) pairs; only pairs whose location literally
+    occurs in the page text count, and the same threshold then decides -- so a read can
+    never park on a place the page does not print."""
+    import audit_query_urls as AQ
+    from pipeline import board_verify as BV
+    import pipeline.llm as LLM
+    page = ("<html>Location: Israel  Clear filters  Analyst - Houston, TX  Manager - Plano, TX"
+            "  Engineer - Denver, CO  Sales</html>")
+    monkeypatch.setattr(BV, "fetch", lambda url, allow_paid=True: (page, "plain"))
+    monkeypatch.setattr(BV, "visible_text", lambda html, limit=9000: page * 4)
+    pairs = [{"title": "Analyst", "location": "Houston, TX"},
+             {"title": "Manager", "location": "Plano, TX"},
+             {"title": "Engineer", "location": "Denver, CO"},
+             {"title": "Invented", "location": "Bangalore, India"}]
+    monkeypatch.setattr(LLM, "call_json", lambda *a, **k: {"postings": pairs})
+    monkeypatch.setattr(AQ, "call_json", LLM.call_json, raising=False)
+    t, ev = AQ.read_tally("Comcast", _COMCAST_URL, allow_paid=False)
+    assert ev["grounded"] == 3 and ev["pairs"] == 4
+    assert t is not None and AQ.verdict_from(t) == "ignored"
+    # the page's echo of OUR query cannot ground a location: three US postings the model
+    # labelled "Israel" off the filter chip are not three Israeli cards
+    monkeypatch.setattr(LLM, "call_json", lambda *a, **k: {"postings": [
+        {"title": "Analyst", "location": "Israel"}, {"title": "Manager", "location": "Israel"},
+        {"title": "Engineer", "location": "Israel"}]})
+    t, ev = AQ.read_tally("Comcast", _COMCAST_URL, allow_paid=False)
+    assert t is None and ev["grounded"] == 0, ev
+    monkeypatch.setattr(LLM, "call_json", lambda *a, **k: {"postings": pairs[3:]})
+    t, ev = AQ.read_tally("Comcast", _COMCAST_URL, allow_paid=False)
+    assert t is None and ev["error"] == "too few grounded pairs"
+
+
+def test_query_audit_cadence_reads_the_ledger():
+    import audit_query_urls as AQ
+    today = _dtm.date(2026, 8, 30)
+    assert AQ._ledger_stale({}, "X", today)
+    assert not AQ._ledger_stale({"X": {"date": "2026-08-20", "verdict": "honoured"}}, "X", today)
+    assert AQ._ledger_stale({"X": {"date": "2026-07-20", "verdict": "honoured"}}, "X", today)
+    assert AQ._ledger_stale({"X": {"date": "2026-08-26", "verdict": "unverifiable"}}, "X", today)
+    assert not AQ._ledger_stale({"X": {"date": "2026-08-29", "verdict": "unverifiable"}}, "X", today)
+
+
+def test_every_activation_path_asks_the_same_question_of_a_query_url():
+    """Kills `hunt-query-url-stamped-il` (with its sibling above).
+
+    Two of seven paths had the guard on 2026-08-30 and the drain re-admitted the class
+    through its own door: `_score` counted stamped cards and proposed `scrape`. Every tool
+    that scrapes a page and counts `is_israel_job` over the cards goes through
+    `audit_query_urls.il_jobs`, and a retyped `[j for j in jobs if is_israel_job(j)]` next
+    to a `scrape(` call is the regression this pins.
+    """
+    import audit_query_urls as AQ
+    stamped = _cards("/job/houston/x/1", "/job/pennsylvania/y/2")
+    assert AQ.il_jobs(_COMCAST_URL, stamped) == []
+    assert len(AQ.il_jobs("https://jobs.comcast.com/careers", stamped)) == 2
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for mod in ("listing_hunt.py", "queue_resolve_search.py", "crack_walled.py",
+                "repair_extract_gap.py", "resolve_deep.py", "retry_unreachable.py"):
+        src = open(os.path.join(here, mod), encoding="utf-8").read()
+        assert "il_jobs(" in src, mod
+        bare = _re.findall(r"\[j for j in jobs if (?:israel\.)?is_israel_job\(j\)\]", src)
+        assert not bare, (mod, bare)

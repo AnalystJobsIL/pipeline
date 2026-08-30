@@ -1,0 +1,2557 @@
+{
+ "ABB": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 1775,
+    "pairs": 0,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://careers.abb/global/en/search-results?keywords=Israel",
+  "verdict": "unverifiable"
+ },
+ "ASML": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 25,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 25,
+    "page_chars": 2679,
+    "pairs": 25,
+    "route": "plain+render",
+    "sample": [
+     [
+      "CS - EUV Upgrade Install and Relocation ",
+      "Taichung, Taiwan"
+     ],
+     [
+      "Logistics Engineer Disturbance Managemen",
+      "Veldhoven, Netherlands"
+     ],
+     [
+      "Manufacturing- Quality Manager- Linkou",
+      "Linkou, Taiwan"
+     ],
+     [
+      "CS - EUV Technical Support Engineer (Top",
+      "Tainan, Taiwan"
+     ],
+     [
+      "CNC milling operator / CNC Zerspanungsme",
+      "Berlin, Germany"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 25,
+    "examples": [
+     "taiwan",
+     "veldhoven",
+     "taiwan"
+    ],
+    "foreign": 17,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 25,
+   "examples": [
+    "taiwan",
+    "veldhoven",
+    "taiwan"
+   ],
+   "foreign": 17,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://www.asml.com/en/careers/find-your-job?location=Israel",
+  "verdict": "ignored"
+ },
+ "AT&T": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 3,
+   "examples": [
+    "phoenix",
+    "phoenix",
+    "phoenix"
+   ],
+   "foreign": 3,
+   "il": 0,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 3,
+   "examples": [
+    "phoenix",
+    "phoenix",
+    "phoenix"
+   ],
+   "foreign": 3,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://www.att.jobs/search-jobs?location=Israel",
+  "verdict": "ignored"
+ },
+ "AWS": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 12,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 4530,
+    "pairs": 0,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 12,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://www.amazon.jobs/en/business_categories/amazon-web-services?loc_query=Israel",
+  "verdict": "unverifiable"
+ },
+ "Abbott": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 1,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 1,
+    "page_chars": 1827,
+    "pairs": 1,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Sales & Therapy Specialist TAVI (Structu",
+      "Israel - Tel Aviv"
+     ]
+    ],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 1,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://www.jobs.abbott/us/en/search-results?keywords=Israel",
+  "verdict": "unverifiable"
+ },
+ "Align Technology": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 1,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 88,
+    "page_chars": 641,
+    "pairs": 88,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Clinical Education Manager EMEA, Ortho",
+      "EMEA-Spain"
+     ],
+     [
+      "Clinical Education Manager EMEA, Ortho",
+      "EMEA-United Kingdom"
+     ],
+     [
+      "Clinical Education Manager EMEA, Ortho",
+      "EMEA-Poland"
+     ],
+     [
+      "Clinical Education Manager EMEA, Ortho",
+      "EMEA-Netherlands"
+     ],
+     [
+      "Clinical Education Specialist",
+      "EMEA-Italy"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 88,
+    "examples": [
+     "spain",
+     "united kingdom",
+     "poland"
+    ],
+    "foreign": 78,
+    "il": 1,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 88,
+   "examples": [
+    "spain",
+    "united kingdom",
+    "poland"
+   ],
+   "foreign": 78,
+   "il": 1,
+   "via": "read"
+  },
+  "url": "https://jobs.aligntech.com/search-job?location=Israel",
+  "verdict": "leaks"
+ },
+ "Amazon": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 3,
+    "page_chars": 20000,
+    "pairs": 3,
+    "route": "plain",
+    "sample": [
+     [
+      "Software Development Engineer (AWS ML), ",
+      "IL, Tel Aviv"
+     ],
+     [
+      "Software Development Student , Machine L",
+      "IL, Tel Aviv"
+     ],
+     [
+      "Chip Design Engineer",
+      "IL, Tel Aviv"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 3,
+    "examples": [],
+    "foreign": 0,
+    "il": 3,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 3,
+   "via": "read"
+  },
+  "url": "https://www.amazon.jobs/en/search.json?country=ISR",
+  "verdict": "honoured"
+ },
+ "Amazon Israel": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 9,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 10,
+    "page_chars": 781,
+    "pairs": 10,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Software Development Engineer (AWS ML), ",
+      "Tel Aviv, ISR"
+     ],
+     [
+      "Software Development Student , Machine L",
+      "Tel Aviv, ISR"
+     ],
+     [
+      "Chip Design Engineer, Graviton Team",
+      "Tel Aviv, ISR"
+     ],
+     [
+      "DFT Engineer",
+      "Tel Aviv, ISR"
+     ],
+     [
+      "Electrical/Mechanical Engineering Techni",
+      "Tel Aviv, ISR"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 10,
+    "examples": [],
+    "foreign": 0,
+    "il": 10,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 10,
+   "examples": [],
+   "foreign": 0,
+   "il": 10,
+   "via": "read"
+  },
+  "url": "https://www.amazon.jobs/en/search?loc_query=Israel&country=ISR",
+  "verdict": "honoured"
+ },
+ "Apple": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 20,
+    "page_chars": 19193,
+    "pairs": 20,
+    "route": "plain",
+    "sample": [
+     [
+      "Advanced Optics Design&Validation Studen",
+      "Herzliya"
+     ],
+     [
+      "Embedded Engineer for Networking Silicon",
+      "Haifa"
+     ],
+     [
+      "Embedded Engineer for Networking Silicon",
+      "Herzliya"
+     ],
+     [
+      "SW Developer For Validation-SSD",
+      "Herzliya"
+     ],
+     [
+      "Design Engineer",
+      "Herzliya"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 20,
+    "examples": [],
+    "foreign": 0,
+    "il": 20,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 20,
+   "examples": [],
+   "foreign": 0,
+   "il": 20,
+   "via": "read"
+  },
+  "url": "https://jobs.apple.com/en-us/search?location=israel-ISR",
+  "verdict": "honoured"
+ },
+ "Blaize": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 761,
+    "pairs": 0,
+    "route": "plain",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://www.blaize.com/careers/all/?location=Israel",
+  "verdict": "unverifiable"
+ },
+ "Booking.com": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 1,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 20000,
+    "pairs": 0,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 1,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://employees-holdings-workingatbooking.icims.com/jobs/search?ss=1&searchLocation=Israel",
+  "verdict": "unverifiable"
+ },
+ "Brenntag": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 1,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 1,
+   "via": "cache"
+  },
+  "url": "https://brenntag.wd3.myworkdayjobs.com/en-US/brenntag_jobs?locationCountry=Israel",
+  "verdict": "honoured"
+ },
+ "Comcast": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 14,
+   "examples": [
+    "pennsylvania",
+    "plano",
+    "colorado"
+   ],
+   "foreign": 8,
+   "il": 0,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 14,
+   "examples": [
+    "pennsylvania",
+    "plano",
+    "colorado"
+   ],
+   "foreign": 8,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://jobs.comcast.com/search-jobs?location=Israel",
+  "verdict": "ignored (note full; parked on existing pool tokens)"
+ },
+ "Continental Israel": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 9,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 902,
+    "pairs": 0,
+    "route": "render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 9,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://jobs.continental.com/en/detail-page/job-detail/REF97327K-p-9f5c47fa289fd2dde975a1c868b127f7/logistics-project-manager/?tx_conjobs_filter%5Bfilter%5D%5Bcountry%5D%5B0%5D=Israel",
+  "verdict": "unverifiable"
+ },
+ "Dentsply Sirona": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 2,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 2,
+    "page_chars": 5138,
+    "pairs": 2,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Production Planning & Control Engineer",
+      "Bar Lev, IL, 20156"
+     ],
+     [
+      "Project Engineer - ECOs",
+      "Bar Lev, IL, 20156"
+     ]
+    ],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 2,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://careers.dentsplysirona.com/search/?q=&locationsearch=Israel",
+  "verdict": "unverifiable"
+ },
+ "Deutsche Post DHL": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 8,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 9027,
+    "pairs": 0,
+    "route": "render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 8,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://careers.dhl.com/global/en/search-results?keywords=Israel",
+  "verdict": "unverifiable"
+ },
+ "Deutsche Telekom": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 20000,
+    "pairs": 0,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://telekom-growthhub.eightfold.ai/careers?location=Israel",
+  "verdict": "unverifiable"
+ },
+ "EPAM Systems, Inc.": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 10,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 5,
+    "page_chars": 20000,
+    "pairs": 5,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Platform Engineering Team Lead",
+      "Hybrid in Israel"
+     ],
+     [
+      "Data Scientist",
+      "Hybrid in Israel"
+     ],
+     [
+      "Machine Learning Engineer (MLE)",
+      "Hybrid in Israel"
+     ],
+     [
+      "Data Ops Team Leader",
+      "Hybrid in Israel"
+     ],
+     [
+      "Senior Data Engineer",
+      "Hybrid in Israel"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 5,
+    "examples": [],
+    "foreign": 0,
+    "il": 5,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 5,
+   "examples": [],
+   "foreign": 0,
+   "il": 5,
+   "via": "read"
+  },
+  "url": "https://careers.epam.com/en/jobs?Country=Israel",
+  "verdict": "honoured"
+ },
+ "Electronic Arts": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 20,
+    "page_chars": 5225,
+    "pairs": 20,
+    "route": "plain",
+    "sample": [
+     [
+      "Development Manager @ EA Sports FC",
+      "Bucharest, Romania"
+     ],
+     [
+      "Experience Design Director - EA Sports N",
+      "Orlando, United States of America"
+     ],
+     [
+      "Senior Director, Product Management - EA",
+      "Orlando, United States of America"
+     ],
+     [
+      "Backend Software Engineer I - Gameplay S",
+      "Vancouver, Canada"
+     ],
+     [
+      "Game Designer I",
+      "Hyderabad, India"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 20,
+    "examples": [
+     "bucharest",
+     "united states",
+     "united states"
+    ],
+    "foreign": 20,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 20,
+   "examples": [
+    "bucharest",
+    "united states",
+    "united states"
+   ],
+   "foreign": 20,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://jobs.ea.com/en_US/careers/SearchJobs?location=Israel",
+  "verdict": "ignored"
+ },
+ "Forcepoint": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 2,
+   "examples": [],
+   "foreign": 0,
+   "il": 2,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 2,
+   "examples": [],
+   "foreign": 0,
+   "il": 2,
+   "via": "cache"
+  },
+  "url": "https://forcepoint.wd1.myworkdayjobs.com/external-careers?locationCountry=b4dbf35ffb1c4467b7fef2c31e57af41",
+  "verdict": "honoured"
+ },
+ "Fujitsu": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 10,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 10,
+    "page_chars": 3598,
+    "pairs": 10,
+    "route": "plain+render",
+    "sample": [
+     [
+      "German Bilingual Service Desk Agent (Tal",
+      "Lisboa, 11, PRT, Portugal"
+     ],
+     [
+      "Italian Bilingual Service Desk Agent (Ta",
+      "Lisboa, 11, PRT, Portugal"
+     ],
+     [
+      "IT Support with Dutch & English",
+      "Multiple Locations Portugal"
+     ],
+     [
+      "N1 - N3 Japanese Bilingual Specialist 1",
+      "Taguig, PHL, Philippines"
+     ],
+     [
+      "Mandarin Bilingual Service Desk Agent (T",
+      "Kuala Lumpur, 10, MYS, Malaysia"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 10,
+    "examples": [
+     "portugal",
+     "portugal",
+     "portugal"
+    ],
+    "foreign": 10,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 10,
+   "examples": [
+    "portugal",
+    "portugal",
+    "portugal"
+   ],
+   "foreign": 10,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://www.jobs.global.fujitsu.com/search?location=Israel",
+  "verdict": "ignored"
+ },
+ "Google Israel": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 20,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 20,
+    "page_chars": 20000,
+    "pairs": 20,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Power Delivery Design Engineer, Google C",
+      "Tel Aviv, Israel ; Haifa, Israel"
+     ],
+     [
+      "Silicon Validation Engineer, Google Clou",
+      "Haifa, Israel ; Tel Aviv, Israel"
+     ],
+     [
+      "Data Center Operations Manager, Global S",
+      "Tel Aviv, Israel"
+     ],
+     [
+      "Senior Verification Engineer, Digital Si",
+      "Tel Aviv, Israel ; Haifa, Israel"
+     ],
+     [
+      "RTL Design Technical Lead, Servers, Goog",
+      "Tel Aviv, Israel ; Haifa, Israel"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 20,
+    "examples": [],
+    "foreign": 0,
+    "il": 20,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 20,
+   "examples": [],
+   "foreign": 0,
+   "il": 20,
+   "via": "read"
+  },
+  "url": "https://www.google.com/about/careers/applications/jobs/results/?location=Israel",
+  "verdict": "honoured"
+ },
+ "HSBC Global Services Limited": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 1,
+   "examples": [],
+   "foreign": 0,
+   "il": 1,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 1,
+   "examples": [],
+   "foreign": 0,
+   "il": 1,
+   "via": "cache"
+  },
+  "url": "https://mycareer.hsbc.com/en_GB/external/SearchJobs?scrollToJobsSection=true&location=Israel",
+  "verdict": "honoured"
+ },
+ "Hunter Douglas, Inc.": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 116,
+   "examples": [
+    "australia",
+    "colombia",
+    "mexico"
+   ],
+   "foreign": 4,
+   "il": 0,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 116,
+   "examples": [
+    "australia",
+    "colombia",
+    "mexico"
+   ],
+   "foreign": 4,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://jobs.hunterdouglas.com/search/?q=&locationsearch=Israel",
+  "verdict": "ignored"
+ },
+ "IQVIA": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 10,
+    "page_chars": 18066,
+    "pairs": 10,
+    "route": "render",
+    "sample": [
+     [
+      "Lab Cent Project Coordinator 1",
+      "Thane, India"
+     ],
+     [
+      "Application Specialist m/w/d [Wundversor",
+      "Hamburg, Germany"
+     ],
+     [
+      "Associate Clinical Project Management Di",
+      "Durham, United States of America"
+     ],
+     [
+      "Associate Clinical Project Management Di",
+      "Carlsbad, United States of America"
+     ],
+     [
+      "Associate Clinical Project Management Di",
+      "Collegeville, United States of America"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 10,
+    "examples": [
+     "india",
+     "germany",
+     "united states"
+    ],
+    "foreign": 10,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 10,
+   "examples": [
+    "india",
+    "germany",
+    "united states"
+   ],
+   "foreign": 10,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://jobs.iqvia.com/search-jobs?query=&country=Israel",
+  "verdict": "ignored"
+ },
+ "John Deere": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 1123,
+    "pairs": 0,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://jobs.deere.com/successfactors/search/?q=&locationsearch=Israel",
+  "verdict": "unverifiable"
+ },
+ "Johnson & Johnson": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 10,
+   "examples": [],
+   "foreign": 0,
+   "il": 1,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 10,
+   "examples": [],
+   "foreign": 0,
+   "il": 1,
+   "via": "cache"
+  },
+  "url": "https://www.careers.jnj.com/en/jobs/?search=&country=Israel",
+  "verdict": "honoured"
+ },
+ "Kimberly-Clark": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 3,
+    "page_chars": 20000,
+    "pairs": 3,
+    "route": "render",
+    "sample": [
+     [
+      "Key Account Manager - Ecom",
+      "Ho Chi Minh Office"
+     ],
+     [
+      "Key Account Manager - Mom & Baby Channel",
+      "Ho Chi Minh Office"
+     ],
+     [
+      "Senior Executive Technology & Board Serv",
+      "Dallas World Headquarters"
+     ]
+    ],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://careers.kimberly-clark.com/en/job-search?location=Israel",
+  "verdict": "unverifiable"
+ },
+ "Lam Research": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 20000,
+    "pairs": 0,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://careers.lamresearch.com/careers?location=Israel",
+  "verdict": "unverifiable"
+ },
+ "Lenovo": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 1,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 10,
+    "page_chars": 3447,
+    "pairs": 10,
+    "route": "plain",
+    "sample": [
+     [
+      "Managed Service Desk Engineer",
+      "India, Karnataka, BANGALORE"
+     ],
+     [
+      "数据分析主管",
+      "China, Beijing, 北京（Beijing）"
+     ],
+     [
+      "AI产品经理( 联想百应Claw)",
+      "China, Beijing, 北京（Beijing）"
+     ],
+     [
+      "AI Solution Architect",
+      "United States of America, North Carolina"
+     ],
+     [
+      "Advisor, AI Ethics",
+      "United States of America, North Carolina"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 10,
+    "examples": [
+     "india",
+     "china",
+     "china"
+    ],
+    "foreign": 10,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 10,
+   "examples": [
+    "india",
+    "china",
+    "china"
+   ],
+   "foreign": 10,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://jobs.lenovo.com/en_US/careers/SearchJobs?location=Israel",
+  "verdict": "ignored"
+ },
+ "Mastercard": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 4,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 4,
+    "page_chars": 1986,
+    "pairs": 4,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Senior Software Engineer - Infrastructur",
+      "Ramat-Gan, Israel, 5252212"
+     ],
+     [
+      "Manager, Market Delivery",
+      "Ramat-Gan, Israel, 5252212"
+     ],
+     [
+      "Manager, Software Engineering",
+      "Ramat-Gan, Israel, 5252212"
+     ],
+     [
+      "Lead Software Engineer (Backend & AI)",
+      "Ramat-Gan, Israel, 5252212"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 4,
+    "examples": [],
+    "foreign": 0,
+    "il": 4,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 4,
+   "examples": [],
+   "foreign": 0,
+   "il": 4,
+   "via": "read"
+  },
+  "url": "https://careers.mastercard.com/us/en/search-results?keywords=Israel",
+  "verdict": "honoured"
+ },
+ "Meta": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 8,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 9,
+    "page_chars": 5730,
+    "pairs": 9,
+    "route": "render",
+    "sample": [
+     [
+      "Software Engineer (Leadership) - Product",
+      "Tel Aviv, Israel +1 locations"
+     ],
+     [
+      "Client Solutions Manager 12-Month STE Co",
+      "Tel Aviv, Israel"
+     ],
+     [
+      "Software Engineer, ML (Technical Leaders",
+      "Tel Aviv, Israel"
+     ],
+     [
+      "Solutions Architect - (Tel Aviv)- (12 Mo",
+      "Tel Aviv, Israel"
+     ],
+     [
+      "Product Manager, Central Products",
+      "Tel Aviv, Israel"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 9,
+    "examples": [],
+    "foreign": 0,
+    "il": 9,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 9,
+   "examples": [],
+   "foreign": 0,
+   "il": 9,
+   "via": "read"
+  },
+  "url": "https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel",
+  "verdict": "honoured"
+ },
+ "Microsoft (Xbox/Gaming)": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 20,
+    "page_chars": 20000,
+    "pairs": 20,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Senior Software Engineer",
+      "India, Karnataka, Bangalore"
+     ],
+     [
+      "ROP-Software engineer II",
+      "India, Karnataka, Bangalore"
+     ],
+     [
+      "Senior Security Operations Engineer",
+      "United States, Washington, Redmond"
+     ],
+     [
+      "Principal Security Operations Engineer",
+      "United States, Washington, Redmond"
+     ],
+     [
+      "Strategic Account Technology Strategist",
+      "United States, Illinois, Chicago + 3 mor"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 20,
+    "examples": [
+     "india",
+     "india",
+     "united states"
+    ],
+    "foreign": 20,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 20,
+   "examples": [
+    "india",
+    "india",
+    "united states"
+   ],
+   "foreign": 20,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://jobs.careers.microsoft.com/global/en/search?lc=Israel&p=Gaming",
+  "verdict": "ignored"
+ },
+ "Microsoft Israel": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 20,
+    "page_chars": 20000,
+    "pairs": 20,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Senior Software Engineer",
+      "India, Karnataka, Bangalore"
+     ],
+     [
+      "ROP-Software engineer II",
+      "India, Karnataka, Bangalore"
+     ],
+     [
+      "Senior Security Operations Engineer",
+      "United States, Washington, Redmond"
+     ],
+     [
+      "Principal Security Operations Engineer",
+      "United States, Washington, Redmond"
+     ],
+     [
+      "Strategic Account Technology Strategist",
+      "United States, Illinois, Chicago + 3 mor"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 20,
+    "examples": [
+     "india",
+     "india",
+     "united states"
+    ],
+    "foreign": 20,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 20,
+   "examples": [
+    "india",
+    "india",
+    "united states"
+   ],
+   "foreign": 20,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://jobs.careers.microsoft.com/global/en/search?lc=Israel",
+  "verdict": "ignored"
+ },
+ "OpenText": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 7,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 3,
+    "page_chars": 2579,
+    "pairs": 3,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Strategic Solution Sales Executive (Cybe",
+      "Istanbul, TUR, 34750"
+     ],
+     [
+      "Senior Consultant - Data Migration and M",
+      "Amstelveen, NLD, 1183 AV"
+     ],
+     [
+      "Lead Consultant (ECM Solutions)",
+      "Klagenfurt, Carinthia, AUT, 9020"
+     ]
+    ],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 7,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://careers.opentext.com/careers?location=Israel",
+  "verdict": "unverifiable"
+ },
+ "OpenWeb": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 774,
+    "pairs": 0,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://www.openweb.com/careers/jobs/?location=Israel",
+  "verdict": "unverifiable"
+ },
+ "PepsiCo": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 2,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 10,
+    "page_chars": 20000,
+    "pairs": 10,
+    "route": "plain+render",
+    "sample": [
+     [
+      "מהנדס/ת מכונות להנדסת תהליך",
+      "Rahat, Israel"
+     ],
+     [
+      "ראש צוות משק",
+      "Rahat, Israel"
+     ],
+     [
+      "טכנאי/ת תשתיות sodastream",
+      "Rahat, Israel"
+     ],
+     [
+      "כרסם/ חרט",
+      "Rahat, Israel"
+     ],
+     [
+      "רתך/ית",
+      "Rahat, Israel"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 10,
+    "examples": [],
+    "foreign": 0,
+    "il": 10,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 10,
+   "examples": [],
+   "foreign": 0,
+   "il": 10,
+   "via": "read"
+  },
+  "url": "https://www.pepsicojobs.com/main/jobs?location=Israel",
+  "verdict": "honoured"
+ },
+ "Prisma Photonics": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 6,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 5,
+    "page_chars": 2676,
+    "pairs": 5,
+    "route": "plain",
+    "sample": [
+     [
+      "DSP Researcher",
+      "Tel Aviv"
+     ],
+     [
+      "Electro Optics Systems Engineer",
+      "Tel Aviv"
+     ],
+     [
+      "Senior Data Engineer",
+      "Tel Aviv"
+     ],
+     [
+      "Senior DevOps",
+      "Tel Aviv"
+     ],
+     [
+      "Senior Product Analyst",
+      "Tel Aviv"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 5,
+    "examples": [],
+    "foreign": 0,
+    "il": 5,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 5,
+   "examples": [],
+   "foreign": 0,
+   "il": 5,
+   "via": "read"
+  },
+  "url": "https://www.prismaphotonics.com/careers/?location=129",
+  "verdict": "honoured"
+ },
+ "Publicis Groupe Israel": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 7,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 10,
+    "page_chars": 3162,
+    "pairs": 10,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Production Artist",
+      "Bnei Brak, IL"
+     ],
+     [
+      "סופרוויזר.ית למשרד פרסום",
+      "Bnei Brak, IL"
+     ],
+     [
+      "Junior Photoshop Specialist",
+      "Bnei Brak, IL"
+     ],
+     [
+      "Financial controller",
+      "Bnei Brak, IL"
+     ],
+     [
+      "Account Supervisor",
+      "Bnei Brak, IL"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 10,
+    "examples": [],
+    "foreign": 0,
+    "il": 10,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 10,
+   "examples": [],
+   "foreign": 0,
+   "il": 10,
+   "via": "read"
+  },
+  "url": "https://careers.publicisgroupe.com/jobs?location=Israel",
+  "verdict": "honoured"
+ },
+ "Rapid7": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 16,
+    "page_chars": 7257,
+    "pairs": 16,
+    "route": "plain",
+    "sample": [
+     [
+      "Account Executive, Commercial",
+      "Austin, TX, United States"
+     ],
+     [
+      "Account Executive, Commercial",
+      "Boston, MA, United States"
+     ],
+     [
+      "Analyst, Strategy & Transformation",
+      "United States"
+     ],
+     [
+      "Associate Detection & Response Analyst -",
+      "Melbourne, Australia"
+     ],
+     [
+      "Director, Financial Planning & Analysis ",
+      "Boston, MA, United States"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 16,
+    "examples": [
+     "austin",
+     "boston",
+     "united states"
+    ],
+    "foreign": 16,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 16,
+   "examples": [
+    "austin",
+    "boston",
+    "united states"
+   ],
+   "foreign": 16,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://careers.rapid7.com/jobs/search?location=Israel",
+  "verdict": "ignored"
+ },
+ "Rapyd Financial Network": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 1,
+   "examples": [
+    "bogota"
+   ],
+   "foreign": 1,
+   "il": 0,
+   "read": {
+    "grounded": 25,
+    "page_chars": 5631,
+    "pairs": 25,
+    "route": "plain",
+    "sample": [
+     [
+      "Compliance Officer",
+      "Bogota, Colombia"
+     ],
+     [
+      "Deputy Compliance Officer",
+      "Bogota, Colombia"
+     ],
+     [
+      "DevOps Engineer",
+      "Bogota, Colombia"
+     ],
+     [
+      "Global HR Business Partner",
+      "Bogota, Colombia"
+     ],
+     [
+      "Payroll Analyst",
+      "Bogota, Colombia"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 25,
+    "examples": [
+     "bogota",
+     "bogota",
+     "bogota"
+    ],
+    "foreign": 14,
+    "il": 11,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 25,
+   "examples": [
+    "bogota",
+    "bogota",
+    "bogota"
+   ],
+   "foreign": 14,
+   "il": 11,
+   "via": "read"
+  },
+  "url": "https://www.rapyd.net/company/careers-search/?location=tel-aviv-israel",
+  "verdict": "leaks"
+ },
+ "Roche": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 4,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 3,
+    "page_chars": 884,
+    "pairs": 3,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Patient Journey Partner",
+      "Hod Hasharon, Center District, Israel"
+     ],
+     [
+      "Healthcare Systems Partner",
+      "Hod Hasharon, Center District, Israel"
+     ],
+     [
+      "Application Specialist - Molecular Solut",
+      "Hod Hasharon, Center District, Israel"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 3,
+    "examples": [],
+    "foreign": 0,
+    "il": 3,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 3,
+   "via": "read"
+  },
+  "url": "https://careers.roche.com/global/en/search-results?keywords=Israel",
+  "verdict": "honoured"
+ },
+ "Rohde & Schwarz": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 6,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 10456,
+    "pairs": 0,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 6,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://www.rohde-schwarz.com/il/career/application-process_252291.html?change_c=IL",
+  "verdict": "unverifiable"
+ },
+ "SAP": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 674,
+    "pairs": 3,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://jobs.sap.com/tile-search-results/?q=&locationsearch=Israel",
+  "verdict": "unverifiable"
+ },
+ "Sapiens": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 3,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 3,
+   "via": "cache"
+  },
+  "url": "https://careers.sapiens.com/search/?createNewAlert=false&q=&locationsearch=Israel&optionsFacetsDD_country=&optionsFacetsDD_city=&optionsFacetsDD_dept=",
+  "verdict": "honoured"
+ },
+ "Shopify": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 33,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 31,
+    "page_chars": 20000,
+    "pairs": 31,
+    "route": "plain",
+    "sample": [
+     [
+      "Executive Protection Specialist / Spécia",
+      "Montreal"
+     ],
+     [
+      "Senior Enterprise Account Executive - Sp",
+      "Remote - Spain"
+     ],
+     [
+      "Senior Lead, Federal Government Affairs ",
+      "Remote - Americas"
+     ],
+     [
+      "Head of Merch Programs",
+      "Remote - Americas"
+     ],
+     [
+      "Event Marketing Lead",
+      "Remote - APAC, Singapore, Hong Kong"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 31,
+    "examples": [
+     "spain",
+     "singapore",
+     "united kingdom"
+    ],
+    "foreign": 9,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 31,
+   "examples": [
+    "spain",
+    "singapore",
+    "united kingdom"
+   ],
+   "foreign": 9,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://www.shopify.com/careers/search?query=&location=Israel",
+  "verdict": "ignored"
+ },
+ "Siemens": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 6,
+    "page_chars": 2495,
+    "pairs": 6,
+    "route": "render",
+    "sample": [
+     [
+      "Site and commissioning Engineer- RTU-Sca",
+      "Thane , Maharashtra , India"
+     ],
+     [
+      "Protection & Commissioning Engineer – Su",
+      "Thane , Maharashtra , India"
+     ],
+     [
+      "Dual Student Tech University RIC",
+      "Mexico City , Ciudad de Mexico , Mexico"
+     ],
+     [
+      "Dual Student Tech University SCM",
+      "Mexico City , Ciudad de Mexico , Mexico"
+     ],
+     [
+      "Regulatory Affairs Professional (m/f/d) ",
+      "Multiple Locations"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 6,
+    "examples": [
+     "india",
+     "india",
+     "mexico"
+    ],
+    "foreign": 5,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 6,
+   "examples": [
+    "india",
+    "india",
+    "mexico"
+   ],
+   "foreign": 5,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://jobs.siemens.com/en_US/externaljobs/SearchJobs?location=Israel",
+  "verdict": "ignored"
+ },
+ "Siemens Digital Industries Software": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 6,
+   "examples": [],
+   "foreign": 0,
+   "il": 5,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 6,
+   "examples": [],
+   "foreign": 0,
+   "il": 5,
+   "via": "cache"
+  },
+  "url": "https://jobs.sw.siemens.com/jobs/?location=Israel",
+  "verdict": "honoured"
+ },
+ "Skoda / Volkswagen Group": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 10,
+   "examples": [
+    "milan",
+    "milan",
+    "milan"
+   ],
+   "foreign": 3,
+   "il": 0,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 10,
+   "examples": [
+    "milan",
+    "milan",
+    "milan"
+   ],
+   "foreign": 3,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://jobs.volkswagen-group.com/search/?q=&locationsearch=Israel",
+  "verdict": "ignored"
+ },
+ "Snap": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 1,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 175,
+    "page_chars": 998,
+    "pairs": 175,
+    "route": "plain+render",
+    "sample": [
+     [
+      "Director, Corporate & Brand Communicatio",
+      "Los Angeles"
+     ],
+     [
+      "Lead, Operations & Internal Communicatio",
+      "Los Angeles"
+     ],
+     [
+      "Manager, Communications (Advertising & B",
+      "Los Angeles; New York; Palo Alto"
+     ],
+     [
+      "Spectacles Student Worker - Software Eng",
+      "Vienna"
+     ],
+     [
+      "Senior Executive Assistant",
+      "London"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 175,
+    "examples": [
+     "los angeles",
+     "los angeles",
+     "los angeles"
+    ],
+    "foreign": 152,
+    "il": 1,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 175,
+   "examples": [
+    "los angeles",
+    "los angeles",
+    "los angeles"
+   ],
+   "foreign": 152,
+   "il": 1,
+   "via": "read"
+  },
+  "url": "https://careers.snap.com/jobs?location=Tel%20Aviv%2C%20Israel",
+  "verdict": "leaks"
+ },
+ "SolarEdge": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 20000,
+    "pairs": 0,
+    "route": "render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 3,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://www.solaredge.com/en/search?search=&f-jobs-location=Israel",
+  "verdict": "unverifiable"
+ },
+ "Stratasys": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 12,
+    "page_chars": 2915,
+    "pairs": 12,
+    "route": "plain",
+    "sample": [
+     [
+      "Team Leader NPI",
+      "Rehovot, IL, IL"
+     ],
+     [
+      "Sr. System Engineer",
+      "Rehovot, IL, IL"
+     ],
+     [
+      "GRC Specialist",
+      "Rehovot, IL, IL"
+     ],
+     [
+      "NPI Engineer (Mechanical)",
+      "Rehovot, IL, IL"
+     ],
+     [
+      "Expert, Software Embedded Developer",
+      "Rehovot, IL, IL"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 12,
+    "examples": [],
+    "foreign": 0,
+    "il": 12,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 12,
+   "examples": [],
+   "foreign": 0,
+   "il": 12,
+   "via": "read"
+  },
+  "url": "https://careers.stratasys.com/tile-search-results/?q=&locationsearch=Israel",
+  "verdict": "honoured"
+ },
+ "Teradyne": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 17,
+   "examples": [
+    "san jose",
+    "taiwan",
+    "munich"
+   ],
+   "foreign": 9,
+   "il": 0,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 17,
+   "examples": [
+    "san jose",
+    "taiwan",
+    "munich"
+   ],
+   "foreign": 9,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://jobs.teradyne.com/Teradyne/search/?createNewAlert=false&amp;q=&amp;optionsFacetsDD_customfield1=Teradyne&amp;optionsFacetsDD_dept=&amp;location=Israel&amp;locale=en_US",
+  "verdict": "ignored"
+ },
+ "Texas Instruments": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 4,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 5,
+    "page_chars": 4578,
+    "pairs": 5,
+    "route": "render",
+    "sample": [
+     [
+      "WiFi Software Development Intern",
+      "Israel"
+     ],
+     [
+      "Field Applications Program",
+      "Ra'anana, Israel"
+     ],
+     [
+      "Junior Design Emulation/Validation Engin",
+      "Ra'anana, Israel"
+     ],
+     [
+      "Field Applications Engineering Intern",
+      "Ra'anana, Israel"
+     ],
+     [
+      "Experienced Design Verification Engineer",
+      "Ra'anana, Israel"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 5,
+    "examples": [],
+    "foreign": 0,
+    "il": 5,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 5,
+   "examples": [],
+   "foreign": 0,
+   "il": 5,
+   "via": "read"
+  },
+  "url": "https://careers.ti.com/en/sites/CX/requisitions?location=Israel",
+  "verdict": "honoured"
+ },
+ "Vimeo": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "error": "too few grounded pairs",
+    "grounded": 0,
+    "page_chars": 20000,
+    "pairs": 0,
+    "route": "plain+render",
+    "sample": [],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://vimeo.com/jobs?location=Israel",
+  "verdict": "unverifiable"
+ },
+ "Volkswagen (CARIAD)": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 8,
+   "examples": [
+    "berlin"
+   ],
+   "foreign": 1,
+   "il": 0,
+   "read": {
+    "grounded": 9,
+    "page_chars": 6696,
+    "pairs": 9,
+    "route": "render",
+    "sample": [
+     [
+      "Internship - Reinforcement Learning Rese",
+      "München, DE, 80807"
+     ],
+     [
+      "Working Student - Committee Management &",
+      "Ingolstadt, DE, 85053 +1 more…"
+     ],
+     [
+      "Senior Data Engineer - Streaming Analyti",
+      "Ingolstadt, DE, 85053 +3 more…"
+     ],
+     [
+      "Working Student - HR Processes & Standar",
+      "Ingolstadt, DE, 85053 +1 more…"
+     ],
+     [
+      "Working Student - Automotive System Deve",
+      "Ingolstadt, DE, 85053"
+     ]
+    ],
+    "via": "read"
+   },
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 8,
+   "examples": [
+    "berlin"
+   ],
+   "foreign": 1,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://jobs.volkswagen-group.com/cariad/search/?searchby=location&createNewAlert=false&q=&locationsearch=Israel",
+  "verdict": "unverifiable"
+ },
+ "West Pharmaceutical Services": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 5,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 9,
+    "page_chars": 1972,
+    "pairs": 9,
+    "route": "plain",
+    "sample": [
+     [
+      "Inventory & Logistics Analyst",
+      "Shlomi, ISR, IL"
+     ],
+     [
+      "Manufacturing Quality Engineer",
+      "Shlomi, ISR, IL"
+     ],
+     [
+      "Sr. Specialist Quality Engineer",
+      "Ra'anana, ISR, IL"
+     ],
+     [
+      "Manufacturing Quality Engineer",
+      "Shlomi, ISR, IL"
+     ],
+     [
+      "Production Planning Manager",
+      "Ra'anana, ISR, IL"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 9,
+    "examples": [],
+    "foreign": 0,
+    "il": 5,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 9,
+   "examples": [],
+   "foreign": 0,
+   "il": 5,
+   "via": "read"
+  },
+  "url": "https://careers.westpharma.com/search/?createNewAlert=false&q=&optionsFacetsDD_country=IL&optionsFacetsDD_customfield4=&optionsFacetsDD_dept=",
+  "verdict": "honoured"
+ },
+ "Xtra Mile - Lifecycle Marketing Agency": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 2,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 4,
+    "page_chars": 3855,
+    "pairs": 4,
+    "route": "plain",
+    "sample": [
+     [
+      "Content Marketing Manager",
+      "Raanana"
+     ],
+     [
+      "Digital Campaign manager (with hands-on ",
+      "Raanana"
+     ],
+     [
+      "Marketing Specialist",
+      "Raanana"
+     ],
+     [
+      "Senior Graphic Designer (TLV)",
+      "Tel-Aviv"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 4,
+    "examples": [],
+    "foreign": 0,
+    "il": 4,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 4,
+   "examples": [],
+   "foreign": 0,
+   "il": 4,
+   "via": "read"
+  },
+  "url": "https://xtra-mile.co/careers-result-page/?nam=&dep=&loc=IL&submit=Search",
+  "verdict": "honoured"
+ },
+ "Zoom": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 0,
+   "examples": [],
+   "foreign": 0,
+   "il": 0,
+   "read": {
+    "grounded": 30,
+    "page_chars": 14044,
+    "pairs": 30,
+    "route": "plain",
+    "sample": [
+     [
+      "Lead Technical Product Manager",
+      "San Jose, California, United States"
+     ],
+     [
+      "Senior Platform Engineer (SRE) - Governm",
+      "San Jose, California, United States"
+     ],
+     [
+      "People Operations Coordinator",
+      "Remote Mexico City, Mexico"
+     ],
+     [
+      "Security DevOps Engineer",
+      "San Jose, California, United States"
+     ],
+     [
+      "EMEA Scale Campaigns & ABM Manager - Wor",
+      "Dublin, County Dublin, Ireland"
+     ]
+    ],
+    "via": "read"
+   },
+   "read_tally": {
+    "cards": 30,
+    "examples": [
+     "san jose",
+     "san jose",
+     "mexico"
+    ],
+    "foreign": 29,
+    "il": 0,
+    "via": "read"
+   },
+   "via": "read"
+  },
+  "tally": {
+   "cards": 30,
+   "examples": [
+    "san jose",
+    "san jose",
+    "mexico"
+   ],
+   "foreign": 29,
+   "il": 0,
+   "via": "read"
+  },
+  "url": "https://careers.zoom.us/jobs/search?location=Israel",
+  "verdict": "ignored"
+ },
+ "adidas": {
+  "date": "2026-08-30",
+  "evidence": {
+   "cards": 19,
+   "examples": [
+    "johannesburg",
+    "los angeles",
+    "berlin"
+   ],
+   "foreign": 11,
+   "il": 0,
+   "via": "cache"
+  },
+  "tally": {
+   "cards": 19,
+   "examples": [
+    "johannesburg",
+    "los angeles",
+    "berlin"
+   ],
+   "foreign": 11,
+   "il": 0,
+   "via": "cache"
+  },
+  "url": "https://careers.adidas-group.com/jobs?location=Israel",
+  "verdict": "ignored"
+ }
+}

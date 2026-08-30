@@ -1195,6 +1195,65 @@ fixed it; `Checkout` has no `health_baseline` entry at all — never measured by
 and was written by `auto_expand` rather than the queue, so `--verify-existing` does not own it
 either (103 of the other 104 never-measured active rows are queue-written, and it does).
 
+### A search with a location filter is a QUERY, not a board (2026-08-30)
+
+`jobs.comcast.com/search-jobs?location=Israel` is an address that ASKS the site for Israel;
+it is a board only if the site honours its own filter, and Comcast's does not. It answered 14
+US postings (`/job/pennsylvania/`, `/job/houston/`, `/job/plano/`), `scrape_universal.
+_page_is_il` stamped `location='Israel'` on every one because the URL said so, `listing_hunt`
+counted the stamps as `verified 14 IL`, and two Houston/Pennsylvania roles reached the email,
+the board and the public CSV. The row's own note vouched for the assumption that produced it —
+the `317` family, one level up: trusting an address to mean what it says instead of reading
+what came back. `pipeline/fetchers.py` learned this for `successfactors` on 2026-08-26 (`24512d6`:
+*"`locationsearch=Israel` is a hint, not a filter"*, hence `israel_scoped = False`) and the
+scrape lane never did.
+
+**60 active rows carried such an address on 2026-08-30** (the audited set is
+`cloud_state/query_filter.json`; `python registry_health.py --query-urls` lists the ones still
+active, 40 after the parks, and 34 of the 60 spelt it `location=`), and
+`region_variants` deliberately exempts them: an Israel token in the URL reads as "already
+pointed at the right place". So the class has its own instrument, `audit_query_urls.py`:
+
+* **Evidence is card-level and independent of the query.** A card is foreign only if the
+  board's OWN routing says so — its url path, its title tail, its `country_code`, or (native
+  rows only, where an API answered) its location field. A description is never evidence on
+  its own: ASML's cards mention "China, Connecticut" in JD boilerplate on a filter it honours.
+  A card whose url IS the page url (the scraper's fallback) says nothing.
+* **The threshold.** `ignored` needs ≥ max(3, 10% of the cards) foreign and 0 Israeli;
+  `leaks` is a foreign majority past at least one Israeli card (Snap: 1 of 175) and parks too,
+  because the scraper's stamp would publish the majority as Israeli; `honoured` (0 foreign) and
+  `mixed` (Israel the majority) stay active. Rows the cache cannot judge get one RENDERED
+  read whose (title, location) pairs must literally occur in the page text — the model
+  extracts, the code counts, the same threshold decides; short of it the row is
+  `unverifiable`, recorded and never parked.
+* **A park holds because every activation path reads the same rule.** `audit_query_urls.
+  il_jobs` refuses to count stamped cards on a query URL unless one card names its own place,
+  and it is THE test over scraped cards in `listing_hunt` (fast path, slow path, queue arm),
+  the drain's `_score`, `crack_walled`, `repair_extract_gap`, `resolve_deep` and
+  `retry_unreachable` — an adversarial pass found the guard on two of the seven and the
+  drain re-admitting the class through its own door. `probe_candidates.il_signal` strikes
+  the echoed query value from the page before counting, so a wake cannot come from our own
+  filter chip, and the grounded read strikes it too, so a `Location: Israel` chip cannot
+  ground three US postings as Israeli. Without these the park was measured to be undone by
+  the next 19:00 hunt on the same 14 cards. The cost, written down: a query-URL row whose
+  postings print only "Israel" and no city can no longer wake through the probe.
+* On 2026-08-30 the audit parked **20** of the 60 (17 `ignored` — Comcast 8/14
+  cards US, AT&T 3/3 Phoenix, Zoom 29/30, Rapid7 16/16, adidas 11/19, ASML 17/25 Taiwan and
+  Veldhoven, Teradyne, Lenovo, Fujitsu, IQVIA, Siemens, Electronic Arts, Shopify, both
+  Microsoft rows, Skoda, Hunter Douglas — and 3 `leaks`: Snap 1 Israeli card of 175, Align
+  1 of 88, Rapyd 11 of 25, where the scraper's stamp would publish the foreign majority
+  as Israeli), found **21** honoured (Google Israel: 20 of 20 rendered postings
+  in Tel Aviv or Haifa; Apple, Meta, Amazon, PepsiCo, Stratasys …) and left
+  **19** unverifiable (client-rendered shells and boards with no visible
+  postings; re-read in 3 days, never parked). Ledger: `cloud_state/query_filter.json`.
+  The root fix — the scraper reading the card's own place before stamping one — is
+  `462@scraper`; this instrument is the registry's belt until it lands.
+* A parked query-URL row lands in the hunt's pool with `needs re-resolution`. Comcast's cell
+  could not take the token (215 chars of a 220 cap, every segment PROTECTED, one of them a
+  `url-dead` tombstone on a live address — a stale-tombstone class this file names under
+  `Ride Vision`, `493`),
+  so its park stands on the pool tokens it already carried and the ledger says so.
+
 ### State transitions (who moves a row, and when)
 
 ```
@@ -1508,7 +1567,7 @@ so a given night processes fewer rows than the pool holds.
 | `triage_dark (18:00 daily)` | `triage-dark.yml` `0 18 * * *` | rows matching its own `TARGET_NOTES` minus `SKIP_NOTES` — classifies a dark row's failure mode and routes it | no |
 | `listing_hunt (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | parked rows matching `HUNT_POOL`, minus terminal, recruiters, discovery junk and `_triaged_page_empty` | **yes** |
 | `repair_extract_gap (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | `in_extract_gap_pool`: rows triage stamped `extract-gap` (`MODE`) with an `http` address, minus terminal and recruiters — the terminal exclusion arrived 2026-08-25, the day it selected a freshly parked `alias-of` twin | **yes** |
-| `queue_resolve_search (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | intake NAMES with no row and no settled verdict (`queue_state`), 4 shards x 30 = 120 a night against a measured intake of ~92/day median — searches, lets a model ORDER the candidates, and lets the SCRAPE decide what is a board | no — proposals only |
+| `queue_resolve_search (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | intake NAMES with no row, no settled verdict (`queue_state`) and no LIVE retirement (`queue_disposition`), never-searched first — 4 shards x a self-budgeted 28 = **112 a night against a measured brand-new intake of 161/day median, 212 mean** (7 days to 2026-08-30) — searches, lets a model ORDER the candidates, and lets the SCRAPE decide what is a board | no — proposals only |
 | `queue_pipeline --apply-proposals (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | every scrape/monitor proposal from the drain; `pipeline/board_verify` reads the RENDERED page and only `ok` reaches `apply_proposals` | **yes**, via the applier's own gates |
 | `queue_pipeline --verify-existing (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | 60 live addresses a night whose verdict has aged past 30 days — a failed one is parked AND ITS ADDRESS CLEARED, so it leaves `probe_candidates`' daily pool | no — it only parks |
 | `crack_walled (19:00 daily + Sun)` | `listing-hunt.yml` `0 19 * * *`, `audit-coverage.yml` `0 4 * * 0` | rows `identity_gate.is_walled` claims — the note token OR a walled ATS host — minus terminal and recruiters | **yes** |
@@ -1880,6 +1939,61 @@ then named nine more (`Lambadapp`, `Yit Yedioth`, `Melabev`, `Xtragiftcard`, `Ga
 is a board if scraping it returns jobs*, which is how 573 of the active rows are read. Nine
 were re-opened on 2026-08-30 and `DISPOSE_SYSTEM` now says a page naming even one role is a
 board and that the absence of an ATS is not a reason.
+
+### The drain reads the ledger, reaches today's intake first, and stops before the kill (2026-08-30)
+
+**The steady state, in two numbers.** The cloud drain can take **112 names a night** (4
+shards × 28: `queue_resolve_search.nightly_capacity()`, derived from the constants it runs
+on, never a literal). Brand-new intake — names never seen in the file's history — was
+**161/day at the median and 212 mean** over the seven days to 2026-08-30 (258 · 53 · 75 ·
+109 · 652 · 161 · 173, from a name-set diff of every commit of `research_companies.json`).
+It cannot hold, and no number this lane can drain by hand changes that: the queue refilled
+from 210 to 572 in one day while a session was draining it. What this lane owns is that
+every slot buys an answer that is actually owed; the shard count, cap and step timeout are
+`listing-hunt.yml`'s (`infra`, `491`), and the other half of gross intake — retired names
+put back every morning — is `discovery`'s (`441`).
+
+**Three files decide what is owed, and the third was never read.** `targets()` filtered on
+`companies.csv` (a row already), `queue_state.json` (a rung settled it, or searched it inside
+14 days) — and not on `queue_disposition.json`. Intake re-adds a retired name every morning:
+of the 362 names two digest runs added on 2026-08-30, **189 carried a retirement** (84
+`no-board`, 64 `duplicate-of`, 15 `not-an-employer`, 15 `already-a-row`, 9 `covered-by-row`,
+2 `acquired-by`), and `--retire-settled` runs three steps AFTER the drain. So on 2026-09-12,
+when their 14-day cadence lapsed, 174 names with a RETIRABLE verdict would each have bought a
+paid search to re-learn an answer already on disk. `targets()` now skips any LIVE answer
+on disk (`queue_disposition.is_retired`: the judge's five verdicts with their TTLs, plus the
+cleanup's own `covered-by-row` / `already-a-row` / `settled-by-a-rung`, looked up
+case-insensitively — the helpers moved to the ledger's own module so the drain does not
+import the orchestrator; `queue_pipeline` re-exports them). A `cannot-tell`, an
+`overturned-*` and a `no-board` past `REOPEN_DAYS` stay owed, and the census counts
+"retired with evidence" by the same call, so the two instruments cannot disagree on a name.
+
+**Order.** The file is append-ordered, so file order is oldest-intake-first and a day's new
+names (173 of the 175 never-tried on 2026-08-30) waited behind every older residue. Names
+this rung never searched come first, then the oldest search; the sort is stable and happens
+before the shard stride, so every shard sees one ranking — and never ONLY the new: intake
+outruns capacity, so a re-try class nobody reaches is a name frozen at its first refusal for
+ever; one slot in five goes to the stalest re-try whenever one is waiting
+(`queue_resolve_search.select`). The stamp now carries
+`new_intake` (selectable names never searched) and `retired_in_queue` (names the lookup
+cleanup will remove) beside `selectable`, so a `queue GREW` alarm can be read as arrivals or
+as resurrection.
+
+**A shard budgets itself.** The four shards run inside one step with `timeout-minutes: 30`,
+and `queue_state.py --ingest` sits after `wait` in that same step: one slow shard past the
+line erases every shard's attempt log for the night — the same names selected and re-bought
+tomorrow, every refusal lost, the IDLE alarm firing with the wrong causes, every step green.
+So a shard selects only what `QRS_TIME_BUDGET_MIN` (26) can score at `QRS_SEC_PER_NAME`
+(55, the workflow's own figure) and stops between names when the clock says so, printing
+`queue-resolve-search: budget hit (26 min), N names not searched/scored`. A name it never
+reached is written nowhere (still never-tried, it sorts first tomorrow); a name whose SEARCH
+was paid and whose page went unread is recorded as a `budget hit` refusal, because `out/`
+does not survive the run and an unrecorded paid search is re-bought tomorrow. Two
+defects found on the way: `search_one`'s error path returned a 4-tuple where every other
+exit is a dict (`TypeError` in `main`, the shard dead, the malformed entry already in the
+search cache so the re-run died on the same name), and `queue_state.load()` answered `{}`
+to a corrupt file — one truncated log plus one `--ingest` would have persisted ~120 names
+over 6,589 attempts. Both are pinned; a corrupt log is a hard stop now.
 
 ### The row's name comes from the employer, not the URL
 

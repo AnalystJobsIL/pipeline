@@ -99,7 +99,8 @@ def attempt(name, url):
                 jobs = scrape(name, final or alt)
             except Exception:  # noqa: BLE001
                 jobs = []
-            il = [j for j in jobs if israel.is_israel_job(j)]
+            from audit_query_urls import il_jobs
+            il = il_jobs(final or alt, jobs)       # a query URL's stamps are not Israel
             if il:
                 return ("scrape", (il, final or alt))   # keep the URL that worked
     return ("empty", None) if reached else ("unreachable", None)

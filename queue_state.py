@@ -64,13 +64,33 @@ RUNGS = ("own-site", "slug-probe", "comeet-token", "search", "resolve-llm", "hun
 TERMINAL = frozenset(("resolved", "already-a-row", "agency", "junk", "no-web-presence"))
 
 
+class QueueStateUnreadable(SystemExit):
+    """The attempt log exists and cannot be read. ABSENT is not CORRUPT."""
+
+
 def load(path=PATH):
+    """The log, or {} when there is none yet. A corrupt file is a HARD STOP, never {}.
+
+    `load` used to answer {} to every exception, and `save` writes whatever it was handed:
+    one truncated file and the next `--ingest` would have persisted ~120 names over a log
+    of 1,037 names and 6,589 attempts, after which every name in the queue reads as never
+    tried and is re-bought. `pipeline/discovery_queue.py` learned the same lesson for the
+    queue file; this is that rule for the attempt log.
+    """
     try:
         with open(path, encoding="utf-8") as f:
             d = json.load(f)
-        return d if isinstance(d, dict) else {}
-    except Exception:                                             # noqa: BLE001
+    except FileNotFoundError:
         return {}
+    except Exception as e:                                        # noqa: BLE001
+        raise QueueStateUnreadable("queue_state: %s is unreadable (%s: %s) -- refusing to "
+                                   "treat a corrupt attempt log as an empty one"
+                                   % (path, type(e).__name__, str(e)[:80]))
+    if not isinstance(d, dict):
+        raise QueueStateUnreadable("queue_state: %s holds a %s, not the name -> attempts "
+                                   "map -- refusing to treat it as empty"
+                                   % (path, type(d).__name__))
+    return d
 
 
 def save(state, path=PATH):

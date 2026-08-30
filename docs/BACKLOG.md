@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**541 filed · 396 open · 145 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**544 filed · 399 open · 145 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 491.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 494.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@scraper` **open** · `462@registry` **open** |
 
-### registry — 129 open
+### registry — 130 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -223,8 +223,9 @@ closure convention in the header.
 - **478** `478@registry` **`board_verify._mechanical_opinion` disarms the gate's paid rung for every board after
 - **479** `479@registry` **The single-writer "names I rewrote" sets grow across tests**
 - **487** `487@registry` **`Checkout` and `finbounce` are duplicate ACTIVE rows of `Checkout.com` and `Bounce AI`** —
+- **493** `493@registry` **A protected tombstone on an ACTIVE row blocks every later verdict from reaching the cell**
 
-### infra — 105 open
+### infra — 107 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -331,6 +332,8 @@ closure convention in the header.
 - **476** `476@infra` **The fattest mutation class cannot be split, so a fourth shard buys nothing**
 - **481** `481@infra` **`guard_kill` reads a skip as NOT-RUN and cannot tell it from an uncollected test** —
 - **490** `490@infra` **`run.py:803` prints `email (last 48h): N roles` for a count that includes the
+- **491** `491@infra` **The drain's capacity lives in `listing-hunt.yml` and is below intake; four workflow diffs**
+- **492** `492@infra` **`check_invariants` F2 fires on 109 legitimate `no-url` rows
 
 ### scraper — 28 open
 
@@ -916,6 +919,20 @@ outside the `discovery` lane and are NOT fixed.
     collectively they now bury what they protect. The author of a comment is the worst judge
     of whether it is still load-bearing; someone else should decide which of these are rules
     and which are just war stories that belong in `docs/sessions/`.
+
+## From the registry lane, 2026-08-30 (evening): capacity, not the backlog
+
+491. **The drain's capacity lives in `listing-hunt.yml` and is below intake; four workflow diffs** — lane: `infra`, measured by `registry` 2026-08-30.
+    Brand-new intake (names never in `research_companies.json`'s history): 258 · 53 · 75 · 109 · 652 · 161 · 173 over the seven days to 08-30 — **median 161, mean 212 a day**. The drain is 4 shards × a self-budgeted 28 = **112 a night** (`queue_resolve_search.nightly_capacity()`). It cannot hold; a session draining by hand is what the day proved does not work (210 -> 572 in one day). Everything the registry could do in its own files is done (the drain never buys an answer already on disk, reaches today's names first with one slot in five for the stalest re-try, stops before the kill, records a paid-but-unread search); what is left is the workflow:
+    1. **Move `python queue_state.py --ingest "out/qrs_[0-9].json"` into its own step with `if: always()`.** It sits after `wait` inside the 30-minute drain step, so one slow shard past the timeout erases every shard's attempt log: the same names are selected and re-bought tomorrow, every refusal is lost, `_drain_liveness` fires IDLE with the wrong causes, and every step is green. The shard's own budget (`QRS_TIME_BUDGET_MIN=26`) makes the kill unlikely; only the step order makes it harmless.
+    2. **Run `queue_pipeline.py --retire-settled --apply` BEFORE the drain**, not three steps after. A re-added retired name is a lookup then, and the drain's stamp counts what is actually owed.
+    3. **Capacity.** Either more shards in the same 30 minutes (`for i in 1 2 3 4 5 6` + `QRS_SHARD=$i/6`, and `NIGHT_SHARDS` in `queue_resolve_search.py` — `test_the_drain_capacity_constants_match_the_workflow` pins them together) or a longer step (`timeout-minutes: 45`, `QRS_TIME_BUDGET_MIN: "41"`). Six shards on a 2-vCPU runner may just slow each one: read the `s/name` figure the shard prints (`=== queue-resolve-search ... (N min, S s/name over K scored, L left)`) from two nights before choosing. Intake at the median needs ~6 shards × 28 = 168. The workflow comment "4 shards x 30 = 120" is 112 now.
+    4. **The 330-minute job cap is over-subscribed once the env-var budgets are counted**: repair 30 + extract-gap 35 + hunt 140 + drain 30 + apply 40 + verify 20 + crack 60 + commit 10 = **365**. A job-level timeout kills `if: always()` steps too, so `persist_state.py commit` would not run and the whole night is discarded — the BACKLOG 39/128 failure one level up. `test_the_queue_drain_is_actually_scheduled` counts the step timeouts and `HUNT_TIME_BUDGET_MIN` but not `REPAIR_URL_TIME_BUDGET_MIN` (30), `REPAIR_TIME_BUDGET_MIN` (35) or `CRACK_TIME_BUDGET_MIN` (60); tighten it to parse every `*_TIME_BUDGET_MIN`.
+    Also a nightly `python audit_query_urls.py --apply` step (ledger `cloud_state/query_filter.json` added to `--own`) so the query-URL class (`ARCHITECTURE.md` §2) is re-read monthly without a session; it is `operator` until then.
+
+492. **`check_invariants` F2 fires on 109 legitimate `no-url` rows — decision taken: import the mode set** — lane: `infra` (`282`), decided by `registry` 2026-08-30. The message "no pool matches it" is right for a TRUNCATED mode and wrong for `no-url`, which four pools own. The one-line fix in `282` (`from triage_dark import MODES as TRIAGE_MODES`) is the decision; the message text can stay because it stops firing on the false class. Until it lands, every reader of the invariants output must know the 109 are noise, which is the cost.
+
+493. **A protected tombstone on an ACTIVE row blocks every later verdict from reaching the cell** — lane: `registry`, found 2026-08-30 while parking Comcast. Its note held `dark-triage 2026-08-23: url-dead — the Workday tenant returns 410 Gone` (protected by `notes._PROTECTED_EXTRA`) beside `no open Israel roles` twice (protected) on a row that was ACTIVE with a live address answering 14 postings — 215 chars of a 220 cap, every segment protected, so `notes.append` dropped the audit's park segment whole. Same class as `Ride Vision` (`docs/sessions/2026-08-30-registry.md`): a tombstone that a later activation made false, kept for ever because protection has no expiry. Count them: active rows whose note carries `url-dead`, `domain-dead` or `defunct` — a protected segment contradicted by `active=true`. The fix belongs with whoever activates a row: an activation should strip the tombstones its own evidence refutes, through `notes` (a `strip_refuted(note, tokens)` helper), never by hand. A second cost of the same class, accepted for now: a query-URL row whose postings print only "Israel" and no city can no longer wake through `probe_candidates` (`il_signal` strikes the echoed value).
 
 ## From the registry lane, 2026-08-24
 
@@ -7945,7 +7962,18 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     day, and the census flickers between 0 and 2 stuck depending on which ran last.
 
     **Re-measured 2026-08-30 and the lane is WRONG: over the nine days to 2026-08-30, intake
-    re-added ZERO retired names.** Every observed resurrection -- 44 of them in one commit --
+    re-added ZERO retired names.**
+
+    **Re-measured again on 2026-08-30 evening, and the original filing was RIGHT**: the two
+    digest runs of that day (`ce61e13`, `8eb1340`) added 362 names, **189 of which carried a
+    retirement on disk** (84 `no-board`, 64 `duplicate-of`, 15 `not-an-employer`, 15
+    `already-a-row`, 9 `covered-by-row`, 2 `acquired-by`); the merge rescue (`458`) accounts for
+    17 of the 74 names `861050d` removed, intake for the rest. The morning measurement was
+    taken over nine days in which retirements were hours old; the re-add shows up the day
+    after. The registry side is now belt-and-braces (`queue_resolve_search.targets` skips a
+    live retirement, so a re-add costs a lookup and never a search), which leaves this item
+    exactly what it says: intake writing a name it could see was answered. Re-derive:
+    `python queue_pipeline.py --census` -> `retired with evidence` vs names in the queue file. Every observed resurrection -- 44 of them in one commit --
     is `merge_json_cache.merge` rescuing a key the origin deleted, which is `458@infra`. The
     two names below did come back the night they were retired, and that is how they came back.
     The `discovery`-side guard described here is still worth having as a belt, but it is not
@@ -8340,6 +8368,21 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     The Israel gate is `classifier`'s and is behaving correctly; the stored location is the
     scrape row's.
 
+    **Measured over the whole class by `registry` on 2026-08-30** (`audit_query_urls.py`, card
+    url path / title tail / country code as the only evidence, plus one grounded read for the
+    rows the cache could not judge): 60 active rows carried a location filter in `api_url`;
+    **17 ignore it** (Comcast 8/14 cards US, AT&T 3/3 Phoenix, Zoom 29/30, Rapid7 16/16, adidas
+    11/19, ASML 17/25, Teradyne 9/17, Skoda 3/10 Milan, Lenovo, Fujitsu, IQVIA, Siemens, EA,
+    Shopify, Microsoft x2, Hunter Douglas), **3 leak** a foreign majority past one Israeli card
+    (Snap 1 of 175, Align 1 of 88, Rapyd 11 of 25), 21 honour it and 19 could not be judged.
+    All 20 are parked and `audit_query_urls.il_jobs` refuses stamped cards on a query URL on
+    every activation path, but that is the registry's belt: the fix is `_from_cards` running
+    `_FOREIGN_PAGE_RX` over the card `ctx` it already computes (scrape_universal.py:1067-1073)
+    before `loc or "Israel"`, and `_Adder.__call__` not inheriting the LISTING url (which
+    carries the query) as a card's url -- until then the 21 honoured rows publish stamped
+    locations that happen to be right, and the 19 unjudged ones publish stamped locations of
+    unknown truth.
+
 463. **The drain's counters exist only in the mail** — lane: `infra`, one line.
     `Classifier.stale_served` / `stale_rejudged` / `stale_unreachable` are printed by
     `summary()` and `alarms()` and then lost, so "is the scope change still draining?" can
@@ -8608,6 +8651,11 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
 
     What `registry` is NOT doing: purging anything (the mechanism is `roles`'), and renaming
     any row (`444`).
+
+    **Correction, 2026-08-30 evening:** `Peak Innovation` IS an ACTIVE row (`listing-hunt
+    2026-08-28: verified 45 IL`) and `Hila & Co.` is a PARKED one (`wrong-url ... needs
+    re-resolution`), so the two rows the public CSV publishes "with no company intel" are a
+    `firmographics.json` gap (`company-intel`), not a registry one; the join key is fine.
 
 461. **The `no-board` re-open cadence expires a verdict but nothing puts the name back, and
     the ATS-gap class is bigger than the 13 that were found** — lane: `registry`, filed
