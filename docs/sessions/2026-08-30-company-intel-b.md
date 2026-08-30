@@ -185,8 +185,14 @@ was already in board_verify). Claude LLM calls 0. SerpApi 0. `companies.csv` unt
 
 ## 8. Verification
 
-Local from the worktree at `deb030c`: lane suite 151 passed; `tools/guard_kill.py --base
-origin/master` → 10 of 10 KILLS; full gates + CI verdict recorded in HANDOFF.md's line and
-the morning-check row due 2026-09-01 (`display_names=71 (+0/-0) divergent=56
-sectors_folded=0` expected in the unattended `firmo_drain` log — the delivery-bar proof).
-The pass is idempotent: a second `--export` produced a byte-identical file.
+Pushed as `e7c9154` (e41a52c..e7c9154, 6 commits, rebased over render's e41a52c which
+landed mid-session). From a CLEAN detached worktree at origin/master AFTER the push:
+`python -m pytest` **1580 passed, 13 skipped, 0 failed** (5m03s); `check_invariants.py`
+`companies.csv OK: 2057 rows, 1097 active, 0 orphans, pool=835`; `docs/check_docs.py`
+**0 error(s), 2 warning(s) over 83 documents**. CI: run **33339933791**, `success`,
+**13 of 13 jobs** (guard-kill job included). `tools/guard_kill.py --base origin/master`
+locally: **12 of 12 new tests KILL**. The pass is idempotent (consecutive exports
+byte-identical; wave 2 hashed them) and the committed file re-derives exactly:
+written=71, added=0, removed=0, divergent=56. Delivery bar: the 2026-09-01 morning-check
+row expects `display_names=71 (+0/-0) divergent=56 sectors_folded=0` in the unattended
+`firmo_drain` step log — both cron paths run the pass with no session.
