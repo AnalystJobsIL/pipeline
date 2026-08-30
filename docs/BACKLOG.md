@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**559 filed · 402 open · 157 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**560 filed · 403 open · 157 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 509.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 510.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 134 open
+### registry — 135 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -228,6 +228,7 @@ closure convention in the header.
 - **501** `501@registry` **A writer can still activate a twin of an active row or a native-ATS row off its host
 - **502** `502@registry` **A shard killed mid-write leaves an unparsable proposal file, and the ingest skips it in silenc
 - **505** `505@registry` **8 verified boards name a DIFFERENT employer than their registry row
+- **509** `509@registry` **`BD_RUN_CAP=0`
 
 ### infra — 107 open
 
@@ -9309,3 +9310,12 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      returns Minnesota; `israel_scoped = False` is the precedent). An honest blank beats a
      confident wrong value: emit what the posting carries and let `israel.is_israel_job`
      decide.
+
+509. **`BD_RUN_CAP=0` — the read-only guard every dry session is told to set — turns one
+     test red** — lane: `registry`. Filed 2026-08-31 (`scraper`; found by its wave-2
+     confirmer). `tests/test_registry.py::test_bd_rescue_reads_the_unlockers_error_code_and_never_retries_a_policy_host`
+     fails under `BD_RUN_CAP=0` with `::warning::bd_rescue: BD_RUN_CAP=0 reached; this run
+     buys no more Bright Data credits.` and passes without the variable — so a lane running
+     the suite with the recommended guard set sees a false red and cannot tell it from a
+     real one. The test should monkeypatch the cap it needs instead of inheriting the
+     session's.
