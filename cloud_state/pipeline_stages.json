@@ -103,18 +103,18 @@
   "scanned": 1000
  },
  "queue": {
+  "alarm": "queue GREW by 5 since 2026-08-29 -- the drain is not keeping pace with intake",
   "date": "2026-08-30",
-  "delta": -17,
-  "direction": "falling",
-  "finished_at": "2026-08-29T22:08:03+00:00",
-  "owed": 464,
-  "retired": 70,
+  "delta": 5,
+  "direction": "GROWING",
+  "finished_at": "2026-08-30T00:27:53+00:00",
+  "owed": 508,
+  "retired": 28,
   "rows_from_queue": 502,
-  "stuck": 0,
-  "unverified_rows": 0
+  "unverified_rows": 428
  },
  "repair": {
-  "date": "2026-08-29",
-  "finished_at": "2026-08-29T05:25:56+00:00"
+  "date": "2026-08-30",
+  "finished_at": "2026-08-30T00:41:31+00:00"
  }
 }
