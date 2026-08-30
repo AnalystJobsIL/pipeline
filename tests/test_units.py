@@ -20979,6 +20979,9 @@ def test_llm_error_envelope_without_result_names_its_subtype_and_error(monkeypat
     else. The envelope's own words now travel; the auth pins are untouched."""
     import subprocess as _sp2
     from pipeline import llm
+    # the runner has no `claude` on PATH and `_invoke` says `cli-missing` before it spawns;
+    # this test is about the envelope, so the CLI's presence is stubbed (run 33300302731)
+    monkeypatch.setattr(llm.shutil, "which", lambda n, *a, **k: "/usr/bin/claude")
     def cli(payload, rc=1):
         monkeypatch.setattr(llm.subprocess, "run", lambda cmd, **kw: _sp2.CompletedProcess(
             cmd, rc, stdout=json.dumps(payload), stderr=""))
