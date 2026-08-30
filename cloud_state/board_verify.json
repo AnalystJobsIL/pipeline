@@ -4380,6 +4380,25 @@
   "verdict": "ok",
   "why": "Comeet ATS API feed for Flexor Technology listing two Tel Aviv R&D roles."
  },
+ "flo live|https://careers.greenfield-growth.com/companies/flolive": {
+  "chars": 98513,
+  "date": "2026-08-30",
+  "employer_named": "FloLIVE",
+  "model": "opus",
+  "name": "Flo Live",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 1945,
+  "url": "https://careers.greenfield-growth.com/companies/flolive",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
+ },
  "flo live|https://careers.greenfield-growth.com/companies/flolive/jobs/65684485-mobile-core-network-engineer": {
   "chars": 89551,
   "date": "2026-08-29",
@@ -5348,6 +5367,20 @@
   "verdict": "ok",
   "why": "Gong's own careers page, mentions Israel roles; no positions listed directly."
  },
+ "gordon tours|https://www.gordontravel.co.il/career": {
+  "chars": 322253,
+  "date": "2026-08-30",
+  "employer_named": "גורדון טורס (Gordon)",
+  "model": "opus",
+  "name": "Gordon Tours",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 6784,
+  "url": "https://www.gordontravel.co.il/career",
+  "verdict": "ok",
+  "why": "Gordon Tours' own Hebrew careers page (gordontravel.co.il), Tel Aviv address, listing positions (placeholder text)."
+ },
  "gordon tours|https://www.gordontravel.co.il/contact": {
   "chars": 323215,
   "date": "2026-08-30",
@@ -5480,6 +5513,17 @@
   "verdict": "ok",
   "why": "Official Gravity Forms careers page (Rocketgenius is parent), says \"Not currently hiring\" though it keeps open applications for future roles."
  },
+ "green api|https://console.green-api.com/careers": {
+  "chars": 257087,
+  "date": "2026-08-30",
+  "model": "opus",
+  "name": "Green API",
+  "route": "render-thin",
+  "text_chars": 98,
+  "url": "https://console.green-api.com/careers",
+  "verdict": "UNVERIFIABLE",
+  "why": "unreadable (98 visible chars via render-thin)"
+ },
  "green api|https://green-api.com/vacancies": {
   "chars": 120952,
   "date": "2026-08-29",
@@ -5591,6 +5635,25 @@
   "url": "https://www.growthspace.com/careers",
   "verdict": "ok",
   "why": "Growthspace's own careers page listing a Tel Aviv open role."
+ },
+ "gsi technology|https://gsi-companies.com/careers/": {
+  "chars": 71518,
+  "date": "2026-08-30",
+  "employer_named": "GSI Family of Companies (GSI Service Group)",
+  "model": "opus",
+  "name": "Gsi Technology",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to GSI Family of Companies (GSI Service Group)"
+  },
+  "states_no_openings": false,
+  "text_chars": 4544,
+  "url": "https://gsi-companies.com/careers/",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to GSI Family of Companies (GSI Service Group)"
  },
  "gsi technology|https://jobs.jobvite.com/gsisg": {
   "chars": 28023,
@@ -6183,6 +6246,25 @@
   "url": "https://identimedical.com/about-us/",
   "verdict": "not-a-board",
   "why": "page_kind=about"
+ },
+ "identi medical|https://jobhunt.co.il/jobs/חברת-identi-medical-מגייסת-מנהל-ת-שיווק-identimedical-6a89841017fe056270d80db1": {
+  "chars": 88090,
+  "date": "2026-08-30",
+  "employer_named": "IDENTI MEDICAL (posted on JobHunt)",
+  "model": "opus",
+  "name": "IDENTI Medical",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 3058,
+  "url": "https://jobhunt.co.il/jobs/חברת-identi-medical-מגייסת-מנהל-ת-שיווק-identimedical-6a89841017fe056270d80db1",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
  },
  "idx|https://integraldiagnostics.wd105.myworkdayjobs.com/idx_careers": {
   "chars": 7014,
@@ -8160,6 +8242,25 @@
   "verdict": "ok",
   "why": "Hebrew jobs page on logica-it.com branded \"חברת Logica-IT\", listing many open tech roles in Israeli regions (גוש דן, ירושלים). It is the company's own site/board."
  },
+ "longevity ai|https://www.humanlongevity.com/careers/": {
+  "chars": 114415,
+  "date": "2026-08-30",
+  "employer_named": "Human Longevity, Inc. (HLI)",
+  "model": "opus",
+  "name": "Longevity AI",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Human Longevity, Inc."
+  },
+  "states_no_openings": false,
+  "text_chars": 5302,
+  "url": "https://www.humanlongevity.com/careers/",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Human Longevity, Inc. (HLI)"
+ },
  "longevity ai|https://www.longevity-ai.com/about": {
   "chars": 70083,
   "date": "2026-08-29",
@@ -8784,6 +8885,25 @@
   "verdict": "NOT-THEIRS",
   "why": "the page is an aggregator"
  },
+ "meganet|https://meganet.in/careers.php": {
+  "chars": 33313,
+  "date": "2026-08-30",
+  "employer_named": "Meganet Technologies Global Limited",
+  "model": "opus",
+  "name": "Meganet",
+  "page_kind": "board",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "a namesake abroad (Meganet Technologies Global Limited (Previously Mega Networks Pvt. Ltd.))"
+  },
+  "states_no_openings": false,
+  "text_chars": 2824,
+  "url": "https://meganet.in/careers.php",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Meganet Technologies Global Limited"
+ },
  "meganet|https://meganetems.com/careers/": {
   "chars": 238156,
   "date": "2026-08-29",
@@ -9327,6 +9447,25 @@
   "url": "https://moburst.teamtailor.com/jobs",
   "verdict": "ok",
   "why": "Moburst's own Teamtailor career site listing 14 openings, including Raanana, Israel roles."
+ },
+ "modiin energy|https://modiinapp.com/en/category/624/job-vacancies-in-modiin-and-the-area": {
+  "chars": 214549,
+  "date": "2026-08-30",
+  "employer_named": "ModiinApp",
+  "model": "opus",
+  "name": "Modiin Energy",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://modiinapp.com/en/category/624/job-vacancies-in-modiin-and-the-area",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
  },
  "modiin energy|https://www.modiin-energy.com": {
   "chars": 91092,
@@ -11598,6 +11737,20 @@
   "verdict": "NOT-THEIRS",
   "why": "belongs to Strada Education Foundation"
  },
+ "strada|https://strada.wd12.myworkdayjobs.com/careers": {
+  "chars": 183196,
+  "date": "2026-08-30",
+  "employer_named": "Strada",
+  "model": "opus",
+  "name": "Strada",
+  "page_kind": "board",
+  "route": "render",
+  "states_no_openings": false,
+  "text_chars": 3576,
+  "url": "https://strada.wd12.myworkdayjobs.com/Careers",
+  "verdict": "ok",
+  "why": "Strada's own Workday careers board listing 160 global jobs; global payroll firm that could include Israel."
+ },
  "strauss water ltd. שטראוס מים|https://www.strauss-group.co.il/career/jobs/": {
   "chars": 379044,
   "date": "2026-08-30",
@@ -13266,6 +13419,25 @@
   "url": "https://devzion.com/careers/",
   "verdict": "NOT-THEIRS",
   "why": "belongs to Zion Development (ZION)"
+ },
+ "zion today|https://shivat-zion.com/information-portal/employment/": {
+  "chars": 349911,
+  "date": "2026-08-30",
+  "employer_named": "Shivat Zion",
+  "model": "opus",
+  "name": "Zion Today",
+  "page_kind": "other",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Shivat Zion"
+  },
+  "states_no_openings": false,
+  "text_chars": 3286,
+  "url": "https://shivat-zion.com/information-portal/employment/",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Shivat Zion"
  },
  "ziv av|https://www.zivav.co.il/why-zivav/index.php": {
   "chars": 224158,
