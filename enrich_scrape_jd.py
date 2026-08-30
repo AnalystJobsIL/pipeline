@@ -117,6 +117,13 @@ def _todo(cache):
     Deduped by url: several cards can share a listing url (8fig and SuperMeat each contributed
     two on 2026-08-26), and each duplicate was a second fetch — and a second credit — for one
     page. The title pool is built first, so a shared url lands there."""
+    # One careers PAGE stored as every posting's description is BACKLOG 370, and it is not a
+    # theory: 25 long texts are shared across 75 postings in the committed cache, 16 companies,
+    # and the model has rejected a real analyst role on the reason "contains only website
+    # navigation/menu text" — with that NO cached under the ROLE's name. A text carried by
+    # postings with DIFFERENT titles cannot be the description of any of them; two postings
+    # with the SAME title are an ordinary twin and are left alone.
+    shared = _shared_page_texts(cache)
     stats, seen, title, archive = Counter(), set(), [], []
     ranks = Counter()          # how many ARCHIVE cards this company has contributed so far
     for comp, jobs in cache.items():
@@ -129,7 +136,11 @@ def _todo(cache):
             # site's own navigation, which is what this cache's own card builder stores when a
             # page yields no JD (`scrape_universal._read_position_page`, capped at 4,000 with no
             # marker test). The bar is now the one `extract_jd` applies to a fresh body.
-            if looks_like_jd((j.get("description") or "").strip()):
+            desc = (j.get("description") or "").strip()
+            if desc and desc in shared:
+                # not "already has a description": it has somebody else's page
+                stats["shared_page"] += 1
+            elif looks_like_jd(desc):
                 stats["has_desc"] += 1
                 continue
             url = j.get("url") or ""
@@ -175,10 +186,29 @@ def _todo(cache):
     # sister driver asserts the same sum over its own rows.
     _accounted = (stats["has_desc"] + stats["no_url"] + stats["chrome"] + stats["dropped_israel"]
                   + stats["duplicate_url"] + stats["not_job_url"] + len(title) + len(archive))
+    # `shared_page` is a REASON a card is in a pool, not a bucket of its own: it is counted and
+    # then the card goes on through the gates like any other card without a description.
     assert _accounted == stats["cards"], (
         "bucket leak: %d cards, %d accounted (%s, title %d, archive %d)"
         % (stats["cards"], _accounted, dict(stats), len(title), len(archive)))
     return title, _archive_order(archive), stats
+
+
+def _shared_page_texts(cache, min_len=400):
+    """The long descriptions that more than one posting carries under DIFFERENT titles.
+
+    Keyed by the TEXT alone, never by company: one careers page fanned across several
+    EMPLOYERS is 370 in its worst form (`otorio|senior data analyst` carries Armis's text), and
+    a company-keyed counter can never reach 2 for it."""
+    by = {}
+    for comp, jobs in cache.items():
+        for j in (jobs or []):
+            if not isinstance(j, dict):
+                continue
+            t = (j.get("description") or "").strip()
+            if len(t) >= min_len:
+                by.setdefault(t, set()).add(str(j.get("title") or "").strip().lower())
+    return {t for t, titles in by.items() if len(titles) > 1}
 
 
 def _archive_order(pairs):
@@ -287,14 +317,30 @@ def _run(args, stamp):
           f"{gates['no_url']} without a url", flush=True)
 
     saves = [0]
+    # every long text already stored, so a fetch that returns one of them is recognised as a
+    # board rather than written onto a second posting
+    shared_now = {}
+    for _c, _js in cache.items():
+        for _j in (_js or []):
+            if isinstance(_j, dict):
+                _t = (_j.get("description") or "").strip()
+                if len(_t) >= 400:
+                    shared_now[_t] = shared_now.get(_t, 0) + 1
+    shared_now = {t: n for t, n in shared_now.items() if n > 1}
 
     def save(item, text, stamp_v):
         item.key["_jd_attempted"] = stamp_v
         # the same rule `enrich_matched_jd._store_text` applies: a real JD beats text that is
         # not one even when it is shorter, and only between two JDs does length decide
         have = str(item.key.get("description") or "")
+        if text and text.strip() in shared_now:
+            # the fetch returned a page another posting already carries: a board, not this
+            # role's posting. Storing it would re-create 370 one card at a time.
+            item.key["_jd_shared_page"] = True
+            return
         if text and (looks_like_jd(text) or not looks_like_jd(have)) and                 (looks_like_jd(text) != looks_like_jd(have) or len(text) > len(have)):
             item.key["description"] = text
+            shared_now.setdefault(text.strip(), 0)
         saves[0] += 1
         # A checkpoint, not a nicety: the `finally` below covers an exception, and the runner
         # kills a step at `timeout-minutes` with SIGTERM, which runs no `finally` at all. At
@@ -408,6 +454,7 @@ def _run(args, stamp):
                       **arch, **title_keys,
                       scrape_thin_remaining=thin_left,
                       scrape_not_job_url=gates["not_job_url"],
+                      scrape_shared_page=gates["shared_page"],
                       scrape_dropped_israel=gates["dropped_israel"],
                       scrape_paid_cooldown=c["paid_cooldown"] + ca["paid_cooldown"],
                       scrape_bd_shell=c["bd_shell"] + ca["bd_shell"],

@@ -525,8 +525,66 @@ def _gh_read(body):
     return _html.unescape(json.loads(body).get("content") or "")
 
 
-def _comeet_read(body):
-    """comeet.com job pages embed the posting as JSON: {"name": "Requirements", "value": "<ul>..."}"""
+def _comeet_sections(details):
+    """`[{name, value}]` -> the headed sections `html_to_text` keeps the line structure of."""
+    out = []
+    for sec in details if isinstance(details, list) else []:
+        if not isinstance(sec, dict):
+            continue
+        name, value = sec.get("name"), sec.get("value")
+        if isinstance(value, str) and value.strip():
+            out.append(f"<h3>{name}</h3>{value}" if name else value)
+    return "\n".join(out)
+
+
+def _comeet_positions(body):
+    """`[(uid, details)]` for every position the hosted page embeds, in page order.
+
+    A Comeet hosted page is a board: it ships EVERY open position's `custom_fields.details`,
+    and the browser selects one by uid. Measured on Legit Security 2026-08-30: 8 positions, 16
+    `{name, value}` sections, 24,517 characters."""
+    out, dec = [], json.JSONDecoder()
+    marks = [m for m in re.finditer(r'"uid":\s*"([0-9A-Za-z.\-]{2,24})"', body)]
+    for i, m in enumerate(marks):
+        stop = marks[i + 1].start() if i + 1 < len(marks) else len(body)
+        d = body.find('"details"', m.end(), stop)      # this position's own block only
+        if d == -1:
+            continue
+        start = body.find("[", d)
+        if start == -1:
+            continue
+        try:
+            details, _ = dec.raw_decode(body, start)
+        except ValueError:
+            continue
+        out.append((m.group(1), details))
+    return out
+
+
+def _comeet_read(body, url=""):
+    """The ONE posting `url` names, out of the board the page embeds.
+
+    Until 2026-08-30 this scanned the whole page for `{"name": ..., "value": ...}` and joined
+    everything it found — so every posting on a Comeet board was stored with the SAME text, all
+    of it truncated at `DESC_MAX`. That is `docs/BACKLOG.md` 370 in its purest form, and this
+    lane's own archive pass created 18 fresh instances of it on 2026-08-29 (Legit Security 9,
+    Exodigo 6, Majestic Labs 3) before the measurement caught it.
+
+    The uid is the last path segment of a comeet job url. When it names a position on the page,
+    that position's sections are the answer. When the page embeds exactly one position there is
+    nothing to disambiguate. When it embeds several and NONE is ours, the honest answer is
+    nothing: the posting has been taken off the board and the other eight are other roles.
+    A page that embeds no position block at all falls back to the old whole-page scan, which is
+    what a single-posting page looks like."""
+    positions = _comeet_positions(body)
+    if positions:
+        want = [p for p in url.rstrip("/").split("/") if p][-1:] or [""]
+        for uid, details in positions:
+            if uid.lower() == want[0].lower():
+                return _comeet_sections(details)
+        if len(positions) == 1:
+            return _comeet_sections(positions[0][1])
+        return ""                       # a board, and our posting is not on it
     out, dec = [], json.JSONDecoder()
     for m in re.finditer(r'\{"name":\s*"([^"]{1,60})",\s*"value":\s*(?=")', body):
         try:
@@ -596,6 +654,8 @@ def _hibob_headers(api):
 _READERS = {"workday": _wd_read, "smartrecruiters": _sr_read, "bamboohr": _bh_read,
             "greenhouse": _gh_read, "comeet": _comeet_read,
             "lever": _lever_read, "hibob": _hibob_read}
+# readers that must know WHICH posting was asked for, because their page carries several
+_READERS_WANT_URL = {"comeet"}
 # extra request headers a platform's API needs, derived from the api url alone
 _NATIVE_HEADERS = {"hibob": _hibob_headers}
 _HIBOB_HOST = re.compile(r"^[a-z0-9-]+\.careers\.hibob\.com$", re.I)
@@ -895,7 +955,8 @@ def native_jd(url, company="", seen_ids=""):
                    else f"{platform}-http")
             continue
         try:
-            text = _text_or_empty(read(body))
+            text = _text_or_empty(read(body, api) if platform in _READERS_WANT_URL
+                                  else read(body))
         except (ValueError, TypeError, AttributeError):
             why = f"{platform}-no-json"          # a wrong slug's 200 error page: next candidate
             continue
@@ -950,6 +1011,19 @@ class Unlocker:
         # that call returns the same shell the free rung already read.
         self.render_cap = render_cap
         self.render_capped = False
+        # A SEPARATE breaker for rendered calls, decided 2026-08-30 (BACKLOG 432). Measured on
+        # the first archive pass: of ~130 paid calls, 19 consecutive RENDERED timeouts opened
+        # the shared failing-streak breaker and the remaining 98 candidates -- ordinary
+        # bot-walled pages that the raw rung reads fine -- all reported `bd-unavailable`. One
+        # slow page class ended the paid rung for the whole run.
+        #
+        # Rendered and raw calls are different populations with different failure rates, so
+        # they get different breakers. The account-level rule is untouched: if the ACCOUNT is
+        # dead the raw calls fail too and the shared breaker still catches it, which is what
+        # bounds the cost of being wrong here -- at worst `render_cap` (60) slow calls before
+        # the render breaker opens, and `RENDER_TIMEOUT` (45 s) bounds each one.
+        self.render_streak = 0
+        self.render_closed = False
         # THE MONTHLY CEILING BINDS HERE TOO. `pipeline/bd_budget.py` is documented as the one
         # place that knows it, and it reads the LIVE account -- but only `scrape-refresh.yml`
         # ever ran it, and this class POSTs to `api.brightdata.com` itself rather than through
@@ -1004,7 +1078,7 @@ class Unlocker:
             # budget on 2026-08-29, and `RENDER_CAP` x 90 s is the whole budget, so the cap
             # could not bound the clock it was introduced to bound (wave 1, P2-F).
             timeout = min(timeout, RENDER_TIMEOUT)
-        if render and self.rendered >= self.render_cap:
+        if render and (self.render_closed or self.rendered >= self.render_cap):
             self.render_capped = True
             return None, "", "bd-render-capped"    # spends nothing: see `render_cap`
         if self.used >= self.cap:
@@ -1031,8 +1105,13 @@ class Unlocker:
         except Exception:  # noqa: BLE001
             status, text, err = None, "", "timeout"
         if err or not text:
+            if render:
+                # the rendered rung answers for itself and cannot close the raw one
+                self.render_streak += 1
+                if self.render_streak >= self.breaker:
+                    self.render_closed = True
             self.streak += 1
-            if self.ok == 0 and self.streak >= self.breaker:
+            if self.ok == 0 and self.streak >= self.breaker and not (render and self.render_closed):
                 self.unavailable = f"no-success-after-{self.streak}"
             elif self.streak >= self._failing_at:
                 # One success used to disarm the breaker for the whole run, so a pass that
@@ -1042,6 +1121,8 @@ class Unlocker:
                 self.unavailable = f"failing-after-{self.streak}"
             return status, "", f"bd-{err or 'empty'}"
         self.ok, self.streak = self.ok + 1, 0
+        if render:
+            self.render_streak = 0
         return status, text, ""
 
 
@@ -1601,12 +1682,24 @@ def alarm_for(c, bd=None, driver="", operator_cap=False, report_budget=True):
     # ONLY `bd-unavailable`, as the comment says: with `CAP=0` the Unlocker reports `capped`
     # having spent nothing, and suppressing the mass-failure rule there left a morning of 30
     # failed fetches saying only `bd-capped(0 spent, 0 roles waiting)`.
+    # ROWS WORKED, not rows walked: a canary probe and a refused address are neither failures
+    # nor fills, and counting them made this rule fire on a pass that behaved perfectly.
+    worked = max(0, c["tried"] - c["probe"] - c["unfillable"])
     if (not any(a.startswith("bd-unavailable") for a in out)
-            and c["tried"] >= MASSFAIL_MIN_TRIED and c["filled"] == 0):
+            and worked and c["filled"] == 0 and (c["todo"] or worked >= MASSFAIL_MIN_TRIED)):
         real = [k for k in c if k.startswith("reason:") and k[7:] not in UNFILLABLE_REASONS and c[k]]
-        if real:
-            top = max(real, key=c.__getitem__)
+        top = max(real, key=c.__getitem__) if real else ""
+        if worked >= MASSFAIL_MIN_TRIED and real:
             out.append(f"jd-massfail({top[7:]} x{c[top]})")
+        else:
+            # BELOW the mass-failure threshold and still nothing to show for the work. This
+            # clause exists because the run that started this whole session -- 33250362574,
+            # the matched driver, 10 due and 0 filled -- was SILENT by construction: the
+            # credit rule needs `used`, and it spent none; the mass-failure rule needs ten
+            # attempts, and a driver at 135-of-145 coverage never reaches ten. A step that can
+            # produce zero must make zero visible whether or not it spent (BACKLOG 437).
+            out.append(f"jd-zero-fill({worked} worked, 0 filled"
+                       f"{': ' + top[7:] + ' x' + str(c[top]) if real else ''})")
     # `--limit 20` is an operator saying "do twenty": the rows it did not reach are not a
     # budget the morning ran out of, and reporting them as one makes a bounded rehearsal read
     # in the mail exactly like a morning that was cut short.

@@ -3502,6 +3502,34 @@ worked and changed nothing. With `lists`, 2,835.
 Comeet (36 seen_ids) and Ashby (8) are deliberately out of scope: neither has a per-job
 endpoint, and re-reading a whole board belongs to `ats-fetch` (`docs/BACKLOG.md` 375).
 
+### What the classifier actually reads, and why the archive pool is not it
+
+*Measured 2026-08-30, the day after the archive pool was built, by the lane that built it.*
+
+A description changes a verdict only for a posting that reaches the LLM tier
+(`seniority.Classifier._classify`): relevance not `excluded`/`none`, not `_NOT_A_JOB`, and not
+(`strong` AND `senior`). Everything else is decided on the title and its text is never opened.
+
+```
+scraped_cache.json     israel 2479 | LLM-bound  91 | thin  28 | reachable  12
+discovered_cache.json  israel 1950 | LLM-bound 225 | thin 205 | reachable 167
+TOTAL                  israel 4429 | LLM-bound 316 | thin 233 | reachable 179
+```
+
+**LLM-bound implies relevance-passing, so the LLM-bound set is a SUBSET OF THE TITLE POOL by
+construction, and the ARCHIVE pool is its complement** — the archive is disjoint from the set
+the classifier reads, always, by definition of the gate that splits them. Of the 1,010 cards
+that gained a description in the first archive pass, **22 were LLM-bound, 6 were already
+decided by title, and 982 are never read.**
+
+The real queue is the **167 `il.linkedin.com` postings in `discovered_cache.json`**, and
+`run.py`'s inline `JDFiller` already serves them — 132 of 167 fetched inline on 2026-08-29 —
+inside the classify step, which is the right place: after the Israel filter, before the tier,
+over exactly the postings that reach it. The archive pool's remaining justification is the
+title gate's 0.25% false-negative rate over 401 postings, roughly one card in the pool, which
+nothing would ever judge. `docs/BACKLOG.md` **438** recommends retiring `jd-archive.yml` on
+that basis; the schedule is unchanged pending its first unattended run.
+
 ### The archive pool, and the cooldown that ate the queue
 
 *Added 2026-08-29, and the headline is a measurement of this layer in production.* Across the
@@ -3552,6 +3580,18 @@ walks, so a search url reaching the loop is parked for a week as though it had b
 on 2026-08-26 `careers.dhl.com/search-results?keywords=Israel` bought a credit. A native rung
 outranks the url rule, so a Comeet or HiBob address is a posting whatever its path looks like.
 
+**A Comeet hosted page is a BOARD, and reading it as a posting is how this lane re-created
+BACKLOG 370.** The page ships every open position's `custom_fields.details` and the browser
+picks one by uid: measured on Legit Security, **8 positions, 16 sections, 24,517 characters**.
+`_comeet_read` joined all of it, so the 2026-08-29 archive pass stored one truncated blob as
+the description of 9 Legit Security postings, 6 Exodigo and 3 Majestic Labs. It now selects the
+position whose uid is the url's last segment, and returns **nothing** when the page carries
+several and none is ours — the posting is off the board, and the other eight are other roles.
+Above it, the driver refuses to count or store a long text that postings with DIFFERENT titles
+share (`_shared_page_texts`, `scrape_shared_page`); a same-title twin is left alone. Shared
+long texts over the committed cache: **9 texts / 31 postings at `4bca457`, 25 / 75 after the
+fills that created them, and the Comeet share of that is now zero.**
+
 **Comeet is 287 of the empty cards and the text was never ours to begin with.** All 287 sit
 behind `ats_platform=scrape` registry rows across 34 companies, so `fetchers.fetch_comeet` — the
 one code path that asks for `details=true` and reads it — never runs on them. The per-job
@@ -3566,8 +3606,21 @@ the denominator tomorrow's fill is read against. Without it a `0 filled` from th
 told from "nothing left to do", and that is precisely how three mornings went unnoticed.
 `jd-budget-spent` is **suppressed** for this pool (a 1,204-card lap is expected to run out of
 clock every night until it closes, and an alarm that fires every morning is one that gets
-trained away); what alarms instead is `scrape:archive:zero-fill(0 of N tried, M still thin)` and
-`scrape:archive:jd-starved(one lap takes N days)` above 14.
+trained away); what alarms instead is `archive:zero-fill(0 of N tried, M still thin)` and
+`archive:jd-starved(one lap takes N days)` above 14.
+
+**And a pass that worked rows and filled none of them alarms whatever it spent** —
+`jd-zero-fill(N worked, 0 filled: <top reason>)`, the same rule as `jd-massfail` below its
+ten-attempt threshold. It exists because the run this whole layer was rebuilt around,
+33250362574, was silent by construction: the credit clause needs `used` and that driver spent
+none, the mass-failure clause needs ten attempts and a driver at 135-of-145 coverage never
+reaches ten. Both read ROWS WORKED — `tried` minus the canary probe minus refused addresses —
+so a pool that was entirely "nothing to fetch here" stays silent, which it should.
+
+**Rendered Bright Data calls carry their own breaker.** 19 consecutive rendered timeouts closed
+the shared one on the first archive pass and took 98 ordinary bot-walled candidates down with
+them. Rendered and raw calls are different populations; the account-level rule is unchanged, so
+a genuinely dead account is still caught by the raw calls failing (`docs/BACKLOG.md` 432).
 
 **"Unfetchable" is a state, not a verdict.** A definitive failure widens the wait — 7, 14,
 28, then a standing `MAX_RETRY_DAYS` 30 (`retry_days_for`, keyed on the new `matched.jd_tries`

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**490 filed · 357 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
+**491 filed · 358 open · 133 closed · 7 half · 35 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -87,6 +87,7 @@ closure convention in the header.
 | 375 | `375@ats-fetch` **open** · `375@classifier` closed |
 | 376 | `376@jd-text` **open** · `376@registry` **open** |
 | 377 | `377@scraper` **open** · `377@infra` **open** |
+| 438 | `438@infra` **open** · `438@jd-text` **open** |
 
 ### registry — 119 open
 
@@ -429,6 +430,21 @@ closure convention in the header.
 - **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
 
+### jd-text — 12 open
+
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **343** `343@jd-text` **Three open roles exist only at an Indeed address, and Indeed cannot be read**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
+- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
+- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
+- **421** `421@jd-text` **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
+- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
+- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
+- **438** `438@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+
 ### roles — 12 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
@@ -443,20 +459,6 @@ closure convention in the header.
 - **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
 - **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
 - **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
-
-### jd-text — 11 open
-
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
-- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **343** `343@jd-text` **Three open roles exist only at an Indeed address, and Indeed cannot be read**
-- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
-- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
-- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
-- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
-- **421** `421@jd-text` **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
-- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
-- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
 
 ### classifier — 7 open
 
@@ -6664,6 +6666,27 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
       `scrape_universal._read_position_page` still stores 4,000 characters of page text with
       no marker test. Filed separately as **374**; re-derive with the command above.
 
+
+    **CLOSED 2026-08-30 by `jd-text`, and the count had GROWN because of this lane.**
+    Re-derived after the 963 fills: **9 shared long texts over 31 postings at `4bca457`, 25
+    over 75 postings now** (16 companies). Eighteen of the new ones were made by the archive
+    pass itself — Legit Security 9, Exodigo 6, Majestic Labs 3 — because `jdfill._comeet_read`
+    scanned the WHOLE hosted page for `{name, value}` sections and joined them. A Comeet hosted
+    page is a BOARD: measured on Legit Security, **8 positions, 16 sections, 24,517 characters**,
+    truncated to `DESC_MAX` and stored on every posting.
+
+    Two fixes, both in this lane. `_comeet_read(body, url)` selects the position whose uid is
+    the url's last segment, returns "" when the page carries several and none is ours (the
+    posting is off the board; the other eight are other roles), and keeps the old whole-page
+    reading for a page that embeds no position block. And the driver will no longer COUNT or
+    STORE a shared page: a long text carried by postings with different titles is not a
+    description (`_shared_page_texts`, `scrape_shared_page` in the stamp), so those cards go
+    back in the pool, while two postings with the same title stay an ordinary twin.
+
+    The 75 affected cards were cleared and re-fetched. The remaining instances are not Comeet
+    and not fetch-shaped — Get SAT 10, Centraleyes 4, Google 4 — they come from
+    `scrape_universal._read_position_page` storing a page with no marker test, which is
+    **374**, and the guard above now keeps them out of the board's descriptions regardless.
 371. **Two employers each hold two ACTIVE rows, and each row bought its own LLM verdict for
     the same role** — lane: `registry`, found 2026-08-28 by `classifier`. `Tenengroup` /
     `Tenengroup Ltd.` and `Nexar` / `Nexar Inc.` are all `active=true` in `companies.csv`.
@@ -7549,6 +7572,27 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     `jd-archive.yml` runs and decide between a longer per-render timeout, a lower cap, or
     routing rendered calls through a separate breaker.
 
+
+    **DECIDED 2026-08-30, not measured for a week, because there was not a week**:
+    `pipeline/bd_budget.py` flips to 5,000/month on 2026-09-01 and `jd-archive.yml` has at most
+    two unattended slots before then. **A separate breaker for rendered calls** — `render_streak`
+    / `render_closed`, tripping at the same `breaker` (5) — rather than a longer timeout or a
+    lower cap.
+
+    Why this one. The failure was never that renders fail; it is that they failed on the SHARED
+    streak, so 19 consecutive rendered timeouts closed the paid rung for 98 candidates that the
+    raw rung reads fine. A longer per-render timeout makes each failure more expensive in the
+    only budget that binds (wall clock: `RENDER_CAP` x 90 s was already the whole 90-minute
+    allowance, which is why `RENDER_TIMEOUT` is 45 s). A lower `RENDER_CAP` throws away the
+    rung that is the entire reason the paid tier now works at all — it is what reads a
+    JavaScript site.
+
+    **What it costs if it is wrong.** If renders fail because the ACCOUNT is dead, the raw calls
+    fail too and the shared breaker still catches it, so the account-level rule is unchanged.
+    The exposure is bounded above by `render_cap` (60) slow calls at `RENDER_TIMEOUT` (45 s)
+    before the render breaker opens — and in the measured shape it opens after 5. The first
+    unattended `jd-archive.yml` run is where to read `scrape_bd_rendered` against
+    `scrape_archive_bd` and re-take this.
 433. **`BD_RUN_CAP=0` — the export CLAUDE.md tells every local session to set — makes
     `tests/test_registry.py` red** — lane: `infra` (it owns `bd_rescue.py`'s spend guard) with
     `docs` (it owns the instruction). `bd_rescue.unlock_status` refuses at
@@ -7643,6 +7687,15 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      exactly the zero nobody notices. The clause's clause (d) says a step that can produce
      zero must make zero visible; this is the one step that measurably cannot.
 
+
+    **CLOSED 2026-08-30 by `jd-text`.** `alarm_for` gains `jd-zero-fill(N worked, 0 filled:
+    <top reason>)`, fired when a pass with a non-empty todo worked rows and filled none of
+    them, whatever it spent. It is the same rule as `jd-massfail` below the ten-attempt
+    threshold, and it reads ROWS WORKED — `tried` minus the canary probe minus refused
+    addresses — so a pass whose whole pool was "nothing to fetch here" is still silent, as
+    `jd-massfail` has always had it. The run that made the case, 33250362574's matched driver
+    (10 due, 2 worked, 0 filled, 0 credits), now says
+    `matched:jd-zero-fill(2 worked, 0 filled: no-markers x2)`.
 438. **`_load_secrets` is copied into ten modules and resolves `secrets.env` against its own tree root, so there
      is no honest way to arm a paid rung from a worktree** — lane: `infra`. `bd_employees.py`,
      `bd_rescue.py`, `pipeline/run.py` and seven more each resolve the file relative to their
@@ -7708,3 +7761,46 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      slow rehearsal from hiding a fast unit failure. A cancelled job is worse than a failing
      one: a failure names the test and a cancellation names nothing, which is how 40
      consecutive cancellations were read as "red" for weeks.
+438. **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+    to relieve already covers the whole useful set** — lane: `jd-text`, measured 2026-08-30 by
+    the lane that built it the day before. **Recommendation: retire it.** Not acted on: the
+    operator is watching for its first unattended run and the schedule is not changed here.
+
+    The classifier reads a description only for postings that reach the LLM tier
+    (`seniority.Classifier._classify`): relevance not `excluded`/`none`, not `_NOT_A_JOB`, and
+    not (`strong` AND `senior`). Everything else is decided on the title and the text is never
+    opened. Derived over both live caches with that predicate:
+
+    ```
+    scraped_cache.json     israel 2479 | LLM-bound  91 | thin  28 | reachable  12
+    discovered_cache.json  israel 1950 | LLM-bound 225 | thin 205 | reachable 167
+    TOTAL                  israel 4429 | LLM-bound 316 | thin 233 | reachable 179
+    ```
+
+    **167 of the 179 are `il.linkedin.com`, in `discovered_cache.json` — a file `jd-archive.yml`
+    does not touch.** Twelve are in the file it walks, and all twelve are in the TITLE pool the
+    05:00 digest step already walks (LLM-bound implies relevance-passing, so the LLM-bound set
+    is a subset of the title pool by construction — 24 cards on 2026-08-30, three seconds).
+    The ARCHIVE pool is the complement of the title gate, so it is **disjoint from the set the
+    classifier reads, by construction**.
+
+    What the first archive pass actually bought, of the 1,010 cards that gained a description:
+
+    ```
+    LLM-bound (a description can change the verdict)             22
+    accepted on the title alone (verdict already decided)         6
+    rejected on the title, the text is never read                982
+    ```
+
+    The remaining argument for any archive at all is the title gate's measured false-negative
+    rate, **0.25% over 401 postings** — about one posting in the 511-card pool, and nothing
+    would ever judge it, because a title-rejected card never reaches the tier. Against that:
+    the operator's scope is analyst roles in Israel, so the corpus argument is spent, and the
+    `jd-gate-swallowed` canary already covers a `_relevance` regression without fetching
+    anything.
+
+    The 167 LinkedIn postings ARE the real queue, they are `discovery`'s file, and
+    `run.py`'s inline `JDFiller` already serves them at **132 of 167 fetched inline on
+    2026-08-29** (html 105, native 27) inside the classify step, which is the right place: it
+    runs after the Israel filter and before the tier, over exactly the postings that reach it.
+    The 35 it misses are LinkedIn `no-markers`, which is **376**.

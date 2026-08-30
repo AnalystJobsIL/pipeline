@@ -18729,3 +18729,149 @@ def test_only_a_real_greenhouse_host_gets_an_authoritative_404():
     assert _is_greenhouse_host("boards.greenhouse.io") and _is_greenhouse_host("greenhouse.io")
     assert not _is_greenhouse_host("notgreenhouse.io")
     assert native_url("https://notgreenhouse.io/acme/jobs/12345") is None
+
+
+# =====================================================================================
+# jd-text, 2026-08-30 — closing 437, 370 and 432. The first two are defects this session
+# CREATED or failed to close; the third is a decision that could not wait for a week of
+# data. Record: docs/sessions/2026-08-29-jd-text.md.
+# =====================================================================================
+
+
+def test_a_pass_that_worked_rows_and_filled_none_alarms_whether_or_not_it_spent():
+    """The zero that started this whole session was SILENT by construction. Run 33250362574,
+    the matched driver: 10 roles due, 0 filled, and no clause could speak — `bd-spent` needs
+    `used` and it spent nothing, `jd-massfail` needs ten attempts and a driver at 135-of-145
+    coverage never reaches ten, `jd-nothing-attempted` needs `tried == 0` and it tried four.
+    A step that can produce zero must make zero visible whether or not it spent."""
+    from pipeline.jdfill import alarm_for
+    # the shape of that morning: four rows worked, none filled, no credit spent
+    a = alarm_for(_j6_Counter({"todo": 10, "tried": 4, "probe": 1, "unfillable": 1,
+                               "filled": 0, "fail": 2, "reason:no-markers": 2}), driver="matched")
+    assert "matched:jd-zero-fill(2 worked, 0 filled: no-markers x2)" in a
+    # ten or more worked keeps the older, louder name and its top reason
+    big = alarm_for(_j6_Counter({"todo": 12, "tried": 12, "filled": 0, "reason:shell": 12}))
+    assert big == "jd-massfail(shell x12)"
+    # ...and a pass that filled something, or worked nothing, still says nothing
+    assert alarm_for(_j6_Counter({"todo": 4, "tried": 4, "filled": 1})) == ""
+    assert alarm_for(_j6_Counter({"todo": 4, "tried": 1, "probe": 1, "filled": 0})) == ""
+    # a refused address is nobody's failure and may not be counted as work
+    assert alarm_for(_j6_Counter({"todo": 3, "tried": 3, "unfillable": 3, "filled": 0,
+                                  "reason:auth-walled": 3})) == ""
+    # The clause is about a pass that HAD WORK: `todo` is what says so, and the
+    # mass-failure boundary at nine tried with no todo at all stays the synthetic
+    # threshold case `test_backfill_alarm_fires_on_mass_zero_and_on_an_unusable_unlocker`
+    # pins. Every real run stamps `todo`.
+    assert alarm_for(_j6_Counter({"tried": 9, "filled": 0})) == ""
+    assert alarm_for(_j6_Counter({"todo": 9, "tried": 9, "filled": 0})).startswith("jd-zero-fill(9")
+
+
+def test_a_comeet_hosted_page_yields_ONE_posting_not_the_whole_board():
+    """BACKLOG 370, and this lane's archive pass created 18 fresh instances of it on 2026-08-29
+    before the measurement caught them: Legit Security 9 postings, Exodigo 6, Majestic Labs 3,
+    every one carrying the same text truncated at `DESC_MAX`.
+
+    A Comeet hosted page is a BOARD — measured on Legit Security, 8 positions and 16
+    `{name, value}` sections, 24,517 characters — and the reader joined all of it. The uid is
+    the last path segment of the url; when the page does not carry it, the posting has been
+    taken off the board and the honest answer is nothing, not the other eight roles."""
+    from pipeline.jdfill import _comeet_read, html_to_text
+    board = _j6_json.dumps({"positions": [
+        {"uid": "6B.D6B", "name": "Engineering Tech Lead",
+         "custom_fields": {"details": [{"name": "Description", "value": "<p>" + "lead " * 90 + "</p>"},
+                                       {"name": "Requirements", "value": "<p>" + "five years " * 40 + "</p>"}]}},
+        {"uid": "A1.C22", "name": "Bookkeeper",
+         "custom_fields": {"details": [{"name": "Description", "value": "<p>" + "ledgers " * 90 + "</p>"}]}}]})
+    one = _comeet_read(board, "https://www.comeet.com/jobs/acme/37.004/engineering-tech-lead/6B.D6B")
+    assert "lead" in one and "ledgers" not in one, "a board must not be one posting's description"
+    assert "Requirements" in one
+    other = _comeet_read(board, "https://www.comeet.com/jobs/acme/37.004/bookkeeper/A1.C22")
+    assert "ledgers" in other and "lead" not in other
+    # a uid the board does not carry: the posting is gone, and the other roles are not it
+    assert _comeet_read(board, "https://www.comeet.com/jobs/acme/37.004/security-analyst/A2.B15") == ""
+    # a page with exactly one position needs no disambiguation
+    solo = _j6_json.dumps({"positions": [{"uid": "ZZ.999", "custom_fields": {
+        "details": [{"name": "Description", "value": "<p>" + "solo " * 90 + "</p>"}]}}]})
+    assert "solo" in _comeet_read(solo, "https://www.comeet.com/jobs/acme/1.0/x/QQ.111")
+    # ...and a page that embeds no position block at all keeps the old whole-page reading
+    flat = '{"name": "Description", "value": "<p>' + "flat " * 90 + '</p>"}'
+    assert "flat" in _comeet_read(flat, "https://www.comeet.com/jobs/acme/1.0/x/QQ.111")
+
+
+def test_a_text_another_posting_already_carries_is_not_this_ones_description(tmp_path, monkeypatch):
+    """The driver half of 370. A long text carried by postings with DIFFERENT titles cannot be
+    the description of any of them, so those cards are not "already done" — they go back in the
+    pool. And a fetch that returns a text another posting already holds is a board: storing it
+    would re-create the defect one card at a time. Two postings with the SAME title are an
+    ordinary twin and are left alone."""
+    import enrich_scrape_jd as esj
+    from pipeline import jdfill
+    page = _jd_of(1200)
+    cache = {"ACME": [_j8_card(title="Data Analyst", url="https://a.co/jobs/da-1", desc=page),
+                      _j8_card(title="Bookkeeper", url="https://a.co/jobs/bk-1", desc=page)],
+             "TWIN": [_j8_card(title="Data Analyst", url="https://t.co/jobs/da-1", desc=_jd_of(1300)),
+                      _j8_card(title="Data Analyst", url="https://t.co/jobs/da-2", desc=_jd_of(1300))]}
+    title, archive, g = esj._todo(cache)
+    assert g["shared_page"] == 2 and g["has_desc"] == 2, "the twin keeps its description"
+    assert sorted(i.url for i in title + archive) == ["https://a.co/jobs/bk-1", "https://a.co/jobs/da-1"]
+    # ...and the fetch may not write that page onto either of them
+    p = tmp_path / "c.json"
+    p.write_text(_j6_json.dumps(cache), encoding="utf-8")
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD(page, "html", "ok", False))
+    monkeypatch.setattr(esj, "record_enrich", lambda **k: None)
+    assert esj.main(["--with-archive", "--cache", str(p)]) == 0
+    got = _j6_json.loads(p.read_text(encoding="utf-8"))
+    assert all(j.get("_jd_shared_page") for j in got["ACME"]), "a board was stored as a posting"
+
+
+def test_rendered_calls_have_their_own_breaker(monkeypatch):
+    """BACKLOG 432, decided rather than measured for a week: `bd_budget` flips to 5,000/month on
+    2026-09-01 and `jd-archive.yml` has at most two unattended slots before then.
+
+    Measured on the first archive pass: of ~130 paid calls, **19 consecutive RENDERED timeouts**
+    opened the shared failing-streak breaker, and the remaining 98 candidates — ordinary
+    bot-walled pages the raw rung reads fine — all reported `bd-unavailable`. One slow page
+    class ended the paid rung for a whole run. Rendered and raw calls are different populations
+    with different failure rates, so they get different breakers."""
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setenv("JD_BD", "1")
+
+    class _Resp:
+        status, headers = 200, {}
+
+        def __init__(self, body):
+            self._b = body
+
+        def read(self, n=0):
+            return self._b
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    calls = []
+
+    def _open(req, timeout=0):
+        body = _j6_json.loads(req.data)
+        calls.append(bool(body.get("render")))
+        if body.get("render"):
+            raise TimeoutError("render is slow")
+        return _Resp(b"<html><body>" + b"raw " * 200 + b"</body></html>")
+
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen", _open)
+    bd = jdfill.Unlocker(cap=99, breaker=5, render_cap=60)
+    for i in range(5):
+        bd("https://a.co/x%d" % i, render=True)
+    assert bd.render_closed, "five failing renders close the RENDER rung"
+    assert bd.unavailable == "", "...and leave the account alone"
+    # the raw rung still works, which is the whole point
+    st, body, why = bd("https://a.co/raw")
+    assert why == "" and body and calls[-1] is False
+    # and a render past the closed breaker spends nothing
+    used = bd.used
+    assert bd("https://a.co/y", render=True) == (None, "", "bd-render-capped")
+    assert bd.used == used
