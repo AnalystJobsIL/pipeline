@@ -1790,7 +1790,15 @@ class JDFiller:
         # night judged on a bare title (21 on 08-28, 2 on 08-27 when 9 more were rate-limited
         # instead) and is the largest fixable class this layer has.
         cap = int(os.environ.get("JDFILL_BD_CAP", str(INLINE_BD_CAP)))
-        self.bd = bd if bd is not None else (Unlocker(cap=cap) if cap > 0 else None)
+        # NO RENDERS INLINE, by default, and that is a measurement rather than caution. The
+        # class this rung is for is LinkedIn `no-markers`, which the RAW residential fetch
+        # reads (median 4.3 s, max 6.0 s per call). The class renders are for is `scrape
+        # shell`, and rendering it filled 1 of 4 at 5.8-27.8 s a call — poor yield at four
+        # times the clock, on the mail's critical path. `render_cap=0` makes a render request
+        # return `bd-render-capped` and spend NOTHING, so a shell page costs no credit here
+        # and the backfills, which have the time, keep it. `JDFILL_RENDER_CAP` re-opens it.
+        rcap = int(os.environ.get("JDFILL_RENDER_CAP", "0"))
+        self.bd = bd if bd is not None else (Unlocker(cap=cap, render_cap=rcap) if cap > 0 else None)
         self.bd_tried = self.bd_filled = 0
         # work the paid rung WOULD have taken and could not. This counter exists because the
         # step this runs in does not carry `BRIGHTDATA_API_KEY` (`daily-digest.yml`, the
@@ -1903,6 +1911,11 @@ class JDFiller:
         # failed went from a bold alarm to complete silence (wave 1).
         if self.tried and self.filled == 0 and self.tried + self.unfillable >= MASSFAIL_MIN_TRIED:
             out.append(f"inline jd-fill {self.filled}/{self.tried} — every fetch failed ({self.failures(3)})")
+        if getattr(self.bd, "capped", False):
+            # a binding cap truncates the night silently, which is the shape this repo keeps
+            # hitting: the roles past it are judged on the title and nothing says so
+            out.append(f"inline jd-fill: the Bright Data cap bound at {self.bd.cap} — the "
+                       f"postings past it were judged with no description")
         if self.bd is not None and self.bd_unavailable_work:
             out.append(f"inline jd-fill: the paid rung is configured and UNUSABLE "
                        f"({self.bd.unavailable}) with {self.bd_unavailable_work} postings the "

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**503 filed · 369 open · 134 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
+**504 filed · 370 open · 134 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 456.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 457.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -348,7 +348,7 @@ closure convention in the header.
 - **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
 - **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
 
-### discovery — 23 open
+### discovery — 24 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -373,6 +373,7 @@ closure convention in the header.
 - **340** `340@discovery` **`pipeline/aggregators.py` does not know the Israeli job boards, and the hunt will
 - **428** `428@discovery` **`discovered_cache.json` has no archive pass, and it is 1,919 thin cards of 1,950** —
 - **441** `441@discovery` **Intake re-adds names that were retired with evidence, so the queue can never stay
+- **456** `456@discovery` **The inline JD filler re-buys the same postings every night, because it has no cooldown
 
 ### docs — 19 open
 
@@ -8071,6 +8072,43 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
 
 ## From the `company-intel` lane, 2026-08-30 (the gap's direction)
 
+
+    **THE CAP: 25 IS WRONG IN BOTH DIRECTIONS, and the measurements say why** (jd-text,
+    2026-08-30, for the infra session adding the env lines).
+
+    *Too low for the need.* The nightly paid candidates are every posting the free rungs could
+    not read: **34 on 2026-08-29** (23 `discovery-linkedin no-markers` + 7 `scrape shell` + 1
+    `oraclehcm shell` + 1 targeted + 1 `http-400` + 1 timeout). A cap of 25 binds every single
+    night and truncates ~9 of them — and until this commit it did so SILENTLY, because the
+    inline rung had no `bd-capped` clause at all. It has one now.
+
+    *Too high for the value, because the same rows are re-bought nightly.* `maybe_fill` has
+    **no cooldown** — zero references to an attempt stamp — and its fill goes into the job
+    dict, which reaches `matched` and is **never written back to `discovered_cache.json`**. So
+    a LinkedIn posting that is fetched, judged and REJECTED is thin again tomorrow and is
+    bought again, every night, for as long as it stays in the cache (21-day TTL). The 24-a-
+    night LinkedIn class is a standing pool, not 24 new postings.
+
+    **Recommendation: land the key with `JDFILL_BD_CAP: "30"`, not 25**, and treat the first
+    week's `Bright Data N/M filled` line as the measurement. 30 covers the measured 34 minus
+    the shell class this lane just stopped paying for (see below), leaves the cap non-binding
+    on a normal night, and is **900/month against the 5,000 that begins 2026-09-01 — 18% of
+    the pool** for the one step that decides verdicts. If that is too much, the lever is the
+    recurrence, not the cap: fix the re-buy and the same coverage costs a fraction.
+
+    **Wall clock, and the 19-timeout risk.** This lane turned renders OFF for the inline rung
+    (`render_cap=0`, `JDFILL_RENDER_CAP` re-opens it), measured: the raw fetch that serves the
+    LinkedIn class runs **median 4.3 s, max 6.0 s**, while rendering the shell class filled
+    **1 of 4 at 5.8-27.8 s**. So the added time is ~24 raw calls x 4.3 s ≈ **1.7 min**, worst
+    case ~2.4 min, against `JDFILL_TIME_BUDGET_MIN` 25 inside a 110-minute job. The
+    19-consecutive-render-timeout episode cannot recur here: renders are off, and were they
+    on, the separate render breaker added 2026-08-29 closes that rung after **5** failures at
+    `RENDER_TIMEOUT` 45 s = 3.75 minutes, not 19 x 90 s = 28.5.
+
+    **What must be true before the cap matters:** a cooldown or a write-back for the inline
+    rung, so a rejected posting is not re-bought nightly. Neither is this lane's alone —
+    `discovered_cache.json` is `discovery`'s file and a new state file is an `infra` strategy —
+    so it is filed as **456** rather than built half.
 449. **`pipeline/llm.py` discards the CLI's error envelope, so two mornings said `is_error
      (api_error_status=None)` and nothing else** — lane: `classifier` (shared plumbing; every
      lane calls it). Claude Code 2.1.x has TWO result variants: the success one always carries
@@ -8131,3 +8169,21 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      `error_during_execution` dominate on blurbs, drop the context for blurbs (the facts
      record already supplies `sub_sector`/`business_model`, and `derive_blurb` renders them
      for free) or cap it to the first sentence. Not before the evidence exists.
+
+456. **The inline JD filler re-buys the same postings every night, because it has no cooldown
+    and its fills are never persisted** — lane: `discovery` (it owns `discovered_cache.json`)
+    with `infra` (a new state file needs a persist strategy and a section 5 row); found by
+    `jd-text` 2026-08-30 while sizing `JDFILL_BD_CAP` for 448.
+
+    `JDFiller.maybe_fill` checks only `looks_like_jd(description)` — **no attempt stamp, no
+    `due()`, nothing** — and writes the text it fetches into the job dict, which reaches
+    `matched` and never returns to `discovered_cache.json`. A posting that is fetched, judged
+    and REJECTED is therefore thin again tomorrow and is fetched again, for as long as it
+    stays in the cache (21-day TTL). With the paid rung armed (448) that becomes a nightly
+    CREDIT for the same row, up to 21 times.
+
+    The two candidate fixes, neither of them this lane's to choose: persist the fetched text
+    back into `discovered_cache.json` (cheap, but that file is discovery's and has a TTL that
+    would then need to preserve it), or give the inline rung the `_jd_attempted`/`due()`
+    machinery the backfills already have, which needs somewhere to write the stamp. Until one
+    lands, size the cap for a standing pool rather than for new arrivals.

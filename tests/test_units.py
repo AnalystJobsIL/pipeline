@@ -19797,3 +19797,31 @@ def test_a_column_build_rows_produces_but_columns_forgets_cannot_vanish_silently
         raise AssertionError("an unregistered column must not be dropped in silence")
     except ValueError as e:
         assert "SECRET_NEW_COL" in str(e)
+
+
+def test_the_inline_rung_buys_raw_and_never_renders_and_says_when_the_cap_binds(monkeypatch):
+    """Two measurements decide this. The class the inline rung exists for is LinkedIn
+    `no-markers`, which the RAW residential fetch reads at a median 4.3 s; the class renders are
+    for is `scrape shell`, which rendering filled **1 of 4 at 5.8-27.8 s a call**. Poor yield at
+    four times the clock, on the mail's critical path, is not a trade this step should make —
+    the backfills have the time and keep it. `render_cap=0` spends NOTHING on a render request.
+
+    And a cap that binds must say so: the postings past it are judged with no description, and
+    a silent truncation is the shape this repo keeps hitting."""
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setenv("JD_BD", "1")
+    monkeypatch.setenv("JDFILL_BD_CAP", "2")
+    f = jdfill.JDFiller(budget_min=10, enabled=True)
+    assert f.bd.render_cap == 0 and f.bd.cap == 2
+    # a render request costs nothing at all
+    assert f.bd("https://a.co/x", render=True) == (None, "", "bd-render-capped")
+    assert f.bd.used == 0
+    # ...and the raw rung still spends, up to the cap, which then announces itself
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen",
+                        lambda req, timeout=0: (_ for _ in ()).throw(TimeoutError()))
+    for i in range(3):
+        f.bd("https://a.co/%d" % i)
+    assert f.bd.used == 2 and f.bd.capped
+    assert any("the Bright Data cap bound at 2" in a for a in f.alarms())
