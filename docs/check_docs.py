@@ -1718,8 +1718,13 @@ def _tree_skip_reason():
     runner that the reason this repo documents is the reason that actually applies. The
     documentation used to assert the CI behaviour; now CI asserts it back."""
     if os.environ.get("GITHUB_ACTIONS"):
-        return ("CI: the runner builds the pushed commit from a depth-1 checkout, so there "
-                "is no history to be behind and nothing to compare against")
+        # MEASURED on run 33294213125, not assumed: `shallow='true' commits='1'` and
+        # `origin/master='61bbc99a'` - the ref EXISTS and points at the commit being
+        # built. So it is not that there is nothing to compare against; it is that
+        # origin/master IS this commit, `behind` is 0 by construction, and a check that
+        # can only ever say 0 is a check that says nothing.
+        return ("CI: the runner checks out the pushed commit one commit deep with "
+                "origin/master pointing AT it, so `behind` is 0 by construction")
     if _git("rev-parse", "--is-inside-work-tree") is None:
         return "not a git checkout"
     if _rebase_in_progress():

@@ -12783,14 +12783,17 @@ def test_a_checkout_behind_only_on_code_never_goes_red(tmp_path):
 
 
 def test_ci_itself_confirms_why_the_tree_check_cannot_run_there():
-    """The documented reason for skipping in CI, asserted BY CI.
+    """The documented reason for skipping in CI, asserted BY CI - and corrected by it.
 
     `check_tree_is_current`, `check_morning_rows_survive` and `check_unattended_proof` all
     compare this tree against `origin/master`, and all three return silently on a runner.
-    The reason given everywhere is that `actions/checkout@v5` clones one commit deep, so
-    there is no history to be behind and no ref to be behind it. That was an assumption
-    until this guard: on a runner it now checks the claim and prints what it found, and the
-    build goes red if the checkout ever stops looking the way the docs say it does.
+
+    The reason first written here was "a depth-1 checkout has no ref to be behind". Run
+    33294213125 reported `shallow='true' origin/master='61bbc99a' commits='1'` — the ref
+    EXISTS and points at the commit being built. The true reason is narrower and better:
+    `origin/master` IS this commit, so `behind` is 0 by construction and the check can only
+    ever say 0. That is what this now asserts, and it is why the guard emits what it FOUND
+    rather than confirming what was expected.
 
     Locally it skips - there is nothing to confirm on a laptop with a full clone."""
     if not os.environ.get("GITHUB_ACTIONS"):
@@ -12815,13 +12818,19 @@ def test_ci_itself_confirms_why_the_tree_check_cannot_run_there():
     finally:
         if was is not None:
             os.environ["GITHUB_ACTIONS"] = was
-    # Either the runner has no origin/master to compare against, or its history is one
-    # commit deep - either way "how far behind is this tree" has no answer here. If BOTH
-    # are false the docs are wrong and these three checks could run in CI after all.
-    assert without_the_env_var is not None or shallow == "true" or depth == "1", (
-        "the runner has a full clone AND an origin/master ref, so the reason this repo "
-        "gives for skipping in CI is no longer true: shallow=%r origin=%r commits=%r"
-        % (shallow, origin, depth))
+    # The consequence, which is the actual reason: with the env var gone the check would
+    # run, and would report a tree 0 commits behind - every push, for ever. A check that can
+    # only ever say 0 is one that says nothing, and THAT is why these three skip here.
+    was2 = os.environ.pop("GITHUB_ACTIONS", None)
+    try:
+        state = cd.tree_state()
+    finally:
+        if was2 is not None:
+            os.environ["GITHUB_ACTIONS"] = was2
+    assert state is None or state[0] == 0, (
+        "on this runner the checkout is %r commits behind origin/master, so these three "
+        "checks would have something to say after all and should stop skipping here: %r"
+        % (state[0], state))
 
 
 
