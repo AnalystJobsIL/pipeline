@@ -87,13 +87,20 @@ if a.case in ("yes", "no", "prose_before_json", "flaky") and not expect_alarm:
                    rows_after == rows_before + paths.get("llm", 0)))
 if a.case == "nollm":
     checks.append(("the fake never ran under --no-llm", calls == []))
-if calls:
-    argv = calls[0]["argv"]
+# only the CLASSIFIER's calls carry the pinned argv; company-intel shares the fake CLI (its
+# blurb calls use tools and its own prompt), so judge the seam on the calls made from the
+# classifier's fixed scratch dir -- a 0-classify-call rehearsal used to FAIL this check on
+# whatever call happened to be first in the log
+clf_calls = [c for c in calls if "classify-scratch" in os.path.abspath(c.get("cwd") or "")]
+if clf_calls:
+    argv = clf_calls[0]["argv"]
     checks.append(("argv is the pinned seam (tools off, json, schema, THE FULL rules, no session)",
                    all(f in argv for f in ("--tools", "--json-schema", "--system-prompt", "--no-session-persistence"))
                    and argv[argv.index("--tools") + 1] == ""
                    and argv[argv.index("--system-prompt") + 1] == seniority.LLM_RULES))
-    checks.append(("cwd is not the repo", os.path.abspath(calls[0]["cwd"]) != REPO))
+    checks.append(("cwd is not the repo", os.path.abspath(clf_calls[0]["cwd"]) != REPO))
+elif calls:
+    print("note: %d claude call(s), none from the classifier - argv checks n/a this scope" % len(calls))
 status1 = subprocess.run(["git", "status", "--short"], capture_output=True, text=True, cwd=REPO).stdout
 checks.append(("git status unchanged", status0 == status1))
 print(f"case={a.case} paths={paths} llm_calls={summ['llm_calls']} calls={len(calls)} rows {rows_before}->{rows_after}")
