@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**555 filed · 406 open · 149 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**557 filed · 407 open · 150 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 505.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 507.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -228,7 +228,7 @@ closure convention in the header.
 - **499** `499@registry` **`Port` and `Port.io` are two ACTIVE registry rows for one employer**
 - **501** `501@registry` **A writer can still activate a twin of an active row or a native-ATS row off its host
 - **502** `502@registry` **A shard killed mid-write leaves an unparsable proposal file, and the ingest skips it in silenc
-- **503** `503@registry` **8 verified boards name a DIFFERENT employer than their registry row
+- **505** `505@registry` **8 verified boards name a DIFFERENT employer than their registry row
 
 ### infra — 107 open
 
@@ -449,7 +449,7 @@ closure convention in the header.
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
 - **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
 - **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
-- **504** `504@company-intel` **OPERATOR DECISION
+- **506** `506@company-intel` **OPERATOR DECISION
 
 ### ats-fetch — 18 open
 

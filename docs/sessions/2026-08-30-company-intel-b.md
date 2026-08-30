@@ -113,9 +113,12 @@ and `test_save_shared_applies_the_display_pass_so_no_publisher_can_resurrect`:
   cleared name resurrected from sqlite via `merge`'s fill-forward at ~05:30 and the
   10:17 cron cleared it again — two committed flips a day, structurally certain once a
   named record is re-researched. Fix: `save_shared` re-runs the pass on a copy at every
-  write. Rejected alternatives: exempting `display_name` from fill-forward (breaks
-  legitimate survival across re-research) and stripping it in `_record` (leaves the
-  digest's union resurrecting mid-run anyway).
+  write. Wave 2 then proved the file was only half the surface: render reads
+  `union_store`'s in-memory view, where the same fill-forward resurrected the name
+  for the BOARD while the file stayed clean — so `union_store` runs the pass too
+  (~46 ms on the full store). Rejected alternatives: exempting `display_name` from
+  fill-forward (breaks legitimate survival across re-research) and stripping it in
+  `_record` (leaves the digest's union resurrecting mid-run anyway).
 - **A stale ok out-ranked a newer refusal**: `Y Axis Global`→`Y-Axis` was written off a
   page whose newest verdict is NOT-THEIRS. The newest row per name now decides whatever
   its verdict. The mirror (transient UNVERIFIABLE clears for ≤7 days) is accepted:
@@ -154,12 +157,12 @@ coverage grows on its cadence, the pass picks up every new ok row at the next `-
 zero marginal cost. Reading all ~1,097 active rows' sites in one pass was rejected
 (~1,097 page reads for a class the existing cadence already drains).
 
-## 5. Raised, not decided (504) + leads (503)
+## 5. Raised, not decided (506) + leads (505)
 
-**504**: which language should an employer's name render in? Two mirror classes: the two
+**506** (renumbered from 504 at rebase; master took 503/504 the same evening): which language should an employer's name render in? Two mirror classes: the two
 Hebrew-keyed published rows on an English-facing board, and ~24 divergent rows whose own
 page self-names in Hebrew (`Discount Bank` ← `בנק דיסקונט`, `Migdal Group`, `Isracard`…).
-`display_name` writes neither direction; if decided, it is a separate field. **503**: 8
+`display_name` writes neither direction; if decided, it is a separate field. **505**: 8
 verified boards name a different employer (`Outbrain`←`Teads`, `UserWay`←`Level Access`,
 `QuantLR`←`HEQA Security`…) — rename/acquisition leads for `registry`.
 
