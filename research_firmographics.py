@@ -30,6 +30,7 @@ from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 # Windows — a Hebrew company name in a print then kills the whole run (UnicodeEncodeError)
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+from pipeline import board_verify as BV
 from pipeline import firmographics as F
 from pipeline import stages
 from pipeline.companies import load_companies
@@ -161,6 +162,8 @@ def main():
                     help="also re-research records older than this many days")
     ap.add_argument("--dry-run", action="store_true", help="only report, no research")
     ap.add_argument("--export", action="store_true", help="write the union to cloud_state/firmographics.json and exit")
+    ap.add_argument("--display-report", action="store_true",
+                    help="triage every board_verify employer_named (write/absent/report), write nothing, exit")
     # A wall-clock bound beside the count bound (2026-08-30). `--limit` is a proxy for the
     # thing the 120-minute job actually runs out of, and a proxy misses in both directions:
     # 08-28 added 155 active rows in one day against a cap of 150, and a queue of 40 that
@@ -184,6 +187,41 @@ def main():
 
     st = SeenStore()
     today = dt.date.today().isoformat()
+
+    if a.display_report:
+        # The operator's review channel for the divergent pile: every ok+named verify row
+        # resolved to its record key (the join --export applies) and put through the same
+        # rule, grouped by verdict, nothing written.
+        verify = BV.load(os.path.join(HERE, BV.PATH))
+        recs, _status = load_shared_status()
+        index = {}
+        for k in recs:
+            index.setdefault(str(k).lower(), []).append(k)
+        rows = {}
+        for key, row in verify.items():
+            if isinstance(row, dict) and row.get("verdict") == "ok" \
+                    and str(row.get("employer_named") or "").strip():
+                name = str(key).split("|", 1)[0]
+                stamp = (str(row.get("date") or ""), str(key))
+                if name not in rows or stamp > rows[name][0]:
+                    rows[name] = (stamp, str(row["employer_named"]).strip())
+        buckets = {"write": [], "absent": [], "report": []}
+        unmatched = 0
+        for name, (_s, named) in sorted(rows.items()):
+            keys = index.get(name.lower(), [])
+            if len(keys) != 1:
+                unmatched += 1
+                continue
+            verdict, payload = F.display_name_from_evidence(keys[0], named)
+            buckets[verdict].append((keys[0], named, payload))
+        for verdict in ("write", "absent", "report"):
+            print(f"== {verdict} ({len(buckets[verdict])}) ==")
+            for name, named, payload in buckets[verdict]:
+                print(f"  {name!r} <- {named!r}: {payload}")
+        print(f"unmatched (no record yet, or an ambiguous case-twin): {unmatched}")
+        print(f"overrides: {len(F.DISPLAY_NAME_OVERRIDES)} "
+              f"({', '.join(sorted(F.DISPLAY_NAME_OVERRIDES))})")
+        return
 
     if a.export:
         # the UNION, atomically — the local table alone overwrote the file and deleted
@@ -213,6 +251,13 @@ def main():
                   "the export already holds (%s%s)"
                   % (len(lost), ", ".join(lost[:5]), " ..." if len(lost) > 5 else ""))
             return 1
+        # Field-level passes on the union, AFTER the guards (they change no key, so the
+        # superset guard's semantics are untouched) and BEFORE both writes: the employer's
+        # own name from board_verify evidence (set AND cleared each run — the single
+        # writer), and the sector case-fold (BACKLOG 482). Both cron paths run this line,
+        # so a company verified tomorrow gets its display_name with no session.
+        dn = F.apply_display_names(recs, BV.load(os.path.join(HERE, BV.PATH)))
+        folded = F.fold_sectors(recs)
         os.makedirs(os.path.dirname(EXPORT), exist_ok=True)
         with open(EXPORT, "w", encoding="utf-8") as f:
             json.dump(recs, f, ensure_ascii=False, indent=2, sort_keys=True)
@@ -221,6 +266,11 @@ def main():
             return 1
         print(f"exported {len(recs)} records ({len(recs) - len(shared):+d}) "
               f"-> {EXPORT} + {SHARED_EXPORT}")
+        print(f"display_names={dn['written']} (+{dn['added']}/-{dn['removed']})"
+              f"{' VERIFY UNREADABLE, cleared nothing' if dn['skipped'] else ''} "
+              f"divergent={len(dn['divergent'])} sectors_folded={folded}")
+        for name, named, why in dn["divergent"][:5]:
+            print(f"  divergent: {name!r} <- page says {named!r} ({why}) — not written")
         return
 
     seeded = seed_poc(st, today)

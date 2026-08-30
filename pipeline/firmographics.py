@@ -21,6 +21,9 @@ Record shape (all researched fields; code stamps as_of):
       "il_center":         str,   # main Israel site(s)
       "as_of":             "YYYY-MM-DD"  (stamped by us, not the model)
     }
+Optional, never from the model: "display_name" — the employer's own name where the
+registry key is a slug ("withfaye" -> "Faye"). Evidence-only, set and cleared by
+`apply_display_names` (see that section); absent means "render the registry name".
 """
 from __future__ import annotations
 
@@ -28,6 +31,9 @@ import datetime as _dt
 import json
 import os
 import re
+import unicodedata as _ud
+
+from pipeline.company_identity import _acronym
 
 # "growth-private" means venture/growth-STAGE — Bosch and EY are private but not that;
 # without "private-enterprise" the by_stage axis folds century-old giants into startup stats
@@ -310,6 +316,9 @@ def _coerce(rec, company):
         out[key] = " ".join(str(v).split())[:300] if isinstance(v, str) and v.strip() else ""
     if not out["sector"]:                       # sector is the one field we insist on
         return None
+    # one public enum, not two cyber bars: roles.csv groups by this string, and the model
+    # capitalizes on a whim — `cybersecurity` 166 vs `Cybersecurity` 39 (BACKLOG 482)
+    out["sector"] = out["sector"].lower()
     stage = str(rec.get("stage", "")).strip().lower()
     out["stage"] = stage if stage in STAGES else ""
     band = str(rec.get("size_band", "")).strip().upper()
@@ -763,8 +772,14 @@ def all_failures(st, today=""):
     return merge_failures(load_failures(today)[0], local)
 
 
+# Display metadata is never research evidence: a cosmetic key must not decide `newer`
+# ties, `merge` winners or `display_index` rank — the same class of bug as the fill pass's
+# two bookkeeping fields promoting AWS to answer for Amazon (see display_index).
+_EVIDENCE_EXEMPT = frozenset({"display_name"})
+
+
 def _evidence(rec):
-    return sum(1 for v in rec.values() if v not in ("", None))
+    return sum(1 for k, v in rec.items() if k not in _EVIDENCE_EXEMPT and v not in ("", None))
 
 
 def newer(a, b):
@@ -838,6 +853,193 @@ def display_index(records):
         if cur is None or rank(name, rec) > rank(*cur):
             best[k] = (name, rec)
     return {k: rec for k, (_n, rec) in best.items()}
+
+
+# ---- the employer's own name, as a field (display_name) ---------------------------- #
+# Some registry keys are ATS slugs ("withfaye" where the employer is Faye), and the key
+# CANNOT change: it joins firmographics, the roles ledger and the public CSV — a rename
+# orphans intel and role history at once (docs/BACKLOG.md 459). `display_name` is the
+# non-orphaning answer: an optional string on the record, written ONLY from evidence the
+# employer authored — board_verify's `employer_named` (an LLM's read of the company's own
+# careers page) where it is recognisably the SAME company, or the override table below —
+# and ABSENT everywhere else. Render falls back to the registry name; absent is honest and
+# a confidently wrong name is worse than a slug. `apply_display_names` (run by
+# `research_firmographics.py --export` on both cron paths) is the SINGLE writer: it sets
+# and CLEARS derived values from current evidence on every run, so withdrawn evidence
+# retracts the name — the retraction `merge`'s fill-forward cannot express. The digest
+# hook's own publish (`company_intel.py`) deliberately does NOT run this pass: merge
+# preserves existing values there, and new evidence lands at the next --export. Do not
+# add a second writer.
+
+DISPLAY_NAME_KEY = "display_name"
+
+# Display names with per-row FIRST-PARTY evidence outside board_verify. These keys are
+# ATS slugs, which fail the same-company containment rule by construction — hence a
+# table, not a looser rule. Overrides win over the extractor, apply even when
+# board_verify is unreadable, and are the one arm the clearing pass never touches.
+DISPLAY_NAME_OVERRIDES = {
+    "withfaye":  "Faye",       # JD self-naming, cloud_state/roles_text.jsonl (also a bv-ok row)
+    "helfy":     "Helfy",      # JD self-naming, cloud_state/roles_text.jsonl
+    "comblack":  "Comblack",   # JD self-naming, cloud_state/roles_text.jsonl
+    "finbounce": "Bounce AI",  # same Comeet tenant E9.00C as the active "Bounce AI" row (487)
+}
+
+# legal tails stripped repeatedly; the leading [\s,.] alternation is what catches
+# "ENI-ONE.LTD" (dot separator, no space)
+_DN_LEGAL = re.compile(
+    r"(?i)(?:[\s,.]|^)(inc|incorporated|ltd|llc|l\.l\.c|plc|gmbh|ag|bv|b\.v|nv|n\.v|sa|s\.a"
+    r"|lp|l\.p|corp|corporation|co|limited|company)\.?\s*$")
+_DN_JUNK = re.compile(r"(?i)\b(careers?|jobs?|part of|division of|member of|trading as"
+                      r"|formerly|acquired)\b")
+# a clause is a sentence about the company, not its name; ":" is deliberately absent
+# (Run:AI) and so is the unspaced hyphen (1touch.io, ENI-ONE)
+_DN_CLAUSE = re.compile(r'[,/|•;"—]|\s-\s')
+_DN_DOMAIN = re.compile(r"(?i)^[a-z0-9][a-z0-9-]*(\.[a-z]{2,4}){1,2}$")
+_DN_HEBREW = re.compile(r"[֐-׿]")
+
+
+def _squash(s):
+    return re.sub(r"[^0-9a-zא-׿]+", "", str(s or "").lower())
+
+
+def _stem(s):
+    """identity_key over an accent-folded string, squashed to bare letters. NFKD-minus-
+    combining is load-bearing: identity_key turns `ć` into a word break, so 'Mećkano'
+    would never stem-match 'Meckano' without the fold. Hebrew letters survive both steps,
+    which is the structural reason a Latin candidate can never claim a Hebrew-named row."""
+    folded = "".join(ch for ch in _ud.normalize("NFKD", str(s or "")) if not _ud.combining(ch))
+    return _squash(identity_key(folded))
+
+
+def _clean_display(raw):
+    s = " ".join(str(raw or "").split()).strip("\"'“”‘’ ")
+    s = " ".join(re.sub(r"\([^)]*\)", " ", s).split())  # a parenthetical is never the brand
+    prev = None
+    while s != prev:
+        prev = s
+        s = _DN_LEGAL.sub("", s)
+        # a stripped suffix can expose a dangling joiner: "Levi Strauss & Co." -> "& "
+        s = re.sub(r"(?i)(?:\s+(?:and|&))?[\s,.&/–—-]*$", "", s)
+    return s
+
+
+def display_name_from_evidence(registry_name, employer_named):
+    """One name's verdict: ("write", cleaned) | ("absent", why) | ("report", why).
+
+    "write" only when the page's name and the registry name are recognisably the SAME
+    company (shared stem, containment, or acronym). A page naming a different string —
+    parent company, product name, mis-read — is reported, never written: the divergent
+    pile mixes genuine improvements with wrong companies, and the Bounce/Bounce AI row in
+    the public dataset is what shipping that failure looks like."""
+    reg = " ".join(str(registry_name or "").split())
+    raw = " ".join(str(employer_named or "").split())
+    if not raw:
+        return "absent", "no-evidence"
+    if raw == reg:
+        return "absent", "identical"     # never editorialize a name we do not dispute
+    if _DN_HEBREW.search(reg):
+        return "report", "hebrew-registry"  # the registry name IS the employer's name
+    cand = _clean_display(raw)
+    if not 2 <= len(cand) <= 60:
+        return "report", "unusable-after-clean"
+    if _DN_HEBREW.search(cand) or any(ord(ch) >= 0x250 for ch in cand):
+        return "report", "non-latin"     # below U+0250 stays: Nestlé survives the fold
+    if _DN_CLAUSE.search(cand) or _DN_JUNK.search(cand):
+        return "report", "clause-or-junk"
+    if _DN_DOMAIN.match(cand) and _squash(cand) != _squash(reg):
+        return "report", "domain-shaped"  # ADVICE.CO.IL; Worthy.com == "Worthy Com" writes
+    if cand == reg:
+        return "absent", "identical-after-clean"
+    letters = [ch for ch in cand if ch.isalpha()]
+    if letters and all(ch.isupper() for ch in letters) and (len(letters) > 5 or " " in cand):
+        return "absent", "allcaps-styling"  # CSS-uppercase headers; AIG/IVIX still write
+    sc, sr = _stem(cand), _stem(reg)
+    if not sc or not sr:
+        return "report", "empty-stem"
+    if sc == sr:
+        return "write", cand             # case/punct/suffix-only: Abbvie -> AbbVie
+    if len(sc) >= 3 and sc in sr:
+        return "write", cand             # brand-shorter: Faye <- withfaye
+    if len(sr) >= 3 and sr in sc:
+        extra = len(identity_key(cand).split()) - len(identity_key(reg).split())
+        if extra <= 1:
+            return "write", cand         # Leumit Health -> Leumit Health Services
+        return "report", "candidate-adds-%d-words" % extra  # legal long forms
+    if len(_acronym(cand)) >= 2 and _acronym(cand) == sr:
+        return "write", cand             # DT -> Direct Travel
+    return "report", "different-name"
+
+
+def apply_display_names(records, verify):
+    """Set/clear `display_name` on `records` in place from board_verify evidence; the
+    single authoritative writer (see the section comment). An unreadable verify ({} —
+    `board_verify.load` returns that on any error) applies only the overrides and CLEARS
+    NOTHING: a corrupt read must never become a destructive write. Returns
+    {"written", "added", "removed", "divergent": [(name, employer_named, why)...],
+    "unmatched", "skipped"} — idempotent: same evidence in, byte-identical records out.
+
+    board_verify keys its rows by a LOWERCASED name and this store is keyed by the cased
+    registry string, so the join resolves through a lowercase index of `records` — the
+    verdict must judge the real registry name, or every case-only difference reads as a
+    fix. A lowercase collision between two record keys is skipped, never guessed."""
+    rep = {"written": 0, "added": 0, "removed": 0, "divergent": [], "unmatched": 0,
+           "skipped": not verify}
+    derived = {}
+    if verify:
+        index = {}
+        for k in records:
+            index.setdefault(str(k).lower(), []).append(k)
+        latest = {}
+        for key, row in verify.items():
+            if not isinstance(row, dict) or row.get("verdict") != "ok":
+                continue
+            named = str(row.get("employer_named") or "").strip()
+            if not named:
+                continue
+            name = str(key).split("|", 1)[0]
+            stamp = (str(row.get("date") or ""), str(key))
+            if name not in latest or stamp > latest[name][0]:
+                latest[name] = (stamp, named)
+        for name, (_stamp, named) in sorted(latest.items()):
+            keys = index.get(name.lower(), [])
+            if len(keys) != 1:
+                rep["unmatched"] += 1    # no record yet (self-heals), or an ambiguous twin
+                continue
+            verdict, payload = display_name_from_evidence(keys[0], named)
+            if verdict == "write":
+                derived[keys[0]] = payload
+            elif verdict == "report":
+                rep["divergent"].append((keys[0], named, payload))
+    for name, val in DISPLAY_NAME_OVERRIDES.items():
+        if name in records:
+            derived[name] = val
+    for name, rec in records.items():
+        if not isinstance(rec, dict):
+            continue
+        want = derived.get(name)
+        if want:
+            if rec.get(DISPLAY_NAME_KEY) != want:
+                rep["added"] += DISPLAY_NAME_KEY not in rec
+                rec[DISPLAY_NAME_KEY] = want
+            rep["written"] += 1
+        elif not rep["skipped"] and DISPLAY_NAME_KEY in rec:
+            del rec[DISPLAY_NAME_KEY]
+            rep["removed"] += 1
+    return rep
+
+
+def fold_sectors(records):
+    """Case-fold every record's `sector` in place (BACKLOG 482) and return how many
+    changed. Fold ONLY — `healthtech` vs `healthtech / medical devices` are two labels,
+    and merging labels is a judgement this pass must never make."""
+    n = 0
+    for rec in records.values():
+        if isinstance(rec, dict):
+            s = rec.get("sector")
+            if isinstance(s, str) and s != s.lower():
+                rec["sector"] = s.lower()
+                n += 1
+    return n
 
 
 def sync_store(st, run_date, shared=None):

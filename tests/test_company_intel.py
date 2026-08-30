@@ -19,6 +19,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from pipeline import board_verify as BV  # noqa: E402
 from pipeline import company_info, company_intel as CI, digest, firmographics as F, store  # noqa: E402
 
 TODAY = "2026-08-24"
@@ -44,6 +45,9 @@ def env(tmp_path, monkeypatch):
     # every test here writes the tracked cloud_state/pipeline_stages.json
     from pipeline import stages as _stages
     monkeypatch.setattr(_stages, "PATH", str(tmp_path / "stages.json"))
+    # --export now reads board_verify for display names (2026-08-30): scratch that too,
+    # or the chain-export tests silently read the tracked cloud_state/board_verify.json
+    monkeypatch.setattr(BV, "PATH", str(tmp_path / "board_verify.json"))
     calls = []
 
     def fake_claude(prompt, *, system="", schema="", model="", effort="", tools=(),
@@ -2092,3 +2096,117 @@ def test_the_grew_and_stale_warning_survives_a_corrupt_export():
     lines, warn = CI.audit_lines(r)
     assert any("nothing is draining it" in w for w in warn)
     assert "bulk cron: last ran 2026-08-25 (5d ago), 0 researched" in lines[0]
+
+
+# ---- display_name: the employer's own name, from evidence only (2026-08-30) -------- #
+# The registry key cannot change (it joins firmographics, the roles ledger and the public
+# CSV — BACKLOG 459), so slug rows ("withfaye") ship an optional `display_name` instead,
+# written by `apply_display_names` in --export from board_verify evidence + the override
+# table, and by nothing else. These guards pin the evidence rule, the single-writer
+# semantics, the _evidence exemption and the sector case-fold (BACKLOG 482).
+
+
+def test_display_name_writes_only_a_recognisably_same_company():
+    cases = [
+        ("Abbvie", "AbbVie", "AbbVie"),                      # stem-equal: pure case fix
+        ("Trustmi Network Ltd.", "Trustmi Network", "Trustmi Network"),  # suffix-only
+        ("Bluewhite Robotics", "Bluewhite", "Bluewhite"),    # brand-shorter containment
+        ("withfaye", "Faye", "Faye"),                        # brand inside an ATS slug
+        ("Jether Energy", "Jether Energy Research", "Jether Energy Research"),  # adds 1 word
+        ("DT", "Direct Travel", "Direct Travel"),            # acronym arm
+        ("Abcloudz", "ABCloudz, Inc.", "ABCloudz"),          # legal tail stripped
+    ]
+    for reg, named, want in cases:
+        verdict, payload = F.display_name_from_evidence(reg, named)
+        assert (verdict, payload) == ("write", want), (reg, named, verdict, payload)
+
+
+def test_display_name_reports_a_divergent_or_junk_name_instead_of_writing():
+    cases = [
+        ("Advice Electronics", "ADVICE.CO.IL", "domain-shaped"),
+        ("Outbrain", "Teads", "different-name"),             # a parent/product is NOT a fix
+        ("Merck Healthcare", "Merck KGaA, Darmstadt, Germany", "clause-or-junk"),
+        ("Allspring", "Allspring Global Investments", "candidate-adds-2-words"),
+        ("Acme", "Careers at Acme Group", "clause-or-junk"),  # page furniture, not a name
+    ]
+    for reg, named, why in cases:
+        verdict, payload = F.display_name_from_evidence(reg, named)
+        assert (verdict, payload) == ("report", why), (reg, named, verdict, payload)
+
+
+def test_hebrew_registry_names_are_never_rewritten_and_allcaps_styling_is_withheld():
+    # the two Hebrew-keyed rows ARE the employer's real name; an English form is a product
+    # decision, never this extractor's (docs/sessions/2026-08-30-company-intel-b.md)
+    assert F.display_name_from_evidence("מטריקס",
+                                        "matrixDnA (Matrix - DNA)") == ("report", "hebrew-registry")
+    assert F.display_name_from_evidence("אסם", "Osem") == ("report", "hebrew-registry")
+    assert F.display_name_from_evidence("הפניקס",
+                                        "הפניקס") == ("absent", "identical")
+    # CSS-uppercase headers are styling, not a name; short true initialisms still write
+    assert F.display_name_from_evidence("Mobius Protection Systems",
+                                        "MOBIUS PROTECTION SYSTEMS") == ("absent", "allcaps-styling")
+    assert F.display_name_from_evidence("Aig", "AIG") == ("write", "AIG")
+
+
+def test_apply_display_names_is_the_single_writer_and_survives_an_unreadable_verify():
+    recs = {"X Corp": {"sector": "s", "as_of": TODAY, "display_name": "Stale"},
+            "withfaye": {"sector": "s", "as_of": TODAY},
+            "Abbvie": {"sector": "s", "as_of": TODAY}}
+    verify = {"abbvie|u": {"verdict": "ok", "employer_named": "AbbVie", "date": TODAY},
+              "x corp|u": {"verdict": "NOT_THEIRS", "employer_named": "Other Co", "date": TODAY}}
+    rep = F.apply_display_names(recs, verify)
+    assert recs["Abbvie"]["display_name"] == "AbbVie"       # lowercased bv key -> cased record
+    assert "display_name" not in recs["X Corp"]             # evidence withdrawn -> retracted
+    assert recs["withfaye"]["display_name"] == "Faye"       # override, no verify row needed
+    assert rep["removed"] == 1 and not rep["skipped"]
+    # an unreadable verify ({}) must clear NOTHING: a corrupt read is not a retraction
+    recs2 = {"X Corp": {"sector": "s", "as_of": TODAY, "display_name": "Kept"},
+             "withfaye": {"sector": "s", "as_of": TODAY}}
+    rep2 = F.apply_display_names(recs2, {})
+    assert recs2["X Corp"]["display_name"] == "Kept" and rep2["skipped"]
+    assert recs2["withfaye"]["display_name"] == "Faye"      # overrides still apply
+    # the override wins over a conflicting extractor derivation
+    recs3 = {"withfaye": {"sector": "s", "as_of": TODAY}}
+    F.apply_display_names(recs3, {"withfaye|u": {"verdict": "ok", "employer_named": "Withfaye",
+                                                 "date": TODAY}})
+    assert recs3["withfaye"]["display_name"] == "Faye"
+
+
+def test_display_name_is_not_evidence_anywhere_evidence_is_counted():
+    """A cosmetic key must not decide `newer` ties or `display_index` rank — the AWS-over-
+    Amazon class: adding display_name to one record of an identity group must not switch
+    which record answers for the group."""
+    a = {"as_of": TODAY, "sector": "s"}
+    b = {"as_of": TODAY, "sector": "s", "display_name": "D"}
+    assert F.newer(a, b) is a                               # tie: display_name adds nothing
+    with_dn = {"sector": "s", "as_of": TODAY, "display_name": "Dell"}
+    without = {"sector": "s", "as_of": TODAY}
+    idx = F.display_index({"Dell Technologies": with_dn, "Dell Corporation": without})
+    assert idx[F.identity_key("Dell Technologies")] is without  # -len tiebreak, not evidence
+    # merge still PRESERVES the field when a re-research omits it (field-generic fill)
+    fresh = {"sector": "s2", "as_of": "2026-08-25"}
+    assert F.merge({"sector": "s", "as_of": TODAY, "display_name": "Faye"}, fresh)["display_name"] == "Faye"
+
+
+def test_coerce_lowercases_sector_and_never_accepts_a_display_name_from_the_model():
+    out = F._coerce({"sector": "Fintech", "display_name": "Evil Co"}, "X")
+    assert out["sector"] == "fintech"                       # one public enum (BACKLOG 482)
+    assert "display_name" not in out                        # evidence-only: never the model
+
+
+def test_the_export_pass_writes_display_names_and_folds_sectors_end_to_end(env, monkeypatch, tmp_path):
+    """--export is the ONE unattended writer: both cron paths run it, so a company verified
+    tomorrow gets its display_name and a case-folded sector with no session."""
+    import research_firmographics as RF
+    st, export, _, _ = env
+    export.write_text(json.dumps({"Abbvie": {**REC, "sector": "Fintech"}}), encoding="utf-8")
+    (tmp_path / "board_verify.json").write_text(json.dumps(
+        {"abbvie|u": {"verdict": "ok", "employer_named": "AbbVie", "date": "2026-08-30"}}),
+        encoding="utf-8")
+    monkeypatch.setattr(RF, "EXPORT", str(tmp_path / "state" / "firmographics.json"))
+    monkeypatch.setattr(RF, "SeenStore", lambda *a, **k: st)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--export"])
+    RF.main()
+    out = json.load(open(export, encoding="utf-8"))
+    assert out["Abbvie"]["display_name"] == "AbbVie"
+    assert out["Abbvie"]["sector"] == "fintech"
