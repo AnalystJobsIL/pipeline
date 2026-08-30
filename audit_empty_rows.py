@@ -151,10 +151,6 @@ _COMEET = re.compile(r"comeet", re.I)
 _UNSUPPORTED = re.compile(r"(eightfold\.ai|avature\.net|oraclecloud\.com|jobvite\.com|phenom)", re.I)
 
 
-# Path words `_ATS_IN_URL` reads as a tenant when the real tenant is in the query string.
-_EMBED_PATH_WORDS = frozenset(("embed", "job_board", "jobs", "boards", "api", "v1", "v0"))
-
-
 def active_twin(name, plat, tok, api, rows):
     """The name of another ACTIVE row already reading this board, or "".
 
@@ -178,8 +174,15 @@ def active_twin(name, plat, tok, api, rows):
     # Function-local so `audit_empty_rows` stays cheap to import for the four tools that
     # import IT. Neither module imports this one back, so a module-level edge would work;
     # this keeps `auto_expand`'s import cost off that path.
+    #
+    # NOT `apply_proposals`, though it owns the same keys: importing it pops
+    # BRIGHTDATA_API_KEY and zeroes PAGE_UNLOCK_BUDGET (its own paid-rung lock), which one
+    # call from `listing_hunt` would inherit for the whole process -- every later target
+    # searching into a disarmed unlocker and reporting a confident zero. The keys live in
+    # `pipeline.company_identity`, which has no import-time side effects, and BOTH tools
+    # read them from there.
     import auto_expand as _ax
-    import apply_proposals as _ap
+    from pipeline.company_identity import COMEET_UID, board_url_keys, _NOT_A_SLUG
 
     def _keys(p, t, u):
         out = set()
@@ -193,7 +196,7 @@ def active_twin(name, plat, tok, api, rows):
             # imported, not retyped, because the second key is the one that catches
             # query-string twins (`AWS` and `Amazon Web Services (AWS)` are both active on
             # one amazon.jobs page today, differing only in `?loc_query=`).
-            lo, hp = _ap._url_keys(u)
+            lo, hp = board_url_keys(u)
             if hp[0]:
                 out.add(("url", lo))
                 # ...but NOT where the query is the board's identity rather than a filter:
@@ -207,7 +210,7 @@ def active_twin(name, plat, tok, api, rows):
             # `/embed/job_board?for=<tenant>` puts the tenant in the QUERY, and the pattern
             # reads the path word `embed` as the tenant -- which would make every company
             # using the embed form one board. The `for=` form has no tenant in its path.
-            if m and m.group(2) not in _EMBED_PATH_WORDS:
+            if m and m.group(2) not in _NOT_A_SLUG:
                 out.add(("ats", _ax._ATS_PLAT[m.group(1)], m.group(2)))
             m2 = _ax._RECRUITEE_IN_URL.search(c)
             if m2:
@@ -215,7 +218,7 @@ def active_twin(name, plat, tok, api, rows):
             # Comeet is the largest ATS here (189 active rows) and its uid is the board's
             # true name: `comeet.com/jobs/<slug>/<uid>` and the careers-api form are the
             # same board under two spellings (`DealHub` / `DealHub.ai`, both active).
-            mc = _ap.COMEET_UID.search(cand or "")
+            mc = COMEET_UID.search(cand or "")
             if mc:
                 out.add(("comeet", mc.group(1).lower()))
         return out
@@ -561,7 +564,15 @@ def main():
             continue
         # ...and is anyone ELSE already reading it? Every gate above answers "is this board
         # this company's?"; a twin passes all of them (`active_twin`).
-        _tw = active_twin(name, plat, tok, api, rows)
+        # ONE fresh read serves both the check and the write, so nothing can activate the
+        # twin between them -- and the check must be fresh: two rows on one board are both
+        # `ok` here until the first is written, so a start-of-run snapshot cannot see the
+        # twin this very run just created. Deciding before printing is the rule this file's
+        # siblings already keep: an `[OK]` line for a row the write branch then refuses is
+        # the log that hid a day of bugs.
+        fresh = (list(csv.reader(open("companies.csv", encoding="utf-8"))) if apply
+                 else rows)
+        _tw = active_twin(name, plat, tok, api, fresh)
         if _tw:
             # NOT appended to `still`: `still` feeds `_deep_rung`, a Chromium render plus
             # `DEEP_BD_SEARCH_CAP` searches, and a twin is settled without either -- the
@@ -569,23 +580,17 @@ def main():
             print(f"  [==] {name}: {plat} {tok} verified {n_il} IL but that board is already "
                   f"read by the active row {_tw!r}", flush=True)
             if apply:
-                fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
                 for fr in fresh:
                     if fr and fr[0] == name and len(fr) >= 6:
-                        fr[5] = _note_replace(fr[5], "re-audit",
-                                              f"re-audit {TODAY}: twin-board; not activated")
+                        fr[5] = _note_replace(
+                            fr[5], "re-audit",
+                            f"re-audit {TODAY}: twin-board; no listing found")
                 write_csv_rows("companies.csv", fresh)
             continue
         fixed.append((name, plat, n_all, n_il))
         print(f"  [OK] {name}: {plat} {tok} -> {n_all} jobs / {n_il} IL", flush=True)
         if apply:
-            # re-read before every write (single-writer discipline) AND write incrementally
-            # so a killed run never loses verified fixes
-            fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
-            if active_twin(name, plat, tok, api, fresh):
-                # the re-read is the authority: another writer may have activated the twin
-                # between the check above and this write
-                continue
+            # write incrementally so a killed run never loses verified fixes
             for fr in fresh:
                 if fr and fr[0] == name and len(fr) >= 6:
                     fr[1], fr[2], fr[3] = plat, tok, api

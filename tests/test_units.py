@@ -511,23 +511,53 @@ def test_a_board_already_read_by_an_active_row_cannot_be_activated_again():
                          "https://api.ashbyhq.com/posting-api/job-board/stigg", other) == ""
 
 
+def test_the_twin_guard_does_not_disarm_the_paid_rungs(monkeypatch):
+    """`active_twin` needs the board-identity keys `apply_proposals` owns — and importing
+    THAT module pops `BRIGHTDATA_API_KEY` and zeroes `PAGE_UNLOCK_BUDGET`, because it locks
+    its own paid rungs at import. One twin check would have inherited that lock for the
+    whole process: `listing_hunt` calls the guard on its first `found` row, so every later
+    target searched into a disarmed unlocker and reported a confident zero — the 57-of-57
+    'dead' failure, reintroduced through an import. The keys live in
+    `pipeline.company_identity`, which has no import-time side effects."""
+    import audit_empty_rows as A
+    from pipeline import identity_gate as _g
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "FAKE-NOT-A-REAL-KEY")
+    monkeypatch.setenv("PAGE_UNLOCK_BUDGET", "100")
+    monkeypatch.setattr(_g, "_UNLOCK_BUDGET", 100, raising=False)
+    A.active_twin("X", "greenhouse", "x",
+                  "https://boards-api.greenhouse.io/v1/boards/x/jobs",
+                  [["Y", "greenhouse", "y",
+                    "https://boards-api.greenhouse.io/v1/boards/y/jobs", "true", "n"]])
+    assert os.environ.get("BRIGHTDATA_API_KEY") == "FAKE-NOT-A-REAL-KEY", "key was popped"
+    assert os.environ.get("PAGE_UNLOCK_BUDGET") == "100", "unlock budget was zeroed"
+    assert _g._UNLOCK_BUDGET == 100, "the gate's paid rung was locked by the guard's import"
+
+
 def test_every_activation_path_refuses_an_active_twin():
     """Every tool that flips `active` off a verified board can open a SECOND active row on
     one board. Named as a list this said three and the tree had five: `listing_hunt` and
     `repair_extract_gap` activate nightly, not just on Sunday, and `repair_extract_gap`
     activates off the row's STORED address — the shape that puts `Orca-AI` on `Orca AI`'s
-    page. So this scans, exactly like its sibling twenty lines up, and a sixth activator
-    added tomorrow fails it on the day it is written."""
+    page. So this scans, exactly like its sibling twenty lines up, and a new tool that
+    writes `fr[4] = "true"` fails it on the day it is written. It does NOT reach a row
+    built as a whole list (`apply_proposals` appends `[..., "true", note]`); that path has
+    `_collides`, which is stricter, and this test does not claim otherwise."""
     import glob
     import os
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    ungated = []
+    ungated, late = [], []
     for path in sorted(glob.glob(os.path.join(root, "*.py"))):
         src = open(path, encoding="utf-8", errors="replace").read()
-        if 'fr[4] = "true"' in src and "active_twin" not in src:
+        if 'fr[4] = "true"' not in src:
+            continue
+        if "active_twin" not in src:
             ungated.append(os.path.basename(path))
+        elif src.index("active_twin") > src.index('fr[4] = "true"'):
+            # importing the guard is not consulting it: it has to run BEFORE the write
+            late.append(os.path.basename(path))
     assert not ungated, (f"these tools activate a row without asking whether another ACTIVE "
                          f"row already reads that board: {ungated}")
+    assert not late, (f"these tools reach the guard only after activating: {late}")
 
 
 def test_the_deep_rung_cannot_activate_a_twin_row_or_an_off_host_endpoint(monkeypatch):

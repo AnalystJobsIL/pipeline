@@ -388,7 +388,7 @@ def main():
                         # Not `alias-of`: WHICH row survives is a human's call, and an
                         # activating tool that retires coverage on its own is the larger bug.
                         fr[5] = _note_replace(fr[5], "crack-walled",
-                                              f"crack-walled {TODAY}: twin-board; not activated")
+                                              f"crack-walled {TODAY}: twin-board; no listing found")
                     elif verdict.startswith("cracked"):
                         plat, lu = got
                         fr[1], fr[2], fr[3] = plat, "", lu
@@ -424,7 +424,8 @@ def main():
                             # honest column for a documented own-host page is `scrape`.
                             _ph = _INV.PLATFORM_HOST.get((fr[1] or "").strip().lower())
                             if _ph and not re.search(_ph, got[1] or "", re.I):
-                                fr[1], fr[2] = "scrape", ""
+                                fr[1] = "scrape"   # keep the tenant slug: it is
+                                #                    still the board's true name
                             fr[5] = _note_replace(
                                 fr[5], "crack-walled",
                                 f"crack-walled {TODAY}: host documented, 0 IL now")

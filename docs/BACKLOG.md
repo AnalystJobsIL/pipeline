@@ -229,6 +229,8 @@ closure convention in the header.
 - **502** `502@registry` **A shard killed mid-write leaves an unparsable proposal file, and the ingest skips it in silenc
 - **505** `505@registry` **8 verified boards name a DIFFERENT employer than their registry row
 - **509** `509@registry` **`BD_RUN_CAP=0`
+- **509** `509@registry` **`identity_ok` is a NO-OP for a name with no ASCII targets, and it activated a
+- **510** `510@registry` **`queue_resolve_search._is_ours` cannot read a Hebrew title or a spelled-out name: 13 of
 
 ### infra — 107 open
 
@@ -9347,3 +9349,58 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      the suite with the recommended guard set sees a false red and cannot tell it from a
      real one. The test should monkeypatch the cap it needs instead of inheriting the
      session's.
+
+## From the `registry` lane, 2026-08-31 (the drain session, wave 2)
+
+*Record: `docs/sessions/2026-08-30-registry-e.md`. Both were measured by an adversarial Opus
+pass over the night's own 172 proposals, not reasoned from the code.*
+
+510. **`identity_ok` is a NO-OP for a name with no ASCII targets, and it activated a
+     NEWSPAPER** — lane: `registry`. `identity_gate._name_targets("קבוצת שיבולת")` returns an empty set,
+     and callers read "no target objected" as "nothing objects", so the gate answers **True for
+     any URL whatsoever**. Reproduction, no network:
+     ```
+     from pipeline.identity_gate import _name_targets, identity_ok
+     _name_targets("קבוצת שיבולת")                                    -> set()
+     identity_ok("קבוצת שיבולת", "https://www.themarker.com/career")  -> True
+     identity_ok("קבוצת שיבולת", "https://www.ibm.com/careers")       -> True
+     identity_ok("Wix", "https://www.themarker.com/career")  -> False
+     ```
+     Live cost, 2026-08-30: the drain proposed `קבוצת שיבולת -> https://www.themarker.com/career` with
+     `10/10 IL`, and `apply_proposals` would have written it **active**. That page is
+     TheMarker's labour-news section; the string `שיבולת` occurs **0 times** on it and the ten
+     "Israel jobs" are bylined news articles. The session dropped the proposal by hand;
+     nothing in the code would have. **This is `317`'s family and strictly worse**: 317 is a
+     slug carrying FEW bits, this is a name carrying NONE.
+     **Do not fix it by refusing an empty target set.** Measured on `companies.csv` at
+     `7f17156`: **1 of 572 queue names** has no ASCII target (the one above) but **5 of 1,097
+     ACTIVE rows** do, and all five are real Israeli employers — Phoenix (`fnx.co.il`), Matrix,
+     Menora Mivtachim, Bank Leumi, Osem. A blanket `False` parks them on the next
+     re-verification. The shape that works in BOTH directions is to test the name's own script
+     against the page: a real Hebrew careers page carries the Hebrew name and TheMarker's does
+     not. `511` needs the same change — do them together.
+     (Noticed in passing: Osem's stored address is a **Facebook page**. Separate row-quality bug.)
+
+511. **`queue_resolve_search._is_ours` cannot read a Hebrew title or a spelled-out name: 13 of
+     67 refusals on 2026-08-30 were FALSE** — lane: `registry`. `_name_targets` joins the name
+     into one token and `_is_ours` strips `[^a-z0-9]` from the title before matching, so the
+     admit rule cannot fire when the title is Hebrew, spells the name as separate words, or
+     uses a variant:
+     ```
+     Naschitz Brandes Amir -> ['naschitzbrandesamir']  title words {careers, naschitz, brandes, amir}
+     Hi Sec Labs           -> ['hisec','hiseclabs']    title words {jobs, highseclabs}
+     Fironlawfirm          -> ['fironlawfirm']         title words {career, at, firon, law, firm}
+     ```
+     All 13 returned HTTP 200 from the company's OWN live careers page, 9 of 13 satisfy
+     `looks_like_a_job_listing_page`, and each still reproduces `_is_ours(...) == False`:
+     Hi Sec Labs (`highseclabs.com/jobs/`), First International Bank Of Israel, Naschitz
+     Brandes Amir, Megiddo Y K, Hot Telecommunication, Fironlawfirm, Eyesatopio (its real
+     Comeet board), Finalisrael, Mor Institute, Hi Tech Mechanics, Libra Insurance Ltd,
+     Hiperglobal Edge, More Investment House.
+     **The cost is not the miss, it is the cadence**: each waits out `tried_within(..., 14)`
+     and re-buys its Bright Data search on ~2026-09-14, for ever. Fix: match `_name_targets`
+     tokens AND their word-split forms against the title, and score a Hebrew title against the
+     Hebrew name. Rate **13 of 67 = 19.4 percent**, over 22 refusals examined; the other 7
+     examined were correctly refused, so the check is not one-sided.
+     Second, smaller cause in the same 67: `_fetch` reads 400,000 bytes and two Wix pages hit
+     exactly that cap, so the run judged a **truncated** page (`Eyecontrol`, `Nanoghost`).

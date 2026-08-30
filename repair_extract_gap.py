@@ -132,22 +132,33 @@ def main():
                   f"belongs to another company ({r[3][:44]}) — not activated", flush=True)
             continue
         if il:
+            # This tool activates off the row's STORED address, which is how a parked row
+            # lands on the board an active row already reads (`Orca-AI` on `Orca AI`'s
+            # careers page, one trailing slash apart). Identity says yes to both; only this
+            # asks who else is here. Decided BEFORE the counter and the print, so
+            # `N activated` counts activations and the log does not say `[OK]` for a row
+            # this branch refuses.
+            fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
+            _tw = _active_twin(r[0], "scrape", "", r[3], fresh)
+            if _tw:
+                still += 1
+                print(f"  [==]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL but that "
+                      f"board is already read by {_tw!r} — not activated", flush=True)
+                if apply:
+                    for fr in fresh:
+                        if fr and fr[0] == r[0] and len(fr) >= 6:
+                            fr[5] = _note_replace(
+                                fr[5], "repair ",
+                                f"repair {TODAY}: twin-board; no listing found")
+                    write_csv_rows("companies.csv", fresh)
+                # ...and NO `scraped_cache` write: caching the twin's jobs under this name
+                # is a landmine for the day someone activates the row by hand.
+                continue
             fixed += 1
             print(f"  [OK]  {n}/{len(targets)} {r[0][:26]:26} {len(il)} IL", flush=True)
             if apply:
-                fresh = list(csv.reader(open("companies.csv", encoding="utf-8")))
-                _tw = _active_twin(r[0], "scrape", "", r[3], fresh)
                 for fr in fresh:
                     if not (fr and fr[0] == r[0] and len(fr) >= 6):
-                        continue
-                    if _tw:
-                        # This tool activates off the row's STORED address, which is how a
-                        # parked row lands on the board an active row already reads
-                        # (`Orca-AI` on `Orca AI`'s careers page, differing by a trailing
-                        # slash). Identity says yes to both; only this asks who else is
-                        # here. ARCHITECTURE.md section 2, clause 4.
-                        fr[5] = _note_replace(fr[5], "repair ",
-                                              f"repair {TODAY}: twin-board; not activated")
                         continue
                     fr[1], fr[2], fr[3] = "scrape", "", r[3]
                     fr[4] = "true"

@@ -469,7 +469,7 @@ def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail, rows=N
             if not ok:
                 fr[5] = _note_replace(
                     fr[5], "deep-validated",
-                    f"deep-validated {TODAY}: endpoint off-host; unverified")
+                    f"deep-validated {TODAY}: endpoint off-host; needs re-resolution")
                 return
             api, n_all, n_il = cand, _n_all, _n_il
         _rows = rows
@@ -477,7 +477,7 @@ def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail, rows=N
             _rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
         if active_twin(name, plat, tok, api, _rows):
             fr[5] = _note_replace(fr[5], "deep-validated",
-                                  f"deep-validated {TODAY}: twin-board; not activated")
+                                  f"deep-validated {TODAY}: twin-board; no listing found")
             return
         fr[1], fr[2], fr[3] = plat, tok, api
         fr[4] = "true"

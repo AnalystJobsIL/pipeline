@@ -84,20 +84,15 @@ from pipeline.verdicts import is_terminal_row          # noqa: E402
 import queue_pipeline as _QP                           # noqa: E402  (row_name_for)
 
 CSV_PATH = "companies.csv"
-COMEET_UID = re.compile(
-    r"comeet\.com/(?:careers-api/2\.0/company/|jobs/[^/]+/)([0-9A-Za-z]{2}\.[0-9A-Za-z]{3})",
-    re.I)
 MAX_AGE_H = 6.0
 
-
-# --------------------------------------------------------------------------------------- #
-# de-dup
-# --------------------------------------------------------------------------------------- #
-def _url_keys(u):
-    """(lower api_url, (host, path)) -- the second catches query-string twins."""
-    u = (u or "").strip()
-    p = urllib.parse.urlparse(u)
-    return u.lower(), (p.netloc.lower(), (p.path or "").rstrip("/").lower())
+# The board-identity keys moved to `pipeline/company_identity.py` so the registry's
+# activation guard can use them WITHOUT importing this module: the lines above pop
+# BRIGHTDATA_API_KEY and zero PAGE_UNLOCK_BUDGET at import to lock this tool's paid rungs,
+# and a tool that imported the keys from here inherited that lock for its whole process
+# (`listing_hunt` went blind after its first twin check, 2026-08-31). Same objects, so
+# `_collides` and `audit_empty_rows.active_twin` cannot drift apart.
+from pipeline.company_identity import COMEET_UID, board_url_keys as _url_keys  # noqa: E402
 
 
 def _own_domain(u):

@@ -356,3 +356,29 @@ def looks_like_a_job_listing_page(url: str) -> bool:
         return False
     return bool(_LISTING_HOST.search(p.netloc) or _LISTING_PATH.search(p.netloc)
                 or _LISTING_PATH.search(p.path + "?" + (p.query or "")))
+
+
+# --------------------------------------------------------------------------------------- #
+# board identity keys — "is this the same BOARD?", as opposed to "is this the same company?"
+# --------------------------------------------------------------------------------------- #
+COMEET_UID = re.compile(
+    r"comeet\.com/(?:careers-api/2\.0/company/|jobs/[^/]+/)([0-9A-Za-z]{2}\.[0-9A-Za-z]{3})",
+    re.I)
+
+
+def board_url_keys(u):
+    """`(lower url, (host, path))` — the second catches query-string twins.
+
+    Two rows read ONE board under several spellings: a filter parameter (`AWS` and
+    `Amazon Web Services (AWS)` differ only by `?loc_query=`), a trailing slash, a case
+    change. The exact-url key misses all of those and the host+path key does not.
+
+    Lives here, in plumbing with no import-time side effects, because BOTH the proposal
+    applier and the registry's activation guard need it: `apply_proposals` pops
+    `BRIGHTDATA_API_KEY` and zeroes `PAGE_UNLOCK_BUDGET` at import to lock its own paid
+    rungs, so a tool that imported these keys FROM there disarmed Bright Data for its whole
+    process — `listing_hunt` went blind after its first twin check (2026-08-31).
+    """
+    u = (u or "").strip()
+    p = urllib.parse.urlparse(u)
+    return u.lower(), (p.netloc.lower(), (p.path or "").rstrip("/").lower())
