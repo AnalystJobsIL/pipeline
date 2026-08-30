@@ -161,3 +161,8 @@ the time, since it is the same number this table re-derives.
   `guard-kill`, five `mutation-gate` shards, six rehearsals). The run before it, on
   `a476f24`, was `success` too, so nothing red was inherited. The three guards added here
   ran under `guard-kill` there and passed it: each fails with its target reverted to base.
+* **The follow-up `a13045a` was pushed red, by me.** Recording the verdict put `HANDOFF.md`
+  at 3,206 words against the 3,200 cap; I read the lint's last line, not its error line, and
+  pushed. Run 33329556885 is expected to fail `guard` on `test_docs_are_consistent_with_the_code`.
+  Fixed in the next commit by trimming the line; the same cap three lanes hit today, and the
+  same misread clause 3 warns about — the step you care about is not the verdict.
