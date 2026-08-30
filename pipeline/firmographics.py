@@ -950,9 +950,30 @@ def display_name_from_evidence(registry_name, employer_named):
         return "report", "domain-shaped"  # ADVICE.CO.IL; Worthy.com == "Worthy Com" writes
     if cand == reg:
         return "absent", "identical-after-clean"
+    # the page confirming the registry form in a parenthetical is a vote FOR the registry
+    # name, not against it: 'RiversideFM, Inc. (Riverside.fm)' must not overwrite the brand
+    for inner in re.findall(r"\(([^)]*)\)", raw):
+        if _squash(inner) and _squash(inner) == _squash(reg):
+            return "absent", "registry-confirmed-in-parenthetical"
     letters = [ch for ch in cand if ch.isalpha()]
-    if letters and all(ch.isupper() for ch in letters) and (len(letters) > 5 or " " in cand):
+    if letters and all(ch.isupper() for ch in letters) \
+            and (len(letters) > 5 or " " in cand or any(ch.isdigit() for ch in cand)):
         return "absent", "allcaps-styling"  # CSS-uppercase headers; AIG/IVIX still write
+    if _squash(cand) == _squash(reg):
+        # same letters, different dress: write only a strict casing ENRICHMENT (AbbVie,
+        # BiltOn). A page echoing 'onebeat' for 'Onebeat', or 'Kela' for the brand KELA,
+        # degrades a registry casing that was already the employer's own (wave 1a).
+        if sum(ch.isupper() for ch in cand) > sum(ch.isupper() for ch in reg):
+            return "write", cand
+        return "absent", "casing-not-richer"
+    # an Israel-qualified row naming its global parent form is backwards on an Israel board
+    if re.search(r"(?i)\bisrael\b", reg) and not re.search(r"(?i)\bisrael\b", cand):
+        return "absent", "keeps-the-israel-form"
+    # a corporate-umbrella word the registry name does not carry is the parent/holding
+    # substitution shape (wave 1a: 'Yael Group', 'HSBC Group', 'Ultra Clean Holdings')
+    added = set(cand.lower().split()) - set(reg.lower().split())
+    if added & {"group", "groupe", "holdings", "holding", "international", "worldwide"}:
+        return "report", "corporate-umbrella"
     sc, sr = _stem(cand), _stem(reg)
     if not sc or not sr:
         return "report", "empty-stem"
@@ -986,9 +1007,10 @@ def apply_display_names(records, verify):
            "skipped": not verify}
     derived = {}
     if verify:
-        index = {}
+        index, idents = {}, {}
         for k in records:
             index.setdefault(str(k).lower(), []).append(k)
+            idents.setdefault(identity_key(k), []).append(k)
         latest = {}
         for key, row in verify.items():
             if not isinstance(row, dict) or row.get("verdict") != "ok":
@@ -1007,6 +1029,16 @@ def apply_display_names(records, verify):
                 continue
             verdict, payload = display_name_from_evidence(keys[0], named)
             if verdict == "write":
+                # a derived name whose identity is ANOTHER record's is the impersonation
+                # shape (wave 1a: 'Trigo Retail' -> 'Trigo' beside the active row `Trigo`,
+                # 'kelasys' -> 'Kela Technologies' beside `KELA`): refuse it here; the
+                # duplicate row itself is registry's to park (487's class). Overrides are
+                # exempt on purpose — hand-curated, and render's identity guard backstops.
+                ik = identity_key(payload)
+                if ik != identity_key(keys[0]) and ik in idents:
+                    rep["divergent"].append(
+                        (keys[0], named, "identity-collision(%s)" % idents[ik][0]))
+                    continue
                 derived[keys[0]] = payload
             elif verdict == "report":
                 rep["divergent"].append((keys[0], named, payload))

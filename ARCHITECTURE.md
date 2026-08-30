@@ -3321,12 +3321,14 @@ pass — `firmographics.apply_display_names`, run by `research_firmographics.py 
 both cron paths — from two evidence arms and nothing else: `cloud_state/board_verify.json`'s
 `employer_named` (an LLM's read of the company's own careers page) where
 `display_name_from_evidence` judges the page's name recognisably the *same* company
-(shared stem, containment, acronym — **104 records** on 2026-08-30), and the 4-row
-`DISPLAY_NAME_OVERRIDES` table whose slugs fail containment by construction but carry
-first-party JD/tenant evidence in the comment beside each. A page naming a *different*
-string — a parent, a product, a mis-read — is printed as `divergent: ... — not written`
-(**43** that day; `python research_firmographics.py --display-report` is the full triage),
-because a confidently wrong name is worse than a slug. Three rules the tests pin: the pass
+(shared stem, containment, acronym — **72 records** on 2026-08-31, after an adversarial
+audit of the first cut removed 32: parent-umbrella words, casing degradations, identity
+collisions — the session record's §3), and the 4-row `DISPLAY_NAME_OVERRIDES` table whose
+slugs fail containment by construction but carry first-party JD/tenant evidence in the
+comment beside each. A page naming a *different* string — a parent, a product, a mis-read,
+a name whose `identity_key` is another record's — is printed as `divergent: ... — not
+written` (**55** that day; `python research_firmographics.py --display-report` is the full
+triage), because a confidently wrong name is worse than a slug. Three rules the tests pin: the pass
 sets **and clears** from current evidence each run, so withdrawn evidence retracts a name
 (the retraction `merge`'s fill-forward cannot express — an unreadable verify clears
 nothing); `display_name` is in `_EVIDENCE_EXEMPT`, so a cosmetic key never flips `newer()`

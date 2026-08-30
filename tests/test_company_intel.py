@@ -2210,3 +2210,32 @@ def test_the_export_pass_writes_display_names_and_folds_sectors_end_to_end(env, 
     out = json.load(open(export, encoding="utf-8"))
     assert out["Abbvie"]["display_name"] == "AbbVie"
     assert out["Abbvie"]["sector"] == "fintech"
+
+
+def test_wave1a_defect_classes_are_refused_parent_casing_israel_and_collisions():
+    """2026-08-31 adversarial audit of the first 104 written names (wave 1a, session
+    record §3): every class it confirmed as a wrong write must now be refused."""
+    # a parent/holding umbrella word the registry row does not carry
+    assert F.display_name_from_evidence("Ultra Clean Technology",
+                                        "Ultra Clean Holdings, Inc.") == ("report", "corporate-umbrella")
+    assert F.display_name_from_evidence("Yael Korentec Technologies",
+                                        "Yael Group") == ("report", "corporate-umbrella")
+    # same letters, poorer dress: the page echoing a tenant string must not degrade the brand
+    assert F.display_name_from_evidence("Onebeat", "onebeat") == ("absent", "casing-not-richer")
+    assert F.display_name_from_evidence("KELA", "Kela") == ("absent", "casing-not-richer")
+    assert F.display_name_from_evidence("Abbvie", "AbbVie") == ("write", "AbbVie")  # enrichment still writes
+    # the page confirming the registry form in a parenthetical votes FOR the registry name
+    assert F.display_name_from_evidence("Riverside.fm",
+                                        "RiversideFM, Inc. (Riverside.fm)") == ("absent", "registry-confirmed-in-parenthetical")
+    # an Israel-qualified row naming its global form is backwards on an Israel board
+    assert F.display_name_from_evidence("Publicis Groupe Israel",
+                                        "Publicis Groupe") == ("absent", "keeps-the-israel-form")
+    # digits defeated the all-caps letter count (GROUP19: 5 alpha chars)
+    assert F.display_name_from_evidence("Group19 Tech", "GROUP19") == ("absent", "allcaps-styling")
+    # a derived name whose identity_key is ANOTHER record's is the impersonation shape
+    recs = {"Trigo Retail": {"sector": "s", "as_of": TODAY},
+            "Trigo": {"sector": "s", "as_of": TODAY}}
+    rep = F.apply_display_names(recs, {"trigo retail|u": {
+        "verdict": "ok", "employer_named": "Trigo", "date": TODAY}})
+    assert "display_name" not in recs["Trigo Retail"]
+    assert rep["divergent"] == [("Trigo Retail", "Trigo", "identity-collision(Trigo)")]

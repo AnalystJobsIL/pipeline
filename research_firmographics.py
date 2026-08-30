@@ -194,9 +194,10 @@ def main():
         # rule, grouped by verdict, nothing written.
         verify = BV.load(os.path.join(HERE, BV.PATH))
         recs, _status = load_shared_status()
-        index = {}
+        index, idents = {}, {}
         for k in recs:
             index.setdefault(str(k).lower(), []).append(k)
+            idents.setdefault(identity_key(k), []).append(k)
         rows = {}
         for key, row in verify.items():
             if isinstance(row, dict) and row.get("verdict") == "ok" \
@@ -213,6 +214,10 @@ def main():
                 unmatched += 1
                 continue
             verdict, payload = F.display_name_from_evidence(keys[0], named)
+            if verdict == "write":
+                ik = identity_key(payload)
+                if ik != identity_key(keys[0]) and ik in idents:
+                    verdict, payload = "report", "identity-collision(%s)" % idents[ik][0]
             buckets[verdict].append((keys[0], named, payload))
         for verdict in ("write", "absent", "report"):
             print(f"== {verdict} ({len(buckets[verdict])}) ==")

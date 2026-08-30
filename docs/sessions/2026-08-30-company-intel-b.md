@@ -30,7 +30,7 @@ consequence.
   before both writes; `--display-report` prints the full write/absent/report triage;
   the export prints `display_names=N (+A/-R) divergent=D sectors_folded=S`.
 - `cloud_state/firmographics.json` materialized in the same commit.
-- 7 guards in `tests/test_company_intel.py`, all KILLS under `tools/guard_kill.py`.
+- 8 guards in `tests/test_company_intel.py`, all KILLS under `tools/guard_kill.py`.
 
 **Evidence arms, and only these.** (1) `cloud_state/board_verify.json`'s `employer_named`
 — an LLM's read of the company's OWN careers page, quote-required, `verdict == "ok"` only
@@ -45,8 +45,11 @@ reported, never written: a confidently wrong name is worse than a slug.
 
 **Counts, measured at the fold (re-derive with `--display-report`):** 908 verify rows →
 559 ok+named → 341 resolve to a record (267 have no record yet — the pass self-heals as
-coverage and research grow) → **104 written · 140 absent (identical/all-caps-styling) ·
-43 reported**. Sector case-fold: **565** records changed; 0 mixed-case sectors remain.
+coverage and research grow) → after wave 1a's cuts (§3b) **72 written · 55 reported ·
+the rest absent** (identical / all-caps styling / casing-not-richer). The first cut wrote
+104; the audit removed 32, and the SAME pass retracted them — the clear-on-no-evidence
+semantics doing exactly its job on its first day. Sector case-fold: **565** records
+changed; 0 mixed-case sectors remain.
 
 ## 3. Three behaviours the tests pin, and why
 
@@ -68,6 +71,34 @@ record exactly; 313 more match case-insensitively. The pass resolves through a l
 index and judges the REAL registry key — without that, every case-only difference reads
 as a "fix" (an early un-resolved run wrote 436 names, 4× too many). An ambiguous
 lowercase twin is skipped, never guessed.
+
+## 3b. Wave 1a — an opus audit of all 104 written names found 13 defect classes
+
+The audit read every written pair against its verify record and `companies.csv`. Confirmed
+and fixed the same evening, each with a rule and a pinned test
+(`test_wave1a_defect_classes_are_refused_parent_casing_israel_and_collisions`):
+
+- **Parent/umbrella substitution** (`Yael Korentec Technologies`→`Yael Group` — a
+  staffing-agency parent; `Ultra Clean Technology`→`Ultra Clean Holdings`; `HSBC Group`):
+  `identity_key` strips `group/technologies/israel`, so the parent stems equal to the
+  subsidiary. Fix: an umbrella word the registry name does not carry → `report`.
+- **Identity collision** (`Trigo Retail`→`Trigo` beside the ACTIVE French `Trigo` row —
+  the wrong-company class; `kelasys`→`Kela Technologies` beside `KELA`; plus
+  `Atera Networks`→`Atera`, `brightdata`→`Bright Data`, `Alice IO`→`Alice`, same employer
+  but a byte-identical name on two rows): a derived name whose `identity_key` is another
+  record's is refused as `identity-collision(<row>)`. Genuine improvements lost to this
+  (`brightdata`) come back when `registry` collapses the duplicate rows — that is 487's
+  class, not a display fix.
+- **Casing degradation** (`KELA`→`Kela`, `Onebeat`→`onebeat`, `RealPlay`→`Realplay`):
+  same letters must now be a strict casing ENRICHMENT (`Abbvie`→`AbbVie` still writes).
+- **The parenthetical held the brand** (`Riverside.fm` ← `RiversideFM, Inc.
+  (Riverside.fm)`): a parenthetical squash-equal to the registry name is a vote FOR it.
+- **`X Israel`→`X` inversion** (`Publicis Groupe Israel`→`Publicis Groupe`): absent.
+- **Digits defeated the all-caps guard** (`GROUP19`: 5 alpha chars): digits now count.
+
+Clean under attack: zero Hebrew leakage, zero domain-shaped writes, all 4 overrides
+verified against their evidence, and the report bucket's direction of error is right (it
+correctly held `QuantLR`←`HEQA Security`, `UserWay`←`Level Access`, `Outbrain`←`Teads`).
 
 ## 4. The 8 rows, one by one
 
