@@ -23580,3 +23580,43 @@ def test_refresh_the_stamp_counts_ownless_and_alarms_only_on_a_jump(tmp_path, mo
     stamp = _json.loads(p.stages.read_text(encoding="utf-8"))["collect"]
     assert {"ownless", "ownless_base", "ownless_rows_base"} <= set(stamp)
     assert R._uncached_base("ownless") == (stamp["ownless_base"], stamp["ownless_rows_base"])
+
+
+def test_scrape_a_span_wrapped_heading_is_still_a_card():
+    """Wix wraps every heading's text in styling spans, so `[^<]` matched NOTHING on
+    GenCell's 12-role board and its Commercial Manager vanished with the 2026-08-26
+    chrome (228). Tags are stripped from the captured text; the junk gates are unchanged."""
+    import scrape_universal as N
+    cards = "".join(
+        f'<h2 class="font_2"><span style="x"><span>{t}</span></span></h2>'
+        f'<p>Petah Tikva, Israel</p>'
+        for t in ("Validation Engineer", "QA Engineer", "Project Manager"))
+    add, jobs = N._make_adder("GenCell", "https://co.example/jobs")
+    N._from_cards("<html>" + cards + "</html>", False, add)
+    assert [j["title"] for j in jobs] == ["Validation Engineer", "QA Engineer", "Project Manager"]
+    assert all(j["location"] == "Petah Tikva, Israel" for j in jobs)
+
+
+def test_scrape_a_registry_url_that_is_itself_a_position_page_is_read(monkeypatch):
+    """nsKnox's registry url IS the position page (`/jobs/<role-slug>/`, 200, the posting
+    live) and no strategy read a single position page as a listing — the row sat
+    `regressed-to-zero` for weeks (228). The rung fires only when every strategy found
+    nothing, the url path is posting-shaped with a multi-word slug, and the page's h1 is
+    not a board index; the Pecan/VAST group rules then judge the one page."""
+    import scrape_universal as N
+    monkeypatch.delenv("SCRAPE_ASSUME_IL", raising=False)
+    page = ("<html><h1>Customer Service Professional - Student Position</h1>"
+            "<p>nsKnox, one of Israel's leading fintech security companies, is hiring.</p>"
+            + "x" * 2100 + "</html>")
+    url = "https://co.example/jobs/customer-service-professional-student-position/"
+    jobs, strategy = N._extract("nsKnox", url, _rendered(url=url, page_html=page),
+                                fetch=_no_fetch)
+    assert strategy == "links" and len(jobs) == 1
+    assert jobs[0]["title"].startswith("Customer Service Professional")
+    assert jobs[0]["location"] == "Israel" and jobs[0]["_loc_src"] == "group"
+    # a board INDEX under /jobs/ never enters the rung: multi-word slug required,
+    # and a board-ish h1 is refused by _parse_position_page
+    idx_page = "<html><h1>Open Positions</h1><p>Israel</p>" + "x" * 2100 + "</html>"
+    jobs2, _ = N._extract("Co", "https://co.example/jobs/", _rendered(page_html=idx_page),
+                          fetch=_no_fetch)
+    assert jobs2 == []

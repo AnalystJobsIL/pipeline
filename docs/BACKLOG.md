@@ -3549,7 +3549,19 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     The next extractor change re-poisons: the sanctioned repeat is
     `python health_check.py --rebase-scrape <rev>` (the evidence) then `--apply "A,B,…"`.
 228. **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-    recorded as an empty page** — lane: `scraper`. The 2026-08-26 extractor dropped these along
+    recorded as an empty page** — lane: `scraper`. **Re-derived 2026-08-31 (`scraper`), all four
+    diagnosed, two mechanisms fixed, each with a guard:** the wall sub-claim is CLOSED —
+    `_classify` no longer books an ip-refused render "empty" on a decoy plain-200 (live:
+    lakeFS now reads `error http:403`; its rescue needs the unlocker and is the one piece
+    left). **nsKnox** FIXED: its registry url IS the position page and no strategy read one
+    as a listing — a gated one-`_Board` rung now does (live scoped dry-run: `1 via links`);
+    cache entry lands at the next 00:00 cron. **GenCell** now READABLE (12 span-wrapped Wix
+    headings matched nothing under `[^<]`; pattern fixed) but the board prints no
+    per-posting location, so all are honestly refused and counted (`loc_unknown=11` on the
+    scoped run) — placing them is a registry/hunt call, not a stamp. **Predicta Med** lists
+    exactly 2 roles, below the >=3 same-class card floor — the floor is the junk gate and
+    stays; the row wants a native or hunt path. The 2026-08-26 "Commercial Manager" is no
+    longer listed on GenCell's board (12 other roles are). The 2026-08-26 extractor dropped these along
     with the chrome, and their rows are (correctly) still `regressed-to-zero`: **GenCell**
     `Commercial Manager` (`gencellprojects.com/jobs/commercial-manager`), **Predicta Med**
     `Senior AI Engineer` (Ramat Gan), **lakeFS** `Director of Product Management`

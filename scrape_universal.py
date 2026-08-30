@@ -114,7 +114,9 @@ ISRAEL_LOC = _build_israel_loc()
 _POSTING_HREF = re.compile(r"/(job|jobs|position|opening|vacancy|role)s?[/\-_=?]|gh_jid=|/apply\b", re.I)
 # strategy 3: job cards as N same-class siblings
 _CARD_PATTERNS = (
-    r"<(h[1-4])([^>]*)>([^<]{5,90})</\1>",
+    # inner <span>s tolerated: Wix wraps every heading's text in styling spans, so GenCell's
+    # 12-role board matched NOTHING under a bare `[^<]` (228; tags are stripped at read)
+    r"<(h[1-4])([^>]*)>((?:[^<]|</?span[^>]*>){5,140}?)</\1>",
     # non-heading job cards: any tag whose class names it a job/position title
     # (e.g. Legit Security's <p class="job-post-title">)
     r'<(p|div|span|a)([^>]*class=["\'][^"\']*(?:job|position|role|opening)[^"\']*'
@@ -1213,7 +1215,8 @@ def _from_cards(page_html, url_is_il, add, promote_only=False):
     groups = {}
     for pat in _CARD_PATTERNS:
         for m in re.finditer(pat, page_html, re.I):
-            tag, attrs, text = m.group(1).lower(), m.group(2), m.group(3).strip()
+            tag, attrs = m.group(1).lower(), m.group(2)
+            text = re.sub(r"<[^>]+>", "", m.group(3)).strip()
             cm = re.search(r'class=["\']([^"\']+)', attrs) if "class=" in attrs else None
             cls = cm.group(1) if cm else ""
             groups.setdefault((tag, cls), []).append((m.start(), text, ""))
@@ -2061,6 +2064,19 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
     r.llm_skipped += skipped
     if add.israeli:
         return done()
+    if page_html and _POSTING_HREF.search(url) and len(_slug_text(url).split()) >= 2:
+        # the registry row's url IS a single position page (nsKnox's /jobs/<role-slug>/
+        # answered 200 with the posting for weeks, 228) — no strategy read one as a
+        # listing. Gated: every strategy found nothing, the url path is posting-shaped
+        # with a multi-word slug (a bare `/jobs/` board never enters), and
+        # `_parse_position_page` refuses a board-index h1 (`_NOT_A_POSITION`). One page,
+        # one `_Board`, so the Pecan/VAST group rules judge it like any opened position.
+        add.stage = "links"
+        one = _Board(add)
+        one.read(page_html, url)
+        one.flush()
+        if add.israeli:
+            return done()
     r.loc_unknown = len(add.locless)     # the two exits below skip done()
     # 6) nothing was read off the page itself. Is the page a skin over a board we can
     #    already read? Detection and the identity verdict are free and are RECORDED here
