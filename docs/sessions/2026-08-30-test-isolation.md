@@ -156,8 +156,10 @@ no other measurement of.
   fix), `rehearse (mixed, seeds 1–5)` **success**, `rehearse (worst, seed 1)` **failure —
   inherited**: `FAIL night 1: pool validate_empty (Sun 04:00) lost 1 rows it should keep:
   ['Syte']`, byte-identical on the previous run `33302546519` (`d01213f`, `registry`'s
-  push, before anything of mine existed). Mutation shards: see the HANDOFF line for the
-  conclusion quoted after they finished.
+  push, before anything of mine existed). Mutation shards 0/1/2: **success**, all three.
+  The run's overall conclusion is therefore `failure` on that one inherited job alone.
+  The follow-up push `ba3d804` (run **33306204991**): `guard` and `guard-kill` **success**
+  (`before` = the cloud-run commit, 0 new tests).
 * `guard_kill` judges a push by `github.event.before`; a push of several commits is one
   range, so a test added in commit 2 and its fix in commit 3 is KILLS, and a test whose fix
   landed in an EARLIER push is CANNOT-FAIL on the push that adds it. That is the intended
