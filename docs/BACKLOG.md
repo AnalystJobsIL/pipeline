@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**553 filed · 404 open · 149 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**554 filed · 405 open · 149 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 503.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 504.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -508,7 +508,7 @@ closure convention in the header.
 - **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 
-### classifier — 9 open
+### classifier — 10 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -519,6 +519,7 @@ closure convention in the header.
 - **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
 - **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
 - **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
+- **503** `503@classifier` **The contract drain still competes with fresh roles for the same call budget; the deferred
 
 ### render — 6 open
 
@@ -9145,3 +9146,17 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      A bare `Israel` is not wrong — a board that lists "Israel" as the office is honest — but
      it is the value a stamped card and an honest card share, so each deserves one look at the
      posting's own page; a wrong one goes into `roles_retractions.jsonl`.
+
+503. **The contract drain still competes with fresh roles for the same call budget; the deferred
+     drain would end that trade for good** — lane: `classifier`. Filed 2026-08-30 (evening).
+     The fresh-reserve (`CLASSIFY_FRESH_RESERVE`, 80) is a guard-rail, not a solution: it
+     protects fresh roles by REFUSING drain work, so on a morning where backlog + fresh
+     exceeds `cap − reserve` the queue survives another day. The clean shape is a deferred
+     drain — serve the stale verdict for today's decision, queue the re-judgement, spend
+     whatever budget is LEFT after every fresh role is judged (verdict lands in the cache for
+     tomorrow). Costs that made it wrong to ship the night before an unattended run: job
+     payloads must be retained per queued role, `roles.classify_grouped` is invoked twice
+     (`run.py:389` and `:410`) so the flush point needs care, and the YES cohort must stay
+     inline (a stale YES is on the board NOW) — an inline-YES/deferred-NO hybrid. Take it
+     only with a rehearsal (`tests/rehearse_classifier.py`) proving the flush runs after the
+     second `classify_grouped` call and the cache diff matches the queue.

@@ -20532,7 +20532,9 @@ def test_the_stale_yes_drain_cannot_starve_the_fresh_roles_behind_it(monkeypatch
     the 48-hour email window and never be mailed at all."""
     _fake_seam(monkeypatch, lambda p: _ok("YES"))
     cache = {"v3.deadbeef|acme|stale analyst %d|bare" % i: True for i in range(200)}
-    clf = seniority.Classifier(llm_cache=cache, cap=100, rejudge_cap=60)
+    # fresh_reserve=0: this test isolates the YES-cap mechanism; the reserve has its own
+    # kill-test below and would stop the drain at `cap - reserve` before the cap could bite
+    clf = seniority.Classifier(llm_cache=cache, cap=100, rejudge_cap=60, fresh_reserve=0)
     clf.rejudge_yes_cap = 40
     for i in range(200):
         clf.classify({"company": "Acme", "title": "Stale Analyst %d" % i})
@@ -20545,6 +20547,74 @@ def test_the_stale_yes_drain_cannot_starve_the_fresh_roles_behind_it(monkeypatch
     # of the pool the cap actually bounds
     assert clf.stale_rejudged - clf.stale_rejudged_yes == 0
     assert "stale-yes/cap 40" in clf.summary()
+
+
+def test_the_drain_never_spends_the_fresh_reserve(monkeypatch):
+    """2026-08-30 evening. The YES cap's "deliberately generous" 150 was the only thing
+    standing between a backlog morning and starved fresh roles -- a number gesturing at a
+    promise the code did not hold. `fresh_reserve` holds it structurally: the drain (both
+    cohorts) may never consume the run's final `fresh_reserve` call slots, so a fresh role
+    behind a 150-role stale wall is judged, not `llm_skipped`. Without the reserve this
+    Classifier(cap=100, rejudge_cap=100) spends all 100 attempts on the wall and the fresh
+    role behind it falls out of the 48-hour email window."""
+    _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    cache = {"v3.deadbeef|acme|stale analyst %d|bare" % i: False for i in range(150)}
+    clf = seniority.Classifier(llm_cache=cache, cap=100, rejudge_cap=100, fresh_reserve=80)
+    for i in range(150):
+        clf.classify({"company": "Acme", "title": "Stale Analyst %d" % i})
+    # the drain stopped at exactly cap - fresh_reserve attempts; the rest were served stale
+    assert clf.attempts == 20, clf.attempts
+    assert clf.stale_rejudged == 20, clf.stale_rejudged
+    assert clf.reserve_held == 130, clf.reserve_held
+    fresh = clf.classify({"company": "Acme", "title": "Data Analyst New",
+                          "description": _TEXT})
+    assert fresh["path"] == "llm", fresh
+    # ...and the mail's runs-to-empty divides by the rate the reserve actually allows
+    # (20 a run), not by the nominal cap of 100
+    assert any("about 7 more run(s)" in a for a in clf.alarms()), clf.alarms()
+
+
+def test_a_reserve_pause_is_not_a_stalled_scope_change(monkeypatch):
+    """2026-08-30 evening. The "scope change has stalled" alarm fires when roles were
+    re-judgeable, the seam was up and nothing drained. A run whose fresh roles spent down
+    to the reserve before the first stale row was met satisfies all three -- and is the
+    reserve WORKING, not the drain breaking. `reserve_held` gates the alarm."""
+    _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    cache = {"v3.deadbeef|acme|old analyst|bare": False}
+    monkeypatch.setenv("CLASSIFY_FRESH_RESERVE", "80")
+    clf = seniority.Classifier(llm_cache=cache, cap=90, rejudge_cap=60)
+    for i in range(10):    # fresh roles burn down to the reserve line first
+        clf.classify({"company": "Acme", "title": "Data Analyst %d" % i,
+                      "description": _TEXT})
+    stale = clf.classify({"company": "Acme", "title": "Old Analyst"})
+    assert stale["path"] == "llm_cache", stale
+    assert clf.stale_rejudged == 0 and clf.reserve_held == 1, (clf.stale_rejudged,
+                                                              clf.reserve_held)
+    assert not any("stalled" in a for a in clf.alarms()), clf.alarms()
+
+
+def test_a_deliberate_contract_change_drains_in_one_unattended_run(monkeypatch):
+    """2026-08-30 evening. The morning of 2026-08-30 left 210 roles decided by a superseded
+    verdict, "about 4 more run(s)" at cap 60 -- and GitHub fired 66 of the last 71 cron
+    slots, so four more runs meant Wednesday at best. Under the shipped defaults the whole
+    2026-08-30-shaped morning (210 stale NOs interleaved with 80 fresh roles) drains in ONE
+    run with the fresh reserve intact: every fresh role is judged, nothing is queued, and
+    neither the SUPERSEDED line nor the stalled line reaches the mail."""
+    _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    cache = {"v3.deadbeef|acme|stale analyst %d|bare" % i: False for i in range(210)}
+    clf = seniority.Classifier(llm_cache=cache)     # production = the defaults, no env
+    fresh_paths = []
+    for i in range(210):
+        clf.classify({"company": "Acme", "title": "Stale Analyst %d" % i})
+        if i < 80:
+            fresh_paths.append(clf.classify(
+                {"company": "Acme", "title": "Data Analyst %d" % i,
+                 "description": _TEXT})["path"])
+    assert clf.stale_rejudged == 210, clf.stale_rejudged
+    assert clf.stale_served - clf.stale_unreachable == 0, clf.stale_served
+    assert clf.reserve_held == 0, clf.reserve_held
+    assert fresh_paths and set(fresh_paths) == {"llm"}, set(fresh_paths)
+    assert not any("SUPERSEDED" in a or "stalled" in a for a in clf.alarms()), clf.alarms()
 
 
 def test_an_enum_on_a_list_column_constrains_each_value_not_the_cell():

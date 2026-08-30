@@ -45,7 +45,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 
 | due | lane | must be true | answered | verdict |
 |---|---|---|---|---|
-| 2026-08-31 | classifier | the scope rule is **live and draining** in an UNATTENDED run: the `classify:` line names a contract that is NOT `v3.a517bb77`, and `re-judged` is above 0. `re-judged 0` with the breaker closed means the `drain did NOT move this run` alarm fired | | not yet due |
+| 2026-08-31 | classifier | the scope rule is **live and draining** in an UNATTENDED run: the `classify:` line names a contract that is NOT `v3.a517bb77`, `re-judged` above 0, and the `SUPERSEDED` clause GONE (08-30 evening caps: one-run drain; a one-directional `drain moved` line is expected) | | not yet due |
 | 2026-09-10 | infra | `python tests/schedule_census.py --days 14` — **≥ 3 isolated single-slot drops ⇒ build the recovery digest cron; otherwise it stays rejected.** It was 0 on 2026-08-27 | — | not yet due |
 | 2026-08-31 | infra | first `listing-hunt` run (`event: schedule`, headSha ⊇ the 08-30 infra (b) commit) prints `retire-settled: queue N -> M` BEFORE its `queue-resolve-search:` lines, and `ingested N new attempts` from the step `Ingest the drain's attempt log`; quote its `S s/name over K scored` line into `491` item 3 (6 shards vs a 45-min step) | | |
 | 2026-09-01 | infra | `tests.yml` on ANOTHER lane's push: `mutation-gate (0)`..`(4)` all `success`, every shard's `timing    wall` under **1,800 s**; over that ⇒ add a matrix entry, never the budget | | not yet due |
@@ -153,12 +153,8 @@ the command that re-derives it, because that is the only thing that keeps this h
 5. **`--census` rewrites its own baseline every digest run**, so a pool alarms at most once
    and a slow drift never alarms at all. `315@registry`.
 
-**Closed since this list was written, verified 2026-08-27:**
-*(6) `candidate_probe.json` and `scrape_rot.json` were never-yet-exercised in cloud — both
-are present and in the 08-26 state commit. (7) CI conflict-recovery clobbering `seen.db` —
-`grep -rn "reset --hard" .github/workflows/*.yml` returns nothing; all nine state-committing
-workflows go through `persist_state.py commit`, which the `infra` session recorded three
-entries further down this same file.*
+*Items (6)-(7), closed and verified 2026-08-27, pruned 2026-08-30 for the word cap — the
+verifications live in `docs/sessions/2026-08-2[6-7]-*.md`.*
 
 ## Session log — newest last
 
@@ -168,3 +164,4 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-24 → 2026-08-30, 51 session lines across ten lanes** — folded to pointers (338, 361), last by `docs` (c). Records: `docs/sessions/2026-08-2[4-9]-*.md`, `docs/sessions/2026-08-30-*.md`; `registry` (d) is in `2026-08-30-infra-b.md` §0. CI runs no record holds: 33298814000, 33299353269, 33298892195.
 - **2026-08-30 `infra` (b)** — `mutation-gate (0)` killed at 40 min (M1 is ONE class): split by RECORD, 5 shards, verdicts printed as they land. Drain: ingest its own `always()` step, retire-settled first, cap 350/budgets 327. Commit gate `--strict` refuses twins/off-host rows; `dry_run` digest dispatch; the 08-27 lag is GitHub's (§4). **NOT finished:** 491 item 3, 501, 502. Record: `docs/sessions/2026-08-30-infra-b.md`.
 - **2026-08-30 `docs` (c)** — clause 4 (evidence, not adjectives); cross-lane debt: a filed diff is applied by the next lane in the file (`check_debt_on_touched_files`, 5 of 66 commits today); `next` reads master, the gate refuses new collisions. CI: `dc3a787` 33328309775 and `3453a2a` 33329623016 both `success` 13/13; `a13045a`/`6ef03c9` `failure` (HANDOFF over cap, mine). Record: `docs/sessions/2026-08-30-docs-craft.md`.
+- **2026-08-30 `classifier` (b)** — drain fits one run: `LLM_CAP` 450 (the real bound), `REJUDGE_CAP` 250, fresh-reserve 80; bare-Israel rule REJECTED (11/11 FN). **NOT finished:** the 05:00 run; 464, 116, 503. Record: `docs/sessions/2026-08-30-classifier-b.md`.

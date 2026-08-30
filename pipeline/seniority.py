@@ -616,11 +616,14 @@ class Classifier:
     `alarms()` the mail's bold `Stages:` lines. Never raises for a posting."""
 
     def __init__(self, use_llm=True, llm_cache=None, *, cap=None, budget_min=None,
-                 model=None, timeout=None, rejudge_cap=None):
+                 model=None, timeout=None, rejudge_cap=None, fresh_reserve=None):
         self.use_llm = use_llm
         self.cache = llm_cache if llm_cache is not None else {}
-        # an explicit argument wins; the environment is the cloud's way to set a default
-        self.cap = int(cap if cap is not None else os.environ.get("CLASSIFY_LLM_CAP", 300))
+        # an explicit argument wins; the environment is the cloud's way to set a default.
+        # 450 calls is ~24 min on the runner (3.0-3.2 s/call; the hour fits ~1,150) -- the
+        # old 300 was the bound that actually starved the 2026-08-30 contract drain: the
+        # rejudge caps never bind before this one does on a backlog morning.
+        self.cap = int(cap if cap is not None else os.environ.get("CLASSIFY_LLM_CAP", 450))
         self.budget = float(budget_min if budget_min is not None
                             else os.environ.get("CLASSIFY_TIME_BUDGET_MIN", 60))
         self.model = model or os.environ.get("CLASSIFY_MODEL", LLM_MODEL)
@@ -629,8 +632,14 @@ class Classifier:
         self.quarantine_min = int(os.environ.get("CLASSIFY_QUARANTINE_MIN", QUARANTINE_MIN_FRESH))
         # the contract THIS run judges under: the rules text and the model that will answer
         self.contract = _contract(model=self.model)
+        # 250, not 60: the pool self-drains (a drained role never returns), so at steady
+        # state the cap costs nothing -- it only bites the morning after a deliberate
+        # contract change, which is exactly when the operator wants the queue gone in ONE
+        # unattended run, not four (210 queued on 2026-08-30 was "about 4 more run(s)").
+        # Fresh roles are protected structurally by `fresh_reserve` below, not by keeping
+        # this number small.
         self.rejudge_cap = int(rejudge_cap if rejudge_cap is not None
-                               else os.environ.get("CLASSIFY_REJUDGE_CAP", 60))
+                               else os.environ.get("CLASSIFY_REJUDGE_CAP", 250))
         # The stale-YES cohort is exempt from `rejudge_cap` but NOT unbounded: "there are only
         # ever as many as the board is long" is an assumption about the data, and the code has
         # to enforce it or a pathological morning spends the whole run on the drain and starves
@@ -639,6 +648,16 @@ class Classifier:
         # never be mailed at all. So: a separate, deliberately generous ceiling, well above any
         # plausible board (91 roles on 2026-08-29, 16 stale YES forecast for the first run).
         self.rejudge_yes_cap = int(os.environ.get("CLASSIFY_REJUDGE_YES_CAP", 150))
+        # The drain -- BOTH cohorts, the uncapped-feeling YES one included -- may never
+        # spend the run's final `fresh_reserve` call slots: a fresh role skipped today can
+        # fall out of the 48-hour email window and never be mailed, where a stale verdict
+        # merely serves one more day. This is the structural form of the promise the YES
+        # cap's "deliberately generous" number only gestured at; the trade-off is that on
+        # a morning pathological enough to trip it, a stale YES behind the reserve stays
+        # on the board under the retired spec until tomorrow.
+        self.fresh_reserve = int(fresh_reserve if fresh_reserve is not None
+                                 else os.environ.get("CLASSIFY_FRESH_RESERVE", 80))
+        self.reserve_held = 0         # drain candidates the reserve refused this run
         self.paths = Counter()
         self.attempts = self.ok = self.yes = self.failed = self.skipped = self.cached = 0
         self.skipped_accept = self.served_bare = 0
@@ -809,11 +828,6 @@ class Classifier:
             # a JD-backed verdict is never re-judged on a bare title; a bare one serves a bare
             # job. A verdict from a SUPERSEDED contract still decides -- unless this run still
             # has re-judgement budget, which is how the change drains instead of cliff-edging.
-            # A LEGACY `company|title` row is served and never re-judged for its contract:
-            # it was made by another prompt and another model, so there is no contract for it
-            # to be stale AGAINST, and the bare->jd upgrade below already refreshes it the day
-            # a description arrives. Spending budget on it also made the tier call the CLI for
-            # a row the docs promise is answered without one (docs/BACKLOG.md 116 owns purging).
             # ...and NEVER re-judge a JD-backed verdict on a bare title. That is the
             # invariant the bare/jd split exists for, and the drain must not be the one thing
             # that breaks it: reproduced, a superseded `|jd` ACCEPT was re-judged with today's
@@ -959,8 +973,18 @@ class Classifier:
         board behind a queue of rejections. The YES cohort is self-limiting -- each is drained
         once and rewritten under the current contract -- so this cannot run away: the
         run-level `cap` and `budget_min` still bound the tier as a whole, and `_unavailable()`
-        (checked here) is what stops it when they bite."""
+        (checked here) is what stops it when they bite.
+
+        Above both cohort caps sits `fresh_reserve`: the drain -- YES cohort included --
+        may never consume the run's final `fresh_reserve` call slots, so however large the
+        backlog, the fresh roles interleaved behind it in encounter order still get judged.
+        The refusal is counted in `reserve_held`, not in `budget_reason` -- the tier is up,
+        only the drain is paused -- and the "scope change has stalled" alarm is gated on it,
+        because a reserve doing its job is not a stall."""
         if self._unavailable():
+            return False
+        if self.cap and self.fresh_reserve and self.attempts >= self.cap - self.fresh_reserve:
+            self.reserve_held += 1
             return False
         if prior_yes:
             return self.stale_rejudged_yes < self.rejudge_yes_cap
@@ -1148,7 +1172,12 @@ class Classifier:
         # different things.
         queued = self.stale_served - self.stale_unreachable
         if queued:
-            runs = -(-queued // self.rejudge_cap) if self.rejudge_cap else 0
+            # the honest per-run drain rate: the reserve stops the drain at
+            # `cap - fresh_reserve` attempts, so dividing by `rejudge_cap` alone would
+            # promise a rate the run cannot deliver
+            d = (min(self.rejudge_cap, max(1, self.cap - self.fresh_reserve))
+                 if self.cap else self.rejudge_cap)
+            runs = -(-queued // d) if d else 0
             capped = self.stale_rejudged - self.stale_rejudged_yes
             out.append(f"classify {queued} roles decided by a SUPERSEDED verdict that this run "
                        f"could have re-judged ({capped} done against cap {self.rejudge_cap}"
@@ -1161,9 +1190,11 @@ class Classifier:
                        f"verdict is never re-judged on a bare title. Raising "
                        f"CLASSIFY_REJUDGE_CAP does not reach them - a description does "
                        f"(lane: jd-text)")
-        if queued and not self.stale_rejudged and not self._unavailable():
+        if queued and not self.stale_rejudged and not self._unavailable() and not self.reserve_held:
             # the drain is a property of every scheduled run, not of a session; this is the
-            # line that says it has stopped while the seam was up and the budget unspent
+            # line that says it has stopped while the seam was up and the budget unspent.
+            # `reserve_held` exempts a run where the fresh-reserve paused the drain -- that
+            # is the reserve working, not the scope change stalling
             out.append(f"classify the contract drain did NOT move this run: {queued} roles "
                        f"were re-judgeable, the seam was available and the cap is "
                        f"{self.rejudge_cap} - the scope change has stalled")

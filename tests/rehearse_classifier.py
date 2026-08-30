@@ -35,7 +35,8 @@ if a.fresh or a.case in ("all_no", "all_yes"):
     con = sqlite3.connect(os.path.join(W, "seen.db")); con.execute("delete from llm_cache"); con.commit(); con.close()
     print("scratch llm_cache emptied (--fresh)")
 for k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE", "JDFILL", "SCRAPE_VIA_UNLOCKER", "AGGREGATOR_ENABLED",
-          "SERPAPI_KEY", "CLAUDE_CODE_OAUTH_TOKEN", "CLASSIFY_LLM_CAP", "CLASSIFY_TIME_BUDGET_MIN"):
+          "SERPAPI_KEY", "CLAUDE_CODE_OAUTH_TOKEN", "CLASSIFY_LLM_CAP", "CLASSIFY_TIME_BUDGET_MIN",
+          "CLASSIFY_REJUDGE_CAP", "CLASSIFY_REJUDGE_YES_CAP", "CLASSIFY_FRESH_RESERVE"):
     os.environ.pop(k, None)
 os.environ["JD_BD"] = "0"
 os.environ["PATH"] = FIXTURES + os.pathsep + os.environ["PATH"]

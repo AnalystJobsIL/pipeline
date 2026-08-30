@@ -4448,6 +4448,23 @@ addresses). Latin names the Hebrew list had and this one lacked (Yavne, Afula, T
 Dimona, Safed/Tzfat, Akko, Nahariya), six districts in seven spellings, and 23 towns — 40 entries — were added
 on 2026-08-24 (`test_the_latin_place_list_has_the_hebrew_lists_cities`).
 
+**A bare `location == "Israel"` is trusted, deliberately (2026-08-30).** Two Comcast postings
+in Houston/Pennsylvania reached subscribers carrying the literal word `Israel` — a stamp the
+scraper copied from the board's own `?location=Israel` query, not from the postings
+(`462@scraper` owns the card-level fix; the registry's query-URL audit parked the row class,
+and `roles` retracts the pair with `withdrawn`). The gate itself was measured before deciding
+whether to stop trusting the bare word: of the 13 published rows whose location is exactly
+`Israel`/`ישראל` and nothing else, 11 are genuine Israeli roles (Percepto ×2, Tavily, HiBob,
+Ecoppia, Nebius ×2, EPAM, Jobgether, Nestlé/אסם) — and **0 of the 13 carry any corroborating
+signal**: every `country_code` is blank and no URL mentions an Israeli place. A
+"bare-country-needs-corroboration" rule would therefore drop **all 11 genuine rows to catch
+the 2 that three other belts already catch** — a 100 % false-negative rate on the class it
+judges — and `is_israel_job`
+is the *identical predicate* for 11 non-digest callers (board activation, zero-confirmation,
+queue drain), so the same rule would also turn live boards into confirmed zeros. The record
+alone cannot tell the nine from the two; only the scrape, which saw whether the card had a
+place of its own, can — which is why the fix lives at the source and the gate stays trusting.
+
 **Gate 2 — does it qualify?** `seniority` decides from the lowercased **title** first:
 
 | title says | decision | `path` |
@@ -4621,11 +4638,12 @@ reason of every fresh verdict is printed to the step log: `[llm] company | title
 
 | bound | default | env / constant | what the mail says when it bites |
 |---|---|---|---|
-| calls per run | 300 | `CLASSIFY_LLM_CAP` — **the binding bound.** ~14 s/call is the local Windows `.cmd`-shim cost; the runner pays 3.0-3.2 s (`attempts 67 in 3.4 min`, run 33250362574; `83 in 4.4`, run 33193786610), so the 60-minute budget is worth ~1,150 calls there and the minutes never bite (BACKLOG 121, closed 2026-08-30) | `classify llm-budget(cap 300 calls) — N roles judged on keywords alone (A accepted and emailed, R rejected until the next run), B served their cached bare verdict` |
+| calls per run | 450 | `CLASSIFY_LLM_CAP` — **the binding bound** (450 ≈ 24 min on the runner; raised from 300 on 2026-08-30 because on a backlog morning this cap, not the rejudge caps, was what starved the contract drain — 210 queued + ~80 fresh ≈ 290 demand against 300). ~14 s/call is the local Windows `.cmd`-shim cost; the runner pays 3.0-3.2 s (`attempts 67 in 3.4 min`, run 33250362574; `83 in 4.4`, run 33193786610), so the 60-minute budget is worth ~1,150 calls there and the minutes never bite (BACKLOG 121, closed 2026-08-30) | `classify llm-budget(cap 300 calls) — N roles judged on keywords alone (A accepted and emailed, R rejected until the next run), B served their cached bare verdict` |
 | minutes per run (sum of call durations incl. timeouts, not wall-clock) | 60 | `CLASSIFY_TIME_BUDGET_MIN` | `classify llm-budget(60 min spent) — …` |
 | seconds per call | 45 | `CLASSIFY_TIMEOUT` / `LLM_TIMEOUT` | a `transient` failure |
 | model | `sonnet` | `CLASSIFY_MODEL` / `LLM_MODEL` | `classify model drift: asked sonnet, served …` when the answering model (largest `inputTokens` in `modelUsage`) is another family |
-| superseded-contract re-judgements per run | 60 NO + 150 YES | `CLASSIFY_REJUDGE_CAP` / `CLASSIFY_REJUDGE_YES_CAP` — how fast a scope change drains; spent in encounter order, and a drained role never returns. **The two cohorts are bounded separately** (2026-08-30): a superseded YES is a role on the board *right now* under a retired spec and there are only ever as many as the board is long (91 on 08-29; 16 forecast for the first run), where stale NOs number in the hundreds — capped together, the budget goes alphabetically and a retired-spec role waits behind a queue of rejections. The YES cap is deliberately generous rather than absent: unbounded, the drain spends the run in encounter order and every FRESH role behind it comes back `llm_skipped`, and a fresh role skipped today can fall out of the 48-hour email window and never be mailed at all | `classify N roles decided by a SUPERSEDED verdict that this run could have re-judged (M done against cap 60, plus Y stale YES re-judged uncapped) - about R more run(s) at this rate` |
+| superseded-contract re-judgements per run | 250 NO + 150 YES | `CLASSIFY_REJUDGE_CAP` / `CLASSIFY_REJUDGE_YES_CAP` — how fast a scope change drains; spent in encounter order, and a drained role never returns. **The two cohorts are bounded separately** (2026-08-30): a superseded YES is a role on the board *right now* under a retired spec and there are only ever as many as the board is long (91 on 08-29; 16 forecast for the first run), where stale NOs number in the hundreds — capped together, the budget goes alphabetically and a retired-spec role waits behind a queue of rejections. The YES cap is deliberately generous rather than absent: unbounded, the drain spends the run in encounter order and every FRESH role behind it comes back `llm_skipped`, and a fresh role skipped today can fall out of the 48-hour email window and never be mailed at all | `classify N roles decided by a SUPERSEDED verdict that this run could have re-judged (M done against cap 250, plus Y stale YES re-judged uncapped) - about R more run(s) at this rate` |
+| fresh-role reserve | 80 calls | `CLASSIFY_FRESH_RESERVE` — the drain, **both cohorts, the YES one included**, may never consume the run's final 80 call slots (`_may_rejudge` refuses once `attempts >= cap - reserve`, counted in `reserve_held`), so however large a backlog, the fresh roles interleaved behind it are judged and cannot fall out of the 48-hour email window. This is the structural form of the promise the YES cap's generous 150 only gestured at, and it is what makes a 250 NO cap safe: at steady state the pool is empty and neither number spends anything; after a deliberate contract change the queue clears in one unattended run (2026-08-30: 210 queued = 201 NO + 9 YES). The trade-off, accepted: on a morning that trips the reserve, a stale YES behind it stays on the board under the retired spec until tomorrow. A reserve pause is not a stall — the `stalled` alarm is gated on `reserve_held` | (no line of its own; the SUPERSEDED line's runs-to-empty divides by `min(rejudge_cap, cap - reserve)`) |
 | quarantine floor | 30 fresh verdicts | `CLASSIFY_QUARANTINE_MIN` / `QUARANTINE_MIN_FRESH` (the rehearsal sets 10) | see below |
 
 An explicit constructor argument beats the environment (`Classifier(cap=2)` in a test is 2).
@@ -4680,7 +4698,7 @@ changing the rules text or the model marks every verdict made under the old one 
 automatically. `KEY_VERSION` was a hand-typed literal and was bumped **once, ever**, which is
 why `v2|apptor-ai|data scientist|jd` carried a NO judged on 2026-08-25 into every later run
 and would have carried it for a year. A superseded verdict is **still served** — it is
-evidence, not garbage — so a scope change is never a cliff; `CLASSIFY_REJUDGE_CAP` (60) of
+evidence, not garbage — so a scope change is never a cliff; `CLASSIFY_REJUDGE_CAP` (250) of
 them are re-bought per run, in encounter order, and a drained role is rewritten under the
 current contract and never comes back, which is also the shape `BACKLOG 122` asks for. The
 trap this creates is that a deliberate scope change flips a large cohort one way and would
@@ -4759,9 +4777,9 @@ X` the attempt failures (the alarm below uses X). The classifier's alarms ride t
 | cap or minutes spent | `classify llm-budget(…) — N roles judged on keywords alone (…)` | unit test only (`test_the_cap_and_the_time_budget_skip_instead_of_failing_v2`) |
 | every fresh verdict NO / mostly YES | `classify mass-no(…) — N of this run's M verdicts NOT cached` | `all_no`, `all_yes` (the driver empties the scratch cache for these; `--fresh` does it for any mode; needs ≥ `CLASSIFY_QUARANTINE_MIN` fresh roles — 10 companies, not 4) |
 | re-judgements of this seam's verdicts flipping one way | `classify mass-flip(…) — …` | unit test only (`test_mass_flip_is_a_ratio_not_a_cliff`) |
-| a scope change still propagating | `classify N roles decided by a SUPERSEDED verdict that this run could have re-judged (M done, cap 60) - about R more run(s) at this rate` | unit test only (`test_the_stale_alarm_separates_the_queue_from_what_no_cap_can_reach`) |
+| a scope change still propagating | `classify N roles decided by a SUPERSEDED verdict that this run could have re-judged (M done, cap 250) - about R more run(s) at this rate` | unit test only (`test_the_stale_alarm_separates_the_queue_from_what_no_cap_can_reach`) |
 | ...and the part no cap can reach | `classify N superseded verdicts CANNOT be re-judged: the role has no description this run … (lane: jd-text)` | same |
-| the propagation has STOPPED | `classify the contract drain did NOT move this run: N roles were re-judgeable, the seam was available and the cap is 60 - the scope change has stalled` | same |
+| the propagation has STOPPED | `classify the contract drain did NOT move this run: N roles were re-judgeable, the seam was available and the cap is 250 - the scope change has stalled` | same |
 
 Real-CLI rehearsal (15 companies, sonnet, 2026-08-24): `classify: 232 judged = keyword 213 +
 llm 19 (4 yes) + cache 0 + failed 0 + skipped 0; attempts 19 in 4.3 min, rejudged 18 (flipped
@@ -4856,7 +4874,7 @@ wall 14–16 s — the difference is CLI start-up, not the flags (three argv var
 unattended digests print `attempts 67 in 3.4 min` (run `33250362574`) and `attempts 83 in
 4.4 min` (run `33193786610`) — **3.04 and 3.18 s per call**, i.e. the API time and almost
 nothing else. The 14–16 s wall is a Windows `.cmd`-shim cost local to this machine. So the
-60-minute budget is worth ~1,150 calls on the runner, `CLASSIFY_LLM_CAP` = 300 is the bound
+60-minute budget is worth ~1,150 calls on the runner, `CLASSIFY_LLM_CAP` (300 then, 450 since 2026-08-30) is the bound
 that actually binds, and `--bare` and per-call batching have nothing left to buy — both
 stay rejected.
 
