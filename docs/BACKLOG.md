@@ -368,35 +368,6 @@ closure convention in the header.
 - **484** `484@discovery` **Twenty agencies still walk past `is_recruiter` by name**
 - **485** `485@discovery` **`discovery_telegram.py` sends a spoofed Chrome UA and keeps only a post's first URL**
 
-### scraper — 26 open
-
-- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
-- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
-- **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
-- **219** `219@scraper` **Strategy 5's model, measured once**
-- **220** `220@scraper` **A `links:` carry has no ceiling**
-- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
-- **222** `222@scraper` **`pipeline/llm.py`
-- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-- **235** `235@scraper` **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
-- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
-- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
-- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
-- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
-- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
-- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
-- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
-- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
-- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
-- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
-- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
-- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
-- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
-- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
-- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
-- **497** `497@scraper` **`&amp;` reaches the public title and the role's id**
-
 ### docs — 24 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
@@ -423,6 +394,33 @@ closure convention in the header.
 - **467** `467@docs` **`check_unattended_proof` still returns silently on a runner**
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
+
+### scraper — 24 open
+
+- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
+- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
+- **90** `90@scraper` **Per-job strategy provenance in the cache**
+- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
+- **219** `219@scraper` **Strategy 5's model, measured once**
+- **220** `220@scraper` **A `links:` carry has no ceiling**
+- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
+- **222** `222@scraper` **`pipeline/llm.py`
+- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
+- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
+- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
+- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
+- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
+- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
+- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
+- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
+- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
+- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
+- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
+- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
+- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
+- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
+- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
+- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
 
 ### ats-fetch — 20 open
 
@@ -3641,8 +3639,19 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     open Israel roles now` while serving 2–10 Israel roles live. Harmless to `check_invariants`
     (checks D and E gate on `active == "false"`), wrong to a reader and to any future pool that
     stops gating on `active`.
-235. **The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
-    hold two role records** — lane: `scraper` (+ `roles`). 31 of the 50 cached titles on the 15
+235. ~~**The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
+    hold two role records**~~ — **CLOSED 2026-08-31 (`scraper`)**: `_comeet_slug_cut` — the
+    posting url's slug names the clean title, so a title that strictly EXTENDS it is cut at
+    the boundary and the residue judged as the card's own place claim; a title that does not
+    extend it (Legit Security's nine neighbour-url cards) is never renamed. Re-measured
+    before fixing: **118 of 295** sluggable cached titles carried a tail (not 31 of 50), the
+    slug named the clean title in all 118, and the type-word splitter cleaned 0. The cut
+    needs no vocabulary, ever, for comeet rows — the durable answer 247 asked for.
+    `merge_key` untouched: a clean write-time title makes both sides of any pair produce the
+    same key, so the STOP condition ("only correct fix is in merge_key") is not met. The
+    Modellama pair is HISTORY (variant closed 2026-08-27, untouched) and no open tail-forked
+    pair remains in `roles.jsonl` (Sunflower's two BI Developer rows are two real postings —
+    distinct comeet uids). Lane was: `scraper` (+ `roles`). 31 of the 50 cached titles on the 15
     comeet rows carry a place/level/type tail after the 2026-08-26 extractor (`'Head of System
     Engineering Beit HaEmek (Northern District), IL Senior Full-time, Salaried'` where the API
     says `'Head of System Engineering'`). `merge_key` is `company|title`, so the tail forks the
@@ -3975,7 +3984,12 @@ re-derive again before acting.
     `llm_skipped` and `rescued`; `_worker`'s `except` branch omitted `weak_read` (wave-1
     attacker C). One shared builder for "a result that never ran" ended the class.
 
-247. **The foreign-place vocabulary is a list, and a list is never finished** — lane:
+247. **The foreign-place vocabulary is a list, and a list is never finished**
+    *(2026-08-31, `scraper`: partly answered without the list — comeet rows now cut the tail
+    at the url slug's boundary (235's closure), and a `, ST` residue reads as a US state
+    code by SHAPE (`_US_STATE_TAIL`, IL excepted); `Texas`, `California`, `Philippines`
+    were the only members the 118 measured residues still needed. The general complaint
+    stands for non-comeet boards.)* — lane:
     `scraper`. `_FOREIGN_PAGE_RX` is what tells a global board from an Israeli one, and it
     names Austin, Houston and New York but not Denver, Chicago, Atlanta or Miami, and not
     `US- Remote`. A page reading `Account Executive - Denver, CO` on an Israeli company's
@@ -9169,7 +9183,12 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      own text, or the card's url path is read (`/job/<us-state>/`). The store holds **11**
      bare-`Israel` locations today; `500@roles` lists them.
 
-497. **`&amp;` reaches the public title and the role's id** — lane: `scraper`. Filed by `roles`
+497. ~~**`&amp;` reaches the public title and the role's id**~~ — **CLOSED 2026-08-31
+     (`scraper`)**: `html.unescape` in `_Adder._judge`, the one filter every scrape reading
+     passes — chosen over `fetchers._clean` (not this lane's file; and the unescape also
+     turns two `&amp;`-noise slug disagreements into agreements for 235's cut). A
+     fetcher-sourced title with an entity would still ship; none is in the cache today.
+     Lane was: `scraper`. Filed by `roles`
      2026-08-30. `Manager 2, Business Operations &amp; Analytics` shipped with the entity
      unescaped in the mail, the board and `roles.csv`, and `role_id` is
      `comcast|manager 2 business operations amp analytics`. `fetchers._clean` collapses

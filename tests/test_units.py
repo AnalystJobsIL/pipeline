@@ -23453,3 +23453,40 @@ def test_collect_stamp_counts_loc_unknown_and_alarms_on_fabricated(tmp_path, mon
     stamp = _json.loads(p.stages.read_text(encoding="utf-8"))["collect"]
     assert stamp["legacy_loc"] == 1 and stamp["loc_unknown"] == 0
     assert "fabricated-loc" not in str(stamp.get("alarm", ""))
+
+
+def test_scrape_a_comeet_slug_settles_the_title_tail():
+    """BACKLOG 235: the comeet widget runs place/level/type chips into the visible title
+    while the posting url's slug names the clean title — measured 2026-08-31, 118 of 295
+    sluggable cached cards carried such a tail and `_split_title_tail` (which needs a
+    trailing TYPE word) cleaned 0, so `store.merge_key` forked one posting into two role
+    records (Modellama's was emailed twice). The cut only shortens to the boundary the
+    board's own url names; the residue is the card's own place claim."""
+    import scrape_universal as N
+    from pipeline.israel import is_israel_job
+    U = "https://www.comeet.com/jobs/dealhub/A1.234/%s/B2.345"
+    add, jobs = N._make_adder("DealHub.ai", "https://www.dealhub.ai/careers/")
+    assert add("Solution Expert Holon, Senior", "", U % "solution-expert")
+    assert (jobs[0]["title"], jobs[0]["location"]) == ("Solution Expert", "Holon")
+    assert jobs[0]["_loc_src"] == "own", "the card's own url spoke"
+    # the same posting's US twin: cut, kept WITH its foreign place, hard country negative
+    assert add("Solution Expert Austin, Texas", "",
+               "https://www.comeet.com/jobs/dealhub/A1.234/solution-expert/C3.456")
+    assert (jobs[1]["title"], jobs[1]["location"]) == ("Solution Expert", "Austin, Texas")
+    assert jobs[1]["country_code"] == "XX" and not is_israel_job(jobs[1])
+    # a ", ST" tail is a state code without a city list (Seattle is in no vocabulary)
+    assert add("Enterprise Account Manager Seattle, WA", "", U % "enterprise-account-manager")
+    assert jobs[2]["location"] == "Seattle, WA" and not is_israel_job(jobs[2])
+    # the boundary may land inside a parenthesis the slug swallowed
+    assert add("QA Engineer(Entry Level) Holon, Entry-level", "", U % "qa-engineerentry-level")
+    assert (jobs[3]["title"], jobs[3]["location"]) == ("QA Engineer(Entry Level)", "Holon")
+    # a chips-only residue cuts the title and claims nothing (the dedupe is the point)
+    assert add("Data Analyst Senior", "Tel Aviv", U % "data-analyst")
+    assert (jobs[4]["title"], jobs[4]["location"]) == ("Data Analyst", "Tel Aviv")
+    # NEVER a rename: a title that does not extend the slug is a mis-addressed card
+    # (Legit Security carried nine neighbours' urls), and a url must not rename a role
+    assert add("Bookkeeper", "Tel Aviv", U % "application-security-sales-engineer")
+    assert jobs[5]["title"] == "Bookkeeper"
+    # 497: an entity never reaches a public title or a role id again
+    assert add("Manager 2, Business Operations &amp; Analytics", "Tel Aviv", "")
+    assert jobs[6]["title"] == "Manager 2, Business Operations & Analytics"

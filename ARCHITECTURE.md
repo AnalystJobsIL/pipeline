@@ -413,7 +413,13 @@ including the claim "none".
    Aviv, Israel"`); a Comeet-widget tail `<place>? <level>? <type>` is split off the title
    (`"Fraud Analyst Herzliya Full-time"` → `Fraud Analyst` / `Herzliya`; a foreign place is
    kept as the location so `pipeline.israel`, not the scraper, drops the role — 86 cached
-   titles carried one); `ISRAEL_LOC` is word-bounded like `israel._PLACE_PATTERNS`
+   titles carried one), and on a comeet-addressed card the posting url's SLUG settles the
+   whole tail (`_comeet_slug_cut`, 2026-08-31: 118 of 295 sluggable cached titles carried a
+   tail the type-word splitter could not touch — `"Solution Expert Holon, Senior"` — and
+   the slug named the clean title in all 118; the cut fires only when the title strictly
+   extends the slug, so a mis-addressed card — Legit Security carried nine neighbours'
+   urls — is never renamed, and the residue is judged as the card's own place claim,
+   `", ST"` reading as a US state code with IL excepted); `ISRAEL_LOC` is word-bounded like `israel._PLACE_PATTERNS`
    (BACKLOG 126; the lookarounds are case-sensitive on purpose — under `re.I` they blocked
    the run-together card text real boards serve, `HerzliyaJunior Software Developer`,
    `R&DRegularTel Aviv`). **A position page that LABELS the role's place** — `Job Location:

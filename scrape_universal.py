@@ -691,7 +691,10 @@ _TAIL_LEVEL_DROP = r"(?:mid(?:-level)?|intermediate|experienced)"
 _TAIL_MODE = r"(?:remote|hybrid|on-?site|global)"
 _FOREIGN_PLACES = ("United States", "United Kingdom", "USA", "US", "UK", "Europe", "EMEA", "Germany",
                    "Poland", "Ukraine", "Portugal", "Spain", "India", "Canada", "London", "New York",
-                   "NYC", "Berlin")
+                   "NYC", "Berlin",
+                   # exactly what the 118 measured comeet residues needed (2026-08-31) — the
+                   # `, ST` state-code SHAPE (`_US_STATE_TAIL`) covers the rest without a list
+                   "Texas", "California", "Philippines")
 # a foreign place named anywhere in a location string (the LLM copying an office sidebar)
 _FOREIGN_RX = re.compile(r"(?<![A-Za-z])(?:" + "|".join(map(re.escape, _FOREIGN_PLACES)) + r")(?![A-Za-z])")
 _TITLE_TAIL = re.compile(
@@ -715,6 +718,63 @@ def _split_title_tail(title):
         head = f"{head} {level}"
     return head, (m.group("place") or "").strip()
 
+
+
+_COMEET_SLUG = re.compile(r"comeet\.com/jobs/[^/]+/[^/]+/([^/?#]+)", re.I)
+_NON_ALNUM = re.compile(r"[^0-9a-zא-ת]+")
+_RESIDUE_CHIPS = re.compile(
+    r"\b(?:" + _TAIL_LEVEL_KEEP + "|" + _TAIL_LEVEL_DROP + "|" + _TAIL_TYPE + "|"
+    + _TAIL_MODE + r"|associate|management|salaried|hourly)\b", re.I)
+# a ", ST" tail is a US state code whatever the city's name — IL excluded: Comeet spells
+# Israel that way ("Beit HaEmek (Northern District), IL")
+_US_STATE_TAIL = re.compile(
+    r",\s*(?:A[LKZR]|C[AOT]|D[EC]|FL|GA|HI|I[DAN]|KS|KY|LA|M[EDAINSOT]|N[EVHJMYCD]|"
+    r"O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[TA]|W[AVIY])(?![A-Za-z])")
+
+
+def _residue_place(resid):
+    """The place a slug-cut residue names, or "". The residue is the widget's chip row
+    (place/level/type run together), so the level/type words are stripped and what names an
+    Israeli or known-foreign place is the card's own claim; anything else ("Gini-Apps",
+    "Bay Area") proves nothing and the cut alone stands."""
+    r = _clean_loc(_RESIDUE_CHIPS.sub(" ", resid or ""))
+    if not r:
+        return ""
+    if ISRAEL_LOC.search(r):
+        return _loc_from_ctx(r) or r
+    return r if (_FOREIGN_RX.search(r) or _US_STATE_TAIL.search(r)) else ""
+
+
+def _comeet_slug_cut(title, url_):
+    """(clean title, place hint) for a comeet-addressed card whose visible title runs the
+    widget's place/level/type chips into the real title — the posting url's slug names the
+    clean title (measured 2026-08-31: 118 of 295 sluggable cached cards carried such a
+    tail, the slug named the clean title in ALL 118, and `_split_title_tail` — which needs
+    a trailing type word — cleaned 0; the tail forks `store.merge_key`, BACKLOG 235:
+    Modellama's one posting was emailed twice). The cut only ever shortens a title to a
+    boundary the board's own url names: when the title does not strictly EXTEND the slug
+    (Legit Security: nine cards carrying a NEIGHBOUR's url), nothing changes — a url must
+    never rename a role."""
+    m = _COMEET_SLUG.search(url_ or "")
+    if not m:
+        return title, ""
+    slug = m.group(1) or ""
+    ns = _NON_ALNUM.sub("", slug.lower())
+    if not ns or (len(ns) < 8 and "-" not in slug.strip("-")):
+        return title, ""                 # a short one-word slug proves too little
+    raw = title or ""
+    nt = _NON_ALNUM.sub("", raw.lower())
+    if nt == ns or not nt.startswith(ns):
+        return title, ""
+    got, i = 0, 0
+    for i, ch in enumerate(raw, start=1):
+        if _NON_ALNUM.sub("", ch.lower()):
+            got += 1
+            if got == len(ns):
+                break
+    while i < len(raw) and raw[i] in ")]":
+        i += 1                           # the boundary may land inside "(Entry Level)"
+    return raw[:i].rstrip(" -–—|,·"), _residue_place(raw[i:])
 
 
 def _abs_url(url_, base):
@@ -898,7 +958,8 @@ class _Adder:
         the neighbouring card's place — 16 of them on Port.io, 6 with a US role's title
         under a Tel Aviv location (docs/BACKLOG.md 88, 221). It passes the SAME filters as
         an appending read: a foreign card must not hand its address to an Israeli role."""
-        judged = self._judge(title, loc)
+        title, hint = _comeet_slug_cut(title, url_)
+        judged = self._judge(title, loc, hint)
         if judged is None or judged[2] or not _is_strong(url_, self.url):
             return False
         idx = self._promotable(judged[0], judged[1])
@@ -926,16 +987,20 @@ class _Adder:
             if all(u == short or u.startswith(short + "-") for u in urls):
                 self._promote(self._weak.pop(key), short)
 
-    def _judge(self, title, loc):
+    def _judge(self, title, loc, place_hint=""):
         """The filters every reading passes, whatever strategy made it: `(title, loc,
         foreign)`, or None when this is not a posting of ours. One copy, because a second
         write path that skipped them let a Palo Alto card hand its address to a Tel Aviv
-        role (wave-0 critic)."""
-        title = _BIDI.sub("", title or "").strip()
+        role (wave-0 critic). `place_hint` is `_comeet_slug_cut`'s residue place — the
+        card's own url spoke — and flows through the same tail channel; the title arrives
+        already cut. Entities are unescaped here so `&amp;` can never reach a public title
+        or a role's id again (497)."""
+        title = _html.unescape(_BIDI.sub("", title or "")).strip()
         loc = _BIDI.sub("", loc or "")
         if not title or len(title) > 90:
             return None
         title, place = _split_title_tail(title)
+        place = place or place_hint
         foreign = bool(place) and not ISRAEL_LOC.search(place)
         if foreign or (place and not (loc and ISRAEL_LOC.search(loc) and loc.strip().lower() != "israel")):
             # the card's own tail is the strongest evidence of ITS place: a foreign one beats
@@ -957,8 +1022,9 @@ class _Adder:
         return title, loc, foreign
 
     def __call__(self, title, loc, url_, date="", desc="", jid="", loc_src=""):
+        title, hint = _comeet_slug_cut(title, url_)
         passed = _BIDI.sub("", loc or "")
-        judged = self._judge(title, loc)
+        judged = self._judge(title, loc, hint)
         if judged is None:
             return False
         title, loc, foreign = judged
