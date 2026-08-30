@@ -20595,8 +20595,8 @@ def test_a_reserve_pause_is_not_a_stalled_scope_change(monkeypatch):
 
 def test_a_deliberate_contract_change_drains_in_one_unattended_run(monkeypatch):
     """2026-08-30 evening. The morning of 2026-08-30 left 210 roles decided by a superseded
-    verdict, "about 4 more run(s)" at cap 60 -- and GitHub fired 66 of the last 71 cron
-    slots, so four more runs meant Wednesday at best. Under the shipped defaults the whole
+    verdict, "about 4 more run(s)" at cap 60 -- and GitHub dropped 5 of its last 75 cron
+    slots with lags to +734 min, so four more runs meant Wednesday at best. Under the shipped defaults the whole
     2026-08-30-shaped morning (210 stale NOs interleaved with 80 fresh roles) drains in ONE
     run with the fresh reserve intact: every fresh role is judged, nothing is queued, and
     neither the SUPERSEDED line nor the stalled line reaches the mail."""

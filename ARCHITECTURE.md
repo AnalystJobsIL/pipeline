@@ -4455,13 +4455,14 @@ scraper copied from the board's own `?location=Israel` query, not from the posti
 and `roles` retracts the pair with `withdrawn`). The gate itself was measured before deciding
 whether to stop trusting the bare word: of the 13 published rows whose location is exactly
 `Israel`/`ישראל` and nothing else, 11 are genuine Israeli roles (Percepto ×2, Tavily, HiBob,
-Ecoppia, Nebius ×2, EPAM, Jobgether, Nestlé/אסם) — and **0 of the 13 carry any corroborating
-signal**: every `country_code` is blank and no URL mentions an Israeli place. A
-"bare-country-needs-corroboration" rule would therefore drop **all 11 genuine rows to catch
-the 2 that three other belts already catch** — a 100 % false-negative rate on the class it
-judges — and `is_israel_job`
-is the *identical predicate* for 11 non-digest callers (board activation, zero-confirmation,
-queue drain), so the same rule would also turn live boards into confirmed zeros. The record
+Ecoppia, Nebius ×2, EPAM, Jobgether, Nestlé/אסם) — and the corroboration is nearly absent:
+`text_mentions_israel(url)` is False for all 13 (three sit on `il.linkedin.com`/`il.indeed.com`
+hosts the predicate deliberately does not read), and of the source records only ONE (Nebius via
+`discovered_cache.json`) carries `country_code: "IL"`, which already decides before the
+location test. A "bare-country-needs-corroboration" rule would therefore drop **10 of the 11
+genuine rows to catch the 2 that three other belts already catch** — and `is_israel_job`
+is the *identical predicate* at 33 call sites across 28 non-digest files (board activation,
+zero-confirmation, queue drain, every resolver), so the same rule would also turn live boards into confirmed zeros. The record
 alone cannot tell the nine from the two; only the scrape, which saw whether the card had a
 place of its own, can — which is why the fix lives at the source and the gate stays trusting.
 
@@ -4638,7 +4639,7 @@ reason of every fresh verdict is printed to the step log: `[llm] company | title
 
 | bound | default | env / constant | what the mail says when it bites |
 |---|---|---|---|
-| calls per run | 450 | `CLASSIFY_LLM_CAP` — **the binding bound** (450 ≈ 24 min on the runner; raised from 300 on 2026-08-30 because on a backlog morning this cap, not the rejudge caps, was what starved the contract drain — 210 queued + ~80 fresh ≈ 290 demand against 300). ~14 s/call is the local Windows `.cmd`-shim cost; the runner pays 3.0-3.2 s (`attempts 67 in 3.4 min`, run 33250362574; `83 in 4.4`, run 33193786610), so the 60-minute budget is worth ~1,150 calls there and the minutes never bite (BACKLOG 121, closed 2026-08-30) | `classify llm-budget(cap 300 calls) — N roles judged on keywords alone (A accepted and emailed, R rejected until the next run), B served their cached bare verdict` |
+| calls per run | 450 | `CLASSIFY_LLM_CAP` — **the binding bound** (450 ≈ 24 min on the runner; raised from 300 on 2026-08-30 because on a backlog morning this cap, not the rejudge caps, was what starved the contract drain — ~205 versioned-stale + 33 reachable legacy + ~78 fresh ≈ 316 demand against 300, and the 80-call reserve below needs `cap − reserve` ≥ that demand). ~14 s/call is the local Windows `.cmd`-shim cost; the runner pays 3.0-3.2 s (`attempts 67 in 3.4 min`, run 33250362574; `83 in 4.4`, run 33193786610), so the 60-minute budget is worth ~1,150 calls there and the minutes never bite (BACKLOG 121, closed 2026-08-30) | `classify llm-budget(cap 450 calls) — N roles judged on keywords alone (A accepted and emailed, R rejected until the next run), B served their cached bare verdict` |
 | minutes per run (sum of call durations incl. timeouts, not wall-clock) | 60 | `CLASSIFY_TIME_BUDGET_MIN` | `classify llm-budget(60 min spent) — …` |
 | seconds per call | 45 | `CLASSIFY_TIMEOUT` / `LLM_TIMEOUT` | a `transient` failure |
 | model | `sonnet` | `CLASSIFY_MODEL` / `LLM_MODEL` | `classify model drift: asked sonnet, served …` when the answering model (largest `inputTokens` in `modelUsage`) is another family |
@@ -4732,9 +4733,11 @@ be stale *against*" — and wrong for a SCOPE change: they were judged on 2026-0
 spec with a 3-year bar, no agency rule and no qualitative rule, and while no description ever
 arrives the bare→jd upgrade that was meant to refresh them never fires, so they decide for
 ever. Measured 2026-08-30: **235** such rows — 233 of the plain `company|title` shape plus 2 whose
-TITLE contains a `|` — of which **193 are unreachable** (a versioned twin already wins at
+TITLE contains a `|` — of which **193 were unreachable at 05:00** (a versioned twin already wins at
 `_lookup`) and **42 reachable, 36 of them NOs**: `gett|business analyst- maternity leave
-replacement`, `oak|product analyst`, `mize|operations analyst`. (An earlier draft of this
+replacement`, `oak|product analyst`, `mize|operations analyst`. By the day's second run
+(10:54 db) the split had already decayed to **202 shadowed / 33 reachable (27 NOs)** — the
+drain writes versioned twins every run, so re-derive before purging (`116`). (An earlier draft of this
 paragraph said 240/192/41/35, which did not add up: 240 counted the 7 `jdq1|` rows the next
 sentence excludes, and the reachable split had dropped the two piped titles. Re-derive with the
 one-liner below and note that `llm_cache`'s 254 non-contract rows are **235 legacy + 12

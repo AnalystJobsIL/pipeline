@@ -3,23 +3,28 @@
 Lane: `classifier`. Worktree `classifier-0830b` off `origin/master` `deb030c`. Spent:
 **0 paid sonnet calls** (every measurement below is cache/ledger arithmetic; the audit needed
 no seam call). Bright Data: 0. SerpApi: 0. No workflow dispatched, none cancelled.
-Tomorrow's unattended 05:00 run is *expected* to spend ~290 sonnet calls (~16 min) draining
+Tomorrow's unattended 05:00 run is *expected* to spend ~316 sonnet calls (~17 min) draining
 the queue; hard ceiling now 450 calls ≈ 24 min (was 300 ≈ 16).
 
 ## The one job: 210 → 0 in one unattended run
 
 The morning session left `classify 210 roles decided by a SUPERSEDED verdict … about 4 more
-run(s) at this rate` in the mail, and GitHub fired 66 of the last 71 cron slots (lags to
+run(s) at this rate` in the mail, and GitHub dropped 5 of its last 75 cron slots (lags to
 +734 min), so "4 more runs" meant Wednesday at best. Re-derived from the committed
-`cloud_state/seen.db` (commit `8eb1340`): the queue is exactly **210 job-identities = 201 NO
-priors + 9 YES priors** (winning prefixes: `v2` ×185, `v3.a517bb77` ×25).
+`cloud_state/seen.db` (commit `8eb1340`): the versioned stale pool is exactly **210 cache-key
+suffixes over 205 distinct company|title = 201 NO priors + 9 YES priors** (winning prefixes:
+`v2` ×185, `v3.a517bb77` ×25) — and the 33 reachable legacy rows (27 NO) are drain demand ON
+TOP of it: a legacy row has no versioned key, so it is not in the 210, while the digest
+alarm's 210 counts postings and does include legacy encounters. The two 210s agreeing is a
+coincidence of populations, not a reconciliation.
 
-**What was actually binding.** Not `CLASSIFY_REJUDGE_CAP`. Demand tomorrow ≈ 210 drain +
-~80 fresh ≈ 290 attempts against `CLASSIFY_LLM_CAP` = **300** — the global call cap was the
-wall, and raising only the rejudge cap would have starved fresh roles behind the drain in
-encounter order (a fresh role skipped can fall out of the 48-hour email window forever).
-An adversarial design pass caught this before it shipped; the first draft would have left
-~50–60 queued tomorrow while its own tests passed.
+**What was actually binding.** Not `CLASSIFY_REJUDGE_CAP`. Demand tomorrow ≈ 205 versioned
+stale + 33 reachable legacy + ~78 fresh ≈ **316 attempts against `CLASSIFY_LLM_CAP` = 300** —
+the global call cap was the wall, and raising only the rejudge cap would have starved fresh
+roles behind the drain in encounter order (a fresh role skipped can fall out of the 48-hour
+email window forever). An adversarial design pass caught this before it shipped: the first
+draft (reserve 80 at cap 300) capped the drain at 220 attempts and would have left ~60–90
+stale rows queued tomorrow while its own tests passed.
 
 **Shipped** (all in `pipeline/seniority.py` defaults — production sets no `CLASSIFY_*` env,
 so the defaults are the production values and no workflow was touched):
@@ -33,9 +38,10 @@ so the defaults are the production values and no workflow was touched):
 | runs-to-empty divides by `min(rejudge_cap, cap − reserve)` | the mail must not promise a rate the run cannot deliver |
 | deleted the "legacy rows are never re-judged" comment (was seniority.py:812-816) | dead prose: legacy rows join the drain since `3bf54c2`; the code five lines below said the opposite |
 
-Arithmetic for tomorrow: 210 + ~80 ≈ 290 < 370 (= 450 − 80) drain allowance; NO cohort 201 ≤
-250; YES cohort 9 ≤ 150; ~290 × 3.2 s ≈ 16 min ≪ 60-min classifier budget ≪ 110-min step
-budget (yesterday's whole digest: 51 min).
+Arithmetic for tomorrow: ~205 + 33 + ~78 ≈ 316 < 370 (= 450 − 80) drain-inclusive demand;
+NO cohort ≤ 234 ≤ 250; YES cohort ≤ 9 + a few legacy YES ≤ 150; ~316 × 3.2 s ≈ 17 min ≪
+60-min classifier budget ≪ 110-min step budget (the 08-30 digest run used 51 min — from its
+run page, not re-derivable from the tree).
 
 **The mass-flip guard at 210-row volume: structurally silent, by construction.** Only
 same-contract, same-seam re-judgements feed `_v2_*` (`same = prior[2] and prior[3]`), and
@@ -65,7 +71,9 @@ pops the three rejudge/reserve env vars so a local export cannot skew a rehearsa
 
 ## The 87-YES audit (item 4): condition (5) is biting; the surge is the drain
 
-The digest's `llm 191 (87 yes)` is the 05:00 run; the committed db is the 10:54 run
+The 05:00 run's step log reported `llm 191 (87 yes)` (the `(87 yes)` shape is
+`Classifier.summary()`, which never reaches the digest — the digest itself carries only
+`llm=191`); the committed db is the 10:54 run
 (`funnel.csv` says `judged_llm=63` for it), so the auditable population is the **93** YES
 rows written 2026-08-30 under `v3.da2cb878`. Decomposition against older-prefix verdicts for
 the same job suffix:
@@ -85,27 +93,32 @@ fabricated-location pair: correctly judged in-scope on their text; their exclusi
 ## Bare `location == "Israel"` (item 5): rule rejected with a number, nothing shipped
 
 Of the **13** published rows whose location is exactly `Israel`/`ישראל`, 11 are genuine and
-2 are the Comcast pair — and **0 of 13 carry any corroboration**: every `country_code` is
-blank, no URL mentions an Israeli place (Percepto ×2, Tavily, HiBob, Ecoppia, Nebius ×2,
-EPAM, Jobgether, Nestlé/אסם measured one by one). A corroboration rule = 100 % false
-negatives on the class it judges, to catch 2 rows that three belts already catch (registry's
-query-URL park, roles' `withdrawn`, `462@scraper`'s card-level fix). Answer to scraper's
+2 are the Comcast pair — and corroboration is nearly absent: `text_mentions_israel(url)` is
+False for all 13 (three sit on `il.linkedin.com`/`il.indeed.com` hosts the predicate does not
+read); the ledger keeps no `country_code` at all, and of the SOURCE records exactly one —
+Nebius via `discovered_cache.json`, `country_code: "IL"` — is decided before the location
+test ever runs. A corroboration rule would drop **10 of the 11 genuine** (Percepto ×2,
+Tavily, HiBob, Ecoppia, Nebius/greenhouse, EPAM, Jobgether, Nestlé/אסם measured one by one)
+to catch 2 rows that three belts already catch (registry's query-URL park, roles'
+`withdrawn`, `462@scraper`'s card-level fix). Answer to scraper's
 coordination question: **the record alone cannot distinguish the nine from the two** — the
 distinguishing fact (did the card have a place of its own, or did the board's query echo it)
 exists only at scrape time, so `462@scraper`'s `_from_cards`/`_FOREIGN_PAGE_RX` direction is
 the only real fix and no `israel.py` change is warranted (`500@roles` owns reading each bare
 row's own page once). §7b now records this with the measurement. Found while measuring, other lanes' to fix: the Nestlé/אסם pair is the same
-posting under two company names (superseded-detection miss), three rows have
-company/location swapped (`company="Tel Aviv"`), one location is un-normalised
-`NETANYA_ISRAEL`.
+posting under two company names (superseded-detection miss), **seven** rows (all
+`purged`, three distinct location values) have company/location swapped
+(`company="Tel Aviv"`), one location is un-normalised `NETANYA_ISRAEL`.
 
 ## Legacy keys (item 6): morning number stands, refined
 
 254 non-contract rows = **235 legacy proper** (233 `company|title` + 2 with `|` in the
 title) + 12 title-only (unreachable by construction) + 7 `jdq1|`. They drain since
-`3bf54c2`; of the queue's 210, the legacy-reachable subset rides the same one-run drain.
-The 193 versioned-shadowed rows are dead weight for `116@classifier` — purge only after the
-drain completes, from a cloud run's own commit, never a local checkout.
+`3bf54c2`, and they are demand beside the 210, not inside it (see above). On the 10:54 db
+the shadowed/reachable split is **202 / 33 (27 NO)** — the morning's 193/42 was the 05:00 db,
+and the split decays every run as the drain writes versioned twins. Purge (`116@classifier`)
+only after the drain completes, re-derived fresh, from a cloud run's own commit, never a
+local checkout.
 
 ## The audit trail without touching `store.py` (item 7)
 
@@ -118,6 +131,14 @@ not that. The drain is still auditable because `cloud_state/seen.db` is committe
     (pipeline/seniority._versioned) compare the served verdict (newest prefix wins) —
     tonight's before-state: 464 suffixes, 254 current (161 NO / 93 YES), 210 superseded-only
     (201 NO / 9 YES; v2 ×185, v3.a517bb77 ×25).
+
+## Housekeeping the word cap forced
+
+`HANDOFF.md` stood at exactly 3,200/3,200 words when this session arrived, so every added
+word had to be bought. Bought by pruning the "Closed since this list was written, verified
+2026-08-27" footnote (items 6–7, ~70 words) down to a one-line pointer — the verifications
+live in the 08-26/27 session records. If `docs` disagrees, that block is restorable from
+`git show deb030c:HANDOFF.md`.
 
 ## What this session did NOT finish
 

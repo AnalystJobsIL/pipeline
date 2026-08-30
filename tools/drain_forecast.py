@@ -50,12 +50,16 @@ def _flatten(d):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    ap.add_argument("--cap", type=int, default=int(os.environ.get("CLASSIFY_REJUDGE_CAP", 60)))
+    # None -> the Classifier's own default, so this tool can never forecast against a
+    # retired number (it printed "cap 60" the evening the default moved to 250)
+    ap.add_argument("--cap", type=int, default=None)
     ap.add_argument("--active-only", action="store_true",
                     help="only postings whose employer has an active companies.csv row")
     ap.add_argument("--group/--no-group", dest="group", default=True,
                     help="group by store.merge_key first, as classify_grouped does (default on)")
     a = ap.parse_args()
+    if a.cap is None:
+        a.cap = seniority.Classifier(use_llm=False, llm_cache={}).rejudge_cap
 
     postings = []
     for name in ("discovered_cache.json", "scraped_cache.json"):
