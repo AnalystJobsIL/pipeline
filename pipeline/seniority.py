@@ -654,7 +654,11 @@ class Classifier:
         # merely serves one more day. This is the structural form of the promise the YES
         # cap's "deliberately generous" number only gestured at; the trade-off is that on
         # a morning pathological enough to trip it, a stale YES behind the reserve stays
-        # on the board under the retired spec until tomorrow.
+        # on the board under the retired spec until tomorrow. Two edges, both deliberate:
+        # a reserve >= cap turns the drain off for the run (visible as the "paused the
+        # drain" alarm, never a silent stall), and the bare->jd upgrade -- a bare or
+        # legacy prior on a role that HAS text today -- is an upgrade, not a drain, and
+        # spends outside these caps as it always has.
         self.fresh_reserve = int(fresh_reserve if fresh_reserve is not None
                                  else os.environ.get("CLASSIFY_FRESH_RESERVE", 80))
         self.reserve_held = 0         # drain candidates the reserve refused this run
@@ -842,7 +846,10 @@ class Classifier:
             # them NOs, e.g. `gett|business analyst- maternity leave replacement`). A legacy
             # row is only ever read as BARE (`_lookup` returns `judged_with_text` False), so
             # re-judging it cannot break the invariant below. Purging them is still 116's.
-            drainable = not prior[3] and (has_text or not prior[1])
+            # `not shared`: a shared description is ANOTHER role's text; a verdict judged on
+            # it is refused a cache row below, so a drain purchase here would be paid for and
+            # re-bought every morning -- served stale and counted unreachable instead.
+            drainable = not prior[3] and (has_text or not prior[1]) and not shared
             if not (drainable and self._may_rejudge(prior[0])):
                 self.cached += 1
                 stale = not prior[3]
@@ -875,6 +882,11 @@ class Classifier:
         verdict, reason = self._judge(job)
         if verdict is None:
             if prior is not None:
+                # a drain attempt that FAILED still served the superseded verdict. Without
+                # this line those roles fall out of `stale_served`, `queued` undercounts by
+                # exactly the number of failed attempts, and a flaky morning's mail can say
+                # the queue is empty while 16% of it is still superseded.
+                self.stale_served += draining
                 return {**base, "decision": "accept" if prior[0] else "reject",
                         "path": "llm_cache",
                         "reason": f"bare cached verdict kept; LLM failed ({reason})"}
@@ -1171,7 +1183,15 @@ class Classifier:
         # cap can move, and a drain that has stopped are now three lines that ask for three
         # different things.
         queued = self.stale_served - self.stale_unreachable
-        if queued:
+        if queued and not self.stale_rejudged and self.reserve_held:
+            # a run that drained NOTHING because the reserve paused it must not print a
+            # forecast ("about 1 more run(s)") computed from a rate it did not achieve --
+            # and must not stay silent either: this is the line that says why
+            out.append(f"classify {queued} roles decided by a SUPERSEDED verdict remain: the "
+                       f"fresh reserve paused the drain before it re-judged anything "
+                       f"({self.reserve_held} held after {self.attempts} attempts of cap "
+                       f"{self.cap})")
+        elif queued:
             # the honest per-run drain rate: the reserve stops the drain at
             # `cap - fresh_reserve` attempts, so dividing by `rejudge_cap` alone would
             # promise a rate the run cannot deliver

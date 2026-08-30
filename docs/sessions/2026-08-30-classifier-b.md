@@ -132,6 +132,38 @@ not that. The drain is still auditable because `cloud_state/seen.db` is committe
     tonight's before-state: 464 suffixes, 254 current (161 NO / 93 YES), 210 superseded-only
     (201 NO / 9 YES; v2 ×185, v3.a517bb77 ×25).
 
+## The adversarial waves (two opus agents, throwaway copies, never a worktree)
+
+**Wave B (fact-check) found six wrong numbers in this record's first draft**, all corrected
+above and in §7b/HANDOFF/AGENT_BRIEF: "11 non-digest callers" was really 33 call sites in 28
+files; "3 swapped rows" was 7 (3 distinct locations, all purged); "0 of 13 corroborated"
+missed the Nebius discovery record's `country_code: "IL"` (so 10/11 FN, not 11/11); the
+"290 vs 300" arithmetic didn't close until the 33 reachable legacy rows were counted (316 vs
+300); the 193/42 legacy split had decayed to 202/33 by the audited db; the §7b bounds row's
+mail sample still said `cap 300 calls`. It also caught `tools/drain_forecast.py` defaulting
+to the retired cap 60 — now it asks the Classifier.
+
+**Wave A (attack) confirmed the headline** (its own simulation of the true queue shape —
+188 `|jd` + 22 `|bare` + 78 fresh — drains to 0 with `reserve_held` 0) **and broke three
+edges**, all fixed with kill-tests:
+1. A drain attempt whose call FAILED served the stale verdict but fell out of
+   `stale_served`, so `queued` undercounted by the failure count — a flaky morning could
+   report the queue empty with 16 % of it left. Fixed (one line in the verdict-None branch);
+   guard `test_a_failed_drain_attempt_still_counts_as_a_served_stale_verdict`.
+2. A run the reserve paused before ANY drain printed "about 1 more run(s)" (a rate it did
+   not achieve) and the stalled alarm stayed gagged. Now such a run prints its own line —
+   "the fresh reserve paused the drain before it re-judged anything (N held…)" — and no
+   forecast; guard extended in `test_a_reserve_pause_is_not_a_stalled_scope_change`.
+3. A superseded `|bare` prior whose description today is another role's byte-identical text
+   was a drain purchase that `commit()` then refused — paid and re-bought daily. `drainable`
+   now requires `not shared`; the row counts unreachable (the truth); guard
+   `test_a_shared_description_is_never_a_drain_purchase`.
+Wave A also reshaped the one-run kill-test to the measured queue (188 `|jd` re-read on text
++ 22 `|bare`), which the first version — 210 `|bare` — did not certify. Two accepted,
+documented edges: `fresh_reserve >= cap` turns the drain off for the run (visible via the
+new paused line, an operator lever, no clamp), and the bare→jd upgrade path spends outside
+every drain cap, as it always has (≤ ~60 rows tomorrow).
+
 ## Housekeeping the word cap forced
 
 `HANDOFF.md` stood at exactly 3,200/3,200 words when this session arrived, so every added

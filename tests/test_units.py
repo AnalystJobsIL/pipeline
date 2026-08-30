@@ -20590,31 +20590,87 @@ def test_a_reserve_pause_is_not_a_stalled_scope_change(monkeypatch):
     assert stale["path"] == "llm_cache", stale
     assert clf.stale_rejudged == 0 and clf.reserve_held == 1, (clf.stale_rejudged,
                                                               clf.reserve_held)
-    assert not any("stalled" in a for a in clf.alarms()), clf.alarms()
+    alarms = clf.alarms()
+    assert not any("stalled" in a for a in alarms), alarms
+    # ...and it does not stay silent, and does not print a forecast computed from a
+    # drain rate of zero ("about 1 more run(s)" on a run that drained nothing)
+    assert any("paused the drain" in a for a in alarms), alarms
+    assert not any("more run(s)" in a for a in alarms), alarms
 
 
 def test_a_deliberate_contract_change_drains_in_one_unattended_run(monkeypatch):
     """2026-08-30 evening. The morning of 2026-08-30 left 210 roles decided by a superseded
     verdict, "about 4 more run(s)" at cap 60 -- and GitHub dropped 5 of its last 75 cron
     slots with lags to +734 min, so four more runs meant Wednesday at best. Under the shipped defaults the whole
-    2026-08-30-shaped morning (210 stale NOs interleaved with 80 fresh roles) drains in ONE
-    run with the fresh reserve intact: every fresh role is judged, nothing is queued, and
-    neither the SUPERSEDED line nor the stalled line reaches the mail."""
+    2026-08-30-shaped morning (188 stale `|jd` NOs re-read on today's text plus 22 stale
+    `|bare` NOs -- the measured queue split -- interleaved with 80 fresh roles) drains in
+    ONE run with the fresh reserve intact: every fresh role is judged, nothing is queued,
+    and neither the SUPERSEDED line nor the stalled line reaches the mail."""
     _fake_seam(monkeypatch, lambda p: _ok("NO"))
-    cache = {"v3.deadbeef|acme|stale analyst %d|bare" % i: False for i in range(210)}
+    cache = {"v3.deadbeef|acme|stale analyst %d|%s" % (i, "jd" if i < 188 else "bare"): False
+             for i in range(210)}
     clf = seniority.Classifier(llm_cache=cache)     # production = the defaults, no env
     fresh_paths = []
     for i in range(210):
-        clf.classify({"company": "Acme", "title": "Stale Analyst %d" % i})
+        # a |jd prior drains only when the role carries text today; the 22 bare ones don't.
+        # Descriptions are unique per role or the shared-text guard would (rightly) refuse
+        # to drain byte-identical text at one employer
+        clf.classify({"company": "Acme", "title": "Stale Analyst %d" % i,
+                      "description": _TEXT + "s%d" % i if i < 188 else ""})
         if i < 80:
             fresh_paths.append(clf.classify(
                 {"company": "Acme", "title": "Data Analyst %d" % i,
-                 "description": _TEXT})["path"])
+                 "description": _TEXT + "f%d" % i})["path"])
     assert clf.stale_rejudged == 210, clf.stale_rejudged
     assert clf.stale_served - clf.stale_unreachable == 0, clf.stale_served
     assert clf.reserve_held == 0, clf.reserve_held
     assert fresh_paths and set(fresh_paths) == {"llm"}, set(fresh_paths)
     assert not any("SUPERSEDED" in a or "stalled" in a for a in clf.alarms()), clf.alarms()
+
+
+def test_a_failed_drain_attempt_still_counts_as_a_served_stale_verdict(monkeypatch):
+    """Opus wave A, 2026-08-30 evening. A drain attempt whose call FAILS serves the
+    superseded verdict -- but it fell out of `stale_served`, so `queued` undercounted by
+    exactly the number of failed attempts and a flaky morning's mail could report the
+    queue empty while a sixth of it was still superseded (simulated: 33 of 210 left,
+    alarm silent). The morning-check row verifies "the SUPERSEDED clause GONE"; this is
+    what keeps that verification honest."""
+    from pipeline.llm import LLMUnavailable
+    n = [0]
+    def flaky(p):
+        n[0] += 1
+        if n[0] % 3 == 2:            # every 3rd call fails: never 3 consecutive,
+            return LLMUnavailable("boom", kind="transient")   # breaker stays closed
+        return _ok("NO")
+    _fake_seam(monkeypatch, flaky)
+    cache = {"v3.deadbeef|acme|stale analyst %d|bare" % i: False for i in range(10)}
+    clf = seniority.Classifier(llm_cache=cache, fresh_reserve=0)
+    for i in range(10):
+        clf.classify({"company": "Acme", "title": "Stale Analyst %d" % i})
+    assert clf.stale_rejudged == 7, clf.stale_rejudged      # a failure is never "drained"
+    queued = clf.stale_served - clf.stale_unreachable
+    assert queued == 3, (clf.stale_served, clf.stale_unreachable)
+    assert any("SUPERSEDED" in a for a in clf.alarms()), clf.alarms()
+
+
+def test_a_shared_description_is_never_a_drain_purchase(monkeypatch):
+    """Opus wave A, 2026-08-30 evening. A superseded `|bare` prior whose description today
+    is byte-identical to another role's at the same employer: the verdict would be judged
+    on ANOTHER role's text and `commit()` refuses it a cache row, so draining it is a call
+    paid for and re-bought every morning. Served stale and counted unreachable instead --
+    the truth: it becomes drainable when jd-text delivers ITS OWN description."""
+    seam = []
+    _fake_seam(monkeypatch, lambda p: (seam.append(p) or _ok("NO")))
+    cache = {"v3.deadbeef|acme|data analyst one|bare": False}
+    clf = seniority.Classifier(llm_cache=cache, fresh_reserve=0)
+    clf.classify({"company": "Acme", "title": "Product Analyst Zero", "description": _TEXT,
+                  "url": "https://acme.example/jobs/0"})
+    stale = clf.classify({"company": "Acme", "title": "Data Analyst One",
+                          "description": _TEXT, "url": "https://acme.example/jobs/1"})
+    assert stale["path"] == "llm_cache", stale
+    assert clf.stale_unreachable == 1 and clf.stale_rejudged == 0, (
+        clf.stale_unreachable, clf.stale_rejudged)
+    assert len(seam) == 1, len(seam)   # the shared row spent nothing
 
 
 def test_an_enum_on_a_list_column_constrains_each_value_not_the_cell():
