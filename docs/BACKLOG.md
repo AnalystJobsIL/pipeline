@@ -3549,7 +3549,7 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     The next extractor change re-poisons: the sanctioned repeat is
     `python health_check.py --rebase-scrape <rev>` (the evidence) then `--apply "A,B,…"`.
 228. **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-    recorded as an empty page** — lane: `scraper`. **Re-derived 2026-08-31 (`scraper`), all four
+    recorded as an empty page** — lane: `scraper`. **Re-derived 2026-08-30 (`scraper`), all four
     diagnosed, two mechanisms fixed, each with a guard:** the wall sub-claim is CLOSED —
     `_classify` no longer books an ip-refused render "empty" on a decoy plain-200 (live:
     lakeFS now reads `error http:403`; its Director is RECOVERED —
@@ -3654,7 +3654,7 @@ UTC against `origin/master` (`b2090f6`); re-derive before acting.
     (checks D and E gate on `active == "false"`), wrong to a reader and to any future pool that
     stops gating on `active`.
 235. ~~**The scraper's Comeet-widget title tail still reaches `store.merge_key`, so one posting can
-    hold two role records**~~ — **CLOSED 2026-08-31 (`scraper`)**: `_comeet_slug_cut` — the
+    hold two role records**~~ — **CLOSED 2026-08-30 (`scraper`)**: `_comeet_slug_cut` — the
     posting url's slug names the clean title, so a title that strictly EXTENDS it is cut at
     the boundary and the residue judged as the card's own place claim; a title that does not
     extend it (Legit Security's nine neighbour-url cards) is never renamed. Re-measured
@@ -3999,7 +3999,7 @@ re-derive again before acting.
     attacker C). One shared builder for "a result that never ran" ended the class.
 
 247. **The foreign-place vocabulary is a list, and a list is never finished**
-    *(2026-08-31, `scraper`: partly answered without the list — comeet rows now cut the tail
+    *(2026-08-30, `scraper`: partly answered without the list — comeet rows now cut the tail
     at the url slug's boundary (235's closure), and a `, ST` residue reads as a US state
     code by SHAPE (`_US_STATE_TAIL`, IL excepted); `Texas`, `California`, `Philippines`
     were the only members the 118 measured residues still needed. The general complaint
@@ -8465,7 +8465,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     about the bar"). The classifier lane does not own those files and has not touched them.
 
 462. ~~**A `?location=Israel` listing URL makes every card on the page an Israeli posting**~~ —
-    **CLOSED 2026-08-31 (`scraper`)**: `_page_is_il` no longer reads the URL at all — query OR
+    **CLOSED 2026-08-30 (`scraper`)**: `_page_is_il` no longer reads the URL at all — query OR
     path (`careers.arm.com/location/israel-jobs/` shipped 17 the same way; a query-stripped fix
     would have re-shipped them) — a card nothing placed is refused by `_Adder._judge` and
     counted (`loc_unknown`), the listing-url fallback is query-stripped (`_bare`), a foreign
@@ -9193,7 +9193,7 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      read-only example.
 
 496. ~~**The scraper stamps the QUERY's location on a card that has none, and the Israel filter
-     then agrees with itself**~~ — **CLOSED 2026-08-31 (`scraper`): the scraper half — see
+     then agrees with itself**~~ — **CLOSED 2026-08-30 (`scraper`): the scraper half — see
      462's closure for the mechanism (the "or the card's url path is read" alternative was
      rejected: a placename vocabulary over url paths is 247's unfinishable list, and an
      honest refusal needs none). The eightfold half (`fetchers.py:596`) is NOT closed — it is
@@ -9322,7 +9322,7 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      the scraper lane.
 
 504. **The eightfold fetcher stamps the query's location on postings that carry none** —
-     lane: `ats-fetch`. Re-filed 2026-08-31 (`scraper`) as the surviving half of `496`,
+     lane: `ats-fetch`. Re-filed 2026-08-30 (`scraper`) as the surviving half of `496`,
      whose scraper half closed with `462`. `fetchers.py:596` writes the search location for
      eightfold rows the way `scrape_universal._page_is_il` did before 2026-08-31; the
      `successfactors` fetcher already refuses the same inference (`fetchers.py:726`,

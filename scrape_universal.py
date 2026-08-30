@@ -123,7 +123,7 @@ _CARD_PATTERNS = (
     r'(?:title|name|copy)[^"\']*["\'][^>]*)>([^<]{5,90})</\1>',
 )
 # a heading whose text IS a link: `[^<]` above breaks on the `<a>`, so this card shape —
-# the one that DECLARES its own address — matched nothing at all until 2026-08-31 (434)
+# the one that DECLARES its own address — matched nothing at all until 2026-08-30 (434)
 _CARD_LINKED_HEADING = (r"<(h[1-4])([^>]*)>\s*<a\s[^>]*?href=[\"']([^\"']+)[\"'][^>]*>"
                         r"([^<]{5,90})</a>\s*</\1>")
 _CARD_SENTENCE = re.compile(r"(we|our|join|about|why|what|how|let)\b", re.I)
@@ -754,7 +754,7 @@ def _residue_place(resid):
 def _comeet_slug_cut(title, url_):
     """(clean title, place hint) for a comeet-addressed card whose visible title runs the
     widget's place/level/type chips into the real title — the posting url's slug names the
-    clean title (measured 2026-08-31: 118 of 295 sluggable cached cards carried such a
+    clean title (measured 2026-08-30: 118 of 295 sluggable cached cards carried such a
     tail, the slug named the clean title in ALL 118, and `_split_title_tail` — which needs
     a trailing type word — cleaned 0; the tail forks `store.merge_key`, BACKLOG 235:
     Modellama's one posting was emailed twice). The cut only ever shortens a title to a
