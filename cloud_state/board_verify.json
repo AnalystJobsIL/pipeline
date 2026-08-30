@@ -366,6 +366,20 @@
   "verdict": "ok",
   "why": "ADI's own careers page (adi-il.org.il), Hebrew, Israeli nonprofit; search/listing shell with job categories, no explicit \"no openings\" statement."
  },
+ "adscale|https://adscale.com/careers/": {
+  "chars": 235699,
+  "date": "2026-08-30",
+  "employer_named": "AdScale",
+  "model": "opus",
+  "name": "Adscale",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 7190,
+  "url": "https://adscale.com/careers/",
+  "verdict": "ok",
+  "why": "AdScale's own careers page listing two open roles in Herzliya/Yokneam, Israel HQ."
+ },
  "adscale|https://adscale.tech/en/category/jobs/": {
   "chars": 241955,
   "date": "2026-08-29",
@@ -761,6 +775,20 @@
   "verdict": "UNVERIFIABLE",
   "why": "a wall or an empty shell we could not read"
  },
+ "akim|https://akim.org.il/jobs/": {
+  "chars": 389384,
+  "date": "2026-08-30",
+  "employer_named": "אקים ישראל (Akim Israel)",
+  "model": "opus",
+  "name": "Akim",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://akim.org.il/jobs/",
+  "verdict": "ok",
+  "why": "akim.org.il own jobs archive listing Akim Israel's own openings."
+ },
  "akim|https://careers.akima.com/jobs": {
   "chars": 399714,
   "date": "2026-08-29",
@@ -942,7 +970,7 @@
  "alma labs|https://www.comeet.com/jobs/almalasers/67.006/": {
   "chars": 399998,
   "date": "2026-08-30",
-  "employer_named": "almalasers (from URL; page name unrendered)",
+  "employer_named": "(none rendered; URL slug \"almalasers\")",
   "model": "opus",
   "name": "Alma Labs",
   "page_kind": "error",
@@ -3059,6 +3087,25 @@
   "verdict": "NOT-THEIRS",
   "why": "a namesake abroad (Confidential)"
  },
+ "confidential company|https://confidential.careers": {
+  "chars": 157821,
+  "date": "2026-08-30",
+  "employer_named": "Confidential Careers",
+  "model": "opus",
+  "name": "Confidential Company",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://confidential.careers",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
+ },
  "confidential global company|https://confidential.careers/jobs-in-israel": {
   "chars": 131988,
   "date": "2026-08-29",
@@ -3537,6 +3584,25 @@
   "url": "https://digistage.co.il",
   "verdict": "not-a-board",
   "why": "page_kind=about"
+ },
+ "digistage|https://www.taasiya.co.il/jobs/74307.htm": {
+  "chars": 70800,
+  "date": "2026-08-30",
+  "employer_named": "דרושים בתעשיה (taasiya.co.il) — ad for Digistage",
+  "model": "opus",
+  "name": "Digistage",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.taasiya.co.il/jobs/74307.htm",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
  },
  "discount bank|https://ehsb.fa.em2.oraclecloud.com/hcmui/candidateexperience/he/sites/cx_3001/requisitions": {
   "chars": 514476,
@@ -4499,6 +4565,25 @@
   "verdict": "ok",
   "why": "Official Fresenius Medical Care careers site listing its own global job openings; Israel filter not reflected but page lists positions."
  },
+ "friends|https://www.friendsbalt.org/about/work-at-friends": {
+  "chars": 50558,
+  "date": "2026-08-30",
+  "employer_named": "Friends School of Baltimore",
+  "model": "opus",
+  "name": "Friends",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Friends School of Baltimore"
+  },
+  "states_no_openings": false,
+  "text_chars": 5383,
+  "url": "https://www.friendsbalt.org/about/work-at-friends",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Friends School of Baltimore"
+ },
  "friends|https://www.friendsfromthecity.com/careers": {
   "chars": 32193,
   "date": "2026-08-29",
@@ -4827,6 +4912,25 @@
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (0 visible chars via plain-thin)"
  },
+ "genesis premium herbs|https://www.genesiscareers.jobs": {
+  "chars": 399846,
+  "date": "2026-08-30",
+  "employer_named": "Genesis Careers",
+  "model": "opus",
+  "name": "Genesis Premium Herbs",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Genesis Careers"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.genesiscareers.jobs",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Genesis Careers"
+ },
  "genesis premium herbs|https://www.genesiscareers.jobs/genesishcc/jobs": {
   "chars": 267050,
   "date": "2026-08-29",
@@ -5059,6 +5163,20 @@
   "url": "https://careers.devexperts.com/vacancies/",
   "verdict": "NOT-THEIRS",
   "why": "belongs to Devexperts (Devexperts Solutions IE Limited)"
+ },
+ "global dev experts|https://www.globaldevexperts.com/careers/": {
+  "chars": 257378,
+  "date": "2026-08-30",
+  "employer_named": "Global Dev Experts",
+  "model": "opus",
+  "name": "Global Dev Experts",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.globaldevexperts.com/careers/",
+  "verdict": "ok",
+  "why": "Company's own careers page listing four of its own open roles."
  },
  "globalbit|https://globalbit.co.il/career": {
   "chars": 136154,
@@ -7173,6 +7291,25 @@
   "url": "https://kingsolomonacademy.org/jobs/vacancies",
   "verdict": "NOT-THEIRS",
   "why": "belongs to King Solomon Academy (Ark Schools)"
+ },
+ "kinneret|https://kinneret.ac.il/en/career-center/": {
+  "chars": 177898,
+  "date": "2026-08-30",
+  "employer_named": "Kinneret Academic College in the Jordan Valley",
+  "model": "opus",
+  "name": "Kinneret",
+  "page_kind": "other",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "ok",
+   "why": "Page is on kinneret.ac.il, published by Kinneret Academic College (Israeli, Jordan Valley), describing its Career Center; it links to job openings and gives an "
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://kinneret.ac.il/en/career-center/",
+  "verdict": "UNVERIFIABLE",
+  "why": "two reads disagreed (NOT-THEIRS then ok); a verdict that does not reproduce is not a verdict"
  },
  "kinneret|https://www.kinneret.ac.il/%d7%9e%d7%a8%d7%9b%d7%96-%d7%a7%d7%a8%d7%99%d7%99%d7%a8%d7%94/%d7%94%d7%a6%d7%a2%d7%95%d7%aa-%d7%a2%d7%91%d7%95%d7%93%d7%94-%d7%9c%d7%a1%d7%98%d7%95%d7%93%d7%a0%d7%98%d7%99%d7%9d-%d7%95%d7%91%d7%95%d7%92%d7%a8%d7%99%d7%9d/%d7%94%d7%a6%d7%a2%d7%95%d7%aa-%d7%a2%d7%91%d7%95%d7%93%d7%94-alljobs/": {
   "chars": 374323,
@@ -11582,6 +11719,25 @@
   "url": "https://www.tairc.com/careers",
   "verdict": "ok",
   "why": "TAIRC's own careers page listing 59 open roles across its departments; nothing indicates a different country's entity."
+ },
+ "taldor|https://jobswipe.co/jobs/taldor-דרושים-srch_q0,6": {
+  "chars": 145697,
+  "date": "2026-08-30",
+  "employer_named": "JobSwipe",
+  "model": "opus",
+  "name": "Taldor",
+  "page_kind": "aggregator",
+  "route": "render",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 3269,
+  "url": "https://jobswipe.co/jobs/Taldor-דרושים-SRCH_Q0,6",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
  },
  "talentium|https://jobs.talentium.io/talentium": {
   "chars": 105377,

@@ -7552,3 +7552,24 @@ def test_a_stale_verdict_does_not_freeze_a_name_for_ever(tmp_path, monkeypatch):
     assert "Stale" in seen, "a stale non-answer must be re-judged"
     assert "Fresh" in seen, "a name never judged must be judged"
     assert "Answered" not in seen, "a settled verdict is not paid for twice"
+
+
+def test_dispose_shards_do_not_discard_each_others_verdicts(tmp_path):
+    """Three shards judge different names into ONE document. A whole-file write means the
+    last shard to save discards the rest: 461 names were judged in a single pass and 224
+    records survived -- ~237 paid LLM calls in the bin. Same shape as `board_verify.save`,
+    and as the two-snapshot-writers rule for `companies.csv`."""
+    import json
+    import queue_pipeline as QP
+    path = str(tmp_path / "disp.json")
+    QP.save_disposition({"Alpha": {"verdict": "duplicate-of", "date": "2026-08-30"}}, path)
+    b = {"Beta": {"verdict": "no-board", "date": "2026-08-30"}}
+    QP.save_disposition(b, path)
+    on_disk = json.load(open(path, encoding="utf-8"))
+    assert set(on_disk) == {"Alpha", "Beta"}, on_disk
+    assert "Alpha" in b, "the saving shard learns what the others recorded"
+
+    QP.save_disposition({"Alpha": {"verdict": "no-board", "date": "2026-08-31"}}, path)
+    QP.save_disposition({"Alpha": {"verdict": "duplicate-of", "date": "2026-08-01"}}, path)
+    assert json.load(open(path, encoding="utf-8"))["Alpha"]["verdict"] == "no-board", (
+        "an older verdict must never clobber a newer one")

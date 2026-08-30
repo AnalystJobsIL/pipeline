@@ -477,6 +477,31 @@ def self_check(names, cache):
     return disagreed
 
 
+def save_disposition(state, path=None):
+    """MERGE, never overwrite. Three shards judge different names into ONE json document.
+
+    A plain `write_json` means the last shard to save discards every other shard's verdicts:
+    461 names were judged in one pass and 224 records survived, so ~237 paid LLM calls went
+    in the bin. Exactly the shape `board_verify.save` was fixed for, and the shape the
+    `companies.csv` two-snapshot-writers rule warns about -- a whole-file write from
+    concurrent processes is never safe, whatever the file.
+    """
+    from pipeline.atomic import write_json
+    path = path or DISPOSE_PATH
+    try:
+        with open(path, encoding="utf-8") as f:
+            merged = json.load(f) or {}
+    except Exception:                                             # noqa: BLE001
+        merged = {}
+    for k, v in (state or {}).items():
+        old = merged.get(k)
+        if not old or (v.get("date", "") >= old.get("date", "")):
+            merged[k] = v
+    state.update(merged)                   # this shard learns what the others recorded
+    write_json(path, merged)
+
+
+
 def dispose(limit=0, apply=False, shard="", read_pages=True):
     """Judge every name still owed, and retire what the evidence settles."""
     import queue_state as QS
@@ -536,7 +561,7 @@ def dispose(limit=0, apply=False, shard="", read_pages=True):
               % (i, len(todo), name[:30], v,
                  ((ans or {}).get("other_name") or (ans or {}).get("why") or "")[:44]),
               flush=True)
-        write_json(DISPOSE_PATH, state)
+        save_disposition(state)
     print("\n%s" % dict(counts))
 
     retire = [(e.get("name") or "").strip() for e in queue
