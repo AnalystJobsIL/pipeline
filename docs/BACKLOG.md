@@ -9014,6 +9014,14 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      `purged`/`superseded` mark is the fix, not a deletion. (`title-twin Bounce/Bounce AI` has
      never reached a mail — one role is closed and the other open, so no single product sees
      the pair; only the whole-store `--cards` rehearsal reports it, since 08-25.)
+     **`roles` 2026-08-30 evening:** the retraction path (§7c) REMOVES it today — one line in
+     `cloud_state/roles_retractions.jsonl` keyed by the LinkedIn url, `status: withdrawn`, reason
+     `wrong employer: Bounce AI's posting under Bounce's name` — and its `removed` entry tells a
+     downloader why. It does NOT fix the class: the row exists because `resolve_claims` unifies
+     only on a shared strong id or url (`488`) and the firmographics join is by NAME; the durable
+     fix is the identity key on both (`132`/`133`, `489`), after which the Bounce row is `superseded`
+     by `bounce ai|data analyst` automatically. Not started 2026-08-30 — the line is a two-minute
+     job for whoever picks this up; the identity-key join is the work.
 490. **`run.py:803` prints `email (last 48h): N roles` for a count that includes the
      newly-covered roles** — lane: `infra` (wording only). `stats["new"] = len(email_jobs)` after
      `first_scan` is appended, so "(last 48h)" is false on every morning with a newly-covered
