@@ -5394,7 +5394,13 @@ record, which is a filter with a hole exactly one day wide; and `recruiters.is_r
 the names the store holds (`PURGE_REASON_RECRUITER`) — the nine agencies BACKLOG 460 (iii)
 enumerated. All three subtract every identity a live registry row answers to, and all three
 sit under the mass-purge hold. Measured on the 2026-08-30 store: 10 records, every one already
-`closed`, none at an active row.
+`closed`, none at an active row. **A hold holds.** On a hold morning `run.py` passes
+`never_ours=None` to `record_run` — distinct from `{}`, "no source names anyone" — and a
+standing `purged` record its board still lists keeps its verdict unjudged; the confirmer wave
+found the first version passing the emptied dict, which sent such a record through
+`rid in onboard` back to `open` and into the public file. A `role_id` line, once bound to its
+posting's url, also withdraws a second company's record at that url: that is the same posting
+under another name (the shape `superseded` exists for), not a second employer.
 
 **Nothing is evicted by the window.** `roles_archive.csv` is the complement on the date axis
 (`status` open or closed AND `last_seen < window start`), same columns, same cell hygiene,

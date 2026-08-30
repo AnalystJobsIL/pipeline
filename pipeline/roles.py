@@ -1023,6 +1023,11 @@ class Ledger:
         # A dict {identity: reason} since 2026-08-30 — there are two sources of "never an
         # employer" now (the registry's aggregator rows, and intake's `agency` verdicts) and
         # the record must say WHICH. A bare set still works and means the registry reason.
+        # `None` means the run's mass-purge HOLD is on: no new purge, and — the part the
+        # confirmer wave found missing — no standing purge is re-judged either. An empty
+        # dict/set means "no source names anyone", which is a different fact: a purged
+        # record its board still lists would then return to the ladder and be `open`.
+        held = never_ours is None
         if isinstance(never_ours, dict):
             _reason_for = dict(never_ours)
         else:
@@ -1145,6 +1150,8 @@ class Ledger:
                     c[want] += 1                      # a delta, like `closed today`
                     withdrawn_lines.append(f"{rec.get('company')} | {rec.get('title')} — {reason}")
                 c[want + "_total"] += 1
+            elif held and prev_status == "purged":
+                c["purged_total"] += 1            # a hold HOLDS: the verdict stands unjudged
             elif rec.get("retracted_on") and prev_status in RETRACTABLE and not (
                     _norm_never_ours and ident in _norm_never_ours):
                 # A record that WAS retracted and no line names any more: the human lifted

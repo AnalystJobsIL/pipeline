@@ -22524,3 +22524,90 @@ def test_run_py_archive_page_falls_back_to_the_ledgers_own_verdict():
     arch = src[src.index("# archive: everything ever matched"):src.index("arch.sort(")]
     assert 'ledger.records.get(_mkey(j)) or {}).get("status") not in roles.RETRACTABLE' in arch
     assert "merge_key as _mkey" in src
+
+
+# --- roles, 2026-08-30 (b): the confirmer wave ---------------------------------------------
+def test_a_mass_purge_hold_holds_a_standing_purge_rather_than_re_judging_it(tmp_path):
+    """Confirmer, NEW-1. On a hold morning `run.py` empties `_never_ours` for the day and
+    passed that SAME empty dict to `record_run`, so a purged record its board still listed
+    fell through to `rid in onboard` and came back `open` — into roles.csv, with a stale
+    `purge_reason` on an open record. A hold is `never_ours=None`; an empty source is `{}`,
+    and only the second means "nobody names this row any more"."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    j = _role("Jobgether", "Team Lead Product Analyst", "https://il.linkedin.com/jobs/view/x-1", "1",
+              src="discovery-linkedin")
+    st.upsert_matched(j, "2026-08-29")
+    lg = roles.Ledger(st, "2026-08-29"); lg.open_sync()
+    lg.record_run("2026-08-29", board_jobs=[j], merged=[j], scanned_ok={"Jobgether"}, failed=set(),
+                  never_ours={"jobgether": roles.PURGE_REASON_AGENCY})
+    assert lg.records[store.merge_key(j)]["status"] == "purged"
+    st.upsert_matched(j, "2026-08-30")                    # still fetched the next morning
+    lg2 = roles.Ledger(st, "2026-08-30"); lg2.open_sync()
+    lines = lg2.record_run("2026-08-30", board_jobs=[j], merged=[j], scanned_ok={"Jobgether"},
+                           failed=set(), never_ours=None)          # the HOLD
+    rec = lg2.records[store.merge_key(j)]
+    assert rec["status"] == "purged" and rec["purged_on"] == "2026-08-29"
+    assert "purged" not in lines[0] and lg2.counts.get("purged_total") == 1
+    rows, _c = roles.build_rows(lg2.records, run_date="2026-08-30")
+    assert rows == [], "held means held: nothing returns to the public file"
+    # ...whereas an EMPTY source is a lift: no verdict names it, the ladder judges it
+    lg3 = roles.Ledger(st, "2026-08-31"); lg3.open_sync()
+    lg3.record_run("2026-08-31", board_jobs=[j], merged=[j], scanned_ok={"Jobgether"},
+                   failed=set(), never_ours={})
+    assert lg3.records[store.merge_key(j)]["status"] == "open"
+    src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "pipeline", "run.py"), encoding="utf-8").read()
+    assert "never_ours=None if _purge_held else _never_ours" in src
+    st.close()
+
+
+def test_a_comment_line_is_a_bad_line_and_a_retraction_keeps_a_real_closure_date(tmp_path):
+    """Confirmer, mutants M15 + M18. `#` lines are NOT a contract (persist_state would
+    refuse the file); and a retraction on a role that had already closed keeps its real
+    `closed_on` — the predicate-purge branch was tested for this, the retraction branch
+    was not."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    j = _role("Comcast", "Analyst", "https://c.co/houston/1", "1", src="scrape")
+    st.upsert_matched(j, "2026-08-17")
+    lg = roles.Ledger(st, "2026-08-20"); lg.open_sync()
+    lg.record_run("2026-08-20", board_jobs=[], merged=[], scanned_ok={"Comcast"}, failed=set())
+    assert lg.records[store.merge_key(j)]["closed_on"] == "2026-08-17"
+    _retract_file(tmp_path, "# a comment is not allowed",
+                  {"url": j["url"], "status": "withdrawn", "reason": "Houston", "on": "2026-08-30"})
+    lg2 = roles.Ledger(st, "2026-08-30")
+    assert lg2.retractions.bad == 1 and len(lg2.retractions) == 1
+    lg2.open_sync()
+    lg2.record_run("2026-08-30", board_jobs=[], merged=[], scanned_ok=set(), failed=set())
+    rec = lg2.records[store.merge_key(j)]
+    assert rec["status"] == "withdrawn" and rec["closed_on"] == "2026-08-17"
+    (w,) = roles.removed_list(lg2.records)
+    assert w["on"] == "2026-08-30", "the day it left the public file is the retraction's"
+    st.close()
+
+
+def test_the_meta_is_written_last_so_a_failed_csv_leaves_a_stale_meta_the_alarm_sees(tmp_path, monkeypatch):
+    """Confirmer, mutant M20. The ordering `write_dataset` calls deliberate was unasserted:
+    if the CSV write fails, the META must be the stale half, because `_dataset_alarm`
+    compares its `run_date` against the run log and says so next morning — a fresh meta over
+    a stale CSV describes rows that are not there and nothing would catch it."""
+    from pipeline import roles, atomic
+    recs = _ledger(2)
+    cp, mp, _f = roles.dataset_paths(str(tmp_path / "seen.db"))
+    ap = roles.archive_path(str(tmp_path / "seen.db"))
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
+    roles.write_dataset(cp, mp, rows, meta, archive_path=ap, archive_rows=[])
+    real_swap = atomic._swap
+
+    def boom(path, writer, **kw):
+        if str(path).endswith(roles.DATASET):
+            raise OSError("disk full")
+        return real_swap(path, writer, **kw)
+    monkeypatch.setattr(atomic, "_swap", boom)
+    rows2, counts2 = roles.build_rows(recs, run_date="2026-08-31")
+    meta2 = roles.build_meta(rows2, counts2, recs, run_date="2026-08-31")
+    with pytest.raises(OSError):
+        roles.write_dataset(cp, mp, rows2, meta2, archive_path=ap, archive_rows=[])
+    assert json.load(open(mp, encoding="utf-8"))["run_date"] == "2026-08-30", "the meta is the stale half"

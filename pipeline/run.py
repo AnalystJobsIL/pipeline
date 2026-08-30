@@ -530,6 +530,9 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                  f"measurement")
         _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
         _never_ours = {}
+        _purge_held = True      # the record is told to HOLD its purges, not re-judge them
+    else:
+        _purge_held = False
 
     def _alive(j):
         """Is this role still open? = we saw it in the latest scan of its company.
@@ -652,7 +655,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     _role_lines = ledger.record_run(
         run_date, board_jobs=alive_jobs, merged=merged,
         scanned_ok={r["company_name"] for r in rows}, failed=failed_names, paths=paths,
-        scoped=bool(only or limit), never_ours=_never_ours)
+        scoped=bool(only or limit), never_ours=None if _purge_held else _never_ours)
     _role_lines = _role_lines + _claim_lines
 
     # THE PUBLIC DATASET (lane: roles, ARCHITECTURE §7c). One row per role, a rolling
