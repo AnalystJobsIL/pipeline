@@ -271,3 +271,27 @@ callers; `-1` then counted; the per-key merge under a same-hour double push; neg
 `left`; `stages.stamp` raising inside the handler. Noted, unchanged: a local unscoped
 `python -m pipeline.run` on the laptop would claim the day's `intel` baseline before the
 cloud digest (the documented local invocations are scoped).
+
+## 10. Verification — the three gates from a CLEAN worktree at the pushed commit
+
+CI could not produce a verdict: `tests.yml` was cancelled ×4 since 04:55Z (the `guard` job
+dies on its own 10-minute timeout, BACKLOG 442, `infra`'s) and there was no clean verdict
+since 02:03Z. **This commit is UNVERIFIED IN CI**: run **33296542486** on `2019c3f` was
+`in_progress` at push time, queued behind two older in-progress runs. The orchestrator will
+re-run CI when infra lands the fix. The substitute, run AFTER the push from a fresh
+`git worktree add --detach … 2019c3f` (no local state, no credentials):
+
+| gate | result |
+|---|---|
+| `python -m pytest` | **1406 passed, 12 skipped, 2 failed** in 7m13s |
+| `python check_invariants.py` | `companies.csv OK: 2046 rows, 1099 active, 0 orphans, pool=835` |
+| `python docs/check_docs.py` | `0 error(s), 4 warning(s) over 67 documents` |
+| `python docs/backlog.py check` | clean; company-intel 17 open |
+
+The two reds, neither in a file this lane touched: `tests/test_registry.py::
+test_bd_rescue_reads_the_unlockers_error_code_and_never_retries_a_policy_host` (`registry`;
+red on master before this session, and it sets its own `BRIGHTDATA_*` env so it is not the
+worktree-credential trap) and `tests/test_units.py::
+test_a_configured_but_unusable_paid_rung_announces_itself` (`jd-text`, landed in `76483ec`
+minutes before this push — BACKLOG 448; **it fails on `76483ec` alone**, i.e. before this
+commit existed). The lane's own file: **141 passed, 0 failed**.
