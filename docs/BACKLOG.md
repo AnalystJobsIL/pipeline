@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**546 filed · 400 open · 146 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**551 filed · 403 open · 148 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 496.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 501.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@scraper` **open** · `462@registry` **open** |
 
-### registry — 131 open
+### registry — 132 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -225,6 +225,7 @@ closure convention in the header.
 - **487** `487@registry` **`Checkout` and `finbounce` are duplicate ACTIVE rows of `Checkout.com` and `Bounce AI`** —
 - **493** `493@registry` **A protected tombstone on an ACTIVE row blocks every later verdict from reaching the cell**
 - **495** `495@registry` **`queue_pipeline.py --census` WRITES `cloud_state/queue_receipt.json` for a read-only
+- **499** `499@registry` **`Port` and `Port.io` are two ACTIVE registry rows for one employer**
 
 ### infra — 108 open
 
@@ -325,7 +326,6 @@ closure convention in the header.
 - **439** `439@infra` **`check_unattended_proof` cannot run in CI, where the push it should judge lands** —
 - **448** `448@infra` **The inline JD filler's paid rung is armed by default and CANNOT SPEND, because the step
 - **450** `450@infra` **`firmographics.yml`: the budget is not wired, one slot a day measures the gap before
-- **453** `453@infra` **`cloud_state/roles.csv` is committed and public by raw URL, but it is not on Pages** —
 - **455** `455@infra` **A `bd_rescue` test fails whenever another `bd_rescue` test runs first**
 - **458** `458@infra` **`merge_json_cache.merge` resurrects a key the ORIGIN deleted, so a deletion committed
 - **463** `463@infra` **The drain's counters exist only in the mail**
@@ -336,8 +336,9 @@ closure convention in the header.
 - **491** `491@infra` **The drain's capacity lives in `listing-hunt.yml` and is below intake; four workflow diffs**
 - **492** `492@infra` **`check_invariants` F2 fires on 109 legitimate `no-url` rows
 - **494** `494@infra` **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
+- **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
 
-### scraper — 28 open
+### scraper — 30 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -367,6 +368,8 @@ closure convention in the header.
 - **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
 - **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
 - **462** `462@scraper` **A `?location=Israel` listing URL makes every card on the page an Israeli posting** —
+- **496** `496@scraper` **The scraper stamps the QUERY's location on a card that has none, and the Israel filter
+- **497** `497@scraper` **`&amp;` reaches the public title and the role's id**
 
 ### discovery — 26 open
 
@@ -482,9 +485,9 @@ closure convention in the header.
 - **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
 - **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
 - **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
-- **473** `473@roles` **`roles.csv.meta.json` says `published_on_pages: false` on the very page that publishes
 - **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
 - **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
 
 ### jd-text — 15 open
 
@@ -7666,7 +7669,11 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     whether a LinkedIn guest page is worth keeping in the corpus at all, given that 13 rows of
     it turned out to be a sign-in form on 2026-08-28. Decide before building.
 
-453. **`cloud_state/roles.csv` is committed and public by raw URL, but it is not on Pages** —
+453. ~~**`cloud_state/roles.csv` is committed and public by raw URL, but it is not on Pages**~~ —
+    **CLOSED 2026-08-30 (`infra`)**: shipped in `e5fee4d` exactly as the diff below prescribes — the
+    publish step copies `roles.csv`, its meta and `funnel.csv` when non-empty, and exports
+    `ROLES_PAGES_URL` on the pipeline step; `https://analystjobsil.github.io/board/roles.csv`
+    answered 200 on 2026-08-30. The residue (the meta denied it) was `473@roles`, closed the same day.
     lane: `infra`. Filed by `roles` 2026-08-30; the diff below is written and tested, and the
     file it edits is `infra`'s, so this lane did not apply it. The dataset the operator asked
     for ("analyses that will be on git pages... I want others to have easy access to it") is
@@ -8609,7 +8616,17 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
 
 460. **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
     different answer** — lane: `roles` (they own the purge and the join), verdicts by
-    `registry`, measured 2026-08-30.
+    `registry`, measured 2026-08-30. **Partly drained 2026-08-30 (`roles`, evening):** class
+    (iii) below is done — `recruiters.is_recruiter` and intake's `agency` verdicts are now
+    purge sources beside the aggregator rows (`ARCHITECTURE.md` §7c), and all ten records they
+    name left the public dataset in the same run (`purged 10` on the `Roles:` line). What is
+    left is the join half and the two companies the CSV still cannot profile: the live file's
+    `firmo N of M unmatched` names **Hila & Co.** (parked, `needs re-resolution`; its board says
+    HILA) and **Peak Innovation** (active, `verified 45 IL`, no firmographics record) — both
+    have a `companies.csv` row and neither has a firmographics one, so the fix is `registry`'s
+    resolution for the first and `company-intel`'s research for the second. Compie
+    Technologies, INGIMA and ONE datAI, named unmatched the same morning, were the documented
+    one-run lag (`as_of 2026-08-30`), not a gap.
 
     The public per-role CSV the `roles` lane is building does not exist on `origin/master`
     yet and nothing references it; when it ships, one row per role joined to firmographics on `company_name`, these 28 are what a
@@ -8785,8 +8802,12 @@ the rebase (a collision is what 241–246 are).
      which must never fail a digest) would have nothing to gate on. Return it from the census
      mode only; the 09-10 morning check reads the number by hand today.
 
-473. **`roles.csv.meta.json` says `published_on_pages: false` on the very page that publishes
-     it, and `ROLES_PAGES_URL` is read by nothing** — lane: `roles`. The board now serves
+473. ~~**`roles.csv.meta.json` says `published_on_pages: false` on the very page that publishes
+     it, and `ROLES_PAGES_URL` is read by nothing**~~ — **CLOSED 2026-08-30 (`roles`)**: `build_meta`
+     takes `pages_url` from `export_dataset` (`os.environ[roles.PAGES_URL_ENV]`); `download_url`
+     is the Pages address when set, `raw_url` is always the raw one, and `published_on_pages` is
+     derived. `test_published_on_pages_is_read_from_the_url_the_workflow_exports` proves it end to
+     end. Original text: lane: `roles`. The board now serves
      `/roles.csv` and `/roles.csv.meta.json` (infra applied 453 with a non-empty guard), but
      `pipeline/roles.py:1614` hard-codes `False` and `tests/test_units.py:19285` pins it. The
      digest's pipeline step exports `ROLES_PAGES_URL=https://analystjobsil.github.io/board/roles.csv`;
@@ -9018,3 +9039,53 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      receipt should be a `--stamp`-only artefact; `queue_state.py` (no args) already sets the
      read-only example.
 
+496. **The scraper stamps the QUERY's location on a card that has none, and the Israel filter
+     then agrees with itself** — lane: `scraper`, **high**. Filed by `roles` 2026-08-30.
+     `Comcast`'s registry `api_url` is `jobs.comcast.com/search-jobs?location=Israel`;
+     `scrape_universal._page_is_il` (`:1011`) is True on the query string, so `_from_dom`
+     (`:1005-1008`) writes the literal word `"Israel"` for every card that carries no location
+     of its own, and `fetchers.py:596` does the same for eightfold. `is_israel_job("Israel")`
+     is then right to say yes, `scrape_dropped_israel=0` that morning, and two US postings
+     (`/job/houston/`, `/job/pennsylvania/`) reached the mail, the board and the public
+     dataset — the `successfactors` fetcher already refuses the same inference (`:726`:
+     "`locationsearch=Israel` is a hint, not a filter"; Boston Scientific returns Minnesota).
+     The rows are retracted by hand (`cloud_state/roles_retractions.jsonl`, §7c); the CLASS is
+     open until a locationless card on a query-scoped page is `location: ""` and judged on its
+     own text, or the card's url path is read (`/job/<us-state>/`). The store holds **11**
+     bare-`Israel` locations today; `500@roles` lists them.
+
+497. **`&amp;` reaches the public title and the role's id** — lane: `scraper`. Filed by `roles`
+     2026-08-30. `Manager 2, Business Operations &amp; Analytics` shipped with the entity
+     unescaped in the mail, the board and `roles.csv`, and `role_id` is
+     `comcast|manager 2 business operations amp analytics`. `fetchers._clean` collapses
+     whitespace only; an `html.unescape` there (or in the scraper's `write`) fixes the text,
+     and the retraction file is keyed by url precisely so that fix cannot un-retract the row.
+
+498. **`roles_archive.csv` and `roles_text.jsonl` are not on Pages** — lane: `infra`. Filed by
+     `roles` 2026-08-30. The meta names both by `raw_url` so nothing overstates; to put them
+     beside the board add the two names to the publish step's optional-file loop in
+     `.github/workflows/daily-digest.yml` (`for f in docs/archive.html cloud_state/roles.csv
+     cloud_state/roles.csv.meta.json cloud_state/funnel.csv cloud_state/roles_archive.csv
+     cloud_state/roles_text.jsonl; do` and the matching `git add` list), and register the two
+     new files in `persist_state.SINGLE_WRITER` (`"cloud_state/roles_archive.csv":
+     "daily-digest"`; `roles_retractions.jsonl` is hand-written, so it wants the default `ours`
+     with a comment, not a single-writer claim). `roles_text.jsonl` is 514 KB and grows only on
+     a JD day. Then `roles.build_meta` can set `archive.published_on_pages` from a second
+     variable, or infer it from `ROLES_PAGES_URL`'s directory.
+
+499. **`Port` and `Port.io` are two ACTIVE registry rows for one employer** — lane: `registry`.
+     Filed by `roles` 2026-08-30. `claim conflicts 1 (Port<-Port.io)` resolves correctly
+     every morning (the comeet row's name is in the url slug `/jobs/port/59.004/`, both losers
+     are `superseded` with their ids unioned), but the cause is upstream: `Port` (comeet,
+     token `59.004`, notes empty) and `Port.io` (scrape, `www.port.io/careers`, `verified 29
+     IL`) never collapse because `identity_key` reads them as `port` and `port io`. The
+     company's own name is Port.io; the board shows `Port`. One row should be `alias-of` the
+     other — BACKLOG 133's shape, and `137@render`'s "also listed as" is the display half.
+
+500. **11 store records carry the bare location `Israel`, the weakest string the store holds and
+     the one 482 produces** — lane: `roles`. Filed 2026-08-30. Two were Comcast (withdrawn);
+     `Nebius | Business Intelligence Developer` (www.linkedin.com, open) is the next to read.
+     `python -c "import json;print([ (r['company'],r['title']) for r in map(json.loads,open('cloud_state/roles.jsonl',encoding='utf-8')) if r.get('location')=='Israel' and r['status'] in ('open','closed')])"`.
+     A bare `Israel` is not wrong — a board that lists "Israel" as the office is honest — but
+     it is the value a stamped card and an honest card share, so each deserves one look at the
+     posting's own page; a wrong one goes into `roles_retractions.jsonl`.

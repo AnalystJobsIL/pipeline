@@ -47,17 +47,37 @@ TEXT = "roles_text.jsonl"
 DATASET = "roles.csv"                  # the public one-row-per-role export
 DATASET_META = "roles.csv.meta.json"   # what the CSV cannot say about itself
 FUNNEL = "funnel.csv"                  # one row per full run: postings -> sent
-WINDOW_DAYS = 60                       # the dataset's rolling window, on `last_seen`
+ARCHIVE = "roles_archive.csv"          # every role that has aged OUT of the window, same columns
+RETRACTIONS = "roles_retractions.jsonl"   # hand-written: rows to withdraw, with the reason
+# The dataset's rolling window, on `last_seen`. 90 is the OPERATOR'S number (2026-08-30: he
+# said "~60" first and "90 days" later; the 60 that shipped that morning was the
+# orchestrator's transcription of the first, not a decision). Nothing is evicted by it:
+# a role older than the window moves to `roles_archive.csv`, still in the repo.
+WINDOW_DAYS = 90
 SEP = ";"                              # the ONE list separator in the CSV, documented in meta
-DOWNLOAD_URL = ("https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/"
-                "cloud_state/roles.csv")
+RAW_BASE = "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/"
+DOWNLOAD_URL = RAW_BASE + DATASET      # the raw address, always true; Pages when infra says so
+PAGES_URL_ENV = "ROLES_PAGES_URL"      # set by daily-digest.yml when the publish step copies it
+DATASET_SINCE = "2026-08-30"           # the first day roles.csv existed: nothing before it was
+                                       # ever public, so a withdrawal earlier than this is a
+                                       # withdrawal from nothing
 PURGE_REASON = "registry row points at an aggregator, so the postings were never this row's"
+PURGE_REASON_AGENCY = ("intake rejected this name as an agency (cloud_state/intake_rejects.json), "
+                       "so the posting was another employer's")
+PURGE_REASON_RECRUITER = ("pipeline/recruiters.is_recruiter names this as a staffing agency, so "
+                          "the posting was another employer's")
 TAGS_V = 1                 # bump when roleprofile's vocabulary changes shape -> re-snapshot
 CORRUPT_FRAC = 0.10        # more bad lines than this and the file is a wreck, not a ledger
 MASS_CLOSE_MIN = 10        # closures/day above max(MIN, FRAC * open) are a broken fetch,
 MASS_CLOSE_FRAC = 0.25     # not a measurement: statuses are held and the mail is told
 REPOST_DAYS = 3            # the render rule (digest.py): posted_date jumped >=3d past first_seen
-STATUSES = ("open", "closed", "superseded", "purged")
+# open/closed: the employer's board. superseded: a double (one posting, two names). purged:
+# the COMPANY was never an employer (an aggregator row, an agency). withdrawn: the employer
+# is real and THIS posting was never in scope — not in Israel, not this employer's — which
+# is a different fact from `purged` and must not be filed under it (Comcast is an employer;
+# its Houston posting was not ours). Both leave every product, both keep their line.
+STATUSES = ("open", "closed", "superseded", "purged", "withdrawn")
+RETRACTABLE = ("withdrawn", "purged")      # the two verdicts a retraction line may carry
 _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # path segments that are ATS plumbing, never a tenant slug — and the ATS hosts themselves:
 # `Smart Shooter` is not named by every smartrecruiters url, nor `Comeet` by every comeet one
@@ -79,6 +99,102 @@ CORE = ["company", "title", "location", "url", "posted_date", "seniority", "sour
 def ledger_paths(db_path):
     d = os.path.dirname(os.path.abspath(db_path))
     return os.path.join(d, LEDGER), os.path.join(d, TEXT)
+
+
+def retractions_path(db_path):
+    """`roles_retractions.jsonl` beside the store — derived like `ledger_paths`, so a scratch
+    run applies a scratch file and the committed retractions reach only the committed store."""
+    return os.path.join(os.path.dirname(os.path.abspath(db_path)), RETRACTIONS)
+
+
+class Retractions:
+    """The hand-written verdicts: rows that must leave the public dataset, with the reason.
+
+    WHY A FILE, AND WHY BY HAND. Every automatic exclusion this module has (`superseded`,
+    `purged`) is a PREDICATE the run re-evaluates each morning. Comcast's Houston posting
+    passes every predicate: its registry row is a real employer, its `location` is the
+    literal word "Israel" (the scraper stamped the QUERY's location onto a card that had
+    none), and `is_israel_job("Israel")` is right to say yes. Nothing the record carries
+    says Texas except the url path a human read. A retraction is that human reading,
+    written down once, applied by every run after — and lifted by deleting the line.
+
+    One JSON object per line: `{"url": …} | {"role_id": …}` (at least one; the url is the
+    stable key, because a `role_id` is minted from the title and a title-cleaning fix
+    upstream would mint a new one that a role_id-keyed line would miss), `"status"` in
+    `RETRACTABLE`, `"reason"` (free text, published in the meta), `"on"` (ISO date), and
+    optionally `"evidence"`. A bad line is counted and skipped, never raises — a typo in
+    this file must cost one retraction, not the digest.
+    """
+
+    def __init__(self, entries=(), bad=0, path=""):
+        self.entries = list(entries)
+        self.bad = bad
+        self.path = path
+        for e in self.entries:
+            e.setdefault("_hits", [])
+
+    @classmethod
+    def load(cls, path):
+        entries, bad = [], 0
+        if not os.path.exists(path):
+            return cls([], 0, path)
+        try:
+            with open(path, "rb") as f:
+                raw = f.read().decode("utf-8-sig", errors="replace")
+        except OSError:
+            return cls([], 1, path)
+        for line in raw.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            try:
+                e = json.loads(line)
+                ok = (isinstance(e, dict)
+                      and (isinstance(e.get("url"), str) and e["url"]
+                           or isinstance(e.get("role_id"), str) and e["role_id"])
+                      and e.get("status") in RETRACTABLE
+                      and isinstance(e.get("reason"), str) and e["reason"].strip()
+                      and _iso(str(e.get("on") or "")))
+            except ValueError:
+                ok = False
+            if not ok:
+                bad += 1
+                continue
+            entries.append(e)
+        return cls(entries, bad, path)
+
+    def __bool__(self):
+        return bool(self.entries)
+
+    def __len__(self):
+        return len(self.entries)
+
+    @staticmethod
+    def _key(e):
+        return e.get("url") or e.get("role_id")
+
+    def match(self, rec):
+        """The retraction that names this record (a ledger record or a `matched` row), or
+        None. Matched on the role's id, its url, or any of its `seen_ids` (a scrape id IS
+        the url) — so the same posting is caught whichever way it is keyed."""
+        if not self.entries or not isinstance(rec, dict):
+            return None
+        rid = rec.get("role_id") or rec.get("mkey") or ""
+        url = rec.get("url") or ""
+        sids = rec.get("seen_ids") or []
+        if isinstance(sids, str):
+            sids = sids.split("+")
+        for e in self.entries:
+            if e.get("role_id") and e["role_id"] == rid:
+                return e
+            u = e.get("url")
+            if u and (u == url or any(s.endswith(u) for s in sids)):
+                return e
+        return None
+
+    def unmatched(self):
+        """Entries no record answered to — a typo, or a posting not (yet) in the store."""
+        return [self._key(e) for e in self.entries if not e["_hits"]]
 
 
 def load(path):
@@ -116,7 +232,7 @@ def load(path):
     return records, "ok", bad
 
 
-_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description", "purge_reason"]
+_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description", "purge_reason", "withdraw_reason", "retracted_on"]
 _LIST_FIELDS = ("sources", "seen_ids", "episodes", "reposts")
 _DICT_FIELDS = ("sent", "tags", "attribution", "class")
 
@@ -487,6 +603,13 @@ class Ledger:
         self.counts = {}                # this run's status tally, for the funnel record
         self.alarms = []
         self.claims = []                # "Winner<-Loser" strings
+        # The hand-written retractions, read OUTSIDE `_guard` and before any seam: `run.py`'s
+        # `_alive` consults them directly, so a frozen (corrupt) ledger day cannot put a
+        # withdrawn posting back on the board — the file is its own authority.
+        self.retractions = Retractions.load(retractions_path(st.path))
+        if self.retractions.bad:
+            self.alarms.append(f"roles retractions unreadable ({self.retractions.bad} bad "
+                               f"line(s) in {RETRACTIONS}) — those lines were not applied")
 
     def _touch(self, rec):
         """This record changed this run: `updated` gets the run date at flush."""
@@ -856,8 +979,16 @@ class Ledger:
         # Nice/NICE, SolarEdge, Nova, Innoviz, HP, Workday, Orca AI, Akamai, Tevel, Dell,
         # TechBiz Global). A role under a live company must never be purged because a parked
         # row strips to the same identity.
-        _norm_never_ours = set(never_ours or ())
+        # A dict {identity: reason} since 2026-08-30 — there are two sources of "never an
+        # employer" now (the registry's aggregator rows, and intake's `agency` verdicts) and
+        # the record must say WHICH. A bare set still works and means the registry reason.
+        if isinstance(never_ours, dict):
+            _reason_for = dict(never_ours)
+        else:
+            _reason_for = {i: PURGE_REASON for i in (never_ours or ())}
+        _norm_never_ours = set(_reason_for)
         sent = self.st.load_sent()
+        withdrawn_lines = []
         c = Counter()
         # BEFORE the frozen early-return below. The run log records that the pipeline LOOKED,
         # which is true whether or not the ledger could be read — and `upsert_matched` uses
@@ -947,7 +1078,27 @@ class Ledger:
             # status. A record absorbed for the first time this run has no history: it is
             # classified, not closed, and never counts toward the mass-close guard.
             fresh = rec.pop("_fresh", False)
-            if _norm_never_ours and _store._norm_company(rec.get("company")) in _norm_never_ours:
+            ret = self.retractions.match(rec)
+            ident = _store._norm_company(rec.get("company"))
+            if ret is not None:
+                # A human said so, in `roles_retractions.jsonl`. Applied before every
+                # predicate below because the predicates are exactly what this posting
+                # passed. The status is the line's (`withdrawn` or `purged`), the reason
+                # is published, and `retracted_on` is the line's date — not today's, so a
+                # re-derived file does not move the day the row left. Lifting a retraction
+                # is deleting the line: the record is then judged like any other next run.
+                ret["_hits"].append(rid)
+                want, reason = ret["status"], ret["reason"].strip()
+                field = "withdraw_reason" if want == "withdrawn" else "purge_reason"
+                if (rec.get("status") != want or rec.get(field) != reason
+                        or rec.get("retracted_on") != ret["on"]):
+                    rec["status"], rec[field], rec["retracted_on"] = want, reason, ret["on"]
+                    rec["closed_on"] = rec.get("closed_on") or ret["on"]
+                    self._touch(rec)
+                    c[want] += 1                      # a delta, like `closed today`
+                    withdrawn_lines.append(f"{rec.get('company')} | {rec.get('title')} — {reason}")
+                c[want + "_total"] += 1
+            elif _norm_never_ours and ident in _norm_never_ours:
                 if rec.get("status") != "purged":
                     rec["status"], rec["closed_on"] = "purged", run_date
                     self._touch(rec)
@@ -963,8 +1114,8 @@ class Ledger:
                 # would leave them reasonless for ever. This is not a backfill of something
                 # inferred — reaching this branch means the row is in `never_ours` TODAY, so
                 # the reason is re-observed on the run that writes it.
-                if rec.get("purge_reason") != PURGE_REASON:
-                    rec["purge_reason"] = PURGE_REASON
+                if rec.get("purge_reason") != _reason_for[ident]:
+                    rec["purge_reason"] = _reason_for[ident]
                     self._touch(rec)
                     c["purged"] += 1      # a delta, like `closed today` beside it — not a
                 c["purged_total"] += 1    # running total that never decays
@@ -1001,6 +1152,15 @@ class Ledger:
                     c["closed_today"] += 1
                     c["closed"] += 1
                     self._touch(rec)
+        # The alarm that makes a withdrawal visible where a human reads daily: the day a
+        # retraction is first applied, `Stages:` names the row and the reason. A line that
+        # matched nothing is ALSO an alarm — a typo in the file must not read as "applied".
+        if withdrawn_lines:
+            self.alarms.append(f"roles withdrawn {len(withdrawn_lines)} role(s) from every "
+                               f"product and the public dataset: " + "; ".join(withdrawn_lines)[:400])
+        for key in self.retractions.unmatched():
+            self.alarms.append(f"roles retraction unmatched ({key}) — no record answers to it; "
+                               f"check the line in {RETRACTIONS}")
         if self.dirty or self.text_dirty:
             self.flush(run_date)
         self.counts = dict(c)           # the funnel reads what the mail line reads
@@ -1010,6 +1170,7 @@ class Ledger:
         line = (f"open {c['open']} · closed today {c['closed_today']} · reopened {c['reopened']}"
                 f" · reposted {c['reposted']}"
                 + (f" · purged {c['purged']}" if c["purged"] else "")
+                + (f" · withdrawn {c['withdrawn']}" if c["withdrawn"] else "")
                 + (f" · merged-copy {paths['merged-copy']}" if paths and paths.get("merged-copy") else "")
                 + (f" · absorbed {self.report.get('absorbed')} ({c['fresh_closed']} already closed)"
                    if self.report.get("absorbed") else "")
@@ -1041,6 +1202,12 @@ class Ledger:
             csv_path, meta_path, _f = dataset_paths(self.st.path)
             rows, counts = build_rows(self.records, run_date=run_date,
                                       firmographics=firmographics, window_days=window_days)
+            # ...and the archive: the same row builder over the roles the window has aged
+            # out. Regenerated WHOLE from the ledger every run (no append machinery, so it
+            # cannot drift from the record), header-only until the first eviction.
+            archived, _ac = build_rows(self.records, run_date=run_date,
+                                       firmographics=firmographics, window_days=window_days,
+                                       archive=True)
             earliest_run = ""
             try:
                 earliest_run = self.st.conn.execute(
@@ -1048,12 +1215,15 @@ class Ledger:
             except Exception:  # noqa: BLE001 — the log is a nicety here, never a blocker
                 pass
             meta = build_meta(rows, counts, self.records, run_date=run_date,
-                              window_days=window_days, earliest_run=earliest_run)
-            write_dataset(csv_path, meta_path, rows, meta)
+                              window_days=window_days, earliest_run=earliest_run,
+                              pages_url=os.environ.get(PAGES_URL_ENV, ""), archived=archived)
+            write_dataset(csv_path, meta_path, rows, meta,
+                          archive_path=archive_path(self.st.path), archive_rows=archived)
             ex = (f"superseded {counts.get('superseded', 0)} · purged {counts.get('purged', 0)}"
+                  f" · withdrawn {counts.get('withdrawn', 0)}"
                   f" · outside window {counts.get('outside_window', 0)}")
             return [f"dataset {len(rows)} roles ({counts['window_start']}..{counts['window_end']})"
-                    f" · excluded {ex}"
+                    f" · archived {len(archived)} · excluded {ex}"
                     f" · firmo {counts.get('firmo:none', 0)} of {len(rows)} unmatched"]
         except Exception as e:  # noqa: BLE001
             self.alarms.append(f"roles dataset export failed: {e.__class__.__name__}: "
@@ -1297,6 +1467,56 @@ def dataset_paths(db_path):
             os.path.join(d, FUNNEL))
 
 
+def archive_path(db_path):
+    """`roles_archive.csv` beside the store, by the same rule (and for the same reason)."""
+    return os.path.join(os.path.dirname(os.path.abspath(db_path)), ARCHIVE)
+
+
+def intake_rejected(path, reasons=("agency",)):
+    """{normalised company name: purge reason} from discovery's `intake_rejects.json` — the
+    verdicts intake already made and never applied backwards. `Jobgether` was rejected as an
+    `agency` on 2026-08-28 and its 2026-08-26 record stayed in the public file: a rejection
+    that is not retroactive is a filter with a hole exactly one day wide. Read-only; a
+    missing or unreadable file is an empty answer, never an exception."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    out = {}
+    for key, v in data.items():
+        if not isinstance(v, dict) or v.get("reason") not in reasons:
+            continue
+        name = str(v.get("name") or key).strip()
+        if name:
+            out[_store._norm_company(name)] = PURGE_REASON_AGENCY
+    return out
+
+
+def recruiter_names(companies):
+    """{normalised name: purge reason} for the company names `pipeline/recruiters.is_recruiter`
+    calls a staffing agency — the third source of "never an employer", and the one BACKLOG
+    460 (iii) measured: nine store companies, ten records, every one already closed and none
+    at an active registry row (2026-08-30). An agency's posting is another employer's role
+    under the agency's name; the classifier already refuses them at intake (2026-08-28), and
+    this applies the same verdict to what entered before. Never raises: a predicate that
+    fails is an empty answer."""
+    out = {}
+    try:
+        from . import recruiters
+    except Exception:  # noqa: BLE001
+        return out
+    for name in companies:
+        try:
+            if name and recruiters.is_recruiter(name):
+                out[_store._norm_company(name)] = PURGE_REASON_RECRUITER
+        except Exception:  # noqa: BLE001
+            continue
+    return out
+
+
 # Characters that must never reach a cell. A NUL is the one that matters: `_clean` does not
 # strip it, json round-trips it through the ledger, and pandas' C parser then TRUNCATES the
 # cell at it without a warning while the csv module keeps the whole string — silent,
@@ -1464,8 +1684,13 @@ def _company_earliest(records):
     return out
 
 
-def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS):
+def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS, archive=False):
     """(rows, counts) for the dataset. Pure: no I/O, no network, no store.
+
+    `archive=True` selects the COMPLEMENT on the date axis — the open/closed roles whose
+    `last_seen` is before the window start — with the same columns and the same cell
+    hygiene, so `roles.csv` + `roles_archive.csv` is every role that was ever ours and the
+    two never overlap. Everything excluded by STATUS is excluded from both.
 
     THE WINDOW IS ON `last_seen`, and that choice is the one the rest of the file rests on.
     `pipeline/run.py:_posted_in` already answers a dating question for the 48h email, and
@@ -1495,18 +1720,24 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
             continue
         st_ = rec.get("status") or "open"
         if st_ not in ("open", "closed"):
-            # one row per ROLE: a double (`superseded`) and a row that was never ours
-            # (`purged`) are both counted in the meta and neither is published. Any OTHER
-            # value is a corrupt record, not a status, and is counted apart rather than
-            # published as an undocumented enum value.
-            counts[st_ if st_ in ("superseded", "purged") else "unreadable"] += 1
+            # one row per ROLE: a double (`superseded`), a row that was never ours
+            # (`purged`) and a posting that was never in scope (`withdrawn`) are all counted
+            # in the meta and none is published. Any OTHER value is a corrupt record, not a
+            # status, and is counted apart rather than published as an undocumented enum.
+            counts[st_ if st_ in ("superseded", "purged", "withdrawn") else "unreadable"] += 1
             continue
         ls = str(rec.get("last_seen") or "")[:10]
         if not _iso(ls):
             counts["undatable"] += 1
             continue
-        if ls < start or ls > end:
-            counts["outside_window"] += 1
+        if ls < start:
+            counts["archived"] += 1          # aged out of the window: the archive's row
+            if not archive:
+                continue
+        elif ls > end:
+            counts["outside_window"] += 1    # after the window END: only a re-derive with
+            continue                         # an older --date can produce these
+        elif archive:
             continue
         counts["rows"] += 1
         fs = _earliest_seen(rec)
@@ -1599,7 +1830,47 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
     return rows, counts
 
 
-def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earliest_run=""):
+def _published_span(rec):
+    """The days this record was in a PUBLIC roles.csv, or None if it never was: from the
+    later of the file's first day and the record's first sighting, to the day it was
+    retracted, INCLUSIVE and conservative — a hand retraction is dated the day a human
+    decided, and that morning's file had usually already shipped with the row (Comcast:
+    published 08-30, retracted 08-30), so `to` names the last file that MAY carry it, never
+    a file that certainly does not. Derived, not stamped — the export never writes to the
+    record — and honest about the one thing it cannot know: whether a given morning's run
+    actually happened."""
+    if rec.get("status") not in RETRACTABLE:
+        return None
+    start = max(DATASET_SINCE, _earliest_seen(rec) or DATASET_SINCE)
+    end = str(rec.get("retracted_on") or rec.get("closed_on") or "")[:10]
+    if not _iso(end):
+        return None
+    return {"from": start, "to": end} if start <= end else None
+
+
+def withdrawn_list(records):
+    """The withdrawal record a repeat downloader reconciles against: every retracted or
+    purged role, its reason, the day it left, and the span it was public (null when it
+    left before the file existed — the seven `Tel Aviv` rows never reached anyone)."""
+    out = []
+    for rid in sorted(records):
+        rec = records[rid]
+        if not isinstance(rec, dict) or rec.get("status") not in RETRACTABLE:
+            continue
+        out.append({
+            "role_id": rid,
+            "company": str(rec.get("company") or ""),
+            "title": str(rec.get("title") or ""),
+            "status": rec.get("status"),
+            "reason": str(rec.get("withdraw_reason") or rec.get("purge_reason") or ""),
+            "on": str(rec.get("retracted_on") or rec.get("closed_on") or "")[:10],
+            "published_in_roles_csv": _published_span(rec),
+        })
+    return out
+
+
+def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earliest_run="",
+               pages_url="", archived=()):
     """What the CSV cannot say about itself — above all, where OUR blindness ends and the
     market's silence begins.
 
@@ -1616,10 +1887,26 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
     nulls = {c: sum(1 for r in rows if str(r.get(c, "")) == "") for c in COLUMNS}
     enums = dict(_closed_vocabularies())
     enums.update(_ENUMS)          # a hand-written enum always wins over a derived one
+    archived = list(archived)
+    n_arch = counts.get("archived", 0)
+    # Every record is accounted for exactly once, and the file says so. A public dataset
+    # that cannot reconcile its own store count is one whose exclusions cannot be trusted.
+    parts = {"rows": len(rows), "archived": n_arch,
+             "superseded": counts.get("superseded", 0), "purged": counts.get("purged", 0),
+             "withdrawn": counts.get("withdrawn", 0),
+             "outside_window": counts.get("outside_window", 0),
+             "undatable": counts.get("undatable", 0),
+             "unreadable": counts.get("unreadable", 0)}
+    pages = (pages_url or "").strip()
     return {
         "dataset": DATASET,
-        "download_url": DOWNLOAD_URL,
-        "published_on_pages": False,
+        # The Pages address when infra's publish step copies the file there (it says so via
+        # ROLES_PAGES_URL on the pipeline step), else the raw address. `raw_url` is always
+        # true; `published_on_pages` used to be a hard-coded False and the file denied its
+        # own location on the very page that served it.
+        "download_url": pages or DOWNLOAD_URL,
+        "raw_url": DOWNLOAD_URL,
+        "published_on_pages": bool(pages),
         "generated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "run_date": str(run_date),
         "rows": len(rows),
@@ -1655,11 +1942,33 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
         "excluded": {
             "superseded": counts.get("superseded", 0),
             "purged": counts.get("purged", 0),
-            "purge_reason": PURGE_REASON,
+            "withdrawn": counts.get("withdrawn", 0),
             "outside_window": counts.get("outside_window", 0),
             "undatable": counts.get("undatable", 0),
             "note": "superseded = the same posting also fetched under a second company name, "
-                    "kept once. purged = the registry row was never an employer.",
+                    "kept once. purged = the COMPANY was never an employer (a registry row "
+                    "that points at an aggregator; a name intake rejected as an agency). "
+                    "withdrawn = the employer is real but THIS posting was never in scope "
+                    "(not in Israel, or not this employer's) — it was published in error and "
+                    "is listed under `withdrawn` with its reason and the days it was public. "
+                    "Rows that aged out of the window are not excluded: they are in "
+                    f"{ARCHIVE}.",
+        },
+        "withdrawn": withdrawn_list(records),
+        "archive": {
+            "file": ARCHIVE,
+            "rows": len(archived),
+            "rule": f"status open or closed AND last_seen < {start} — every role the window "
+                    f"has aged out, same columns, regenerated whole from the ledger each run",
+            "raw_url": RAW_BASE + ARCHIVE,
+            "published_on_pages": False,
+        },
+        "reconciliation": {
+            **parts,
+            "store_records": len(records),
+            "identity": "rows + archived + superseded + purged + withdrawn + outside_window "
+                        "+ undatable + unreadable == store_records",
+            "holds": sum(parts.values()) == len(records),
         },
         "conventions": {
             "list_separator": SEP,
@@ -1675,6 +1984,7 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
             "why": "the full text is up to 6,000 characters per role with embedded newlines: "
                    "it breaks naive parsers, and this file is committed to git every day",
             "file": TEXT,
+            "raw_url": RAW_BASE + TEXT,     # not beside the CSV on Pages: fetch it from here
             "join": "role_id",
             "columns_here": ["description_len", "description_truncated", "description_sha1"],
         },
@@ -1687,27 +1997,31 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
     }
 
 
-def write_dataset(csv_path, meta_path, rows, meta):
-    """Both files atomically. The CSV is sorted by role_id, so the daily diff is the change."""
+def write_dataset(csv_path, meta_path, rows, meta, archive_path=None, archive_rows=None):
+    """All files atomically. The CSV is sorted by role_id, so the daily diff is the change."""
     from .atomic import _swap, write_json
 
-    def _w(f):
-        # `restval` supplies a missing column; `extrasaction="raise"` catches an EXTRA one.
-        # Projecting the row onto COLUMNS first (the previous version) made the second guard
-        # dead code, so a column `build_rows` started producing and nobody registered would
-        # have vanished from the public file without a word.
-        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="raise", restval="",
-                           lineterminator="\r\n")
-        w.writeheader()
-        for r in rows:
-            w.writerow(r)
-    # The CSV first and the meta second, never the other way round. The two `os.replace`
+    def _writer(out):
+        def _w(f):
+            # `restval` supplies a missing column; `extrasaction="raise"` catches an EXTRA
+            # one. Projecting the row onto COLUMNS first (the previous version) made the
+            # second guard dead code, so a column `build_rows` started producing and nobody
+            # registered would have vanished from the public file without a word.
+            w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="raise", restval="",
+                               lineterminator="\r\n")
+            w.writeheader()
+            for r in out:
+                w.writerow(r)
+        return _w
+    # The archive, then the CSV, then the meta — never the other way round. The `os.replace`
     # calls are not one transaction, so this orders the failure window rather than closing
-    # it: if one of the pair fails it must be the META that is stale, because
+    # it: if one of the set fails it must be the META that is stale, because
     # `_dataset_alarm` compares its `run_date` against the run log and says so the next
     # morning. A stale CSV under a fresh meta describes rows that are not there, and nothing
     # in this repo would catch that.
-    _swap(csv_path, _w)
+    if archive_path:
+        _swap(archive_path, _writer(list(archive_rows or [])))
+    _swap(csv_path, _writer(rows))
     write_json(meta_path, meta)
 
 

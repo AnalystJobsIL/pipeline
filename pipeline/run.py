@@ -315,7 +315,25 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     _agg_named = {r["company_name"] for r in _all_rows if is_aggregator(r.get("api_url") or "")}
     _live_named = {r["company_name"] for r in _all_rows
                    if r.get("active") == "true" and r["company_name"] not in _agg_named}
-    _never_ours = {_ident(n) for n in _agg_named} - {_ident(n) for n in _live_named}
+    _live_idents = {_ident(n) for n in _live_named}
+    # {identity: purge reason}. Two sources, and the record says which (lane: roles):
+    #   - the registry's aggregator rows, as before;
+    #   - discovery's `intake_rejects.json` verdicts of `agency` — a name intake refuses
+    #     TODAY but whose posting entered the store BEFORE the verdict (Jobgether, 08-26 vs
+    #     08-28) stayed public for ever, because a rejection was never applied backwards.
+    #     Measured on the 2026-08-30 store: 3 records, all already closed, none at a live row.
+    # Same subtraction for both: never an identity a live registry row answers to. The
+    # registry reason wins where both name a row.
+    #   - `recruiters.is_recruiter` over the names the STORE holds — the nine staffing agencies
+    #     BACKLOG 460 (iii) enumerated (ten records, all closed, none at a live row).
+    _stored_names = {j.get("company") or "" for j in st.get_matched_since("0000-01-01", include_superseded=True)}
+    _never_ours = {k: v for k, v in roles.recruiter_names(_stored_names).items()
+                   if k not in _live_idents}
+    _never_ours.update({k: v for k, v in roles.intake_rejected(
+        os.path.join(REPO_ROOT, "cloud_state", "intake_rejects.json")).items()
+        if k not in _live_idents})
+    _never_ours.update({_ident(n): roles.PURGE_REASON for n in _agg_named
+                        if _ident(n) not in _live_idents})
     if only:
         want = {o.strip().lower() for o in only}
         rows = [r for r in rows if r["company_name"].strip().lower() in want]
@@ -511,7 +529,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                  f"sit at rows that read as aggregators) — a broken registry pass, not a "
                  f"measurement")
         _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
-        _never_ours = set()
+        _never_ours = {}
 
     def _alive(j):
         """Is this role still open? = we saw it in the latest scan of its company.
@@ -523,6 +541,11 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         job board — reached subscribers on 2026-08-26. This one predicate gates the email,
         the board and therefore the archive."""
         if _ident(j.get("company")) in _never_ours:
+            return False
+        # ...and a posting a human retracted (`cloud_state/roles_retractions.jsonl`): the
+        # employer is real, THIS posting was never in scope. Read from the file, not from
+        # the ledger's status, so a frozen-ledger day cannot put it back on the board.
+        if ledger.retractions.match(j) is not None:
             return False
         last = j.get("last_seen", "")
         if last >= yesterday:
@@ -736,7 +759,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             # The archive is `matched` minus board and never reads the ledger, so `purged`
             # alone left seven other employers' postings publishing under the name of a city
             # on a page headed "no longer on the employer's careers page".
-            and _ident(j["company"]) not in _never_ours]
+            and _ident(j["company"]) not in _never_ours
+            and ledger.retractions.match(j) is None]
     # The store keeps every role forever — which is the point, it IS the archive — but the
     # PAGE renders a full detail card per role, so it would grow without bound. Newest
     # first; the database keeps the tail whether or not the page shows it.

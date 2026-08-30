@@ -19529,6 +19529,13 @@ def test_a_corrupt_file_is_not_a_baseline_for_the_shrink_guard(tmp_path):
     open(p, "w", encoding="utf-8").write("{not json\n" * 20)
     roles.dump(p, _ledger(2))                 # allowed: a wreck is not a record count
     assert len(roles.load(p)[0]) == 2
+    # ...and the file is a baseline again the moment it is readable: the same write that a
+    # wreck could not block is refused over the two good records it just wrote. Without
+    # this half the test asserts only the permissive branch, which a `dump` with NO guard
+    # at all also satisfies — `tools/guard_kill.py` found it CANNOT-FAIL on 2026-08-30.
+    with pytest.raises(roles.LedgerShrink):
+        roles.dump(p, _ledger(1))
+    assert len(roles.load(p)[0]) == 2, "the refused write left the file untouched"
 
 
 def test_seniority_reaches_the_record_from_the_classifier_and_from_the_title(tmp_path):
@@ -19596,7 +19603,8 @@ def test_the_dataset_has_one_row_per_role_and_excludes_what_was_never_one(tmp_pa
     rows, counts = roles.build_rows(recs, run_date="2026-08-30")
     assert len(rows) == 3 and counts["rows"] == 3
     assert counts["superseded"] == 1 and counts["purged"] == 1
-    assert counts["outside_window"] == 1
+    assert counts["archived"] == 1 and counts["outside_window"] == 0, \
+        "before the window start is the ARCHIVE's row, not an exclusion (2026-08-30 b)"
     assert {r["role_id"] for r in rows} == set(_ledger(3))
     assert [r["role_id"] for r in rows] == sorted(r["role_id"] for r in rows)
 
@@ -19616,7 +19624,8 @@ def test_the_window_is_on_last_seen_and_its_edge_is_inclusive(tmp_path):
     # 61-day range, and the upper edge was not enforced at all
     assert counts["window_start"] == "2026-07-01" and counts["window_end"] == "2026-08-29"
     assert {r["role_id"] for r in rows} == {"a|x", "b|y"}, "the start day itself is IN"
-    assert counts["outside_window"] == 2, "and a last_seen AFTER the run date is OUT"
+    assert counts["archived"] == 1 and counts["outside_window"] == 1, \
+        "before the start is the archive's; a last_seen AFTER the run date is OUT"
     # a 2024 posted_date on a role still on its board belongs in the window: the operator
     # set no recency bar on INCLUSION, and the 60 days is the CSV's window, not a scope rule
     rows, _ = roles.build_rows({"a|x": _rec("a|x", posted_date="2024-10-22")},
@@ -20164,7 +20173,7 @@ def test_the_window_has_two_edges_and_the_rule_string_states_both():
     rows, counts = roles.build_rows(recs, run_date="2026-08-20", window_days=60)
     assert {r["role_id"] for r in rows} == {"in|a"}
     assert counts["outside_window"] == 1
-    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-20")
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-20", window_days=60)
     w = meta["window"]
     assert w["start"] in w["rule"] and w["end"] in w["rule"]
     assert "60 days" in w["rule"]
@@ -22004,3 +22013,243 @@ def test_every_activation_path_asks_the_same_question_of_a_query_url():
         assert "il_jobs(" in src, mod
         bare = _re.findall(r"\[j for j in jobs if (?:israel\.)?is_israel_job\(j\)\]", src)
         assert not bare, (mod, bare)
+# --- roles, 2026-08-30 (b): the retraction path, the archive, the 90-day window ----------
+# lane: roles — three rows in the PUBLIC dataset were wrong (two Comcast postings in
+# Pennsylvania and Houston stamped "Israel" by the scraper; Jobgether, an aggregator with no
+# registry row) and nothing could remove them: parking the row freezes `last_seen` at today
+# and the rows stay in the CSV for the whole window.
+def _retract_file(tmp_path, *lines):
+    from pipeline import roles
+    p = roles.retractions_path(str(tmp_path / "seen.db"))
+    with open(p, "w", encoding="utf-8") as f:
+        for ln in lines:
+            f.write(ln if isinstance(ln, str) else json.dumps(ln))
+            f.write("\n")
+    return p
+
+
+def test_the_window_is_ninety_days_by_the_operators_decision():
+    """The operator said "~60" first and "90 days" later on 2026-08-30; the 60 that shipped
+    was a transcription of the first, not a decision. Both edges move with the constant."""
+    from pipeline import roles
+    assert roles.WINDOW_DAYS == 90
+    recs = _ledger(1, last_seen="2026-06-03")           # exactly 90 days before 08-31
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31")
+    assert counts["window_start"] == "2026-06-03" and len(rows) == 1
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-31")
+    assert meta["window"]["days"] == 90 and "(90 days)" in meta["window"]["rule"]
+
+
+def test_a_retraction_withdraws_the_row_and_the_meta_records_when_it_was_public(tmp_path):
+    """A human verdict in `roles_retractions.jsonl` — keyed by URL, because the role_id is
+    minted from a title an upstream fix may re-spell — becomes `withdrawn` on the record with
+    its reason and date, leaves the CSV, is counted in `excluded`, and is listed under
+    `withdrawn` with the span it was public so a repeat downloader can reconcile."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    j = _role("Comcast", "Manager 2, Business Operations &amp; Analytics",
+              "https://jobs.comcast.com/job/houston/manager-2/45483/99862967712", "x",
+              src="scrape", posted_date="")
+    j["location"] = "Israel"
+    k = _role("Wix", "Data Analyst", "https://w.co/1", "1")
+    for job in (j, k):
+        st.upsert_matched(job, "2026-08-30")
+    _retract_file(tmp_path, {"url": "https://jobs.comcast.com/job/houston/manager-2/45483/99862967712",
+                             "status": "withdrawn", "reason": "the posting is in Houston, Texas",
+                             "on": "2026-08-30"})
+    lg = roles.Ledger(st, "2026-08-31")
+    lg.open_sync()
+    assert len(lg.retractions) == 1 and lg.retractions.bad == 0
+    assert lg.retractions.match({"mkey": store.merge_key(j), "url": j["url"],
+                                 "seen_ids": store.seen_id(j)}) is not None, "a matched row matches too"
+    lines = lg.record_run("2026-08-31", board_jobs=[j, k], merged=[j, k],
+                          scanned_ok={"Comcast", "Wix"}, failed=set())
+    rec = lg.records[store.merge_key(j)]
+    assert rec["status"] == "withdrawn" and rec["retracted_on"] == "2026-08-30"
+    assert rec["withdraw_reason"] == "the posting is in Houston, Texas"
+    assert "withdrawn 1" in lines[0] and "open 1" in lines[0], lines
+    assert any(a.startswith("roles withdrawn 1 role(s)") and "Houston" in a for a in lg.alarms), lg.alarms
+    assert not any("unmatched" in a for a in lg.alarms)
+    # the record is on disk with its reason, and it keeps its line
+    recs, status, _b = roles.load(lg.path)
+    assert status == "ok" and recs[store.merge_key(j)]["status"] == "withdrawn"
+    # the export: gone from the rows, counted, listed with the days it was public
+    rows, counts = roles.build_rows(lg.records, run_date="2026-08-31")
+    assert [r["company"] for r in rows] == ["Wix"] and counts["withdrawn"] == 1
+    meta = roles.build_meta(rows, counts, lg.records, run_date="2026-08-31")
+    assert meta["excluded"]["withdrawn"] == 1 and "withdrawn = the employer is real" in meta["excluded"]["note"]
+    (w,) = meta["withdrawn"]
+    assert w["company"] == "Comcast" and w["status"] == "withdrawn" and w["on"] == "2026-08-30"
+    assert w["reason"] == "the posting is in Houston, Texas"
+    assert w["published_in_roles_csv"] == {"from": "2026-08-30", "to": "2026-08-30"}, \
+        "public the morning it shipped, retracted the same day: the span is inclusive"
+    assert meta["reconciliation"]["holds"] is True
+    st.close()
+
+
+def test_a_retracted_posting_stays_withdrawn_when_its_board_lists_it_again(tmp_path):
+    """The retraction is applied BEFORE `rid in onboard`: Comcast's board will keep listing
+    the Houston role every morning, and every morning it must stay withdrawn. Lifting one is
+    deleting the line — then the record is judged like any other."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    j = _role("Comcast", "Analyst", "https://jobs.comcast.com/job/pennsylvania/a/1", "x", src="scrape")
+    st.upsert_matched(j, "2026-08-30")
+    p = _retract_file(tmp_path, {"role_id": store.merge_key(j), "status": "withdrawn",
+                                 "reason": "Pennsylvania", "on": "2026-08-30"})
+    lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[j], merged=[j], scanned_ok={"Comcast"}, failed=set())
+    st.upsert_matched(j, "2026-09-01")                    # fetched again
+    lg2 = roles.Ledger(st, "2026-09-01"); lg2.open_sync()
+    lg2.record_run("2026-09-01", board_jobs=[j], merged=[j], scanned_ok={"Comcast"}, failed=set())
+    assert lg2.records[store.merge_key(j)]["status"] == "withdrawn"
+    assert not any("withdrawn" in a for a in lg2.alarms), "applied once is alarmed once"
+    os.remove(p)                                           # the human lifts it
+    lg3 = roles.Ledger(st, "2026-09-02"); lg3.open_sync()
+    lg3.record_run("2026-09-02", board_jobs=[j], merged=[j], scanned_ok={"Comcast"}, failed=set())
+    assert lg3.records[store.merge_key(j)]["status"] == "open"
+    st.close()
+
+
+def test_a_retraction_that_names_nothing_and_a_bad_line_are_both_alarms_never_exceptions(tmp_path):
+    """A typo in a hand-written file must cost one line, not the digest — and it must not
+    read as 'applied': an entry no record answers to is named on `Stages:`."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    st.upsert_matched(_role("Wix", "Data Analyst", "https://w.co/1", "1"), "2026-08-30")
+    _retract_file(tmp_path,
+                  "{not json",
+                  {"url": "https://x.example/none", "status": "withdrawn", "reason": "r", "on": "2026-08-30"},
+                  {"url": "https://x.example/bad-status", "status": "closed", "reason": "r", "on": "2026-08-30"},
+                  {"url": "https://x.example/no-date", "status": "withdrawn", "reason": "r", "on": "yesterday"})
+    lg = roles.Ledger(st, "2026-08-31")
+    assert lg.retractions.bad == 3 and len(lg.retractions) == 1
+    assert any("roles retractions unreadable (3 bad line(s)" in a for a in lg.alarms), lg.alarms
+    lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set())
+    assert any("roles retraction unmatched (https://x.example/none)" in a for a in lg.alarms), lg.alarms
+    assert lg.records[store.merge_key(_role("Wix", "Data Analyst", "https://w.co/1", "1"))]["status"] != "withdrawn"
+    st.close()
+
+
+def test_run_py_gates_every_product_on_the_retraction_file_and_reads_intakes_verdicts():
+    """`_alive` (email + board) and the archive filter consult `ledger.retractions` — the
+    FILE, not the ledger's status, so a frozen-ledger day cannot resurrect a withdrawn
+    posting — and `_never_ours` takes intake's `agency` verdicts as well as the registry's
+    aggregator rows, minus every identity a live row answers to."""
+    src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "pipeline", "run.py"), encoding="utf-8").read()
+    i_alive = src.index("def _alive(j):")
+    body = src[i_alive:src.index("def _cap_per_company", i_alive)]
+    assert "ledger.retractions.match(j) is not None" in body and "return False" in body
+    arch = src[src.index("# archive: everything ever matched"):src.index("arch.sort(")]
+    assert "ledger.retractions.match(j) is None" in arch
+    assert "roles.intake_rejected(" in src and 'cloud_state", "intake_rejects.json"' in src
+    nev = src[src.index("_never_ours = {k: v for k, v in roles.recruiter_names("):src.index("if only:")]
+    assert "if k not in _live_idents" in nev and "roles.PURGE_REASON" in nev
+    assert "roles.recruiter_names(_stored_names)" in nev, "the third source: recruiters.is_recruiter"
+
+
+def test_an_intake_agency_verdict_purges_backwards_with_its_own_reason(tmp_path):
+    """Jobgether was rejected as an `agency` on 08-28; its 08-26 record stayed public. The
+    verdict now reaches the store, and the record says WHICH source purged it — a set still
+    means the registry's aggregator reason, so the seven `Tel Aviv` rows do not churn."""
+    from pipeline import roles, store
+    p = tmp_path / "intake_rejects.json"
+    p.write_text(json.dumps({"jobgether": {"name": "Jobgether", "reason": "agency"},
+                             "alma lasers": {"name": "Alma Lasers", "reason": "handle-mismatch"},
+                             "junk": "not a dict"}), encoding="utf-8")
+    got = roles.intake_rejected(str(p))
+    assert got == {"jobgether": roles.PURGE_REASON_AGENCY}
+    assert roles.intake_rejected(str(tmp_path / "missing.json")) == {}
+    rn = roles.recruiter_names(["Recruitx", "Wix", "", None])
+    assert rn == {"recruitx": roles.PURGE_REASON_RECRUITER}, rn
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    st.upsert_matched(_role("Jobgether", "Team Lead Product Analyst",
+                            "https://il.linkedin.com/jobs/view/x-4457464817", "4457464817",
+                            src="discovery-linkedin"), "2026-08-26")
+    st.upsert_matched(_role("Tel Aviv", "Data Analyst", "https://jobs.secrettelaviv.com/1", "1",
+                            src="scrape"), "2026-08-26")
+    lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    lines = lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
+                          never_ours={**got, "tel aviv": roles.PURGE_REASON})
+    jg = lg.records["jobgether|team lead product analyst"]
+    ta = lg.records["tel aviv|data analyst"]
+    assert jg["status"] == "purged" and jg["purge_reason"] == roles.PURGE_REASON_AGENCY
+    assert ta["status"] == "purged" and ta["purge_reason"] == roles.PURGE_REASON
+    assert "purged 2" in lines[0]
+    rows, counts = roles.build_rows(lg.records, run_date="2026-08-31")
+    meta = roles.build_meta(rows, counts, lg.records, run_date="2026-08-31")
+    by = {w["company"]: w for w in meta["withdrawn"]}
+    assert by["Jobgether"]["status"] == "purged" and "agency" in by["Jobgether"]["reason"]
+    assert by["Jobgether"]["published_in_roles_csv"] == {"from": "2026-08-30", "to": "2026-08-31"}
+    # a bare set is still accepted and means the registry reason
+    lg2 = roles.Ledger(st, "2026-09-01"); lg2.open_sync()
+    lg2.record_run("2026-09-01", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
+                   never_ours={"tel aviv"})
+    assert lg2.records["tel aviv|data analyst"]["purge_reason"] == roles.PURGE_REASON
+    st.close()
+
+
+def test_a_row_the_window_aged_out_moves_to_the_archive_and_the_identity_reconciles(tmp_path):
+    """Nothing is evicted by the window: the archive is the COMPLEMENT on the date axis,
+    same columns, regenerated whole; the meta proves every record is counted exactly once."""
+    from pipeline import roles
+    recs = _ledger(4)
+    recs["c0|data analyst"]["last_seen"] = "2026-05-01"              # aged out
+    recs["c1|data analyst"]["status"] = "withdrawn"
+    recs["c1|data analyst"]["withdraw_reason"] = "r"
+    recs["c1|data analyst"]["retracted_on"] = "2026-08-30"
+    recs["c2|data analyst"]["last_seen"] = "2026-09-09"              # after the end: a re-derive
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31")
+    arch, _ac = roles.build_rows(recs, run_date="2026-08-31", archive=True)
+    assert [r["role_id"] for r in rows] == ["c3|data analyst"]
+    assert [r["role_id"] for r in arch] == ["c0|data analyst"]
+    assert counts["archived"] == 1 and counts["outside_window"] == 1 and counts["withdrawn"] == 1
+    assert set(arch[0]) == set(roles.COLUMNS)
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-31", archived=arch)
+    r = meta["reconciliation"]
+    assert r["holds"] is True and r["store_records"] == 4
+    assert (r["rows"], r["archived"], r["withdrawn"], r["outside_window"]) == (1, 1, 1, 1)
+    assert meta["archive"]["file"] == roles.ARCHIVE and meta["archive"]["rows"] == 1
+    assert "last_seen < 2026-06-03" in meta["archive"]["rule"]
+    cp, mp, _f = roles.dataset_paths(str(tmp_path / "seen.db"))
+    ap = roles.archive_path(str(tmp_path / "seen.db"))
+    roles.write_dataset(cp, mp, rows, meta, archive_path=ap, archive_rows=arch)
+    import csv
+    with open(ap, encoding="utf-8", newline="") as f:
+        got = list(csv.DictReader(f))
+    assert [g["role_id"] for g in got] == ["c0|data analyst"]
+    # an identity that does NOT hold is reported, not hidden
+    bad = roles.build_meta(rows, {**counts, "archived": 0}, recs, run_date="2026-08-31", archived=arch)
+    assert bad["reconciliation"]["holds"] is False
+
+
+def test_published_on_pages_is_read_from_the_url_the_workflow_exports(tmp_path, monkeypatch):
+    """`daily-digest.yml` has exported ROLES_PAGES_URL since 2026-08-30 and copied the file
+    beside the board; the meta kept saying `published_on_pages: false` on the very page that
+    served it. The env var is the source; the raw address is always true."""
+    from pipeline import roles, store
+    recs = _ledger(1)
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31")
+    off = roles.build_meta(rows, counts, recs, run_date="2026-08-31")
+    assert off["published_on_pages"] is False and off["download_url"] == roles.DOWNLOAD_URL
+    on = roles.build_meta(rows, counts, recs, run_date="2026-08-31",
+                          pages_url="https://analystjobsil.github.io/board/roles.csv")
+    assert on["published_on_pages"] is True
+    assert on["download_url"] == "https://analystjobsil.github.io/board/roles.csv"
+    assert on["raw_url"] == roles.DOWNLOAD_URL
+    assert on["description_text"]["raw_url"].endswith("roles_text.jsonl"), "not on Pages: say where it is"
+    assert on["archive"]["published_on_pages"] is False
+    # end to end: the export reads the environment the workflow sets
+    monkeypatch.setenv(roles.PAGES_URL_ENV, "https://analystjobsil.github.io/board/roles.csv")
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    st.upsert_matched(_role("Wix", "Data Analyst", "https://w.co/1", "1"), "2026-08-30")
+    lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set())
+    lg.export_dataset("2026-08-31")
+    _c, mp, _f = roles.dataset_paths(st.path)
+    disk = json.load(open(mp, encoding="utf-8"))
+    assert disk["published_on_pages"] is True
+    assert os.path.exists(roles.archive_path(st.path)), "the archive is written every run"
+    st.close()

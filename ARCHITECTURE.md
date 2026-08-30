@@ -4868,8 +4868,8 @@ Two text files beside the sqlite store, written by `pipeline/roles.py` through
 
 A record carries everything the pipeline knows about the role: the `matched` columns
 (`company title location url posted_date seniority sources[] seen_ids[] first_seen last_seen
-jd_attempted`), `status` (`open | closed | superseded | purged`, with `closed_on` /
-`superseded_by`), `episodes` (every opening — sqlite *resets* `first_seen` on a >3-day
+jd_attempted`), `status` (`open | closed | superseded | purged | withdrawn`, with `closed_on` /
+`superseded_by` / `purge_reason` / `withdraw_reason` / `retracted_on`), `episodes` (every opening — sqlite *resets* `first_seen` on a >3-day
 reappearance because the email must re-alert, and the ledger keeps the earlier opening
 instead of undoing that), `reposts` (dates the posting was bumped ≥3 days past its
 episode's `first_seen` — the render rule, recorded at ingest), `class` (decision / path /
@@ -5220,9 +5220,10 @@ guard a mass-close has: a run where it would remove more than `max(10, 25 %)` of
 abandons the purge for the day and says `roles mass-purge held (…)` on the bold `Stages:`
 line. That is CLAUDE.md rule 2, and the 40 `token` rows are exactly the shape that trips it.
 
-**Only the aggregator-origin class is purged**; the general parked→closed rule is not
-implemented, because `active=false` conflates four different facts (see the limitations below
-and BACKLOG 313).
+**Three classes are purged — aggregator rows, intake's `agency` verdicts, and
+`recruiters.is_recruiter` names (the dataset section below) — and a human can retract any
+single posting**; the general parked→closed rule is not implemented, because `active=false`
+conflates four different facts (see the limitations below and BACKLOG 313).
 
 **A mass-close is an alarm, never a closure:** more closures in one run than `max(10, 25 % of the open set)`
 (`MASS_CLOSE_MIN`, `MASS_CLOSE_FRAC`; 50 % let a morning where 40 % of boards answered
@@ -5235,8 +5236,10 @@ and the bold `Stages:` line says `roles mass-close held (N of M …)`. Rehearsed
 One line in the audit block, from `summary["roles"]`:
 
 ```
-- **Roles:** open 146 · closed today 16 · reopened 0 · reposted 12 · merged-copy 454 · ledger 165 = store 165; claim conflicts 2 (Port<-Port.io, HP<-HP Indigo)
+- **Roles:** open 146 · closed today 16 · reopened 0 · reposted 12 · purged 10 · withdrawn 2 · merged-copy 454 · ledger 165 = store 165; claim conflicts 2 (Port<-Port.io, HP<-HP Indigo); dataset 149 roles (2026-06-02..2026-08-30) · archived 0 · excluded superseded 4 · purged 17 · withdrawn 2 · outside window 0 · firmo 2 of 149 unmatched
 ```
+`purged` and `withdrawn` before the semicolon are the DAY's deltas (a verdict first applied
+this run); the same words after `excluded` are running totals over the store.
 `open` is this run's count of records left `open`: the alive set, plus roles at companies
 the run did not judge that were open before (a scoped run), plus a held cohort on a
 mass-close morning — so it can exceed `board` (measured: `open 64` against `board 61` on
@@ -5255,22 +5258,31 @@ print `::warning::roles …`.
 
 ### The public dataset — `cloud_state/roles.csv`
 
-The product is a dataset as well as a board: **one row per role, a rolling 60-day window,
-joined with everything the repo already holds**, for anyone to download. Three files, written
+The product is a dataset as well as a board: **one row per role, a rolling 90-day window,
+joined with everything the repo already holds**, for anyone to download. Five files, written
 by `pipeline/roles.py` beside the ledger and committed by the digest's existing
 `--own cloud_state`:
 
 | file | what |
 |---|---|
-| `cloud_state/roles.csv` | one row per role, 54 columns |
-| `cloud_state/roles.csv.meta.json` | what the CSV cannot say about itself: window, exclusions, per-column null counts, every enum's values spelled out |
+| `cloud_state/roles.csv` | one row per role, 54 columns, `last_seen` inside the window |
+| `cloud_state/roles_archive.csv` | the same 54 columns for every role the window has aged OUT — regenerated whole from the ledger each run, so nothing is ever evicted (header-only until the first eviction, ~2026-11-14) |
+| `cloud_state/roles.csv.meta.json` | what the CSV cannot say about itself: window, exclusions, the `withdrawn` list, per-column null counts, every enum's values spelled out, and a reconciliation identity |
+| `cloud_state/roles_retractions.jsonl` | **hand-written**: the postings a human withdrew, with the reason (below) |
 | `cloud_state/funnel.csv` | one row per FULL run: postings → Israel → judged → matched → alive → board → emailed |
 
-Raw address, stable, and named in the meta file as `download_url`:
-`https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv`.
-**It is not on the Pages site yet** — the publish step copies by name and that file is
-`infra`'s, so the diff is written out in `docs/BACKLOG.md` 453 and the meta carries
-`"published_on_pages": false` rather than letting the file overstate where it is.
+Addresses, all in the meta: `download_url` is the Pages copy
+(`https://analystjobsil.github.io/board/roles.csv`) when the digest's pipeline step exports
+`ROLES_PAGES_URL` — infra's publish step copies `roles.csv`, its meta and `funnel.csv` beside
+the board since `e5fee4d` — and `raw_url` is always the raw GitHub address. `published_on_pages`
+is derived from that variable; it was a hard-coded `false` for the first day and the file
+denied its own location on the very page that served it (BACKLOG 473). `roles_archive.csv` and
+`roles_text.jsonl` are **not** copied to Pages yet (`raw_url` in the meta names where they
+are; the one-token workflow diff is filed for `infra`).
+
+**The window is 90 days on the operator's word.** He said "~60" first and "90 days" later on
+2026-08-30; the 60 that shipped that morning was a transcription of the first, not a decision.
+`roles.WINDOW_DAYS` carries the decision beside the number.
 
 `dataset_paths` derives from the db path exactly as `ledger_paths` does, so a
 `--db /tmp/scratch.db` or `--only` run writes its dataset next to its own store and can no
@@ -5314,15 +5326,72 @@ neither enforced nor mentioned in the first version, so re-deriving the file wit
 `--date` published a window ending 2026-08-20 while 128 of its 143 rows had been seen after
 it; `days` also described a 61-day span.
 
-**One row per role means one row per ROLE.** `superseded` (the same posting fetched under a
-second company name) and `purged` (a registry row that was never an employer — `Tel Aviv` is a
-CITY) are excluded, and both are **counted in the meta**, because a public file that silently
-drops rows is the thing this one exists not to be. A purge now also records `purge_reason` on
-the record itself: it was previously indistinguishable from a `closed` role except by reading
-the registry as it stood that morning, which is not recoverable later.
+**One row per role means one row per ROLE, and three verdicts take a row out.** Each is a
+different fact, and the meta's `excluded` block spells all three out with counts:
+
+| status | the fact | who decides |
+|---|---|---|
+| `superseded` | the same posting was fetched under a second company name; kept once | `resolve_claims`, every run |
+| `purged` | the COMPANY was never an employer — `Tel Aviv` is a CITY, `Jobgether` an aggregator, `Recruitx` an agency | a predicate, every run (three sources, below) |
+| `withdrawn` | the employer is real and THIS posting was never in scope — Comcast is an employer; its Houston posting was never in Israel | a human, in `roles_retractions.jsonl` |
+
+A public file that silently drops rows is the thing this one exists not to be, so every
+excluded record also carries its reason on the line (`purge_reason` / `withdraw_reason`,
+`retracted_on`), and the meta carries a **`withdrawn` list** — every `purged` or `withdrawn`
+role with company, title, status, reason, the day it left and `published_in_roles_csv:
+{from, to}` (null when it left before the file existed, which is true of the seven `Tel Aviv`
+rows). That list is what a repeat downloader reconciles against: anyone who fetched the
+2026-08-30 file has two Comcast rows that no later file carries, and the meta says so with
+dates. The span is inclusive and conservative — `to` is the retraction date, the last file
+that MAY carry the row, never a file that certainly does not.
+
+**Why the withdrawn rows vanish from the CSV rather than staying as tombstones.** Three shapes
+were weighed. A tombstone row inside `roles.csv` (status `withdrawn` plus a reason column)
+makes every naive reader wrong again — `pandas.read_csv` then `groupby` counts Houston as an
+Israeli analyst role unless the reader knows to filter, and a dataset whose DEFAULT read is
+wrong is the failure being fixed. A silent vanish leaves a repeat downloader nothing to
+reconcile. So the row leaves the CSV, the tombstone lives in the meta (with dates and reason)
+and in the public `roles.jsonl` (the record keeps its line, status and reason), and no fourth
+file is needed to reach Pages.
+
+**The retraction file — `cloud_state/roles_retractions.jsonl`.** One JSON object per line:
+`{"url": …}` (or `"role_id"`), `"status"` ∈ `withdrawn | purged`, `"reason"`, `"on"`, optional
+`"evidence"`. Keyed by **url** on purpose: Comcast's `role_id` contains the `&amp;` artefact
+(`…operations amp analytics`), so a title-cleaning fix upstream would mint a new id that a
+role_id-keyed line would miss, while the posting's address is stable. `roles.Retractions`
+matches on role_id, url, or any `seen_id` (a scrape id IS the url). It is read in
+`Ledger.__init__`, outside every `_guard`, and consulted in **two** places from that one
+object: `run.py`'s `_alive` (email + board) and its archive filter — the FILE, never the
+ledger's status, so a frozen-ledger day cannot put Houston back on the board — and
+`Ledger._record_run`, which stamps the status BEFORE `rid in onboard`, so a board that keeps
+listing the posting every morning keeps it withdrawn every morning. Lifting one is deleting
+the line; the record is then judged like any other next run. Two alarms on `Stages:`: `roles
+withdrawn N role(s) …` names the row and reason the day a line is first applied, and `roles
+retraction unmatched (<key>)` names a line no record answers to — a typo must never read as
+"applied". A malformed line is counted (`roles retractions unreadable (N bad line(s) …)`) and
+the rest of the file still applies. Rehearsed on a copy of the real store 2026-08-30: `withdrawn
+2 · purged 10` on the `Roles:` line, 161 → 149 rows, 0 Comcast/Jobgether rows.
+
+**Three automatic sources of `purged`, and the record says which.** `_never_ours` in `run.py`
+is `{identity: reason}`: the registry's aggregator `api_url` rows (`PURGE_REASON`, the original
+class); discovery's `cloud_state/intake_rejects.json` verdicts of `agency`
+(`PURGE_REASON_AGENCY`) — a rejection intake made on 08-28 that never reached the 08-26
+record, which is a filter with a hole exactly one day wide; and `recruiters.is_recruiter` over
+the names the store holds (`PURGE_REASON_RECRUITER`) — the nine agencies BACKLOG 460 (iii)
+enumerated. All three subtract every identity a live registry row answers to, and all three
+sit under the mass-purge hold. Measured on the 2026-08-30 store: 10 records, every one already
+`closed`, none at an active row.
+
+**Nothing is evicted by the window.** `roles_archive.csv` is the complement on the date axis
+(`status` open or closed AND `last_seen < window start`), same columns, same cell hygiene,
+regenerated whole from the ledger every run — so there is no append machinery to drift, and a
+role that ages out of `roles.csv` appears in the archive the same morning. The meta's
+`reconciliation` block proves the accounting each run: `rows + archived + superseded + purged +
+withdrawn + outside_window + undatable + unreadable == store_records`, and says `holds: false`
+rather than hiding a miscount.
 
 **The window is aspirational and the file says so.** The store began accumulating on
-2026-08-16, so "the past 60 days" is really "everything we hold" until about mid-October. The
+2026-08-16, so "the past 90 days" is really "everything we hold" until about mid-November. The
 meta carries `window.fully_covered: false` and a note naming the earliest observation, so that
 a gap before it reads as OUR blindness and not the market's. That distinction is the whole
 difference between a dataset and a misleading one, and it turns itself off: once the earliest
@@ -5360,6 +5429,12 @@ that an analysis can group by category without parsing anything. A test asserts 
 `seniority_title` and `years_experience` are both in the file and they are different
 measurements: the first is read from the TITLE by keyword (`roles.seniority_of`, the same
 `_seniority` the classifier calls), the second from the DESCRIPTION text by `roleprofile`.
+`seniority_title` is read straight off the record, and the sqlite `matched.seniority` column
+IS written — by two paths, stated here because a reader of `store.py` once found "a column
+nothing writes": `classify_grouped` puts the classifier's answer on the job and
+`upsert_matched` stores it, and the ledger's title backfill reaches sqlite through
+`open_sync`'s reconcile (`seniority` is in `CORE`). 172 of 172 rows on 2026-08-30:
+`select count(*), sum(coalesce(trim(seniority),'')='') from matched`.
 
 **The funnel stops being thrown away.** Every number in `funnel.csv` was already computed and
 printed once per run — `classify: 6428 judged = keyword 6053 + llm 67 + cache 308`, then
@@ -5400,7 +5475,17 @@ notices going stale, which is the failure mode this whole section is a correctio
 ### Guards
 
 `tests/test_units.py`, "lane: roles" — 56 cases, every one a defect the rehearsal or an
-attacker reproduced. The 2026-08-27 additions: a display word is not a job id (Thales' 16 →
+attacker reproduced. The 2026-08-30 (b) additions: the window is 90 and both edges move with
+it; a url-keyed retraction withdraws the row, alarms once, leaves the CSV and is listed with
+its public span; a retracted posting stays withdrawn when its board lists it again and is
+re-judged when the line is deleted; a bad line and an unmatched line are alarms, never
+exceptions; `run.py` gates `_alive` and the archive on the FILE and reads all three purge
+sources; an intake `agency` verdict purges backwards with its own reason while a bare set
+still means the registry's; an aged-out row moves to the archive and the reconciliation
+identity holds (and reports when it does not); `published_on_pages` is read from the
+workflow's variable end to end. And the corrupt-file shrink test gained its positive half:
+it asserted only the permissive branch, which a `dump` with no guard also satisfies, and
+`tools/guard_kill.py` found it CANNOT-FAIL. The 2026-08-27 additions: a display word is not a job id (Thales' 16 →
 16 keys); two companies on one ATS no longer share a key, and a shared Oracle pod is separated
 by its site segment; a tenant never carries `+` or `:`; both parsers of the key still read the
 id half; a competitor card on our page donates neither its text nor its url — written to FAIL
@@ -5449,8 +5534,13 @@ HEAD had, and proves the feature RAN from the tree's own board (neither loser is
   trying to backfill a superseded row's empty description (BACKLOG 140, `jd-text`) and
   `research_firmographics.py` still counts superseded-only companies (141).
 - Tags are only as good as the text captured while the role was open (`docs/TAGGING.md`).
-- **Only the aggregator-origin class of parked row is purged.** `active=false` conflates four
-  facts. Of the **371** parked rows on 2026-08-27: **248** carry a `dark-triage` / `walled` /
+- **Only three classes of "never an employer" are purged automatically** (aggregator rows,
+  intake `agency` verdicts, `recruiters.is_recruiter`), and a wrong POSTING at a real employer
+  is caught by nothing but a human line in `roles_retractions.jsonl`: the Comcast class — a
+  scrape row whose `api_url` says `?location=Israel`, so `scrape_universal._page_is_il`
+  stamps the literal word "Israel" on every card that carries no location of its own, and
+  `is_israel_job("Israel")` is right to accept it — is the scraper's to close at the source
+  (BACKLOG, `scraper`). `active=false` conflates four facts. Of the **371** parked rows on 2026-08-27: **248** carry a `dark-triage` / `walled` /
   `unreachable` note (*we cannot read the page* — not evidence the job closed), **54** are
   `alias-of` (the roles are real and belong to another row: `superseded`, not `closed`), **40**
   mention an aggregator in their notes while only **2** actually have an aggregator `api_url`
