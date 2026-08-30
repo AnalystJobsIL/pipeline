@@ -829,10 +829,23 @@ def union_store(st, shared=None):
     """sqlite ∪ export, `merge` per company. The one view every consumer and both writers
     must use — the chain used to read sqlite alone and re-researched companies the cloud
     had profiled hours earlier (2 on 2026-08-24), and `--export` then wrote the local
-    table over the file, deleting the cloud's records (19 at risk that evening)."""
-    out = dict(load_shared() if shared is None else shared)
+    table over the file, deleting the cloud's records (19 at risk that evening).
+
+    The display-name pass runs on the union too: render reads THIS in-memory view (via
+    `company_intel.enrich_for_run`), not the file, and `merge`'s fill-forward plus
+    `sync_store`'s tie-keep meant a stale sqlite copy could put a withdrawn name on the
+    BOARD indefinitely while the published file said it was gone (wave 2). Evidence is
+    the authority at every read and every write; the pass is idempotent, ~46 ms on the
+    full store."""
+    base = load_shared() if shared is None else shared
+    out = {k: (dict(v) if isinstance(v, dict) else v) for k, v in base.items()}
     for c, rec in st.load_firmographics().items():
         out[c] = merge(out.get(c), rec)
+    try:
+        verify = _board_verify.load(os.path.join(_ROOT, _board_verify.PATH))
+    except Exception:  # noqa: BLE001 — an unreadable verify must never break the union
+        verify = {}
+    apply_display_names(out, verify)
     return out
 
 
@@ -1026,7 +1039,9 @@ def apply_display_names(records, verify):
             if not isinstance(row, dict):
                 continue
             name = str(key).split("|", 1)[0]
-            stamp = (str(row.get("date") or ""), str(key))
+            # on an equal date a refusal outranks an ok (the middle term), never the URL's
+            # alphabet: same-day disagreement is a reason to hold back, not a coin toss
+            stamp = (str(row.get("date") or ""), row.get("verdict") != "ok", str(key))
             if name not in latest or stamp > latest[name][0]:
                 latest[name] = (stamp, row)
         for name, (_stamp, row) in sorted(latest.items()):
@@ -1144,6 +1159,7 @@ def save_shared(records):
     except Exception:  # noqa: BLE001 — an unreadable verify must never block a publish
         verify = {}
     apply_display_names(records, verify)
+    fold_sectors(records)    # the same one-writer symmetry: no publisher ships mixed case
     path = os.path.abspath(SHARED_EXPORT)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = f"{path}.{os.getpid()}.tmp"

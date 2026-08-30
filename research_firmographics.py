@@ -200,7 +200,7 @@ def main():
         for key, row in verify.items():
             if isinstance(row, dict):
                 name = str(key).split("|", 1)[0]
-                stamp = (str(row.get("date") or ""), str(key))
+                stamp = (str(row.get("date") or ""), row.get("verdict") != "ok", str(key))
                 if name not in rows or stamp > rows[name][0]:
                     rows[name] = (stamp, row)
         buckets = {"write": [], "absent": [], "report": []}

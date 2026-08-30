@@ -2292,3 +2292,34 @@ def test_save_shared_applies_the_display_pass_so_no_publisher_can_resurrect(env,
         encoding="utf-8")
     F.save_shared({"X Corp": {**REC, "display_name": "Stale"}})
     assert "display_name" not in json.load(open(export, encoding="utf-8"))["X Corp"]
+
+
+def test_wave2_memory_matches_evidence_and_the_last_boundaries():
+    """2026-08-31 wave 2: the union render actually reads must obey evidence too — a
+    stale sqlite copy put a withdrawn name on the BOARD while the file said it was gone —
+    and the two boundaries wave 2 found still silently widenable."""
+    # containment >= 3 was widenable to >= 2 with every test green
+    assert F.display_name_from_evidence("Elmo Motion Control", "El") == ("report", "different-name")
+    # a same-DAY refusal outranks a same-day ok — never the URL's alphabet
+    recs = {"Acme Ltd": {"sector": "s", "as_of": TODAY, "display_name": "Acme"}}
+    F.apply_display_names(recs, {
+        "acme ltd|a": {"verdict": "ok", "employer_named": "Acme", "date": "2026-08-30"},
+        "acme ltd|b": {"verdict": "NOT_THEIRS", "employer_named": "", "date": "2026-08-30"}})
+    assert "display_name" not in recs["Acme Ltd"]
+
+
+def test_union_store_applies_the_display_pass_so_the_board_matches_the_file(env, monkeypatch, tmp_path):
+    """Wave 2 blocker: render reads union_store's in-memory view, and merge's
+    fill-forward resurrected a cleared name there while save_shared kept the FILE clean —
+    a withdrawn name on the board indefinitely. The union re-derives from evidence too."""
+    st, export, _, _ = env
+    st.save_firmographics({"X Corp": {**REC, "display_name": "Stale"}}, TODAY)
+    export.write_text(json.dumps({"X Corp": REC}), encoding="utf-8")
+    (tmp_path / "board_verify.json").write_text(json.dumps(
+        {"other co|u": {"verdict": "ok", "employer_named": "Other Co", "date": TODAY}}),
+        encoding="utf-8")
+    union = F.union_store(st)
+    assert "display_name" not in union["X Corp"]        # memory obeys evidence
+    shared = {"Y Corp": {**REC, "display_name": "Kept"}}
+    F.union_store(st, shared)
+    assert shared["Y Corp"]["display_name"] == "Kept"   # and never mutates the caller
