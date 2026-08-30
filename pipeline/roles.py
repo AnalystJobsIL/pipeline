@@ -1197,6 +1197,14 @@ _COLUMNS = [
 
 COLUMNS = [c for c, _doc in _COLUMNS]
 
+# Columns whose cell is a SEP-joined LIST rather than one value. It matters to a reader
+# holding the meta file: an `enum` on one of these constrains each separated token, not the
+# cell, and a checker that compares the whole cell against the enum reports every multi-value
+# row as undocumented. (I wrote exactly that checker while validating the published file and
+# briefly believed the data was wrong.)
+LIST_COLUMNS = ["sources", "repost_dates", "degree_fields", "ai", "skills"] + [
+    "skills_" + c for c in _CATS]
+
 _ENUMS = {
     "status": {
         "open": "still listed on the employer's own careers board when we last looked",
@@ -1655,6 +1663,8 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
         },
         "conventions": {
             "list_separator": SEP,
+            "list_columns": LIST_COLUMNS,
+            "enum_on_a_list_column": "constrains each separated value, not the whole cell",
             "booleans": "true / false",
             "empty": "an empty cell means we do not hold the value, never zero and never false",
             "dates": "ISO YYYY-MM-DD, UTC",

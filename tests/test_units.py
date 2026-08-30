@@ -20255,3 +20255,27 @@ def test_the_stale_yes_drain_cannot_starve_the_fresh_roles_behind_it(monkeypatch
     # of the pool the cap actually bounds
     assert clf.stale_rejudged - clf.stale_rejudged_yes == 0
     assert "stale-yes/cap 40" in clf.summary()
+
+
+def test_an_enum_on_a_list_column_constrains_each_value_not_the_cell():
+    """`degree_fields` and `ai` are `;`-joined lists that also carry an `enum`. A reader —
+    or a checker — comparing the whole CELL against the enum reports every multi-value row as
+    undocumented, which is what happened while validating the published file. The meta now
+    names the list columns and says what an enum on one of them means."""
+    from pipeline import roles
+    recs = _ledger(1)
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
+    assert set(roles.LIST_COLUMNS) >= {"skills", "ai", "degree_fields", "sources"}
+    assert meta["conventions"]["list_columns"] == roles.LIST_COLUMNS
+    assert "each separated value" in meta["conventions"]["enum_on_a_list_column"]
+    # and the real invariant: every TOKEN of every enum-bearing column is documented
+    for c, spec in meta["columns"].items():
+        if not spec.get("enum"):
+            continue
+        for r in rows:
+            if not r[c]:
+                continue
+            vals = r[c].split(roles.SEP) if c in roles.LIST_COLUMNS else [r[c]]
+            for v in vals:
+                assert v in spec["enum"], (c, v)
