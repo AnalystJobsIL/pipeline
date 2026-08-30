@@ -18995,3 +18995,509 @@ def test_a_configured_but_unusable_paid_rung_announces_itself(monkeypatch):
                       "url": "https://il.linkedin.com/jobs/view/%d" % i})
     assert f.bd_tried == 0 and f.bd_unavailable_work == 3
     assert any("configured and UNUSABLE (no-key) with 3 postings" in a for a in f.alarms())
+# --- roles, 2026-08-30: the public dataset, the shrink guard, the funnel ------------------
+# lane: roles — every one of these is a defect this session reproduced or a promise
+# `cloud_state/roles.csv` makes to a stranger who will never read this repo.
+def _rec(rid, **kw):
+    """One ledger record, in the shape `roles.load` returns."""
+    c, _, t = rid.partition("|")
+    base = {"role_id": rid, "company": c.title(), "title": t.title(), "location": "Tel Aviv",
+            "url": f"https://boards.greenhouse.io/{c}/jobs/{abs(hash(rid)) % 9999}",
+            "posted_date": "2026-08-20", "first_seen": "2026-08-20", "last_seen": "2026-08-29",
+            "seniority": "", "sources": ["greenhouse"], "seen_ids": [f"greenhouse:{c}"],
+            "status": "open", "superseded_by": "", "jd_attempted": "", "episodes": [],
+            "reposts": [], "sent": {}, "desc_len": 1200, "desc_sha1": "abc",
+            "tags": {"v": 1, "skills": [["SQL", "query"], ["Looker", "bi"]],
+                     "family": "Data Analyst", "track": "IC", "years": 3,
+                     "degree": {"level": "BSc", "status": "required", "fields": ["Statistics"]},
+                     "ai": [["Building with AI", "ai-build"]]},
+            "updated": "2026-08-29"}
+    base.update(kw)
+    return base
+
+
+def _ledger(n=3, **kw):
+    return {f"c{i}|data analyst": _rec(f"c{i}|data analyst", **kw) for i in range(n)}
+
+
+def test_the_ledger_never_shrinks_and_a_short_write_is_refused(tmp_path):
+    """Retention is the product: every closed role is history nobody can buy back. Nothing
+    in this module deletes, so a write holding FEWER records than the file it replaces is a
+    bug upstream — refuse it and keep the file."""
+    from pipeline import roles
+    p = str(tmp_path / "roles.jsonl")
+    full = _ledger(5)
+    roles.dump(p, full)
+    before = open(p, encoding="utf-8").read()
+
+    short = {k: v for k, v in list(full.items())[:3]}
+    try:
+        roles.dump(p, short)
+        raise AssertionError("a shrinking write must not be performed")
+    except roles.LedgerShrink as e:
+        assert "3" in str(e) and "5" in str(e)
+    assert open(p, encoding="utf-8").read() == before, "the file on disk must be untouched"
+
+    # growth, and a same-size rewrite, are normal days
+    roles.dump(p, {**full, "z|new": _rec("z|new")})
+    assert len(roles.load(p)[0]) == 6
+    roles.dump(p, roles.load(p)[0])
+    assert len(roles.load(p)[0]) == 6
+    # ...and the escape hatch is explicit, for a repair tool that rebuilds a file wholesale
+    roles.dump(p, short, allow_shrink=True)
+    assert len(roles.load(p)[0]) == 3
+
+
+def test_a_purge_and_a_supersede_keep_their_line_so_the_guard_never_fires(tmp_path):
+    """The two status changes that take a role off every product are exactly the ones that
+    must NOT look like a deletion — else the guard fires on a legitimate morning."""
+    from pipeline import roles
+    p = str(tmp_path / "roles.jsonl")
+    recs = _ledger(4)
+    roles.dump(p, recs)
+    for rid, st_ in zip(sorted(recs), ("purged", "superseded")):
+        recs[rid]["status"] = st_
+    recs[sorted(recs)[0]]["purge_reason"] = roles.PURGE_REASON
+    roles.dump(p, recs)                       # count unchanged -> allowed
+    back, status, _ = roles.load(p)
+    assert status == "ok" and len(back) == 4
+    assert back[sorted(back)[0]]["purge_reason"] == roles.PURGE_REASON
+
+
+def test_a_shrink_is_an_alarm_and_never_an_exception_out_of_flush(tmp_path):
+    """`flush` may not raise: the sqlite side has already committed, and the day must ship."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-08-30")
+    roles.dump(lg.path, _ledger(6))
+    lg.records = _ledger(2)
+    lg.dirty = True
+    assert lg.flush("2026-08-30") is False
+    assert any("SHRINK refused" in a for a in lg.alarms)
+    assert len(roles.load(lg.path)[0]) == 6
+    st.close()
+
+
+def test_a_corrupt_file_is_not_a_baseline_for_the_shrink_guard(tmp_path):
+    """`load` refuses to read a wreck and returns {}. That must not read here as 'the file
+    held nothing', which would let the guard wave through a write over a corrupt file — nor
+    as 'it held everything', which would block the repair."""
+    from pipeline import roles
+    p = str(tmp_path / "roles.jsonl")
+    open(p, "w", encoding="utf-8").write("{not json\n" * 20)
+    roles.dump(p, _ledger(2))                 # allowed: a wreck is not a record count
+    assert len(roles.load(p)[0]) == 2
+
+
+def test_seniority_reaches_the_record_from_the_classifier_and_from_the_title(tmp_path):
+    """BACKLOG 145: `matched.seniority` was empty on 154 of 154 records and 154 of 154 sqlite
+    rows because nothing ever ASSIGNED it — `store.upsert_matched` read `job['seniority']`,
+    which no code wrote. Both halves are fixed: the classifier's verdict lands on the job,
+    and every record the classifier did not judge is filled from its own title."""
+    from collections import Counter
+    from pipeline import roles, seniority
+    # 1. every classify path returns a seniority, and classify_grouped puts it on the job
+    clf = seniority.Classifier(use_llm=False)
+    jobs = [_role("Wix", "Senior Data Analyst", "https://w.co/1", "1", desc=_jd_of(9)),
+            _role("Wix", "Junior BI Analyst", "https://w.co/2", "2", desc=_jd_of(9)),
+            _role("Wix", "Data Analyst", "https://w.co/3", "3", desc=_jd_of(9))]
+
+    class _JD:
+        def maybe_fill(self, j):
+            return False
+    out = roles.classify_grouped(jobs, clf, _JD(), Counter(), Counter())
+    assert out, "the no-LLM path must still accept a strong senior title"
+    for j in out:
+        assert j["seniority"] == j["_class"]["seniority"] != ""
+    assert jobs[0]["seniority"] == "senior" and jobs[1]["seniority"] == "junior"
+
+    # 2. the backfill agrees with the classifier, and is the same function
+    assert roles.seniority_of("Senior Data Analyst") == "senior"
+    assert roles.seniority_of("Junior BI Analyst") == "junior"
+    assert roles.seniority_of("Data Analyst") == "unknown"
+    recs = {"a|senior data analyst": _rec("a|senior data analyst"),
+            "b|data analyst": _rec("b|data analyst"),
+            "c|x": _rec("c|x", title="", seniority="")}
+    changed = roles.backfill_seniority(recs)
+    assert set(changed) == {"a|senior data analyst", "b|data analyst"}
+    assert recs["a|senior data analyst"]["seniority"] == "senior"
+    assert recs["b|data analyst"]["seniority"] == "unknown"
+    assert recs["c|x"]["seniority"] == "", "no title, no verdict invented"
+    assert roles.backfill_seniority(recs) == [], "idempotent: a filled column is left alone"
+
+
+def test_a_re_sighting_never_blanks_a_populated_seniority(tmp_path):
+    """The UPDATE branch wrote `job.get('seniority','')` unconditionally, with none of the
+    non-empty guard its neighbouring `description` CASE has. One re-sighting by a fetcher
+    that does not classify would erase the column again."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Wix", "Senior Data Analyst", "https://w.co/1", "1")
+    st.upsert_matched({**j, "seniority": "senior"}, "2026-08-28")
+    st.upsert_matched({**j, "seniority": ""}, "2026-08-29", closed_keys=set())
+    row = st.get_matched_since("0000-01-01")[0]
+    assert row["seniority"] == "senior" and row["last_seen"] == "2026-08-29"
+    st.close()
+
+
+def test_the_dataset_has_one_row_per_role_and_excludes_what_was_never_one(tmp_path):
+    """`superseded` is the same posting under a second company name; `purged` is a row that
+    was never an employer (`Tel Aviv`, a CITY). One row per ROLE means neither is published
+    — and both are COUNTED, because a public dataset that silently drops rows is the thing
+    this file exists not to be."""
+    from pipeline import roles
+    recs = _ledger(3)
+    recs["s|dupe"] = _rec("s|dupe", status="superseded", superseded_by="c0|data analyst")
+    recs["tel aviv|analyst"] = _rec("tel aviv|analyst", status="purged",
+                                    purge_reason=roles.PURGE_REASON)
+    recs["old|role"] = _rec("old|role", first_seen="2026-01-01", last_seen="2026-02-01")
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    assert len(rows) == 3 and counts["rows"] == 3
+    assert counts["superseded"] == 1 and counts["purged"] == 1
+    assert counts["outside_window"] == 1
+    assert {r["role_id"] for r in rows} == set(_ledger(3))
+    assert [r["role_id"] for r in rows] == sorted(r["role_id"] for r in rows)
+
+
+def test_the_window_is_on_last_seen_and_its_edge_is_inclusive(tmp_path):
+    """A role open for three weeks is still open; the dataset asks 'was it live in the
+    window', not 'was it posted in it'. `last_seen` is an observation WE made (154 of 154
+    records carry one) rather than a claim by an employer who publishes a date on ~5% of
+    company-board postings."""
+    from pipeline import roles
+    recs = {"a|x": _rec("a|x", last_seen="2026-07-01", first_seen="2026-06-01"),
+            "b|y": _rec("b|y", last_seen="2026-06-30", first_seen="2026-06-01"),
+            "c|z": _rec("c|z", last_seen="2026-06-29", first_seen="2026-06-01")}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-29", window_days=60)
+    assert counts["window_start"] == "2026-06-30" and counts["window_end"] == "2026-08-29"
+    assert {r["role_id"] for r in rows} == {"a|x", "b|y"}, "the start day itself is IN"
+    assert counts["outside_window"] == 1
+    # a 2024 posted_date on a role still on its board belongs in the window: the operator
+    # set no recency bar on INCLUSION, and the 60 days is the CSV's window, not a scope rule
+    rows, _ = roles.build_rows({"a|x": _rec("a|x", posted_date="2024-10-22")},
+                               run_date="2026-08-29")
+    assert len(rows) == 1 and rows[0]["posted_date"] == "2024-10-22"
+
+
+def test_date_basis_names_which_date_placed_the_row_including_a_first_scan(tmp_path):
+    """A public dataset whose date column silently means two different things is worse than
+    one that admits it. The third value is the case `run.py:_posted_in` refuses to call
+    fresh: on a company's FIRST scan its whole back catalogue arrives at once, so
+    `first_seen` dates our LOOKING and is only an upper bound on the posting's age."""
+    from pipeline import roles
+    recs = {
+        "a|dated": _rec("a|dated", posted_date="2026-08-25"),
+        # two roles at one company: the older first_seen is that company's first scan
+        "b|old": _rec("b|old", company="B", posted_date="", first_seen="2026-08-16"),
+        "b|new": _rec("b|new", company="B", posted_date="", first_seen="2026-08-27"),
+    }
+    rows, counts = roles.build_rows(recs, run_date="2026-08-29")
+    by = {r["role_id"]: r for r in rows}
+    assert by["a|dated"]["date_basis"] == "posted_date"
+    assert by["a|dated"]["date_estimate"] == "2026-08-25"
+    assert by["b|old"]["date_basis"] == "first_seen_backfill"
+    assert by["b|new"]["date_basis"] == "first_seen"
+    assert by["b|new"]["date_estimate"] == "2026-08-27"
+    assert counts["basis:posted_date"] == 1
+    # every value the column can take is documented for a reader with no context
+    assert set(roles._ENUMS["date_basis"]) == {"posted_date", "first_seen",
+                                               "first_seen_backfill"}
+
+
+def test_the_dataset_flattens_tags_onto_documented_columns(tmp_path):
+    """A nested skills list is not a CSV column. `skills` carries them all on one separator;
+    the per-category columns let an analysis group by category without parsing anything."""
+    from pipeline import roles, roleprofile
+    rows, _ = roles.build_rows(_ledger(1), run_date="2026-08-30")
+    r = rows[0]
+    assert r["skills"] == "SQL;Looker"
+    assert r["skills_query"] == "SQL" and r["skills_bi"] == "Looker"
+    assert r["skills_de"] == "" and r["skills_cloud"] == ""
+    assert r["family"] == "Data Analyst" and r["track"] == "IC"
+    assert r["years_experience"] == 3 and r["seniority_title"] == ""
+    assert r["degree_level"] == "BSc" and r["degree_status"] == "required"
+    assert r["degree_fields"] == "Statistics" and r["ai"] == "Building with AI"
+    # the per-category columns must cover the vocabulary, or a skill vanishes from the file
+    assert set(roles._CATS) == {c for _n, c, _rx in roleprofile.SKILLS}
+    # a record with no tags at all (3 of 154 today) is a row of blanks, never a crash
+    rows, _ = roles.build_rows({"a|x": _rec("a|x", tags=None)}, run_date="2026-08-30")
+    assert rows[0]["skills"] == "" and rows[0]["family"] == "" and rows[0]["years_experience"] == ""
+
+
+def test_no_value_in_the_vocabulary_can_break_the_list_separator(tmp_path):
+    """`skills` is split on ';' by every downstream analysis. A skill, family, degree field
+    or AI label containing one would silently become two."""
+    from pipeline import roles, roleprofile
+    vocab = ([n for n, _c, _rx in roleprofile.SKILLS]
+             + [n for n, _t, _rx in getattr(roleprofile, "SOFT_SKILLS", [])]
+             + list(roles._CATS))
+    assert not [v for v in vocab if roles.SEP in v]
+    # ...and a value that somehow carries one is escaped rather than shipped raw
+    assert roles._j(["a;b", "c"]) == "a,b;c"
+
+
+def test_the_csv_round_trips_through_a_naive_reader(tmp_path):
+    """The file is for strangers. It must open with stdlib defaults, with a comma in a
+    title, a quote in a company name and a non-Latin location, and it must not carry a BOM
+    (which makes the first column name unmatchable in pandas)."""
+    import csv as _csv
+    from pipeline import roles
+    recs = {"a|x": _rec("a|x", company='Acme "Labs", Ltd', title="Analyst, Growth",
+                        location="תל אביב"),
+            "b|y": _rec("b|y", url="https://x.co/a?q=1&r=2")}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
+    cp, mp, _f = roles.dataset_paths(str(tmp_path / "seen.db"))
+    roles.write_dataset(cp, mp, rows, meta)
+    raw = open(cp, "rb").read()
+    assert not raw.startswith(b"\xef\xbb\xbf"), "no BOM"
+    assert b"\r\n" in raw, "RFC4180 line endings"
+    with open(cp, encoding="utf-8", newline="") as f:
+        back = list(_csv.DictReader(f))
+    assert len(back) == 2 and list(back[0]) == roles.COLUMNS
+    assert all(None not in r for r in back), "no ragged row"
+    assert back[0]["company"] == 'Acme "Labs", Ltd' and back[0]["title"] == "Analyst, Growth"
+    assert back[0]["location"] == "תל אביב"
+    assert not any("\n" in v for r in back for v in r.values())
+
+
+def test_the_meta_file_says_where_our_blindness_ends(tmp_path):
+    """The store began accumulating on 2026-08-16, so 'the past 60 days' is aspirational
+    until mid-October. A gap before the earliest observation is OUR blindness, not the
+    market's, and that distinction is the whole difference between a dataset and a
+    misleading one."""
+    from pipeline import roles
+    recs = _ledger(2, first_seen="2026-08-16")
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30", earliest_run="2026-08-27")
+    assert meta["window"]["fully_covered"] is False
+    assert "ASPIRATIONAL" in meta["window"]["note"] and "2026-08-16" in meta["window"]["note"]
+    assert "blindness" in meta["window"]["note"]
+    assert meta["store"]["earliest_first_seen"] == "2026-08-16"
+    assert meta["store"]["earliest_recorded_run"] == "2026-08-27"
+    assert meta["rows"] == len(rows) == 2
+    assert meta["download_url"].endswith("cloud_state/roles.csv")
+    assert meta["published_on_pages"] is False, "true only when infra publishes it"
+    assert meta["description_text"]["in_this_file"] is False
+    assert meta["conventions"]["list_separator"] == roles.SEP
+    # every column is documented, and every null count matches the file exactly
+    assert set(meta["columns"]) == set(roles.COLUMNS)
+    assert all(c["doc"].strip() for c in meta["columns"].values())
+    for c in roles.COLUMNS:
+        assert meta["columns"][c]["nulls"] == sum(1 for r in rows if str(r.get(c, "")) == "")
+    # ...and every enum's values are spelled out for a reader with no context
+    for col, vals in roles._ENUMS.items():
+        assert meta["columns"][col]["enum"] == vals
+        assert all(v.strip() for v in vals.values())
+    # once the window is covered the note must stop crying wolf
+    old = roles.build_meta(rows, {**counts, "window_start": "2026-08-20"},
+                           _ledger(2, first_seen="2026-08-16"), run_date="2026-08-30")
+    assert old["window"]["fully_covered"] is True and "COVERED" in old["window"]["note"]
+
+
+def test_truncated_descriptions_are_declared_rather_than_shipped_silently(tmp_path):
+    """Seven rows sit exactly on the 6,000-character capture cap — Amazon's ends mid-sentence
+    at '...If you have a'. The true length is gone before the store sees it, so it cannot be
+    reported; that the row IS cut can be, and must be."""
+    from pipeline import roles, store, jdfill, fetchers
+    assert store.DESC_MAX == jdfill.DESC_MAX == fetchers._DESC_MAX == 6000
+    recs = {"a|x": _rec("a|x", desc_len=store.DESC_MAX),
+            "b|y": _rec("b|y", desc_len=5999),
+            "c|z": _rec("c|z", desc_len=0)}
+    rows, _ = roles.build_rows(recs, run_date="2026-08-30")
+    by = {r["role_id"]: r for r in rows}
+    assert by["a|x"]["description_truncated"] == "true"
+    assert by["b|y"]["description_truncated"] == "false"
+    assert by["c|z"]["description_len"] == 0
+    assert by["a|x"]["description_sha1"] == "abc", "the join key into roles_text.jsonl"
+
+
+def test_company_facts_join_by_name_and_then_by_identity(tmp_path):
+    """110 of 116 companies with roles join on the raw name; three more only after
+    `identity_key` collapses a suffix or an 'X Israel' site form. A row that matches neither
+    says so rather than looking like a company with no sector."""
+    from pipeline import roles
+    firmo = {"Acme": {"sector": "fintech", "size_band": "M", "employees_global": 500,
+                      "as_of": "2026-08-20"},
+             "Nice": {"sector": "cx", "as_of": "2026-08-20"}}
+    recs = {"acme|x": _rec("acme|x", company="Acme"),
+            "acme ltd|y": _rec("acme ltd|y", company="Acme Ltd"),
+            "nobody|z": _rec("nobody|z", company="Nobody Inc")}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30", firmographics=firmo)
+    by = {r["role_id"]: r for r in rows}
+    assert by["acme|x"]["firmo_match"] == "exact" and by["acme|x"]["sector"] == "fintech"
+    assert by["acme ltd|y"]["firmo_match"] == "identity"
+    assert by["acme ltd|y"]["employees_global"] == 500
+    assert by["nobody|z"]["firmo_match"] == "none" and by["nobody|z"]["sector"] == ""
+    assert counts["firmo:exact"] == 1 and counts["firmo:identity"] == 1
+    assert counts["firmo:none"] == 1
+
+
+def test_the_funnel_keeps_one_honest_row_per_run_date(tmp_path):
+    """Every number already exists and is printed once — `classify: 6428 judged = keyword
+    6053 + llm 67 + cache 308`, then `email 4 · board 91 · scanned 1000` — and then thrown
+    away with the runner. A morning that ran three times must leave ONE row."""
+    import csv as _csv
+    from pipeline import roles
+    p = str(tmp_path / "funnel.csv")
+    roles.record_funnel(p, {"run_date": "2026-08-29", "jobs_fetched": 1000, "email_new": 4})
+    roles.record_funnel(p, {"run_date": "2026-08-30", "jobs_fetched": 1100, "email_new": 9})
+    assert roles.record_funnel(p, {"run_date": "2026-08-29", "jobs_fetched": 1050,
+                                   "email_new": 6}) == 2
+    with open(p, encoding="utf-8", newline="") as f:
+        rows = list(_csv.DictReader(f))
+    assert [r["run_date"] for r in rows] == ["2026-08-29", "2026-08-30"], "sorted, keyed"
+    assert rows[0]["jobs_fetched"] == "1050", "a re-run replaces its own row"
+    assert list(rows[0]) == roles.FUNNEL_COLS
+    # an unreadable file is rebuilt from this run forward, never raised
+    open(p, "w", encoding="utf-8").write("\x00 not a csv")
+    assert roles.record_funnel(p, {"run_date": "2026-08-31"}) == 1
+
+
+def test_the_dataset_is_written_beside_its_own_store_and_never_the_published_one(tmp_path):
+    """The one property that makes a local experiment harmless: `dataset_paths` derives from
+    the db path exactly as `ledger_paths` does, so a `--db /tmp/scratch.db` run can no more
+    clobber the published CSV than it can the published ledger."""
+    from pipeline import roles
+    a = roles.dataset_paths(str(tmp_path / "seen.db"))
+    b = roles.dataset_paths("/somewhere/else/scratch.db")
+    assert os.path.dirname(a[0]) == str(tmp_path) == os.path.dirname(roles.ledger_paths(
+        str(tmp_path / "seen.db"))[0])
+    assert os.path.dirname(b[0]) != os.path.dirname(a[0])
+    assert [os.path.basename(x) for x in a] == ["roles.csv", "roles.csv.meta.json", "funnel.csv"]
+
+
+def test_the_export_seam_never_freezes_the_ledger_and_never_raises(tmp_path, monkeypatch):
+    """`_guard` FREEZES the ledger, which is right for a seam that touches the record and
+    wrong for one that derives a file from it. An export bug must not cost a day of the
+    thing it is derived from."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-08-30")
+    lg.records = _ledger(2)
+    lines = lg.export_dataset("2026-08-30", firmographics={})
+    assert os.path.exists(roles.dataset_paths(st.path)[0])
+    assert lines and "dataset 2 roles" in lines[0]
+
+    # a half-written record does not raise at all — it is skipped, and counted as undatable
+    lg.records = {"a|x": {"role_id": "a|x", "episodes": "not a list"}}
+    assert "dataset 0 roles" in lg.export_dataset("2026-08-30", firmographics={})[0]
+    assert lg.alarms == []
+
+    # ...and when the write itself fails, the ledger is untouched and the mail is told
+    def _boom(*_a, **_k):
+        raise OSError("disk full")
+    monkeypatch.setattr(roles, "write_dataset", _boom)
+    lg.records = _ledger(2)
+    lines = lg.export_dataset("2026-08-30", firmographics={})
+    assert lg.frozen is False, "a derived file may never freeze the record it derives from"
+    assert any("dataset export failed" in a and "OSError" in a for a in lg.alarms)
+    assert "NOT written" in lines[0]
+
+    # a frozen ledger exports nothing rather than a file built from what it could not read
+    lg2 = roles.Ledger(st, "2026-08-30")
+    lg2.frozen = True
+    assert "ledger frozen" in lg2.export_dataset("2026-08-30")[0]
+    st.close()
+
+
+def test_a_run_that_stops_regenerating_the_dataset_raises_an_alarm(tmp_path):
+    """An artefact nobody re-derives is one nobody notices going stale. The check compares
+    the meta file's stamp against the run log — and stays silent on a scratch store, which
+    is what a local experiment should get."""
+    import json as _json
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-08-30")
+    lg.records = _ledger(2)
+    _c, mp, _f = roles.dataset_paths(st.path)
+
+    lg.alarms = []
+    lg._dataset_alarm()
+    assert lg.alarms == [], "no run log, no claim — a scratch store is silent"
+
+    st.record_run_date("2026-08-29")
+    lg.alarms = []
+    lg._dataset_alarm()
+    assert any("dataset missing" in a for a in lg.alarms)
+
+    _json.dump({"run_date": "2026-08-28"}, open(mp, "w", encoding="utf-8"))
+    lg.alarms = []
+    lg._dataset_alarm()
+    assert any("dataset stale" in a and "2026-08-28" in a for a in lg.alarms)
+
+    _json.dump({"run_date": "2026-08-29"}, open(mp, "w", encoding="utf-8"))
+    lg.alarms = []
+    lg._dataset_alarm()
+    assert lg.alarms == [], "regenerated by the last run: nothing to say"
+    st.close()
+
+
+def test_the_two_sent_ledgers_agree_by_seen_id_not_by_row_count(tmp_path):
+    """74 rows in sqlite `sent` against 69 truthy `sent` dicts in the ledger is not a
+    disagreement: one is per SEEN_ID and the other per ROLE, and a claim winner carries the
+    loser's ids too. The invariant that matters is that the id SETS match."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Wix", "Data Analyst", "https://w.co/1", "1")
+    j["seen_ids"] = ["greenhouse:1", "comeet:9"]        # one role, two contributing postings
+    st.upsert_matched(j, "2026-08-29")
+    lg = roles.Ledger(st, "2026-08-29")
+    lg.open_sync()
+    st.mark_sent(j, "2026-08-29")
+    lg2 = roles.Ledger(st, "2026-08-30")
+    lg2.open_sync()
+    lg2.record_run("2026-08-30", board_jobs=[j], merged=[j], scanned_ok={"Wix"}, failed=set())
+    recs, _s, _b = roles.load(lg2.path)
+    from_ledger = {sid for r in recs.values() for sid in (r.get("sent") or {})}
+    assert from_ledger == set(st.load_sent()) == {"greenhouse:1", "comeet:9"}
+    assert sum(1 for r in recs.values() if r.get("sent")) == 1, "one ROLE, two ids"
+    st.close()
+
+
+def test_the_funnel_row_reads_the_counters_the_run_actually_keeps():
+    """The funnel is only reachable on a FULL run, so if its field mapping lived inline in
+    `run.py` nothing but production would ever exercise it. These are the real key names
+    from `pipeline/run.py`'s `stats` / `paths` Counters and the ledger's tally: a rename
+    that would silently empty a column has to fail here instead."""
+    from collections import Counter
+    from pipeline import roles
+    stats = Counter({"companies_scanned": 1000, "companies_failed": 12, "jobs_fetched": 24000,
+                     "israel_matched": 6428, "accepted": 210, "after_merge": 154,
+                     "board_count": 91, "new": 4, "first_scan": 0, "email_overflow": 0})
+    paths = Counter({"keyword": 6000, "keyword_nollm": 53, "llm": 67, "llm_cache": 308,
+                     "llm_failed_fallback": 0, "llm_skipped": 0, "merged-copy": 454})
+    row = roles.funnel_row("2026-08-30", stats=stats, paths=paths,
+                           counts={"open": 91, "closed_today": 16, "purged_total": 7},
+                           records=154, alive=91, sent_total=74)
+    assert set(row) == set(roles.FUNNEL_COLS), "every column is produced, and no extras"
+    assert row["judged_keyword"] == 6053 and row["judged_llm"] == 67
+    assert row["judged_cache"] == 308 and row["merged_copy"] == 454
+    assert row["israel_matched"] == 6428 and row["board_rendered"] == 91
+    assert row["email_new"] == 4 and row["store_records"] == 154 and row["sent_total"] == 74
+    assert row["open"] == 91 and row["closed_today"] == 16 and row["purged"] == 7
+    # a counter the run never filled is EMPTY, not zero: an empty cell means "not measured",
+    # and a zero in a trend file is a measurement somebody will plot
+    bare = roles.funnel_row("2026-08-30", stats=Counter(), paths=Counter(), counts={},
+                            records=0, alive=0, sent_total=0)
+    assert bare["companies_scanned"] == "" and bare["open"] == ""
+    assert bare["judged_llm"] == 0, "a classify path that ran zero times really did run zero"
+
+
+def test_the_run_writes_the_dataset_and_only_a_full_run_writes_the_funnel():
+    """Two properties of the wiring in `pipeline/run.py`'s role-selection block that no
+    scoped test run can reach: the dataset is exported on every run (it lands beside
+    whatever store the run used), and the funnel is guarded by the same `not (only or
+    limit)` rule as `stages.stamp('publish')` — a scoped run's 'companies scanned' is a
+    flag on the command line, not a measurement, and a row of those poisons a trend."""
+    src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "pipeline", "run.py"), encoding="utf-8").read()
+    assert "ledger.export_dataset(" in src
+    i_export = src.index("ledger.export_dataset(")
+    i_funnel = src.index("roles.record_funnel(")
+    guard = src.rindex("if not (only or limit):", 0, i_funnel)
+    assert guard < i_funnel and guard > i_export, "the funnel, and not the export, is guarded"
+    # both sit after the record is written, so neither can precede what it derives from
+    assert src.index("ledger.record_run(") < i_export
+    # ...and before company intel, so a company-intel failure cannot cost a day of dataset
+    assert i_export < src.index("company_intel.enrich_for_run(")

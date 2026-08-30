@@ -624,6 +624,42 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         scanned_ok={r["company_name"] for r in rows}, failed=failed_names, paths=paths,
         scoped=bool(only or limit), never_ours=_never_ours)
     _role_lines = _role_lines + _claim_lines
+
+    # THE PUBLIC DATASET (lane: roles, ARCHITECTURE §7c). One row per role, a rolling
+    # 60-day window on `last_seen`, joined with tags and firmographics, written beside the
+    # ledger — `cloud_state/roles.csv` on a real run, next to the scratch store on a scoped
+    # one, because `dataset_paths` derives from the db path exactly as `ledger_paths` does.
+    #
+    # It sits HERE, immediately after the record is written and BEFORE company intel, so it
+    # is as durable as the record it derives from: a company-intel failure (its own budget,
+    # its own guard) must not be able to cost a day of the dataset. The price is that
+    # firmographics researched during THIS run reach the CSV tomorrow — 110 of 116 companies
+    # with roles are already covered, so that is a handful of cells one day late, and it
+    # self-heals on the next run.
+    _fm = {}
+    try:
+        from . import firmographics as _firmo_mod
+        _fm = _firmo_mod.union_store(st, _firmo_mod.load_shared())
+    except Exception as _e:  # noqa: BLE001 — an unreadable export costs columns, never the file
+        _stage_alarms.append(f"roles dataset: firmographics unreadable "
+                             f"({_e.__class__.__name__}) — company columns will be empty")
+    _role_lines += ledger.export_dataset(run_date, firmographics=_fm)
+
+    # ...and the funnel, which is the same numbers this run already prints and then throws
+    # away. Only a FULL run may write it: a scoped `--only` run's "companies scanned" is a
+    # flag on the command line, not a measurement, and a row of those in a trend file is
+    # worse than no row. Same rule, same reason, as `stages.stamp("publish", ...)` below.
+    if not (only or limit):
+        try:
+            roles.record_funnel(
+                roles.dataset_paths(st.path)[2],
+                roles.funnel_row(run_date, stats=stats, paths=paths, counts=ledger.counts,
+                                 records=len(ledger.records), alive=len(alive_jobs),
+                                 sent_total=st.count_sent()))
+        except Exception as _e:  # noqa: BLE001 — a trend row is never worth a digest
+            _stage_alarms.append(f"roles funnel not recorded ({_e.__class__.__name__}: "
+                                 f"{str(_e)[:60]})")
+
     for _line in [a for a in ledger.alarms if a not in _stage_alarms]:
         _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
 

@@ -34,6 +34,15 @@ import sqlite3
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_DB = os.path.join(REPO_ROOT, "state", "seen.db")
 
+# The store's share of the 6,000-character capture cap, which was a bare literal inside
+# `upsert_matched` while `fetchers._DESC_MAX` and `jdfill.DESC_MAX` were named constants
+# pinned equal by a test. It is NOT raised here: both layers above truncate first, so the
+# characters are already gone by the time a job reaches this file, and raising this alone
+# would change nothing while implying the cap had moved. What the public dataset can say
+# honestly is that a row sits ON the cap and is therefore cut — `roles.build_rows` reads
+# this constant to say it (`description_truncated`).
+DESC_MAX = 6000
+
 _SUFFIXES = re.compile(r"\s+(ltd|inc|llc|corp|co|gmbh|technologies|software|labs|group)\.?$", re.I)
 
 
@@ -720,15 +729,17 @@ class SeenStore:
         # endpoints (workday, smartrecruiters, bamboohr, microsoft) return NONE — so a
         # daily re-sighting used to overwrite a backfilled JD with "". Never downgrade:
         # only a longer, non-empty text replaces what is stored.
-        new_desc = (job.get("description") or "").strip()[:6000]
+        new_desc = (job.get("description") or "").strip()[:DESC_MAX]
         if prev and keep_first:
             self.conn.execute(
-                """UPDATE matched SET location=?, url=?, posted_date=?, seniority=?,
+                """UPDATE matched SET location=?, url=?, posted_date=?,
+                   seniority=CASE WHEN ? != '' THEN ? ELSE seniority END,
                    sources=?, seen_ids=?,
                    description=CASE WHEN length(?) > length(COALESCE(description,''))
                                     THEN ? ELSE description END,
                    last_seen=? WHERE mkey=?""",
-                (job.get("location"), job.get("url"), new_pd, job.get("seniority", ""),
+                (job.get("location"), job.get("url"), new_pd,
+                 job.get("seniority") or "", job.get("seniority") or "",
                  "+".join(sorted(new_sources)), "+".join(sorted(new_sids)),
                  new_desc, new_desc, run_date, mkey))
         else:

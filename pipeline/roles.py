@@ -30,6 +30,7 @@ NEVER overwritten: sqlite carries the day and the mail says so until a human loo
 """
 from __future__ import annotations
 
+import csv
 import datetime as dt
 import hashlib
 import json
@@ -43,6 +44,14 @@ from .atomic import _swap
 
 LEDGER = "roles.jsonl"
 TEXT = "roles_text.jsonl"
+DATASET = "roles.csv"                  # the public one-row-per-role export
+DATASET_META = "roles.csv.meta.json"   # what the CSV cannot say about itself
+FUNNEL = "funnel.csv"                  # one row per full run: postings -> sent
+WINDOW_DAYS = 60                       # the dataset's rolling window, on `last_seen`
+SEP = ";"                              # the ONE list separator in the CSV, documented in meta
+DOWNLOAD_URL = ("https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/"
+                "cloud_state/roles.csv")
+PURGE_REASON = "registry row points at an aggregator, so the postings were never this row's"
 TAGS_V = 1                 # bump when roleprofile's vocabulary changes shape -> re-snapshot
 CORRUPT_FRAC = 0.10        # more bad lines than this and the file is a wreck, not a ledger
 MASS_CLOSE_MIN = 10        # closures/day above max(MIN, FRAC * open) are a broken fetch,
@@ -107,7 +116,7 @@ def load(path):
     return records, "ok", bad
 
 
-_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description"]
+_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description", "purge_reason"]
 _LIST_FIELDS = ("sources", "seen_ids", "episodes", "reposts")
 _DICT_FIELDS = ("sent", "tags", "attribution", "class")
 
@@ -135,8 +144,38 @@ def _valid(rec):
     return True
 
 
-def dump(path, records):
-    """Atomic, sorted, one line per role, keys sorted — the diff is the change."""
+class LedgerShrink(Exception):
+    """A write that would remove records from a ledger file. Never performed."""
+
+
+def dump(path, records, allow_shrink=False):
+    """Atomic, sorted, one line per role, keys sorted — the diff is the change.
+
+    RETENTION IS THE PRODUCT NOW. Every closed role is history the operator cannot buy
+    back: the store began accumulating on 2026-08-16 and a role that leaves it takes its
+    posting date, its text and its episodes with it. Nothing in this module deletes — a
+    wrong row becomes `superseded` or `purged`, both of which keep the line — so a write
+    that holds FEWER records than the file it replaces is a bug somewhere upstream, not a
+    deletion anybody asked for. Refuse it and keep the file.
+
+    This is the one choke point: `Ledger.flush` and `stamp_sent` are the only writers and
+    both come through here. It is deliberately a COUNT and not a key-set check, because the
+    legitimate shrink-shaped events all keep the count — a purge changes `status`, a
+    supersede changes `status`, `merge_duplicates` runs before anything is recorded.
+
+    What it does NOT protect against, said plainly: the wholesale restore path in
+    `daily-digest.yml` (`cp -rT`), which replaces the file without going through this
+    function at all (docs/BACKLOG.md 125/160). `allow_shrink=True` exists for the one
+    caller that legitimately rewrites a file from scratch — a repair tool, never the run.
+    """
+    if not allow_shrink and os.path.exists(path):
+        have, status, _bad = load(path)
+        # a corrupt file is not a baseline to measure against — `load` already refuses to
+        # let one be read, and its `{}` must not read here as "the file was empty"
+        if status == "ok" and len(records) < len(have):
+            raise LedgerShrink(f"{os.path.basename(path)}: refusing to write "
+                               f"{len(records)} records over {len(have)}")
+
     def _w(f):
         for rid in sorted(records):
             f.write(json.dumps(records[rid], ensure_ascii=False, sort_keys=True) + "\n")
@@ -366,6 +405,13 @@ def classify_grouped(candidates, clf, jdfill, stats, paths):
             paths[c["path"]] += 1
             judged += 1
             m["_class"] = c
+            # ...and the seniority the classifier just derived, onto the JOB, because that
+            # is what `store.upsert_matched` writes into the `matched.seniority` column and
+            # what `reconcile` carries into the record. Every `Classifier.classify` return
+            # carries `seniority` (pipeline/seniority.py `base`), and nothing was reading it:
+            # the column was empty on 154 of 154 records and 154 of 154 sqlite rows
+            # (docs/BACKLOG.md 145). One assignment, no call, no spend.
+            m["seniority"] = c.get("seniority") or ""
             if c["decision"] == "accept" and verdict is None:
                 verdict = c
         if len(members) > judged:             # never plant a zero key in `Decision paths`
@@ -377,6 +423,7 @@ def classify_grouped(candidates, clf, jdfill, stats, paths):
                 accepted.append(m)
             elif "_class" not in m:           # inherited: the verdict, and the text it was judged on
                 m["_class"] = verdict
+                m["seniority"] = verdict.get("seniority") or ""
                 m["_inherited"] = True
                 if len(str(m.get("description") or "")) < len(str(best.get("description") or "")):
                     m["description"] = best.get("description")
@@ -400,6 +447,7 @@ class Ledger:
         self.dirty = False
         self.text_dirty = False
         self.report = {}
+        self.counts = {}                # this run's status tally, for the funnel record
         self.alarms = []
         self.claims = []                # "Winner<-Loser" strings
 
@@ -490,6 +538,7 @@ class Ledger:
             self.alarms.append(f"roles ledger holds {rep['unrehydratable']} record(s) with no "
                                f"ISO first_seen/last_seen — not rehydrated, fix the line")
         rep["superseded"] = self.sweep_store()
+        self._dataset_alarm()
         rep["sqlite"] = len(rows) + rep["rehydrated"]
         rep["ledger_n"] = len(self.records)
         self.report = rep
@@ -799,6 +848,15 @@ class Ledger:
                 c["absorbed"] += 1
             prev_status = rec.get("status") or "open"
             self._absorb(rec, reconcile(row, {**rec, "description": rec.get("description") or ""}))
+            # The title-derived seniority, for every record the classifier did not judge THIS
+            # run — the 63 closed and the 52 not re-fetched would otherwise keep the empty
+            # string forever, and `roles.csv` would ship a column that is populated only for
+            # the roles that happened to be live this morning. `_seniority` is a pure keyword
+            # function over the title (pipeline/seniority.py): no description, no call, no
+            # spend, and it is the SAME function whose answer `classify` puts on the job.
+            if not (rec.get("seniority") or "") and rec.get("title"):
+                if backfill_seniority({rid: rec}):
+                    self._touch(rec)
             if row.get("status") == "superseded":
                 if rec.get("status") != "superseded":
                     rec["status"], rec["superseded_by"] = "superseded", row.get("superseded_by") or ""
@@ -856,6 +914,21 @@ class Ledger:
                 if rec.get("status") != "purged":
                     rec["status"], rec["closed_on"] = "purged", run_date
                     self._touch(rec)
+                # WHY this row left the product, on the row itself. `purged` is the one
+                # status that removes a record from every product INCLUDING the archive, and
+                # it was indistinguishable from `closed` except by reading the registry as it
+                # stood that morning — which is not recoverable later. The dataset counts
+                # purges in its meta file, and a count with no reason is the kind of
+                # confident number this repo punishes.
+                #
+                # Stamped OUTSIDE the status change, deliberately: the seven records purged
+                # on 2026-08-27 are already `purged`, so a stamp on the transition alone
+                # would leave them reasonless for ever. This is not a backfill of something
+                # inferred — reaching this branch means the row is in `never_ours` TODAY, so
+                # the reason is re-observed on the run that writes it.
+                if rec.get("purge_reason") != PURGE_REASON:
+                    rec["purge_reason"] = PURGE_REASON
+                    self._touch(rec)
                     c["purged"] += 1      # a delta, like `closed today` beside it — not a
                 c["purged_total"] += 1    # running total that never decays
             elif rid in onboard:
@@ -893,6 +966,7 @@ class Ledger:
                     self._touch(rec)
         if self.dirty or self.text_dirty:
             self.flush(run_date)
+        self.counts = dict(c)           # the funnel reads what the mail line reads
         ledger_n, store_n = len(self.records), len(rows)
         if ledger_n != store_n:
             self.alarms.append(f"roles ledger {ledger_n} != store {store_n} after sync")
@@ -914,6 +988,69 @@ class Ledger:
         return {"v": TAGS_V, "skills": [list(s) for s in p.get("skills") or []],
                 "family": p.get("family"), "track": p.get("track"), "years": p.get("years"),
                 "degree": p.get("degree"), "ai": list(p.get("ai") or [])}
+
+    # ---- the public dataset -------------------------------------------------------
+    def export_dataset(self, run_date, firmographics=None, window_days=WINDOW_DAYS):
+        """Write `roles.csv` + its meta file beside the ledger. Returns mail lines.
+
+        Deliberately NOT wrapped in `self._guard`: that seam FREEZES the ledger, which is
+        the right answer for a seam that reads or writes the record and the wrong one here.
+        The dataset is derived — if it cannot be written, the record is still perfect and
+        tomorrow rebuilds the file whole. An export bug must never cost a day of the thing
+        it is derived from."""
+        try:
+            if self.frozen:
+                return ["roles dataset not written (ledger frozen — sqlite carried the day)"]
+            csv_path, meta_path, _f = dataset_paths(self.st.path)
+            rows, counts = build_rows(self.records, run_date=run_date,
+                                      firmographics=firmographics, window_days=window_days)
+            earliest_run = ""
+            try:
+                earliest_run = self.st.conn.execute(
+                    "SELECT MIN(run_date) FROM runs").fetchone()[0] or ""
+            except Exception:  # noqa: BLE001 — the log is a nicety here, never a blocker
+                pass
+            meta = build_meta(rows, counts, self.records, run_date=run_date,
+                              window_days=window_days, earliest_run=earliest_run)
+            write_dataset(csv_path, meta_path, rows, meta)
+            ex = (f"superseded {counts.get('superseded', 0)} · purged {counts.get('purged', 0)}"
+                  f" · outside window {counts.get('outside_window', 0)}")
+            return [f"dataset {len(rows)} roles ({counts['window_start']}..{counts['window_end']})"
+                    f" · excluded {ex}"
+                    f" · firmo {counts.get('firmo:none', 0)} of {len(rows)} unmatched"]
+        except Exception as e:  # noqa: BLE001
+            self.alarms.append(f"roles dataset export failed: {e.__class__.__name__}: "
+                               f"{str(e)[:80]} — roles.csv keeps yesterday's rows")
+            return ["roles dataset NOT written (see Stages)"]
+
+    def _dataset_alarm(self):
+        """Did the LAST run regenerate the dataset? An artefact nobody re-derives is one
+        nobody notices going stale — the whole reason this lane exists twice over.
+
+        Compares the meta file's `run_date` against the newest date in the run log, both of
+        which predate this run (`record_run_date` stamps later). A scratch store has an
+        empty log and is silent, which is what a local experiment should be."""
+        try:
+            last = self.st.conn.execute("SELECT MAX(run_date) FROM runs").fetchone()[0] or ""
+        except Exception:  # noqa: BLE001
+            return
+        if not last or not self.records:
+            return
+        _c, meta_path, _f = dataset_paths(self.st.path)
+        try:
+            with open(meta_path, encoding="utf-8") as f:
+                stamped = str(json.load(f).get("run_date") or "")
+        except FileNotFoundError:
+            self.alarms.append(f"roles dataset missing ({DATASET_META} absent while the run "
+                               f"log reaches {last}) — nothing is publishing roles.csv")
+            return
+        except Exception:  # noqa: BLE001 — unreadable is as bad as absent, and as loud
+            self.alarms.append(f"roles dataset meta unreadable ({DATASET_META}) — "
+                               f"roles.csv cannot be trusted to describe itself")
+            return
+        if stamped < last:
+            self.alarms.append(f"roles dataset stale (roles.csv stamped {stamped}, last run "
+                               f"{last}) — a run completed without regenerating it")
 
     # ---- flush --------------------------------------------------------------------
     def flush(self, run_date=None):
@@ -937,9 +1074,475 @@ class Ledger:
                 dump(self.text_path, self.text)
                 self.text_dirty = False
             return True
+        except LedgerShrink as e:
+            # louder than a write failure and differently caused: the bytes are fine, the
+            # RECORD SET is short. Yesterday's file stands and the day is still delivered.
+            self.alarms.append(f"roles ledger SHRINK refused ({e}) — the file on disk was "
+                               f"kept; nothing was deleted, and nothing was recorded either")
+            return False
         except Exception as e:  # noqa: BLE001
             self.alarms.append(f"roles ledger write failed: {e.__class__.__name__}: {str(e)[:80]}")
             return False
+
+
+# --------------------------------------------------------------------------- #
+# the public dataset — one row per role (ARCHITECTURE.md 7c)
+# --------------------------------------------------------------------------- #
+# WHY A SECOND FILE AT ALL. `roles.jsonl` is the record and it is public already, but it is
+# a nested JSON-lines file with a skills list of pairs inside a tags object: nobody opens
+# that in a spreadsheet and no analysis groups by skill without writing a parser first. The
+# CSV is the same data, flattened, with every list on one documented separator.
+#
+# WHAT IT IS NOT: it is not a second store. It is derived, every morning, from the ledger
+# and the firmographics export, and if it is deleted the next run rebuilds it whole.
+_CATS = ("bi", "query", "de", "pa", "prog", "method", "cloud", "lang")
+
+# (name, doc) — the doc reaches the reader through the meta file, so it is written for
+# somebody who has never seen this repo.
+_COLUMNS = [
+    ("role_id", "Stable id for the role: lowercased 'company|title'. Join key for roles_text.jsonl."),
+    ("company", "Employer name as it appears on the board we read."),
+    ("title", "Job title as posted."),
+    ("location", "Location as posted (free text, usually an Israeli city)."),
+    ("url", "The posting's own address on the employer's careers board."),
+    ("status", "open = still on the employer's board at last_seen; closed = it was gone when we last looked."),
+    ("posted_date", "The date the EMPLOYER states the role was posted. Empty when the board publishes none."),
+    ("first_seen", "The first day this pipeline saw the role. Not a posting date."),
+    ("last_seen", "The last day this pipeline saw the role on its board. The window column."),
+    ("date_estimate", "Best available 'when did this role appear': posted_date if there is one, else first_seen."),
+    ("date_basis", "Which date date_estimate came from, and how much to trust it."),
+    ("days_observed", "last_seen - first_seen + 1: days we OBSERVED it open, not days it was open."),
+    ("closed_on", "The day we recorded it closed. Empty while open."),
+    ("emailed", "true if this role went out in a daily digest email."),
+    ("emailed_on", "The date it was first emailed. Empty if never emailed."),
+    ("episodes", "How many separate spells we have seen this role open (a reappearance after an absence starts a new one)."),
+    ("reposts", "How many times the employer bumped posted_date 3+ days past the start of the current spell."),
+    ("repost_dates", "The posted_date values those bumps landed on, separated by ';'."),
+    ("sources", "Which fetchers saw it (greenhouse, comeet, scrape, ...), separated by ';'."),
+    ("host", "The hostname of url — the ATS or careers domain the posting lives on."),
+    ("seniority_title", "Seniority read from the TITLE ALONE by keyword. Not the years figure."),
+    ("years_experience", "Years of experience asked for, read from the DESCRIPTION text. Empty when the text does not say."),
+    ("family", "Role family, from title first and the opening of the description second."),
+    ("track", "IC = individual contributor, Lead = the title names a lead/manager/head."),
+    ("degree_level", "Highest degree the posting requires or prefers."),
+    ("degree_status", "Whether that degree is required or merely preferred."),
+    ("degree_fields", "Fields of study named alongside it, separated by ';'."),
+    ("ai", "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned."),
+    ("skills", "Every skill found in title+description, separated by ';', in extraction order."),
+    ("class_decision", "The classifier's verdict on the role when it was last judged."),
+    ("class_path", "How that verdict was reached: keyword, llm, llm_cache, ..."),
+    ("description_len", "Characters of description text we hold. 0 when we captured none."),
+    ("description_truncated", "true when the text sits exactly on the 6,000-character capture cap, i.e. the real posting is longer."),
+    ("description_sha1", "sha1 of the description text; join to roles_text.jsonl to read it."),
+    ("sector", "Company sector (firmographics)."),
+    ("sub_sector", "Narrower niche (firmographics, free text)."),
+    ("stage", "Company stage (firmographics)."),
+    ("stage_note", "Ticker or acquisition note behind that stage."),
+    ("size_band", "Headcount band (firmographics)."),
+    ("employees_global", "Global headcount, all sites (firmographics)."),
+    ("founded", "Year founded (firmographics)."),
+    ("business_model", "How the company earns money (firmographics, free text)."),
+    ("customer_type", "Who buys from it (firmographics, free text)."),
+    ("il_center", "Its main Israeli site(s) (firmographics)."),
+    ("firmo_as_of", "The date those company facts were researched."),
+    ("firmo_match", "How the company facts were matched to this row."),
+] + [(f"skills_{c}", f"Skills of category '{c}' only, separated by ';' — group by this without parsing.")
+     for c in _CATS]
+
+COLUMNS = [c for c, _doc in _COLUMNS]
+
+_ENUMS = {
+    "status": {
+        "open": "still listed on the employer's own careers board when we last looked",
+        "closed": "we looked at that board again and the posting was gone",
+    },
+    "date_basis": {
+        "posted_date": "the employer published a date and we use it",
+        "first_seen": "no published date; the day WE first saw it, which is an upper bound "
+                      "on how old the posting is",
+        "first_seen_backfill": "no published date, AND this was the first day we ever "
+                               "scanned this employer, so the whole back catalogue arrived "
+                               "at once. first_seen says only 'not newer than this'.",
+    },
+    "seniority_title": {
+        "senior": "the title says senior/lead/principal/staff (or the Hebrew equivalent)",
+        "junior": "the title says junior/entry-level and does not also say senior",
+        "unknown": "the title carries no seniority word — most titles",
+    },
+    "track": {"IC": "individual contributor", "Lead": "the title names a lead, manager or head"},
+    "degree_status": {"required": "stated as a requirement", "preferred": "stated as an advantage"},
+    "firmo_match": {
+        "exact": "company facts matched this row's company name exactly",
+        "identity": "matched after normalising the name (suffixes, aliases, 'X Israel')",
+        "none": "we hold no researched facts for this company; every firmographics column is empty",
+    },
+    "class_decision": {"accept": "judged an analytics role in Israel", "reject": "judged not one"},
+}
+
+_FIRMO_COLS = ("sector", "sub_sector", "stage", "stage_note", "size_band", "employees_global",
+               "founded", "business_model", "customer_type", "il_center")
+
+
+def dataset_paths(db_path):
+    """(roles.csv, roles.csv.meta.json, funnel.csv) beside the ledger.
+
+    Derived from the db path exactly as `ledger_paths` is, and that is the whole safety
+    property: a scoped or `--db /tmp/scratch.db` run writes its dataset next to its scratch
+    store and can no more clobber the published CSV than it can the published ledger."""
+    d = os.path.dirname(os.path.abspath(db_path))
+    return (os.path.join(d, DATASET), os.path.join(d, DATASET_META),
+            os.path.join(d, FUNNEL))
+
+
+def _j(values):
+    """Join a list onto the one separator, dropping empties. A value containing the
+    separator would make the column unparseable, so it is escaped to a comma — measured
+    zero occurrences across the vocabulary, and a test pins that."""
+    return SEP.join(str(v).replace(SEP, ",").strip() for v in (values or []) if str(v).strip())
+
+
+def _b(x):
+    return "true" if x else "false"
+
+
+def seniority_of(title):
+    """The title-derived seniority, and the ONE place this lane asks for it.
+
+    It is `pipeline/seniority._seniority` — the same function whose answer `Classifier`
+    already puts in every verdict — reached through one named wrapper so the record, the
+    backfill and the tests cannot drift onto three different notions of the word. Pure
+    keyword work over the title: no description, no call, no spend."""
+    from .seniority import _seniority
+    return _seniority(str(title or "").lower())
+
+
+def backfill_seniority(records):
+    """Fill an empty `seniority` from the title. Returns the role_ids it changed.
+
+    The column was empty on 154 of 154 records and 154 of 154 sqlite rows (BACKLOG 145)
+    because nothing ever assigned it. Fixing the assignment fixes the roles judged from
+    today on; it does nothing for the roles already closed, which are most of the history
+    the dataset exists to carry. This is the other half, and it is deterministic — the same
+    titles yield the same answers every run, so it converges and then costs nothing."""
+    changed = []
+    for rid, rec in records.items():
+        if (rec.get("seniority") or "") or not rec.get("title"):
+            continue
+        sen = seniority_of(rec["title"])
+        if sen:
+            rec["seniority"] = sen
+            changed.append(rid)
+    return changed
+
+
+def _company_first_scan(records):
+    """{company: the earliest first_seen we hold for it} — the ledger's own answer to the
+    question `run.py:seen_before` asks sqlite: had we ever scanned this employer before?
+
+    A role whose `first_seen` IS that date arrived on the company's first scan, together
+    with its whole back catalogue, so `first_seen` dates our LOOKING and not the posting.
+    `_posted_in` refuses to call such a role fresh; the dataset cannot refuse it — it is a
+    real open role — so it labels it instead."""
+    out = {}
+    for rec in records.values():
+        c, fs = rec.get("company") or "", str(rec.get("first_seen") or "")
+        if not _iso(fs):
+            continue
+        if c not in out or fs < out[c]:
+            out[c] = fs
+    return out
+
+
+def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS):
+    """(rows, counts) for the dataset. Pure: no I/O, no network, no store.
+
+    THE WINDOW IS ON `last_seen`, and that choice is the one the rest of the file rests on.
+    `pipeline/run.py:_posted_in` already answers a dating question for the 48h email, and
+    this is deliberately NOT a second answer to it — it is a different question. The email
+    asks "is this NEWS?", so it must not treat a first-scan back catalogue as fresh, and it
+    leans on `posted_date` because that is what "posted in the last 48h" means. The dataset
+    asks "was this role LIVE in the window?", and for that `last_seen` is the honest axis:
+    it is an OBSERVATION (154 of 154 records carry one) rather than a claim by an employer
+    who publishes a date on ~5% of company-board postings. `_posted_in`'s ladder is not
+    discarded — it is emitted as `date_estimate` + `date_basis`, so a reader who wants the
+    posting-age view has it, with the confidence spelled out.
+    """
+    firmographics = firmographics or {}
+    from .firmographics import identity_key
+    by_ident = {}
+    for name, rec in firmographics.items():
+        by_ident.setdefault(identity_key(name), rec)
+    first_scan = _company_first_scan(records)
+    end = str(run_date)
+    start = (dt.date.fromisoformat(end) - dt.timedelta(days=window_days)).isoformat()
+    counts = Counter()
+    rows = []
+    for rid in sorted(records):
+        rec = records[rid]
+        st_ = rec.get("status") or "open"
+        if st_ in ("superseded", "purged"):
+            counts[st_] += 1          # one row per ROLE: a double and a row that was never
+            continue                  # ours are both counted in the meta, never published
+        ls = str(rec.get("last_seen") or "")[:10]
+        if not _iso(ls):
+            counts["undatable"] += 1
+            continue
+        if ls < start:
+            counts["outside_window"] += 1
+            continue
+        counts["rows"] += 1
+        fs = str(rec.get("first_seen") or "")[:10]
+        pd_ = str(rec.get("posted_date") or "")[:10]
+        if _iso(pd_):
+            basis, est = "posted_date", pd_
+        elif _iso(fs):
+            basis = ("first_seen_backfill" if first_scan.get(rec.get("company") or "") == fs
+                     else "first_seen")
+            est = fs
+        else:
+            basis, est = "", ""
+        counts[f"basis:{basis or 'none'}"] += 1
+        days = ""
+        if _iso(fs) and _iso(ls):
+            days = (dt.date.fromisoformat(ls) - dt.date.fromisoformat(fs)).days + 1
+        tags = rec.get("tags") or {}
+        skills = [s for s in (tags.get("skills") or []) if isinstance(s, list) and s]
+        degree = tags.get("degree") or {}
+        cls = rec.get("class") or {}
+        company = rec.get("company") or ""
+        fm = firmographics.get(company)
+        match = "exact" if fm else ""
+        if fm is None:
+            fm = by_ident.get(identity_key(company))
+            match = "identity" if fm else "none"
+        fm = fm or {}
+        counts[f"firmo:{match}"] += 1
+        row = {
+            "role_id": rid,
+            "company": company,
+            "title": rec.get("title") or "",
+            "location": rec.get("location") or "",
+            "url": rec.get("url") or "",
+            "status": st_,
+            "posted_date": pd_ if _iso(pd_) else "",
+            "first_seen": fs,
+            "last_seen": ls,
+            "date_estimate": est,
+            "date_basis": basis,
+            "days_observed": days,
+            "closed_on": str(rec.get("closed_on") or ""),
+            "emailed": _b(rec.get("sent")),
+            "emailed_on": str(rec.get("emailed_on") or ""),
+            "episodes": len(rec.get("episodes") or []),
+            "reposts": len(rec.get("reposts") or []),
+            "repost_dates": _j(rec.get("reposts")),
+            "sources": _j(sorted(rec.get("sources") or [])),
+            "host": urlparse(rec.get("url") or "").netloc,
+            "seniority_title": rec.get("seniority") or "",
+            "years_experience": tags.get("years") if isinstance(tags.get("years"), int) else "",
+            "family": tags.get("family") or "",
+            "track": tags.get("track") or "",
+            "degree_level": degree.get("level") or "",
+            "degree_status": degree.get("status") or "",
+            "degree_fields": _j(degree.get("fields")),
+            "ai": _j([a[0] for a in (tags.get("ai") or []) if isinstance(a, list) and a]),
+            "skills": _j([s[0] for s in skills]),
+            "class_decision": cls.get("decision") or "",
+            "class_path": cls.get("path") or "",
+            "description_len": rec.get("desc_len") if isinstance(rec.get("desc_len"), int) else "",
+            # The capture cap is 6,000 characters in all three layers that touch the text
+            # (fetchers, jdfill, the store), and it cuts mid-sentence — Amazon's ends "...If
+            # you have a". The true length is already gone by the time it reaches the store,
+            # so it cannot be reported; that a row IS cut can be, and silently shipping a
+            # truncated public dataset is the one option that was never available.
+            "description_truncated": _b(rec.get("desc_len") == _store.DESC_MAX),
+            "description_sha1": rec.get("desc_sha1") or "",
+            "firmo_as_of": fm.get("as_of") or "",
+            "firmo_match": match,
+        }
+        for c in _FIRMO_COLS:
+            v = fm.get(c)
+            row[c] = "" if v is None else v
+        for c in _CATS:
+            row[f"skills_{c}"] = _j(sorted(s[0] for s in skills if len(s) > 1 and s[1] == c))
+        rows.append(row)
+    counts["window_start"], counts["window_end"] = start, end
+    return rows, counts
+
+
+def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earliest_run=""):
+    """What the CSV cannot say about itself — above all, where OUR blindness ends and the
+    market's silence begins.
+
+    The store began accumulating on 2026-08-16, so a 60-day window is aspirational until
+    roughly mid-October: a gap before the earliest observation is a gap in our looking. A
+    reader who mistakes it for a quiet market draws exactly the wrong conclusion, and the
+    difference between a dataset and a misleading one is whether it says so itself."""
+    by_status = Counter((r.get("status") or "open") for r in records.values())
+    firsts = sorted(str(r.get("first_seen") or "")[:10] for r in records.values()
+                    if _iso(str(r.get("first_seen") or "")[:10]))
+    earliest = firsts[0] if firsts else ""
+    start, end = counts["window_start"], counts["window_end"]
+    covered = earliest and earliest <= start
+    nulls = {c: sum(1 for r in rows if str(r.get(c, "")) == "") for c in COLUMNS}
+    return {
+        "dataset": DATASET,
+        "download_url": DOWNLOAD_URL,
+        "published_on_pages": False,
+        "generated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "run_date": str(run_date),
+        "rows": len(rows),
+        "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
+        "window": {
+            "days": window_days,
+            "basis": "last_seen",
+            "start": start,
+            "end": end,
+            "rule": f"last_seen >= {start} (inclusive), i.e. the role was seen open on its "
+                    f"employer's board at some point in the window",
+            "fully_covered": bool(covered),
+            "note": (
+                "COVERED: the store's observations reach back to or before the window start."
+                if covered else
+                f"ASPIRATIONAL: this store's earliest observation is {earliest}, which is "
+                f"AFTER the window start {start}. Any absence of roles before {earliest} is "
+                f"OUR blindness, not the market's — the pipeline was not yet watching. Do "
+                f"not read the shape of the first days as a trend."),
+        },
+        "store": {
+            "records": len(records),
+            "by_status": dict(sorted(by_status.items())),
+            "earliest_first_seen": earliest,
+            "earliest_recorded_run": earliest_run,
+            "retention": "nothing is ever deleted; a wrong row becomes superseded or purged "
+                         "and keeps its line",
+        },
+        "excluded": {
+            "superseded": counts.get("superseded", 0),
+            "purged": counts.get("purged", 0),
+            "purge_reason": PURGE_REASON,
+            "outside_window": counts.get("outside_window", 0),
+            "undatable": counts.get("undatable", 0),
+            "note": "superseded = the same posting also fetched under a second company name, "
+                    "kept once. purged = the registry row was never an employer.",
+        },
+        "conventions": {
+            "list_separator": SEP,
+            "booleans": "true / false",
+            "empty": "an empty cell means we do not hold the value, never zero and never false",
+            "dates": "ISO YYYY-MM-DD, UTC",
+            "encoding": "UTF-8, no BOM, CRLF line endings, RFC4180 quoting",
+        },
+        "description_text": {
+            "in_this_file": False,
+            "why": "the full text is up to 6,000 characters per role with embedded newlines: "
+                   "it breaks naive parsers, and this file is committed to git every day",
+            "file": TEXT,
+            "join": "role_id",
+            "columns_here": ["description_len", "description_truncated", "description_sha1"],
+        },
+        "funnel": {"file": FUNNEL,
+                   "what": "one row per full daily run: postings fetched -> Israel -> judged "
+                           "-> matched -> alive -> board -> emailed"},
+        "columns": {c: {k: v for k, v in (("doc", doc), ("nulls", nulls[c]),
+                                          ("enum", _ENUMS.get(c))) if v is not None}
+                    for c, doc in _COLUMNS},
+    }
+
+
+def write_dataset(csv_path, meta_path, rows, meta):
+    """Both files atomically. The CSV is sorted by role_id, so the daily diff is the change."""
+    from .atomic import _swap, write_json
+
+    def _w(f):
+        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="raise",
+                           lineterminator="\r\n")
+        w.writeheader()
+        for r in rows:
+            w.writerow({c: r.get(c, "") for c in COLUMNS})
+    _swap(csv_path, _w)
+    write_json(meta_path, meta)
+
+
+FUNNEL_COLS = ["run_date", "companies_scanned", "companies_failed", "jobs_fetched",
+               "israel_matched", "judged_keyword", "judged_llm", "judged_cache",
+               "judged_failed", "judged_skipped", "merged_copy", "accepted", "after_merge",
+               "store_records", "open", "closed_today", "purged", "alive", "board_rendered",
+               "email_new", "first_scan", "email_overflow", "sent_total"]
+
+
+def funnel_row(run_date, *, stats, paths, counts, records, alive, sent_total):
+    """This run's funnel, from the counters `pipeline/run.py` already keeps.
+
+    It lives HERE rather than inline in `run.py` for two reasons: `run.py` is shared with
+    infra and every line this lane adds there is a line another lane has to read around,
+    and — the real one — the funnel is only reachable on a FULL run, so inline it would be
+    exercised by nothing but production. As a function it is unit-tested against the same
+    key names `run()` uses, and a rename that would have silently emptied a column fails a
+    test instead of quietly shipping a zero.
+
+    Missing keys become "", never 0: an empty cell means "we did not measure this", and a
+    zero in a trend file is a measurement. That distinction is the whole point of the file.
+    """
+    def _s(k):
+        v = stats.get(k, "")
+        return "" if v is None else v
+    return {
+        "run_date": run_date,
+        "companies_scanned": _s("companies_scanned"),
+        "companies_failed": _s("companies_failed"),
+        "jobs_fetched": _s("jobs_fetched"),
+        "israel_matched": _s("israel_matched"),
+        "judged_keyword": paths.get("keyword", 0) + paths.get("keyword_nollm", 0),
+        "judged_llm": paths.get("llm", 0),
+        "judged_cache": paths.get("llm_cache", 0),
+        "judged_failed": paths.get("llm_failed_fallback", 0),
+        "judged_skipped": paths.get("llm_skipped", 0),
+        "merged_copy": paths.get("merged-copy", 0),
+        "accepted": _s("accepted"),
+        "after_merge": _s("after_merge"),
+        "store_records": records,
+        "open": counts.get("open", ""),
+        "closed_today": counts.get("closed_today", ""),
+        "purged": counts.get("purged_total", ""),
+        "alive": alive,
+        "board_rendered": _s("board_count"),
+        "email_new": _s("new"),
+        "first_scan": _s("first_scan"),
+        "email_overflow": _s("email_overflow"),
+        "sent_total": sent_total,
+    }
+
+
+def record_funnel(path, row):
+    """Append (or replace) one run's funnel row. Sorted by run_date, keyed by it.
+
+    Every one of these numbers is already computed by `pipeline/run.py` and printed once —
+    `classify: 6428 judged = keyword 6053 + llm 67 + cache 308`, then `email 4 · board 91 ·
+    scanned 1000` — and then dropped on the floor with the runner. Nobody could answer "is
+    this getting better or worse" without re-deriving it by hand, which is how four days of
+    apparently-zero JD fills went unnoticed. Re-running a date REPLACES its row: a morning
+    that ran three times must leave one honest row, not three."""
+    from .atomic import _swap
+    have = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8-sig", newline="") as f:
+                for r in csv.DictReader(f):
+                    if r.get("run_date"):
+                        have[r["run_date"]] = r
+        except (OSError, csv.Error):
+            have = {}                      # unreadable: rebuilt from this run forward
+    have[str(row["run_date"])] = {c: str(row.get(c, "")) for c in FUNNEL_COLS}
+
+    def _w(f):
+        w = csv.DictWriter(f, fieldnames=FUNNEL_COLS, extrasaction="ignore",
+                           lineterminator="\r\n")
+        w.writeheader()
+        for k in sorted(have):
+            w.writerow({c: have[k].get(c, "") for c in FUNNEL_COLS})
+    _swap(path, _w)
+    return len(have)
 
 
 def stamp_sent(db_path, marks):
@@ -970,3 +1573,76 @@ def stamp_sent(db_path, marks):
         return n
     except Exception:  # noqa: BLE001 — a bookkeeping mirror must never block delivery
         return 0
+
+
+# --------------------------------------------------------------------------- #
+# CLI: re-derive the dataset from the ledger without running the pipeline
+# --------------------------------------------------------------------------- #
+def _main(argv=None):
+    """`python -m pipeline.roles export --db cloud_state/seen.db`
+
+    Reads the ledger and the firmographics union; writes roles.csv + its meta. Touches no
+    network, spends nothing, and never writes the ledger itself — it exists so the dataset
+    can be seeded once and re-derived after any change to its shape, without a full run
+    (which fetches 800+ boards) and without waiting a day to see the columns."""
+    import argparse
+    ap = argparse.ArgumentParser(prog="python -m pipeline.roles",
+                                 description="re-derive roles.csv from the role ledger")
+    ap.add_argument("command", choices=["export", "backfill-seniority"])
+    ap.add_argument("--db", default=os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "cloud_state", "seen.db"),
+        help="the store whose directory holds the ledger (default: cloud_state/seen.db)")
+    ap.add_argument("--date", default=dt.date.today().isoformat(),
+                    help="the run date to stamp (default: today, UTC-naive)")
+    ap.add_argument("--window-days", type=int, default=WINDOW_DAYS)
+    a = ap.parse_args(argv)
+
+    path, _t = ledger_paths(a.db)
+    records, status, bad = load(path)
+    if status != "ok":
+        print(f"ledger {status} ({path}) — nothing exported", flush=True)
+        return 1
+    if a.command == "backfill-seniority":
+        # The one write this CLI makes, and it is the same computation `record_run` does
+        # every morning — run here so the committed ledger carries the column today rather
+        # than only for whichever roles happen to be judged tomorrow. `dump`'s shrink guard
+        # still applies: the record count cannot change, so it cannot trip.
+        changed = backfill_seniority(records)
+        if changed:
+            for rid in changed:
+                records[rid]["updated"] = a.date
+            dump(path, records)
+        filled = sum(1 for r in records.values() if r.get("seniority"))
+        print(f"seniority: +{len(changed)} filled, {filled} of {len(records)} records "
+              f"now carry one -> {path}", flush=True)
+        return 0
+    from . import firmographics as _f
+    shared, fstatus = _f.load_shared_status()
+    csv_path, meta_path, _fn = dataset_paths(a.db)
+    rows, counts = build_rows(records, run_date=a.date, firmographics=shared,
+                              window_days=a.window_days)
+    earliest_run = ""
+    if os.path.exists(a.db):
+        st = _store.SeenStore(a.db)
+        try:
+            earliest_run = st.conn.execute("SELECT MIN(run_date) FROM runs").fetchone()[0] or ""
+        finally:
+            st.close()
+    meta = build_meta(rows, counts, records, run_date=a.date, window_days=a.window_days,
+                      earliest_run=earliest_run)
+    write_dataset(csv_path, meta_path, rows, meta)
+    print(f"{len(rows)} roles -> {csv_path}", flush=True)
+    print(f"  ledger {len(records)} records ({bad} bad lines), firmographics {len(shared)} "
+          f"({fstatus})", flush=True)
+    print(f"  window {counts['window_start']}..{counts['window_end']} on last_seen"
+          f"  ({'covered' if meta['window']['fully_covered'] else 'ASPIRATIONAL'})", flush=True)
+    print(f"  excluded: superseded {counts.get('superseded', 0)}, purged "
+          f"{counts.get('purged', 0)}, outside window {counts.get('outside_window', 0)}, "
+          f"undatable {counts.get('undatable', 0)}", flush=True)
+    print(f"  firmographics matched: exact {counts.get('firmo:exact', 0)}, identity "
+          f"{counts.get('firmo:identity', 0)}, none {counts.get('firmo:none', 0)}", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())
