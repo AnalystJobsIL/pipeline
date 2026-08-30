@@ -147,12 +147,19 @@ no other measurement of.
   in `test_registry.py` depends on a name a previous test rewrote is the measurement to make.
 * the 11 CANNOT-FAIL owners above, one item per lane.
 
-## 7. Not finished
+## 7. Verdicts, and not finished
 
-* The corrected today-range run and the post-fix suite runs are quoted above only if the
-  `TBD_` markers are gone; if one is still here, the run did not finish in the session.
+* Two-file order on the pushed tree, re-run: **1,358 passed, 12 skipped, 0 failed** — the
+  brief's reproduction no longer reproduces.
+* CI on `3cb25d2`, run **33305567382**: `guard` **success**, `guard-kill` **success** (base
+  `d01213f`, 4 new tests, `KILLS 4` — every guard this session added fails without its
+  fix), `rehearse (mixed, seeds 1–5)` **success**, `rehearse (worst, seed 1)` **failure —
+  inherited**: `FAIL night 1: pool validate_empty (Sun 04:00) lost 1 rows it should keep:
+  ['Syte']`, byte-identical on the previous run `33302546519` (`d01213f`, `registry`'s
+  push, before anything of mine existed). Mutation shards: see the HANDOFF line for the
+  conclusion quoted after they finished.
 * `guard_kill` judges a push by `github.event.before`; a push of several commits is one
   range, so a test added in commit 2 and its fix in commit 3 is KILLS, and a test whose fix
   landed in an EARLIER push is CANNOT-FAIL on the push that adds it. That is the intended
   reading, and it will name pure regression guards until their authors catalogue them.
-* CI verdict: TBD_CI.
+* `477`–`479` are filed, not measured further; `481` (a skip is NOT-RUN) is mine to close.
