@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**489 filed · 356 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
+**490 filed · 357 open · 133 closed · 7 half · 34 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 442.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 443.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -210,7 +210,7 @@ closure convention in the header.
 - **427** `427@registry` **Discovery is wired; the path from a discovered NAME to a ROW is not**
 - **430** `430@registry` **34 companies publish a Comeet board through an `ats_platform=scrape` row, and 287 of
 
-### infra — 98 open
+### infra — 99 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -310,6 +310,7 @@ closure convention in the header.
 - **438** `438@infra` **`_load_secrets` is copied into ten modules and resolves `secrets.env` against its own tree roo
 - **439** `439@infra` **`check_unattended_proof` cannot run in CI, where the push it should judge lands** —
 - **440** `440@infra` **A test fixture spells the operator's personal GitHub handle**
+- **442** `442@infra` **The `guard` job no longer fits its 10-minute timeout, and a cancelled gate names
 
 ### scraper — 26 open
 
@@ -7692,3 +7693,18 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     record is older than some re-open window -- a company that had no board in August may have
     one in November, so this should be a cadence, not a tombstone. `queue_disposition.load()`
     is the reader; it is a plain dict keyed by name.
+
+## From the `docs` lane, 2026-08-30 (CI truth)
+
+442. **The `guard` job no longer fits its 10-minute timeout, and a cancelled gate names
+     nothing** — lane: `infra` (the workflow) with `registry` (the rehearsal cost). On run
+     **33293548117** steps 1-8 took **3m13s** and `Five mixed-policy rehearsals` was cut off
+     after **6m59s** at `timeout-minutes: 10`. `Unit guards`, `Registry invariants` and the
+     fourteen rehearsed nights all PASSED on that run, so the suite is healthy and the budget
+     is not. This is the shape item **195** already ruled on for the mutation gate: raising
+     the timeout "buys a week, fixes nothing", and it sharded instead. The five seeds are
+     independent by construction (`--seed 1..5`) so they shard trivially; alternatively the
+     14-night rehearsal and the five seeded ones move to their own job, which also stops a
+     slow rehearsal from hiding a fast unit failure. A cancelled job is worse than a failing
+     one: a failure names the test and a cancellation names nothing, which is how 40
+     consecutive cancellations were read as "red" for weeks.

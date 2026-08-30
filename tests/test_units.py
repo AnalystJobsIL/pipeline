@@ -12804,8 +12804,14 @@ def test_ci_itself_confirms_why_the_tree_check_cannot_run_there():
         origin = cd._git("rev-parse", "-q", "--verify", "origin/master")
         depth = (cd._git("rev-list", "--count", "HEAD") or "").strip()
         without_the_env_var = cd._tree_skip_reason()
-        print("CI checkout: shallow=%r origin/master=%r commits=%r reason_without_env=%r"
-              % (shallow, (origin or "").strip()[:8], depth, without_the_env_var))
+        # a WARNING, not a print: pytest shows a passing test's stdout only with
+        # -rP, so the facts would have been visible exactly when they were not
+        # needed. The warnings summary is in every build log.
+        import warnings
+        warnings.warn("CI checkout: shallow=%r origin/master=%r commits=%r "
+                      "reason_without_env=%r"
+                      % (shallow, (origin or "").strip()[:8], depth,
+                         without_the_env_var), stacklevel=1)
     finally:
         if was is not None:
             os.environ["GITHUB_ACTIONS"] = was
