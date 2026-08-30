@@ -22078,7 +22078,7 @@ def test_a_retraction_withdraws_the_row_and_the_meta_records_when_it_was_public(
     assert [r["company"] for r in rows] == ["Wix"] and counts["withdrawn"] == 1
     meta = roles.build_meta(rows, counts, lg.records, run_date="2026-08-31")
     assert meta["excluded"]["withdrawn"] == 1 and "withdrawn = the employer is real" in meta["excluded"]["note"]
-    (w,) = meta["withdrawn"]
+    (w,) = meta["removed"]
     assert w["company"] == "Comcast" and w["status"] == "withdrawn" and w["on"] == "2026-08-30"
     assert w["reason"] == "the posting is in Houston, Texas"
     assert w["published_in_roles_csv"] == {"from": "2026-08-30", "to": "2026-08-30"}, \
@@ -22180,7 +22180,7 @@ def test_an_intake_agency_verdict_purges_backwards_with_its_own_reason(tmp_path)
     assert "purged 2" in lines[0]
     rows, counts = roles.build_rows(lg.records, run_date="2026-08-31")
     meta = roles.build_meta(rows, counts, lg.records, run_date="2026-08-31")
-    by = {w["company"]: w for w in meta["withdrawn"]}
+    by = {w["company"]: w for w in meta["removed"]}
     assert by["Jobgether"]["status"] == "purged" and "agency" in by["Jobgether"]["reason"]
     assert by["Jobgether"]["published_in_roles_csv"] == {"from": "2026-08-30", "to": "2026-08-31"}
     # a bare set is still accepted and means the registry reason
@@ -22253,3 +22253,274 @@ def test_published_on_pages_is_read_from_the_url_the_workflow_exports(tmp_path, 
     assert disk["published_on_pages"] is True
     assert os.path.exists(roles.archive_path(st.path)), "the archive is written every run"
     st.close()
+
+
+# --- roles, 2026-08-30 (b): what two adversarial waves broke, each pinned ------------------
+def test_a_role_id_retraction_follows_the_posting_when_a_title_edit_mints_a_new_id(tmp_path):
+    """Wave A, HIGH. A `role_id` line protected exactly one merge_key; the day scraper
+    unescapes `&amp;` a new record is minted for the SAME url and nothing named it — the
+    posting came back to the board, the mail and roles.csv with no alarm. A role_id line is
+    now bound to its record's url at open, so the retraction follows the posting."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    url = "https://jobs.comcast.com/job/houston/manager-2/45483/998629"
+    j = _role("Comcast", "Manager 2, Business Operations &amp; Analytics", url, "x", src="scrape")
+    st.upsert_matched(j, "2026-08-30")
+    _retract_file(tmp_path, {"role_id": store.merge_key(j), "status": "withdrawn",
+                             "reason": "Houston", "on": "2026-08-30"})
+    lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[j], merged=[j], scanned_ok={"Comcast"}, failed=set())
+    j2 = _role("Comcast", "Manager 2, Business Operations & Analytics", url, "x", src="scrape")
+    assert store.merge_key(j2) != store.merge_key(j), "the fix mints a new id"
+    st.upsert_matched(j2, "2026-09-01")
+    lg2 = roles.Ledger(st, "2026-09-01"); lg2.open_sync()
+    row = [r for r in st.get_matched_since("0000-01-01") if r["mkey"] == store.merge_key(j2)][0]
+    assert lg2.retractions.match(row) is not None, "the sqlite row `_alive` sees is caught"
+    lg2.record_run("2026-09-01", board_jobs=[j2], merged=[j2], scanned_ok={"Comcast"}, failed=set())
+    assert lg2.records[store.merge_key(j2)]["status"] == "withdrawn"
+    rows, _c = roles.build_rows(lg2.records, run_date="2026-09-01")
+    assert not [r for r in rows if r["company"] == "Comcast"]
+    st.close()
+
+
+def test_a_url_key_is_normalised_and_exact_never_a_suffix():
+    """Wave A. `endswith` with no anchor let `x/998629` withdraw two employers' postings;
+    `http://` vs `https://`, a trailing slash or an upper-cased host silently missed."""
+    from pipeline import roles
+    full = "https://jobs.comcast.com/job/houston/manager-2/45483/998629"
+    rec = {"role_id": "c|m", "url": full, "seen_ids": ["scrape:" + full]}
+    for key in (full, "http://jobs.comcast.com/job/houston/manager-2/45483/998629",
+                full + "/", "https://JOBS.COMCAST.COM/job/houston/manager-2/45483/998629"):
+        r = roles.Retractions([{"url": key, "status": "withdrawn", "reason": "r", "on": "2026-08-30"}])
+        assert r.match(rec) is not None, key
+    for key in ("https://x.example/998629", "998629", "https://jobs.comcast.com/job/houston",
+                "https://jobs.comcast.com/job/houston/manager-2/45483/998629?src=li"):
+        r = roles.Retractions([{"url": key, "status": "withdrawn", "reason": "r", "on": "2026-08-30"}])
+        assert r.match(rec) is None, key
+    # a seen_id whose id half is a url matches on its own, with the url column empty
+    r = roles.Retractions([{"url": full, "status": "withdrawn", "reason": "r", "on": "2026-08-30"}])
+    assert r.match({"role_id": "c|m", "url": "", "seen_ids": ["scrape:" + full]}) is not None
+    assert r.match({"mkey": "c|m", "url": "", "seen_ids": "scrape:" + full}) is not None, "a matched row"
+    assert r.match({"role_id": "c|m", "url": "", "seen_ids": ["bamboohr@acme:998629"]}) is None
+
+
+def test_lifting_a_retraction_off_board_is_loud_and_returns_the_record_to_the_ladder(tmp_path):
+    """Wave A. "Lifting is deleting the line" was false once the posting had left its
+    board: the record stayed `withdrawn` for ever, in NEITHER public file, and the meta kept
+    advertising a withdrawal nobody stood behind. Also the lost-file case: an emptied
+    retraction file reverted every withdrawal silently. Both are one alarm now."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    j = _role("Comcast", "Analyst", "https://c.co/houston/1", "x", src="scrape")
+    st.upsert_matched(j, "2026-08-30")
+    p = _retract_file(tmp_path, {"url": j["url"], "status": "withdrawn", "reason": "mistake",
+                                 "on": "2026-08-30"})
+    lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[j], merged=[j], scanned_ok={"Comcast"}, failed=set())
+    assert lg.records[store.merge_key(j)]["status"] == "withdrawn"
+    open(p, "w").close()                                   # the file is emptied (or lost)
+    lg2 = roles.Ledger(st, "2026-09-01"); lg2.open_sync()
+    lg2.record_run("2026-09-01", board_jobs=[], merged=[], scanned_ok={"Comcast"}, failed=set())
+    rec = lg2.records[store.merge_key(j)]
+    assert rec["status"] == "closed" and rec["closed_on"] and "retracted_on" not in rec
+    assert "withdraw_reason" not in rec
+    assert any(a.startswith("roles retraction lifted for 1 role(s)") for a in lg2.alarms), lg2.alarms
+    rows, counts = roles.build_rows(lg2.records, run_date="2026-09-01")
+    meta = roles.build_meta(rows, counts, lg2.records, run_date="2026-09-01")
+    assert meta["removed"] == [] and [r["company"] for r in rows] == ["Comcast"]
+    st.close()
+
+
+def test_a_flipped_retraction_never_keeps_the_stale_reason(tmp_path):
+    """Wave A. `withdrawn`/reason-A changed to `purged`/reason-B left `withdraw_reason=A`
+    on the record and the public meta published A."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    j = _role("X", "Analyst", "https://x.co/1", "1")
+    st.upsert_matched(j, "2026-08-30")
+    p = _retract_file(tmp_path, {"url": j["url"], "status": "withdrawn", "reason": "A", "on": "2026-08-30"})
+    lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set())
+    _retract_file(tmp_path, {"url": j["url"], "status": "purged", "reason": "B", "on": "2026-08-30"})
+    lg2 = roles.Ledger(st, "2026-09-01"); lg2.open_sync()
+    lg2.record_run("2026-09-01", board_jobs=[], merged=[], scanned_ok=set(), failed=set())
+    rec = lg2.records[store.merge_key(j)]
+    assert rec["status"] == "purged" and rec["purge_reason"] == "B" and "withdraw_reason" not in rec
+    (w,) = roles.removed_list(lg2.records)
+    assert w["reason"] == "B" and w["status"] == "purged"
+    st.close()
+
+
+def test_the_published_span_stops_where_the_window_would_have_archived_the_row():
+    """Wave A. A role last seen 2026-06-01 and retracted 2026-11-15 was claimed public
+    from 08-30 to 11-15 while the window had archived it on 08-30 (90 days after 06-01
+    ends 08-29). The span is capped at last_seen + window - 1 — and it still reads the
+    earliest sighting, not the file's first day, for `from`."""
+    from pipeline import roles
+    old = _rec("a|x", status="withdrawn", withdraw_reason="r", retracted_on="2026-11-15",
+               first_seen="2026-05-01", last_seen="2026-06-01")
+    assert roles._published_span(old) is None, "archived before the file existed: never public"
+    mid = _rec("b|y", status="withdrawn", withdraw_reason="r", retracted_on="2026-11-15",
+               first_seen="2026-08-20", last_seen="2026-09-01")
+    assert roles._published_span(mid) == {"from": "2026-08-30", "to": "2026-11-15"}, "retracted first"
+    mid["retracted_on"] = "2026-12-15"
+    assert roles._published_span(mid) == {"from": "2026-08-30", "to": "2026-11-29"}, "aged out first"
+    late = _rec("c|z", status="purged", purge_reason="r", closed_on="2026-09-10",
+                first_seen="2026-09-02", last_seen="2026-09-05")
+    assert roles._published_span(late) == {"from": "2026-09-02", "to": "2026-09-10"}, \
+        "from is the first sighting when it is after the file's first day"
+    assert roles._published_span(late, window_days=3) == {"from": "2026-09-02", "to": "2026-09-07"}
+
+
+def test_a_superseded_row_or_a_second_line_never_reads_as_an_unmatched_retraction(tmp_path):
+    """Wave A. A line naming a superseded double, or two lines for one row, alarmed
+    `retraction unmatched` — inviting the operator to 'fix' a correct line."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    j = _role("Acme", "Data Analyst", "https://a.co/1", "1")
+    k = _role("Acme Israel", "Data Analyst", "https://a.co/1", "1")
+    st.upsert_matched(j, "2026-08-30"); st.upsert_matched(k, "2026-08-30")
+    st.supersede(store.merge_key(k), store.merge_key(j))
+    _retract_file(tmp_path,
+                  {"role_id": store.merge_key(k), "status": "withdrawn", "reason": "r", "on": "2026-08-30"},
+                  {"url": "https://a.co/1", "status": "withdrawn", "reason": "r", "on": "2026-08-30"},
+                  {"role_id": store.merge_key(j), "status": "withdrawn", "reason": "r2", "on": "2026-08-30"})
+    lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set())
+    assert not any("unmatched" in a for a in lg.alarms), lg.alarms
+    assert lg.records[store.merge_key(k)]["status"] == "superseded", "a double stays a double"
+    assert lg.records[store.merge_key(j)]["status"] == "withdrawn"
+    st.close()
+
+
+def test_a_predicate_purge_keeps_the_real_closure_date_and_is_named_on_stages(tmp_path):
+    """Wave B. The purge branch overwrote `closed_on` (10 real records lost their closure
+    date on the first run); wave A: the automatic verdict was the quiet one. Also: a
+    standing `purged` record at a company the run did not judge is a TOTAL, not a delta."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    j = _role("Abra", "Data Analytics Architect", "https://abra.co/1", "1")
+    st.upsert_matched(j, "2026-08-17")
+    lg = roles.Ledger(st, "2026-08-20"); lg.open_sync()
+    lg.record_run("2026-08-20", board_jobs=[], merged=[], scanned_ok={"Abra"}, failed=set())
+    rec = lg.records[store.merge_key(j)]
+    assert rec["status"] == "closed" and rec["closed_on"] == "2026-08-17", "a fresh closure dates from last_seen"
+    lg2 = roles.Ledger(st, "2026-08-30"); lg2.open_sync()
+    lines = lg2.record_run("2026-08-30", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
+                           never_ours={"abra": roles.PURGE_REASON_RECRUITER})
+    rec = lg2.records[store.merge_key(j)]
+    assert rec["status"] == "purged" and rec["closed_on"] == "2026-08-17", "the closure date survives"
+    assert rec["purged_on"] == "2026-08-30", "and the day it left the PUBLIC file is its own stamp"
+    (w,) = roles.removed_list(lg2.records)
+    assert w["on"] == "2026-08-30" and w["published_in_roles_csv"] == {"from": "2026-08-30", "to": "2026-08-30"}
+    assert any(a.startswith("roles purged 1 role(s) by predicate this run: Abra") for a in lg2.alarms), lg2.alarms
+    assert "purged 1" in lines[0]
+    lg3 = roles.Ledger(st, "2026-08-31"); lg3.open_sync()
+    lines = lg3.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
+                           scoped=True, never_ours=set())
+    assert "purged" not in lines[0], "a standing verdict is not re-counted as today's delta"
+    assert lg3.counts.get("purged_total") == 1
+    st.close()
+
+
+def test_a_corrupt_record_costs_one_row_never_the_export():
+    """Wave B. A non-dict record raised out of `_company_earliest` before the guard that
+    documents it, and a non-string status raised out of `build_meta`'s `sorted()` after
+    `build_rows` had handled it — either took the whole day's dataset."""
+    from pipeline import roles
+    recs = _ledger(2)
+    recs["b|y"] = "not a dict"
+    recs["c|z"] = _rec("c|z", status=5)
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    assert len(rows) == 2 and counts["unreadable"] == 2
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
+    assert meta["store"]["by_status"] == {"open": 2, "unreadable": 2}
+    assert meta["reconciliation"]["holds"] is True
+
+
+def test_only_an_http_address_counts_as_a_pages_url(tmp_path, monkeypatch):
+    """Wave B. `0`, `false` and `javascript:` from a workflow variable were published as
+    `download_url` with `published_on_pages: true`. The archive's own address follows a
+    second variable rather than a hard-coded False (the defect 473 just removed)."""
+    from pipeline import roles
+    recs = _ledger(1)
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31")
+    for bad in ("0", "false", "javascript:alert(1)", "analystjobsil.github.io/board/roles.csv", "  "):
+        m = roles.build_meta(rows, counts, recs, run_date="2026-08-31", pages_url=bad)
+        assert m["published_on_pages"] is False and m["download_url"] == roles.DOWNLOAD_URL, bad
+    monkeypatch.setenv(roles.ARCHIVE_PAGES_URL_ENV, "https://analystjobsil.github.io/board/roles_archive.csv")
+    m = roles.build_meta(rows, counts, recs, run_date="2026-08-31")
+    assert m["archive"]["published_on_pages"] is True
+    assert m["archive"]["download_url"].endswith("/board/roles_archive.csv")
+    monkeypatch.setenv(roles.ARCHIVE_PAGES_URL_ENV, "false")
+    m = roles.build_meta(rows, counts, recs, run_date="2026-08-31")
+    assert m["archive"]["published_on_pages"] is False and m["archive"]["download_url"] == roles.RAW_BASE + roles.ARCHIVE
+
+
+def test_the_run_and_the_cli_write_the_same_archive_and_neither_archives_a_removed_row(tmp_path, monkeypatch):
+    """Wave A mutants 1+2, wave B defect 1. The archive was only asserted to EXIST, so an
+    export that left it header-only for ever survived; the re-derive CLI wrote no archive at
+    all and a meta whose `archive.rows` contradicted its own `reconciliation.archived`; and
+    nothing proved a purged or withdrawn record never lands in the archive."""
+    from pipeline import roles, store
+    import csv
+    monkeypatch.setenv(roles.PAGES_URL_ENV, "https://analystjobsil.github.io/board/roles.csv")
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    st.upsert_matched(_role("Old", "Data Analyst", "https://o.co/1", "o1"), "2026-01-10")
+    st.upsert_matched(_role("Tel Aviv", "Data Analyst", "https://jobs.secrettelaviv.com/1", "t1", src="scrape"), "2026-01-11")
+    st.upsert_matched(_role("Comcast", "Analyst", "https://c.co/houston/1", "c1", src="scrape"), "2026-01-12")
+    st.upsert_matched(_role("New", "Data Analyst", "https://n.co/1", "n1"), "2026-08-30")
+    _retract_file(tmp_path, {"url": "https://c.co/houston/1", "status": "withdrawn", "reason": "r", "on": "2026-08-30"})
+    lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
+                  never_ours={"tel aviv": roles.PURGE_REASON})
+    line = lg.export_dataset("2026-08-31")[0]
+    assert "archived 1" in line and "withdrawn 1" in line, line
+    cp, mp, _f = roles.dataset_paths(st.path)
+    with open(roles.archive_path(st.path), encoding="utf-8", newline="") as f:
+        arch = list(csv.DictReader(f))
+    assert [r["company"] for r in arch] == ["Old"], "aged out: archived; purged/withdrawn: nowhere"
+    meta = json.load(open(mp, encoding="utf-8"))
+    assert meta["archive"]["rows"] == meta["reconciliation"]["archived"] == 1
+    assert meta["reconciliation"]["holds"] is True and meta["rows"] == 1
+    # the CLI re-derive, same store: same files, same answers, Pages honoured
+    os.remove(roles.archive_path(st.path))
+    rc = roles._main(["export", "--db", st.path, "--date", "2026-08-31"])
+    assert rc == 0
+    with open(roles.archive_path(st.path), encoding="utf-8", newline="") as f:
+        assert [r["company"] for r in csv.DictReader(f)] == ["Old"]
+    meta2 = json.load(open(mp, encoding="utf-8"))
+    assert meta2["archive"]["rows"] == 1 and meta2["published_on_pages"] is True
+    assert [w["company"] for w in meta2["removed"]] == ["Comcast", "Tel Aviv"]
+    st.close()
+
+
+def test_sweep_store_never_supersedes_or_crowns_a_withdrawn_record(tmp_path):
+    """Wave A (suspected, now pinned). `sweep_store` skipped superseded and purged but not
+    withdrawn, so a withdrawn record could be flipped to `superseded` — losing its status
+    and its `removed` entry — or WIN a group and supersede a legitimate twin."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    j = _role("Port", "Senior BI Analyst", "https://www.comeet.com/jobs/port/59.004/x/15.F68", "15.F68", src="comeet")
+    k = _role("Port.io", "Senior BI Analyst", "https://www.comeet.com/jobs/port/59.004/x/15.F68", "15.F68", src="scrape")
+    st.upsert_matched(j, "2026-08-30")
+    _retract_file(tmp_path, {"role_id": store.merge_key(j), "status": "withdrawn", "reason": "r", "on": "2026-08-30"})
+    lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set())
+    assert lg.records[store.merge_key(j)]["status"] == "withdrawn"
+    st.upsert_matched(k, "2026-09-01")                    # the twin arrives AFTER the withdrawal
+    lg2 = roles.Ledger(st, "2026-09-01"); lg2.open_sync()
+    assert lg2.records[store.merge_key(j)]["status"] == "withdrawn", "not flipped by the sweep"
+    assert lg2.records[store.merge_key(k)]["status"] != "superseded", "a withdrawn row crowns nobody"
+    st.close()
+
+
+def test_run_py_archive_page_falls_back_to_the_ledgers_own_verdict():
+    """Wave A (suspected). On a mass-purge-hold morning `_never_ours` is emptied for the
+    day, and the archive PAGE — which never read the ledger — would have republished every
+    purged row under a city's name. It now also reads the record's durable status."""
+    src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "pipeline", "run.py"), encoding="utf-8").read()
+    arch = src[src.index("# archive: everything ever matched"):src.index("arch.sort(")]
+    assert 'ledger.records.get(_mkey(j)) or {}).get("status") not in roles.RETRACTABLE' in arch
+    assert "merge_key as _mkey" in src

@@ -9070,8 +9070,12 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      new files in `persist_state.SINGLE_WRITER` (`"cloud_state/roles_archive.csv":
      "daily-digest"`; `roles_retractions.jsonl` is hand-written, so it wants the default `ours`
      with a comment, not a single-writer claim). `roles_text.jsonl` is 514 KB and grows only on
-     a JD day. Then `roles.build_meta` can set `archive.published_on_pages` from a second
-     variable, or infer it from `ROLES_PAGES_URL`'s directory.
+     a JD day. `roles.build_meta` already reads `ROLES_ARCHIVE_PAGES_URL` for
+     `archive.published_on_pages` / `archive.download_url` — export it beside `ROLES_PAGES_URL`
+     on the pipeline step when the copy lands. Also from wave B: `run_gates` has no shape gate
+     for `.csv` (`persist_state.py:434-449`), so a refused `roles.csv.meta.json` is restored
+     alone while the CSV stands — `_dataset_alarm` catches it the next morning; `PAIRED`
+     could name the trio.
 
 499. **`Port` and `Port.io` are two ACTIVE registry rows for one employer** — lane: `registry`.
      Filed by `roles` 2026-08-30. `claim conflicts 1 (Port<-Port.io)` resolves correctly

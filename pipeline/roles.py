@@ -58,6 +58,7 @@ SEP = ";"                              # the ONE list separator in the CSV, docu
 RAW_BASE = "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/"
 DOWNLOAD_URL = RAW_BASE + DATASET      # the raw address, always true; Pages when infra says so
 PAGES_URL_ENV = "ROLES_PAGES_URL"      # set by daily-digest.yml when the publish step copies it
+ARCHIVE_PAGES_URL_ENV = "ROLES_ARCHIVE_PAGES_URL"   # ditto for roles_archive.csv, once infra copies it
 DATASET_SINCE = "2026-08-30"           # the first day roles.csv existed: nothing before it was
                                        # ever public, so a withdrawal earlier than this is a
                                        # withdrawal from nothing
@@ -118,12 +119,20 @@ class Retractions:
     says Texas except the url path a human read. A retraction is that human reading,
     written down once, applied by every run after — and lifted by deleting the line.
 
-    One JSON object per line: `{"url": …} | {"role_id": …}` (at least one; the url is the
-    stable key, because a `role_id` is minted from the title and a title-cleaning fix
-    upstream would mint a new one that a role_id-keyed line would miss), `"status"` in
-    `RETRACTABLE`, `"reason"` (free text, published in the meta), `"on"` (ISO date), and
-    optionally `"evidence"`. A bad line is counted and skipped, never raises — a typo in
-    this file must cost one retraction, not the digest.
+    One JSON object per line, NO comment lines (`persist_state._well_formed` parses every
+    non-blank line of a `.jsonl`, so a `#` line would make the runner check the file out
+    from base — put prose in `"evidence"`): `{"url": …} | {"role_id": …}` (at least one; the
+    url is the stable key, because a `role_id` is minted from the title and a
+    title-cleaning fix upstream would mint a new one), `"status"` in `RETRACTABLE`,
+    `"reason"` (free text, published in the meta), `"on"` (ISO date), optional
+    `"evidence"`. A bad line is counted and skipped, never raises — a typo in this file
+    must cost one retraction, not the digest.
+
+    MATCHING IS EXACT after normalisation (scheme dropped, host lower-cased, one trailing
+    slash dropped): a partial key must never withdraw whatever else happens to end with it
+    (an attacker's `x/998629` caught two employers), and a key that differs only by
+    `http://` must not silently miss. A `role_id` line is BOUND to its record's own url
+    at open (`bind`), so the posting stays caught when a title edit mints a new id.
     """
 
     def __init__(self, entries=(), bad=0, path=""):
@@ -132,6 +141,7 @@ class Retractions:
         self.path = path
         for e in self.entries:
             e.setdefault("_hits", [])
+            e["_urls"] = {_url_key(e["url"])} if e.get("url") else set()
 
     @classmethod
     def load(cls, path):
@@ -145,12 +155,12 @@ class Retractions:
             return cls([], 1, path)
         for line in raw.splitlines():
             line = line.strip()
-            if not line or line.startswith("#"):
+            if not line:
                 continue
             try:
                 e = json.loads(line)
                 ok = (isinstance(e, dict)
-                      and (isinstance(e.get("url"), str) and e["url"]
+                      and (isinstance(e.get("url"), str) and e["url"].strip()
                            or isinstance(e.get("role_id"), str) and e["role_id"])
                       and e.get("status") in RETRACTABLE
                       and isinstance(e.get("reason"), str) and e["reason"].strip()
@@ -173,28 +183,57 @@ class Retractions:
     def _key(e):
         return e.get("url") or e.get("role_id")
 
-    def match(self, rec):
-        """The retraction that names this record (a ledger record or a `matched` row), or
-        None. Matched on the role's id, its url, or any of its `seen_ids` (a scrape id IS
-        the url) — so the same posting is caught whichever way it is keyed."""
+    def bind(self, records):
+        """Give every `role_id` line the url of the record it names, so the retraction
+        follows the POSTING and not the spelling of its title. Called at open."""
+        for e in self.entries:
+            rid = e.get("role_id")
+            rec = records.get(rid) if rid else None
+            if isinstance(rec, dict) and rec.get("url"):
+                e["_urls"].add(_url_key(rec["url"]))
+
+    def match_all(self, rec):
+        """Every retraction that names this record (a ledger record or a `matched` row):
+        by role id, by url, or by any `seen_id` whose id half IS a url."""
         if not self.entries or not isinstance(rec, dict):
-            return None
+            return []
         rid = rec.get("role_id") or rec.get("mkey") or ""
-        url = rec.get("url") or ""
+        keys = set()
+        if rec.get("url"):
+            keys.add(_url_key(rec["url"]))
         sids = rec.get("seen_ids") or []
         if isinstance(sids, str):
             sids = sids.split("+")
-        for e in self.entries:
-            if e.get("role_id") and e["role_id"] == rid:
-                return e
-            u = e.get("url")
-            if u and (u == url or any(s.endswith(u) for s in sids)):
-                return e
-        return None
+        for s in sids:
+            if isinstance(s, str) and ":" in s:
+                tail = s.split(":", 1)[1]
+                if tail.startswith(("http://", "https://")):
+                    keys.add(_url_key(tail))
+        return [e for e in self.entries
+                if (e.get("role_id") and e["role_id"] == rid) or (keys & e["_urls"])]
+
+    def match(self, rec):
+        hits = self.match_all(rec)
+        return hits[0] if hits else None
 
     def unmatched(self):
         """Entries no record answered to — a typo, or a posting not (yet) in the store."""
         return [self._key(e) for e in self.entries if not e["_hits"]]
+
+
+def _http_url(u):
+    """The value only if it is an http(s) address; a `0`, a `false` or a stray word from a
+    workflow variable must never be published as `download_url`."""
+    u = (u or "").strip()
+    return u if re.match(r"^https?://\S+$", u) else ""
+
+
+def _url_key(u):
+    """One spelling of an address: no scheme, lower-cased host, no trailing slash."""
+    u = (u or "").strip()
+    u = re.sub(r"^https?://", "", u, flags=re.I)
+    host, sep, rest = u.partition("/")
+    return host.lower() + (sep + rest.rstrip("/") if sep else "")
 
 
 def load(path):
@@ -232,7 +271,7 @@ def load(path):
     return records, "ok", bad
 
 
-_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description", "purge_reason", "withdraw_reason", "retracted_on"]
+_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description", "purge_reason", "withdraw_reason", "retracted_on", "purged_on"]
 _LIST_FIELDS = ("sources", "seen_ids", "episodes", "reposts")
 _DICT_FIELDS = ("sent", "tags", "attribution", "class")
 
@@ -636,6 +675,7 @@ class Ledger:
         rows = {r["mkey"]: r for r in self.st.get_matched_since("0000-01-01", include_superseded=True)}
         self.records, self.status, skipped = load(self.path)
         self.text, tstatus, tskipped = load(self.text_path)
+        self.retractions.bind(self.records)      # a role_id line follows its posting's url
         rep = {"ledger": self.status, "skipped": skipped, "rehydrated": 0, "absorbed": 0,
                "merged": 0, "rehydrated_sent": 0, "unrehydratable": 0}
         if self.status == "corrupt":
@@ -883,7 +923,8 @@ class Ledger:
         """The same rule over what the store ALREADY holds: a double whose other half is
         no longer fetched (its registry row was parked) would otherwise stay on the board
         or in the archive forever. Returns the number superseded this sweep."""
-        recs = [r for r in self.records.values() if r.get("status") not in ("superseded", "purged")]
+        recs = [r for r in self.records.values()
+                if r.get("status") not in ("superseded", "purged", "withdrawn")]
         open_keys = {r["role_id"] for r in recs if (r.get("status") or "open") == "open"}
         n = 0
         for idxs in self._groups(recs):
@@ -988,7 +1029,7 @@ class Ledger:
             _reason_for = {i: PURGE_REASON for i in (never_ours or ())}
         _norm_never_ours = set(_reason_for)
         sent = self.st.load_sent()
-        withdrawn_lines = []
+        withdrawn_lines, purged_lines, lifted = [], [], []
         c = Counter()
         # BEFORE the frozen early-return below. The run log records that the pipeline LOOKED,
         # which is true whether or not the ledger could be read — and `upsert_matched` uses
@@ -1029,7 +1070,9 @@ class Ledger:
                 if rec.get("status") != "superseded":
                     rec["status"], rec["superseded_by"] = "superseded", row.get("superseded_by") or ""
                     self._touch(rec)
-                continue
+                for e in self.retractions.match_all(rec):
+                    e["_hits"].append(rid)       # a double is already off every product: the
+                continue                         # line is answered, never "unmatched"
             # episodes: the sqlite first_seen resets on a >3-day gap; history is kept here
             eps = rec.setdefault("episodes", [])
             if not eps or eps[-1].get("first_seen") != rec["first_seen"]:
@@ -1078,7 +1121,8 @@ class Ledger:
             # status. A record absorbed for the first time this run has no history: it is
             # classified, not closed, and never counts toward the mass-close guard.
             fresh = rec.pop("_fresh", False)
-            ret = self.retractions.match(rec)
+            hits = self.retractions.match_all(rec)
+            ret = hits[0] if hits else None
             ident = _store._norm_company(rec.get("company"))
             if ret is not None:
                 # A human said so, in `roles_retractions.jsonl`. Applied before every
@@ -1087,21 +1131,41 @@ class Ledger:
                 # is published, and `retracted_on` is the line's date — not today's, so a
                 # re-derived file does not move the day the row left. Lifting a retraction
                 # is deleting the line: the record is then judged like any other next run.
-                ret["_hits"].append(rid)
+                for e in hits:                        # two lines for one row: both answered
+                    e["_hits"].append(rid)
                 want, reason = ret["status"], ret["reason"].strip()
                 field = "withdraw_reason" if want == "withdrawn" else "purge_reason"
+                other = "purge_reason" if want == "withdrawn" else "withdraw_reason"
                 if (rec.get("status") != want or rec.get(field) != reason
-                        or rec.get("retracted_on") != ret["on"]):
+                        or rec.get("retracted_on") != ret["on"] or rec.get(other)):
                     rec["status"], rec[field], rec["retracted_on"] = want, reason, ret["on"]
+                    rec.pop(other, None)              # a flipped line never keeps a stale reason
                     rec["closed_on"] = rec.get("closed_on") or ret["on"]
                     self._touch(rec)
                     c[want] += 1                      # a delta, like `closed today`
                     withdrawn_lines.append(f"{rec.get('company')} | {rec.get('title')} — {reason}")
                 c[want + "_total"] += 1
+            elif rec.get("retracted_on") and prev_status in RETRACTABLE and not (
+                    _norm_never_ours and ident in _norm_never_ours):
+                # A record that WAS retracted and no line names any more: the human lifted
+                # it, or the file was lost (it rides the same wholesale-restore path as the
+                # ledger). Either way it is loud — the record returns to the ordinary ladder
+                # below on this run, and the retraction stamps come off so the meta stops
+                # advertising a withdrawal nobody stands behind.
+                lifted.append(f"{rec.get('company')} | {rec.get('title')}")
+                for k in ("retracted_on", "withdraw_reason", "purge_reason"):
+                    rec.pop(k, None)
+                rec["status"] = "open" if rid in onboard else "closed"
+                rec["closed_on"] = None if rid in onboard else (rec.get("closed_on") or run_date)
+                self._touch(rec)
+                c["open" if rid in onboard else "closed"] += 1
             elif _norm_never_ours and ident in _norm_never_ours:
                 if rec.get("status") != "purged":
-                    rec["status"], rec["closed_on"] = "purged", run_date
-                    self._touch(rec)
+                    rec["status"] = "purged"
+                    rec["closed_on"] = rec.get("closed_on") or run_date   # keep a real closure date
+                    rec["purged_on"] = run_date       # the day it left the PUBLIC file — not the
+                    self._touch(rec)                  # day the board dropped it
+                    purged_lines.append(f"{rec.get('company')} ({_reason_for[ident][:40]}…)")
                 # WHY this row left the product, on the row itself. `purged` is the one
                 # status that removes a record from every product INCLUDING the archive, and
                 # it was indistinguishable from `closed` except by reading the registry as it
@@ -1135,6 +1199,8 @@ class Ledger:
                     rec["_close"] = True
                 elif prev_status == "closed":
                     c["closed"] += 1
+            elif prev_status in RETRACTABLE:
+                c[prev_status + "_total"] += 1     # a standing verdict is a total, never a delta
             else:
                 c[prev_status] += 1
         # mass-close guard: statuses are held, the mail is told
@@ -1158,6 +1224,15 @@ class Ledger:
         if withdrawn_lines:
             self.alarms.append(f"roles withdrawn {len(withdrawn_lines)} role(s) from every "
                                f"product and the public dataset: " + "; ".join(withdrawn_lines)[:400])
+        if purged_lines:
+            # the automatic verdict is the quiet one, so it is named too — a predicate that
+            # starts catching real employers must be visible the morning it does
+            self.alarms.append(f"roles purged {len(purged_lines)} role(s) by predicate this run: "
+                               + "; ".join(purged_lines)[:400])
+        if lifted:
+            self.alarms.append(f"roles retraction lifted for {len(lifted)} role(s) — no line in "
+                               f"{RETRACTIONS} names them any more, they return to the ordinary "
+                               f"ladder (deliberate, or the file was lost): " + "; ".join(lifted)[:300])
         for key in self.retractions.unmatched():
             self.alarms.append(f"roles retraction unmatched ({key}) — no record answers to it; "
                                f"check the line in {RETRACTIONS}")
@@ -1199,26 +1274,15 @@ class Ledger:
         try:
             if self.frozen:
                 return ["roles dataset not written (ledger frozen — sqlite carried the day)"]
-            csv_path, meta_path, _f = dataset_paths(self.st.path)
-            rows, counts = build_rows(self.records, run_date=run_date,
-                                      firmographics=firmographics, window_days=window_days)
-            # ...and the archive: the same row builder over the roles the window has aged
-            # out. Regenerated WHOLE from the ledger every run (no append machinery, so it
-            # cannot drift from the record), header-only until the first eviction.
-            archived, _ac = build_rows(self.records, run_date=run_date,
-                                       firmographics=firmographics, window_days=window_days,
-                                       archive=True)
             earliest_run = ""
             try:
                 earliest_run = self.st.conn.execute(
                     "SELECT MIN(run_date) FROM runs").fetchone()[0] or ""
             except Exception:  # noqa: BLE001 — the log is a nicety here, never a blocker
                 pass
-            meta = build_meta(rows, counts, self.records, run_date=run_date,
-                              window_days=window_days, earliest_run=earliest_run,
-                              pages_url=os.environ.get(PAGES_URL_ENV, ""), archived=archived)
-            write_dataset(csv_path, meta_path, rows, meta,
-                          archive_path=archive_path(self.st.path), archive_rows=archived)
+            rows, archived, counts, _meta = export_files(
+                self.records, self.st.path, run_date=run_date, firmographics=firmographics,
+                window_days=window_days, earliest_run=earliest_run)
             ex = (f"superseded {counts.get('superseded', 0)} · purged {counts.get('purged', 0)}"
                   f" · withdrawn {counts.get('withdrawn', 0)}"
                   f" · outside window {counts.get('outside_window', 0)}")
@@ -1676,6 +1740,8 @@ def _company_earliest(records):
     reader needs; it is just no longer dressed up as a fact about scanning."""
     out = {}
     for rec in records.values():
+        if not isinstance(rec, dict):
+            continue                    # `build_rows` counts it as unreadable; never raise here
         c, fs = rec.get("company") or "", _earliest_seen(rec)
         if not fs:
             continue
@@ -1830,10 +1896,12 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
     return rows, counts
 
 
-def _published_span(rec):
+def _published_span(rec, window_days=WINDOW_DAYS):
     """The days this record was in a PUBLIC roles.csv, or None if it never was: from the
-    later of the file's first day and the record's first sighting, to the day it was
-    retracted, INCLUSIVE and conservative — a hand retraction is dated the day a human
+    later of the file's first day and the record's first sighting, to the EARLIER of the
+    day it was retracted and the last day the window still held it (`last_seen` +
+    window - 1 — after that the row is the archive's, not the CSV's). INCLUSIVE and
+    conservative on the retraction side — a hand retraction is dated the day a human
     decided, and that morning's file had usually already shipped with the row (Comcast:
     published 08-30, retracted 08-30), so `to` names the last file that MAY carry it, never
     a file that certainly does not. Derived, not stamped — the export never writes to the
@@ -1842,16 +1910,22 @@ def _published_span(rec):
     if rec.get("status") not in RETRACTABLE:
         return None
     start = max(DATASET_SINCE, _earliest_seen(rec) or DATASET_SINCE)
-    end = str(rec.get("retracted_on") or rec.get("closed_on") or "")[:10]
+    end = str(rec.get("retracted_on") or rec.get("purged_on") or rec.get("closed_on") or "")[:10]
     if not _iso(end):
         return None
+    ls = str(rec.get("last_seen") or "")[:10]
+    if _iso(ls):
+        aged = (dt.date.fromisoformat(ls) + dt.timedelta(days=window_days - 1)).isoformat()
+        end = min(end, aged)
     return {"from": start, "to": end} if start <= end else None
 
 
-def withdrawn_list(records):
+def removed_list(records, window_days=WINDOW_DAYS):
     """The withdrawal record a repeat downloader reconciles against: every retracted or
-    purged role, its reason, the day it left, and the span it was public (null when it
-    left before the file existed — the seven `Tel Aviv` rows never reached anyone)."""
+    purged role, its status, its reason, the day it left, and the span it was public (null
+    when it left before the file existed — the seven `Tel Aviv` rows never reached anyone).
+    Named `removed`, not `withdrawn`: it carries BOTH classes, and a reader who counted a
+    list called `withdrawn` would have read seventeen purges as withdrawals."""
     out = []
     for rid in sorted(records):
         rec = records[rid]
@@ -1862,9 +1936,10 @@ def withdrawn_list(records):
             "company": str(rec.get("company") or ""),
             "title": str(rec.get("title") or ""),
             "status": rec.get("status"),
-            "reason": str(rec.get("withdraw_reason") or rec.get("purge_reason") or ""),
-            "on": str(rec.get("retracted_on") or rec.get("closed_on") or "")[:10],
-            "published_in_roles_csv": _published_span(rec),
+            "reason": str((rec.get("withdraw_reason") if rec.get("status") == "withdrawn"
+                           else rec.get("purge_reason")) or ""),
+            "on": str(rec.get("retracted_on") or rec.get("purged_on") or rec.get("closed_on") or "")[:10],
+            "published_in_roles_csv": _published_span(rec, window_days),
         })
     return out
 
@@ -1874,13 +1949,18 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
     """What the CSV cannot say about itself — above all, where OUR blindness ends and the
     market's silence begins.
 
-    The store began accumulating on 2026-08-16, so a 60-day window is aspirational until
-    roughly mid-October: a gap before the earliest observation is a gap in our looking. A
+    The store began accumulating on 2026-08-16, so a 90-day window is aspirational until
+    roughly mid-November: a gap before the earliest observation is a gap in our looking. A
     reader who mistakes it for a quiet market draws exactly the wrong conclusion, and the
     difference between a dataset and a misleading one is whether it says so itself."""
-    by_status = Counter((r.get("status") or "open") for r in records.values())
+    # a corrupt status (an int, a list, a word outside STATUSES) is `unreadable` here as it
+    # is in `build_rows` — `sorted()` over mixed types used to take the whole export down
+    by_status = Counter(
+        ((r.get("status") or "open") if isinstance(r, dict)
+         and (r.get("status") or "open") in STATUSES else "unreadable")
+        for r in records.values())
     firsts = sorted(str(r.get("first_seen") or "")[:10] for r in records.values()
-                    if _iso(str(r.get("first_seen") or "")[:10]))
+                    if isinstance(r, dict) and _iso(str(r.get("first_seen") or "")[:10]))
     earliest = firsts[0] if firsts else ""
     start, end = counts["window_start"], counts["window_end"]
     covered = earliest and earliest <= start
@@ -1897,7 +1977,8 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
              "outside_window": counts.get("outside_window", 0),
              "undatable": counts.get("undatable", 0),
              "unreadable": counts.get("unreadable", 0)}
-    pages = (pages_url or "").strip()
+    pages = _http_url(pages_url)
+    archive_pages = _http_url(os.environ.get(ARCHIVE_PAGES_URL_ENV, ""))
     return {
         "dataset": DATASET,
         # The Pages address when infra's publish step copies the file there (it says so via
@@ -1954,14 +2035,15 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
                     "Rows that aged out of the window are not excluded: they are in "
                     f"{ARCHIVE}.",
         },
-        "withdrawn": withdrawn_list(records),
+        "removed": removed_list(records, window_days),
         "archive": {
             "file": ARCHIVE,
             "rows": len(archived),
             "rule": f"status open or closed AND last_seen < {start} — every role the window "
                     f"has aged out, same columns, regenerated whole from the ledger each run",
             "raw_url": RAW_BASE + ARCHIVE,
-            "published_on_pages": False,
+            "download_url": archive_pages or RAW_BASE + ARCHIVE,
+            "published_on_pages": bool(archive_pages),   # ROLES_ARCHIVE_PAGES_URL, when infra copies it
         },
         "reconciliation": {
             **parts,
@@ -1995,6 +2077,30 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
                                           ("enum", enums.get(c))) if v is not None}
                     for c, doc in _COLUMNS},
     }
+
+
+def export_files(records, db_path, *, run_date, firmographics=None, window_days=WINDOW_DAYS,
+                 earliest_run=""):
+    """The ONE export: rows, the archive, the meta — written beside `db_path`. Used by the
+    run (`Ledger.export_dataset`) and by the re-derive CLI alike, so the two cannot drift:
+    the first CLI wrote roles.csv and a meta that said `archive.rows: 0` while
+    `reconciliation.archived` said 7, and no archive file at all — the identity held
+    against the STORE while the files it described did not exist. Returns
+    (rows, archived, counts, meta)."""
+    csv_path, meta_path, _f = dataset_paths(db_path)
+    rows, counts = build_rows(records, run_date=run_date, firmographics=firmographics,
+                              window_days=window_days)
+    # ...and the archive: the same row builder over the roles the window has aged out.
+    # Regenerated WHOLE from the ledger every run (no append machinery, so it cannot drift
+    # from the record), header-only until the first eviction.
+    archived, _ac = build_rows(records, run_date=run_date, firmographics=firmographics,
+                               window_days=window_days, archive=True)
+    meta = build_meta(rows, counts, records, run_date=run_date, window_days=window_days,
+                      earliest_run=earliest_run, pages_url=os.environ.get(PAGES_URL_ENV, ""),
+                      archived=archived)
+    write_dataset(csv_path, meta_path, rows, meta,
+                  archive_path=archive_path(db_path), archive_rows=archived)
+    return rows, archived, counts, meta
 
 
 def write_dataset(csv_path, meta_path, rows, meta, archive_path=None, archive_rows=None):
@@ -2188,8 +2294,6 @@ def _main(argv=None):
     from . import firmographics as _f
     shared, fstatus = _f.load_shared_status()
     csv_path, meta_path, _fn = dataset_paths(a.db)
-    rows, counts = build_rows(records, run_date=a.date, firmographics=shared,
-                              window_days=a.window_days)
     earliest_run = ""
     if os.path.exists(a.db):
         st = _store.SeenStore(a.db)
@@ -2197,10 +2301,14 @@ def _main(argv=None):
             earliest_run = st.conn.execute("SELECT MIN(run_date) FROM runs").fetchone()[0] or ""
         finally:
             st.close()
-    meta = build_meta(rows, counts, records, run_date=a.date, window_days=a.window_days,
-                      earliest_run=earliest_run)
-    write_dataset(csv_path, meta_path, rows, meta)
-    print(f"{len(rows)} roles -> {csv_path}", flush=True)
+    # The same call the run makes — archive, CSV, meta, Pages address — so a re-derive can
+    # never publish a meta that contradicts the files beside it. It re-derives from the
+    # RECORDS' statuses: a retraction line is applied by a run (`_record_run`), not here.
+    rows, archived, counts, meta = export_files(
+        records, a.db, run_date=a.date, firmographics=shared, window_days=a.window_days,
+        earliest_run=earliest_run)
+    print(f"{len(rows)} roles -> {csv_path}; {len(archived)} archived -> {archive_path(a.db)}",
+          flush=True)
     print(f"  ledger {len(records)} records ({bad} bad lines), firmographics {len(shared)} "
           f"({fstatus})", flush=True)
     print(f"  window {counts['window_start']}..{counts['window_end']} on last_seen"

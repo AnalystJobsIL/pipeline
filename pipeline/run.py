@@ -307,7 +307,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # strips one trailing corporate suffix, so a raw-name set would miss a parked `X GmbH`
     # while a naively normalised one would purge the ACTIVE `X` beside it — the registry
     # holds eleven such twins. One set, used by BOTH `_alive` and `record_run`.
-    from .store import _norm_company as _ident
+    from .store import _norm_company as _ident, merge_key as _mkey
     # `api_url` ONLY. Widening this to `token` was tried and is a NO-GO: 40 rows carry an
     # aggregator address in `token` (a fingerprint of the `url-cleared` repair passes) while
     # `api_url` holds a real board, and they include Deloitte, Shufersal, Zim, JTI, Phoenix
@@ -656,7 +656,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     _role_lines = _role_lines + _claim_lines
 
     # THE PUBLIC DATASET (lane: roles, ARCHITECTURE §7c). One row per role, a rolling
-    # 60-day window on `last_seen`, joined with tags and firmographics, written beside the
+    # 90-day window on `last_seen` (`roles.WINDOW_DAYS`), joined with tags and firmographics, written beside the
     # ledger — `cloud_state/roles.csv` on a real run, next to the scratch store on a scoped
     # one, because `dataset_paths` derives from the db path exactly as `ledger_paths` does.
     #
@@ -760,7 +760,10 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             # alone left seven other employers' postings publishing under the name of a city
             # on a page headed "no longer on the employer's careers page".
             and _ident(j["company"]) not in _never_ours
-            and ledger.retractions.match(j) is None]
+            and ledger.retractions.match(j) is None
+            # ...and the ledger's own durable verdict, so a mass-purge-hold morning (which
+            # empties `_never_ours` for the day) cannot put a purged row back on this page
+            and (ledger.records.get(_mkey(j)) or {}).get("status") not in roles.RETRACTABLE]
     # The store keeps every role forever — which is the point, it IS the archive — but the
     # PAGE renders a full detail card per role, so it would grow without bound. Newest
     # first; the database keeps the tail whether or not the page shows it.

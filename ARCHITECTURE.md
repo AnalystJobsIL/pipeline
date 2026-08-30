@@ -5337,13 +5337,16 @@ different fact, and the meta's `excluded` block spells all three out with counts
 
 A public file that silently drops rows is the thing this one exists not to be, so every
 excluded record also carries its reason on the line (`purge_reason` / `withdraw_reason`,
-`retracted_on`), and the meta carries a **`withdrawn` list** — every `purged` or `withdrawn`
+`retracted_on`), and the meta carries a **`removed` list** — every `purged` or `withdrawn`
 role with company, title, status, reason, the day it left and `published_in_roles_csv:
 {from, to}` (null when it left before the file existed, which is true of the seven `Tel Aviv`
-rows). That list is what a repeat downloader reconciles against: anyone who fetched the
-2026-08-30 file has two Comcast rows that no later file carries, and the meta says so with
-dates. The span is inclusive and conservative — `to` is the retraction date, the last file
-that MAY carry the row, never a file that certainly does not.
+rows). It is named `removed` and not `withdrawn` because it carries BOTH classes — an
+attacker counting a list called `withdrawn` read seventeen purges as withdrawals. That list
+is what a repeat downloader reconciles against: anyone who fetched the 2026-08-30 file has
+two Comcast rows that no file from the first run after it carries, and the meta says so with
+dates. The span is inclusive and conservative — `to` is the EARLIER of the retraction date
+(the last file that MAY carry the row, never a file that certainly does not) and the last
+day the window still held it (`last_seen` + 89; after that the row was the archive's).
 
 **Why the withdrawn rows vanish from the CSV rather than staying as tombstones.** Three shapes
 were weighed. A tombstone row inside `roles.csv` (status `withdrawn` plus a reason column)
@@ -5365,12 +5368,23 @@ object: `run.py`'s `_alive` (email + board) and its archive filter — the FILE,
 ledger's status, so a frozen-ledger day cannot put Houston back on the board — and
 `Ledger._record_run`, which stamps the status BEFORE `rid in onboard`, so a board that keeps
 listing the posting every morning keeps it withdrawn every morning. Lifting one is deleting
-the line; the record is then judged like any other next run. Two alarms on `Stages:`: `roles
-withdrawn N role(s) …` names the row and reason the day a line is first applied, and `roles
-retraction unmatched (<key>)` names a line no record answers to — a typo must never read as
-"applied". A malformed line is counted (`roles retractions unreadable (N bad line(s) …)`) and
-the rest of the file still applies. Rehearsed on a copy of the real store 2026-08-30: `withdrawn
-2 · purged 10` on the `Roles:` line, 161 → 149 rows, 0 Comcast/Jobgether rows.
+the line: the record returns to the ordinary ladder on the next run (open if its board still
+lists it, closed otherwise), its retraction stamps come off, and the mail says `roles
+retraction lifted for N role(s) …` — which is ALSO what an emptied or lost file produces, so a
+wholesale restore that drops the file cannot revert every withdrawal silently. Three more
+alarms on `Stages:`: `roles withdrawn N role(s) …` names the row and reason the day a line is
+first applied; `roles purged N role(s) by predicate this run: …` names every company the
+automatic sources newly caught (the quiet verdict is the risky one); `roles retraction
+unmatched (<key>)` names a line no record answers to — a typo must never read as "applied"
+(a line naming a `superseded` double, or a second line for one row, is answered, not
+unmatched). A malformed line is counted (`roles retractions unreadable (N bad line(s) …)`)
+and the rest of the file still applies. **No comment lines**: `persist_state._well_formed`
+parses every non-blank line of a `.jsonl`, so a `#` line would make the runner check the file
+out from base; prose goes in `"evidence"`. Url keys are matched EXACTLY after one
+normalisation (scheme dropped, host lower-cased, trailing slash dropped) — the first version
+used `endswith`, and an attacker's `x/998629` withdrew two employers' postings at once.
+Rehearsed on a copy of the real store 2026-08-30: `withdrawn 2 · purged 10` on the `Roles:`
+line, 161 → 149 rows, 0 Comcast/Jobgether rows.
 
 **Three automatic sources of `purged`, and the record says which.** `_never_ours` in `run.py`
 is `{identity: reason}`: the registry's aggregator `api_url` rows (`PURGE_REASON`, the original
@@ -5388,7 +5402,13 @@ regenerated whole from the ledger every run — so there is no append machinery 
 role that ages out of `roles.csv` appears in the archive the same morning. The meta's
 `reconciliation` block proves the accounting each run: `rows + archived + superseded + purged +
 withdrawn + outside_window + undatable + unreadable == store_records`, and says `holds: false`
-rather than hiding a miscount.
+rather than hiding a miscount. The run and the re-derive CLI (`python -m pipeline.roles export
+--db <copy> --date …`) go through ONE function, `roles.export_files` — the first CLI wrote no
+archive and a meta whose `archive.rows: 0` contradicted its own `reconciliation.archived: 7`,
+an identity that held against the store while the files it described did not exist. A
+predicate purge keeps the record's real `closed_on` (the first version overwrote ten closure
+dates) and stamps `purged_on`, the day the row left the PUBLIC file, which is what the
+`removed` list's `on` and span read.
 
 **The window is aspirational and the file says so.** The store began accumulating on
 2026-08-16, so "the past 90 days" is really "everything we hold" until about mid-November. The
