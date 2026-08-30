@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**557 filed · 407 open · 150 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**559 filed · 402 open · 157 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 507.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 509.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 135 open
+### registry — 134 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -442,8 +442,8 @@ closure convention in the header.
 - **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
 - **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
-- **503** `503@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
-- **504** `504@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
+- **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
+- **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
 ### company-intel — 19 open
 
@@ -466,27 +466,6 @@ closure convention in the header.
 - **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
 - **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 - **506** `506@company-intel` **OPERATOR DECISION
-
-### ats-fetch — 18 open
-
-- **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
-- **1** `1@ats-fetch` **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
-- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
-- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
-- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
-- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
-- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
-- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
-- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
-- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
-- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded**
-- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** —
-- **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
-- **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
-- **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
-- **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
-- **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
-- **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 
 ### roles — 17 open
 
@@ -9197,7 +9176,7 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      462's closure for the mechanism (the "or the card's url path is read" alternative was
      rejected: a placename vocabulary over url paths is 247's unfinishable list, and an
      honest refusal needs none). The eightfold half (`fetchers.py:596`) is NOT closed — it is
-     `ats-fetch`'s file and is re-filed as `504` with the successfactors precedent.**
+     `ats-fetch`'s file and is re-filed as `508` with the successfactors precedent.**
      lane: `scraper`, **high**. Filed by `roles` 2026-08-30.
      `Comcast`'s registry `api_url` is `jobs.comcast.com/search-jobs?location=Israel`;
      `scrape_universal._page_is_il` (`:1011`) is True on the query string, so `_from_dom`
@@ -9321,8 +9300,8 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      violated it and self-correct on their next scraped night). Do not build the reader in
      the scraper lane.
 
-504. **The eightfold fetcher stamps the query's location on postings that carry none** —
-     lane: `ats-fetch`. Re-filed 2026-08-30 (`scraper`) as the surviving half of `496`,
+508. **The eightfold fetcher stamps the query's location on postings that carry none** —
+     lane: `ats-fetch`. Re-filed 2026-08-30 (`scraper`, renumbered at rebase: master had taken 503-506) as the surviving half of `496`,
      whose scraper half closed with `462`. `fetchers.py:596` writes the search location for
      eightfold rows the way `scrape_universal._page_is_il` did before the 2026-08-30 scraper commits; the
      `successfactors` fetcher already refuses the same inference (`fetchers.py:726`,
