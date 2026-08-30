@@ -64,6 +64,38 @@ jobs:
       - name: Platform wiring report (informational)
         run: python -m pipeline.platform_check || true
 
+  # Every test the push ADDED must fail with the push's non-test files put back to the
+  # previous tip (`tools/guard_kill.py`, infra 2026-08-30). A guard that cannot fail is the
+  # defect this repo is built around, and on 2026-08-30 the day's 184 new tests measured
+  # 11 that pass with their fix reverted. Its own job because it needs history (`guard` is
+  # depth 1 on purpose, see above) and its base is the push's `before` sha -- unknown after
+  # a force-push or on a new branch (all zeros), where `HEAD~1` is the honest fallback.
+  guard-kill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install pytest
+        run: python -m pip install --quiet pytest
+      - name: Every new guard dies without its fix
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          base="$BEFORE"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then base="HEAD~1"; fi
+          echo "base: $base ($(git rev-parse --short "$base"))"
+          rc=0
+          timeout --signal=INT --kill-after=30 10m python tools/guard_kill.py --base "$base" || rc=$?
+          if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+            echo "::error::guard-kill: exceeded its 10-minute budget (job timeout 12; rc $rc, 137 = killed after the INT grace) -- the new-test set is too large for one job; shard it, do not raise the number"
+          fi
+          exit "$rc"
+
   # Every scheduled registry tool's real main() over a copy of the registry with the network
   # forbidden, fourteen nights; exit 1 on the first pool that loses a row it should keep
   # (registry lane, BACKLOG 52). `worst` once and `mixed` under five seeds (the truncation

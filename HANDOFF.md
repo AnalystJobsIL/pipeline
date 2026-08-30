@@ -159,22 +159,18 @@ One line per session, in the shape at the top of this file. The long version is 
 
 - **2026-08-24, six lanes** — `ats-fetch`, `classifier`, `company-intel`, `jd-text`,
   `registry`, `scraper`. Folded to a pointer on 2026-08-27 to keep this file inside the
-  word cap it sets: each entry named a record and the records hold the long version.
+  word cap it sets (`docs/BACKLOG.md` 338); the records hold the long version.
   `docs/sessions/2026-08-24-*.md`.
 - **2026-08-25, five lanes** — `discovery`, `infra`, `registry`, `render`, `roles`.
-  Folded to a pointer on 2026-08-28 by `classifier`, as the 2026-08-24 batch was on
-  2026-08-27 and for the same reason (`docs/BACKLOG.md` 338): no lane could fit an entry.
+  Folded to a pointer on 2026-08-28 by `classifier`, same reason.
   `docs/sessions/2026-08-25-*.md`.
 - **2026-08-28, 10 lanes** — `infra` (×2), `docs` (×2), `classifier` (×2), `registry`, `scraper`, `company-intel`, `jd-text`. Folded 2026-08-30. `docs/sessions/2026-08-28-*.md`.
 - **2026-08-26, five lanes** — `ats-fetch` (×2), `scraper` (×2), `discovery`,
-  `company-intel`, `jd-text`. Folded to a pointer on 2026-08-28 by `docs`, as the
-  2026-08-24 batch was on 08-27 and the 2026-08-25 batch on 08-28, and for the same
-  reason (`docs/BACKLOG.md` 338): the word cap left nine words and no lane could fit an
-  entry. `docs/sessions/2026-08-26-*.md`.
+  `company-intel`, `jd-text`. Folded to a pointer on 2026-08-28 by `docs`, same reason.
+  `docs/sessions/2026-08-26-*.md`.
 - **2026-08-27, five lanes** — `registry` (×3), `infra`, `docs`, `roles`, `discovery`.
-  Folded to a pointer on 2026-08-28 by `classifier`, as the 2026-08-24/25/26 batches
-  were, and for the same reason (`docs/BACKLOG.md` 338, 361): the word cap left twelve
-  words too few for one entry. `docs/sessions/2026-08-27-*.md`.
+  Folded to a pointer on 2026-08-28 by `classifier`, same reason (338, 361).
+  `docs/sessions/2026-08-27-*.md`.
 - **2026-08-30 `jd-text`** - the inline filler was never idle: **128/146, 132/164, 132/167** a morning, into `matched` not the caches. `linkedin no-markers` is HONEST; the Unlocker reads those pages **5 of 5**, so it may now buy (**9 of 10**) - INERT until infra applies 448. **UNVERIFIED IN CI**: `guard` cancels at its 10-min timeout (442). `docs/sessions/2026-08-30-jd-text.md`. **NOT done:** 445-448.
 - **2026-08-29, two lanes** - `jd-text`, `registry` (queue). Folded 2026-08-30 by `classifier`. `docs/sessions/2026-08-29-*.md`.
 - **2026-08-30 `registry`** - three checks disagreed on whose board a URL is; **29 rows existed despite a NOT-THEIRS verdict**, one ACTIVE on a VC's jobs page. `board_verify.py` renders before reading; a non-reproducing verdict is UNVERIFIABLE. **151 wrong addresses cleared, 0 left.** Drain wired at 19:00. **NOT finished:** 481 owed (retried nightly), the cron has not run. `docs/sessions/2026-08-30-registry-verify.md`.
@@ -184,4 +180,5 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-30 `roles`** - `seniority` was computed and dropped (**0 of 154**), the funnel printed once and discarded, retention unguarded. Now **`cloud_state/roles.csv`, 143 rows**, 60-day window on `last_seen`; seniority **154/154**; `funnel.csv`; `dump()` refuses to shrink. **NOT on Pages** (`453@infra`). Run **33299098476** (tip `a1033c3`): `Unit guards` + `Registry invariants` PASSED. **NOT finished:** 453-455, proof due 08-31. `docs/sessions/2026-08-30-roles.md`.
 - **2026-08-30 `classifier`** - scope is QUANTITATIVE analyst work; the stale alarm invited a cap raise that buys nothing. Condition (5) + a demote-only hint (**0 FN of 96**); strong+senior with a JD is READ (**5 of 19 rejected**); `373`/`121` closed. Run **33298814000**: `Unit guards` **1468 passed**, job cancelled on its timeout (`442`). **NOT finished:** 461-466, the unattended run. `docs/sessions/2026-08-30-classifier.md`.
 - **2026-08-30 `registry`** - a retirement was only an ABSENCE and the merge rescues origin's deletions (`458@infra`); a STATE now, re-applied nightly by lookup: queue **276 -> 210**. Run **33299353269** CANCELLED like every run around it (`guard`'s 10-min timeout, `442`, inherited). **NOT finished:** 458-462. Record: `docs/sessions/2026-08-30-registry.md`.
-- **2026-08-30 `infra`** — the suite was green, the GATE was broken: 11 runs cancelled at `guard`'s 10 min; 4 surviving mutants = 2 equivalent + 2 unkilled records. Three jobs with named budgets, `ci`/`cron` on the mail, run provenance, `secretsenv`. **Run 33300459869: 10 jobs green, shards 3/3.** **NOT finished:** 467-476, history rewrite. `docs/sessions/2026-08-30-infra.md`.
+- **2026-08-30 `infra`** — the suite was green, the GATE was broken: 11 runs cancelled at `guard`'s 10 min. Three jobs with named budgets, `ci`/`cron` on the mail, `secretsenv`. **Run 33300459869: 10 jobs green, shards 3/3.**
+- **2026-08-30 `infra` (test isolation)** — 386 measured: an IMPORT-time lock in three registry tools, not the counter; **2 of 1,496 tests reach the rung; 1 vacuous guard in one order, 0 shipped**; conftest re-arms it. `tools/guard_kill.py` + CI job: **184 new tests today, 10 cannot fail** (`480`). Open: `477`–`479`. **UNVERIFIED IN CI.** **NOT finished:** 467-476, history rewrite. `docs/sessions/2026-08-30-infra.md`.

@@ -87,6 +87,52 @@ for _k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE"):
 
 
 _leaked: list[tuple[str, int]] = []
+_rung_leaked: list[tuple[str, str]] = []
+
+
+@pytest.fixture(autouse=True)
+def _the_gates_paid_rung_is_re_armed_before_each_test(request):
+    """`pipeline/identity_gate`'s `_UNLOCK_BUDGET` / `_UNLOCK_SPENT` and `PAGE_UNLOCK_BUDGET`
+    are put back to their session-start values BEFORE every test (BACKLOG 386, measured
+    2026-08-30 -- `docs/sessions/2026-08-30-test-isolation.md`).
+
+    The leak is not the counter. `_UNLOCK_SPENT` reaches 1 of 100 in a whole run. The leak is
+    the BUDGET: `confirm_zero`, `apply_proposals` and `drain_queue` each set
+    `identity_gate._UNLOCK_BUDGET = 0` and `PAGE_UNLOCK_BUDGET=0` at IMPORT, monkeypatch
+    cannot undo either, and the first test to import one of them (a function-local import,
+    so it depends on which test runs first) disarms the rung for every test after it.
+    Measured per test with a tracing plugin: exactly two tests in the suite reach the rung's
+    precondition. `test_the_unlocker_rung_inside_the_page_test_still_exists` is the positive
+    control and FAILS, not vacuously passes, when it runs after the import (`pytest
+    tests/test_units.py tests/test_registry.py`); `test_the_queue_drain_cannot_spend_a_
+    bright_data_credit` asserts the locks and passes VACUOUSLY in that order -- with both
+    locks deleted it still passed, because `confirm_zero` had zeroed the budget earlier.
+    Re-arming before each test makes the first pass in every order and the second real in
+    every order; no other test's rung calls change, because no other test makes any.
+
+    Re-armed BEFORE, like the credential sentinel: a test's own imports may then lower the
+    budget (that is what the drain guard asserts), and the next test starts at 100 again.
+    Who left it lowered is printed at session end, never failed -- the polluter is another
+    lane's file."""
+    gate = sys.modules.get("pipeline.identity_gate")
+    if gate is not None:
+        gate._UNLOCK_BUDGET = _INITIAL_UNLOCK_BUDGET
+        gate._UNLOCK_SPENT = 0
+    if _INITIAL_PAGE_UNLOCK_ENV is None:
+        os.environ.pop("PAGE_UNLOCK_BUDGET", None)
+    else:
+        os.environ["PAGE_UNLOCK_BUDGET"] = _INITIAL_PAGE_UNLOCK_ENV
+    yield
+    gate = sys.modules.get("pipeline.identity_gate")
+    if gate is not None and (gate._UNLOCK_BUDGET != _INITIAL_UNLOCK_BUDGET or gate._UNLOCK_SPENT):
+        _rung_leaked.append((request.node.nodeid,
+                             f"budget {gate._UNLOCK_BUDGET} spent {gate._UNLOCK_SPENT}"))
+
+
+# Read ONCE, at conftest import: the gate's budget comes from this env var at ITS import, and
+# every test must start where the session started, not where the previous test left it.
+_INITIAL_PAGE_UNLOCK_ENV = os.environ.get("PAGE_UNLOCK_BUDGET")
+_INITIAL_UNLOCK_BUDGET = int(os.environ.get("PAGE_UNLOCK_BUDGET", "100") or 0)   # identity_gate.py:81
 
 
 @pytest.fixture(autouse=True)
@@ -122,6 +168,12 @@ def _no_bright_data_state_survives_a_test(request):
 
 
 def pytest_sessionfinish(session, exitstatus):
+    if _rung_leaked:
+        print(f"\n[unlock-rung] {len(_rung_leaked)} test(s) left identity_gate's paid rung "
+              f"disarmed or spent (re-armed before the next test by tests/conftest.py):",
+              flush=True)
+        for nodeid, what in _rung_leaked:
+            print(f"  {what:<22} {nodeid}", flush=True)
     if not _leaked:
         return
     total = sum(n for _, n in _leaked)

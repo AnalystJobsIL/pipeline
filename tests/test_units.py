@@ -21208,3 +21208,111 @@ def test_the_prune_refuses_a_recorded_verdict_that_carries_no_evidence(tmp_path,
         QD.main(["--apply"])
     left = {e["name"] for e in json.loads((tmp_path / QD.QUEUE).read_text(encoding="utf-8"))}
     assert "Recorded Without Evidence" in left, "the name must survive a refused prune"
+
+
+# lane: infra (2026-08-30) -- a guard that cannot fail is the defect this repo is built
+# around, and until today nothing measured whether a NEW test could. `tools/guard_kill.py`
+# reverts every non-test file in a range and requires the range's new tests to go red.
+# `docs/sessions/2026-08-30-test-isolation.md`.
+
+import json
+import subprocess as _gk_sp
+import sys as _gk_sys
+
+
+def _gk_repo(tmp_path):
+    """A one-module git repo with one passing test, committed; returns (root, git)."""
+    def git(*a):
+        return _gk_sp.run(["git", *a], cwd=tmp_path, capture_output=True, text=True, check=True)
+    git("init", "-q")
+    git("config", "user.email", "t@example.invalid")
+    git("config", "user.name", "t")
+    (tmp_path / "m.py").write_text("def double(x):\n    return x + x\n", encoding="utf-8")
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_m.py").write_text(
+        "import sys, os\nsys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))\n"
+        "import m\n\ndef test_double():\n    assert m.double(2) == 4\n", encoding="utf-8")
+    git("add", "-A")
+    git("commit", "-q", "-m", "base")
+    return git
+
+
+def test_guard_kill_names_the_test_that_passes_with_its_fix_reverted(tmp_path, monkeypatch):
+    """Two new tests land beside a fix. One asserts the fix (`triple`), one asserts something
+    that was already true. The first is KILLS, the second CANNOT-FAIL, and the exit code is 1
+    because of the second alone. Also pins that `tests/` stays at HEAD in the reverted copy:
+    the new tests must exist there to run at all."""
+    sys_path_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _gk_sys.path.insert(0, os.path.join(sys_path_root, "tools"))
+    import guard_kill as GK
+    git = _gk_repo(tmp_path)
+    (tmp_path / "m.py").write_text("def double(x):\n    return x + x\n\n"
+                                   "def triple(x):\n    return 3 * x\n", encoding="utf-8")
+    with open(tmp_path / "tests" / "test_m.py", "a", encoding="utf-8") as f:
+        f.write("\ndef test_triple():\n    assert m.triple(2) == 6\n"
+                "\ndef test_double_again():\n    assert m.double(3) == 6\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "fix + two tests")
+    monkeypatch.setattr(GK, "ROOT", str(tmp_path))
+    monkeypatch.setattr(GK, "_catalogued_ids", lambda: set())
+    out = tmp_path / "verdicts.json"
+    rc = GK.main(["--base", "HEAD~1", "--json", str(out)])
+    got = {r["test"]: r["bucket"] for r in json.loads(out.read_text(encoding="utf-8"))["tests"]}
+    assert got == {"tests/test_m.py::test_triple": "KILLS",
+                   "tests/test_m.py::test_double_again": "CANNOT-FAIL"}, got
+    assert rc == 1, "a CANNOT-FAIL test must be the exit code, not a line in the log"
+    assert "tests/test_m.py" not in json.loads(out.read_text(encoding="utf-8"))["reverted"], \
+        "tests/ must stay at HEAD in the reverted copy"
+
+
+def test_guard_kill_accepts_a_catalogued_killer_and_is_green_when_every_guard_dies(tmp_path, monkeypatch):
+    """The escape hatch is the mutation catalogue, not a comment: a passing new test whose
+    docstring names a REAL mutation record (the mutate.py convention) is CATALOGUED (tools/mutate.py verifies
+    it), an unknown id is not. With only KILLS and CATALOGUED the exit code is 0."""
+    sys_path_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _gk_sys.path.insert(0, os.path.join(sys_path_root, "tools"))
+    import guard_kill as GK
+    git = _gk_repo(tmp_path)
+    (tmp_path / "m.py").write_text("def double(x):\n    return 2 * x\n", encoding="utf-8")
+    with open(tmp_path / "tests" / "test_m.py", "a", encoding="utf-8") as f:
+        f.write('\ndef test_vouched():\n    """Kills `m-double-remove`."""\n    assert m.double(1) == 2\n')
+    git("add", "-A")
+    git("commit", "-q", "-m", "refactor + a catalogued guard")
+    monkeypatch.setattr(GK, "ROOT", str(tmp_path))
+    monkeypatch.setattr(GK, "_catalogued_ids", lambda: {"m-double-remove"})
+    out = tmp_path / "v.json"
+    assert GK.main(["--base", "HEAD~1", "--json", str(out)]) == 0
+    rows = json.loads(out.read_text(encoding="utf-8"))["tests"]
+    assert [(r["bucket"], r["kills"]) for r in rows] == [("CATALOGUED", ["m-double-remove"])], rows
+    # the same docstring naming an id the catalogue does not have vouches for nothing
+    assert GK.classify([("t::x", "Kills `ghost`.")], {"t::x": "PASSED"}, {"m-double-remove"}) \
+        == [{"test": "t::x", "verdict": "PASSED", "bucket": "CANNOT-FAIL", "kills": []}]
+    # and a SKIPPED or uncollected test is reported as such, never judged either way
+    assert [r["bucket"] for r in GK.classify([("t::s", ""), ("t::m", "")],
+                                              {"t::s": "SKIPPED"}, set())] == ["SKIPPED", "NOT-RUN"]
+
+
+def test_guard_kill_sees_new_tests_by_definition_not_by_diff_position():
+    """A test is new when its NAME is absent from the base file, so a test added in the middle
+    of a file (every lane's habit) counts, a moved one does not, and class methods count."""
+    sys_path_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _gk_sys.path.insert(0, os.path.join(sys_path_root, "tools"))
+    import guard_kill as GK
+    names = GK._test_names("def test_a():\n    'doc a'\n\nclass TestX:\n    def test_b(self):\n"
+                           "        pass\n\ndef helper():\n    pass\n", "t.py")
+    assert names == {"test_a": "doc a", "TestX::test_b": ""}
+    assert GK._test_names("def test_broken(:\n", "t.py") == {}, "a syntax error is not a test"
+
+
+def test_guard_kill_runs_in_ci_against_the_pushed_range_with_history_to_see_it():
+    """`tests.yml` runs the tool in its own job with `fetch-depth: 0` (the `guard` job is depth
+    1 on purpose -- see its comment) against `github.event.before`, falling back to `HEAD~1`
+    when that sha is unknown (a force-push, or the all-zero sha of a new branch). Pinned so the
+    check cannot be dropped from the gate, or left pointing at a base that makes it a no-op."""
+    jobs = _tests_yml_jobs()
+    assert "guard-kill" in jobs, sorted(jobs)
+    timeout, text = jobs["guard-kill"]
+    assert timeout, "every job in tests.yml carries timeout-minutes"
+    assert "fetch-depth: 0" in text, "without history the tool cannot see the base"
+    assert "github.event.before" in text and "HEAD~1" in text
+    assert "python tools/guard_kill.py" in text

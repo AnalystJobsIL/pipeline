@@ -704,6 +704,18 @@ Three mechanisms keep this honest, and all three exist because the number was wr
   **present-and-empty** rather than popped, because all four `_load_secrets` copies re-arm an
   ABSENT name with `os.environ.setdefault`. See
   `docs/decisions/2026-08-28-tests-cannot-spend.md`.
+- **`tests/conftest.py` re-arms the gate's paid rung before every test** (lane: infra,
+  2026-08-30). `confirm_zero`, `apply_proposals` and `drain_queue` set
+  `identity_gate._UNLOCK_BUDGET = 0` and `PAGE_UNLOCK_BUDGET=0` at IMPORT — a lock for their
+  own process, and a leak into every test after the first one that imports them (a
+  function-local import, so which test that is depends on file order). Measured with a
+  per-test tracer over the whole suite: `_UNLOCK_SPENT` reaches 1 of 100 and is not the
+  leak; the budget is. Exactly **two** tests reach the rung's precondition — the positive
+  control, which FAILS (not vacuously passes) when `tests/test_units.py` runs first, and the
+  drain-lock guard, which passes VACUOUSLY in that order (with both locks deleted it still
+  passed). The fixture puts budget, counter and env back to their session-start values
+  before each test and prints who lowered them at session end.
+  `docs/sessions/2026-08-30-test-isolation.md`.
 
 **The largest uncontrolled spender is not this layer.** `DEEP_BD_SEARCH_CAP` reads like a
 daily ceiling of 150 and is per-PROCESS — six scripts import `google_via_unlocker` in
@@ -1043,7 +1055,15 @@ miscount. Derive it —
 ```bash
 python -m pytest tests/test_registry.py -k every_registry_writer   # asserts all of them are gated
 python tools/mutate.py --all                                       # asserts the gates are real
+python tools/guard_kill.py --base <ref>                            # asserts the NEW guards can fail
 ```
+
+`tools/guard_kill.py` (lane: infra, 2026-08-30) is the general form of the mutation gate for
+tests the catalogue does not know: every test added since `--base` runs against a copy in
+which every non-test file is put back to `--base`, and must go red. `tests.yml` runs it on
+every push against the push's `before` sha in its own `guard-kill` job. First measurement,
+the whole of 2026-08-30 (`bfdff0f..d01213f`, 184 new tests): the numbers are in
+`docs/sessions/2026-08-30-test-isolation.md`, per lane.
 
 — because `test_every_registry_writer_consults_an_identity_predicate` finds writers in **both**
 source shapes: `fr[3] = …` / `fr[4] = "true"`, and the whole-row literal

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**527 filed · 383 open · 144 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**532 filed · 388 open · 144 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 477.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 482.** Run `python docs/backlog.py next` before you file anything — 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@scraper` **open** · `462@registry` **open** |
 
-### registry — 125 open
+### registry — 128 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -219,8 +219,11 @@ closure convention in the header.
 - **468** `468@registry` **Three modules still carry their own `_load_secrets`, so a worktree session of those
 - **470** `470@registry` **Two mutation records were filed with no test that reaches the mutated line, and two more
 - **472** `472@registry` **`_load_secrets` callers in seven root tools still resolve through `bd_rescue`'s copy** —
+- **477** `477@registry` **386's diagnosis is wrong in one word, and the fix is in `infra`'s file**
+- **478** `478@registry` **`board_verify._mechanical_opinion` disarms the gate's paid rung for every board after
+- **479** `479@registry` **The single-writer "names I rewrote" sets grow across tests**
 
-### infra — 103 open
+### infra — 104 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -325,6 +328,7 @@ closure convention in the header.
 - **463** `463@infra` **The drain's counters exist only in the mail**
 - **471** `471@infra` **`schedule_census.py` reports the isolated-drop count and then exits 0**
 - **476** `476@infra` **The fattest mutation class cannot be split, so a fourth shard buys nothing**
+- **481** `481@infra` **`guard_kill` reads a skip as NOT-RUN and cannot tell it from an uncollected test** —
 
 ### scraper — 28 open
 
@@ -453,7 +457,7 @@ closure convention in the header.
 - **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
 - **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 
-### jd-text — 14 open
+### jd-text — 15 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -469,6 +473,7 @@ closure convention in the header.
 - **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
 - **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
 - **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
+- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 
 ### roles — 14 open
 
@@ -8673,6 +8678,11 @@ the rebase (a collision is what 241–246 are).
      skip only when that is unset or all zeros (a branch creation). Same for
      `check_tree_is_current` if it wants the runner's verdict. Until then 439 is half done and
      local pre-push is the only enforcement point.
+     **Corrected 2026-08-30 (`infra`, test isolation):** the first sentence was not true at
+     `d01213f` — `tests.yml` carried no `AJIL_PUSH_BASE` and no `fetch-depth: 0` (wave 1
+     reverted that draft, see the `guard` job's comment). The plumbing now exists in the
+     `guard-kill` job only (`fetch-depth: 0`, `BEFORE=${{ github.event.before }}`); the
+     `guard` job is still depth 1, so the hunk above still has nothing to read there.
 
 468. **Three modules still carry their own `_load_secrets`, so a worktree session of those
      lanes is still silently disarmed** — lanes: `registry` (`bd_rescue.py:46`; `bd_employees.py:41`
@@ -8759,3 +8769,74 @@ the rebase (a collision is what 241–246 are).
      …) and `discovery` (`discovery_daily.py:917`, `bd_discover.py:80`). They import
      `bd_rescue._load_secrets`, so 468's diff fixes them for free — listed so nobody counts
      them as separate copies again (the "ten modules" in 438 was this list).
+
+## From the `infra` lane, 2026-08-30 (test isolation: how much of the green is vacuous)
+
+Measured with two tracing plugins over all 1,496 tests in three orders;
+`docs/sessions/2026-08-30-test-isolation.md` has the tables. Numbers 477–481 taken from
+`docs/backlog.py next` in a worktree; renumbered on the rebase if master took them.
+
+477. **386's diagnosis is wrong in one word, and the fix is in `infra`'s file** — lane:
+     `registry`. The polluter is not "a `bd_rescue` test in the same file": it is the
+     import-time lock in three of the lane's own tools (`confirm_zero.py:67`,
+     `apply_proposals.py:76`, `drain_queue.py:123` set `identity_gate._UNLOCK_BUDGET = 0` and
+     `PAGE_UNLOCK_BUDGET=0` when imported), which monkeypatch cannot undo, reached from a
+     function-local import whose first caller depends on file order (`test_units` →
+     `auto_expand` → `confirm_zero`). `_UNLOCK_SPENT` moves 0 → 1 in a whole run. Exactly
+     **2 of 1,496 tests** reach the rung's precondition: the positive control FAILS in the
+     two-file order (386's reproduction) and `test_the_queue_drain_cannot_spend_a_bright_
+     data_credit` passes VACUOUSLY there (both locks deleted → still 2 passed); in the
+     shipped order zero guards are vacuous. `tests/conftest.py` now re-arms budget, counter
+     and env before every test, so both are real in every order. To do in
+     `tests/test_registry.py`, which this session did not touch: nothing in code; 386's
+     text should say the above, then close.
+
+478. **`board_verify._mechanical_opinion` disarms the gate's paid rung for every board after
+     the first, in production** — lane: `registry`, **unmeasured, filed for the lane to
+     verify**. `pipeline/board_verify.py:418` calls `gate.identity_ok(name, url)` (no html →
+     re-fetch → a walled page reaches the unlocker rung) and then, five lines later,
+     `import apply_proposals`, which sets the gate's budget to 0 for the rest of the process.
+     `queue_pipeline.py --verify-existing --limit 60` runs this per board with
+     `BRIGHTDATA_API_KEY` in its env (`listing-hunt.yml`). Importing `auto_expand`,
+     `pipeline.run`, `registry_health`, `queue_pipeline` or `board_verify` at module level
+     leaves the budget at 100 (checked, all five), so the module-level locks are not the
+     issue; the function-local import inside a per-board loop is. Measure: count walled
+     boards after the first whose verdict is `None` in one `--verify-existing` run.
+
+479. **The single-writer "names I rewrote" sets grow across tests** — lane: `registry`.
+     `bd_rescue._MOD` 0 → 7 over five tests, `validate_empty._MODIFIED` over three,
+     `wayback_rescue._MODIFIED` two, `retry_unreachable._MODIFIED` one, none reset between
+     tests (`trace_state`, default order). A merge that treats a leaked name as "mine" can
+     rewrite a row a later test asserts it left alone, or pass a "did not write" assertion
+     for the wrong reason. Not measured whether any current assertion depends on it; the
+     measurement is the same tracer with the assertion list. The other 19 leaked names are
+     tallies and memo caches (the session record, §3) — `pipeline.jdfill._registry_rows`
+     caches the REAL 1,099-row registry into every later test, which is the one to watch
+     (`jd-text`).
+
+480. **Ten of the day's 184 new tests pass with their fix reverted** — lanes: `jd-text` (6),
+     `roles` (2), `classifier` (1), `registry` (1). `python tools/guard_kill.py --base
+     a07e743~1` over `bfdff0f..d01213f`: KILLS 171, CATALOGUED 2, CANNOT-FAIL 10, NOT-RUN 1.
+     Per lane, the test and the commit that added it:
+     `jd-text` `40aa439`: `test_native_url_derives_the_workday_tenant_from_the_host_label_by_default`,
+     `test_a_registry_row_on_another_workday_host_cannot_rewrite_a_posting_address`,
+     `test_the_scrape_pass_is_idempotent_within_a_day`,
+     `test_merge_json_cache_keeps_the_longer_description_and_a_card_origin_never_saw`;
+     `jd-text` `fc25aac`: `test_the_archive_left_and_paid_cooldown_keys_are_the_shape_the_mail_needs`,
+     `test_the_archive_nights_verdict_survives_the_morning_that_follows_it`;
+     `roles` `2c8fbe4`: `test_a_corrupt_file_is_not_a_baseline_for_the_shrink_guard`,
+     `test_the_two_sent_ledgers_agree_by_seen_id_not_by_row_count`;
+     `classifier` `3bf54c2`: `test_a_mass_flip_morning_is_still_caught_when_legacy_rows_are_draining`;
+     `registry` `861050d`: `test_the_judge_never_re_judges_a_name_a_human_overruled`.
+     A CANNOT-FAIL is not automatically a bug — a test that pins behaviour older than the
+     range is one — but it is a test whose author has not shown it can fail. Each owner:
+     either show the assertion failing against a one-line break of the code it names (then
+     it is a mutation record, `Kills \`<id>\`` in the docstring), or say in the docstring
+     what older behaviour it pins. From now on `tests.yml`'s `guard-kill` job asks this of
+     every push.
+
+481. **`guard_kill` reads a skip as NOT-RUN and cannot tell it from an uncollected test** —
+     lane: `infra`. `-rA` prints `SKIPPED [1] file:line: reason` with no node id, so
+     `test_ci_itself_confirms_why_the_tree_check_cannot_run_there` (skipped outside CI) is
+     reported, not judged. `--junitxml` would name both; not done because the first
+     measurement needed the tool more than the tool needed the distinction.
