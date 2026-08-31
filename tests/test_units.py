@@ -5228,6 +5228,22 @@ def test_run_py_holds_one_classifier_and_the_mail_gets_its_alarms():
     assert 'stats["llm_calls"] = clf.attempts' in src
     assert src.index("if clf.commit():") < src.index("st.save_llm_cache(llm_cache, run_date)") < src.index("company_intel.enrich_for_run(")
     assert "sum(paths.values()) != stats[\"israel_matched\"]" in src
+    # 2026-08-31 (`classifier` lane, disclosed): the dataset backfill. Only the wiring is
+    # pinned here — the behaviour has its own tests — because this is the half no unit test
+    # can reach: an unscoped run is the only thing that executes it, and a hook that is
+    # written but never called is exactly how a column stays empty for a week.
+    assert "_cbf.backfill_verdicts(ledger, clf)" in src
+    assert "class_backfill=_class_backfill" in src, "the map must reach record_run"
+    # ...after BOTH classify sites (fresh roles judged first, so no backlog can take a call
+    # slot the 48h window needed) and before the commit that persists what it bought
+    assert src.rindex("roles.classify_grouped(") < src.index("_cbf.backfill_verdicts(") \
+        < src.index('stats["llm_calls"] = clf.attempts')
+    # ...never on a scoped run or with no seam, and a QUARANTINED morning writes nothing
+    # into the dataset: `rec["class"]` is written once and never re-judged
+    gate = src[src.index("_class_backfill = {}"):src.index("_cbf.backfill_verdicts(")]
+    assert "if use_llm and not (only or limit):" in gate
+    assert "clf.quarantine()" in src[src.index("_cbf.backfill_verdicts("):
+                                     src.index('stats["llm_calls"] = clf.attempts')]
 
 
 def test_save_llm_cache_writes_only_new_or_changed_rows(tmp_path):
@@ -25024,3 +25040,338 @@ def test_the_drain_refuses_to_run_when_its_paid_rung_cannot_answer():
     finally:
         for k, v in keep.items():
             _os.environ.pop(k, None) if v is None else _os.environ.__setitem__(k, v)
+# --------------------------------------------------------------------------- #
+# 2026-08-31 — the dataset's verdict backfill, and the seam defect the contract
+# drain's first unattended run exposed
+# (lane: classifier; ARCHITECTURE.md 7b, docs/decisions/2026-08-31-domain-scope.md)
+# --------------------------------------------------------------------------- #
+def test_the_domain_rule_reaches_the_model_and_moves_the_contract():
+    """The operator's 2026-08-31 ruling: the DOMAIN never decides — most data analysts are
+    domain specific — and only FP&A, SOC and market intelligence stay named exclusions. It
+    replaced a categorical `Also NO for finance/FP&A/accounting, security/SOC, sales` clause
+    that was rejecting quantitative analysts on their field. Like condition (5) it has to be
+    BUILT in `_rules()` on BOTH bar branches, and it has to move `CONTRACT` or the verdicts it
+    invalidates are never re-judged."""
+    for bar in (True, False):
+        r = seniority._rules(bar)
+        assert "THE DOMAIN NEVER DECIDES" in r, bar
+        assert "FP&A" in r and "SOC" in r, bar
+        assert "market intelligence" in r, bar               # condition (5) names it too
+        assert "five conditions" in r and "QUANTITATIVE, NOT QUALITATIVE" in r, bar
+        assert chr(10) not in r, bar        # one line: cmd.exe truncates argv at a newline
+        # the categorical clause is gone in both branches, not merely reworded around
+        assert "Also NO for finance/FP&A/accounting, security/SOC, sales" not in r, bar
+    # v3.da2cb878 judged the 2026-08-31 morning; the ruling must supersede it
+    assert seniority.CONTRACT.startswith(seniority.CONTRACT_PREFIX)
+    assert seniority.CONTRACT not in ("v3.a517bb77", "v3.da2cb878")
+
+
+def test_the_claude_system_default_follows_a_rules_change(monkeypatch):
+    """`_claude(prompt, *, system=LLM_RULES)` bound the rules at DEF time. `set_experience_bar`
+    rebinds the `LLM_RULES` and `CONTRACT` globals, so after a flip every verdict would be
+    KEYED under the new contract while the model was still SENT the old rules — the whole
+    cache superseded and re-judged against the spec it was supposed to leave, one-directional,
+    with the drain's alarm pointing at `_rules()` where nothing is wrong. It is the only
+    divergence between the hashed string and the argv string this seam can produce."""
+    seen = {}
+
+    def fake_call(prompt, **kw):
+        seen["system"] = kw.get("system")
+        return _ok("YES")
+    monkeypatch.setattr(seniority.llm, "call", fake_call)
+    before = seniority.LLM_RULES
+    try:
+        seniority.set_experience_bar(True)
+        assert seniority.LLM_RULES != before        # the globals moved...
+        seniority._claude("Job title: Data Analyst")
+        assert seen["system"] == seniority.LLM_RULES, "the model was sent the OLD rules"
+        # ...and what the model is sent is what the contract hashes
+        assert seniority._contract(rules=seen["system"]) == seniority.CONTRACT
+    finally:
+        seniority.set_experience_bar(False)
+    seniority._claude("Job title: Data Analyst")
+    assert seen["system"] == seniority.LLM_RULES == before
+
+
+def _bf_job(i, desc=None):
+    # each role's OWN text: byte-identical descriptions at one employer are a stored careers
+    # page, and both `_classify` and `judge_backfill` blank them by design
+    return {"company": "Acme", "title": "Data Analyst %d" % i, "location": "Tel Aviv",
+            "url": "https://acme.com/jobs/%d" % i,
+            "description": (_TEXT + " Role %d." % i) if desc is None else desc}
+
+
+def test_the_dataset_backfill_is_excluded_from_the_fresh_quarantine_cohort(monkeypatch):
+    """The 33 verdict-less rows found on 2026-08-31 are historical ACCEPTS with real JDs:
+    judged as FRESH they are ~30 verdicts at a ~100 % YES rate, over `MASS_YES_RATE`, and the
+    run would withhold its whole fresh cohort — the morning's real roles — on the strength of
+    a backlog pass. The backlog is not a measurement of anything, so it is not a cohort."""
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    clf = seniority.Classifier(llm_cache={})
+    for i in range(30):
+        assert clf.judge_backfill(_bf_job(i))["decision"] == "accept"
+    assert len(calls) == 30 and clf.backfill_yes == 30
+    # the `llm N (Y yes)` clause counts the POSTINGS this run classified: the backfill
+    # never enters `paths`, so its yeses must not be counted in a clause whose other
+    # half is `p['llm']` -- two halves of one clause over different populations
+    assert "llm 0 (0 yes)" in clf.summary(), clf.summary()
+    assert "dataset backfill 30 verdict-less records: 30 judged (30 yes)" in clf.summary()
+    assert clf.quarantine() == "", "a backlog pass must not quarantine the run"
+    assert clf.commit() == 30
+    # ...but a REAL mass-no morning withholds the backfill's verdicts TOO, and that
+    # asymmetry with the drain is the point: a drain verdict withheld today is re-bought
+    # tomorrow, while `rec["class"]` is written once and never re-judged, so a bad backfill
+    # verdict is permanent -- and it is the one that asks a human to delete a published row.
+    _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    clf2 = seniority.Classifier(llm_cache={})
+    for i in range(30):
+        clf2.judge_backfill(_bf_job(i))
+    for i in range(30):
+        clf2.classify({"company": "Beta", "title": "Data Analyst %d" % i,
+                       "description": _TEXT + " Beta %d." % i})
+    assert clf2.quarantine().startswith("mass-no")
+    held = clf2.quarantined_keys()
+    assert clf2._backfill_keys and clf2._backfill_keys <= held
+    assert clf2.commit() == 0, "a quarantined morning caches nothing it judged"
+
+
+def test_the_dataset_backfill_is_bounded_and_never_eats_the_runs_budget(monkeypatch):
+    """Its own cap, and the run's. It deliberately does NOT consult `fresh_reserve`: it runs
+    after both classify sites, when every fresh role has already been judged, so the reserve
+    has nothing left to protect — but it must still stop at `cap`, and every record it could
+    not buy has to be counted and alarmed, never dropped silently."""
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    clf = seniority.Classifier(llm_cache={})
+    clf.backfill_cap = 2
+    out = [clf.judge_backfill(_bf_job(i)) for i in range(5)]
+    assert len(calls) == 2 and clf.backfill_judged == 2 and clf.backfill_held == 3
+    assert out[2] is None and out[3] is None       # the caller leaves those cells empty
+    alarm = [a for a in clf.alarms() if "could not judge 3 verdict-less records" in a]
+    assert alarm and "its own cap 2" in alarm[0], alarm
+    # ...and the reason named is the REAL one. "breaker closed" while the true cause was
+    # --no-llm or a spent cap is the line that invites the wrong fix.
+    off = seniority.Classifier(llm_cache={}, use_llm=False)
+    assert off.judge_backfill(_bf_job(1)) is None
+    assert any("(--no-llm)" in a for a in off.alarms()), off.alarms()
+    # the run's own cap stops it too, with no exception and no call
+    clf2 = seniority.Classifier(llm_cache={}, cap=1)
+    clf2.attempts = 1
+    assert clf2.judge_backfill(_bf_job(9)) is None and clf2.backfill_held == 1
+    assert len(calls) == 2
+    # ...but the fresh reserve does not: attempts inside the reserve window still backfill
+    clf3 = seniority.Classifier(llm_cache={}, cap=100, fresh_reserve=80)
+    clf3.attempts = 90                            # `_may_rejudge` would refuse the drain here
+    assert clf3._may_rejudge() is False
+    assert clf3.judge_backfill(_bf_job(1))["decision"] == "accept"
+
+
+def test_the_dataset_backfill_is_idempotent_and_a_second_pass_costs_nothing(monkeypatch):
+    """At steady state this runs every morning over a ledger with nothing to do. A judged
+    record keeps its verdict, and a re-judgement is the contract DRAIN's job under the drain's
+    caps — so the backfill must serve the cache and never buy the same verdict twice."""
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    cache = {}
+    clf = seniority.Classifier(llm_cache=cache)
+    first = clf.judge_backfill(_bf_job(1))
+    assert first["path"] == "llm" and len(calls) == 1
+    clf.commit()
+    clf2 = seniority.Classifier(llm_cache=cache)
+    second = clf2.judge_backfill(_bf_job(1))
+    assert second["decision"] == first["decision"] and second["path"] == "llm_cache"
+    assert len(calls) == 1 and clf2.backfill_cached == 1 and clf2.backfill_judged == 0
+    # a SUPERSEDED verdict is not an answer here: the column must carry a verdict made under
+    # the contract that is live today, and draining a stale one is the drain's job
+    clf3 = seniority.Classifier(llm_cache={"v3.deadbeef|acme|data analyst 2|jd": True})
+    assert clf3.judge_backfill(_bf_job(2))["path"] == "llm"
+    assert len(calls) == 2
+    # a keyword-excluded title is answered for free
+    clf4 = seniority.Classifier(llm_cache={})
+    kw = clf4.judge_backfill({"company": "Acme", "title": "Backend Engineer",
+                              "description": _TEXT})
+    assert kw["decision"] == "reject" and kw["path"] == "keyword" and len(calls) == 2
+
+
+def test_backfill_verdicts_skips_what_is_judged_and_names_the_rest(tmp_path, monkeypatch):
+    """`candidates` is the queue this lane owns: records with NO verdict. A record that
+    already carries one is never re-judged here, and a `superseded` record — the second copy
+    of a posting kept under another company name — never reaches the dataset, so buying a
+    verdict for one would be a call for a row no reader can see."""
+    from pipeline import class_backfill, roles, store
+    calls = _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    recs = _ledger(4)
+    ids = sorted(recs)
+    recs[ids[0]]["class"] = {"decision": "accept", "path": "llm", "reason": "judged already"}
+    recs[ids[1]]["status"] = "superseded"
+    for rid in ids:
+        recs[rid]["description"] = _TEXT
+    assert [r for r, _ in class_backfill.candidates(recs)] == ids[2:]
+
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-08-31")
+    lg.records = recs
+    clf = seniority.Classifier(llm_cache={})
+    verdicts, line = class_backfill.backfill_verdicts(lg, clf, verbose=False)
+    st.close()
+    assert set(verdicts) == set(ids[2:]) and len(calls) == 2
+    assert all(v["decision"] == "reject" for v in verdicts.values())
+    assert "2 verdict-less record(s)" in line and "2 judged (0 yes, 2 no)" in line
+    # A second pass in the same process is served from cache: the same DECISIONS, 0 new
+    # calls, and the path says where the answer came from.
+    again, _line2 = class_backfill.backfill_verdicts(lg, clf, verbose=False)
+    assert ({k: v["decision"] for k, v in again.items()}
+            == {k: v["decision"] for k, v in verdicts.items()})
+    assert len(calls) == 2 and clf.backfill_cached == 2
+    assert all(v["path"] == "llm_cache" for v in again.values())
+    # ...and the line is emitted even with NOTHING to do. At steady state that is every
+    # morning, and a hook that goes silent when it succeeds cannot be told apart from a
+    # hook that never ran -- which is the only question the morning check asks.
+    # ...and once the map is APPLIED there is nothing left, and the line still says so
+    assert sorted(class_backfill.apply_to(recs, verdicts, "2026-08-31")) == ids[2:]
+    _, empty = class_backfill.backfill_verdicts(lg, clf, verbose=False)
+    assert empty.startswith("backfill: 0 verdict-less record(s)"), empty
+    # a NO on a published row is not self-executing: it says so where a human reads daily
+    assert any("roles_retractions.jsonl" in a for a in clf.alarms())
+
+
+def test_record_run_applies_the_backfill_map_and_never_overwrites_a_live_verdict(tmp_path):
+    """`rec["class"]` has ONE writer and it fires only for jobs in this run's `merged` set —
+    which is why 33 of 167 published rows carried an empty `class_decision`. The backfill map
+    fills only an EMPTY cell, and is applied AFTER the live stamping, so a record that
+    reopened this morning keeps the verdict the run made for it."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-08-31")
+    recs = _ledger(3)
+    ids = sorted(recs)
+    for rid in ids:
+        recs[rid]["status"] = "closed"
+        recs[rid]["description"] = ""
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid in ids[:2]:          # ids[2] has no sqlite row: the backfill must still reach it
+        st.insert_matched({**recs[rid], "mkey": rid})
+    live = {"decision": "accept", "path": "llm", "reason": "this run judged it"}
+    job = dict(recs[ids[0]], _class=live)
+    lines = lg.record_run("2026-08-31", board_jobs=[job], merged=[job], scanned_ok=set(),
+                          failed=set(), paths={}, scoped=True,
+                          class_backfill={ids[0]: {"decision": "reject", "path": "llm",
+                                                   "reason": "backfill must not win"},
+                                          ids[1]: {"decision": "reject", "path": "llm",
+                                                   "reason": "no verdict before"},
+                                          "no|such record": {"decision": "reject",
+                                                             "path": "llm", "reason": "x"}})
+    st.close()
+    assert lg.records[ids[0]]["class"] == live, "the live verdict must win"
+    assert lg.records[ids[1]]["class"]["decision"] == "reject"
+    assert not (lg.records[ids[2]].get("class") or {})     # not in the map: still empty
+    assert any("class-backfilled 1" in ln for ln in lines)
+
+
+def test_a_backfill_retraction_line_shape_validates(tmp_path):
+    """A record judged NO keeps its line and its reason; it leaves the PUBLIC file only when
+    a human writes a retraction — the `roles` lane's machinery, and the only sanctioned way a
+    published row disappears. The template this lane writes must round-trip that reader, or
+    the row stays on the board with a `reject` verdict beside it."""
+    from pipeline import roles
+    p = str(tmp_path / roles.RETRACTIONS)
+    line = {"url": "https://acme.com/jobs/1", "status": "withdrawn",
+            "reason": ("re-judged NO under contract %s (dataset class backfill 2026-08-31): "
+                       "out of the product's analyst scope" % seniority.CONTRACT),
+            "on": "2026-08-31", "evidence": "LLM verdict: an FP&A role, not analytics",
+            "by": "classifier backfill 2026-08-31"}
+    with open(p, "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(line, ensure_ascii=False) + "\n")
+    r = roles.Retractions.load(p)
+    assert r.bad == 0 and len(r.entries) == 1
+    assert r.entries[0]["status"] in roles.RETRACTABLE and r.entries[0]["reason"].strip()
+
+
+def test_a_backfill_reject_is_counted_at_every_tier_and_only_when_published(monkeypatch):
+    """The alarm asks a human to write a retraction line, so it has to count every reject on
+    a PUBLISHED row — a keyword or cached reject costs the reader exactly as much as a paid
+    one. It counted only the LLM branch, so three published rows could be stamped
+    `class_decision=reject` with nobody told; and it counted purged/withdrawn records, which
+    `build_rows` never emits, so the number overstated the human's work."""
+    _fake_seam(monkeypatch, lambda p: _ok("NO"))
+    clf = seniority.Classifier(llm_cache={seniority.cache_keys(
+        _bf_job(1), True, seniority.CONTRACT)[0]: False})
+    assert clf.judge_backfill(_bf_job(1))["path"] == "llm_cache"          # cached reject
+    assert clf.judge_backfill({"company": "Acme", "title": "Backend Engineer",
+                               "description": _TEXT})["path"] == "keyword"
+    assert clf.judge_backfill(_bf_job(2))["path"] == "llm"               # paid reject
+    assert clf.backfill_no == 3, "every tier's reject needs the same human act"
+    alarm = [a for a in clf.alarms() if "record(s) NO" in a]
+    assert alarm and "judged 3 published record(s) NO" in alarm[0]
+    # ...and a record the dataset never publishes is not the human's work
+    off = seniority.Classifier(llm_cache={})
+    assert off.judge_backfill(_bf_job(3), published=False)["decision"] == "reject"
+    assert off.backfill_no == 0 and not [a for a in off.alarms() if "record(s) NO" in a]
+
+
+def test_the_backfill_keeps_the_deterministic_head_and_the_shared_text_guard(monkeypatch):
+    """Two ways `judge_backfill` could disagree with `_classify` about the same posting, both
+    of which would put a verdict in the public column that contradicts the board.
+
+    The experience bar: with it ON, `_classify` rejects a junior title for free and the
+    backfill would have PAID for one and possibly accepted it. The shared-description guard:
+    two different roles at one employer with byte-identical text means the scraper stored the
+    careers PAGE, and a confident verdict on another posting's words gets keyed under this
+    role's name for a year. These records reach the backfill queue precisely when they close
+    verdict-less, so neither case is hypothetical here."""
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    clf = seniority.Classifier(llm_cache={})
+    try:
+        seniority.set_experience_bar(True)
+        r = clf.judge_backfill({"company": "Acme", "title": "Junior Data Analyst",
+                                "description": _TEXT})
+        assert r["decision"] == "reject" and r["path"] == "keyword"
+        assert not calls, "the bar rejects for free on both paths, or they disagree"
+    finally:
+        seniority.set_experience_bar(False)
+    # the shared description: same employer, same bytes, two titles at two addresses
+    clf2 = seniority.Classifier(llm_cache={})
+    a = clf2.judge_backfill(_bf_job(1, desc=_TEXT))
+    b = clf2.judge_backfill(_bf_job(2, desc=_TEXT))
+    assert a["decision"] == b["decision"] == "accept"
+    assert clf2.shared_text == 1
+    assert clf2.commit() == 1, "a verdict judged on another role's text is never cached"
+
+
+def test_the_backfill_cli_never_writes_a_description_into_the_record_ledger(tmp_path):
+    """`Ledger._absorb` puts the description on the record IN MEMORY and `flush` strips it;
+    `roles.dump` does not. Writing `ledger.records` straight to disk duplicated the whole of
+    `roles_text.jsonl` into the record ledger — 267 kB to 914 kB, 193 of 193 records — and
+    the inline copy then SHADOWS the text file at the next `open_sync` for any record with no
+    sqlite row, so a jd-text repair would be ignored."""
+    from pipeline import class_backfill, roles
+    recs = _ledger(3)
+    for rid in recs:
+        recs[rid]["description"] = _TEXT
+        recs[rid]["_touched"] = True
+    p = str(tmp_path / "roles.jsonl")
+    roles.dump(p, class_backfill._writable(recs))
+    back, status, _ = roles.load(p)
+    assert status == "ok" and len(back) == 3
+    assert not any("description" in r for r in back.values())
+    assert not any(k.startswith("_") for r in back.values() for k in r)
+    assert all(r.get("title") and r.get("url") for r in back.values())   # nothing else lost
+
+
+def test_the_backfill_queue_is_only_what_the_dataset_publishes(tmp_path):
+    """`build_rows` emits a row for `open` and `closed` only. Keeping the other statuses was
+    justified as "cheap (a keyword reject or a cache hit for most)"; measured on the
+    2026-08-31 pool, 9 of 42 candidates were purged/withdrawn and ALL NINE were `strong`
+    relevance — every one needed a paid call, 21 % of the pass, for a cell no reader can
+    see. Seven were staffing agencies the pipeline had already purged as never ours."""
+    from pipeline import class_backfill
+    recs = _ledger(5)
+    ids = sorted(recs)
+    for rid, st_ in zip(ids, ("open", "closed", "superseded", "purged", "withdrawn")):
+        recs[rid]["status"] = st_
+    assert [r for r, _ in class_backfill.candidates(recs)] == ids[:2]
+    # ...and a record whose class dict lost its decision is still owed one: testing the dict
+    # for truthiness alone made it look judged for ever while shipping an empty cell
+    recs[ids[0]]["class"] = {"path": "llm"}
+    assert ids[0] in [r for r, _ in class_backfill.candidates(recs)]
+    recs[ids[0]]["class"] = {"decision": "accept", "path": "llm"}
+    assert ids[0] not in [r for r, _ in class_backfill.candidates(recs)]

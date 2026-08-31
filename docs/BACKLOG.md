@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**579 filed · 418 open · 161 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**584 filed · 423 open · 161 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 529.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 534.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -483,7 +483,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### roles — 18 open
+### roles — 20 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
 - **3** `3@roles` **`pipeline/dates.py`**
@@ -503,6 +503,8 @@ closure convention in the header.
 - **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
 - **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
 - **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
+- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
+- **533** `533@roles` **One employer, two company strings, two paid LLM calls
 
 ### jd-text — 14 open
 
@@ -521,7 +523,7 @@ closure convention in the header.
 - **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 
-### classifier — 10 open
+### classifier — 13 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -533,6 +535,9 @@ closure convention in the header.
 - **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
 - **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
 - **503** `503@classifier` **The contract drain still competes with fresh roles for the same call budget; the deferred
+- **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
+- **531** `531@classifier` **The seam volunteers "temporary" as a ground for NO, and the rules never say it is not
+- **532** `532@classifier` **Where the analytics-engineer line falls is a product boundary no decision record
 
 ### render — 6 open
 
@@ -9786,3 +9791,68 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      change) and the answer is the same as `Faye`/`withfaye`: an evidenced `display_name`,
      which `company-intel` can write once `board_verify` reads those pages — filed here so
      the registry knows the row's NAME is the wrong half of each pair.
+
+529. **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
+     not — and three measurements say leaving it alone is right** — lane: `classifier`.
+     Filed by `classifier` 2026-08-31, deliberately unfixed. `docs/decisions/2026-08-31-domain-scope.md`
+     makes the domain irrelevant to the LLM tier, but `_HARD_EXCLUDE` rejects a bare
+     `Financial / Compliance / Security / SOC / Credit / Equity / Investment Analyst` on the
+     `keyword` path with no description read and no appeal, so the ruling does not reach the
+     gate above it. Not changed, on evidence: **0 of the 116 `excluded`-tier rejections** in
+     the exhaustive 401-posting title-gate measurement (2026-08-28) was a genuine analyst
+     role; both live finance-titled postings that carry a description are NO under the new
+     rules; and of the **28 live titles** affected, 20 are SOC or security roles the operator
+     names as out. What reopens it: a MEASURED false negative in that tier — judge the 28
+     through the production seam when descriptions exist for more than two of them, and if
+     any is a genuine analytics role, move that alternative from `_HARD_EXCLUDE` to a
+     `_QUALITATIVE_HINT`-style demotion (never a reject) and re-run the 252-row golden
+     fixture. The 28 are re-derived by the one-liner in the decision record.
+
+530. **`withdrawn` now means two different things, and the note a downloader reads says only
+     one of them** — lane: `roles`. Filed by `classifier` 2026-08-31. The meta explains
+     `withdrawn` as "the employer is real but THIS posting was never in scope … it was
+     published in error". Of the 17 rows withdrawn after this commit, **14 were published
+     correctly under a retired spec** and are out of scope under the contract that is live
+     today (`docs/decisions/2026-08-31-domain-scope.md`); their lines say so in the reason
+     field, the note does not. **Seven of the 14 were emailed to subscribers** (AppsFlyer
+     Financial Data Analyst 08-20, Freightos 08-17, Global-e 08-17, Guardio ×2 08-17, SHILA
+     08-24 …), so the note is also the only place that can say what a withdrawal does and does
+     not claim about a mail that was delivered. Either the note broadens, or a third status
+     splits the two — and the second is not obviously right, because a downloader who wants
+     "rows that left the file" wants one list, not three. Re-derive after the next run:
+     `python -c "import json;m=json.load(open('cloud_state/roles.csv.meta.json',encoding='utf-8'));print(m['excluded']['withdrawn'], sum(1 for r in m['removed'] if 'backfill' in (r.get('reason') or '')))"`
+
+531. **The seam volunteers "temporary" as a ground for NO, and the rules never say it is not
+     one** — lane: `classifier`. Filed 2026-08-31. Asked twice about
+     `AppsFlyer | Financial Data Analyst - Temporary position (9 months)`, the model answered
+     NO partly because the role "is also not a permanent job" — under two different contracts.
+     Boundary 3 excludes student placements only, and the **same pass accepted three Taboola
+     maternity-cover roles as YES**, so the seam is inconsistent on a distinction the spec
+     does not draw. It changed no verdict (the FP&A ground stands alone), which is why this is
+     filed rather than fixed: the repair is one clause in condition (3) of `LLM_RULES`
+     ("a fixed-term, temporary or maternity-cover position IS a job"), and it costs a contract
+     bump plus a measurement round, so it belongs with the next scope change rather than on
+     its own.
+
+532. **Where the analytics-engineer line falls is a product boundary no decision record
+     draws** — lane: `classifier`. Filed 2026-08-31. Condition (1) says BI counts; condition
+     (2) excludes data engineering. A "BI Developer" building Power BI dashboards, reports and
+     semantic models *alongside* SSIS/ADF pipelines is neither, and three of the 2026-08-31
+     backfill's 18 published rejects sat on that line — `Central Bottling Company Israel |
+     Business Intelligence Developer 17621` was **lifted** for it, while both Guardio rows
+     (explicitly dbt/Airflow/ELT) stand. Deciding it by one unreviewed LLM call per published
+     row is how the board loses real BI roles, or keeps engineering ones. It deserves what the
+     agency boundary got on 2026-08-28: a named case, a measurement over the golden fixture,
+     and a written decision.
+
+533. **One employer, two company strings, two paid LLM calls — the classifier cannot see that
+     `NVIDIA` and `NVIDIA AI` are one company** — lane: `roles`. Filed by `classifier`
+     2026-08-31. Run 33387229779 judged `NVIDIA | Senior Business Intelligence Analyst` at
+     12:03:28Z and `NVIDIA AI | Senior Business Intelligence Analyst` at 12:03:41Z — two calls,
+     two cache rows, two board cards for what the mail itself flags as
+     `title-twin NVIDIA/NVIDIA AI`. The verdict cache is keyed
+     `<contract>|<norm_company>|<norm_title>|jd` and `_norm_company` strips only legal-form
+     suffixes, deliberately: merging two real employers is a wrong answer where a duplicate is
+     a wasted call. So it is not fixable in the key — it is the same identity gap as
+     `merge_key` → `firmographics.identity_key` (132-139), measured from the classifier's
+     side, and the cost is one duplicate call per twin per contract change.

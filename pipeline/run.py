@@ -409,6 +409,39 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         stats["israel_matched"] += len(gcands)
         accepted += roles.classify_grouped(gcands, clf, jdfill, stats, paths)
 
+    # THE DATASET BACKFILL (lane: classifier, ARCHITECTURE §7b; hook applied 2026-08-31 with
+    # the operator's ruling, and it is `infra`'s file — the whole body is one call).
+    # `cloud_state/roles.csv` shipped 33 of 167 rows with an EMPTY `class_decision`: a role
+    # that closed before `rec["class"]` existed is never in `merged` again, so the one writer
+    # never fires and the contract drain cannot reach it either (it re-judges RECORDED
+    # verdicts). This judges those records under the current contract and hands the map to
+    # `record_run` below, which fills only an empty cell — this run's live verdict always
+    # wins. It sits AFTER both classify sites on purpose: every fresh role is judged by then,
+    # so the backlog cannot take a call slot the 48h email window needed. Bounded by
+    # `CLASSIFY_BACKFILL_CAP`, and free (but never silent) once the backlog is empty.
+    _class_backfill = {}
+    if use_llm and not (only or limit):   # scoped, or no seam: never spend on the backlog
+        try:
+            from . import class_backfill as _cbf
+            _class_backfill, _cbf_line = _cbf.backfill_verdicts(ledger, clf)
+            print("  " + _cbf_line, flush=True)     # printed even at `0 verdict-less`:
+            #   at steady state that IS every morning, and a hook that goes silent when it
+            #   succeeds cannot be told apart from a hook that never ran
+            # A QUARANTINED morning writes nothing into the dataset. `rec["class"]` is
+            # written once and never revisited (the drain re-judges cache rows, not ledger
+            # fields), so a verdict from a seam this run has just declared broken would be
+            # permanent — and it is the verdict that asks a human to delete a published row.
+            # Rule 2: a mass-zero is a broken run, not a measurement.
+            if _class_backfill and clf.quarantine():
+                _line = (f"classify dataset backfill DISCARDED {len(_class_backfill)} verdict(s): "
+                         f"the run is quarantined ({clf.quarantine()}) and a backfill verdict "
+                         f"is written once and never re-judged — retried tomorrow")
+                _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
+                _class_backfill = {}
+        except Exception as e:     # noqa: BLE001 — a backlog pass never breaks the digest
+            _line = f"classify dataset backfill FAILED ({type(e).__name__}: {e}) — the column keeps its empty cells"
+            _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
+
     # persist this run's LLM verdicts NOW (not after rendering): an exception anywhere in the
     # rendering / company-intel code below must not lose what was paid for (a runner timeout
     # still loses it — the commit lives in the Persist step). `commit` withholds a quarantined
@@ -655,7 +688,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     _role_lines = ledger.record_run(
         run_date, board_jobs=alive_jobs, merged=merged,
         scanned_ok={r["company_name"] for r in rows}, failed=failed_names, paths=paths,
-        scoped=bool(only or limit), never_ours=None if _purge_held else _never_ours)
+        scoped=bool(only or limit), never_ours=None if _purge_held else _never_ours,
+        class_backfill=_class_backfill)
     _role_lines = _role_lines + _claim_lines
 
     # THE PUBLIC DATASET (lane: roles, ARCHITECTURE §7c). One row per role, a rolling

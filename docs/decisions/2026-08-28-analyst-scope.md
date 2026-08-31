@@ -30,6 +30,14 @@ Finance (including FP&A, investment, credit, actuarial) and security (SOC, threa
 intelligence, fraud) analysts are out. They are analysts; they are not this product's
 analysts, and the reader is a data/BI analyst.
 
+> **SUPERSEDED 2026-08-31 — `docs/decisions/2026-08-31-domain-scope.md`.** That paragraph is
+> no longer the rule and was never quite what the code enforced. The operator's ruling: the
+> DOMAIN never decides, because most data analysts are domain specific — a quantitative
+> analyst in finance, fraud, sales, compliance or compensation is IN, and only **FP&A /
+> accounting close, SOC / security monitoring and investigations, and market intelligence**
+> are named exclusions. Everything else is decided from the description. Measured at 0 of 17
+> verdicts moved.
+
 Boundaries 3 and 4 changed today. The rest is a written-down version of what the code already
 did.
 

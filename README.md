@@ -67,9 +67,15 @@ analytics, which is the bar a bare "Data Scientist" has always had. **Excluded:*
 internships, student placements, apprenticeships and trainee programmes — deterministically,
 in English and Hebrew, above every accept. Also out: a staffing agency or IT-outsourcing
 house advertising a role at a client company (judged per posting, not by a name list); core
-ML, data engineering, software engineering, FP&A, security/SOC. Israel is judged per
+ML, data engineering, software engineering, FP&A / accounting, SOC / security monitoring and
+investigations, market intelligence, and pure product management. **The domain does not
+decide** — most data analysts are domain specific, so a quantitative analyst in sales,
+marketing, fraud, compliance, HR or any other field is in scope when their own core output
+is analysis of measured data. Israel is judged per
 posting, not per company. The full product decision is
-[`docs/decisions/2026-08-28-analyst-scope.md`](docs/decisions/2026-08-28-analyst-scope.md);
+[`docs/decisions/2026-08-28-analyst-scope.md`](docs/decisions/2026-08-28-analyst-scope.md)
+as amended by
+[`docs/decisions/2026-08-31-domain-scope.md`](docs/decisions/2026-08-31-domain-scope.md);
 the code that implements it is described in `ARCHITECTURE.md` §0.
 
 ## Reading this repo

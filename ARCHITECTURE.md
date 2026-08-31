@@ -127,7 +127,13 @@ analytics, which is the bar a bare "Data Scientist" has always had (§7b has the
 measurement). **Out of scope**: internships, student placements and trainee programmes; a
 staffing agency or IT-outsourcing house advertising a role at a client company — judged per
 posting, not by a name list, so it is a demotion to the LLM tier and never a keyword reject;
-core ML/model building, data engineering, software engineering, finance/FP&A, security/SOC.
+core ML/model building, data engineering, software engineering, FP&A / accounting close,
+SOC / security monitoring and investigations, market intelligence, and pure product
+management. **The domain itself does not decide** (2026-08-31): a quantitative analyst in
+sales, marketing, fraud, compliance, HR or any other field is in scope when their own core
+output is analysis of measured data — with the standing exception that the title gate above
+this step still rejects a bare `Financial / Compliance / Security / SOC / Credit / Equity /
+Investment Analyst` deterministically (§7b measures what that costs).
 Deterministic keyword rules decide the clear cases; ambiguous
 titles go to one bounded, tool-less sonnet call through `pipeline/llm.py` (§7b), whose
 YES/NO **role judgment** is
@@ -4993,6 +4999,47 @@ buys no call and protects no role *today*; it is there for the day the registry 
 > `v2|מטריקס|מנתח/ת ומאייפנ/ת מערכות bi למשרד מממשלתי מוביל בירושלים - matrix - dna|jd`.
 > Re-derive: `python tools/measure_scope_rule.py --tier both --workers 4`.
 
+**2026-08-31 — the domain never decides.** Condition (2) carried a categorical tail (`Also NO
+for finance/FP&A/accounting, security/SOC, sales …`) that the operator retired: *"sales is
+fine. domain specific is fine, most data analysts are domain specific. FP&A, SOC and 'market
+intelligence' specifically can be excluded, other than that description based is best"*. It
+is now a WORK test — a quantitative analyst in sales, marketing, fraud, risk, compliance,
+HR/compensation or any other field is IN when their own core output is analysis of measured
+data — with **four exclusions that hold however quantitative the posting looks, and which the
+rules call exclusions rather than examples**: FP&A / budgeting / forecasting / accounting
+close; SOC / security monitoring and investigations; market intelligence; and pure
+product-management or architect roles. The first wording put that list after "answer NO only
+where the work itself is not analysis", which a model may read as *examples* of non-analysis
+and escape by judging one FinOps posting to BE analysis; and it left `market intelligence` in
+condition (5) under "judge the WORK, never the title", where a quantitative
+market-intelligence analyst still passed. Both were corrected before shipping.
+
+> **Measured in three rounds, 30 calls.** (i) 17 postings under the first wording — 12 of the
+> morning's flips whose subject matter the clause bears on, and 5 the morning rejected ON the
+> domain: **0 moved.** (ii) The 13 with stored text re-judged under the SHIPPED wording:
+> **1 moved** — `Chainalysis | Intelligence Analyst - Fraud Researcher`, the posting that
+> raised the question, now NO ("fraud/scam investigation and research … akin to security
+> monitoring/investigations"). Every marketing, sales, compensation and commercial-analytics
+> YES held. (iii) The two finance-titled postings the keyword tier rejects that carry a
+> description: **both NO** (`Applied Materials | Operations Finance Analyst`,
+> `Crossriver | IT Compliance Analyst`). Artifact:
+> `tests/fixtures/classifier/2026-08-31-domain-scope.json`.
+
+**The limit, stated plainly: this rule governs what reaches the model.** `_HARD_EXCLUDE`
+still rejects a bare `Financial / Compliance / Security / SOC / Credit / Equity / Investment
+Analyst` title on the `keyword` path, no description read and no appeal — so "the domain
+never decides" is true of the LLM tier and **not** of the gate above it. The gate is left
+alone because the measurements say it is not costing roles: **0 of the 116 `excluded`-tier
+rejections** in the exhaustive 401-posting title-gate measurement (2026-08-28, below) was a
+genuine analyst role, and both live finance-titled postings that carry a description are NO
+under the new rules. **28 live titles** are affected, 20 of them SOC or security roles the
+operator names as out. What would reopen it: a measured false negative in that tier
+(`529@classifier`).
+
+The contract moves once for both changes (`v3.da2cb878` → `v3.7cb6831f`) and the drain
+follows it. `docs/decisions/2026-08-31-domain-scope.md`; the paragraph it supersedes is
+marked in the 08-28 record.
+
 **The scope those gates enforce is now a decision, not a phrase**:
 `docs/decisions/2026-08-28-analyst-scope.md`. Two of its five boundaries changed that day and
 both are one named flag rather than scattered conditionals. (1) **The experience bar is
@@ -5051,6 +5098,17 @@ item 6) calls:
 claude -p --model sonnet --effort low --tools "" --no-session-persistence
           --output-format json --json-schema {verdict: YES|NO, reason} --system-prompt <LLM_RULES>
 ```
+The rules reach the CLI as ONE argv element resolved at CALL time. `_claude`'s `system=`
+default was `LLM_RULES`, bound once at `def` time, and `set_experience_bar()` rebinds the
+`LLM_RULES` and `CONTRACT` globals — so after a flip every verdict would have been KEYED
+under the new contract while the model was still SENT the old rules: the whole cache
+superseded and re-judged against the spec it was leaving, one-directional, with the drain's
+alarm pointing at `_rules()` where nothing is wrong. That is the one divergence between the
+hashed string and the argv string this seam can produce, and it is now `system=None` resolved
+in the body, pinned by `test_the_claude_system_default_follows_a_rules_change` (2026-08-31,
+found while clearing the first drain's alarm — the rules string itself was intact:
+2,507 chars, 0 newlines, and `sha1(rules|model)` reproduced the run's own contract).
+
 posting on stdin, `shell=False` on every OS (`shutil.which("claude")`), `cwd=` one fixed
 scratch directory — **never the repo**: from the repo root every call read `CLAUDE.md` and the
 gitignored `CLAUDE.local.md` (24,845 cache-creation input tokens against 4,633 from a scratch
@@ -5076,6 +5134,7 @@ reason of every fresh verdict is printed to the step log: `[llm] company | title
 | superseded-contract re-judgements per run | 250 NO + 150 YES | `CLASSIFY_REJUDGE_CAP` / `CLASSIFY_REJUDGE_YES_CAP` — how fast a scope change drains; spent in encounter order, and a drained role never returns. **The two cohorts are bounded separately** (2026-08-30): a superseded YES is a role on the board *right now* under a retired spec and there are only ever as many as the board is long (91 on 08-29; 16 forecast for the first run), where stale NOs number in the hundreds — capped together, the budget goes alphabetically and a retired-spec role waits behind a queue of rejections. The YES cap is deliberately generous rather than absent: unbounded, the drain spends the run in encounter order and every FRESH role behind it comes back `llm_skipped`, and a fresh role skipped today can fall out of the 48-hour email window and never be mailed at all | `classify N roles decided by a SUPERSEDED verdict that this run could have re-judged (M done against cap 250, plus Y stale YES re-judged uncapped) - about R more run(s) at this rate` |
 | fresh-role reserve | 80 calls | `CLASSIFY_FRESH_RESERVE` — the drain, **both cohorts, the YES one included**, may never consume the run's final 80 call slots (`_may_rejudge` refuses once `attempts >= cap - reserve`, counted in `reserve_held`), so however large a backlog, the fresh roles interleaved behind it are judged and cannot fall out of the 48-hour email window. This is the structural form of the promise the YES cap's generous 150 only gestured at, and it is what makes a 250 NO cap safe: at steady state the pool is empty and neither number spends anything; after a deliberate contract change the queue clears in one unattended run (2026-08-30: 210 queued = 201 NO + 9 YES). The trade-off, accepted: on a morning that trips the reserve, a stale YES behind it stays on the board under the retired spec until tomorrow. A reserve pause is not a stall — the `stalled` alarm is gated on `reserve_held` | (no line of its own; the SUPERSEDED line's runs-to-empty divides by `min(rejudge_cap, cap - reserve)`) |
 | quarantine floor | 30 fresh verdicts | `CLASSIFY_QUARANTINE_MIN` / `QUARANTINE_MIN_FRESH` (the rehearsal sets 10) | see below |
+| dataset backfill per run | 60 calls | `CLASSIFY_BACKFILL_CAP` — the verdict-less ledger records judged per run (below). Its own cap because it is not the drain: it may not eat the run, and it must not be bounded by the drain's caps either, since a record with NO verdict has nothing to drain. Held records are alarmed, never dropped | `classify dataset backfill could not judge N verdict-less records this run (<the real reason: `--no-llm`, the breaker, the run's budget, or `its own cap 40`>) - they ship with an empty class_decision and are offered again tomorrow` |
 
 An explicit constructor argument beats the environment (`Classifier(cap=2)` in a test is 2).
 
@@ -5106,6 +5165,68 @@ count. The digest still ships; only the suspect cohort is withheld from the cach
 verdicts still decide postings later in the same run); the mail says
 `classify mass-no(…) — N of this run's M verdicts NOT cached`. A withheld cohort is re-bought
 tomorrow, bounded by the cap; nothing escalates yet (BACKLOG 123).
+
+### The dataset backfill — a published row is never "included but never judged"
+
+`pipeline/class_backfill.py`, 2026-08-31. `cloud_state/roles.csv` published **33 of 167 rows
+with an empty `class_decision`**, every one `closed`, 30 with a real description.
+`rec["class"]` has ONE writer (`pipeline/roles.py`, from this run's `merged` jobs), so a role
+that closed before that field existed is never in `merged` again and its cell stays empty for
+ever — and the contract drain cannot reach it either, because the drain re-judges RECORDED
+verdicts and these have none. Nothing was going to fix it, and every role that closes during
+an outage joins the pile.
+
+`Classifier.judge_backfill(job)` judges those records under the CURRENT contract — never a
+superseded one, which is the drain's job — and `run.py` hands the `{role_id: class}` map to
+`Ledger.record_run(class_backfill=…)`, which fills **empty cells only**, after the live
+stamping, so a role that reopened this morning keeps the verdict the run made for it. Three
+deliberate isolations, each a way it could have broken the run it rides in:
+
+* it never touches `self.paths`, so the `Decision paths:` reconciliation still sums to
+  `Israel-matched` (and its calls are therefore in `LLM calls this run`, which is *attempts*,
+  without a matching term in `Decision paths:` — the step log's `backfill:` line is where
+  that number is accounted for);
+* it is **not a fresh cohort** (`_suspect` subtracts `backfill_ok`/`backfill_yes`) — the
+  backlog is historical ACCEPTS at a ~100 % YES rate, and judged as fresh they would have
+  quarantined the morning's real roles. That is a question about *evidence*; whether the
+  run's output deserves to be kept is a different one, so a **quarantined morning discards
+  the backfill entirely** (`run.py` drops the map with an alarm, and `quarantined_keys`
+  withholds its verdicts). `rec["class"]` is written once and never re-judged — the drain
+  re-judges CACHE rows, not ledger fields — so a bad backfill verdict is permanent where a
+  withheld drain verdict is merely re-bought tomorrow;
+* it does **not** consult `fresh_reserve`: it runs after both classify sites, when every
+  fresh role has already been judged, so the reserve has nothing left to protect.
+  `CLASSIFY_BACKFILL_CAP` and the run's own `cap` bound it, and a held record is alarmed.
+
+It shares the live path's whole deterministic head — the hard excludes, `_NOT_A_JOB`, the
+experience bar and the **shared-description guard** — because a backfill verdict that
+disagreed with `_classify` about the same posting would put a `class_decision` in the public
+file that contradicts the board. It also refuses to serve a `|bare` verdict to a record that
+has a real description: everywhere else a bare verdict is provisional and upgraded when the
+text arrives, and this column is written once.
+
+The queue is the records the dataset PUBLISHES (`open`/`closed`). `superseded`, `purged` and
+`withdrawn` were kept at first on the reasoning that they would be cheap; measured on the
+2026-08-31 pool, **9 of the 42 candidates were purged or withdrawn and all 9 were `strong`
+relevance** — every one needed a paid call, 21 % of the pass, for a cell no reader can see.
+
+A `reject` does not remove a row by itself: the record keeps its line and its reason, and it
+leaves the public file only when a human writes into `cloud_state/roles_retractions.jsonl`
+(§7c). The seam prints `classify dataset backfill judged N published record(s) NO …`,
+counting **every tier** — a keyword or cached reject needs the same human act as a paid one.
+First pass, 2026-08-31: **42 verdict-less records, 41 judged (17 YES, 24 NO) + 1 keyword,
+0 held; empty `class_decision` 33 → 0.** Of the 24 rejects, 18 were on published rows; each
+was read against the seam's reason and **14 were given retraction lines**, four lifted
+(one contradicted condition (1) verbatim and had been emailed; two were judged on text
+`looks_like_jd` rejects, where a verdict is provisional everywhere else in this seam but a
+retraction is permanent; one sits on a BI-developer boundary no decision record draws —
+`530`/`532`). Next run: **167 → 153 rows, 0 empty, reconciliation holds** (rehearsed on a
+scratch copy).
+The step log's `backfill:` line is printed **even when there is nothing to do** — at steady
+state that is every morning, and a hook that goes silent when it succeeds cannot be told
+apart from one that never ran, which is the only question the morning after asks.
+Re-derive: `python -m pipeline.class_backfill --db cloud_state/seen.db --dry-run` (spends
+nothing) and `python -c "import csv;print(sum(1 for r in csv.DictReader(open('cloud_state/roles.csv',encoding='utf-8')) if not r['class_decision']))"`.
 
 ### The verdict cache (`cloud_state/seen.db` → `llm_cache`, column `title_key`)
 
@@ -5211,6 +5332,8 @@ X` the attempt failures (the alarm below uses X). The classifier's alarms ride t
 | every fresh verdict NO / mostly YES | `classify mass-no(…) — N of this run's M verdicts NOT cached` | `all_no`, `all_yes` (the driver empties the scratch cache for these; `--fresh` does it for any mode; needs ≥ `CLASSIFY_QUARANTINE_MIN` fresh roles — 10 companies, not 4) |
 | re-judgements of this seam's verdicts flipping one way | `classify mass-flip(…) — …` | unit test only (`test_mass_flip_is_a_ratio_not_a_cliff`) |
 | a scope change still propagating | `classify N roles decided by a SUPERSEDED verdict that this run could have re-judged (M done, cap 250) - about R more run(s) at this rate` | unit test only (`test_the_stale_alarm_separates_the_queue_from_what_no_cap_can_reach`) |
+| the backfill could not finish | `classify dataset backfill could not judge N verdict-less records this run …` | unit test only (`test_the_dataset_backfill_is_bounded_and_never_eats_the_runs_budget`) |
+| the backfill rejected a PUBLISHED row | `classify dataset backfill judged N published record(s) NO: they carry class_decision=reject until a line in cloud_state/roles_retractions.jsonl withdraws them (lane: roles)` | unit test only (`test_backfill_verdicts_skips_what_is_judged_and_names_the_rest`) |
 | ...and the part no cap can reach | `classify N superseded verdicts CANNOT be re-judged: the role has no description this run … (lane: jd-text)` | same |
 | the propagation has STOPPED | `classify the contract drain did NOT move this run: N roles were re-judgeable, the seam was available and the cap is 250 - the scope change has stalled` | same |
 

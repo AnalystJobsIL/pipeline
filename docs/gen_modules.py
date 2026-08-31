@@ -124,6 +124,7 @@ PIPELINE = {
  "fetchers": "one normalizer per ATS platform -> the common job shape. %d platforms, plus the two pseudo-platforms `scrape` and `discovery`" % _PLATFORMS,
  "israel": "deterministic Israel-location filter",
  "seniority": "relevance + experience classification; the LLM tier for ambiguous titles",
+ "class_backfill": "judges the role-ledger records that carry NO classifier verdict, so the public dataset's `class_decision` is never \"included but never judged\" (33 of 167 rows on 2026-08-31). Runs from `run.py` after both classify sites and as `python -m pipeline.class_backfill`; fills only an empty cell, never re-judges (that is the contract drain's job)",
  "store": "the SQLite seen-store: sent / matched / llm_cache / company_info / firmographics",
  "roles": "**the role ledger** (lane `roles`): cloud_state/roles.jsonl + roles_text.jsonl, one line per role - status / episodes / reposts / class / tags / attribution / sent - reconciled with the sqlite store at open",
  "jdtext": "the JD as text -> requirements / responsibilities / blurb / location / seniority chip (pure; stdlib + the lexicon for two checks)",

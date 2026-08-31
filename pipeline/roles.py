@@ -1052,7 +1052,7 @@ class Ledger:
         return hits
 
     def record_run(self, run_date, *, board_jobs, merged, scanned_ok, failed, paths=None,
-                   scoped=True, never_ours=()):
+                   scoped=True, never_ours=(), class_backfill=None):
         """Status / episodes / reposts / class / tags / attribution for this run, then flush.
         Closure is judged for companies this run looked at and whose fetch succeeded — every
         company but the failed ones on a FULL run (a role whose employer is no registry row
@@ -1069,13 +1069,20 @@ class Ledger:
         of a city, permanently — section 7c reserves `purged` for a row that was never ours,
         and this is that case. A purge is not a closure and never counts toward the
         mass-close guard, because parking a row is a deliberate registry action and not the
-        broken fetch that guard exists to catch."""
+        broken fetch that guard exists to catch.
+
+        `class_backfill` is `{role_id: {decision, path, reason}}` from
+        `pipeline/class_backfill.py` (lane: `classifier`): verdicts for records this run
+        never fetched, so the dataset's `class_decision` is not empty on every role that
+        closed before the column existed. It fills only an EMPTY `class` and is applied
+        AFTER the live stamping below, so this run's own verdict always wins."""
         return self._guard("record_run", lambda: self._record_run(
             run_date, board_jobs=board_jobs, merged=merged, scanned_ok=scanned_ok, failed=failed,
-            paths=paths, scoped=scoped, never_ours=never_ours), ["roles: not recorded (see Stages)"])
+            paths=paths, scoped=scoped, never_ours=never_ours,
+            class_backfill=class_backfill), ["roles: not recorded (see Stages)"])
 
     def _record_run(self, run_date, *, board_jobs, merged, scanned_ok, failed, paths, scoped,
-                    never_ours=()):
+                    never_ours=(), class_backfill=None):
         rows = {r["mkey"]: r for r in self.st.get_matched_since("0000-01-01", include_superseded=True)}
         onboard = {_store.merge_key(j) for j in board_jobs}
         by_key = {_store.merge_key(j): j for j in merged}
@@ -1278,6 +1285,19 @@ class Ledger:
                 c[prev_status + "_total"] += 1     # a standing verdict is a total, never a delta
             else:
                 c[prev_status] += 1
+        # The classifier's backlog verdicts (lane: `classifier`, `pipeline/class_backfill.py`),
+        # applied AFTER the loop above so a record this run actually fetched keeps the verdict
+        # the run made for it. Fill-only-empty in both directions: a record that already
+        # carries a `class` is never touched here, and re-judging one is the contract drain's
+        # job, under the drain's caps.
+        for rid, cls in (class_backfill or {}).items():
+            rec = self.records.get(rid)
+            if rec is None or (rec.get("class") or {}) or not cls:
+                continue
+            rec["class"] = {k: cls[k] for k in ("decision", "path", "reason")
+                            if cls.get(k) is not None}
+            self._touch(rec)
+            c["class_backfilled"] += 1
         # mass-close guard: statuses are held, the mail is told
         open_before = c["open"] + c["to_close"]
         if c["to_close"] > max(MASS_CLOSE_MIN, MASS_CLOSE_FRAC * open_before):
@@ -1322,6 +1342,7 @@ class Ledger:
                 + (f" · purged {c['purged']}" if c["purged"] else "")
                 + (f" · withdrawn {c['withdrawn']}" if c["withdrawn"] else "")
                 + (f" · merged-copy {paths['merged-copy']}" if paths and paths.get("merged-copy") else "")
+                + (f" · class-backfilled {c['class_backfilled']}" if c["class_backfilled"] else "")
                 + (f" · absorbed {self.report.get('absorbed')} ({c['fresh_closed']} already closed)"
                    if self.report.get("absorbed") else "")
                 + f" · ledger {ledger_n} {'=' if ledger_n == store_n else '!='} store {store_n}")

@@ -1,0 +1,98 @@
+{
+ "contract": "v3.7cb6831f",
+ "model": "sonnet",
+ "measured": "2026-08-31",
+ "rows": [
+  {
+   "company": "Chainalysis",
+   "title": "Intelligence Analyst - Fraud Researcher",
+   "was": "YES",
+   "now": "NO",
+   "reason": "This is a fraud/scam investigation and research role (prompt engineering, web research on scammers) akin to security monitoring/investigations, which is explici"
+  },
+  {
+   "company": "EY",
+   "title": "אנליסט /ית מתחיל/ה לתחום שכר והטבות",
+   "was": "YES",
+   "now": "YES",
+   "reason": "This is a direct EY hire for an entry-level compensation & benefits analyst role focused on analyzing salary/benefits data, benchmarking against market data, an"
+  },
+  {
+   "company": "EY",
+   "title": "מנתח-ת נתונים סניור",
+   "was": "YES",
+   "now": "YES",
+   "reason": "EY is hiring a senior Data Analyst for its own consulting practice (not a staffing agency placement), doing quantitative data analysis with SQL/Python/BI tools "
+  },
+  {
+   "company": "Harel Insurance & Finance",
+   "title": "Business Analyst",
+   "was": "YES",
+   "now": "YES",
+   "reason": "This is an in-house data analyst role at Harel involving SQL/Tableau analysis of large operational datasets, trend identification, and reporting/dashboards for "
+  },
+  {
+   "company": "Mizrahi-Tefahot Bank בנק מזרחי טפחות",
+   "title": "Analyst",
+   "was": "YES",
+   "now": "YES",
+   "reason": "This is a bank-internal compliance analytics role involving SQL/SAS-based analysis, dashboard development, and ad-hoc reporting on risk/AML trends-quantitative "
+  },
+  {
+   "company": "Paz - yellow",
+   "title": "Trade Marketing Analyst",
+   "was": "YES",
+   "now": "YES",
+   "reason": "This is a full-time trade marketing analyst role at Paz itself, focused on analyzing sales/planogram/market share data to drive category and retail-point decisi"
+  },
+  {
+   "company": "Nestlé",
+   "title": "אנליסט/ית אפקטיביות מסחרית ליחידת ה CDT אסם סחר",
+   "was": "YES",
+   "now": "YES",
+   "reason": "This is a commercial effectiveness analyst role at Nestl? (Osem Trade) itself, focused on analyzing sales/commercial data, building dashboards and data models t"
+  },
+  {
+   "company": "Computer Guard Technologies LTD",
+   "title": "אנליסט/ית דאטה מתחיל/ה – לחברת ניהול מועדוני לקוחות בזירה הקמעונאית",
+   "was": "YES",
+   "now": "YES",
+   "reason": "This is an entry-level data analyst role at a customer club management company, directly hiring for itself, analyzing customer data with BI tools to produce rep"
+  },
+  {
+   "company": "dentsu Israel",
+   "title": "Marketing Analyst",
+   "was": "YES",
+   "now": "YES",
+   "reason": "The role centers on analyzing digital advertising performance data (quantitative metrics from ad platforms) to extract actionable insights, it's a direct hire b"
+  },
+  {
+   "company": "Ashley Digital",
+   "title": "Marketing Analyst",
+   "was": "YES",
+   "now": "YES",
+   "reason": "This is a quantitative marketing analytics role for the company itself, using SQL/BI tools to analyze measured data and drive optimization, not ML/engineering o"
+  },
+  {
+   "company": "SolarEdge Technologies",
+   "title": "Sales Data Analyst",
+   "was": "YES",
+   "now": "YES",
+   "reason": "This is a direct-hire analytic role at SolarEdge involving compiling, analyzing, and reporting sales data with BI/SQL tools, not ML/engineering, not an internsh"
+  },
+  {
+   "company": "mećkano",
+   "title": "Data Analyst",
+   "was": "YES",
+   "now": "YES",
+   "reason": "This is a genuine analytic role at the hiring company itself (SaaS), building dashboards/reports and SQL analysis for business teams, not ML/engineering, not an"
+  },
+  {
+   "company": "LTX",
+   "title": "Commercial Operations Analyst",
+   "was": "NO",
+   "now": "NO",
+   "reason": "This role centers on commercial deal operations, CRM/billing system setup, and revenue reconciliation rather than analyzing data to produce insights or metrics."
+  }
+ ]
+}
