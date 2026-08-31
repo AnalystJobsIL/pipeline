@@ -183,6 +183,38 @@ named that exact row as one that "would be REJECTED today", and FP&A is now a na
 exclusion), and **the two Guardio rows keep two lines** (they are one Comeet posting under a
 renamed title, so both `role_id`s need withdrawing).
 
+## 6. `guard-kill` refused a test twice, and it was right both times
+
+The first push (`3508ee0`) went red on `guard-kill` alone — 11 of 12 new tests KILLED,
+and `test_a_backfill_retraction_line_shape_validates` was **CANNOT-FAIL**: it built a
+retraction dict in a tmp dir and validated *that*, so it passed identically on a tree
+without the commit. It asserted on nothing the commit contained.
+
+The fix pointed it at the real file (`cloud_state/roles_retractions.jsonl`, the 14 lines
+this lane shipped) and I verified it killed — red against the file at `9554c4c`, green
+against the shipped one. It went red again on `b6764c7`, and **that was also correct**:
+`guard-kill` measures against the previous master commit, which by then was `3508ee0` —
+the commit that shipped the data. *"0 non-test file(s) put back"*. A test that guards DATA
+shipped in an EARLIER commit can never fail on the revert, whatever the assertion says.
+
+The only sanctioned escape is `CATALOGUED` — a docstring `Kills \`<id>\`` naming a
+`tests/mutations.json` record — and no code mutation can vouch for an assertion about a
+hand-written data file. So the test is **removed**, not exempted and not re-aimed at a
+weaker target: it is a data check, and the tool's own docstring names that shape
+("the assertion does not depend on the change it shipped with").
+
+What was verified once, by hand, and what protects it from here:
+
+* measured on the shipped file — **17 entries, 0 bad, 14 mine, 0 duplicate urls, every
+  reason ending on a finished word, every one matched to a record** (0 `unmatched`);
+* standing protection is production, not a unit test: `Retractions.load` counts bad lines
+  and `Ledger` alarms `roles retractions unreadable (N bad line(s))` in the mail, and an
+  unmatched url alarms as `roles retraction unmatched`. Both are read daily.
+
+The lesson worth keeping: **a follow-up commit cannot add a guard for the commit before
+it.** If a test is worth having, it ships in the same commit as the change it guards, or
+it ships as a mutation record.
+
 ## Traps this session hit
 
 * **A heredoc mangled a 12 kB test block** on the first attempt (`unexpected EOF`). The
