@@ -26419,7 +26419,9 @@ def test_junior_and_senior_never_fold_whatever_the_shared_evidence():
 
 def test_twin_fold_tie_on_source_refuses(tmp_path):
     """Two equally-sourced live titles is not a retitle we can call: a wrong winner
-    renames a role on the public dataset. The group is skipped whole — both stay."""
+    renames a role on the public dataset. The group is skipped whole — both stay.
+    Kills `twin-winner-breaks-ties` (a refusal test passes on the base tree too, so the
+    catalogue record is what proves it can fail)."""
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
     both = ["comeet:A5.D67", "discovery-linkedin:linkedin:4431037547"]

@@ -2590,5 +2590,15 @@
   "replace": "    except ValueError:\n        raise",
   "why": "jdfill.unfillable -> urlsplit RAISES on a bracket-mangled netloc, and `[email protected]` is Cloudflare's obfuscation placeholder scrapers lift off careers pages; one such row rode export_dataset's catch and kept yesterday's roles.csv for the day. Wave B, finding 3. Killed by test_one_bracket_url_cannot_take_the_days_dataset_down.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "twin-winner-breaks-ties",
+  "file": "pipeline/roles.py",
+  "symbol": "_twin_winner",
+  "class": "M6-fallback-removal",
+  "find": "        if len(ranked) >= 2 and _source_rank(jobs[ranked[0]]) == _source_rank(jobs[ranked[1]]):\n            return None",
+  "replace": "        if False:\n            return None",
+  "why": "two equally-sourced live titles is not a retitle we can call - a guessed winner renames a role on the public dataset (the Fetcherr pair: two comeet slugs, both rank 0). Killed by test_twin_fold_tie_on_source_refuses.",
+  "must_be_killed_by_behavioural": true
  }
 ]
