@@ -27,12 +27,20 @@ import os
 
 PATH = os.path.join(os.path.dirname(__file__), "..", "cloud_state", "pipeline_stages.json")
 
-# `summary()` renders ORDER and nothing else, so a stage absent from this list is stamped
-# to disk and read by nobody. `queue` was stamped nightly for days and never appeared in the
-# mail, which is how the registry's queue went un-named in the one place a human reads daily
-# (2026-08-31). The number it carries is `owed` -- the count the drain would actually select,
-# not the raw unsettled total.
-ORDER = ["repair", "collect", "expand", "firmo", "enrich", "queue", "publish", "ci", "cron"]
+# `summary()` renders ORDER and nothing else, so a stage absent from this list is stamped to
+# disk and read by nobody. On 2026-08-31 `pipeline_stages.json` carried TEN stamps and this
+# list named eight: `queue` (the registry's, `owed`) and `intel` (company-intel's, carrying
+# `backlog`/`blurbs`/`board`/`researched`) were both written nightly and rendered nowhere --
+# so two of the four queues the operator wants named in the daily mail were invisible in the
+# one place a human reads every day. Adding a stage here is the ONLY thing that puts its
+# number in front of somebody. `queue`'s headline is `owed`: the count the drain would
+# actually select, never the raw unsettled total (that was wrong by 3x -- section 3).
+#
+# Written by `registry` (2026-08-31), which owns neither this file nor the `intel` stamp:
+# shared plumbing, changed loudly rather than filed, because a filed one-line diff is what
+# `468` proved does not get applied.
+ORDER = ["repair", "collect", "expand", "firmo", "intel", "enrich", "queue", "publish",
+         "ci", "cron"]
 
 
 def _load() -> dict:

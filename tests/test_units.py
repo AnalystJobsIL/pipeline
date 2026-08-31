@@ -22411,6 +22411,24 @@ def test_the_queue_reports_what_is_owed_not_what_is_merely_unsettled(tmp_path, m
     assert line and "owed=1" in line[0], line
 
 
+def test_every_stamped_stage_is_rendered_somewhere_a_human_reads():
+    """`summary()` renders `ORDER` and nothing else, so a stamp missing from that list is
+    written nightly and read by nobody. On 2026-08-31 the file carried TEN stamps and the
+    list named EIGHT: `queue` (the registry's) and `intel` (company-intel's `backlog` /
+    `blurbs` / `board` / `researched`) were both invisible in the daily mail — two of the
+    four queues that are supposed to be named there."""
+    import json
+    from pipeline import stages
+    try:
+        with open("cloud_state/pipeline_stages.json", encoding="utf-8-sig") as f:
+            stamped = set(json.load(f))
+    except Exception:                                             # noqa: BLE001
+        pytest.skip("no stage file in this tree")
+    missing = sorted(stamped - set(stages.ORDER))
+    assert not missing, (f"these stages are stamped and rendered nowhere: {missing} — add "
+                         f"them to stages.ORDER or nobody will ever read the number")
+
+
 def test_a_half_written_proposal_file_is_reported_not_swallowed(tmp_path, capsys):
     """A shard killed mid-write left an unparsable proposal file and `ingest` skipped it in
     SILENCE, so that shard's paid searches were never recorded and its names sorted first

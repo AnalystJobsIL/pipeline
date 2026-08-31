@@ -1060,7 +1060,18 @@ Read this block, run the one command, and stop. Everything below is the long ver
 
 ```bash
 python registry_health.py        # read-only: census, who re-checks what, which rungs work
+python queue_state.py            # read-only: the intake queue, split by STATE (see below)
 ```
+
+**Before you plan against a queue number, know which number it is.** On 2026-08-31 the
+intake census reported `STILL OWED AN ANSWER 546` and the work actually available was
+**172**: 200 more had been answered inside their 14-day cadence and 174 had an answer on
+disk waiting for a free lookup. Four registry sessions and a spawn prompt were sized against
+546 before anyone split it. The count that means anything is **OWED — "the drain would
+select it tonight"** — and the honest core inside it, the names that have tried every rung
+and have nowhere left to go, is **2 names, not the 48 estimated or the 84 the old census
+implied**. §3 has the table and the definition; the mail's `queue:` line now leads with
+OWED.
 
 **What the registry is.** One row per company in `companies.csv`
 (`company_name, ats_platform, token, api_url, active, notes`). `active=true` means the digest
