@@ -25612,25 +25612,24 @@ def test_the_wall_sentence_is_not_kept_as_the_first_line_of_the_description():
     assert "Cookie Policy" not in seg
 
 
-def test_the_inline_indeed_cap_ships_the_arithmetic_it_claims():
+def test_the_inline_indeed_cap_ships_the_arithmetic_it_claims(monkeypatch):
     """The cap was measured undersized on its first night: `the Indeed cap bound at 8 — 20
     Indeed postings judged on their snippet tonight`, i.e. 28 wanted the rung and 8 got it,
     and two of the 20 were emailed with a 172-character SERP snippet as their description.
     25 x 30 nights = 750/month, 15 % of the 5,000 pool, and it still nests inside the shared
-    `JDFILL_BD_CAP` the workflow pins at 30. Kills: reverting the default to 8."""
-    import ast as _ast
-    import inspect
+    `JDFILL_BD_CAP` the workflow pins at 30.
+
+    Asserted against the SHIPPED DEFAULT with the environment cleared, so the number comes
+    from the code and not from whatever this process inherited; the arithmetic is derived
+    from that same value rather than from two literals a reverted cap would not touch
+    (wave B: `assert 25 * 30 == 750` passes with the default back at 8).
+    Kills: reverting the default to 8."""
     from pipeline import jdfill
-    f = jdfill.JDFiller(budget_min=1, bd=None)
-    assert f.indeed_cap == 25
-    # the DEFAULT in the source, not the value this process happens to compute: a test that
-    # multiplies two literals it wrote itself passes with the cap reverted (wave B)
-    src = inspect.getsource(jdfill.JDFiller.__init__)
-    default = [n.args[1].value for n in _ast.walk(_ast.parse(src.strip()))
-               if isinstance(n, _ast.Call) and getattr(n.func, "attr", "") == "get"
-               and getattr(n.args[0], "value", "") == "JDFILL_INDEED_CAP"]
-    assert default == ["25"], default
-    assert f.indeed_cap * 30 == 750 and round(f.indeed_cap * 30 / 5000 * 100) == 15
+    monkeypatch.delenv("JDFILL_INDEED_CAP", raising=False)
+    cap = jdfill.JDFiller(budget_min=1, bd=None).indeed_cap
+    assert cap == 25
+    assert cap * 30 == 750 and round(cap * 30 / 5000 * 100) == 15
+    assert cap <= 30, "the inline Indeed bound must nest inside JDFILL_BD_CAP (30 in the yml)"
 
 
 def test_a_donor_that_does_not_name_the_role_is_refused_and_the_row_says_so(monkeypatch, tmp_path):
