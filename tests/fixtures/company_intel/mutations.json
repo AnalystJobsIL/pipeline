@@ -164,8 +164,8 @@
   {
     "id": "ci-research-tools-empty",
     "file": "pipeline/firmographics.py",
-    "find": "              effort=RESEARCH_EFFORT, tools=SEARCH, timeout=timeout, meta=meta)",
-    "replace": "              effort=RESEARCH_EFFORT, tools=(), timeout=timeout, meta=meta)",
+    "find": "              model=RESEARCH_MODEL, effort=RESEARCH_EFFORT, tools=SEARCH,",
+    "replace": "              model=RESEARCH_MODEL, effort=RESEARCH_EFFORT, tools=(),",
     "class": "M1",
     "symbol": "research_tools_empty",
     "why": "research must carry the WebSearch grant on both axes"
@@ -569,8 +569,8 @@
   {
     "id": "ci-bulk-research-drops-its-anchor",
     "file": "research_firmographics.py",
-    "find": "                    pending[ex.submit(research_company, name,\n                                      anchors.get(name, \"\"), 240, meta)] = name",
-    "replace": "                    pending[ex.submit(research_company, name, \"\", 240, meta)] = name",
+    "find": "                    pending[ex.submit(_research_one, name, evidence.get(name),\n                                      deadline, meta)] = name",
+    "replace": "                    pending[ex.submit(_research_one, name, {},\n                                      deadline, meta)] = name",
     "class": "M2",
     "symbol": "bulk_research_drops_its_anchor",
     "why": "company-intel guard: an empty context is what made 21 obscure names unidentifiable and their strikes permanent"
@@ -578,8 +578,8 @@
   {
     "id": "ci-anchor-trusts-a-parked-row",
     "file": "research_firmographics.py",
-    "find": "    if str(row.get(\"active\", \"\")).strip().lower() != \"true\":\n        return \"\"",
-    "replace": "    if False:\n        return \"\"",
+    "find": "    if str(row.get(\"active\", \"\")).strip().lower() != \"true\":\n        return {}",
+    "replace": "    if False:\n        return {}",
     "class": "M2",
     "symbol": "anchor_trusts_a_parked_row",
     "why": "company-intel guard: a parked row's url never passed identity_gate (entrypoint pointed at Entry Point USA)"
@@ -610,5 +610,140 @@
     "class": "M2",
     "symbol": "answered_ignores_the_date",
     "why": "company-intel guard: a refresh candidate is in `have` BY DEFINITION, so a membership test erases every refresh failure's strike in the run that made it -- refresh_abandoned could never fire and a squatter holds a cap slot for ever"
+  },
+  {
+    "id": "ci-jd-ahead-of-the-trusted-half",
+    "file": "pipeline/firmographics.py",
+    "find": "    text = \"\\n\".join(head)[:_CTX_TRUSTED_CAP]",
+    "replace": "    text = (\"\\n\".join(head))[:0]",
+    "class": "M1",
+    "symbol": "evidence_context",
+    "why": "company-intel guard: the urls we resolved must never be squeezed out by text a job board wrote"
+  },
+  {
+    "id": "ci-disambiguation-never-fires",
+    "file": "pipeline/firmographics.py",
+    "find": "    if why not in _ROUTABLE and not why.startswith(\"held: \"):\n        return rec, why",
+    "replace": "    if True:\n        return rec, why",
+    "class": "M1",
+    "symbol": "research_with_evidence",
+    "why": "company-intel guard: a live posting must never be closed 'cannot identify' (operator, 2026-08-31)"
+  },
+  {
+    "id": "ci-disambiguation-without-any-evidence",
+    "file": "pipeline/firmographics.py",
+    "find": "    if rec is not None or not has_evidence(ev):\n        return rec, why",
+    "replace": "    if rec is not None:\n        return rec, why",
+    "class": "M5",
+    "symbol": "research_with_evidence",
+    "why": "company-intel guard: a name with no url has no second question to ask, and buying one doubles every junk name"
+  },
+  {
+    "id": "ci-disambiguation-ignores-the-clock",
+    "file": "pipeline/firmographics.py",
+    "find": "    if budget is not None and budget() < DISAMBIG_MIN_S:\n        return rec, why",
+    "replace": "    if False:\n        return rec, why",
+    "class": "M1",
+    "symbol": "research_with_evidence",
+    "why": "company-intel guard: a second call started under the wire is killed at the clamp and reads as an outage"
+  },
+  {
+    "id": "ci-admission-record-cached-anyway",
+    "file": "pipeline/firmographics.py",
+    "find": "    if _ADMITS_UNIDENTIFIED.search(out.get(\"il_center\") or \"\"):\n        return None, REASON_ADMITS",
+    "replace": "    if False:\n        return None, REASON_ADMITS",
+    "class": "M1",
+    "symbol": "research_company_detail",
+    "why": "company-intel guard: BACKLOG 521's tell - a record that admits it identified nobody was cached until 2027-02"
+  },
+  {
+    "id": "ci-admission-eats-an-honest-no-israel-record",
+    "file": "pipeline/firmographics.py",
+    "find": "    r\"(?i)\\b(unidentified|not identified|could ?n.t (?:be )?identif|unable to identif\"",
+    "replace": "    r\"(?i)(unknown|none|no )\"  # noqa",
+    "class": "M5",
+    "symbol": "_ADMITS_UNIDENTIFIED",
+    "why": "company-intel guard: BACKLOG 526's five rows are CORRECT records about companies with no Israel site"
+  },
+  {
+    "id": "ci-employer-echo-never-held",
+    "file": "pipeline/firmographics.py",
+    "find": "    if echo and not _same_company(company, echo):\n        return None, REASON_ECHO_HELD % echo",
+    "replace": "    if False:\n        return None, REASON_ECHO_HELD % echo",
+    "class": "M1",
+    "symbol": "research_company_detail",
+    "why": "company-intel guard: BACKLOG 525 - 3 of 23 records described a different company, all schema-valid"
+  },
+  {
+    "id": "ci-employer-echo-relation-always-true",
+    "file": "pipeline/firmographics.py",
+    "find": "    sa, se = _stem(asked), _stem(echo)\n    if not sa or not se:\n        return True",
+    "replace": "    sa, se = _stem(asked), _stem(echo)\n    if True:\n        return True",
+    "class": "M2",
+    "symbol": "_same_company",
+    "why": "company-intel guard: a relation that always holds is the 525 check deleted"
+  },
+  {
+    "id": "ci-evidence-left-reason-collapses",
+    "file": "pipeline/firmographics.py",
+    "find": "    if rec is None and why in (REASON_UNIDENTIFIED, REASON_ADMITS):",
+    "replace": "    if False:",
+    "class": "M6",
+    "symbol": "_disambiguate",
+    "why": "company-intel guard: 'unidentified despite role evidence' is the reason a reader acts on; the bare verdict is the question we stopped asking"
+  },
+  {
+    "id": "ci-comeet-resolution-unbounded",
+    "file": "research_firmographics.py",
+    "find": "        if done >= COMEET_RESOLVE_MAX:",
+    "replace": "        if False:",
+    "class": "M5",
+    "symbol": "_resolve_comeet",
+    "why": "company-intel guard: ~205 active Comeet rows, one GET each, is the explosion the gather path refuses"
+  },
+  {
+    "id": "ci-comeet-failure-keeps-the-uid",
+    "file": "research_firmographics.py",
+    "find": "        if human and not _IG._COMEET_API.match(human):\n            ev[\"board_url\"] = human\n        else:\n            ev.pop(\"board_url\", None)",
+    "replace": "        ev[\"board_url\"] = human or url",
+    "class": "M6",
+    "symbol": "_resolve_comeet",
+    "why": "company-intel guard: BACKLOG 521 - a tenant uid names no employer and would make has_evidence call the name answerable"
+  },
+  {
+    "id": "ci-session-run-stamps-the-cron",
+    "file": "research_firmographics.py",
+    "find": "    if not only:\n        stages.stamp(\"firmo\", researched=done, failed=failed, records=len(have) + done,",
+    "replace": "    if True:\n        stages.stamp(\"firmo\", researched=done, failed=failed, records=len(have) + done,",
+    "class": "M1",
+    "symbol": "main",
+    "why": "company-intel guard: a hand-run overwriting the firmo stamp makes the mail's 'bulk cron: last ran' describe a laptop"
+  },
+  {
+    "id": "ci-session-run-writes-the-heartbeat",
+    "file": "research_firmographics.py",
+    "find": "    if not only and (done > 0 or (attempted > 0 and infra_errors == 0 and failed < 5",
+    "replace": "    if (done > 0 or (attempted > 0 and infra_errors == 0 and failed < 5",
+    "class": "M1",
+    "symbol": "main",
+    "why": "company-intel guard: two names a human picked prove nothing about the cron that did not run"
+  },
+  {
+    "id": "ci-cached-board-titles-never-read",
+    "file": "research_firmographics.py",
+    "find": "    _titled = _cached_board_titles(evidence, todo)",
+    "replace": "    _titled = 0",
+    "class": "M6",
+    "symbol": "main",
+    "why": "company-intel guard: an active row whose roles we never match reached the model with a url and nothing else - the shape that re-bought the wrong Kidum"
+  },
+  {
+    "id": "ci-cached-titles-overwrite-a-live-posting",
+    "file": "research_firmographics.py",
+    "find": "    want = [n for n in todo if not (evidence.get(n) or {}).get(\"board_titles\")]",
+    "replace": "    want = list(todo)",
+    "class": "M5",
+    "symbol": "_cached_board_titles",
+    "why": "company-intel guard: a live posting outranks a cached listing; the cache can be a day old"
   }
 ]

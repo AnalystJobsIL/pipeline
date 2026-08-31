@@ -873,12 +873,17 @@ def test_the_seam_audit_reaches_the_mail(env):
 
 def test_a_failed_name_carries_its_reason_into_the_mail(env):
     """`research_company` collapses three different outcomes into None and `firmo_failed` has
-    no reason column, so the cause of a 7-day strike existed only in stderr."""
+    no reason column, so the cause of a 7-day strike existed only in stderr.
+
+    Since 2026-08-31 a BOARD company always has a live posting, so the reason a reader sees
+    is the one that says we asked with the posting in hand: `unidentified despite role
+    evidence` — never the bare `could not identify the name`, which is a question this hook
+    no longer asks. ONE failure is still counted for the name, whichever call produced it."""
     st, _export, _calls, fake = env
     fake.script = lambda p, t: json.dumps({"unknown": True}) if t else "Co does X. It earns Y."
     _ci, _fd, rep = _run(st, [_job("Nowhere Ltd")])
     assert rep["failed"] == 1 and rep["failed_reasons"], rep
-    assert "could not identify" in rep["failed_reasons"][0][1]
+    assert rep["failed_reasons"][0][1] == F.REASON_EVIDENCE_LEFT
     assert "why failed: Nowhere Ltd" in CI.audit_lines(rep)[0][0]
 
 
@@ -1281,17 +1286,26 @@ def test_the_bulk_cron_counts_its_own_spend():
     import research_firmographics
     src = inspect.getsource(research_firmographics.main)
     assert "meta = {}" in src, "no audit dict"
-    assert "research_company, name," in src and "240, meta)" in src, "the workers do not fill it"
+    assert "_research_one, name," in src and "deadline, meta)" in src, \
+        "the workers do not fill it"
     assert "seam:" in src and "SEARCHLESS" in src, "it is collected and never reported"
     assert "::warning::company-intel" in src, "a searchless run must warn"
 
 
 def test_research_company_accepts_meta_positionally_as_the_workers_pass_it():
     """The thread pool submits positionally; a signature change would silently pass `meta`
-    as the timeout."""
+    as the timeout. `_research_one` is what the pool submits now, and it is positional in
+    the same way -- everything after the evidence is keyword-only on the seam itself."""
     import inspect
+    import research_firmographics as RF
     names = list(inspect.signature(F.research_company).parameters)
     assert names[:4] == ["company", "context", "timeout", "meta"], names
+    assert list(inspect.signature(RF._research_one).parameters) == \
+        ["name", "ev", "deadline", "meta"]
+    seam = inspect.signature(F.research_with_evidence).parameters
+    assert list(seam)[:2] == ["company", "ev"]
+    assert all(seam[k].kind is inspect.Parameter.KEYWORD_ONLY
+               for k in ("timeout", "meta", "budget"))
 
 
 # --- BACKLOG 244: the death watch proposes, it never writes ------------------------------
@@ -1756,7 +1770,7 @@ def _stamp_env(tmp_path, monkeypatch, export_records):
     monkeypatch.setattr(R, "load_companies",
                         lambda **kw: [{"company_name": n, "ats_platform": "greenhouse"}
                                       for n in export_records])
-    monkeypatch.setattr(R, "research_company",
+    monkeypatch.setattr(R, "research_with_evidence",
                         lambda *a, **k: pytest.fail("no run in this test should spend"))
     return R, stages
 
@@ -1837,7 +1851,10 @@ def _bulk_env(tmp_path, monkeypatch, names, answer):
     R, stages = _stamp_env(tmp_path, monkeypatch, {})
     monkeypatch.setattr(R, "load_companies",
                         lambda **kw: [{"company_name": n, "ats_platform": "greenhouse"} for n in names])
-    monkeypatch.setattr(R, "research_company", lambda name, *a, **k: answer(name))
+    # the seam returns (record, reason) since 2026-08-31: the reason is what tells a
+    # `cannot identify` night from a `rejected: no sector` one in the FAIL line
+    monkeypatch.setattr(R, "research_with_evidence",
+                        lambda name, *a, **k: (answer(name), ""))
     return R, stages
 
 
@@ -2412,40 +2429,70 @@ def test_the_bulk_pass_anchors_an_obscure_name_to_the_board_it_came_from(monkeyp
     `identity_gate`, so it is evidence about WHICH company the name is."""
     import research_firmographics as RF
     row = {"company_name": "Jafi", "active": "true", "api_url": "https://jafi.org.il/careers"}
-    assert "https://jafi.org.il/careers" in RF._row_anchor(row)
+    assert RF._row_evidence(row)["board_url"] == "https://jafi.org.il/careers"
     # a PARKED row's url has not been through the ladder: `entrypoint`'s points at Entry
     # Point USA, and anchoring to a mis-resolved url buys a wrong record until 2027-02
-    assert RF._row_anchor({**row, "active": "false"}) == ""
-    assert RF._row_anchor({**row, "api_url": "greenhouse-token"}) == "", "a token names no host"
+    assert RF._row_evidence({**row, "active": "false"}) == {}
+    assert RF._row_evidence({**row, "api_url": "greenhouse-token"}) == {}, \
+        "a token names no host"
     # ...and the query string never travels: 190 active rows carry a Comeet `token=<hex>`
-    assert RF._row_anchor({**row, "api_url": "https://comeet.com/j/x?token=deadbeef"}) \
-        .endswith("https://comeet.com/j/x.")
+    assert RF._row_evidence({**row, "api_url": "https://comeet.com/j/x?token=deadbeef"}) \
+        ["board_url"] == "https://comeet.com/j/x"
     # an API endpoint names the ATS, not the employer: `Finagra` came back unidentifiable
-    # anchored to its Ashby posting-api url, so the anchor uses the page a person reads
-    assert "jobs.ashbyhq.com/finagra" in RF._row_anchor(
-        {**row, "api_url": "https://api.ashbyhq.com/posting-api/job-board/finagra"})
-    # ...but never through Comeet's arm, which learns the page with a GET: this builds an
-    # anchor for EVERY active row, so one network call there is ~205 of them
+    # anchored to its Ashby posting-api url, so the evidence uses the page a person reads
+    assert "jobs.ashbyhq.com/finagra" in RF._row_evidence(
+        {**row, "api_url": "https://api.ashbyhq.com/posting-api/job-board/finagra"})["board_url"]
+    # ...but never through Comeet's arm, which learns the page with a GET: this builds
+    # evidence for EVERY active row, so one network call there is ~205 of them.
+    # `_resolve_comeet` does those few, AFTER the batch is cut (BACKLOG 521).
     comeet = "https://www.comeet.com/careers-api/2.0/company/A4.000/positions"
     monkeypatch.setattr(RF._IG, "_comeet_human_url",
-                        lambda *a, **k: pytest.fail("the anchor path must never hit the network"))
-    assert comeet in RF._row_anchor({**row, "api_url": comeet + "?token=abc"})
+                        lambda *a, **k: pytest.fail("the gather path must never hit the network"))
+    assert RF._row_evidence({**row, "api_url": comeet + "?token=abc"})["board_url"] == comeet
     # a name with no active row is anchored to the posting we SAW it on, which claims
     # strictly less -- it has to, because 37 of the 43 such names sit on an aggregator
-    anchor = RF._posting_anchor("Trade Marketing Analyst", "https://il.linkedin.com/jobs/view/1")
-    assert "Trade Marketing Analyst" in anchor and "il.linkedin.com" in anchor
-    assert "careers board" not in anchor, "an aggregator posting is not the employer's board"
-    assert RF._posting_anchor("t", "") == ""
-    # the url goes FIRST: `research_company_detail` cuts context at 600 chars, and nothing
-    # caps `matched.title`, so a long title must not push the half we trust off the end
-    long_anchor = RF._posting_anchor("x" * 400, "https://il.linkedin.com/jobs/view/1")
-    assert long_anchor.index("il.linkedin.com") < long_anchor.index("xxx")
-    assert len(long_anchor) < 300, "the title is capped"
+    ev = RF._posting_evidence("Trade Marketing Analyst", "https://il.linkedin.com/jobs/view/1")
+    text = F.evidence_context("Whoever", **ev)
+    assert "Trade Marketing Analyst" in text and "il.linkedin.com" in text
+    assert "careers board" not in text, "an aggregator posting is not the employer's board"
+    assert RF._posting_evidence("t", "") == {}
+    # the url goes FIRST: the context is cut, and nothing caps `matched.title`, so a long
+    # title must not push the half we trust off the end
+    long_text = F.evidence_context(
+        "Whoever", **RF._posting_evidence("x" * 400, "https://il.linkedin.com/jobs/view/1"))
+    assert long_text.index("il.linkedin.com") < long_text.index("xxx")
+    assert 'hiring: "' + "x" * 120 + '".' in long_text, "the title is capped at 120"
+
+
+def test_a_comeet_uid_is_resolved_for_the_batch_and_dropped_when_it_cannot_be(monkeypatch):
+    """BACKLOG 521: `.../company/A4.000/positions` is a tenant uid that names no employer,
+    and `Landacorp` (tenant A4.000 — Landa Digital Printing, Rehovot) came back as a
+    defunct US healthcare-IT firm because of it. Resolve the few names this run will pay
+    for; refuse the uid when the page will not answer, because evidence that identifies
+    nothing must not make `has_evidence` call the name answerable."""
+    import research_firmographics as RF
+    uid = "https://www.comeet.com/careers-api/2.0/company/A4.000/positions"
+    ev = {"Landacorp": {"board_url": uid}, "Other": {"board_url": uid}}
+    calls = []
+
+    def _human(url, *a, **k):
+        calls.append(url)
+        return "https://www.comeet.com/jobs/landa/12.000" if len(calls) == 1 else ""
+    monkeypatch.setattr(RF._IG, "human_board_url", _human)
+    assert RF._resolve_comeet(ev, ["Landacorp", "Other"]) == 2
+    assert ev["Landacorp"]["board_url"].endswith("/jobs/landa/12.000")
+    assert "board_url" not in ev["Other"], "an unresolvable uid is dropped, never sent"
+    # and the cap holds: a run with more Comeet names than the cap resolves the cap's worth
+    many = {f"C{i}": {"board_url": uid} for i in range(RF.COMEET_RESOLVE_MAX + 3)}
+    calls.clear()
+    assert RF._resolve_comeet(many, list(many)) == RF.COMEET_RESOLVE_MAX
+    assert len(calls) == RF.COMEET_RESOLVE_MAX
+    assert all("board_url" not in v for v in list(many.values())[RF.COMEET_RESOLVE_MAX:])
 
 
 def test_the_anchor_actually_reaches_the_call_the_bulk_pass_makes(tmp_path, monkeypatch):
     """Behavioural on purpose, and it took a surviving mutation to earn it: the unit test
-    above proves `_row_anchor` builds a string, and `test_the_bulk_cron_counts_its_own_spend`
+    above proves `_row_evidence` builds a dict, and `test_the_bulk_cron_counts_its_own_spend`
     pins the submit line's SHAPE -- both stayed green against a submit site that passed `""`
     and threw the anchor away, which is precisely the bug being fixed."""
     R, _ = _stamp_env(tmp_path, monkeypatch, {})
@@ -2453,8 +2500,11 @@ def test_the_anchor_actually_reaches_the_call_the_bulk_pass_makes(tmp_path, monk
         {"company_name": "Jafi", "ats_platform": "scrape", "active": "true",
          "api_url": "https://jafi.org.il/careers"}])
     seen = {}
-    monkeypatch.setattr(R, "research_company",
-                        lambda name, context="", *a, **k: seen.setdefault(name, context) and None)
+
+    def _spy(name, ev=None, **k):
+        seen[name] = F.evidence_context(name, **(ev or {}))
+        return None, "model could not identify the name"
+    monkeypatch.setattr(R, "research_with_evidence", _spy)
     monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
     R.main()
     assert "https://jafi.org.il/careers" in seen.get("Jafi", ""), \
@@ -2474,9 +2524,19 @@ def test_a_showcase_brand_folds_onto_the_company_that_owns_it():
     with `firmo_match: none` while NVIDIA's record sat on file, and render warned
     `title-twin NVIDIA/NVIDIA AI` about the same pair (2026-08-31)."""
     assert F.identity_key("NVIDIA AI") == F.identity_key("NVIDIA") == F.identity_key("NVIDIA Israel")
-    # and it stays a fold of the SHOWCASE form only — no real company is captured
-    assert F.identity_key("Oak - Identity Security OS") != F.identity_key("Oak"), \
-        "the registry's `Oak` is Opera Group's Teamtailor division board, a different company"
+    # `Oak` was the same shape and this line asserted the OPPOSITE until the evening of
+    # 2026-08-31: the morning session refused the fold because the registry's PARKED `Oak`
+    # row is Opera Group's Teamtailor board with `&division=Oak`. The operator produced the
+    # half the row could not show — the published `Oak` card is `Product Analyst`
+    # (il.indeed.com jk=9784c063c918d237) and our own ACTIVE Ashby row
+    # `Oak - Identity Security OS` publishes the SAME `Product Analyst`. One company, two
+    # strings, and a third thing that merely shares the word. Judging the NAME against a
+    # parked row's url, and never reading the role's own evidence, is the whole reason this
+    # session exists.
+    assert F.identity_key("Oak - Identity Security OS") == F.identity_key("Oak")
+    # ...and the fold still captures no OTHER company: a division parenthetical stays
+    # distinct, which is what keeps Sony (PlayStation) out of Sony (Semiconductor)
+    assert F.identity_key("Oak (Opera Group)") != F.identity_key("Oak")
 
 
 def test_a_strike_whose_answer_is_already_on_disk_is_cleared(tmp_path, monkeypatch):
@@ -2537,9 +2597,331 @@ def test_the_working_exit_clears_an_answered_strike_too(tmp_path, monkeypatch):
         {"company_name": n, "ats_platform": "greenhouse", "active": "true"}
         for n in ("Wix", "Newco")])
     F.save_failures({"Wix": (2, "2026-08-25")})
-    monkeypatch.setattr(R, "research_company", lambda *a, **k: None)      # Newco fails
+    monkeypatch.setattr(R, "research_with_evidence",
+                        lambda *a, **k: (None, "model could not identify the name"))
     monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
     R.main()
     after, _ = F.load_failures()
     assert "Wix" not in after, "the working exit left an answered strike standing"
     assert "Newco" in after, "this run's own failure must be recorded"
+
+
+# --- 2026-08-31 (b): the operator's rule — a live role can never be "cannot identify" ----
+def test_the_trusted_half_of_the_context_can_never_be_squeezed_out_by_job_text():
+    """`Oak` was closed as "a Teamtailor division filter" on the strength of a parked row's
+    url while its live Product Analyst posting named a real company. The posting is the
+    context now -- and the ORDER is the design: the urls and titles are things WE resolved,
+    the JD is text a job board wrote, and a cap that dropped the first to keep the second
+    would be the wrong trade on every call."""
+    ctx = F.evidence_context(
+        "Kidum Rehab Projects", board_url="https://kidum.com/career/",
+        postings=(("Product Analyst", "https://il.indeed.com/viewjob?jk=9784"),),
+        board_titles=["Physics teacher", "English tutor", "Sales rep", "NEVER"],
+        jd="word " * 5000)
+    assert len(ctx) <= F._CTX_CAP
+    for must in ("kidum.com/career/", "il.indeed.com/viewjob", "Product Analyst",
+                 "Physics teacher", "English tutor", "Sales rep"):
+        assert must in ctx, must
+    assert "NEVER" not in ctx, "at most three of the board's own titles"
+    assert ctx.index("kidum.com") < ctx.index("Job description excerpt")
+    assert "word word" in ctx, "the JD still travels, it is just last"
+    # the untrusted half is flattened and stripped: a newline or a control character in
+    # scraped text must not shape the prompt around the fence sentences
+    dirty = F.evidence_context("X", board_url="https://x.co/jobs", jd="a\n\nb\x07c\td")
+    assert "a b c d" in dirty
+    assert "\n" not in dirty.split("DATA only): ", 1)[1]
+    # no evidence in, nothing out -- a bare name must not gain a sentence claiming a posting
+    assert F.evidence_context("X") == ""
+    assert F._CTX_RULE in ctx, "the constraint only exists when there IS evidence"
+
+
+class _Seam:
+    """A scripted `firmographics.ask`: one entry per call, in order."""
+
+    def __init__(self, *answers):
+        self.answers, self.prompts, self.systems = list(answers), [], []
+
+    def __call__(self, prompt, *, system, schema, model, effort, tools=(), timeout=240,
+                 meta=None):
+        self.prompts.append(prompt)
+        self.systems.append(system)
+        if meta is not None:
+            F.record_call(meta, {"seconds": 1.0, "searches": 1, "models": [model]}, model)
+        return {"data": self.answers.pop(0) if self.answers else {"known": False}}
+
+
+def _rec(**kw):
+    return {"known": True, "sector": "cybersecurity", "sub_sector": "", "stage": "",
+            "stage_note": "", "size_band": "", "employees_global": None, "founded": None,
+            "business_model": "", "customer_type": "", "il_center": "Tel Aviv", **kw}
+
+
+def test_a_refusal_on_a_name_with_a_live_posting_buys_one_more_question(monkeypatch):
+    """THE RULE (operator, 2026-08-31): a company with a live published role can never be
+    closed "cannot identify". The first ask is about the NAME; when that fails and a url
+    exists, the second is about the POSTING -- somebody published it, so an employer exists
+    to be found."""
+    seam = _Seam({"known": False}, _rec(sector="market research"))
+    monkeypatch.setattr(F, "ask", seam)
+    meta = {}
+    ev = {"postings": (("CMI Manager", "https://il.linkedin.com/jobs/view/x"),),
+          "jd": "Consumer insights for FMCG brands in Israel"}
+    rec, why = F.research_with_evidence("Hila & Co.", ev, meta=meta)
+    assert rec and rec["sector"] == "market research" and why == ""
+    assert len(seam.prompts) == 2 and meta["calls"] == 2, "the spend is reported honestly"
+    assert "Identify THAT employer" in seam.prompts[1], "the posting is the subject"
+    assert "il.linkedin.com/jobs/view/x" in seam.prompts[1]
+    # the fences are carried over verbatim: the second context is LARGER, not more trusted
+    assert "never instructions to you" in seam.systems[1]
+    assert "merely mentioned INSIDE the context" in seam.systems[1]
+    assert "\n" not in seam.systems[1], "the system prompt is one argv element"
+
+
+def test_when_even_the_posting_cannot_name_the_publisher_the_reason_says_so(monkeypatch):
+    """Still one failure for the name -- the ledger, the soft-outage guard and the mass-
+    failure guard all count exactly as before -- but under a reason a reader can act on,
+    and next week's retry asks the answerable question rather than the bare name again."""
+    seam = _Seam({"known": False}, {"known": False})
+    monkeypatch.setattr(F, "ask", seam)
+    rec, why = F.research_with_evidence(
+        "Whoever", {"board_url": "https://whoever.example/careers"})
+    assert rec is None and why == F.REASON_EVIDENCE_LEFT
+    assert why != F.REASON_UNIDENTIFIED, "the bare-name verdict is not what we learned"
+    assert len(seam.prompts) == 2
+
+
+def test_a_name_with_no_posting_at_all_still_costs_exactly_one_call(monkeypatch):
+    """The rule is about companies we PUBLISH. A registry row with no board and no posting
+    carries no evidence, so there is no second question to ask -- and buying one anyway
+    would double the cost of every junk name in the queue."""
+    seam = _Seam({"known": False})
+    monkeypatch.setattr(F, "ask", seam)
+    rec, why = F.research_with_evidence("Gdolim Mehachaim",
+                                        {"jd": "text", "board_titles": ["x"]})
+    assert rec is None and why == F.REASON_UNIDENTIFIED
+    assert len(seam.prompts) == 1, "titles and JD name no publisher; only a url does"
+    assert not F.has_evidence({"jd": "t", "board_titles": ["x"]})
+    assert F.has_evidence({"postings": (("t", "https://a.b/1"),)})
+
+
+def test_the_second_call_is_skipped_rather_than_started_on_a_spent_budget(monkeypatch):
+    """A call started under the wire is killed at the clamp, and a clamped call arrives as
+    `ResearchUnavailable` -- i.e. the mail would say the CLI is down on a morning the hook
+    had simply spent its minutes (the wave-1 bug in `_research`, rebuilt if we clamped)."""
+    seam = _Seam({"known": False}, _rec())
+    monkeypatch.setattr(F, "ask", seam)
+    rec, why = F.research_with_evidence(
+        "Whoever", {"board_url": "https://w.example/jobs"}, budget=lambda: 30)
+    assert rec is None and why == F.REASON_UNIDENTIFIED and len(seam.prompts) == 1
+    seam2 = _Seam({"known": False}, _rec())
+    monkeypatch.setattr(F, "ask", seam2)
+    rec, _why = F.research_with_evidence(
+        "Whoever", {"board_url": "https://w.example/jobs"}, budget=lambda: 600)
+    assert rec and len(seam2.prompts) == 2
+
+
+def test_a_record_that_admits_it_identified_nothing_is_routed_not_cached(monkeypatch):
+    """BACKLOG 521's tell: `Landacorp` (Comeet tenant A4.000 = Landa Digital Printing,
+    Rehovot) came back as a defunct US healthcare-IT firm with `il_center` literally
+    "Unknown / not identified in research". A record that admits it found nobody is not a
+    fact to cache until 2027-02."""
+    seam = _Seam(_rec(il_center="Unknown / not identified in research"),
+                 _rec(il_center="Rehovot (HQ)", sector="industrial printing"))
+    monkeypatch.setattr(F, "ask", seam)
+    rec, _why = F.research_with_evidence(
+        "Landacorp", {"board_url": "https://www.comeet.com/jobs/landa/12.000"})
+    assert rec and rec["il_center"] == "Rehovot (HQ)"
+    # ...and an HONEST record about a company with no Israel site is NOT that (BACKLOG 526:
+    # five such rows, every profile correct about who the company is). Rejecting those would
+    # delete correct facts and re-open a queue with nothing left to research.
+    for honest in ("no Israel presence; HQ in US", "none - fully remote",
+                   "Kenya and India; no identified Israel presence", "HQ in Paris, France"):
+        one = _Seam(_rec(il_center=honest))
+        monkeypatch.setattr(F, "ask", one)
+        rec, why = F.research_with_evidence("Finagra", {"board_url": "https://f.example/j"})
+        assert rec and rec["il_center"] == honest and why == "", honest
+        assert len(one.prompts) == 1, "an honest record buys no second call"
+
+
+def test_a_record_about_a_different_company_is_held_and_the_echo_is_never_stored(monkeypatch):
+    """BACKLOG 525: 3 of 23 bought records described a DIFFERENT company than the board they
+    were anchored to, every one plausible, schema-valid and search-backed. The model now
+    echoes WHO it profiled; an echo that is not this company holds the record instead of
+    caching it, and the echo itself never reaches a card -- `display_name` is evidence-only,
+    and a model-authored name on a card is the Bounce/Bounce AI failure."""
+    seam = _Seam(_rec(employer_name="Landa Digital"))
+    monkeypatch.setattr(F, "ask", seam)
+    rec, why = F.research_with_evidence(
+        "Landa Digital Printing", {"board_url": "https://www.comeet.com/jobs/landa/12.000"})
+    assert rec is not None and why == "", "an echo that IS the company must pass"
+    assert "employer_name" not in rec, "a check is not a field"
+    # the hold itself, without a url: one call, no record, a reason naming the impostor
+    solo = _Seam(_rec(employer_name="Totally Other Ltd"))
+    monkeypatch.setattr(F, "ask", solo)
+    rec, why = F.research_with_evidence("Landacorp", {})
+    assert rec is None and "Totally Other Ltd" in why and why.startswith("held: ")
+    assert len(solo.prompts) == 1
+    # ...and with a url it is routable, like every other refusal a posting can answer
+    routed = _Seam(_rec(employer_name="Totally Other Ltd"), _rec(il_center="Rehovot"))
+    monkeypatch.setattr(F, "ask", routed)
+    rec, why = F.research_with_evidence("Landacorp", {"board_url": "https://c.co/jobs/landa"})
+    assert rec and rec["il_center"] == "Rehovot" and len(routed.prompts) == 2
+    # the relation is generous where it should be: a slug, a suffix, an acronym
+    assert F._same_company("withfaye", "Faye") and F._same_company("Oak", "Oak Identity")
+    assert F._same_company("SolarEdge", "SolarEdge Technologies")
+    assert not F._same_company("Kidum Rehab Projects", "Kidum Advancement Group")
+    assert F._same_company("X", ""), "an absent echo can never hold a record"
+
+
+def test_the_digest_hook_asks_with_the_posting_every_board_company_has(tmp_path, monkeypatch):
+    """Behavioural: the hook's own evidence must REACH the call. A board company always has
+    a live role -- this is the caller that must never conclude "cannot identify"."""
+    seen = {}
+
+    def _spy(company, ev=None, **kw):
+        seen[company] = F.evidence_context(company, **(ev or {}))
+        return _rec(), ""
+    monkeypatch.setattr(CI, "research_with_evidence", _spy)
+    jobs = [{"company": "Oak", "title": "Product Analyst", "location": "Tel Aviv",
+             "url": "https://il.indeed.com/viewjob?jk=9784", "posted_date": TODAY,
+             "description": "Oak is an identity security platform"},
+            {"company": "Oak", "title": "Data Engineer", "url": "https://il.indeed.com/2",
+             "location": "Tel Aviv", "posted_date": TODAY, "description": ""}]
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    monkeypatch.setattr(F, "SHARED_EXPORT", str(tmp_path / "export.json"))
+    monkeypatch.setattr(F, "SHARED_FAILURES", str(tmp_path / "failed.json"))
+    CI.enrich_for_run(st, board_jobs=jobs, run_date=TODAY, use_llm=True, scoped=True)
+    ctx = seen.get("Oak", "")
+    assert "il.indeed.com/viewjob?jk=9784" in ctx, "the hook asked the bare name"
+    assert "Product Analyst" in ctx and "Data Engineer" in ctx
+    assert "identity security platform" in ctx
+    assert ctx.index("il.indeed.com") < ctx.index("identity security platform")
+
+
+def test_a_session_run_researches_a_name_and_never_stamps_the_cron(tmp_path, monkeypatch):
+    """`--only` exists because of a trap this lane hit on 2026-08-31: a hand-run of the bulk
+    script overwrites `stages.stamp("firmo", ...)`, which is the 10:00 cron's own liveness
+    and the mail's `bulk cron: last ran ...`. A session must be able to re-research a name
+    without the mail then describing a laptop."""
+    R, stages = _stamp_env(tmp_path, monkeypatch, {"Wix": {**REC, "as_of": "2026-08-30"}})
+    monkeypatch.setattr(R, "load_companies", lambda **kw: [
+        {"company_name": "Wix", "ats_platform": "scrape", "active": "true",
+         "api_url": "https://www.wix.com/jobs"}])
+    monkeypatch.setattr(stages, "stamp",
+                        lambda *a, **k: pytest.fail("a session run stamped the cron's stage"))
+    monkeypatch.setattr(R, "_stamp_ok",
+                        lambda: pytest.fail("a session run wrote the health heartbeat"))
+    asked = {}
+
+    def _spy(name, ev=None, **kw):
+        asked[name] = F.evidence_context(name, **(ev or {}))
+        return _rec(sector="web"), ""
+    monkeypatch.setattr(R, "research_with_evidence", _spy)
+    F.save_failures({"Wix": (2, "2026-08-31")})
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--only", "Wix"])
+    R.main()
+    # the already-researched skip and the weekly strike gate are both bypassed: the operator
+    # naming the row IS the retry decision, and both gates answer "who next", not "is this
+    # allowed". The money gate is not in that class and still refuses.
+    assert "wix.com/jobs" in asked.get("Wix", ""), "the name was not researched"
+    assert R.SeenStore().load_firmographics().get("Wix", {}).get("sector") == "web"
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--only", "Senior Data Analyst"])
+    R.main()
+    assert "Senior Data Analyst" not in asked, "a leaked job title is never worth a call"
+
+
+def test_a_board_we_read_daily_lends_its_own_titles_to_the_research(tmp_path, monkeypatch):
+    """`matched` holds only the roles this board is ABOUT, so an active row whose roles we
+    never match reached the model with a url and nothing else -- and `kidum.com/career/`
+    alone came back as the mental-health hostel operator (BACKLOG 525/528), while the
+    board's own six listings are teachers and tutors for the test-prep group. The scrape
+    cache is the `scraper` lane's file and this only ever reads it."""
+    import research_firmographics as RF
+    cache = tmp_path / "scraped_cache.json"
+    cache.write_text(json.dumps({
+        "Kidum Rehab Projects": [{"title": "Physics teacher"}, {"title": "English tutor"},
+                                 {"title": "Physics teacher"}, {"title": "Sales rep"},
+                                 {"title": "NEVER"}],
+        "Has Matched Roles": [{"title": "from the cache"}],
+        "Broken": "not a list",
+    }, ensure_ascii=False), encoding="utf-8")
+    ev = {"Kidum Rehab Projects": {"board_url": "https://kidum.com/career/"},
+          "Has Matched Roles": {"board_titles": ["from matched"]},
+          "Broken": {}, "Absent": {}}
+    todo = list(ev)
+    assert RF._cached_board_titles(ev, todo, path=str(cache)) == 1
+    got = ev["Kidum Rehab Projects"]["board_titles"]
+    assert got == ["Physics teacher", "English tutor", "Sales rep"], got
+    assert ev["Has Matched Roles"]["board_titles"] == ["from matched"], \
+        "a live posting outranks a cached listing"
+    assert "board_titles" not in ev["Broken"] and "board_titles" not in ev["Absent"]
+    # an unreadable cache is one fewer signal, never a failed run
+    assert RF._cached_board_titles({"X": {}}, ["X"], path=str(tmp_path / "gone.json")) == 0
+
+
+def test_the_two_rows_whose_name_is_not_their_boards_company_render_the_board_s_name():
+    """BACKLOG 528: a registry row can carry the wrong half of a name pair, and the key
+    cannot change (a rename orphans the intel and the role history, 459). Both strings
+    below were read from the employer's own board on 2026-08-31, and both keys fail the
+    automatic same-company rule by construction, which is what the override table is for."""
+    # Neither is a special exemption, and neither is a hand-styled string: each is what the
+    # ORDINARY evidence rule would have written from the page it was read off, had
+    # `board_verify` a row for that board. The table supplies a missing READING, not a
+    # different rule -- so `Landa Corporation` is stored the way `_clean_display` renders
+    # it, without the legal tail, exactly as `Faye <- withfaye` is.
+    assert F.display_name_from_evidence("Landacorp", "Landa Corporation") == \
+        ("write", F.DISPLAY_NAME_OVERRIDES["Landacorp"]) == ("write", "Landa")
+    assert F.display_name_from_evidence("Kidum Rehab Projects", "Kidum") == \
+        ("write", F.DISPLAY_NAME_OVERRIDES["Kidum Rehab Projects"]) == ("write", "Kidum")
+    # ...and every override is applied to a record that exists, or it is a dead table entry
+    recs = {n: {"sector": "x"} for n in F.DISPLAY_NAME_OVERRIDES}
+    rep = F.apply_display_names(recs, {})
+    assert rep["written"] == len(F.DISPLAY_NAME_OVERRIDES)
+    assert recs["Landacorp"]["display_name"] == "Landa"
+    assert recs["Kidum Rehab Projects"]["display_name"] == "Kidum"
+    # a name the table does not claim keeps the registry string: absent is honest, and a
+    # confidently wrong name is worse than a slug
+    assert "display_name" not in F.apply_display_names({"Elsewhere": {"sector": "x"}}, {}) \
+        and "display_name" not in {"Elsewhere": {"sector": "x"}}["Elsewhere"]
+
+
+def test_every_name_this_lane_publishes_facts_for_has_them(tmp_path):
+    """Clause 1, as a test rather than a paragraph: the lane's own gauge over the COMMITTED
+    state. `identity_key` is the join (`display_index` answers for `Dell` from `Dell
+    Technologies`), the `discovery` pseudo-row is not an employer, and `not_a_company`
+    names are never bought. 2026-08-31 evening: 3 -> 0 (`Hila & Co.`, `Oak`, `University
+    of Notre Dame`).
+
+    It is a FLOOR, not a pin: the registry grows every night and this lane's crons drain
+    behind it, so a handful of fresh rows with no facts yet is a normal morning, not a
+    regression. What is never normal is the shape this session fixed -- a name that no
+    amount of re-asking could ever answer."""
+    import csv as _csv
+    import sqlite3 as _sq
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(root, "cloud_state", "firmographics.json"), encoding="utf-8") as f:
+        recs = json.load(f)
+    index = F.display_index(recs)
+    with open(os.path.join(root, "companies.csv"), encoding="utf-8-sig") as f:
+        rows = list(_csv.DictReader(f))
+    universe = {r["company_name"] for r in rows
+                if r["active"].strip().lower() == "true"
+                and (r.get("ats_platform") or "").strip().lower() != "discovery"}
+    con = _sq.connect(os.path.join(root, "cloud_state", "seen.db"))
+    universe |= {c for (c,) in con.execute("SELECT DISTINCT company FROM matched")}
+    con.close()
+    gap = sorted(n for n in universe
+                 if not F.not_a_company(n) and not (recs.get(n) or index.get(F.identity_key(n))))
+    assert len(gap) <= 10, f"{len(gap)} companies can render a card with no facts: {gap[:12]}"
+    # the four this session closed stay closed, by name -- each one a class, not a row:
+    #   Oak                       an identity fold the evidence settled
+    #   Hila & Co.                researched from its own posting after the name failed twice
+    #   University of Notre Dame  not retired on the smell of its name
+    #   Kidum Rehab Projects      a record about the OTHER company of the same name, stripped
+    for closed in ("Oak", "Hila & Co.", "University of Notre Dame", "Kidum Rehab Projects"):
+        assert recs.get(closed) or index.get(F.identity_key(closed)), closed
+    # ...and Kidum is the TEST-PREP group, which is the whole of BACKLOG 525: the record
+    # bought on 2026-08-31 was the mental-health hostel operator, on the same Hebrew name
+    kidum = recs.get("Kidum Rehab Projects") or {}
+    assert "hostel" not in json.dumps(kidum, ensure_ascii=False).lower(), \
+        "the wrong-company record came back; the board is kidum.com, the test-prep group"

@@ -38,6 +38,12 @@ def research_company_detail(*a, **kw):
     return _F.research_company_detail(*a, **kw)
 
 
+def research_with_evidence(*a, **kw):
+    """Same late binding for the evidence-fed form this hook actually calls -- one refusal
+    on a name with a live posting buys one more question, asked about the posting."""
+    return _F.research_with_evidence(*a, **kw)
+
+
 # ---- the digest hook: blurbs + facts for one run ----------------------------------- #
 # Everything the digest needs from this lane, in one call that never raises, is bounded
 # in calls AND minutes, and reports itself (`audit_lines`) into the mail. Env-overridable
@@ -192,8 +198,31 @@ def chip_safe(rec):
 
 
 def _context_for(company, jobs):
+    """The blurb loop's context: this company's job text, nothing else. `company_info`
+    summarises what a company DOES and never has to identify it -- the name is already
+    known to be a board company."""
     return next((j.get("description") for j in jobs
                  if j.get("company") == company and j.get("description")), "")
+
+
+def _evidence_for(company, jobs):
+    """This company's live roles as `firmographics.evidence_context` kwargs.
+
+    The research half needs more than the blurb half does, and for one reason: it has to
+    IDENTIFY the employer, and a name it cannot place used to come back `known: false` and
+    become a 7-day strike -- with the posting that would have answered it sitting in the
+    same dict. Everything here is already in `board_jobs`; no store is read."""
+    mine = [j for j in jobs if j.get("company") == company]
+    titles, postings, jd = [], [], ""
+    for j in mine:
+        t = " ".join(str(j.get("title") or "").split())
+        if t and t not in titles and len(titles) < 3:
+            titles.append(t)
+        if j.get("url") and len(postings) < 2:
+            postings.append((t, j.get("url")))
+        if not jd and j.get("description"):
+            jd = j["description"]
+    return {"postings": tuple(postings), "jd": jd, "board_titles": titles}
 
 
 def _research_order(board_jobs, email_jobs):
@@ -462,9 +491,15 @@ def _research(st, targets, board_jobs, run_date, rep, clock=None):
             rep["stopped_outage"] = len(todo) - i
             break
         try:
-            rec, why = research_company_detail(
-                company, _context_for(company, board_jobs),
-                timeout=int(min(RESEARCH_TIMEOUT_S, remaining)), meta=rep["llm"])
+            # The EVIDENCE, not just the job text: a board company always has a live role,
+            # so this hook is exactly the caller that must never conclude "cannot identify"
+            # (the operator's 2026-08-31 rule). `budget` is the hook's own clock, so the
+            # disambiguation call is skipped rather than started-and-clamped -- a clamped
+            # call arrives as `ResearchUnavailable` and would read as an outage.
+            rec, why = research_with_evidence(
+                company, _evidence_for(company, board_jobs),
+                timeout=int(min(RESEARCH_TIMEOUT_S, remaining)), meta=rep["llm"],
+                budget=clock.remaining)
         except ResearchUnavailable as e:
             if getattr(e, "kind", "") == "transient" and "timeout(" in str(e) \
                     and remaining <= RESEARCH_TIMEOUT_S:

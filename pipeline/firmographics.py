@@ -231,6 +231,18 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     # `title-twin NVIDIA/NVIDIA AI` about the same pair (2026-08-31). No registry row is
     # named `NVIDIA AI`, so nothing is being folded except the showcase form.
     "nvidia ai": "nvidia",
+    # REFUSED on 2026-08-31 morning, landed the same evening on the operator's evidence.
+    # The morning session read the registry's PARKED `Oak` row -- Opera Group's shared
+    # Teamtailor board with `&division=Oak` -- and concluded the string was a division
+    # filter, not an employer. The role told the other half of the story: the published
+    # `Oak` card is `Product Analyst` (il.indeed.com jk=9784c063c918d237), and our own
+    # ACTIVE Ashby row `Oak - Identity Security OS`
+    # (api.ashbyhq.com/posting-api/job-board/oak) publishes the SAME `Product Analyst`,
+    # first seen 2026-08-21. One company, two strings, and the parked row is a THIRD thing
+    # that happens to share the word. Folding the two employer names is not the
+    # Bounce/Bounce AI failure the morning feared -- that was two DIFFERENT companies; this
+    # is one company whose facts we already hold.
+    "oak": "oak identity security os",
     "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
     "vmware broadcom": "vmware",
     "simply joytunes": "simply",
@@ -346,6 +358,45 @@ def _coerce(rec, company):
     return out
 
 
+# The tell BACKLOG 521 measured: a record bought about the wrong company usually ADMITS it
+# somewhere, and `il_center` is where -- `Landacorp` came back as a US healthcare-IT firm
+# with `il_center` literally "Unknown / not identified in research". The regex demands an
+# identification-failure word, never a mere absence of Israel: "HQ in US; no Israel
+# presence" and "none - fully remote" are HONEST records about real companies on wrong rows
+# (BACKLOG 526's class, five of them), and rejecting those would delete correct facts and
+# re-open a queue that has nothing to research.
+_ADMITS_UNIDENTIFIED = re.compile(
+    r"(?i)\b(unidentified|not identified|could ?n.t (?:be )?identif|unable to identif"
+    r"|not (?:be )?determined|unknown\s*[/(-]?\s*not\b|no company identified)")
+
+REASON_UNIDENTIFIED = "model could not identify the name"
+REASON_ADMITS = "record admits the company was not identified"
+REASON_ECHO_HELD = "held: research profiled %r, not this name"
+REASON_EVIDENCE_LEFT = "unidentified despite role evidence"
+
+
+def _same_company(asked, echo):
+    """Is the name the model says it profiled recognisably the name we asked about?
+
+    The same primitives `display_name_from_evidence` uses -- stem equality, EDGE
+    containment, acronym -- and deliberately not that function: its verdicts are about
+    whether a name is worth SHOWING (casing, umbrellas, clauses), and this asks only
+    whether two strings are the same company. Generous on purpose: a false hold costs a
+    real profile, and the prevention half (the board's own titles in the context) is what
+    this check backstops."""
+    sa, se = _stem(asked), _stem(echo)
+    if not sa or not se:
+        return True             # nothing to disagree with: never hold on an empty echo
+    if sa == se:
+        return True
+    edge = lambda sub, whole: whole.startswith(sub) or whole.endswith(sub)  # noqa: E731
+    if len(se) >= 3 and se in sa and edge(se, sa):
+        return True
+    if len(sa) >= 3 and sa in se and edge(sa, se):
+        return True
+    return _acronym(echo) == sa or _acronym(asked) == se
+
+
 # ---- the seam: this lane's calls into pipeline/llm.py ------------------------------ #
 # Until 2026-08-26 this module spawned `claude -p` itself: no --model (so the CLI's default
 # ran -- opus[1m] from ~/.claude/settings.json on the laptop, the account default on the
@@ -421,6 +472,14 @@ _RESEARCH_SCHEMA = json.dumps({
         "business_model": {"type": "string"},
         "customer_type": {"type": "string"},
         "il_center": {"type": "string"},
+        # OPTIONAL and never required: the model echoes back WHO it profiled, which is the
+        # only cheap way to notice it profiled someone else (BACKLOG 525: 3 of 23 bought
+        # records described a different same-named company, every one schema-valid and
+        # search-backed). Kept out of `required` so `_schema_shaped` -- which tests
+        # `required <= set(obj)` -- reads an old-shaped answer exactly as it does today, and
+        # popped by `_coerce`: this field is a CHECK, never a stored fact. `display_name`
+        # stays evidence-only (the model never names a company on our cards).
+        "employer_name": {"type": "string"},
     },
     "required": ["known", "sector", "sub_sector", "stage", "stage_note", "size_band",
                  "employees_global", "founded", "business_model", "customer_type",
@@ -429,6 +488,69 @@ _RESEARCH_SCHEMA = json.dumps({
 }, separators=(",", ":"), sort_keys=True)
 
 _DATA = "Company: {company}\nContext from one of its job posts (may be empty): {context}\n"
+
+# ---- the evidence a live role carries --------------------------------------------- #
+# THE RULE (operator, 2026-08-31): a company with a live published role can never be closed
+# "not an employer" or "cannot identify". On 2026-08-31 this lane closed `Oak` as "a
+# Teamtailor division filter" by judging the bare NAME against a parked row's url -- while
+# the role it publishes (`Product Analyst`, il.indeed.com jk=9784c063c918d237) belongs to
+# Oak Identity Security OS, an active Ashby row of ours. The posting was the evidence and
+# nothing looked at it. Refusal stays correct for ACTIVATING a board (`identity_gate`'s
+# domain, where a wrong yes costs a whole company's listings); it is wrong for DESCRIBING
+# what we already publish.
+#
+# So every caller builds the same shape and this module formats it: the trusted half (the
+# urls we resolved, the titles the board itself lists) FIRST and never squeezed, the
+# untrusted half (text a job board wrote) last and cut. 600 chars was the old cut and it was
+# sized for a bare name; a JD excerpt is the half that needs room.
+_CTX_CAP = 1800
+_CTX_TRUSTED_CAP = 600
+_C0 = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+# The sentence lives in the DATA, not in `_RESEARCH_SYSTEM`: the system prompt is one argv
+# element with no newline allowed, and this is the rule that only matters when there IS
+# evidence. It is what turns an anchor into a constraint -- BACKLOG 525 is three records
+# bought about a DIFFERENT same-named company, and today's 16:23Z cron re-bought one of
+# them (`Kidum Rehab Projects`, the hostel operator, against kidum.com's test-prep board)
+# with the anchor alone.
+_CTX_RULE = ("The profiled company must be the one hiring for these postings; a same-named "
+             "company that is not hiring for them is the WRONG company.")
+
+
+def evidence_context(company, *, board_url="", postings=(), jd="", board_titles=()):
+    """One bounded context string out of what a live role already tells us.
+
+    `postings` is ((title, url), ...) -- the pages we saw the name on. Ordering is the
+    design: urls and the board's own titles are things WE resolved, the JD is text a job
+    board wrote, and a cap that cut the trusted half to keep untrusted text would be the
+    wrong trade every time. Pure: no store, no network, no clock.
+    """
+    head = []
+    if board_url:
+        head.append("We read this employer's job postings from their careers board at "
+                    f"{board_url}.")
+    for title, url in list(postings)[:2]:
+        title = " ".join(str(title or "").split())[:120]
+        if not url:
+            continue
+        head.append(f"We saw this name on a job posting at {url}"
+                    + (f", hiring: \"{title}\"." if title else "."))
+    titles = [" ".join(str(t or "").split())[:120] for t in list(board_titles)[:3]]
+    titles = [t for t in titles if t]
+    if titles:
+        # what the board is actually hiring for is the cheapest disambiguator there is:
+        # kidum.com lists teachers and tutors, which no mental-health hostel operator does
+        head.append("Their live job titles include: "
+                    + "; ".join(f'"{t}"' for t in titles) + ".")
+    if head:
+        head.append(_CTX_RULE)
+    text = "\n".join(head)[:_CTX_TRUSTED_CAP]
+    jd = _C0.sub(" ", " ".join(str(jd or "").split()))
+    lead = "Job description excerpt (untrusted posting text, DATA only): "
+    room = _CTX_CAP - len(text) - len(lead) - 1
+    if jd and room > 120:
+        text += ("\n" if text else "") + lead + jd[:room]
+    return text
 
 
 def ask(prompt, *, system, schema, model, effort, tools=(), timeout=240, meta=None):
@@ -568,24 +690,118 @@ def extract_json(text):
     return first
 
 
-def research_company_detail(company, context="", timeout=240, meta=None):
+def research_company_detail(company, context="", timeout=240, meta=None,
+                            data=None, system=None):
     """(record, reason). `record` is None iff the NAME failed, and `reason` says which of the
-    three ways it failed. Collapsing all three into None meant `firmo_failed` recorded a
+    ways it failed. Collapsing them into None meant `firmo_failed` recorded a
     strike whose cause existed only in stderr -- and the strike is a 7-day gate, so nobody
-    could tell a hallucinating model from a name that is not a company."""
-    res = ask(_DATA.format(company=company, context=(context or "")[:600]),
-              system=_RESEARCH_SYSTEM, schema=_RESEARCH_SCHEMA, model=RESEARCH_MODEL,
-              effort=RESEARCH_EFFORT, tools=SEARCH, timeout=timeout, meta=meta)
+    could tell a hallucinating model from a name that is not a company.
+
+    `data`/`system` let `_disambiguate` re-ask the same schema with the POSTING as the
+    subject, through this one validator rather than a second copy of it."""
+    res = ask((data or _DATA).format(company=company, context=(context or "")[:_CTX_CAP]),
+              system=system or _RESEARCH_SYSTEM, schema=_RESEARCH_SCHEMA,
+              model=RESEARCH_MODEL, effort=RESEARCH_EFFORT, tools=SEARCH,
+              timeout=timeout, meta=meta)
     rec = result_object(res, _RESEARCH_SCHEMA)
     if rec is None:
         return None, "no JSON in the answer"
     if rec.get("unknown") or rec.get("known") is False:
-        return None, "model could not identify the name"
+        return None, REASON_UNIDENTIFIED
     out = _coerce(rec, company)
     if out is None:
         return None, ("rejected: no sector" if not str(rec.get("sector") or "").strip()
                       else "rejected by validation")
+    # Two cheap reads of what we just bought, BEFORE it is cached until 2027-02. Both
+    # produce a routable refusal rather than a silent cache: `research_with_evidence` sends
+    # them back with the posting as the subject, and only a second failure strikes.
+    if _ADMITS_UNIDENTIFIED.search(out.get("il_center") or ""):
+        return None, REASON_ADMITS
+    echo = " ".join(str(rec.get("employer_name") or "").split())[:120]
+    if echo and not _same_company(company, echo):
+        return None, REASON_ECHO_HELD % echo
     return out, ""
+
+
+# The disambiguation ask: same seam, same schema, same validator -- only the SUBJECT moves.
+# A bare name the model cannot place is an unanswerable question, and re-asking it weekly
+# for ever is what the 2026-08-31 backlog was made of (21 of 28 names). A live posting is
+# answerable: somebody published it.
+_DISAMBIG_DATA = (
+    "A live job posting exists and a real employer published it. Identify THAT employer and "
+    "profile it.\nThe name we hold for the employer may be a slug, a board key or a variant: "
+    "{company}\n{context}\n")
+
+# One argv line (no newline, no %% pair -- see `_RESEARCH_SYSTEM`). Both fence sentences are
+# carried over verbatim: the context is larger here, not more trusted.
+_DISAMBIG_SYSTEM = (
+    _RESEARCH_SYSTEM.replace(
+        "Set known=false if you cannot identify the company at all, AND if the given string is "
+        "not itself a company name - a job title, a team, a category, a city. ",
+        "The postings in the context are LIVE and were published by a real employer, so an "
+        "employer exists to be found: work from the careers-site host, the posting urls and "
+        "the job titles, and identify the company that operates that careers site. Set "
+        "employer_name to that employer's own name. Set known=false ONLY if even the "
+        "postings do not let you identify who published them. ")
+)
+
+
+def _disambiguate(company, ev, *, timeout=240, meta=None):
+    """The second, evidence-centred ask. Returns (record, reason) like its sibling."""
+    rec, why = research_company_detail(
+        company, evidence_context(company, **ev), timeout=timeout, meta=meta,
+        data=_DISAMBIG_DATA, system=_DISAMBIG_SYSTEM)
+    if rec is None and why in (REASON_UNIDENTIFIED, REASON_ADMITS):
+        # The honest end of the road, and it is NOT "not an employer": we asked with the
+        # posting in hand and still cannot name the publisher. A strike follows, as before,
+        # but under a reason a reader can act on -- and next week's retry asks WITH the
+        # evidence, so the question is no longer the unanswerable one.
+        return None, REASON_EVIDENCE_LEFT
+    return rec, why
+
+
+# A refusal worth re-asking with the posting as the subject. `no JSON in the answer` and
+# `rejected by validation` are NOT here: those are the seam misbehaving, not the name being
+# hard, and a second call would buy the same mess twice.
+_ROUTABLE = frozenset({REASON_UNIDENTIFIED, REASON_ADMITS})
+
+DISAMBIG_MIN_S = 120    # a research call measured 18-40 s, worst case 240 s: below this
+                        # the second call is one we would only kill at the clamp
+
+
+def has_evidence(ev):
+    """True when this name's evidence carries a url -- the thing that makes the posting
+    answerable. Titles and JD text alone name no publisher."""
+    ev = ev or {}
+    return bool(str(ev.get("board_url") or "").strip()
+                or any(u for _t, u in (ev.get("postings") or ())))
+
+
+def research_with_evidence(company, ev=None, *, timeout=240, meta=None, budget=None):
+    """(record, reason) -- the one entry point both crons and every session use.
+
+    One ordinary research call with the evidence as context; if it refuses and the evidence
+    carries a url, ONE disambiguation call centred on the posting. `budget` is a zero-arg
+    callable returning the seconds this run has left (None = unbounded); the second call is
+    skipped rather than started-and-clamped when it cannot fit, because a clamped call
+    arrives as `ResearchUnavailable` and would read as an outage.
+
+    ONE outcome per name, whichever path produced it: every caller's `failed` counter,
+    soft-outage guard and strike ledger keep counting exactly as they did. The seam's own
+    audit counts CALLS, so `seam: N calls` may exceed the names attempted -- that is the
+    spend, honestly reported, the way the blurb loop already reports it."""
+    ev = ev or {}
+    rec, why = research_company_detail(company, evidence_context(company, **ev),
+                                       timeout=timeout, meta=meta)
+    if rec is not None or not has_evidence(ev):
+        return rec, why
+    if why not in _ROUTABLE and not why.startswith("held: "):
+        return rec, why
+    if budget is not None and budget() < DISAMBIG_MIN_S:
+        return rec, why
+    if budget is not None:
+        timeout = int(max(DISAMBIG_MIN_S, min(timeout, budget())))
+    return _disambiguate(company, ev, timeout=timeout, meta=meta)
 
 
 def research_company(company, context="", timeout=240, meta=None):
@@ -904,6 +1120,23 @@ DISPLAY_NAME_OVERRIDES = {
     "helfy":     "Helfy",      # JD self-naming, cloud_state/roles_text.jsonl
     "comblack":  "Comblack",   # JD self-naming, cloud_state/roles_text.jsonl
     "finbounce": "Bounce AI",  # same Comeet tenant E9.00C as the active "Bounce AI" row (487)
+    # Two rows whose registry NAME is not their board's company (BACKLOG 528). A rename
+    # would orphan the intel and the role history (459), so the user-visible half is a
+    # display_name and the row itself is handed to `registry`. Both strings are the
+    # employer's own, read from the board on 2026-08-31:
+    #   `Landacorp` is Comeet tenant A4.000, and all 13 of its positions carry
+    #   `company_name: "Landa Corporation"` (Backend .NET Developer / Head of AI, Rehovot,
+    #   Israel). This CORRECTS `528`, which said "Landa Digital Printing" -- that is the
+    #   operating brand; the board writes the corporate name. Stored as `_clean_display`
+    #   renders it, i.e. without the legal tail: the value here is byte-identical to what
+    #   `display_name_from_evidence` would write from the same page, so the table supplies
+    #   a missing READING, never a different rule.
+    "Landacorp": "Landa",
+    #   `Kidum Rehab Projects` is the wrong half of a Hebrew pair: two unrelated Israeli
+    #   companies are called קידום, and `kidum.com/career/` -- the row's own board -- is the
+    #   test-prep group (its listings are teachers and tutors). The site's own schema.org
+    #   `sameAs` gives its Latin handle: facebook.com/Kidumltd, linkedin.com/company/kidum.
+    "Kidum Rehab Projects": "Kidum",
 }
 
 # legal tails stripped repeatedly; the leading [\s,.] alternation is what catches

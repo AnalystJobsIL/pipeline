@@ -36,8 +36,9 @@ from pipeline import identity_gate as _IG
 from pipeline import stages
 from pipeline.companies import load_companies
 from pipeline.firmographics import (ResearchUnavailable, band_for, identity_key,
-                                    load_shared_status, not_a_company, research_company,
-                                    save_shared, sync_store, union_store)
+                                    load_shared_status, not_a_company,
+                                    research_with_evidence, save_shared, sync_store,
+                                    union_store)
 from pipeline.store import SeenStore
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -178,8 +179,8 @@ def _clean_url(url):
     return "" if "://" not in url else url.split("?", 1)[0].split("#", 1)[0]
 
 
-def _row_anchor(row):
-    """One line of ANCHOR for an ACTIVE registry row: the board we read this name from.
+def _row_evidence(row):
+    """The EVIDENCE an ACTIVE registry row carries: the board we read this name from.
 
     Active only, and the claim is deliberately modest -- *the board we read this name
     from*, not proof of who owns it. `check_invariants.py` prints **14 active rows whose
@@ -188,40 +189,127 @@ def _row_anchor(row):
     confident-and-untrue sentence this repo punishes hardest (wave 2). What active buys is
     that a live row's url has been through the ladder at all: a PARKED row's has not, and
     `entrypoint`'s points at Entry Point USA. Callers pass active rows only; this refuses
-    anything else rather than trusting the caller."""
+    anything else rather than trusting the caller.
+
+    Returns `firmographics.evidence_context` kwargs, not a sentence: the wording is that
+    function's (one formatter, three callers), and a dict is what `_resolve_comeet` can
+    still repair before the call."""
     if str(row.get("active", "")).strip().lower() != "true":
-        return ""
+        return {}
     url = _clean_url(row.get("api_url")) or _clean_url(row.get("token"))
     if not url:
-        return ""     # a bare ATS token names no host and anchors nothing
+        return {}     # a bare ATS token names no host and anchors nothing
     # An API endpoint names the ATS, not the employer: `Finagra` was researched against
     # `api.ashbyhq.com/posting-api/job-board/finagra` and came back unidentifiable.
     # `identity_gate.human_board_url` is the repo's own endpoint -> readable-page map, so
     # that becomes `jobs.ashbyhq.com/finagra`. Its Comeet arm learns the page with a GET,
-    # which must NEVER fire here -- this builds an anchor for every active row, so one GET
-    # would be ~205 of them; that form keeps the plain url instead.
+    # which must NEVER fire here -- this builds evidence for every active row, so one GET
+    # would be ~205 of them. `_resolve_comeet` does those few, after the batch is cut.
     if not _IG._COMEET_API.match(url):
         url = _IG.human_board_url(url) or url
-    return f"We read this employer's job postings from their careers board at {url}."
+    return {"board_url": url}
 
 
-def _posting_anchor(title, url):
-    """One line of ANCHOR for a name with no ACTIVE row: the posting we saw it on.
+def _posting_evidence(title, url):
+    """The EVIDENCE a name with no ACTIVE row carries: the posting we saw it on.
 
     These are the discovery-net names (`Paz - yellow`, `Computer Guard Technologies LTD`)
     and the parked rows, and they are the half a bare name identifies worst. **This claims
-    strictly less than `_row_anchor`** -- where we SAW the name, never whose board it is --
-    and that is what makes it safe for a row `_row_anchor` refuses. It has to be: 37 of the
-    43 matched-only names sit on `il.linkedin.com` / `il.indeed.com`, so a first-party
-    claim would be false for almost all of them, and `entrypoint` reaches this path with
-    the very url the other anchor rejects (wave 2). The title is capped because nothing
-    caps `matched.title`, and the url goes FIRST so the 600-char context cut cannot drop
-    the half we trust and keep the half a job board wrote."""
-    title, url = str(title or "").strip()[:120], _clean_url(url)
-    if not url:
-        return ""
-    return (f"We saw this name on a job posting at {url}, hiring: \"{title}\"."
-            if title else f"We saw this name on a job posting at {url}.")
+    strictly less than `_row_evidence`** -- where we SAW the name, never whose board it is
+    -- and that is what makes it safe for a row `_row_evidence` refuses. It has to be: 37
+    of the 43 matched-only names sit on `il.linkedin.com` / `il.indeed.com`, so a
+    first-party claim would be false for almost all of them, and `entrypoint` reaches this
+    path with the very url the other builder rejects (wave 2)."""
+    url = _clean_url(url)
+    return {"postings": ((str(title or "").strip(), url),)} if url else {}
+
+
+def _research_one(name, ev, deadline, meta):
+    """One name through the evidence seam, with this run's budget as the second call's
+    bound. `(record, reason)`; raises `ResearchUnavailable` exactly as before.
+
+    The budget is the RUN's deadline, not a per-call timeout: `--budget-min` says when this
+    job stops launching work, and a disambiguation call is work. With no deadline the
+    callable is None, which `research_with_evidence` reads as unbounded."""
+    budget = (lambda: deadline - time.time()) if deadline else None
+    return research_with_evidence(name, ev, timeout=240, meta=meta, budget=budget)
+
+
+def _cached_board_titles(evidence, todo, path=None):
+    """Fill `board_titles` from the board's OWN cached listing for the names being
+    researched. Returns how many names gained titles.
+
+    `matched` only holds the roles this board is ABOUT (analyst/BI), so a company whose
+    board we read daily and whose roles we never match -- an active row with no matched
+    record -- reached the model with a url and nothing else. That is exactly the shape that
+    re-bought the wrong company: `kidum.com/career/` alone came back as the mental-health
+    hostel operator on 2026-08-31, and the board's own six listings are teachers and tutors
+    for the test-prep group. `scraped_cache.json` is the `scraper` lane's file and this
+    only ever READS it; a missing or unreadable cache is not a run failure, it is one fewer
+    signal."""
+    want = [n for n in todo if not (evidence.get(n) or {}).get("board_titles")]
+    if not want:
+        return 0
+    try:
+        with open(path or os.path.join(HERE, "scraped_cache.json"), encoding="utf-8") as f:
+            cache = json.load(f)
+    except Exception:  # noqa: BLE001
+        return 0
+    filled = 0
+    for name in want:
+        jobs = cache.get(name)
+        if not isinstance(jobs, list):
+            continue
+        titles = []
+        for j in jobs:
+            t = " ".join(str((j or {}).get("title") or "").split()) if isinstance(j, dict) else ""
+            if t and t not in titles:
+                titles.append(t)
+            if len(titles) == 3:
+                break
+        if titles:
+            evidence.setdefault(name, {})["board_titles"] = titles
+            filled += 1
+    return filled
+
+
+COMEET_RESOLVE_MAX = 10
+
+
+def _resolve_comeet(evidence, todo):
+    """Turn a Comeet API endpoint into the page a person reads, for the ATTEMPTED names only
+    (BACKLOG 521). Returns how many GETs were made.
+
+    `https://www.comeet.com/careers-api/2.0/company/A4.000/positions` is a tenant uid: it
+    names no employer, and the model then answers about whoever else carries the registry
+    name -- `Landacorp` (tenant A4.000, which is Landa Digital Printing in Rehovot) came
+    back as a defunct US healthcare-IT firm. `identity_gate.human_board_url`'s Comeet arm
+    learns the page with a GET, so it can never run while building evidence for ~205 active
+    rows; here the batch is already cut to what this run will pay for, so it is a handful.
+
+    A uid we cannot resolve is DROPPED rather than sent: it identifies nothing, and leaving
+    it in would also make `has_evidence` call the name answerable on evidence that answers
+    nothing."""
+    done = 0
+    for name in todo:
+        ev = evidence.get(name) or {}
+        url = ev.get("board_url") or ""
+        if not _IG._COMEET_API.match(url):
+            continue
+        if done >= COMEET_RESOLVE_MAX:
+            ev.pop("board_url", None)   # unresolved uid: no anchor is better than a wrong one
+            continue
+        done += 1
+        human = ""
+        try:
+            human = _IG.human_board_url(url) or ""
+        except Exception:  # noqa: BLE001 — a board that will not answer is not a run failure
+            human = ""
+        if human and not _IG._COMEET_API.match(human):
+            ev["board_url"] = human
+        else:
+            ev.pop("board_url", None)
+    return done
 
 
 def is_stale(rec, refresh_days):
@@ -240,6 +328,19 @@ def main():
     ap.add_argument("--refresh-days", type=int, default=None,
                     help="also re-research records older than this many days")
     ap.add_argument("--dry-run", action="store_true", help="only report, no research")
+    # The SESSION channel, and the reason it exists is the stamp. A hand-run of this script
+    # overwrites `stages.stamp("firmo", ...)` -- the 10:00 cron's own liveness and queue
+    # measurement, which the mail prints as `bulk cron: last ran ...` -- with a laptop's
+    # numbers; the 2026-08-31 morning session did exactly that and had to restore the file
+    # with `git checkout` before committing. `--only` researches the names asked for and
+    # stamps NOTHING (neither the shared stage nor the health heartbeat), so a session can
+    # re-research a name without lying about the cron. It also bypasses the `have`-skip and
+    # the 7-day strike gate: the operator naming a row IS the retry decision. `not_a_company`
+    # still refuses -- the money gate is never a matter of who asked.
+    ap.add_argument("--only", default="",
+                    help="comma-separated names: research just these (bypasses the "
+                         "already-researched skip and the weekly strike gate), and stamp "
+                         "neither the shared firmo stage nor the health heartbeat")
     ap.add_argument("--export", action="store_true", help="write the union to cloud_state/firmographics.json and exit")
     ap.add_argument("--display-report", action="store_true",
                     help="triage every board_verify employer_named (write/absent/report), write nothing, exit")
@@ -262,6 +363,9 @@ def main():
         # launched nothing, stamped `budget_min: NaN` into a committed JSON file (not JSON),
         # and wrote the health heartbeat (wave-1)
         ap.error("--budget-min must be a finite number >= 0 (0 means no bound)")
+    only = [n.strip() for n in (a.only or "").split(",") if n.strip()]
+    if a.only and not only:
+        ap.error("--only was given but names no company")
     t0 = time.time()        # the RUN's clock, from here: `minutes` in the stamp is wall time
 
     if a.display_report:
@@ -374,11 +478,12 @@ def main():
     have = union_store(st)
     rows = load_companies()
     names = [r["company_name"] for r in rows]
-    # An ANCHOR per name, for the prompt (see `_context_for`). A bare obscure name is what
-    # the model cannot identify -- 21 of the 28 names in the 2026-08-31 backlog carried a
-    # strike whose reason was "model could not identify the name", every one of them asked
-    # with an EMPTY context, and the weekly retry re-asked the same empty question for ever.
-    anchors = {r["company_name"]: _row_anchor(r) for r in rows}
+    # The EVIDENCE per name, for the prompt (`firmographics.evidence_context`). A bare
+    # obscure name is what the model cannot identify -- 21 of the 28 names in the
+    # 2026-08-31 backlog carried a strike whose reason was "model could not identify the
+    # name", every one of them asked with an EMPTY context, and the weekly retry re-asked
+    # the same empty question for ever.
+    evidence = {r["company_name"]: _row_evidence(r) for r in rows}
     # also cover companies that appear on the actual board (CI's matched table) but are
     # not in companies.csv — CI's discovery layer surfaces jobs from employers we never
     # explicitly listed, and those jobs deserve a profile too
@@ -393,17 +498,31 @@ def main():
             "SELECT DISTINCT company FROM matched WHERE COALESCE(status,'') != 'superseded'")]
         # a name with no ACTIVE row has no board to anchor it, and it is the harder half
         # (LinkedIn/Indeed discovery names: `Paz - yellow`, `Computer Guard Technologies
-        # LTD`, plus every parked row). The posting we saw it on is the anchor, claiming
+        # LTD`, plus every parked row). The posting we saw it on is the evidence, claiming
         # only that. Tie-break to the row a reader would call newest: 115 of 187 rows share
         # today's `last_seen`, and inside a tie sqlite returns INSERTION order, i.e. the
         # oldest -- 9 of 143 companies got a posting that was not their newest, and the
         # choice could change silently after any VACUUM (wave 2).
-        for c, title, url in con.execute(
-                "SELECT company, title, url FROM matched "
+        #
+        # ONE pass, three harvests: the posting (for names with no active row), the newest
+        # JD text, and up to 3 of the company's own live titles. The titles are the cheap
+        # disambiguator BACKLOG 525 wanted -- kidum.com lists teachers and tutors, which is
+        # not a mental-health hostel operator's board, and the anchor ALONE re-bought that
+        # wrong company on 2026-08-31.
+        for c, title, url, desc in con.execute(
+                "SELECT company, title, url, description FROM matched "
                 "WHERE COALESCE(status,'') != 'superseded' "
                 "ORDER BY last_seen DESC, first_seen DESC, rowid DESC"):
-            if c and not anchors.get(c):
-                anchors[c] = _posting_anchor(title, url)
+            if not c:
+                continue
+            ev = evidence.setdefault(c, {})
+            if not ev.get("board_url") and not ev.get("postings"):
+                ev.update(_posting_evidence(title, url))
+            if desc and not ev.get("jd"):
+                ev["jd"] = desc
+            titles = ev.setdefault("board_titles", [])
+            if title and title not in titles and len(titles) < 3:
+                titles.append(title)
         con.close()
         names += [n for n in board if n not in names]
     # leaked job titles ("Sql developer - X", "my team") are never companies: skip for
@@ -437,7 +556,21 @@ def main():
     have_norms = {identity_key(n) for n in have}
     todo, gated, seen_norms = [], [], set()
     stale_pick = {}  # identity group -> its STALEST variant (rotates variants over passes)
-    for n in names:
+    if only:
+        # The operator named these rows; the `have`-skip and the weekly gate are both
+        # answers to "who should we spend on next", and neither is a reason to refuse a
+        # name a human asked for by hand. `not_a_company` is not in that class -- it is the
+        # money gate, and it stays.
+        todo = [n for n in only if not not_a_company(n)]
+        missing = [n for n in todo if n not in set(names)]
+        refused = [n for n in only if not_a_company(n)]
+        if refused:
+            print(f"--only refused {len(refused)} name(s) that are not companies: "
+                  f"{', '.join(refused)}", flush=True)
+        if missing:
+            print(f"--only: {len(missing)} name(s) are in neither companies.csv nor "
+                  f"matched, so they carry no evidence: {', '.join(missing)}", flush=True)
+    for n in [] if only else names:
         nn = identity_key(n)
         if n in have:
             if is_stale(have[n], a.refresh_days) and n not in refresh_abandoned:
@@ -479,7 +612,7 @@ def main():
     if a.dry_run or not todo:
         for n in todo:
             print("  -", n)
-        if not a.dry_run:
+        if not a.dry_run and not only:
             # a drained queue is exactly when a stale strike sits longest: nothing else in
             # this run will look at the ledger, and `refresh_abandoned` counts on regardless
             _led, _ = F.load_failures(today)
@@ -513,6 +646,16 @@ def main():
     queued = len(todo)          # the whole queue this run set out to clear, BEFORE any cap
     if a.limit:
         todo = todo[: a.limit]
+    # AFTER the cut, and only here: this is the one network call the evidence build makes,
+    # and it is bounded by what this run will actually pay a model for (BACKLOG 521).
+    _resolved = _resolve_comeet(evidence, todo)
+    if _resolved:
+        print(f"resolved {_resolved} Comeet tenant uid(s) to the page a person reads "
+              f"(cap {COMEET_RESOLVE_MAX}/run)", flush=True)
+    _titled = _cached_board_titles(evidence, todo)
+    if _titled:
+        print(f"{_titled} name(s) gained their board's own live titles from the scrape cache",
+              flush=True)
 
     # The seam's own audit. Without it this job spends the subscription
     # invisibly: the digest hook reports `N calls, Ns, N searches[, N
@@ -529,8 +672,12 @@ def main():
     deadline = launch_t0 + a.budget_min * 60 if a.budget_min else None
     pending, queue, attempted, aborted = {}, list(todo), 0, False
 
-    def _record(rec, name):
-        """One finished call -> the store, the counters, one `ok`/`FAIL` line."""
+    def _record(rec, name, why=""):
+        """One finished call -> the store, the counters, one `ok`/`FAIL` line.
+
+        `why` is the seam's own reason and it is PRINTED: the strike is a 7-day gate, and
+        `unidentified despite role evidence` (we asked with the posting in hand and still
+        could not name the publisher) is a different morning from `rejected: no sector`."""
         nonlocal done, failed
         if rec:
             if name in have:
@@ -561,7 +708,7 @@ def main():
         else:
             failed += 1
             failed_names.append(name)
-            print(f"FAIL {name} (strike pending)", flush=True)
+            print(f"FAIL {name}{f' ({why})' if why else ''} (strike pending)", flush=True)
 
     def _stamp_kwargs():
         return dict(researched=done, failed=failed, records=len(have) + done, todo=queued,
@@ -581,8 +728,12 @@ def main():
                 while queue and not aborted and len(pending) < max(1, a.workers) \
                         and (deadline is None or time.time() < deadline):
                     name = queue.pop(0)
-                    pending[ex.submit(research_company, name,
-                                      anchors.get(name, ""), 240, meta)] = name
+                    # `research_with_evidence`, not `research_company`: a refusal on a name
+                    # whose evidence carries a url buys ONE more call with the posting as
+                    # the subject, and only then a strike. The run's own budget bounds it,
+                    # so a late night cannot start a second call it would have to kill.
+                    pending[ex.submit(_research_one, name, evidence.get(name),
+                                      deadline, meta)] = name
                     attempted += 1
             _launch()
             while pending:
@@ -590,7 +741,7 @@ def main():
                 for fut in ready:
                     name = pending.pop(fut)
                     try:
-                        rec = fut.result()
+                        rec, why = fut.result()
                     except ResearchUnavailable as e:
                         # infrastructure outage (CLI logged out, network): NOT the name's
                         # fault -- no firmo_failed stamp, and 3 in a row means everything
@@ -608,7 +759,7 @@ def main():
                     # sticky past the abort line: a late success must not un-abort the
                     # run's verdict about its own infrastructure
                     infra_streak = 0 if infra_streak < 3 else infra_streak
-                    _record(rec, name)
+                    _record(rec, name, why)
                 _launch()
     except KeyboardInterrupt:
         raise                   # an operator stopping the run is not a crash (wave-2): the
@@ -619,7 +770,8 @@ def main():
         # place, and `stages.alarms("firmo", 2)` reads a one-day-old stamp as healthy: the
         # 120-minute job timeout, an OOM, a locked sqlite in `_record` -- each silent for
         # three mornings. Stamp what was done with the crash named, then re-raise.
-        stages.stamp("firmo", alarm=f"crashed({type(e).__name__})", **_stamp_kwargs())
+        if not only:      # a session's crash is not the cron's crash (see `--only`)
+            stages.stamp("firmo", alarm=f"crashed({type(e).__name__})", **_stamp_kwargs())
         raise
     left = queued - attempted
     minutes = (time.time() - t0) / 60
@@ -709,10 +861,15 @@ def main():
     # `left` what it did not reach. The three are what the next morning's digest reads to
     # tell "the cron drained the queue" from "the cron ran and left 99 behind" (08-28) --
     # a run that starts twelve hours late, or not at all, has to be legible by its stamp.
-    stages.stamp("firmo", researched=done, failed=failed, records=len(have) + done,
-                 todo=queued, attempted=attempted, left=left, unavailable=infra_errors,
-                 gated=len(gated), minutes=round(minutes, 1), budget_min=a.budget_min,
-                 **({"alarm": _alarm} if _alarm else {}))
+    # ...and a `--only` run stamps NOTHING: this file is the cron's liveness, and a
+    # session's three names would overwrite `13 researched of 15, 0 left` with `2 of 2`,
+    # after which the mail's `bulk cron: last ran ...` describes a laptop. The 2026-08-31
+    # morning session did exactly that and restored it with `git checkout`.
+    if not only:
+        stages.stamp("firmo", researched=done, failed=failed, records=len(have) + done,
+                     todo=queued, attempted=attempted, left=left, unavailable=infra_errors,
+                     gated=len(gated), minutes=round(minutes, 1), budget_min=a.budget_min,
+                     **({"alarm": _alarm} if _alarm else {}))
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store; "
           f"{queued} to do, {attempted} attempted, {left} left ({minutes:.1f} min"
           + (f" of a {a.budget_min:g}-min budget" if a.budget_min else "") + ")")
@@ -738,7 +895,10 @@ def main():
     # ...nor is a truncated all-fail run: the no-strike branch above sits ahead of the
     # mass-failure guard, so `mass_failure` stays False there and the old predicate wrote
     # "proved good" over an 8-name night that failed 6 of 6 under a cap (wave-2)
-    if done > 0 or (attempted > 0 and infra_errors == 0 and failed < 5 and attempted == queued):
+    # ...and never from a `--only` session: the heartbeat answers "is the CHAIN healthy",
+    # and two names a human picked prove nothing about the cron that did not run.
+    if not only and (done > 0 or (attempted > 0 and infra_errors == 0 and failed < 5
+                                  and attempted == queued)):
         _stamp_ok()
 
 

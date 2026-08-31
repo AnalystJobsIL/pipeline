@@ -6784,6 +6784,19 @@
     "stage_note": "Formerly TASE-listed (2021 IPO at ~$187M); filed for creditor protection March 2025, assets sold to US-based Arkena Inc for ~$757K in July 2025",
     "sub_sector": "Digital cutting and creasing (die-cutting) machines for folding carton and corrugated packaging converting"
   },
+  "Hila & Co.": {
+    "as_of": "2026-08-31",
+    "business_model": "Recruitment/headhunting on behalf of client employers",
+    "customer_type": "B2B (employers hiring through an agency)",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Shoham",
+    "sector": "hr services / recruitment",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Independent boutique headhunting practice run by Hila Malka; evidence is the posting itself (LinkedIn 4457744315, 2026-08-31): the job poster is the headhunter and the hiring employer is an unnamed FMCG company",
+    "sub_sector": "Headhunting & Talent Acquisition"
+  },
   "Hippo": {
     "as_of": "2026-08-21",
     "business_model": "Earns premiums and fees from underwriting/selling homeowners insurance plus an agency/program platform (Hippo Home Insurance Program, First Connect)",
@@ -8250,16 +8263,17 @@
   },
   "Kidum Rehab Projects": {
     "as_of": "2026-08-31",
-    "business_model": "Provides community-based rehabilitation housing and support services (hostels, supportive communities) for people with mental health disabilities",
-    "customer_type": "B2G/B2C - government-funded social services for individuals with mental health disabilities",
+    "business_model": "B2C education services - matriculation exam prep, psychometric test courses, English/Amirant courses, tutoring",
+    "customer_type": "Consumers (students, high schoolers, adults preparing for exams)",
+    "display_name": "Kidum",
     "employees_global": null,
-    "founded": null,
-    "il_center": "Israel (multiple hostel/community sites)",
-    "sector": "social services / healthcare",
-    "size_band": "S",
+    "founded": 1985,
+    "il_center": "Israel (nationwide branches; HQ in central Israel)",
+    "sector": "education",
+    "size_band": "M",
     "stage": "private-enterprise",
-    "stage_note": "Non-profit/social service organization operating rehabilitation hostels and supportive communities in Israel",
-    "sub_sector": "Mental health rehabilitation housing and community support"
+    "stage_note": "Largest private test-prep/education company in Israel, ~40 years operating, privately owned (not VC-backed)",
+    "sub_sector": "Test prep and tutoring services (matriculation, psychometric, English)"
   },
   "Kimberly-Clark": {
     "as_of": "2026-08-28",
@@ -8503,6 +8517,7 @@
     "as_of": "2026-08-31",
     "business_model": "Hardware manufacturer - digital printing presses using Nanography technology",
     "customer_type": "B2B",
+    "display_name": "Landa",
     "employees_global": 460,
     "founded": 2002,
     "il_center": "Rehovot (HQ)",
@@ -15742,6 +15757,19 @@
     "stage": "public",
     "stage_note": "NYSE: U; IPO 2020; acquired Israeli ironSource in 2022",
     "sub_sector": "Game engine & app monetization platform"
+  },
+  "University of Notre Dame": {
+    "as_of": "2026-08-31",
+    "business_model": "Higher education / research university",
+    "customer_type": "Students, researchers, general public",
+    "employees_global": null,
+    "founded": 1842,
+    "il_center": "Jerusalem (Tantur Ecumenical Institute)",
+    "sector": "education",
+    "size_band": "XL",
+    "stage": "private-enterprise",
+    "stage_note": "Private, nonprofit Catholic research university (not venture-backed); independent institution founded 1842; Israel site confirmed 2026-08-31 from the row's own SmartRecruiters board (Rector - Tantur Ecumenical Institute, Jerusalem, country il)",
+    "sub_sector": "Higher education / university"
   },
   "Unlimited Robotics": {
     "as_of": "2026-08-22",
