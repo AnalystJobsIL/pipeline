@@ -8248,6 +8248,19 @@
     "stage_note": "Privately held Israeli startup, no public funding round data found",
     "sub_sector": "Product discovery & marketplace marketing (Amazon growth optimization)"
   },
+  "Kidum Rehab Projects": {
+    "as_of": "2026-08-31",
+    "business_model": "Provides community-based rehabilitation housing and support services (hostels, supportive communities) for people with mental health disabilities",
+    "customer_type": "B2G/B2C - government-funded social services for individuals with mental health disabilities",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Israel (multiple hostel/community sites)",
+    "sector": "social services / healthcare",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Non-profit/social service organization operating rehabilitation hostels and supportive communities in Israel",
+    "sub_sector": "Mental health rehabilitation housing and community support"
+  },
   "Kimberly-Clark": {
     "as_of": "2026-08-28",
     "business_model": "Manufacturer/marketer of consumer & professional paper-based products (diapers, tissues, personal care)",
@@ -8485,6 +8498,19 @@
     "stage": "private-enterprise",
     "stage_note": "Israeli PE firm FIMI took 100% ownership for $80M in a court-approved debt arrangement, Sept 2025 (prior owners Benny Landa, ALTANA, SKion)",
     "sub_sector": "nanographic (nano-pigment) digital printing presses for commercial and packaging print"
+  },
+  "Landacorp": {
+    "as_of": "2026-08-31",
+    "business_model": "Hardware manufacturer - digital printing presses using Nanography technology",
+    "customer_type": "B2B",
+    "employees_global": 460,
+    "founded": 2002,
+    "il_center": "Rehovot (HQ)",
+    "sector": "industrial technology / printing",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Privately held, funded by founder Benny Landa plus investors including ALTANA/SKion and the Rausing family; over $400M raised",
+    "sub_sector": "Digital printing presses (Nanography)"
   },
   "Lasso": {
     "as_of": "2026-08-23",
@@ -16160,6 +16186,19 @@
     "stage": "public",
     "stage_note": "CARIAD SE is a wholly-owned subsidiary of Volkswagen AG (XETRA: VOW3 / OTC: VWAGY); spun up in 2020 as Car.Software Organisation, renamed CARIAD in 2021",
     "sub_sector": "Volkswagen Group's in-house automotive software unit — unified vehicle OS, E/E architecture, ADAS/automated driving stack, connected-car cloud and infotainment for VW, Audi, Porsche"
+  },
+  "Voodoo": {
+    "as_of": "2026-08-31",
+    "business_model": "B2C mobile gaming publisher/studio (hyper-casual and casual games)",
+    "customer_type": "B2C",
+    "employees_global": 981,
+    "founded": 2013,
+    "il_center": "Tel Aviv / Raanana (R&D and studio, via acquisitions); HQ in Paris, France",
+    "sector": "gaming",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Venture/growth-equity backed (Tencent, Goldman Sachs, GBL); valued ~$2.3-2.6B as of last rounds",
+    "sub_sector": "Mobile games publishing (hyper-casual/casual)"
   },
   "Voom": {
     "as_of": "2026-08-21",
