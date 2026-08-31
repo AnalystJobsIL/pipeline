@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**567 filed · 407 open · 160 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**571 filed · 411 open · 160 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 517.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 521.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 138 open
+### registry — 140 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -232,6 +232,8 @@ closure convention in the header.
 - **513** `513@registry` **22 companies' only live postings reach us through Indeed while their registry row is
 - **514** `514@registry` **`retry_unreachable` OVERWROTE a notes cell and the row fell out of its re-check pool —
 - **516** `516@registry` **`bd_rescue`'s `empt` branch REBUILDS the row instead of patching it**
+- **517** `517@registry` **One Osem posting is on the live board under TWO employer names, and a third parked
+- **520** `520@registry` **Two of the drain's `N/M IL` activations from 2026-08-29/31 are false, measured against
 
 ### infra — 108 open
 
@@ -344,7 +346,7 @@ closure convention in the header.
 - **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
 - **515** `515@infra` **A cron commit carries `[skip ci]`, so a row a cron corrupts is only ever caught on
 
-### discovery — 26 open
+### discovery — 27 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -372,6 +374,7 @@ closure convention in the header.
 - **456** `456@discovery` **The inline JD filler re-buys the same postings every night, because it has no cooldown
 - **484** `484@discovery` **Twenty agencies still walk past `is_recruiter` by name**
 - **485** `485@discovery` **`discovery_telegram.py` sends a spoofed Chrome UA and keeps only a post's first URL**
+- **519** `519@discovery` **`is_aggregator` does not know `ecommerceguide.com`, a site that says it is one** —
 
 ### docs — 24 open
 
@@ -473,7 +476,7 @@ closure convention in the header.
 - **506** `506@company-intel` **OPERATOR DECISION
 - **512** `512@company-intel` **`entrypoint` still renders as a slug on every surface
 
-### roles — 17 open
+### roles — 18 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
 - **3** `3@roles` **`pipeline/dates.py`**
@@ -492,6 +495,7 @@ closure convention in the header.
 - **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
 - **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
 - **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
+- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
 
 ### jd-text — 14 open
 
@@ -9479,6 +9483,35 @@ Record: `docs/sessions/2026-08-31-jd-text.md`.
      an employer whose board the registry could resolve would be covered at source instead
      of through an aggregator with a 21-day discovery window. Derivation:
      `python -c "import json,csv;d=json.load(open('discovered_cache.json',encoding='utf-8'));ind={j['company'].strip().lower() for j in d if j.get('ats_platform')=='discovery-indeed'};rows={r['company_name'].strip().lower():r for r in csv.DictReader(open('companies.csv',encoding='utf-8-sig'))};print(sorted(n for n in ind if n in rows and rows[n]['active'].strip().lower()!='true'))"`
+
+     **Partial, 2026-08-31 (`registry`) — three of the named faces re-measured, and the
+     list is 21 + 4, not 22.** Re-derived: 21 inactive rows and **4 names with no row**
+     (`icon plc`, `majestic labs`, `mccann`, `viber`). Four of the item's own examples do
+     not survive contact: **Trivago** has neither a row nor a discovery card (the claim is
+     unsupported); **Viber** is the ACTIVE row `Rakuten Viber` (workday
+     `rakuten/RakutenRewards`, reading 0/0 — a WALK-vs-query case, not a missing row);
+     **McCANN** is two existing rows (`Universal McCann Israel`, `McCann Digital`); and
+     **אסם is ACTIVE**, pointed at a **Facebook page** — see `517`.
+     * **TransUnion — SETTLED, and the park was already right.** Its row URL is a location
+       QUERY (`?locationCountry=Israel`), so it was never evidence either way. WALKED
+       instead (`searchText=""`, paged): **236 of 236 postings, 0 Israel roles by
+       `pipeline.israel.is_israel_job`, and not one `locationsText` even contains
+       "Israel"**. Its `listing-hunt 2026-08-29: no IL listing` verdict is independently
+       confirmed, so **no note was written** — the vocabulary has no "walked the board"
+       token (`verdicts.TOKENS`), and inventing one for a single row, or restating a
+       verdict already on the row, would only risk evicting a real segment under the 220
+       cap. The Indeed card for TransUnion is not its own board's posting.
+     * **Prologic LTD — do NOT retire it; the row's own triage verdict is a false agency
+       read.** Its note carries `dark-triage 2026-08-28: page-empty (LLM confirms no open
+       roles (Page appears to be a recruitment/j…))` and its `<title>` markets "השמה
+       הייטק", which reads as a placement agency. It is not: the page is a Bynet-group IT
+       infrastructure and cyber integrator (SolarWinds, Ivanti, SecPod, One Identity
+       partner webinars; "שירותים תשתיות ואינטגרציה סייבר ואבטחת"). `השמה` appears once,
+       in marketing copy. A real Israeli employer whose listings need a render, not a
+       terminal token.
+     * Novo Nordisk, Diageo, Glassbox, Oak (Opera Group teamtailor) and Wipro all answer
+       200 with **zero** Israel text in raw HTML — JS shells, so they need the render rung
+       and cannot be settled by a cheap GET. The remaining names are untouched.
 514. **`retry_unreachable` OVERWROTE a notes cell and the row fell out of its re-check pool —
      the rehearsal caught it on the next push** — lane: `registry`. Filed by `roles`
      2026-08-31. Commit `93dc8fd` (schedule run 33374511068, `[skip ci]`) rewrote
@@ -9502,16 +9535,29 @@ Record: `docs/sessions/2026-08-31-jd-text.md`.
      came from the OPPOSITE direction: retry's new `scanned; no open Israel roles now`
      ADDED the row to `validate_empty`'s pool, and retry's own `replace_own("retry", …)`
      removes that phrase — its sole carrier — the next night. A one-night membership the
-     rehearsal correctly calls a loss. Fixed by carrying the dated fact forward
-     (`_fold_empty`) with a drop-guard for saturated cells (`_keep_selectors`); rule and
-     evidence in `ARCHITECTURE.md` §2, "a fact another pool selects on". `rehearse (worst,
-     seed 1)` green locally, `validate_empty` flat at 65 across 14 nights, 0 orphans.
-     Repair: `listing-hunt 2026-08-29: not a listings page; no listing found` restored via
-     `notes.append` (153 → 218 chars). **`queue-hunt 2026-08-29` is NOT restorable and
-     nobody should try**: at 218 chars the only unprotected segment is the restore itself,
-     so `append` evicts it to make room and then drops the newcomer too — the measured
-     result is the cell back at 153, i.e. attempting it costs the restore. The remaining
-     `bd_rescue` row-rebuild hole is `516`.
+     rehearsal correctly calls a loss. The streak was **six** runs, not four (33381636676,
+     33383497644, 33384129188, 33386238895, 33389300315, 33396868611 — checked job-by-job).
+     Fixed by carrying the dated fact forward (`_fold_empty`) with a drop-guard for
+     saturated cells (`_keep_selectors`); rule and evidence in `ARCHITECTURE.md` §2, "a fact
+     another pool selects on". `rehearse (worst, seed 1)` green, `validate_empty` flat at 65
+     across 14 nights, 0 orphans.
+
+     **The "restore the lost verdicts" half of this item is REFUSED, with the measurement,
+     and no row edit shipped.** Three verdicts were evicted across the two nights, not two:
+     `queue-hunt 2026-08-29`, `listing-hunt 2026-08-29`, and — the one worth having —
+     bd_rescue's PAID `scanned via brightdata; roles-text present but no resolvable board`,
+     evicted in turn by `probe-woken`. The cell holds one of them at most, and an adversarial
+     pass killed the version that restored `listing-hunt`: (a) at 218/220 the restore is the
+     cell's ONLY unprotected segment, so the next stamp of any kind evicts it — simulated
+     against three; (b) `probe_candidates._wake_note` strips `^(listing-hunt|crack-walled|
+     probe-woken)` segments **by design**, so restoring an 08-29 hunt verdict reinstates
+     exactly what the row's own 08-31 wake exists to clear; (c) attempting `queue-hunt`
+     as well returns the cell to 153 — `append` evicts the restore to make room and then
+     drops the newcomer too, so the second restore COSTS the first. The row was left as the
+     cron wrote it, and `rehearse (worst, seed 1)` is green on that note: **the fold is what
+     fixed the gate; the repair was never load-bearing.** A cosmetic edit that dies at the
+     next stamp is not a repair, and this item asked for one. The remaining `bd_rescue`
+     row-rebuild hole is `516`.
 
 ## From the `registry` lane, 2026-08-31 (the CI-gate session)
 
@@ -9530,6 +9576,15 @@ Record: `docs/sessions/2026-08-31-registry.md`.
      or add a nightly rehearsal job at 03:30 UTC after the chain — so the lane that broke a
      pool is the lane that sees it red. Until then a cron-authored break is discovered by
      an unrelated lane, which is where `514` cost three sessions their green.
+
+     **Footnote, measured the same day and the reason this item is worth reading twice:**
+     the commit that CLOSED `514` did not run CI either — its message quoted the marker
+     verbatim while describing this item, and GitHub read the quotation as the instruction.
+     Commit `20b0e03`, pushed 15:0xZ: `actions/runs?head_sha=...` → `total_count 0`, no
+     check-runs, nothing queued, while its parent had 1. **The marker is honoured anywhere
+     in the message, body included, so it cannot be written even to name it** — spell it
+     `skip-ci`, or "the CI-skip marker", in any commit message. The recovery is a following
+     commit with a clean message, which runs CI over both.
 516. **`bd_rescue`'s `empt` branch REBUILDS the row instead of patching it** — lane:
      `registry` (found while closing `514`; not fixed, and it is latent rather than
      hypothetical). `bd_rescue.py:343` writes
@@ -9544,3 +9599,62 @@ Record: `docs/sessions/2026-08-31-registry.md`.
      current row and write back only cols 3-5 and the note, the way `apply_resolved.py:150`
      rewrites fields 2-4 and leaves the rest alone. Churn here touches a nightly paid cron,
      which is why this session filed it rather than took it.
+517. **One Osem posting is on the live board under TWO employer names, and a third parked
+     twin shares the second's URL** — lane: `registry` (the canonical-name half) with
+     `roles` (the merge half); found 2026-08-31 while working `513`. Measured in
+     `cloud_state/seen.db`: the role `אנליסט/ית אפקטיביות מסחרית ליחידת ה CDT אסם סחר`
+     has a `matched` row under **`אסם`** AND under **`Nestlé`**, both `last_seen`
+     2026-08-31 — one posting, two employers, both live. Meanwhile `Nestle` and `Nestlé`
+     are two separate PARKED rows on the byte-identical URL
+     `https://www.nestlejobs.com/job-search?location=Israel`; `check_invariants` check B
+     compares exact names and check B2 only fires on two ACTIVE rows, so nothing sees it.
+     And `אסם` — the only ACTIVE row of the three — points at
+     `https://www.facebook.com/osem.nestle.career/?locale=he_IL`, a **Facebook page**,
+     activated by `queue-drain 2026-08-29 search-llm; 1/1 IL`. `is_aggregator` returns
+     False for a facebook.com URL, which is why the activation was never refused.
+     Three separate defects, and they interlock: (a) a social page is not a board and
+     cannot be walked — the row needs `needs re-resolution` and the 19:00 hunt, or a real
+     Osem board; (b) `Nestlé` should be `alias-of Nestle` (or the reverse — the accented
+     row is the one carrying the live role, so the choice is not free); (c) the duplicate
+     role needs the identity-group work of `132`-`139`. **NOT taken deliberately**: the
+     `roles` and `render` lanes shipped public-dataset fixes the same day, and parking or
+     aliasing either Nestlé row moves a role that is on the board TODAY. Whoever takes it
+     should decide the canonical row first, then let `_alive` age the loser out rather
+     than purging it.
+518. **A terminal registry verdict does not reach the roles purge path, so an agency's role
+     is filed `closed` — as though it had been a real vacancy that ended** — lane: `roles`
+     (the predicate) with `registry` (the evidence); found 2026-08-31 by an adversarial pass
+     over this session's own retirements. `pipeline/run.py`'s `_never_ours` has exactly three
+     sources — `roles.recruiter_names`, `roles.intake_rejected(cloud_state/intake_rejects.json)`
+     and `_agg_named` — and **all three are negative for `Peak Innovation`**:
+     `is_recruiter("Peak Innovation")` is False (the name test cannot see it — the case
+     `ARCHITECTURE.md` §1 already documents), it is absent from the 27 `intake_rejects` keys,
+     and `is_aggregator("https://peak-innovation.co/career/")` is False. Nothing in that path
+     reads `companies.csv`'s TERMINAL token or `active`, so parking the row as `recruiter`
+     — which this session did, on the agency's own words — changes nothing downstream: the
+     record `peak innovation|credit risk analytics team lead` stays `"status":"closed"`,
+     while `pipeline/roles.py` reserves `purged` for "a row that was never ours", which is
+     exactly what an outsourcing agency's posting is. No live exposure today (`last_seen`
+     2026-08-29, so `_alive` is already False and the board carries 0), which is why this is
+     filed rather than hot-fixed. Proposal: give `_never_ours` a fourth source — the registry
+     row's terminal token — so a `recruiter`/`redundant` park is a purge predicate the same
+     night, instead of the name test being the only door.
+519. **`is_aggregator` does not know `ecommerceguide.com`, a site that says it is one** —
+     lane: `discovery` (`pipeline/aggregators.py`), found 2026-08-31. The page reads
+     *"openings pulled daily from verified brand career sites, deduplicated"* over **3,675
+     roles / 1,484 companies / 71 countries** (Gymshark, Klaviyo, Colgate-Palmolive), and
+     `is_aggregator("https://ecommerceguide.com/jobs/")` returns **False**. The row is parked
+     terminal now, so nothing is live — but the detector is still blind, so the same URL
+     rediscovered under another name activates again, and `_never_ours` cannot purge the
+     roles it would publish. One host, one line.
+520. **Two of the drain's `N/M IL` activations from 2026-08-29/31 are false, measured against
+     the live boards** — lane: `registry`, found 2026-08-31 by an adversarial pass. `Nascompany`
+     is active on `queue-drain 2026-08-31 search-llm; 1/1 IL` and its greenhouse board returns
+     **5 jobs, every one `Singapore`, 0 Israel**; `Snke` is active on `queue-drain 2026-08-29
+     hunt; 10/10 IL` and `snke.com/careers` renders **"1 - 0 of 0"**, with 0 occurrences of
+     Israel or Tel Aviv and "Though headquartered in Germany" in its own copy. Neither has a
+     `matched` record, so nothing is on the board — the cost is two active rows scanned daily
+     and two profiles `company-intel` will buy. These are the same class as `511`
+     (`_is_ours` cannot read what it is looking at) and want the same fix; the immediate
+     question is how many of the 08-29..31 `queue-drain` activations share it, which is one
+     pass over the rows carrying that stamp.

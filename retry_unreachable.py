@@ -181,10 +181,11 @@ def _note(base, segment, disproved=True):
 
 
 _EMPTY_PHRASE = re.compile(r"no open israel roles", re.I)
-# This tool's OWN segment, and the date the scan behind it happened. `\bretry ` and not
-# `retry` so `retry-scrape` / `retry-resolved` (the ACTIVATING branches, whose fact is not
-# an emptiness) never match: `replace_own("retry", ...)` evicts those too, but they never
-# carry the phrase, so folding one forward would assert an emptiness nothing measured.
+# This tool's OWN segment, and the date the scan behind it happened. The literal `retry `
+# followed by a DATE and a colon is what excludes `retry-scrape;` / `retry-resolved;` (the
+# ACTIVATING branches, which carry no date and whose fact is not an emptiness):
+# `replace_own("retry", ...)` evicts those segments too, so a looser pattern here would
+# fold one forward and assert an emptiness nothing ever measured.
 _OWN_EMPTY = re.compile(r"retry (\d{4}-\d{2}-\d{2}): [^|]*no open israel roles"
                         r"(?:\s+now)?\s*(\d{4}-\d{2}-\d{2})?", re.I)
 
@@ -200,7 +201,9 @@ def _fold_empty(note, today):
     segment silently retires the row from the pool that re-checks exactly this class.
     Measured: `tests/rehearse_registry.py --nights 14 --policy worst --seed 1` failed
     `night 1: pool validate_empty (Sun 04:00) lost 1 rows it should keep: ['Israel Opera']`
-    for four consecutive `tests.yml` runs (`docs/BACKLOG.md` 514).
+    for SIX consecutive `tests.yml` runs -- 33381636676, 33383497644, 33384129188,
+    33386238895, 33389300315, 33396868611, each verified job-by-job (`docs/BACKLOG.md` 514,
+    which said four).
 
     The fold states two dated facts, both true and neither new: the page did not answer
     TONIGHT, and when it last answered (`date0`) it had no open Israel roles. It never

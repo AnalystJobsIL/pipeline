@@ -1360,7 +1360,7 @@ Octally Integration,scrape,http://www.octally.com/?CategoryID=198,http://www.oct
 Opmed.ai,scrape,https://www.opmed.ai/careers,https://www.opmed.ai/careers,true,listing-hunt 2026-08-28: queue-hunt; verified 3 IL
 PAPAYA,scrape,https://www.papayaglobal.com/careers/,https://www.papayaglobal.com/careers/,true,listing-hunt 2026-08-28: queue-hunt; verified 8 IL
 Paz - yellow,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-29: another company's board; no listing found
-Peak Innovation,scrape,https://peak-innovation.co/career/,https://peak-innovation.co/career/,true,listing-hunt 2026-08-28: queue-hunt; verified 45 IL
+Peak Innovation,scrape,https://peak-innovation.co/career/,https://peak-innovation.co/career/,false,"listing-hunt 2026-08-28: queue-hunt; verified 45 IL | recruiter 2026-08-31: outsourcing/staffing agency by its own page (מיקור חוץ, JB-#### codes, places talent at other companies)"
 Plateful,workable,plateful,https://apply.workable.com/api/v1/widget/accounts/plateful?details=true,true,dark-triage 2026-08-28: js-shell (thin html + job-ish XHR — needs render+capture) | listing-hunt 2026-08-28: verified 2 IL via apply.workable.com | self-heal 2026-08-28: re-resolved to workable
 Prologic LTD,scrape,https://www.prologic.co.il/High-tech-jobs,https://www.prologic.co.il/High-tech-jobs,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-28: page-empty (LLM confirms no open roles (Page appears to be a recruitment/j) (role phrases were bios/testimonials))
 PwC Israel,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-29: another company's board; no listing found
@@ -1665,7 +1665,7 @@ Abcloudz,scrape,,https://abcloudz.com/company/careers/,true,queue-drain 2026-08-
 Allstarsit,scrape,,https://www.allstarsit.com/careers/jobs,true,queue-drain 2026-08-29 hunt; 1/1 IL
 Galil Systems,scrape,,https://galilsoftware.com/company/careers/,true,queue-drain 2026-08-29 hunt; 3/3 IL
 Just Eat Takeaway Com,scrape,,https://careers.justeattakeaway.com/il/he/israel,true,queue-drain 2026-08-29 hunt; 2/2 IL
-Konsortium Ziviler Friedensdienst,scrape,,https://www.ziviler-friedensdienst.org/de/jobs,true,queue-drain 2026-08-29 hunt; 1/1 IL
+Konsortium Ziviler Friedensdienst,scrape,,https://www.ziviler-friedensdienst.org/de/jobs,false,"queue-drain 2026-08-29 hunt; 1/1 IL | redundant 2026-08-31: not an employer - a German consortium job board; its ZFD-Akteur column names the hiring org (GIZ, pbi, AGIAMONDO) and the one Israel posting is Pro Peace's"
 Lely Industries Nv,scrape,,https://www.lely.com/vacancies/,true,queue-drain 2026-08-29 hunt; 8/8 IL
 KPMG Israel,scrape,,https://kpmg.co.il/careers,true,queue-drain 2026-08-29 hunt; 29/29 IL
 Echo,scrape,,https://www.comeet.com/jobs/echo/9A.006,true,queue-drain 2026-08-29 hunt; 2/2 IL
@@ -1782,7 +1782,7 @@ Imubit,scrape,,https://imubit.com/careers,false,queue-hunt 2026-08-29: careers p
 Indocs,scrape,,https://indocs.co.il/careers/,true,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: verified 1 IL via indocs.co.il
 Israel Elwyn,scrape,,https://israelelwyn.org.il/vacancies/,false,listing-hunt 2026-08-29: no IL listing; monitored candidate | dark-triage 2026-08-30: page-empty (LLM confirms no open roles (Page is the company's vacancies pa))
 Israel Hayom ישראל היום,scrape,,https://www.israelhayom.co.il/careers,true,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: verified 15 IL via www.israelhayom.co.il
-Israel Opera,scrape,https://www.israel-opera.co.il/en/the-israeli-opera-chorus-join-us/,https://www.israel-opera.co.il/en/the-israeli-opera-chorus-join-us/,false,dark-triage 2026-08-30: url-dead (unreachable (dns/conn)) | retry 2026-08-31: scanned; no open Israel roles now | probe-woken 2026-08-31: re-hunt pending | listing-hunt 2026-08-29: not a listings page; no listing found
+Israel Opera,scrape,https://www.israel-opera.co.il/en/the-israeli-opera-chorus-join-us/,https://www.israel-opera.co.il/en/the-israeli-opera-chorus-join-us/,false,dark-triage 2026-08-30: url-dead (unreachable (dns/conn)) | retry 2026-08-31: scanned; no open Israel roles now | probe-woken 2026-08-31: re-hunt pending
 Isrotel Hotel Chain,scrape,,https://www.isrotel.co.il/careers/,true,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: verified 15 IL via www.isrotel.co.il
 Ivix,scrape,,https://www.ivix.ai/company/careers,false,"queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: no IL listing; monitored candidate | dark-triage 2026-08-30: extract-gap (LLM found 9: AI,ML Engineer, AI Team Lead)"
 Jafora Tabori,scrape,,https://www.jafora.co.il/en/jobs/,false,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-08-29: no IL listing; monitored candidate | dark-triage 2026-08-30: js-shell (job XHRs seen during render)
@@ -2045,8 +2045,8 @@ Cbre,scrape,https://www.cbre.com/,https://www.cbre.com/,false,scanned; no open I
 Cellosite,scrape,https://cellosite.co.il,https://cellosite.co.il,false,scanned; no open Israel roles now | own-site 2026-08-30: cellosite.co.il linkback
 Checkout,scrape,https://www.checkout.com/jobs,https://www.checkout.com/jobs,false,auto-expand scrape; 2 IL | duplicate of Checkout.com: same Ashby board (posting 9bf673a0 published twice); duplicate-of 2026-08-30
 Bulwarx,smartrecruiters,bulwarx,https://api.smartrecruiters.com/v1/companies/bulwarx/postings,true,auto-expand slug-probe; 3/3 IL
-Ecommerce Guide,scrape,https://ecommerceguide.com/jobs/,https://ecommerceguide.com/jobs/,true,auto-expand scrape; 1 IL
-Rockerbox,scrape,https://www.rockerbox.com/careers,https://www.rockerbox.com/careers,true,auto-expand scrape; 2 IL
+Ecommerce Guide,scrape,https://ecommerceguide.com/jobs/,https://ecommerceguide.com/jobs/,false,"auto-expand scrape; 1 IL | redundant 2026-08-31: not an employer - a job aggregator (its own page: openings pulled daily from verified brand career sites, 3675 roles / 1484 companies / 71 countries)"
+Rockerbox,scrape,https://www.rockerbox.com/careers,https://www.rockerbox.com/careers,false,auto-expand scrape; 2 IL | duplicate of DoubleVerify 2026-08-31: rockerbox.com/careers 301-redirects to doubleverify.com/company/careers (acquired); DoubleVerify is the active greenhouse row
 DoubleVerify,greenhouse,doubleverify,https://boards-api.greenhouse.io/v1/boards/doubleverify/jobs,true,auto-expand slug-probe; 33/2 IL
 Optum,scrape,https://www.optum.com/en/,https://www.optum.com/en/,false,scanned; no open Israel roles now | own-site 2026-08-30: www.optum.com linkback
 Nuvoton Technology Israel Ltd,comeet,51.00F,https://www.comeet.com/careers-api/2.0/company/51.00F/positions?token=15F57C6DB15FAF8C5757CAF841D6DB,true,auto-expand; 17/14 IL
