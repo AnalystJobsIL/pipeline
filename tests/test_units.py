@@ -22316,6 +22316,10 @@ def test_drain_stops_scoring_at_the_budget_and_records_nothing_for_the_rest(
     cadence on a name nobody judged."""
     import queue_resolve_search as QRS
     _r830c_tree(tmp_path, monkeypatch, queue=["A", "B", "C"])
+    # the preflight refuses a disarmed rung before selecting; this test stubs `search_one`,
+    # so it declares the rung armed (`tests/conftest.py` bans the transport regardless).
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "test-key-not-a-real-one")
+    monkeypatch.setenv("DEEP_BD_SEARCH_CAP", "5")
     clock = iter([0, 0, 10, 20, 30, 40, 70, 100, 130, 200, 300, 400, 500, 600, 700])
     monkeypatch.setattr(QRS.time, "monotonic", lambda: next(clock))
     monkeypatch.setattr(QRS, "SEC_PER_NAME", 10.0)      # 1 min fits all three by estimate...
@@ -22470,6 +22474,11 @@ def test_the_drain_makes_its_own_output_directory(tmp_path, monkeypatch):
     trace that 112 selected names had produced nothing."""
     import queue_resolve_search as QRS
     monkeypatch.chdir(tmp_path)
+    # the preflight refuses a DISARMED rung (no key / a cap of 0) before it selects a
+    # name, so a test that stubs the search must say the rung is armed. Nothing can be
+    # bought: `tests/conftest.py` bans the transport itself.
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "test-key-not-a-real-one")
+    monkeypatch.setenv("DEEP_BD_SEARCH_CAP", "5")
     (tmp_path / "research_companies.json").write_text("[]", encoding="utf-8")
     monkeypatch.setattr(QRS, "targets", lambda *a, **k: [])
     monkeypatch.setattr(QRS, "ranked_targets", lambda *a, **k: [])
@@ -24850,3 +24859,168 @@ def test_a_copied_text_never_rides_the_board_url_it_was_copied_onto():
             for p in itertools.permutations([agg1, agg2, copy])
             for m in [store.merge_duplicates([dict(j) for j in p], origins=origins)[0]]}
     assert outs == {("https://acme.com/careers/data-analyst", 170)}
+
+
+def test_a_still_unreachable_night_does_not_retire_the_row_from_validate_empty():
+    """`retry_unreachable` owned a fact another pool selects on, and deleted it nightly.
+
+    `validate_empty`'s membership is the literal phrase `no open israel roles`, and on a row
+    this tool scanned empty the ONLY carrier of that phrase is this tool's own segment.
+    `_note` writes through `notes.replace_own("retry", ...)`, which deletes the previous
+    segment before appending the new one -- so the first night the page stopped answering,
+    the plain `still unreachable` segment silently retired the row from the pool that
+    re-checks exactly this class. `tests/rehearse_registry.py --nights 14 --policy worst
+    --seed 1` was red on it for four consecutive `tests.yml` runs: `night 1: pool
+    validate_empty (Sun 04:00) lost 1 rows it should keep: ['Israel Opera']`
+    (`docs/BACKLOG.md` 514). The fix folds the dated fact forward instead of dropping it."""
+    import retry_unreachable as RU
+    from validate_empty import in_validate_empty_pool
+
+    row = ["Israel Opera", "scrape", "", "https://www.israel-opera.co.il/en/join-us/",
+           "false", "dark-triage 2026-08-30: url-dead (unreachable (dns/conn)) | "
+           "retry 2026-08-31: scanned; no open Israel roles now | "
+           "probe-woken 2026-08-31: re-hunt pending"]
+    assert in_validate_empty_pool(row), "fixture no longer starts in the pool"
+
+    n1 = RU._row_for(row[0], row[3], "unreachable", None, {}, note=row[5])[5]
+    assert in_validate_empty_pool(row[:5] + [n1]), "one unreachable night retired the row"
+    assert "still unreachable" in n1, "the tool's own selector is gone"
+    # the fold states a PAST scan and dates it -- it must never read as tonight's
+    assert "no open Israel roles 2026-08-31" in n1
+
+    # ...and it must not accumulate: a second night re-extracts the SAME date0
+    n2 = RU._keep_selectors(n1, RU._fold_empty(n1, "2026-09-02"))
+    assert in_validate_empty_pool(row[:5] + [n2])
+    assert n2.count("no open Israel roles") == 1 and "2026-08-31" in n2
+    assert "2026-09-02: still unreachable" in n2
+
+
+def test_the_fold_is_skipped_when_writing_it_would_cost_the_pool_it_protects():
+    """The fold is ~33 chars longer, and `replace_own` DELETES before it appends.
+
+    On a saturated cell whose every remaining segment is protected, `notes.append` drops the
+    newcomer whole -- a guarantee written for a tool that only adds. Paired with
+    `replace_own` it deletes this tool's segment and then fails to write the replacement, so
+    the row loses both the phrase and the stamp. Measured on the real registry: of the rows
+    carrying the phrase in their own retry segment, `Syte` (208 chars, every segment
+    protected) is the one the fold does not fit. Writing the SHORT unfolded segment instead
+    is not a fallback -- it deletes the phrase's only carrier just the same."""
+    import retry_unreachable as RU
+    from validate_empty import in_validate_empty_pool
+
+    saturated = ["Syte", "scrape", "", "https://www.syte.ai/careers/", "false",
+                 "dark-triage 2026-08-29: url-dead (http 404) | empty-but-suspect "
+                 "2026-08-30; 2+ role-near-Israel mentions in HTML | probe-woken "
+                 "2026-08-30: re-hunt pending | retry 2026-08-31: scanned; no open "
+                 "Israel roles now"]
+    assert in_validate_empty_pool(saturated) and len(saturated[5]) > 200
+
+    out = RU._row_for(saturated[0], saturated[3], "unreachable", None, {},
+                      note=saturated[5])[5]
+    assert out == saturated[5], "the guard let a saturated row lose its selector"
+    assert in_validate_empty_pool(saturated[:5] + [out])
+    # and the guard is not a blanket no-op: an unsaturated row still gets tonight's date
+    roomy = saturated[:5] + ["retry 2026-08-31: scanned; no open Israel roles now"]
+    assert "still unreachable" in RU._row_for(
+        roomy[0], roomy[3], "unreachable", None, {}, note=roomy[5])[5]
+
+
+def _qs(names, verdict, date, rung="search-llm"):
+    return {n: {"tried": [{"rung": rung, "date": date, "verdict": verdict}]} for n in names}
+
+
+def test_a_disarmed_search_rung_is_named_as_such_and_not_read_as_absent_boards():
+    """The drain's alarm listed three causes it could not tell apart, and MISSED the worst.
+
+    With no key `deep_validate.google_via_unlocker` returns `[]` in silence, `search_one`
+    calls that `no-search-results`, and `queue_state.ingest` records a dated attempt -- so a
+    fully disarmed night is not idle, it is BUSY: `searched_recently` reads ~112 and the
+    IDLE branch never fires at all, while every one of those names is cadence-locked for 14
+    days on a measurement nothing made (CLAUDE.md rule 2). The verdict was in the attempt
+    log the whole time; the stamp read only the rung and the date."""
+    import datetime as _dt
+    import queue_pipeline as QP
+    today = _dt.date.today().isoformat()
+    recent = {today}
+
+    disarmed = _qs(["n%d" % i for i in range(40)], "no-search-results", today)
+    assert QP._recent_empty_share(disarmed, recent) == (40, 40)
+    healthy = _qs(["h%d" % i for i in range(40)], "documented", today)
+    assert QP._recent_empty_share(healthy, recent) == (0, 40)
+    # a transport failure is the SEARCH failing too, never a verdict about the company
+    mixed = dict(_qs(["e%d" % i for i in range(19)], "search-error http-401", today),
+                 **_qs(["ok"], "found", today))
+    assert QP._recent_empty_share(mixed, recent) == (19, 20)
+    # another rung's attempts, and older dates, are none of this alarm's business
+    assert QP._recent_empty_share(_qs(["x"], "no-search-results", today, rung="hunt"),
+                                  recent) == (0, 0)
+    assert QP._recent_empty_share(_qs(["y"], "no-search-results", "2026-01-01"),
+                                  recent) == (0, 0)
+
+
+def test_the_two_ways_a_drain_records_nothing_name_themselves_differently():
+    """`0 searched` has two causes and one of them already happened.
+
+    2026-08-30: all four shards bought their first search and died on a missing `out/`
+    directory -- `bd_spend.jsonl` carries four `queue_resolve_search.py` lines of 1 credit
+    each from that night. A shard that never had a key spends nothing and leaves no line.
+    The old alarm said `a disarmed key, an exhausted DEEP_BD_SEARCH_CAP or a dead shard all
+    look like this`; the ledger already told them apart."""
+    import datetime as _dt
+    import json as _json
+    import queue_pipeline as QP
+    import tempfile, os as _os
+    now = _dt.datetime.now(_dt.timezone.utc)
+    stamp = (now - _dt.timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    old = (now - _dt.timedelta(days=9)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    d = tempfile.mkdtemp()
+    p = _os.path.join(d, "bd_spend.jsonl")
+    with open(p, "w", encoding="utf-8") as f:
+        f.write(_json.dumps({"at": stamp, "tool": "queue_resolve_search.py",
+                             "credits": 1, "ci": True}) + "\n")
+        f.write(_json.dumps({"at": stamp, "tool": "crack_walled.py",
+                             "credits": 74, "ci": True}) + "\n")   # another tool: not ours
+        f.write(_json.dumps({"at": old, "tool": "queue_resolve_search.py",
+                             "credits": 50, "ci": True}) + "\n")   # outside the window
+        f.write("{not json at all\n")                              # a torn line is not a signal
+    got = QP._recent_qrs_spend(path=p)
+    assert [c for c, _, _ in got] == [1], got
+    assert QP._recent_qrs_spend(path=_os.path.join(d, "nope.jsonl")) == []
+
+
+def test_the_drain_refuses_to_run_when_its_paid_rung_cannot_answer():
+    """Better to record NOTHING than 112 confident refusals nothing measured.
+
+    A cap of 0 is indistinguishable downstream from a missing key -- `google_via_unlocker`
+    short-circuits on `_BD["used"] >= cap` before it ever looks at the key -- so the
+    preflight reads the cap the same way `deep_validate` does."""
+    import os as _os
+    import queue_resolve_search as QRS
+    import pytest as _pytest
+
+    def _refuses(**env):
+        keep = {k: _os.environ.get(k) for k in ("BRIGHTDATA_API_KEY", "DEEP_BD_SEARCH_CAP")}
+        try:
+            for k, v in env.items():
+                _os.environ.pop(k, None) if v is None else _os.environ.__setitem__(k, v)
+            with _pytest.raises(SystemExit) as e:
+                QRS._refuse_to_run_disarmed()
+            return e.value.code
+        finally:
+            for k, v in keep.items():
+                _os.environ.pop(k, None) if v is None else _os.environ.__setitem__(k, v)
+
+    assert _refuses(BRIGHTDATA_API_KEY=None, DEEP_BD_SEARCH_CAP="500") == 2
+    assert _refuses(BRIGHTDATA_API_KEY="  ", DEEP_BD_SEARCH_CAP="500") == 2
+    assert _refuses(BRIGHTDATA_API_KEY="k", DEEP_BD_SEARCH_CAP="0") == 2
+    # armed: it must NOT refuse (this guard's whole risk is refusing a good night)
+    keep = {k: _os.environ.get(k) for k in ("BRIGHTDATA_API_KEY", "DEEP_BD_SEARCH_CAP")}
+    try:
+        _os.environ["BRIGHTDATA_API_KEY"] = "k"
+        _os.environ["DEEP_BD_SEARCH_CAP"] = "500"
+        QRS._refuse_to_run_disarmed()
+        _os.environ.pop("DEEP_BD_SEARCH_CAP")      # unset means deep_validate's own default
+        QRS._refuse_to_run_disarmed()
+    finally:
+        for k, v in keep.items():
+            _os.environ.pop(k, None) if v is None else _os.environ.__setitem__(k, v)

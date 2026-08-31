@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**565 filed · 405 open · 160 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**567 filed · 407 open · 160 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 515.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 517.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 137 open
+### registry — 138 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -231,8 +231,9 @@ closure convention in the header.
 - **511** `511@registry` **`queue_resolve_search._is_ours` cannot read a Hebrew title or a spelled-out name: 13 of
 - **513** `513@registry` **22 companies' only live postings reach us through Indeed while their registry row is
 - **514** `514@registry` **`retry_unreachable` OVERWROTE a notes cell and the row fell out of its re-check pool —
+- **516** `516@registry` **`bd_rescue`'s `empt` branch REBUILDS the row instead of patching it**
 
-### infra — 107 open
+### infra — 108 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -341,6 +342,7 @@ closure convention in the header.
 - **491** `491@infra` **The drain's capacity lives in `listing-hunt.yml` and is below intake; four workflow diffs**
 - **494** `494@infra` **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
 - **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
+- **515** `515@infra` **A cron commit carries `[skip ci]`, so a row a cron corrupts is only ever caught on
 
 ### discovery — 26 open
 
@@ -9489,3 +9491,56 @@ Record: `docs/sessions/2026-08-31-jd-text.md`.
      `tests.yml` that is not theirs. Needed: the write path in `retry_unreachable.py` (or
      whatever it calls) goes through `pipeline/notes.py` append, and the row's lost verdicts
      restored from `93dc8fd^`.
+
+     **CLOSED 2026-08-31 (`registry`) — and the title was wrong in both halves.** Nothing
+     overwrote anything, and the two evicted segments are not what the rehearsal was red
+     about. Reproduced byte-for-byte from the shipped code: (1) `bd_rescue.py:343` rebuilt
+     the row (that is the `token` copy of the url — cosmetic; no pool or invariant reads
+     `r[2]` on a scrape row, and 376 rows already carry it), and its 87-char paid verdict
+     took the cell over the 220 cap, so `pipeline/notes.append` evicted the two UNPROTECTED
+     history segments exactly as designed — through `notes.py`, not around it. (2) The red
+     came from the OPPOSITE direction: retry's new `scanned; no open Israel roles now`
+     ADDED the row to `validate_empty`'s pool, and retry's own `replace_own("retry", …)`
+     removes that phrase — its sole carrier — the next night. A one-night membership the
+     rehearsal correctly calls a loss. Fixed by carrying the dated fact forward
+     (`_fold_empty`) with a drop-guard for saturated cells (`_keep_selectors`); rule and
+     evidence in `ARCHITECTURE.md` §2, "a fact another pool selects on". `rehearse (worst,
+     seed 1)` green locally, `validate_empty` flat at 65 across 14 nights, 0 orphans.
+     Repair: `listing-hunt 2026-08-29: not a listings page; no listing found` restored via
+     `notes.append` (153 → 218 chars). **`queue-hunt 2026-08-29` is NOT restorable and
+     nobody should try**: at 218 chars the only unprotected segment is the restore itself,
+     so `append` evicts it to make room and then drops the newcomer too — the measured
+     result is the cell back at 153, i.e. attempting it costs the restore. The remaining
+     `bd_rescue` row-rebuild hole is `516`.
+
+## From the `registry` lane, 2026-08-31 (the CI-gate session)
+
+Record: `docs/sessions/2026-08-31-registry.md`.
+
+515. **A cron commit carries `[skip ci]`, so a row a cron corrupts is only ever caught on
+     SOMEONE ELSE'S push** — lane: `infra`, found 2026-08-31 while closing `514`. The 02:30
+     chain, the 05:00 digest and the self-heal all commit registry state with `[skip ci]`,
+     and `tests.yml` holds the only rehearsal of the registry's pools. So the night the
+     02:30 chain moved `Israel Opera` into a pool it leaves the next night, nothing ran; the
+     red surfaced on `roles`' push nine hours later and three lanes inherited a failure none
+     of them wrote (runs 33381636676, 33383497644, 33384129188, 33386238895, 33389300315 —
+     five consecutive, one job, `rehearse (worst, seed 1)`). The rehearsal is cheap (~90 s
+     for `worst`, 14 nights) and reads only committed state. Proposal, `infra`'s file:
+     run the two seeds that touch registry pools on the state-commit workflows themselves,
+     or add a nightly rehearsal job at 03:30 UTC after the chain — so the lane that broke a
+     pool is the lane that sees it red. Until then a cron-authored break is discovered by
+     an unrelated lane, which is where `514` cost three sessions their green.
+516. **`bd_rescue`'s `empt` branch REBUILDS the row instead of patching it** — lane:
+     `registry` (found while closing `514`; not fixed, and it is latent rather than
+     hypothetical). `bd_rescue.py:343` writes
+     `rows[rowi] = [name, "scrape", best_url, best_url, "false", note]`, so it discards the
+     row's platform and token and stamps its own address into both columns. On a `scrape`
+     row that is cosmetic (nothing reads `r[2]`; 376 rows already look like this, which is
+     why nobody has noticed). On a NATIVE row it would overwrite a working `comeet` /
+     `greenhouse` tenant with a careers-page URL and downgrade the platform to `scrape` —
+     the row keeps answering, from the wrong place. Today's pool is parked http rows so a
+     native row reaching this branch is rare, not impossible (`in_retry_pool`'s widened arm
+     admits any `dark-triage …: url-dead` row that is not on an ATS host). Diff: read the
+     current row and write back only cols 3-5 and the note, the way `apply_resolved.py:150`
+     rewrites fields 2-4 and leaves the rest alone. Churn here touches a nightly paid cron,
+     which is why this session filed it rather than took it.

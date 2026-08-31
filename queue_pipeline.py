@@ -644,6 +644,61 @@ def _nightly_cap():
 DRAIN_NIGHTLY_CAP = _nightly_cap()
 
 
+_BD_SPEND_LOG = os.path.join("cloud_state", "bd_spend.jsonl")
+
+
+def _recent_empty_share(st, recent):
+    """(attempts that bought nothing, attempts scored) over this rung's recent attempts.
+
+    `no-search-results` is what a silent `[]` from the unlocker becomes, and `search-error…`
+    is what a transport failure becomes; both are the SEARCH failing, never a verdict about
+    the company. Counting them is the only way the stamp can tell a rung that answered from
+    one that could not: the attempt log has carried the verdict all along and this alarm
+    read only the rung and the date.
+    """
+    empty = scored = 0
+    for n in st:
+        for a in (st[n].get("tried") or []):
+            if a.get("rung") != "search-llm" or a.get("date") not in recent:
+                continue
+            scored += 1
+            v = (a.get("verdict") or "").strip().lower()
+            empty += v == "no-search-results" or v.startswith("search-error")
+    return empty, scored
+
+
+def _recent_qrs_spend(hours=48, path=_BD_SPEND_LOG):
+    """[(credits, at, ci)] the drain bought in the last `hours`, newest first.
+
+    `bd_rescue`'s atexit hook writes one line per PROCESS and only when it spent something,
+    so this separates the two failures that both read as `0 searched`: a shard that bought a
+    search and then died leaves a line (all four did on 2026-08-30, `credits:1` each), and a
+    shard that never had a key to spend leaves none. Nothing here may raise -- a stamp that
+    dies takes the whole `queue:` mail line with it.
+    """
+    try:
+        raw = open(path, encoding="utf-8").read().splitlines()
+    except Exception:                                             # noqa: BLE001
+        return []
+    cut = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=hours)
+    out = []
+    for ln in raw:
+        ln = ln.strip()
+        if not ln:
+            continue
+        try:
+            r = json.loads(ln)
+            if r.get("tool") != "queue_resolve_search.py" or not r.get("credits"):
+                continue
+            when = dt.datetime.strptime(r["at"], "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=dt.timezone.utc)
+        except Exception:                                         # noqa: BLE001
+            continue                        # a torn or half-written line is not a signal
+        if when >= cut:
+            out.append((int(r.get("credits") or 0), r["at"], bool(r.get("ci"))))
+    return sorted(out, key=lambda t: t[1], reverse=True)
+
+
 def _drain_liveness():
     """`selectable` / `searched` / `drain_alarm` — did the arm that drains the queue RUN?
 
@@ -685,11 +740,34 @@ def _drain_liveness():
                           for a in (st[n].get("tried") or [])))
     out["selectable"] = selectable
     out["searched_recently"] = searched
-    if selectable and not searched:
-        out["drain_alarm"] = ("queue drain IDLE: %d names selectable and 0 searched in the "
-                              "last 2 days -- a disarmed key, an exhausted "
-                              "DEEP_BD_SEARCH_CAP or a dead shard all look like this"
-                              % selectable)
+    empty, scored = _recent_empty_share(st, recent)
+    if scored:
+        out["empty_search_share"] = round(empty / float(scored), 3)
+    if searched and scored >= 10 and empty >= 0.9 * scored:
+        # The failure the old single alarm could not reach AT ALL: a disarmed rung is not
+        # idle, it is BUSY refusing. `searched_recently` is large, so the IDLE branch below
+        # never fires, and every one of those names is cadence-locked for 14 days on a
+        # measurement nothing made. Healthy nights run 0.5% empty (7 of 1,463 attempts,
+        # 2026-08-29..31); a disarmed one runs 100%.
+        out["drain_alarm"] = ("queue drain BOUGHT NOTHING: %d of %d recent search-llm "
+                              "attempts returned no result at all (%.0f%%) -- the disarmed-"
+                              "key / spent-DEEP_BD_SEARCH_CAP fingerprint, NOT %d companies "
+                              "without a board; strip these verdicts before trusting them"
+                              % (empty, scored, 100.0 * empty / scored, empty))
+    elif selectable and not searched:
+        spend = _recent_qrs_spend()
+        if spend:
+            out["drain_alarm"] = ("queue drain IDLE: %d selectable, 0 searched -- but the "
+                                  "shards BOUGHT %d credit(s) (newest %s, ci=%s): they ran "
+                                  "and died mid-run, or the ingest step did not read their "
+                                  "proposals"
+                                  % (selectable, sum(c for c, _, _ in spend),
+                                     spend[0][1], spend[0][2]))
+        else:
+            out["drain_alarm"] = ("queue drain IDLE: %d selectable, 0 searched and NO "
+                                  "Bright Data credit bought in 48h -- the shards never "
+                                  "reached their first search: key absent, step skipped, or "
+                                  "the job died before it" % selectable)
     elif selectable > DRAIN_NIGHTLY_CAP:
         out["drain_alarm"] = ("queue drain BEHIND: %d selectable against a nightly capacity "
                               "of %d -- it needs %.1f nights to clear its own selection set"

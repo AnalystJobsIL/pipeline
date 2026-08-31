@@ -121,6 +121,43 @@ def nightly_capacity():
     return NIGHT_SHARDS * budgeted(NIGHT_CAP)
 
 
+DISARMED = ("queue-resolve-search REFUSING TO RUN: the paid search rung is disarmed "
+            "(%s). Every name would be recorded `no-search-results` and cadence-locked "
+            "for 14 days on a measurement nothing made -- see CLAUDE.md rule 2.")
+
+
+def _refuse_to_run_disarmed():
+    """Exit BEFORE selecting a name when the rung that answers cannot answer.
+
+    `deep_validate.google_via_unlocker` returns `[]` in silence with no key and with a spent
+    or zero cap. `search_one` reads that as `no-search-results`, `score_one` refuses, and
+    `queue_state.ingest` records a dated attempt -- so a disarmed shard does not go idle, it
+    writes ~112 confident refusals and `tried_within(..., "search-llm", 14)` then excludes
+    every one of those names for a fortnight. That is the mass-zero rule with a paid rung on
+    the other side of it, and the stamp cannot see it after the fact: `searched_recently`
+    counts those attempts as work. Refusing here is what keeps the queue honest; the names
+    stay never-searched and sort first tomorrow.
+
+    The cap is read the way `deep_validate` reads it (same env var, same default), because a
+    cap of 0 is indistinguishable downstream from a missing key.
+    """
+    why = ""
+    if not (os.environ.get("BRIGHTDATA_API_KEY") or "").strip():
+        why = "BRIGHTDATA_API_KEY is unset or empty"
+    else:
+        try:
+            cap = int(os.environ.get("DEEP_BD_SEARCH_CAP", "150"))
+        except ValueError:
+            cap = 0
+        if cap <= 0:
+            why = "DEEP_BD_SEARCH_CAP=%s buys nothing" % os.environ.get(
+                "DEEP_BD_SEARCH_CAP", "")
+    if not why:
+        return
+    print("::error::" + DISARMED % why, flush=True)
+    raise SystemExit(2)
+
+
 def _last_search(state, name):
     """The date of this rung's newest attempt on `name`, or "" if it never searched it."""
     import queue_state as QS
@@ -502,6 +539,7 @@ def main(argv=None):
         os.makedirs(_d, exist_ok=True)
     budget_min = TIME_BUDGET_MIN if a.budget_min is None else a.budget_min
 
+    _refuse_to_run_disarmed()
     ranked = ranked_targets(a.shard)
     selectable = [n for _, _, n in ranked]
     n_take = budgeted(a.cap, budget_min) if (a.cap or budget_min) else 0

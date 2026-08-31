@@ -1360,8 +1360,13 @@ to rows that are still `active=false`.
 
 There are two kinds of re-check pool (2026-08-26). **Fact pools** key on durable row
 facts — `active`, an http non-aggregator address, the walled host (`identity_gate.is_walled`),
-the probe's own baseline — and cannot erode: `probe_candidates`, `validate_empty`,
-`crack_walled`, the 02:30 chain (`retry_unreachable.in_retry_pool`). **Token pools** key on a
+the probe's own baseline — and cannot erode: `probe_candidates`,
+`crack_walled`, the 02:30 chain (`retry_unreachable.in_retry_pool`). **`validate_empty` is
+filed here and is a HYBRID**, which is how it eroded anyway: its fact half is the probe's
+pool minus walled hosts, but a row only enters it by carrying an empty-class verdict, and on
+a row the 02:30 chain scanned, the sole carrier of `no open israel roles` is *that chain's
+own segment* — which `replace_own` deletes every night it re-stamps. See "a fact another
+pool selects on" below. **Token pools** key on a
 stamp the *same* tool writes (`triage_dark`) or on the allowlist of note substrings that lives
 in ONE place, `pipeline/verdicts.py` (`TOKENS` / `in_pool` / `stale`): `listing_hunt`, the
 audit and its Chromium rung. Add any new verdict string to `TOKENS` there. **A pool must never
@@ -1382,6 +1387,32 @@ own, per `TOKENS`) because that token is the selector of the 02:30 `retry_unreac
 pass that runs 90 seconds later — leaving it in re-selected the row and, until 2026-08-25,
 the retry rebuilt the cell and erased the verdict Bright Data had just been paid for
 (`git show b3d1d49 -- companies.csv`: 9 rows, nightly, `recovered 0`).
+
+**A fact another pool selects on must be CARRIED FORWARD, not merely appended once**
+(2026-08-31, lane `registry`). The rule above forbids a pool standing on a token inside
+another tool's segment. The mirror of it binds the *writing* tool, and nothing stated it
+until `docs/BACKLOG.md` 514: when your own segment is the only carrier of a fact another
+pool selects on, `replace_own` deletes that fact every night you re-stamp — you are not
+overwriting anyone else's verdict, so no rule was broken, and the row still silently leaves
+a pool. `retry_unreachable` scans a row empty (`retry <date>: scanned; no open Israel roles
+now`), which is what puts it in `validate_empty`'s pool; the next night the page does not
+answer and its plain `still unreachable` segment takes it straight back out. Measured: four
+consecutive `tests.yml` runs red on `rehearse (worst, seed 1)` — *night 1: pool
+validate_empty (Sun 04:00) lost 1 rows it should keep: ['Israel Opera']*.
+
+`retry_unreachable._fold_empty` is the answer: the still-unreachable segment carries the
+older dated fact forward (`retry <today>: still unreachable; no open Israel roles <date0>`),
+stating two true facts and re-extracting `date0` each night so it never accumulates. **Two
+things a future writer must know.** First, the guard beside it (`_keep_selectors`): a folded
+segment is ~33 characters longer, and `notes.append` drops a newcomer whole on a cell at the
+220-char cap whose every segment is protected — a guarantee written for a tool that only
+ADDS, but `replace_own` deletes first, so the pair can delete a fact and then fail to write
+its replacement. Of the rows carrying the phrase in their own retry segment, `Syte` (208
+chars, 4 of 4 protected) is that row; the tool now compares the candidate cell against the
+one it holds and keeps the old note rather than lose a selector, costing one saturated row
+tonight's date. Second, do not "fix" this by widening the reading pool or by exempting the
+rehearsal: `tests/rehearse_registry.py` has no `_OWN_STAMP` entry for `validate_empty`, and
+that is correct — the tool that re-checks empties is not the tool that writes the emptiness.
 
 **The pool is still spelled in THREE places** — `verdicts.TOKENS`, `listing_hunt.HUNT_POOL`,
 `check_invariants.POOL` — and since 2026-08-25 `TOKENS` is a superset of both inline copies
@@ -2102,6 +2133,35 @@ ever; one slot in five goes to the stalest re-try whenever one is waiting
 `new_intake` (selectable names never searched) and `retired_in_queue` (names the lookup
 cleanup will remove) beside `selectable`, so a `queue GREW` alarm can be read as arrivals or
 as resurrection.
+
+**A disarmed drain is BUSY, not idle — and until 2026-08-31 no alarm could see it.** The
+stamp's liveness clause named three causes and admitted it could not tell them apart (*a
+disarmed key, an exhausted `DEEP_BD_SEARCH_CAP` or a dead shard all look like this*). It was
+worse than that: one of the three could not reach the clause at all. With no key
+`deep_validate.google_via_unlocker` returns `[]` in silence, `search_one` reads that as
+`no-search-results`, and `queue_state.ingest` records a dated attempt — so a fully disarmed
+night writes ~112 confident refusals, `searched_recently` reads like a working drain, and
+`tried_within(..., "search-llm", 14)` locks every one of those names out for a fortnight on
+a measurement nothing made. A mass zero recorded as a census (§8, rule 2), with a paid rung
+on the other side of it. Two changes, both keyed on evidence that was already on disk:
+
+* **The drain refuses to start disarmed.** `queue_resolve_search._refuse_to_run_disarmed`
+  runs before `ranked_targets`, so no name is selected and nothing is recorded: unrecorded
+  names stay never-searched and sort first tomorrow. It reads `DEEP_BD_SEARCH_CAP` exactly
+  as `deep_validate` does, because a cap of 0 short-circuits before the key is even looked
+  at and is indistinguishable downstream from a missing one. A test that stubs the search
+  must therefore declare the rung armed; `tests/conftest.py` bans the transport, so a dummy
+  key buys nothing.
+* **The stamp tells the three apart.** `empty_search_share` is published every night
+  (healthy: **0.5 %** — 7 of 1,463 search-llm attempts, 08-29..31; disarmed: 100 %), and
+  ≥ 90 % over ≥ 10 attempts raises `queue drain BOUGHT NOTHING`, naming the fingerprint and
+  saying in words that these are not companies without a board. When nothing was searched at
+  all, `cloud_state/bd_spend.jsonl` separates the remaining two: `bd_rescue`'s atexit hook
+  writes one line per process and only when it spent, so shards that bought and then died
+  leave a trail (all four did on 2026-08-30, `credits:1` each, killed by a missing `out/`)
+  and shards that never had a key leave none. A partial cap exhaustion lands at 25–50 % and
+  is deliberately below the alarm — it is visible in `empty_search_share` without crying
+  wolf, because an alarm that fires on the normal case is the one people learn to skip.
 
 **A shard budgets itself.** The four shards run inside one step with `timeout-minutes: 30`,
 and `queue_state.py --ingest` sits after `wait` in that same step: one slow shard past the

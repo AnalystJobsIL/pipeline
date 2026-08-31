@@ -180,6 +180,41 @@ def _note(base, segment, disproved=True):
     return _note_replace(base, "retry", segment)
 
 
+_EMPTY_PHRASE = re.compile(r"no open israel roles", re.I)
+# This tool's OWN segment, and the date the scan behind it happened. `\bretry ` and not
+# `retry` so `retry-scrape` / `retry-resolved` (the ACTIVATING branches, whose fact is not
+# an emptiness) never match: `replace_own("retry", ...)` evicts those too, but they never
+# carry the phrase, so folding one forward would assert an emptiness nothing measured.
+_OWN_EMPTY = re.compile(r"retry (\d{4}-\d{2}-\d{2}): [^|]*no open israel roles"
+                        r"(?:\s+now)?\s*(\d{4}-\d{2}-\d{2})?", re.I)
+
+
+def _fold_empty(note, today):
+    """Carry a PAST empty scan forward into tonight's still-unreachable segment, or "".
+
+    `validate_empty`'s pool membership is the literal phrase `no open israel roles`
+    (`validate_empty.in_validate_empty_pool`), and on a row this tool scanned empty the ONLY
+    carrier of that phrase is this tool's own segment. `_note` writes through
+    `notes.replace_own("retry", ...)`, which deletes the previous segment before appending
+    the new one -- so the night the page stops answering, the plain `still unreachable`
+    segment silently retires the row from the pool that re-checks exactly this class.
+    Measured: `tests/rehearse_registry.py --nights 14 --policy worst --seed 1` failed
+    `night 1: pool validate_empty (Sun 04:00) lost 1 rows it should keep: ['Israel Opera']`
+    for four consecutive `tests.yml` runs (`docs/BACKLOG.md` 514).
+
+    The fold states two dated facts, both true and neither new: the page did not answer
+    TONIGHT, and when it last answered (`date0`) it had no open Israel roles. It never
+    claims a fresh scan. `date0` is re-extracted from the row every night and never
+    accumulates -- fold(fold(x)) == fold(x) -- and the moment a retry actually reaches the
+    page again, the `empty` branch writes its own fresh phrase and this state dissolves.
+    """
+    m = _OWN_EMPTY.search(note or "")
+    if not m:
+        return ""
+    date0 = m.group(2) or m.group(1)          # a folded date first, else the scan's own stamp
+    return f"retry {today}: still unreachable; no open Israel roles {date0}"
+
+
 def _row_for(name, url, kind, payload, cache, note=""):
     """The one seam every branch of this tool passes through, so the gate lives here.
 
@@ -217,8 +252,35 @@ def _row_for(name, url, kind, payload, cache, note=""):
                 _note(note, f"retry {_today()}: scanned; no open Israel roles now")]
     # still unreachable: the token STAYS (it is this tool's and bd_rescue's selector) and
     # nothing else on the row is touched -- the base note is exactly what came in.
-    return [name, "scrape", url, url, "false",
-            _note(note, f"retry {_today()}: still unreachable", disproved=False)]
+    today = _today()
+    seg = _fold_empty(note, today) or f"retry {today}: still unreachable"
+    return [name, "scrape", url, url, "false", _keep_selectors(note, seg)]
+
+
+def _keep_selectors(note, segment):
+    """`_note(note, segment, disproved=False)`, unless writing it would COST a pool.
+
+    `notes.append` drops a newcomer WHOLE when the cell is at its 220-char cap and every
+    remaining segment is protected (`pipeline/notes.py`, "Dropping the newcomer costs that
+    tool tonight's date on a saturated row, never a pool"). That guarantee holds for a tool
+    that only ADDS -- but `replace_own` deletes this tool's previous segment first, so on a
+    saturated row the pair can delete a fact and then fail to write its replacement. The
+    fold makes the segment ~33 characters longer, which is what brings live rows into
+    range: of the 10 rows carrying the phrase in their own retry segment today, 9 fold
+    within the cap and `Syte` (208 chars, 4 of 4 segments protected) does not -- its note
+    would lose both the phrase and this tool's stamp outright.
+
+    So: compare the candidate cell against the one we hold, and if a selector we came in
+    with is not in it, keep the note we have. The cost is tonight's date on one saturated
+    row, which is the trade `notes.append` already makes; the alternative -- writing the
+    short unfolded segment instead -- still deletes the phrase's only carrier on any row
+    without a second one, so it is not a fallback.
+    """
+    candidate = _note(note, segment, disproved=False)
+    for sel in (_EMPTY_PHRASE, _UNREACHABLE):
+        if sel.search(note or "") and not sel.search(candidate):
+            return note or ""
+    return candidate
 
 
 def main():
