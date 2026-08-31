@@ -239,7 +239,7 @@ closure convention in the header.
 - **524** `524@registry` **`Ecommerce Guide` and `Konsortium Ziviler Friedensdienst` are not Israeli employers and
 - **526** `526@registry` **Five active rows have no Israeli site at all, and their `N IL` verification notes are
 - **527** `527@registry` **`Peak Innovation` is a staffing agency and it feeds 45 listings into the board** —
-- **528** `528@registry` **The registry row `Galil Systems` names a company that does not exist; the board is
+- **528** `528@registry` **Three registry rows name a company that is not the one their board belongs to, and
 
 ### infra — 108 open
 
@@ -9765,12 +9765,24 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      2026-08-28). `Recruitx`/`Jobgether`/`comblack` were handled as the same class. Check:
      `python registry_health.py --explain "Peak Innovation"`, then park or let the agency
      filter take it.
-528. **The registry row `Galil Systems` names a company that does not exist; the board is
-     Galil Software** — lane: `registry`. `galilsoftware.com` is **Galil Software Ltd**,
+528. **Three registry rows name a company that is not the one their board belongs to, and
+     that is why they cannot be profiled** — lane: `registry`. Each was measured against the
+     row's own board by `company-intel`'s 2026-08-31 record audit, and each is the reason a
+     name is still in this lane's gauge: **`Galil Systems`** — `galilsoftware.com` is **Galil
+     Software Ltd**, Israel's onshore-outsourcing house in Nazareth (150+ engineers, ~90 %
+     Israeli-Arab workforce, founded 2008); no employer named "Galil Systems" exists.
+     **`Landacorp`** — Comeet `A4.000` is **Landa Digital Printing** (Benny Landa, Rehovot;
+     its own postings read "Backend .NET Developer - Rehovot"), and the profile bought under
+     the registry name described a US healthcare-IT firm instead (`525`). **`Kidum Rehab
+     Projects`** — `kidum.com` is the test-prep group ("the leading education group in
+     Israel"), while the row's name is `kidumpro.co.il`, an unrelated mental-health hostel
+     operator; two real Israeli companies, both called קידום.
+     A correct profile for any of the three would be keyed under the BOARD's company and so
+     would not answer for the row, which is why researching harder cannot close them. `galilsoftware.com` is **Galil Software Ltd**,
      Israel's onshore-outsourcing house in Nazareth (150+ engineers, ~90 % Israeli-Arab
      workforce, founded 2008); no employer named "Galil Systems" exists. The profile is keyed
      under the registry name, so the card will read `Galil Systems` over Galil Software's
-     facts. This is `459`'s class (a rename orphans intel and role history, so the key cannot
-     simply change) and the answer is the same as `Faye`/`withfaye`: an evidenced
-     `display_name`, which this lane can write once `board_verify` reads that page — filed
-     here so the registry knows the row's name is the wrong half of the pair.
+     facts. This is `459`'s class (a rename orphans intel and role history, so the key cannot simply
+     change) and the answer is the same as `Faye`/`withfaye`: an evidenced `display_name`,
+     which `company-intel` can write once `board_verify` reads those pages — filed here so
+     the registry knows the row's NAME is the wrong half of each pair.

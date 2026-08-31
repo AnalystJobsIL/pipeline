@@ -177,7 +177,7 @@ Two more strike-clear records had the same vacuous shape and got behavioural tes
 
 ## 8. Numbers
 
-**The queue: 28 -> 7.** Re-derived with §7's own gauge before and after, from the same
+**The queue: 28 -> 4.** Re-derived with §7's own gauge before and after, from the same
 command. 21 names researched (3 in a first pass that was killed at 90 s, 18 in the pass that
 replaced it, 2 more on a retry after the `human_board_url` fix); 4 refused by the model; 3
 bought records **stripped** by the audit in §7 and returned to the gauge rather than shipped.
@@ -194,7 +194,15 @@ live, with the date guard correctly keeping the four strikes that same run had j
 The 8 that remain are `Agency`, `Discovery`, `Sivo`, `Tel Aviv` (all pre-existing) and this
 session's four residuals.
 
-### The 7 residuals, each with its reason
+**The final 4** are what is left after `registry` parked `Ecommerce Guide`, `Rockerbox` and
+`Konsortium Ziviler Friedensdienst` the same evening (active rows 1102 -> 1098), which
+removed three of the seven from the render set. Re-derived on the merged tree:
+`Hila & Co.`, `Kidum Rehab Projects`, `Landacorp`, `Oak`. **Not one of them is a research
+gap** — two are rows whose NAME is not their board's company (`528`), one is a division
+filter (`522`), one is a board that resolved to Malta (`523`). Researching harder cannot
+close any of them, which is the honest shape of this residual.
+
+### The 7 residuals as they stood before those parks, each with its reason
 
 | name | why it is still in the gauge |
 |---|---|
