@@ -2392,6 +2392,24 @@ def test_the_bulk_pass_anchors_an_obscure_name_to_the_board_it_came_from():
     assert RF._posting_anchor("t", "") == ""
 
 
+def test_the_anchor_actually_reaches_the_call_the_bulk_pass_makes(tmp_path, monkeypatch):
+    """Behavioural on purpose, and it took a surviving mutation to earn it: the unit test
+    above proves `_row_anchor` builds a string, and `test_the_bulk_cron_counts_its_own_spend`
+    pins the submit line's SHAPE -- both stayed green against a submit site that passed `""`
+    and threw the anchor away, which is precisely the bug being fixed."""
+    R, _ = _stamp_env(tmp_path, monkeypatch, {})
+    monkeypatch.setattr(R, "load_companies", lambda **kw: [
+        {"company_name": "Jafi", "ats_platform": "scrape", "active": "true",
+         "api_url": "https://jafi.org.il/careers"}])
+    seen = {}
+    monkeypatch.setattr(R, "research_company",
+                        lambda name, context="", *a, **k: seen.setdefault(name, context) and None)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
+    R.main()
+    assert "https://jafi.org.il/careers" in seen.get("Jafi", ""), \
+        "the bulk pass asked the bare name -- the shape that made 21 strikes permanent"
+
+
 def test_the_research_prompt_still_fences_the_context_it_is_now_always_given():
     """The anchor makes context the NORMAL case for the bulk pass, so the two sentences that
     stop it profiling a company named INSIDE the context are load-bearing on every call —
