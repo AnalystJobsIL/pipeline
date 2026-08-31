@@ -2427,3 +2427,18 @@ def test_a_strike_whose_answer_is_already_on_disk_is_cleared(tmp_path, monkeypat
     after, _ = F.load_failures()
     assert "Varonis" not in after and "Nowhere Ltd" in after, \
         "an unanswered strike keeps gating; an answered one is not a failure any more"
+
+
+def test_both_of_the_bulk_scripts_exits_clean_an_answered_strike():
+    """The night a stale strike sits longest is the one with NOTHING to do: a drained queue
+    returns early, and if only the working path cleaned the ledger the strike would never be
+    looked at again while `refresh_abandoned` (4+) counted on regardless."""
+    import inspect
+
+    import research_firmographics as RF
+    assert RF._answered_strikes({"Varonis": (1, "x")}, {F.identity_key("Varonis")}) == {"Varonis"}
+    assert RF._answered_strikes({"Varonis": (1, "x")}, set()) == set()
+    src = inspect.getsource(RF.main)
+    early, _, working = src.partition("queued = len(todo)")
+    assert "_answered_strikes" in early, "the drained-queue exit does not clean the ledger"
+    assert "_answered_strikes" in working, "the working exit does not clean the ledger"

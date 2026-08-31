@@ -145,6 +145,16 @@ def plan_counts(n_new, n_refresh, limit):
     return attempted, min(max(0, total - attempted), n_refresh)
 
 
+def _answered_strikes(ledger, have_norms):
+    """The names in the strike ledger whose record is ALREADY on disk (BACKLOG 390).
+
+    By `identity_key`, which is `save_failures`' own deletion key, so a variant answers for
+    the name it was struck under. Used at BOTH of this script's exits: the night this
+    matters most is the one with nothing to do, because a drained queue returns early and a
+    strike that outlived its answer would then never be looked at again."""
+    return {n for n in ledger if identity_key(n) in have_norms}
+
+
 def _row_anchor(row):
     """One line of ANCHOR for an ACTIVE registry row: the board we read this name from.
 
@@ -428,6 +438,14 @@ def main():
         for n in todo:
             print("  -", n)
         if not a.dry_run:
+            # a drained queue is exactly when a stale strike sits longest: nothing else in
+            # this run will look at the ledger, and `refresh_abandoned` counts on regardless
+            _led, _st = F.load_failures()
+            _ans = _answered_strikes(_led, have_norms)
+            if _ans and F.save_failures(_led, cleared=_ans)[0]:
+                print(f"strike ledger: cleared {len(_ans)} strike(s) whose record is already "
+                      f"on disk: {', '.join(sorted(_ans)[:5])}"
+                      + (" ..." if len(_ans) > 5 else ""), flush=True)
             _stamp_ok()  # a clean zero-todo run IS healthy: the chain ran and nothing is
             # stuck — without this, a quiet weekend fires false Desktop alerts that
             # train the user to ignore the one channel real outages depend on
@@ -608,7 +626,7 @@ def main():
     # A strike that outlives its answer is not a gate — `n in have` already skips the name —
     # it is a counter that walks toward `refresh_abandoned` (4+) and evicts a healthy record
     # from the refresh layer for ever. Cleared by IDENTITY, which is `save_failures`' own key.
-    answered = {n for n in ledger if identity_key(n) in have_norms}
+    answered = _answered_strikes(ledger, have_norms)
     cleared = done_names | answered
     written, status = F.save_failures(ledger, cleared=cleared)
     if written:
