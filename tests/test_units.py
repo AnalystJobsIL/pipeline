@@ -24802,3 +24802,24 @@ def test_a_keyless_indeed_url_spends_nothing_and_a_dry_run_report_survives_no_un
     conn.commit(); conn.close()
     monkeypatch.setenv("JD_QUALITY", "0")
     assert emj.main(["--db", str(db), "--dry-run", "--cache", str(tmp_path / "c.json")]) == 0
+def test_a_copied_text_never_rides_the_board_url_it_was_copied_onto():
+    """The mutation harness caught this one unguarded (merge-own-inherited-gate-removal
+    SURVIVED): with the `_inherited` gate off the text-donor pool, a bare board card's
+    COPIED text — classify_grouped writes the group's longest onto it — rides the very
+    board url it donates, replacing the canonical's own shorter text. Two aggregator
+    copies with different lengths make it observable: the merged record must keep the
+    canonical's text (170) under the donated board url, in every member order."""
+    import itertools
+    from pipeline import store
+    origins = {"Acme": "https://acme.com/careers/"}
+    agg1 = _role("Acme", "Data Analyst", "https://il.indeed.com/viewjob?jk=1", "1",
+                 src="discovery-indeed", desc="s" * 170, posted_date="2026-08-25")
+    agg2 = _role("Acme", "Data Analyst", "https://il.linkedin.com/jobs/view/x", "x",
+                 src="discovery-linkedin", desc="L" * 400, posted_date="")
+    copy = _role("Acme", "Data Analyst", "https://acme.com/careers/data-analyst",
+                 "https://acme.com/careers/data-analyst", src="scrape", desc="L" * 400,
+                 posted_date="", _inherited=True)
+    outs = {(m["url"], len(m["description"]))
+            for p in itertools.permutations([agg1, agg2, copy])
+            for m in [store.merge_duplicates([dict(j) for j in p], origins=origins)[0]]}
+    assert outs == {("https://acme.com/careers/data-analyst", 170)}

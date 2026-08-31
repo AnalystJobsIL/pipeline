@@ -2348,7 +2348,7 @@
   "class": "M1-gate-removal",
   "find": "own = [m for m in members if _authoritative(m, origins) and not m.get(\"_inherited\")]",
   "replace": "own = [m for m in members if _authoritative(m, origins)]",
-  "why": "the TEXT donor pool must keep excluding _inherited copies — their description is classify_grouped's copy of the group's longest, not something that posting carried. Killed by test_an_inherited_copy_never_donates_the_text_that_was_copied_onto_it.",
+  "why": "the TEXT donor pool must keep excluding _inherited copies — their description is classify_grouped's copy of the group's longest, not something that posting carried; without the gate a copied text rides the board url it was copied onto. SURVIVED its first run; killed by test_a_copied_text_never_rides_the_board_url_it_was_copied_onto.",
   "must_be_killed_by_behavioural": true
  },
  {
