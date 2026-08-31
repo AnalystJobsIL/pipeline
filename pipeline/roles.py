@@ -1944,7 +1944,7 @@ _COLUMNS = [
     ("description_truncated", "true when the text sits exactly on the 6,000-character capture cap, i.e. the real posting is longer."),
     ("description_sha1", "sha1 of the description text; join to roles_text.jsonl to read it."),
     ("description_quality", "Whether the text we hold reads as a job description (jdfill.looks_like_jd). Empty = text exists but could not be judged this run."),
-    ("description_blocker", "Why a weak text (description_quality snippet/none) is structurally hard to complete, or empty. Recorded verdicts (jd-text's matched.jd_why, 'structural:*') verbatim; else derived: 'gone' (the posting 404s on the employer's own board), 'unfillable:<why>' (a host no rung we own can read), 'listing-page' (the only address we hold is a shared listing, not the posting's own). Rows stay in the file whatever this says (the 2026-08-31 snippet-rows decision)."),
+    ("description_blocker", "Why a weak text (description_quality snippet/none) is structurally hard to complete, or empty. Recorded verdicts (jd-text's matched.jd_why, 'structural:*') verbatim; else derived: 'gone' (the posting 404s on the employer's own board), 'unfillable:<why>' (a host no rung we own can read), 'listing-page' (the only address we hold is a shared listing, not the posting's own). Under the live policy (meta description_text.blocked.policy — 'exclude' since the operator's 2026-09-01 ruling) a blocked row is excluded from this file with its reason counted in the meta; a weak row with NO blocker is pending a fill and stays; the archive keeps history either way."),
     ("sector", "Company sector (firmographics)."),
     ("sub_sector", "Narrower niche (firmographics, free text)."),
     ("stage", "Company stage (firmographics)."),
@@ -2292,11 +2292,15 @@ def _company_earliest(records):
 
 # mark | exclude — what the dataset DOES about a structurally blocked weak-text row.
 # The DERIVATION (`_blocker`) is policy-free on purpose (the orchestrator's condition on
-# the 2026-08-31 contract): tonight ships "mark" per docs/decisions/2026-08-31-snippet-rows.md,
-# and the operator's row-by-row audit flips this ONE constant if it rules toward exclusion —
-# never the derivation, never the column. An excluded row leaves WITH its reason in the
-# meta counts, not silently.
-BLOCKED_POLICY = "mark"
+# the 2026-08-31 contract): this ONE constant is the policy, never the derivation, never
+# the column. "exclude" since 2026-09-01 ON THE OPERATOR'S RULING ("I want there to be no
+# role in the UI and in the db without description. its useless"), superseding the
+# 2026-08-31 snippet-rows MARK decision — the record carries the supersession. An
+# excluded row leaves WITH its reason in the meta counts, never silently; a PENDING row
+# (weak text, no structural signal — the enrich simply has not filled it yet) carries no
+# blocker and stays; and because the blocker is derived per-export, a row is re-admitted
+# automatically the moment usable text lands. The archive keeps history either way.
+BLOCKED_POLICY = "exclude"
 
 
 def _blocker(rec, dq):

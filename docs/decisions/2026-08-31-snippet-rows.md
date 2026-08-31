@@ -68,3 +68,20 @@ every meta identity whole (a removed row's reason stays counted;
 `reconciliation` gains `blocked_excluded`) — so the operator's row-by-row audit can flip
 the policy without touching the derivation, per the orchestrator's condition. The meta's
 `description_text.blocked` block names the live policy beside the counts.
+
+
+## SUPERSEDED on the policy, 2026-09-01 (operator ruling)
+
+The MARK-never-exclude decision above is superseded for structurally blocked rows: the
+operator ruled ("please exclude this role manually from the queue. I want there to be no
+role in the UI and in the db without description. its useless"), relayed by the
+orchestrator session on 2026-09-01. `roles.BLOCKED_POLICY` is now `exclude` — exactly
+the one-line flip the addendum above reserved. What SURVIVES of this record: a weak row
+with NO structural blocker is pending a fill and still publishes marked (the churn and
+market-misstatement arguments above apply to pending rows in full); re-admission is
+automatic the moment usable text lands (the blocker derives per-export); the archive
+keeps history; and every exclusion is counted by reason in the meta
+(`description_text.blocked`, `reconciliation.blocked_excluded`) — nothing disappears
+silently. The first manually retracted instance is
+`taboola|product analyst maternity leave replacement` (url-keyed line in
+`cloud_state/roles_retractions.jsonl`, 2026-09-01).

@@ -6384,11 +6384,14 @@ enrich driver's next run; else derived `gone` (the GONE_MARK stamp), `unfillable
 (`jdfill.unfillable`), or `listing-page` (a non-aggregator canonical whose
 `_posting_key` is `''` — the Bylith class; aggregator urls are never blocked, the paid
 rung reads them). The meta's `description_text.blocked` counts by reason and names the
-POLICY: `roles.BLOCKED_POLICY` is `mark` (rows stay) and is the ONE constant the
-operator's row-by-row audit flips if it rules toward exclusion — the exclude branch is
-built and pinned, removes a row with its reason still counted, and every meta identity
-stays whole (`reconciliation` gains `blocked_excluded`). The mail's dataset line adds
-`blocked N` while any exist. `description_truncated` is `true` when a row sits exactly on the capture cap
+POLICY: `roles.BLOCKED_POLICY` is `exclude` since the operator's 2026-09-01 ruling ("no
+role in the UI and in the db without description"; the supersession is recorded in the
+snippet-rows decision record) — a BLOCKED row leaves `roles.csv` with its reason still
+counted and every meta identity whole (`reconciliation` gains `blocked_excluded`); a
+weak row with NO blocker is pending a fill and still publishes marked; re-admission is
+automatic when text lands (the blocker derives per-export); the archive keeps history
+whatever the policy. The mail's dataset line adds `blocked N (M excluded)` while any
+exist. `description_truncated` is `true` when a row sits exactly on the capture cap
 (`store.DESC_MAX`, 6,000 — the same number as `fetchers._DESC_MAX` and `jdfill.DESC_MAX`, all
 three pinned equal by a test): 7 of 143 rows today, one of them Amazon's, cut mid-sentence at
 "...If you have a". The true length is already gone before the store sees it, so it cannot be

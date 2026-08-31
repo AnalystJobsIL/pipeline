@@ -22771,7 +22771,10 @@ def test_a_retraction_withdraws_the_row_and_the_meta_records_when_it_was_public(
               "https://jobs.comcast.com/job/houston/manager-2/45483/99862967712", "x",
               src="scrape", posted_date="")
     j["location"] = "Israel"
-    k = _role("Wix", "Data Analyst", "https://w.co/1", "1")
+    # a DEEP posting url: the shallow "https://w.co/1" of the first version reads as a
+    # listing page to the 2026-09-01 exclude policy (`_blocker` -> listing-page) and the
+    # survivor row left the CSV for a reason unrelated to what this test pins
+    k = _role("Wix", "Data Analyst", "https://w.co/jobs/data-analyst/123", "1")
     for job in (j, k):
         st.upsert_matched(job, "2026-08-30")
     _retract_file(tmp_path, {"url": "https://jobs.comcast.com/job/houston/manager-2/45483/99862967712",
@@ -23189,7 +23192,9 @@ def test_the_run_and_the_cli_write_the_same_archive_and_neither_archives_a_remov
     st.upsert_matched(_role("Old", "Data Analyst", "https://o.co/1", "o1"), "2026-01-10")
     st.upsert_matched(_role("Tel Aviv", "Data Analyst", "https://jobs.secrettelaviv.com/1", "t1", src="scrape"), "2026-01-11")
     st.upsert_matched(_role("Comcast", "Analyst", "https://c.co/houston/1", "c1", src="scrape"), "2026-01-12")
-    st.upsert_matched(_role("New", "Data Analyst", "https://n.co/1", "n1"), "2026-08-30")
+    # a DEEP url: shallow "https://n.co/1" reads as a listing page to the 2026-09-01
+    # exclude policy and the row left the CSV for a reason this test does not pin
+    st.upsert_matched(_role("New", "Data Analyst", "https://n.co/jobs/data-analyst/77", "n1"), "2026-08-30")
     _retract_file(tmp_path, {"url": "https://c.co/houston/1", "status": "withdrawn", "reason": "r", "on": "2026-08-30"})
     lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
     lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
@@ -24260,10 +24265,11 @@ def test_the_bounce_wrong_employer_retraction_withdraws_the_linkedin_row_only(tm
 
 
 def test_description_quality_marks_a_snippet_row_instead_of_excluding_it():
-    """The operator's rule — smaller and correct beats larger and wrong — lands as a MARK,
-    not an exclusion: the role facts are real market observations, and 11 of 161 published
-    rows carried a search snippet as their 'description' with nothing in the file saying
-    so (docs/decisions/2026-08-31-snippet-rows.md)."""
+    """A weak text with NO structural blocker is marked, never excluded — these rows are
+    PENDING a fill, and the 2026-09-01 operator ruling that flipped `BLOCKED_POLICY` to
+    exclude explicitly keeps them ('pending must not be permanently excluded'). The
+    fixtures here carry healthy posting urls and no gone-stamp, so all three rows stay
+    whatever the policy — which is exactly the property this test pins."""
     from pipeline import roles
     recs = {"a|x": _rec("a|x", desc_len=len(_JD_TEXT), desc_sha1=roles._sha1(_JD_TEXT)),
             "b|y": _rec("b|y", desc_len=170, desc_sha1=roles._sha1("x" * 170)),
@@ -26503,41 +26509,44 @@ def test_jd_why_rides_reconcile_and_a_missing_column_is_tolerated(tmp_path):
 
 def test_the_meta_counts_blocked_rows_and_the_exclude_policy_keeps_the_identities(tmp_path):
     """The policy is a one-line switch ON TOP of the derivation (the orchestrator's
-    condition): `mark` keeps the row with its reason in the column; `exclude` removes it
-    with the reason still counted and every meta identity whole. Flipping the constant is
-    the audit's whole diff — the derivation never moves."""
+    condition): `exclude` — the DEFAULT since the operator's 2026-09-01 ruling ("no role
+    in the UI and in the db without description") — removes a blocked row with the
+    reason still counted and every meta identity whole; `mark` keeps it with the reason
+    in the column. The derivation never moves."""
     from pipeline import roles
+    assert roles.BLOCKED_POLICY == "exclude", "the operator's 2026-09-01 default"
     recs = _ledger(3)
     rid = sorted(recs)[0]
     recs[rid]["desc_len"] = 30
     recs[rid]["description"] = "too short to be a JD"
     recs[rid]["jd_attempted"] = "2026-08-28 gone"
-    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
-    got = {r["role_id"]: r["description_blocker"] for r in rows}
-    assert got[rid] == "gone" and all(v == "" for k, v in got.items() if k != rid)
-    assert counts["blocked:gone"] == 1 and not counts.get("blocked_excluded")
-    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
-    assert meta["description_text"]["blocked"] == {"policy": "mark", "gone": 1}
-    assert "description_blocker" in meta["description_text"]["columns_here"]
-    assert meta["reconciliation"]["holds"] and meta["description_text"]["quality"]["holds"]
+    rows2, counts2 = roles.build_rows(recs, run_date="2026-08-30")
+    assert len(rows2) == 2 and rid not in {r["role_id"] for r in rows2}
+    assert counts2["blocked_excluded"] == 1 and counts2["blocked:gone"] == 1
+    meta2 = roles.build_meta(rows2, counts2, recs, run_date="2026-08-30")
+    assert meta2["description_text"]["blocked"] == {"policy": "exclude", "gone": 1}
+    assert "description_blocker" in meta2["description_text"]["columns_here"]
+    assert meta2["reconciliation"]["holds"], meta2["reconciliation"]
+    assert "blocked_excluded" in meta2["reconciliation"]["identity"]
+    assert meta2["description_text"]["quality"]["holds"]
+    # the ARCHIVE keeps a blocked row whatever the policy: the main build counts an
+    # archived row before ever judging its blocker, so excluding there would diverge
+    # meta.archive.rows from reconciliation.archived — and retention is the product
+    recs[rid]["last_seen"] = "2026-01-05"
+    arch, _ac = roles.build_rows(recs, run_date="2026-08-30", archive=True)
+    assert rid in {r["role_id"] for r in arch}, "the archive must keep blocked history"
+    assert next(r for r in arch if r["role_id"] == rid)["description_blocker"] == "gone"
+    recs[rid]["last_seen"] = "2026-08-29"
     old = roles.BLOCKED_POLICY
-    roles.BLOCKED_POLICY = "exclude"
+    roles.BLOCKED_POLICY = "mark"
     try:
-        rows2, counts2 = roles.build_rows(recs, run_date="2026-08-30")
-        assert len(rows2) == 2 and rid not in {r["role_id"] for r in rows2}
-        assert counts2["blocked_excluded"] == 1 and counts2["blocked:gone"] == 1
-        meta2 = roles.build_meta(rows2, counts2, recs, run_date="2026-08-30")
-        assert meta2["reconciliation"]["holds"], meta2["reconciliation"]
-        assert "blocked_excluded" in meta2["reconciliation"]["identity"]
-        assert meta2["description_text"]["quality"]["holds"]
-        # the ARCHIVE keeps a blocked row whatever the policy: the main build counts an
-        # archived row before ever judging its blocker, so excluding there would diverge
-        # meta.archive.rows from reconciliation.archived — and retention is the product
-        recs[rid]["last_seen"] = "2026-01-05"
-        arch, _ac = roles.build_rows(recs, run_date="2026-08-30", archive=True)
-        assert rid in {r["role_id"] for r in arch}, "the archive must keep blocked history"
-        assert next(r for r in arch if r["role_id"] == rid)["description_blocker"] == "gone"
-        recs[rid]["last_seen"] = "2026-08-29"
+        rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+        got = {r["role_id"]: r["description_blocker"] for r in rows}
+        assert got[rid] == "gone" and all(v == "" for k, v in got.items() if k != rid)
+        assert counts["blocked:gone"] == 1 and not counts.get("blocked_excluded")
+        meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
+        assert meta["description_text"]["blocked"] == {"policy": "mark", "gone": 1}
+        assert meta["reconciliation"]["holds"] and meta["description_text"]["quality"]["holds"]
     finally:
         roles.BLOCKED_POLICY = old
 
