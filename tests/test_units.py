@@ -22429,6 +22429,24 @@ def test_every_stamped_stage_is_rendered_somewhere_a_human_reads():
                          f"them to stages.ORDER or nobody will ever read the number")
 
 
+def test_the_drain_makes_its_own_output_directory(tmp_path, monkeypatch):
+    """The cloud drain had never recorded an attempt, and this is why: `out/` is gitignored,
+    nothing in `listing-hunt.yml` creates it, and no earlier step happens to. On 2026-08-31
+    all four shards selected their names, bought the first search and died at the first
+    cache write — `FileNotFoundError: out/qrs_4.json.search`, 6 seconds in. The step is
+    `continue-on-error: true`, so it was GREEN, and `ingested 0 new attempts` was the only
+    trace that 112 selected names had produced nothing."""
+    import queue_resolve_search as QRS
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "research_companies.json").write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(QRS, "targets", lambda *a, **k: [])
+    monkeypatch.setattr(QRS, "ranked_targets", lambda *a, **k: [])
+    out = tmp_path / "out" / "qrs_1.json"
+    assert not out.parent.exists(), "the directory must be absent for this to mean anything"
+    QRS.main(["--propose", str(out), "--cap", "1"])
+    assert out.parent.is_dir(), "the drain did not create its own output directory"
+
+
 def test_a_half_written_proposal_file_is_reported_not_swallowed(tmp_path, capsys):
     """A shard killed mid-write left an unparsable proposal file and `ingest` skipped it in
     SILENCE, so that shard's paid searches were never recorded and its names sorted first

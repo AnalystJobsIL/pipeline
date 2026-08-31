@@ -490,6 +490,16 @@ def main(argv=None):
                     help="wall-clock budget for this shard (default QRS_TIME_BUDGET_MIN)")
     a = ap.parse_args(argv)
     cache_path = a.cache or (a.propose + ".search")
+    # THE DIRECTORY HAS TO EXIST, and on a fresh runner it does not: `out/` is gitignored,
+    # nothing in `listing-hunt.yml` creates it, and no earlier step happens to. On
+    # 2026-08-31 all four shards selected their names, bought the first search, and died at
+    # the first cache write with `FileNotFoundError: out/qrs_4.json.search` -- 6 seconds in,
+    # `continue-on-error: true`, so the step was GREEN and `ingested 0 new attempts` was the
+    # only trace. That is why the cloud drain had never recorded an attempt. The tool makes
+    # its own output directory rather than trusting the caller to have made it.
+    _d = os.path.dirname(os.path.abspath(a.propose))
+    if _d:
+        os.makedirs(_d, exist_ok=True)
     budget_min = TIME_BUDGET_MIN if a.budget_min is None else a.budget_min
 
     ranked = ranked_targets(a.shard)
