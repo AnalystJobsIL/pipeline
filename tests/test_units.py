@@ -26519,3 +26519,30 @@ def test_the_meta_counts_blocked_rows_and_the_exclude_policy_keeps_the_identitie
         recs[rid]["last_seen"] = "2026-08-29"
     finally:
         roles.BLOCKED_POLICY = old
+
+
+def test_a_twin_superseded_record_never_reclaims_itself(tmp_path):
+    """The reclaim path exists for a CROSS-company winner whose registry row was parked.
+    A same-company twin's winner record still exists and IS the role: the morning the
+    board closes the posting while the stale LinkedIn card lingers, the twin key is
+    fetched, the winner key is not, the company scanned fine — every pre-guard reclaim
+    condition holds, and reclaiming would re-split the role and hand the at-rest sweep
+    an open stale title beside a closed real one (open beats closed: title takeover)."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    win = _role("HoneyBook", "Senior Product Analyst",
+                "https://jobs.ashbyhq.com/honeybook/9d5a89da-0e05", "9d5a89da-0e05", src="ashby")
+    lose = _role("HoneyBook", "Product Data Analyst",
+                 "https://il.linkedin.com/jobs/view/p-4456923326",
+                 "linkedin:4456923326", src="discovery-linkedin")
+    for j in (win, lose):
+        st.upsert_matched(j, "2026-08-30")
+    st.supersede(store.merge_key(lose), store.merge_key(win))
+    L = roles.Ledger(st)
+    L.open_sync()
+    kept, _ = L.resolve_claims([dict(lose)], failed=(), scanned={"HoneyBook"})
+    assert L.reclaimed == 0, "a twin never reclaims"
+    row = next(r for r in st.get_matched_since("0000-01-01", include_superseded=True)
+               if r["title"] == "Product Data Analyst")
+    assert row["status"] == "superseded"
+    st.close()

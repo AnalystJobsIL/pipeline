@@ -1130,6 +1130,15 @@ class Ledger:
                 continue
             if scanned is not None and wc and wc not in scanned:
                 continue                      # out of scope today, not parked
+            # a SAME-company supersede is a twin/retitle fold, and it never reclaims:
+            # reclaim exists for a cross-company winner whose registry row was parked —
+            # there the opening would vanish from every product. A twin's winner record
+            # still exists (open or closed) and IS the role; reclaiming the stale-titled
+            # half re-splits it, and the at-rest sweep would then crown the stale title
+            # (open beats closed) the morning the board closes the posting while the
+            # aggregator card lingers.
+            if wc and wc == sup[k].get("company"):
+                continue
             self.st.update_matched(k, status=None, superseded_by=None)
             rec = self.records.get(k)
             if rec is not None:

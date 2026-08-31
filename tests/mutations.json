@@ -2540,5 +2540,15 @@
   "replace": "    if dq == \"never\":\n        return \"\"",
   "why": "GONE_MARK is a verdict about the ADDRESS, not the text (jd-text's 2026-08-31 contract): a gone row that gained a donor copy has a complete description and must not ship marked blocked. The dq gate is what keeps the column about the text. Killed by test_a_blocker_never_marks_a_row_whose_text_passes.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "twin-reclaim-guard-removed",
+  "file": "pipeline/roles.py",
+  "symbol": "_resolve_claims",
+  "class": "M6-fallback-removal",
+  "find": "            if wc and wc == sup[k].get(\"company\"):\n                continue",
+  "replace": "            if False:\n                continue",
+  "why": "the morning a board closes a posting while its stale aggregator card lingers, every pre-guard reclaim condition holds for the twin key - reclaiming re-splits the role, and the at-rest sweep then crowns the stale title (open beats closed). Reclaim is for cross-company parking only. Killed by test_a_twin_superseded_record_never_reclaims_itself.",
+  "must_be_killed_by_behavioural": true
  }
 ]
