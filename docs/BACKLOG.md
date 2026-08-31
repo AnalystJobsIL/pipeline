@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**588 filed · 427 open · 161 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**588 filed · 426 open · 162 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -510,23 +510,6 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### jd-text — 14 open
-
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
-- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
-- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
-- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
-- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
-- **421** `421@jd-text` **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
-- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
-- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
-- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
-- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
-- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
-- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
-
 ### classifier — 13 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
@@ -542,6 +525,22 @@ closure convention in the header.
 - **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
 - **531** `531@classifier` **The seam volunteers "temporary" as a ground for NO, and the rules never say it is not
 - **532** `532@classifier` **Where the analytics-engineer line falls is a product boundary no decision record
+
+### jd-text — 13 open
+
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
+- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
+- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
+- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
+- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
+- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
+- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
+- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 
 ### render — 6 open
 
@@ -7524,7 +7523,7 @@ stripped (`ARCHITECTURE.md` §8 — a result from a broken path is not a measure
     caught automatically.** Either it joins the Sunday audit's schedule and the rehearsal's
     `SCHEDULE`, or it is documented as an operator-run tool that must never be crond.
 
-421. **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
+421. **CLOSED 2026-08-29 (`jd-text`).** **`test_the_drivers_run_on_the_budgets_their_docstrings_promise` asserts exact float
     equality against a WALL CLOCK, so it fails under load and passes in isolation** — lane:
     `jd-text`, found by an adversarial pass 2026-08-29 and reproduced twice.
     `enrich_matched_jd.py:571` computes `left = max(0.0, minutes - (time.time() - t0) / 60)` and
@@ -8916,26 +8915,25 @@ the rebase (a collision is what 241–246 are).
      `guard` job is still depth 1, so the hunk above still has nothing to read there.
 
 468. **Two modules still carry their own `_load_secrets`, so a worktree session of those
-     lanes is still silently disarmed** — lanes: `registry` (`bd_employees.py:41`
-     imports nobody's — treat as registry's), `jd-text` (`pipeline/jdfill.py:89`, public name
-     `load_secrets`). Was three: `bd_rescue.py`'s copy was replaced 2026-08-30 (`scraper`,
-     cross-lane debt rule — note below). The exact diff for each, three lines,
+     lanes is still silently disarmed** — lane: `registry` (`bd_employees.py:41`
+     imports nobody's — treat as registry's). Was three: `bd_rescue.py`'s copy was replaced
+     2026-08-30 (`scraper`) and `pipeline/jdfill.py`'s on 2026-08-31 (`jd-text`), both under
+     the cross-lane debt rule — notes below. The exact diff, three lines,
      behaviour-preserving (`setdefault` stays, so `tests/conftest.py`'s disarm still holds):
 
      ```python
-     def _load_secrets():                      # bd_rescue.py / bd_employees.py
+     def _load_secrets():                      # bd_employees.py — the one copy left
          from pipeline import secretsenv
          secretsenv.load(ROOT)
-     def load_secrets():                       # pipeline/jdfill.py
-         from pipeline import secretsenv
-         secretsenv.load(_REPO_ROOT)
      ```
      `tests/conftest.py:73`'s comment enumerating four copies is `infra`'s to trim when the
      last copy goes. Closes 438 when applied.
      **Applied to `bd_rescue.py` 2026-08-30 (`scraper`, cross-lane debt rule)** — a worktree
      scrape run now arms under `AJIL_SECRETS` (and `validate_bd`, which imports
     `bd_rescue._load_secrets`, with it). **Applied to `pipeline/jdfill.py` 2026-08-31
-     (`jd-text`, same rule)** — `load_secrets` now delegates to `secretsenv.load(_REPO_ROOT)`.
+     (`jd-text`, same rule)** — `load_secrets` now delegates to `secretsenv.load(_REPO_ROOT)`,
+     and the jdfill hunk was removed from the fence above on 2026-08-31 (evening) so the
+     `--debt` gate stops charging this item against a file whose copy is already gone.
      `bd_employees.py:41` remains — `registry`'s three-line diff above still stands.
 
 469. **The brief's lane table does not name the files the mutation gate failed on** — lane:
