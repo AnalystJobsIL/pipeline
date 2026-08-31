@@ -26060,13 +26060,35 @@ def test_a_copy_that_names_another_employer_is_dropped_before_it_is_fetched(monk
     assert tried == [], tried
 
 
-def test_the_donor_rung_is_reachable_by_every_monkeypatch_the_suite_already_uses():
+def test_the_donor_rung_is_reachable_by_every_monkeypatch_the_suite_already_uses(monkeypatch,
+                                                                                 tmp_path):
     """`enrich_matched_jd` must not bind `fetch_jd`/`plain_fetch`/`wayback_snapshot` into its
     own namespace: 43 tests disarm them on `pipeline.jdfill`, and a local binding escapes
     every one — four tests that believed they had stubbed the fetcher were making real
-    requests to LinkedIn, on the public repo's CI runner, on every push (wave C). Kills:
-    re-adding any of the three to the `from pipeline.jdfill import (...)` list."""
+    requests to LinkedIn, on the public repo's CI runner, on every push (wave C).
+
+    Asserted by DOING it, not by checking an absence: a stub installed the way the rest of
+    the suite installs one has to be what the donor pass calls. (The `hasattr` check below
+    says the same thing and cannot fail on its own — at the base commit the names were not
+    bound because the rung did not exist yet.)"""
+    import sqlite3
+    from types import SimpleNamespace
     import enrich_matched_jd as E
+    from pipeline import jdfill
+    called = []
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda url, **k: (called.append(url)
+                                          or jdfill.JD("", "none", "shell", False)))
+    row = ("acme|data analyst", "Acme", "Data Analyst", "https://acme.example/careers", "",
+           "discovery-linkedin:linkedin:4409973742", "", 0, "2026-08-31")
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
+    conn.commit()
+    E._donor_pass(conn, [row], {}, None, set(),
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert called == ["https://www.linkedin.com/jobs/view/4409973742"], (
+        "the donor pass did not call the stub the suite installed on pipeline.jdfill")
     for name in ("fetch_jd", "plain_fetch", "wayback_snapshot"):
         assert not hasattr(E, name), (
             "%s is bound in enrich_matched_jd's namespace; call it as jdfill.%s so the "
