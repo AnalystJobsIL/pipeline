@@ -24001,3 +24001,283 @@ def test_scrape_a_decoy_plain_page_still_buys_the_unlocker(monkeypatch):
     r2 = _rendered(http_status=403, page_html="")
     N._extract("Co", "https://co.example/careers", r2, fetch=lambda u, t: (real, 200))
     assert not calls, "a plain page that shows the jobs section proves itself - no spend"
+
+
+# --- roles, 2026-08-31: the five public-dataset defects -----------------------------------
+_JD_TEXT = ("Requirements: 3+ years of SQL, Python and dashboarding experience. " * 5
+            + "Responsibilities: build dashboards, own the KPI layer, partner with product.")
+
+
+def test_a_proven_board_posting_donates_its_url_even_when_it_inherited_its_verdict():
+    """zipher|data analyst shipped an Indeed url + 170-char snippet while the employer's own
+    board listed the role at zipher.ai/careers/data-analyst/ with an empty list-endpoint
+    description: the bare board card inherits its verdict (`_inherited`) and the old donor
+    pool excluded it, so the board ADDRESS could never ship. The origin gate, not the flag,
+    is what keeps a competitor card out — an inherited copy's text still never donates."""
+    from pipeline import store
+    origins = {"Zipher": "https://zipher.ai/careers/"}
+    card = _role("Zipher", "Data Analyst", "https://il.indeed.com/viewjob?jk=b081baf87df846ea",
+                 "b081", src="discovery-indeed", desc="x" * 170, posted_date="2026-08-25")
+    copy = _role("Zipher", "Data Analyst", "https://zipher.ai/careers/data-analyst/",
+                 "https://zipher.ai/careers/data-analyst/", src="scrape", desc="x" * 170,
+                 posted_date="", _inherited=True)
+    for order in ([card, copy], [copy, card]):
+        m = store.merge_duplicates([dict(j) for j in order], origins=origins)
+        assert len(m) == 1 and m[0]["url"] == "https://zipher.ai/careers/data-analyst/"
+        assert len(m[0]["description"]) == 170, "the snippet the group had, never lost"
+        assert m[0]["posted_date"] == "2026-08-25", "the card's real date is kept"
+    # textless canonical: the board url still wins and the description falls back as before
+    bare = dict(card, description="")
+    m = store.merge_duplicates([bare, dict(copy)], origins=origins)
+    assert m[0]["url"] == "https://zipher.ai/careers/data-analyst/"
+    # and without origins every rescue is inert, exactly the pre-2026-08-27 answer
+    m = store.merge_duplicates([dict(card), dict(copy)], origins=None)
+    assert m[0]["url"] == "https://il.indeed.com/viewjob?jk=b081baf87df846ea"
+
+
+def test_a_stored_board_url_is_never_regressed_to_an_aggregator_link(tmp_path):
+    """The Zipher regression mechanism itself: the 08-27 scrape-cache refresh blanked the
+    board donor, the next sighting held only the Indeed copy, and `upsert_matched`
+    overwrote the url unconditionally. One downgrade is now refused — a stored
+    non-aggregator url replaced by an aggregator one; every other overwrite stands."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Zipher", "Data Analyst", "https://zipher.ai/careers/data-analyst/", "1", src="scrape")
+    st.upsert_matched(j, "2026-08-29")
+    st.upsert_matched(dict(j, url="https://il.indeed.com/viewjob?jk=x"), "2026-08-30")
+    row = st.conn.execute("SELECT url FROM matched").fetchone()
+    assert row[0] == "https://zipher.ai/careers/data-analyst/", "UPDATE branch refused the downgrade"
+    # the reappearance branch (ON CONFLICT) refuses it too
+    st.conn.execute("UPDATE matched SET last_seen='2026-08-01'")
+    st.conn.commit()
+    st.upsert_matched(dict(j, url="https://il.linkedin.com/jobs/view/x"), "2026-08-30")
+    got = st.conn.execute("SELECT url FROM matched").fetchone()[0]
+    assert got == "https://zipher.ai/careers/data-analyst/"
+    # a board->board move still overwrites (an employer may genuinely move hosts)...
+    st.upsert_matched(dict(j, url="https://jobs.zipher.ai/data-analyst"), "2026-08-30")
+    got = st.conn.execute("SELECT url FROM matched").fetchone()[0]
+    assert got == "https://jobs.zipher.ai/data-analyst"
+    # ...and aggregator->aggregator keeps the fresher link
+    k = _role("Acme", "BI Analyst", "https://il.indeed.com/viewjob?jk=a", "2", src="discovery-indeed")
+    st.upsert_matched(k, "2026-08-29")
+    st.upsert_matched(dict(k, url="https://il.linkedin.com/jobs/view/b"), "2026-08-30")
+    got = st.conn.execute("SELECT url FROM matched WHERE mkey=?", (store.merge_key(k),)).fetchone()[0]
+    assert got == "https://il.linkedin.com/jobs/view/b"
+    st.close()
+
+
+def test_the_ledger_reconcile_never_hands_an_aggregator_url_back():
+    """`reconcile` takes url from the NEWER side, and a scoped run, a hand edit or a
+    restore can make the aggregator sighting the newer one — the same downgrade
+    `upsert_matched` refuses, refused at the second write path."""
+    from pipeline import roles
+    older = {"company": "Zipher", "title": "Data Analyst", "last_seen": "2026-08-28",
+             "url": "https://zipher.ai/careers/data-analyst/"}
+    newer = {"company": "Zipher", "title": "Data Analyst", "last_seen": "2026-08-30",
+             "url": "https://il.indeed.com/viewjob?jk=x"}
+    assert roles.reconcile(newer, older)["url"] == "https://zipher.ai/careers/data-analyst/"
+    # both aggregator: the newer side wins as before
+    both = roles.reconcile(dict(newer), dict(older, url="https://il.linkedin.com/jobs/view/y"))
+    assert both["url"] == "https://il.indeed.com/viewjob?jk=x"
+    # an empty older side never blocks the only url there is
+    out = roles.reconcile(dict(newer), dict(older, url=""))
+    assert out["url"] == "https://il.indeed.com/viewjob?jk=x"
+
+
+def test_one_ashby_posting_under_two_registry_rows_is_one_role(tmp_path):
+    """BACKLOG 488, first pair: checkout com|fraud data analyst held `ashby:9bf673a0-...`
+    while checkout|fraud data analyst held the same uuid as a scrape url ending
+    `/application` — no shared sid string, no equal raw url, so the pair was never even
+    pair-tested. The posting KEY (`rolecard._posting_key`, reused) sees one posting."""
+    from pipeline import roles, store
+    u = "https://jobs.ashbyhq.com/checkout.com/9bf673a0-8e9e-41f2-87c2-00494b72e915"
+    a = _role("Checkout.com", "Fraud Data Analyst", u, "9bf673a0-8e9e-41f2-87c2-00494b72e915",
+              src="ashby")
+    b = _role("Checkout", "Fraud Data Analyst", u + "/application", u + "/application",
+              src="scrape")
+    assert roles.same_posting(a, b) and roles.same_posting(b, a)
+    assert roles.Ledger._groups([a, b]) == [[0, 1]], "the pk bucket pairs what no sid or raw url can"
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.upsert_matched(a, "2026-08-30")
+    st.upsert_matched(b, "2026-08-30")
+    lg = roles.Ledger(st, "2026-08-31")
+    lg.open_sync()
+    assert lg.records[store.merge_key(b)]["status"] == "superseded", "the sweep caught the stored pair"
+    assert lg.records[store.merge_key(a)]["status"] != "superseded"
+    st.close()
+
+
+def test_a_retitled_posting_on_one_comeet_page_is_one_role(tmp_path):
+    """BACKLOG 488, second pair: bounce ai|data analyst and finbounce|data analyst senior
+    sat on the IDENTICAL comeet posting page — the employer retitled it — and the
+    titles-agree arm kept them two rows forever. An identical posting key with an
+    id-shaped tail plus seniority-stripped-equal titles is one opening; a different role
+    under the same title family is not."""
+    from pipeline import roles, store
+    u = "https://www.comeet.com/jobs/bounce/E9.00C/data-analyst/3E.E6D"
+    a = _role("Bounce AI", "Data Analyst", u, "3E.E6D", src="comeet")
+    b = _role("finbounce", "Data Analyst Senior", u, u, src="scrape")
+    assert roles.same_posting(a, b) and roles.same_posting(b, a)
+    growth = dict(a, title="Data Analyst, Growth")
+    assert not roles.same_posting(b, growth) and not roles.same_posting(growth, b)
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.upsert_matched(a, "2026-08-30")
+    st.upsert_matched(b, "2026-08-30")
+    lg = roles.Ledger(st, "2026-08-31")
+    lg.open_sync()
+    assert lg.records[store.merge_key(b)]["status"] == "superseded"
+    rec = lg.records[store.merge_key(a)]
+    assert rec["status"] != "superseded" and rec["title"] == "Data Analyst", "the winner keeps its own title"
+    st.close()
+
+
+def test_titles_are_never_bypassed_without_a_per_posting_id():
+    """The bypass must stay narrower than the hole it closes: a LISTING page shared by
+    every role (Meta), a strong id alone, and a digit-less prose page that slips past the
+    root words all keep seniority-variant titles as two roles."""
+    from pipeline import roles
+    lst = "https://www.metacareers.com/jobs?offices[0]=Tel+Aviv"
+    a = {"company": "Meta", "title": "Data Analyst", "url": lst, "seen_ids": []}
+    b = {"company": "Meta Israel", "title": "Senior Data Analyst", "url": lst, "seen_ids": []}
+    assert not roles.same_posting(a, b)
+    c = {"company": "A", "title": "Data Analyst", "url": "", "seen_ids": ["greenhouse:12345"]}
+    d = {"company": "B", "title": "Senior Data Analyst", "url": "", "seen_ids": ["greenhouse:12345"]}
+    assert not roles.same_posting(c, d), "a strong id alone never carries the titles bypass"
+    prose = "https://x.example.com/positions/analytics"
+    e = {"company": "A", "title": "Data Analyst", "url": prose, "seen_ids": []}
+    f = {"company": "B", "title": "Senior Data Analyst", "url": prose, "seen_ids": []}
+    assert not roles.same_posting(e, f), "a digit-less tail is nobody's posting id"
+    # ...and titles that AGREE on a shared raw url still collapse, exactly as before
+    g = dict(f, title="Data Analyst")
+    assert roles.same_posting(e, g)
+
+
+def test_the_bounce_wrong_employer_retraction_withdraws_the_linkedin_row_only(tmp_path):
+    """BACKLOG 489: bounce|data analyst is Bounce AI's posting under the luggage company's
+    name, on a LinkedIn url no other record shares — so a url-keyed withdrawal is safe,
+    and it must not touch bounce ai|data analyst on its comeet page."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    good = _role("Bounce AI", "Data Analyst",
+                 "https://www.comeet.com/jobs/bounce/E9.00C/data-analyst/3E.E6D", "3E.E6D",
+                 src="comeet")
+    wrong = _role("Bounce", "Data Analyst",
+                  "https://www.linkedin.com/jobs/view/data-analyst-at-bounce-4443290013?_l=en",
+                  "https://www.linkedin.com/jobs/view/data-analyst-at-bounce-4443290013?_l=en",
+                  src="discovery-linkedin-targeted")
+    st.upsert_matched(good, "2026-08-30")
+    st.upsert_matched(wrong, "2026-08-30")
+    _retract_file(tmp_path, {
+        "url": "https://www.linkedin.com/jobs/view/data-analyst-at-bounce-4443290013?_l=en",
+        "status": "withdrawn", "reason": "wrong employer: Bounce AI's posting under Bounce's name",
+        "on": "2026-08-31"})
+    lg = roles.Ledger(st, "2026-08-31")
+    lg.open_sync()
+    lg.record_run("2026-08-31", board_jobs=[good], merged=[good],
+                  scanned_ok={"Bounce AI", "Bounce"}, failed=set())
+    assert lg.records[store.merge_key(wrong)]["status"] == "withdrawn"
+    assert lg.records[store.merge_key(good)]["status"] != "withdrawn"
+    assert not lg.retractions.unmatched(), "the line found its row"
+    st.close()
+
+
+def test_description_quality_marks_a_snippet_row_instead_of_excluding_it():
+    """The operator's rule — smaller and correct beats larger and wrong — lands as a MARK,
+    not an exclusion: the role facts are real market observations, and 11 of 161 published
+    rows carried a search snippet as their 'description' with nothing in the file saying
+    so (docs/decisions/2026-08-31-snippet-rows.md)."""
+    from pipeline import roles
+    recs = {"a|x": _rec("a|x", desc_len=len(_JD_TEXT), desc_sha1=roles._sha1(_JD_TEXT)),
+            "b|y": _rec("b|y", desc_len=170, desc_sha1=roles._sha1("x" * 170)),
+            "c|z": _rec("c|z", desc_len=0, desc_sha1="")}
+    texts = {"a|x": {"role_id": "a|x", "description": _JD_TEXT, "sha1": roles._sha1(_JD_TEXT)},
+             "b|y": {"role_id": "b|y", "description": "x" * 170, "sha1": roles._sha1("x" * 170)}}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31", texts=texts)
+    assert len(rows) == 3, "marking never shrinks the file"
+    q = {r["role_id"]: r["description_quality"] for r in rows}
+    assert q == {"a|x": "jd", "b|y": "snippet", "c|z": "none"}
+    assert (counts["text:jd"], counts["text:snippet"], counts["text:none"]) == (1, 1, 1)
+    assert set(roles._ENUMS["description_quality"]) == {"jd", "snippet", "none"}
+
+
+def test_a_text_quality_the_export_cannot_measure_is_empty_not_guessed():
+    """A missing text entry, a sha1 out of step with the record, and a corrupt-file day
+    (`texts=None`) all leave the cell EMPTY — 'we could not measure' — never a verdict."""
+    from pipeline import roles
+    recs = {"a|x": _rec("a|x", desc_len=500, desc_sha1="abc")}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31", texts={})
+    assert rows[0]["description_quality"] == "" and counts["text:unmeasured"] == 1
+    rows, _ = roles.build_rows(recs, run_date="2026-08-31",
+                               texts={"a|x": {"description": "t", "sha1": "WRONG"}})
+    assert rows[0]["description_quality"] == ""
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31", texts=None)
+    assert rows[0]["description_quality"] == "" and counts["text:unmeasured"] == 1
+
+
+def test_the_meta_and_mail_agree_on_weak_text_and_the_quality_identity_holds(tmp_path):
+    """The meta's quality block carries its own identity (jd+snippet+none+unmeasured ==
+    rows) and the mail's dataset line says `weak text N` only when there is any."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    lg = roles.Ledger(st, "2026-08-31")
+    lg.open_sync()
+    lg.records = {"a|x": _rec("a|x", desc_len=170, desc_sha1=roles._sha1("x" * 170)),
+                  "b|y": _rec("b|y", desc_len=0, desc_sha1="")}
+    roles.dump(roles.ledger_paths(st.path)[1],
+               {"a|x": {"role_id": "a|x", "description": "x" * 170,
+                        "sha1": roles._sha1("x" * 170), "updated": "2026-08-30"}})
+    lines = lg.export_dataset("2026-08-31")
+    assert "weak text 2 (1 snippet, 1 none)" in lines[0]
+    meta = json.load(open(roles.dataset_paths(st.path)[1], encoding="utf-8"))
+    q = meta["description_text"]["quality"]
+    assert q == {"jd": 0, "snippet": 1, "none": 1, "unmeasured": 0, "holds": True}
+    assert q["jd"] + q["snippet"] + q["none"] + q["unmeasured"] == meta["rows"]
+    st.close()
+
+
+def test_the_meta_names_the_text_files_pages_copy_only_when_infra_says_so(monkeypatch):
+    """`published_on_pages` for roles_text.jsonl is read from ROLES_TEXT_PAGES_URL end to
+    end, the way the CSV's own flag already is — a hard-coded answer once had the file
+    denying its own location on the page that served it (BACKLOG 473)."""
+    from pipeline import roles
+    monkeypatch.delenv(roles.TEXT_PAGES_URL_ENV, raising=False)
+    meta = roles.build_meta([], {"window_start": "2026-06-03", "window_end": "2026-08-31"},
+                            {}, run_date="2026-08-31")
+    blk = meta["description_text"]
+    assert not blk["published_on_pages"] and blk["download_url"] == blk["raw_url"]
+    monkeypatch.setenv(roles.TEXT_PAGES_URL_ENV,
+                       "https://analystjobsil.github.io/board/roles_text.jsonl")
+    blk = roles.build_meta([], {"window_start": "2026-06-03", "window_end": "2026-08-31"},
+                           {}, run_date="2026-08-31")["description_text"]
+    assert blk["published_on_pages"] and blk["download_url"].endswith("board/roles_text.jsonl")
+    monkeypatch.setenv(roles.TEXT_PAGES_URL_ENV, "0")      # junk is not an address
+    blk = roles.build_meta([], {"window_start": "2026-06-03", "window_end": "2026-08-31"},
+                           {}, run_date="2026-08-31")["description_text"]
+    assert not blk["published_on_pages"]
+
+
+def test_the_csv_company_cell_shows_the_evidenced_brand_and_keeps_the_registry_join_key():
+    """The company cell renders by the board's own rule (`rolecard.display_name`), and the
+    registry name — the join key role_id derives from — moves to company_registry rather
+    than vanishing (supersedes BACKLOG 504's additive-only shape on the operator's word)."""
+    from pipeline import roles
+    fm = {"withfaye": {"display_name": "Faye", "sector": "Insurtech"}}
+    recs = {"withfaye|analyst": _rec("withfaye|analyst", company="withfaye")}
+    rows, _ = roles.build_rows(recs, run_date="2026-08-31", firmographics=fm)
+    assert rows[0]["company"] == "Faye" and rows[0]["company_registry"] == "withfaye"
+    assert rows[0]["sector"] == "Insurtech", "the firmographics join still reads the registry name"
+    rows, _ = roles.build_rows(recs, run_date="2026-08-31", firmographics={"withfaye": {}})
+    assert rows[0]["company"] == "withfaye" and rows[0]["company_registry"] == "withfaye"
+
+
+def test_a_brand_the_impersonation_guard_refuses_falls_back_to_the_registry_name():
+    """finbounce's stored display is "Bounce AI" and a real Bounce AI exists: the guard
+    refuses it and the cell keeps the honest slug. The export passes the FULL
+    firmographics union as the victim set — a superset of the board's morning dict — so
+    the CSV can only ever diverge toward the slug, never toward an impersonation."""
+    from pipeline import roles
+    fm = {"finbounce": {"display_name": "Bounce AI"}, "Bounce AI": {"sector": "Fintech"}}
+    recs = {"finbounce|data analyst senior": _rec("finbounce|data analyst senior",
+                                                  company="finbounce")}
+    rows, _ = roles.build_rows(recs, run_date="2026-08-31", firmographics=fm)
+    assert rows[0]["company"] == "finbounce" and rows[0]["company_registry"] == "finbounce"

@@ -424,7 +424,11 @@ _COMEET_POSTING_SEGS = 5     # jobs/<slug>/<token>/<title>/<id>; three segments 
 
 def _posting_key(url):
     """The POSTING a card was read from — not the board it sits on (`_tenant`). Two cards
-    with one key under two company names are one posting published twice. Host + path,
+    with one key under two company names are one posting published twice.
+
+    ALSO the ledger's collapse key: `roles._pk` reuses this so the claim guard and the
+    mail's same-posting warning agree on what a posting is — a change here changes which
+    store rows are superseded (roles lane's tests pin the Checkout and Bounce pairs). Host + path,
     lower-cased, a trailing `/application` (Ashby's apply page) and `/` dropped, the query
     kept minus tracking keys; '' on an aggregator, whose url names nobody's posting, and ''
     on a board root or listing page (`_ROOT_WORDS`). Misses, by design — they cost recall,

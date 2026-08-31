@@ -316,8 +316,9 @@ def merge_duplicates(jobs, origins=None):
     an aggregator (real date, short snippet) and on its employer's own board (no date, full
     JD) published the SNIPPET and linked to the AGGREGATOR, because the canonical is elected
     on having an ISO date and scrape rows carry `posted_date: ""` (BACKLOG 260 / 109 / 151;
-    109's stated mechanism — that `upsert_matched` refuses to replace `url` — is false, both
-    of its branches overwrite it unconditionally).
+    109's stated mechanism — that `upsert_matched` refuses to replace `url` — was false for
+    every url until 2026-08-31; `upsert_matched` now refuses exactly ONE downgrade, a stored
+    non-aggregator url replaced by an aggregator one, and overwrites every other case).
 
     `origins` is `{company_name: token-or-api_url}` from the registry. Without it the
     rescues are inert and this behaves exactly as it did before: every degraded path here
@@ -372,7 +373,14 @@ def merge_duplicates(jobs, origins=None):
         # posting's link with a Haifa posting's JD — `merge_key` is location-independent by
         # design, so two members can be genuinely different openings with the same title.
         own = [m for m in members if _authoritative(m, origins) and not m.get("_inherited")]
-        deep = [m for m in own if _is_posting_page(m, origins) and m.get("url")]
+        # `deep` draws from ALL members, `_inherited` ones included: an inherited copy's TEXT
+        # is a copy (roles.classify_grouped wrote the group's longest onto it) and stays out
+        # of `own`, but its ADDRESS is something the scrape really read and `_is_posting_page`
+        # has proven against the registry — a board card whose list endpoint carries no text
+        # (Zipher's `/careers/data-analyst/`, most greenhouse list rows) must still donate the
+        # link, or the aggregator copy's url ships forever (BACKLOG 488's sibling defect).
+        # The origin gate, not the flag, is what keeps a competitor card out of `deep`.
+        deep = [m for m in members if _is_posting_page(m, origins) and m.get("url")]
         # The donor is whichever member supplies the LINK, and the text comes from the same
         # address. Taking the url from one member and the longest description from another
         # published a Tel Aviv posting's link with a Haifa posting's JD: `merge_key` is
@@ -382,7 +390,14 @@ def merge_duplicates(jobs, origins=None):
         if _is_posting_page(out, origins):
             donor_url = str(out.get("url") or "")
         elif deep:
-            donor_url = max(deep, key=lambda m: len(str(m.get("description") or "").strip()))["url"]
+            # prefer a donor whose text may also donate (not inherited), longest text first
+            donor_url = min(
+                deep,
+                key=lambda m: (
+                    1 if m.get("_inherited") else 0,
+                    -len(str(m.get("description") or "").strip()),
+                ),
+            )["url"]
             out["url"] = donor_url
         else:
             donor_url = None
@@ -694,11 +709,20 @@ class SeenStore:
         new_sids = set(job.get("seen_ids") or [seen_id(job)])
         new_pd = str(job.get("posted_date") or "")
         prev = self.conn.execute(
-            "SELECT sources, seen_ids, posted_date, last_seen FROM matched WHERE mkey=?",
+            "SELECT sources, seen_ids, posted_date, last_seen, url FROM matched WHERE mkey=?",
             (mkey,)).fetchone()
         keep_first = False
+        new_url = job.get("url")
         if prev:
-            old_sources, old_sids, old_pd, old_last = prev
+            old_sources, old_sids, old_pd, old_last, old_url = prev
+            # A stored board url is never regressed to an aggregator link. merge_duplicates
+            # promotes the employer's own posting page when the group offers one, but on a
+            # cache-blink day the group holds only the aggregator copy — and this overwrite
+            # is exactly how the Zipher fix regressed (the 08-27 scrape-cache refresh blanked
+            # the donor and the Indeed url came straight back). Board→board moves and
+            # aggregator→aggregator refreshes still overwrite; only the downgrade is refused.
+            if old_url and _is_aggregator_url(new_url) and not _is_aggregator_url(old_url):
+                new_url = old_url
             new_sources |= set((old_sources or "").split("+")) - {""}
             new_sids |= set((old_sids or "").split("+")) - {""}
 
@@ -738,7 +762,7 @@ class SeenStore:
                    description=CASE WHEN length(?) > length(COALESCE(description,''))
                                     THEN ? ELSE description END,
                    last_seen=? WHERE mkey=?""",
-                (job.get("location"), job.get("url"), new_pd,
+                (job.get("location"), new_url, new_pd,
                  job.get("seniority") or "", job.get("seniority") or "",
                  "+".join(sorted(new_sources)), "+".join(sorted(new_sids)),
                  new_desc, new_desc, run_date, mkey))
@@ -758,7 +782,7 @@ class SeenStore:
                                       ELSE matched.description END,
                      first_seen=excluded.first_seen, last_seen=excluded.last_seen""",
                 (mkey, job.get("company"), job.get("title"), job.get("location"),
-                 job.get("url"), new_pd, job.get("seniority", ""),
+                 new_url, new_pd, job.get("seniority", ""),
                  "+".join(sorted(new_sources)), "+".join(sorted(new_sids)),
                  new_desc, run_date, run_date))
         self.conn.commit()

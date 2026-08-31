@@ -5310,7 +5310,18 @@ multi-tenant ATS domain it sells, so matching host labels made every Bob custome
 read as HiBob's own board.
 
 **3. Only an address DEEPER than the board's own may be promoted or donate the url, and ONE
-donor supplies both the link and the text.** Being on the employer's domain is not enough —
+donor supplies both the link and the text — with one asymmetry since 2026-08-31: an
+`_inherited` copy on the employer's own board may donate its ADDRESS, never its text.** A
+board card whose list endpoint carries no description inherits its verdict, and the old donor
+pool excluded it entirely, so Zipher's real `zipher.ai/careers/data-analyst/` could never
+displace the Indeed copy's link (the text stays whatever the group had — a snippet the
+`description_quality` column then names, and one `jd-text`'s enrich can now complete from the
+role's OWN address). The origin gate, not the `_inherited` flag, is what keeps a competitor
+card out of the donor pool. The same downgrade is refused at the two write paths behind the
+merge: `upsert_matched` and `roles.reconcile` never replace a stored non-aggregator url with
+an aggregator one (the exact mechanism the first Zipher fix regressed by — a scrape-cache
+refresh blanked the board donor and the next sighting overwrote the url unconditionally).
+Being on the employer's domain is not enough —
 the two Meta records on that address were promoted to `metacareers.com/jobs?offices[0]=…`,
 a search page this
 section separately warns is shared by every Meta role, which is a worse link for the reader
@@ -5345,11 +5356,20 @@ two active rows read the same board in a handful of identity groups (`registry`,
 This layer makes the product right regardless: after `merge_duplicates`,
 `Ledger.resolve_claims` groups this run's postings across companies by `roles.same_posting`
 — the titles must agree (equal, or the longer one is the shorter plus words from that
-job's own *location*: the scraper glues it on) **and** they share a strong `seen_id` or a
-url. Never a url alone (Meta's url is the listing page, shared by every Meta role) and
+job's own *location*: the scraper glues it on) **and** they share a strong `seen_id`, a
+posting KEY or a url. The posting key (since 2026-08-31, `rolecard._posting_key` reused so
+render and ledger agree on what a posting is) is the address normalised — Ashby's
+`/application`, tracking params and a trailing `/` stripped, `''` for aggregators, board
+roots and listing pages — and it closes BACKLOG 488's two live pairs: `checkout com` /
+`checkout` shared one Ashby posting under two url spellings and two seen-id prefixes, and
+`bounce ai` / `finbounce` sat on the IDENTICAL comeet page under two titles ("Data Analyst"
+retitled "Data Analyst Senior"), which is the ONE case where the titles arm may be
+bypassed — an identical non-empty posting key whose last segment is id-shaped and whose
+titles are equal once bare seniority words (`senior/sr/junior/jr`) are stripped. Never a
+url alone (Meta's url is the listing page, shared by every Meta role) and
 never an id alone (a scrape row's `job_id` is sometimes the listing page, `#` or a
 `mailto:` — six SpearUAV roles carried one id); "Data Analyst" vs "Data Analyst, Growth"
-is two roles, and because that agreement is not transitive (its word-set is the longer
+is two roles even at one address, and because that agreement is not transitive (its word-set is the longer
 job's own location) a group collapses only when every pair agrees. Each group keeps ONE
 company (`Ledger._winner`): the one whose own name is in the url or tenant slug (`armis`
 in `armissecurity`, `port` in `/jobs/port/`; the ATS hosts themselves and path plumbing
@@ -5531,8 +5551,8 @@ by `pipeline/roles.py` beside the ledger and committed by the digest's existing
 
 | file | what |
 |---|---|
-| `cloud_state/roles.csv` | one row per role, 54 columns, `last_seen` inside the window |
-| `cloud_state/roles_archive.csv` | the same 54 columns for every role the window has aged OUT — regenerated whole from the ledger each run, so nothing is ever evicted (header-only until the first eviction, ~2026-11-14) |
+| `cloud_state/roles.csv` | one row per role, 56 columns, `last_seen` inside the window |
+| `cloud_state/roles_archive.csv` | the same 56 columns for every role the window has aged OUT — regenerated whole from the ledger each run, so nothing is ever evicted (header-only until the first eviction, ~2026-11-14) |
 | `cloud_state/roles.csv.meta.json` | what the CSV cannot say about itself: window, exclusions, the `withdrawn` list, per-column null counts, every enum's values spelled out, and a reconciliation identity |
 | `cloud_state/roles_retractions.jsonl` | **hand-written**: the postings a human withdrew, with the reason (below) |
 | `cloud_state/funnel.csv` | one row per FULL run: postings → Israel → judged → matched → alive → board → emailed |
@@ -5544,7 +5564,11 @@ the board since `e5fee4d` — and `raw_url` is always the raw GitHub address. `p
 is derived from that variable; it was a hard-coded `false` for the first day and the file
 denied its own location on the very page that served it (BACKLOG 473). `roles_archive.csv` and
 `roles_text.jsonl` are **not** copied to Pages yet (`raw_url` in the meta names where they
-are; the one-token workflow diff is filed for `infra`).
+are; the exact workflow diff is filed as `498@infra`, and the meta reads
+`ROLES_ARCHIVE_PAGES_URL` / `ROLES_TEXT_PAGES_URL` the day infra sets them — the chosen
+shape for shipping the description text is the existing `roles_text.jsonl` itself, joined on
+`role_id`; a joined full-text CSV was rejected on the daily-rediff arithmetic in
+`docs/decisions/2026-08-31-roles-text-artefact.md`).
 
 **The window is 90 days on the operator's word.** He said "~60" first and "90 days" later on
 2026-08-30; the 60 that shipped that morning was a transcription of the first, not a decision.
@@ -5692,13 +5716,34 @@ observation predates the window start, the note becomes `COVERED`.
 **The description text is not in the CSV.** It is up to 6,000 characters per role with
 embedded newlines — it breaks naive parsers, and this file is committed to git every day,
 where history is unshrinkable. The CSV carries `description_len`, `description_sha1` (the join
-key) and `description_truncated`; the text stays in `roles_text.jsonl` beside it, keyed by
-`role_id`. `description_truncated` is `true` when a row sits exactly on the capture cap
+key), `description_truncated` and — since 2026-08-31 — `description_quality`; the text stays
+in `roles_text.jsonl` beside it, keyed by `role_id`. `description_quality` is the MARK the
+operator's smaller-and-correct rule lands as (`docs/decisions/2026-08-31-snippet-rows.md`):
+`jd` when the stored text passes `jdfill.looks_like_jd`, `snippet` when text exists and fails
+it (11 of 161 rows on 2026-08-31 held a search snippet with nothing in the file saying so),
+`none` when there is no text, empty when the text file could not be judged this run — judged
+at export, never stamped on the record, so a rule change re-judges every row on the next
+export. A weak text never takes a row out (the exclusion classes are verdicts about the
+ROLE; these roles are real market facts, and excluded rows would flap back in the day
+`jd-text` fills them); the meta's `description_text.quality` block carries the counts with
+their own identity, and the mail's dataset line says `weak text N` while any remain. `description_truncated` is `true` when a row sits exactly on the capture cap
 (`store.DESC_MAX`, 6,000 — the same number as `fetchers._DESC_MAX` and `jdfill.DESC_MAX`, all
 three pinned equal by a test): 7 of 143 rows today, one of them Amazon's, cut mid-sentence at
 "...If you have a". The true length is already gone before the store sees it, so it cannot be
 reported; that the row IS cut can be, and shipping a silently truncated public file was never
 an option.
+
+**The `company` cell shows the brand the board shows; `company_registry` keeps the join
+key.** Since 2026-08-31 the export renders `company` through the same guarded resolver as
+every reader surface (`rolecard.display_name` — §7d "the name on the cell"; never the raw
+firmographics field), falling back to the registry name, so `withfaye` reads Faye in the
+dataset exactly as it does in the mail. The registry name moves to `company_registry` — the
+stable join key `role_id` derives from — rather than vanishing; this deliberately supersedes
+BACKLOG 504's additive-only proposal on the operator's word, one day into the dataset's life
+(`docs/decisions/2026-08-31-company-column-shows-the-brand.md`). The victim set passed to the
+impersonation guard is the FULL firmographics union, a superset of the board's morning dict,
+so the two surfaces can diverge only toward the honest slug, never toward an impersonation
+(`finbounce` stays `finbounce` while a real Bounce AI row exists).
 
 **Every cell is sanitised, and that is not decoration.** A title and a location come from an
 employer's own careers board — outside the trust boundary — and `fetchers._clean` only

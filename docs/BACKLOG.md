@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**562 filed · 403 open · 159 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**563 filed · 404 open · 159 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 512.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 513.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -446,7 +446,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### company-intel — 19 open
+### company-intel — 20 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -467,6 +467,7 @@ closure convention in the header.
 - **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
 - **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 - **506** `506@company-intel` **OPERATOR DECISION
+- **512** `512@company-intel` **`entrypoint` still renders as a slug on every surface
 
 ### roles — 17 open
 
@@ -9156,6 +9157,15 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      senior` holds `scrape:<the identical url>`. Four records are `superseded` today and these two
      pairs are not, so the dataset counts 2 roles where there is 1, twice. `rolecard._posting_key`
      is the render-side key that catches both; the ledger's `_winner` could compare on it.
+     **CLOSED 2026-08-31 (`roles`)**: `same_posting` now compares on `rolecard._posting_key`
+     (reused lazily as `roles._pk`, so render and ledger agree on what a posting is), with a
+     pk bucket in `_groups` so such pairs are pair-tested at all, and ONE narrow titles
+     bypass — identical non-empty posting key, id-shaped tail, titles equal once bare
+     seniority words are stripped — for the retitled-posting shape. `sweep_store`
+     retroactively supersedes both stored pairs at the next open. Pinned by
+     `test_one_ashby_posting_under_two_registry_rows_is_one_role` and
+     `test_a_retitled_posting_on_one_comeet_page_is_one_role`; the bypass's refusals by
+     `test_titles_are_never_bypassed_without_a_per_posting_id`.
 489. **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
      name and facts** — lane: `roles` (the row) and `company-intel` (the lookup). The row is
      `closed` (2026-08-25), source `discovery-linkedin-targeted`; its description is Bounce AI's
@@ -9175,6 +9185,10 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      fix is the identity key on both (`132`/`133`, `489`), after which the Bounce row is `superseded`
      by `bounce ai|data analyst` automatically. Not started 2026-08-30 — the line is a two-minute
      job for whoever picks this up; the identity-key join is the work.
+     **`roles` 2026-08-31:** the retraction line is COMMITTED (url-keyed, `withdrawn`,
+     `wrong employer: …`; `test_the_bounce_wrong_employer_retraction_withdraws_the_linkedin_row_only`
+     proves it touches only the LinkedIn row) and applies on the next real run. Still open:
+     the firmographics NAME-join class (`132`/`133`) — the wrong facts, not the wrong row.
 490. **`run.py:803` prints `email (last 48h): N roles` for a count that includes the
      newly-covered roles** — lane: `infra` (wording only). `stats["new"] = len(email_jobs)` after
      `first_scan` is appended, so "(last 48h)" is false on every morning with a newly-covered
@@ -9243,7 +9257,13 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      with a comment, not a single-writer claim). `roles_text.jsonl` is 514 KB and grows only on
      a JD day. `roles.build_meta` already reads `ROLES_ARCHIVE_PAGES_URL` for
      `archive.published_on_pages` / `archive.download_url` — export it beside `ROLES_PAGES_URL`
-     on the pipeline step when the copy lands. Also from wave B: `run_gates` has no shape gate
+     on the pipeline step when the copy lands — and (2026-08-31) `ROLES_TEXT_PAGES_URL` the
+     same way for `description_text.published_on_pages`, both set to
+     `https://analystjobsil.github.io/board/<basename>`. This item is now the CHOSEN shape for
+     shipping the description text itself (`docs/decisions/2026-08-31-roles-text-artefact.md`
+     rejected a joined full-text CSV on the daily-rediff arithmetic), so until it lands the
+     operator reads the text at the meta's `raw_url` — nothing is automatic yet. Also from
+     wave B: `run_gates` has no shape gate
      for `.csv` (`persist_state.py:434-449`), so a refused `roles.csv.meta.json` is restored
      alone while the CSV stands — `_dataset_alarm` catches it the next morning; `PAIRED`
      could name the trio.
@@ -9292,6 +9312,14 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      ("Employer name as it appears on the board we read", `pipeline/roles.py:1391`) is
      stale either way now that the board can show the brand: reword it to "registry name —
      the join key; the board may display the evidenced brand instead".
+     **CLOSED 2026-08-31 (`roles`), superseded on the operator's word**: he asked for the
+     `company` CELL to show the brand ("0 slug-shaped company names" is his check), which the
+     additive shape cannot satisfy. Shipped instead: `company` ← `rolecard.display_name`
+     (the guarded resolver, full-union victim set) falling back to the registry name, plus a
+     `company_registry` column carrying the join key — the trade and its residuals
+     (`finbounce`, `entrypoint`) in
+     `docs/decisions/2026-08-31-company-column-shows-the-brand.md`. The column doc reword
+     this item asked for landed with it.
 505. **8 verified boards name a DIFFERENT employer than their registry row — rename and
      acquisition leads, not display fixes** — lane: `registry`. Filed by `company-intel`
      2026-08-31 out of the `display_name` divergent pile (the pass refuses to write these;
@@ -9414,3 +9442,17 @@ pass over the night's own 172 proposals, not reasoned from the code.*
      examined were correctly refused, so the check is not one-sided.
      Second, smaller cause in the same 67: `_fetch` reads 400,000 bytes and two Wix pages hit
      exactly that cap, so the run judged a **truncated** page (`Eyecontrol`, `Nanoghost`).
+512. **`entrypoint` still renders as a slug on every surface — no display evidence exists** —
+     lane: `company-intel`. Filed by `roles` 2026-08-31 while making the dataset's `company`
+     cell show the evidenced brand (`docs/decisions/2026-08-31-company-column-shows-the-brand.md`).
+     `firmographics["entrypoint"]` exists with NO `display_name`, the row is a parked
+     LinkedIn-shell scrape row (`recruiters.is_recruiter` says False), and its one closed
+     role ("Data Analyst -5664", LinkedIn) stays in the public CSV's 90-day window. The
+     dataset, board and mail all fall back to the registry name, so `entrypoint` is the one
+     slug the 2026-08-31 fixes cannot reach: `DISPLAY_NAME_OVERRIDES`
+     (`pipeline/firmographics.py`) demands per-row first-party evidence and there is none on
+     file. Needed: who is this employer (the posting numbered its title like an agency —
+     if it IS one, the fix is `recruiters`/intake, not display), and if real, an evidenced
+     `display_name` (likely "EntryPoint"). Check: `curl -s
+     https://analystjobsil.github.io/board/roles.csv | grep -c ',entrypoint,entrypoint,'` → 0
+     once written (the row ages out of the window ~2026-11 regardless).

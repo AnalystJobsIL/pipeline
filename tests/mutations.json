@@ -2330,5 +2330,45 @@
   "replace": "        if False and keys & retired_keys:",
   "why": "discovery 2026-08-30: dropping the retirement check re-offers every name the registry retired with evidence once per catalog rotation (BACKLOG 441: ~100 and ~48 such re-adds in the two 2026-08-30 cloud runs).",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "merge-deep-gate-widened-to-root",
+  "file": "pipeline/store.py",
+  "symbol": "merge_duplicates",
+  "class": "M1-gate-removal",
+  "find": "deep = [m for m in members if _is_posting_page(m, origins) and m.get(\"url\")]",
+  "replace": "deep = [m for m in members if _authoritative(m, origins) and m.get(\"url\")]",
+  "why": "the 2026-08-31 url-donation widening (an _inherited board card may donate its ADDRESS) leans entirely on _is_posting_page: with the gate loosened to _authoritative, a board ROOT displaces a per-job card. Killed by test_a_board_root_address_never_displaces_a_per_job_card.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "merge-own-inherited-gate-removal",
+  "file": "pipeline/store.py",
+  "symbol": "merge_duplicates",
+  "class": "M1-gate-removal",
+  "find": "own = [m for m in members if _authoritative(m, origins) and not m.get(\"_inherited\")]",
+  "replace": "own = [m for m in members if _authoritative(m, origins)]",
+  "why": "the TEXT donor pool must keep excluding _inherited copies — their description is classify_grouped's copy of the group's longest, not something that posting carried. Killed by test_an_inherited_copy_never_donates_the_text_that_was_copied_onto_it.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "upsert-url-ratchet-inversion",
+  "file": "pipeline/store.py",
+  "symbol": "upsert_matched",
+  "class": "M2-gate-inversion",
+  "find": "if old_url and _is_aggregator_url(new_url) and not _is_aggregator_url(old_url):",
+  "replace": "if old_url:",
+  "why": "the 2026-08-31 anti-regression ratchet refuses exactly ONE downgrade (board url -> aggregator url); inverted to 'a stored url never changes', an employer moving hosts is pinned to a dead address forever. Killed by the host-move assertion in test_a_stored_board_url_is_never_regressed_to_an_aggregator_link.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "same-posting-exact-widening",
+  "file": "pipeline/roles.py",
+  "symbol": "same_posting",
+  "class": "M2-gate-inversion",
+  "find": "exact = bool(pa) and pa == pb",
+  "replace": "exact = pa == pb",
+  "why": "the posting-key arm added 2026-08-31 relies on '' meaning nobody's posting: without the bool() guard, any two aggregator or listing urls (both keyed '') become the same posting and the titles bypass opens cross-company. Killed by test_titles_are_never_bypassed_without_a_per_posting_id.",
+  "must_be_killed_by_behavioural": true
  }
 ]

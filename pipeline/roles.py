@@ -59,6 +59,7 @@ RAW_BASE = "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/clou
 DOWNLOAD_URL = RAW_BASE + DATASET      # the raw address, always true; Pages when infra says so
 PAGES_URL_ENV = "ROLES_PAGES_URL"      # set by daily-digest.yml when the publish step copies it
 ARCHIVE_PAGES_URL_ENV = "ROLES_ARCHIVE_PAGES_URL"   # ditto for roles_archive.csv, once infra copies it
+TEXT_PAGES_URL_ENV = "ROLES_TEXT_PAGES_URL"         # ditto for roles_text.jsonl (backlog 498)
 DATASET_SINCE = "2026-08-30"           # the first day roles.csv existed: nothing before it was
                                        # ever public, so a withdrawal earlier than this is a
                                        # withdrawal from nothing
@@ -406,14 +407,53 @@ def _strong_ids(job):
     return out
 
 
+def _pk(url):
+    """`rolecard._posting_key`, lazily. The ledger and the render layer must agree on what
+    a POSTING is — the render key already strips Ashby's `/application`, tracking params
+    and a trailing `/`, and answers '' for aggregators, board roots and listing pages,
+    which is exactly the refusal the titles bypass in `same_posting` leans on. A local
+    copy would drift (BACKLOG 488 chose reuse). Lazy because rolecard imports roles at
+    module load; in the digest rolecard is long imported before any ledger runs."""
+    from . import rolecard
+    return rolecard._posting_key(url)
+
+
+# words a board bolts onto a title without minting a new opening ("Data Analyst" retitled
+# "Data Analyst Senior" on the SAME comeet posting page, 2026-08-30). Never "growth",
+# "intern" or a team name — those are different roles even at one address.
+_SENIORITY_ONLY = {"senior", "sr", "junior", "jr"}
+
+
+def _title_sans_seniority(job):
+    return " ".join(w for w in _store._norm(job.get("title")).split()
+                    if w not in _SENIORITY_ONLY)
+
+
 def same_posting(a, b):
     """Two jobs (possibly under different company names) are the same POSTING when their
-    titles agree (`_titles_agree`) AND they share a seen_id or a url. Never a url alone
-    (Meta's url is the listing page, shared by every Meta role) and never an id alone (a
-    listing-page id is shared the same way — six SpearUAV roles carried one)."""
-    if not _titles_agree(a, b):
+    titles agree (`_titles_agree`) AND they share a seen_id, a posting key (`_pk` — the
+    same address once `/application`, tracking params and case are stripped) or a url.
+    Never a url alone (Meta's url is the listing page, shared by every Meta role) and
+    never an id alone (a listing-page id is shared the same way — six SpearUAV roles
+    carried one).
+
+    ONE exception to the titles arm, and it is deliberately narrow: an identical posting
+    KEY whose last segment is id-shaped names one opening even when the employer retitled
+    it — `bounce ai|data analyst` and `finbounce|data analyst senior` sat on the identical
+    comeet page (…/data-analyst/3E.E6D) and the titles arm kept them two rows forever
+    (BACKLOG 488). The bypass needs all three: a non-empty `_pk` match (so aggregators,
+    roots and listing pages can never qualify), an id-shaped final segment (a digit-less
+    prose page like /teams/analytics does not), and titles equal once bare seniority
+    words are stripped ("Data Analyst, Growth" stays a second role)."""
+    pa, pb = _pk(a.get("url")), _pk(b.get("url"))
+    exact = bool(pa) and pa == pb
+    tail = pa.split("?")[0].rsplit("/", 1)[-1] if exact else ""
+    near = (exact and _store._is_id_shaped(tail)
+            and _title_sans_seniority(a)
+            and _title_sans_seniority(a) == _title_sans_seniority(b))
+    if not _titles_agree(a, b) and not near:
         return False
-    if _strong_ids(a) & _strong_ids(b):
+    if exact or (_strong_ids(a) & _strong_ids(b)):
         return True
     ua, ub = (a.get("url") or "").strip(), (b.get("url") or "").strip()
     return bool(ua) and ua == ub
@@ -543,6 +583,13 @@ def reconcile(row, rec):
     out = {}
     for c in ("company", "title", "url", "location", "seniority", "status", "superseded_by"):
         out[c] = newer.get(c) or older.get(c) or ""
+    # The same downgrade `store.upsert_matched` refuses: a board url is never handed back
+    # to an aggregator link just because the aggregator sighting is the newer side (a
+    # scoped run, a hand edit or a restore can make it so). Board→board and agg→agg keep
+    # the newer side, exactly as above.
+    un, uo = str(newer.get("url") or ""), str(older.get("url") or "")
+    if un and uo and _store._is_aggregator_url(un) and not _store._is_aggregator_url(uo):
+        out["url"] = uo
     ls = [x for x in (row.get("last_seen"), rec.get("last_seen")) if x]
     out["first_seen"] = row.get("first_seen") or rec.get("first_seen") or ""
     out["last_seen"] = max(ls) if ls else ""
@@ -790,6 +837,12 @@ class Ledger:
                 buckets.setdefault(("id", sid), []).append(i)
             if (j.get("url") or "").strip():
                 buckets.setdefault(("url", j["url"].strip()), []).append(i)
+            # the normalized posting key too: checkout.com's ashby url and checkout's
+            # `…/application` variant share no raw url and no seen_id, so without this
+            # bucket the pair `same_posting` now collapses is never even pair-tested
+            pk = _pk(j.get("url"))
+            if pk:
+                buckets.setdefault(("pk", pk), []).append(i)
         for idxs in buckets.values():
             for x in range(len(idxs)):
                 for y in range(x + 1, len(idxs)):
@@ -1293,9 +1346,12 @@ class Ledger:
             ex = (f"superseded {counts.get('superseded', 0)} · purged {counts.get('purged', 0)}"
                   f" · withdrawn {counts.get('withdrawn', 0)}"
                   f" · outside window {counts.get('outside_window', 0)}")
+            weak = counts.get("text:snippet", 0) + counts.get("text:none", 0)
+            wk = (f" · weak text {weak} ({counts.get('text:snippet', 0)} snippet, "
+                  f"{counts.get('text:none', 0)} none)") if weak else ""
             return [f"dataset {len(rows)} roles ({counts['window_start']}..{counts['window_end']})"
                     f" · archived {len(archived)} · excluded {ex}"
-                    f" · firmo {counts.get('firmo:none', 0)} of {len(rows)} unmatched"]
+                    f" · firmo {counts.get('firmo:none', 0)} of {len(rows)} unmatched{wk}"]
         except Exception as e:  # noqa: BLE001
             self.alarms.append(f"roles dataset export failed: {e.__class__.__name__}: "
                                f"{str(e)[:80]} — roles.csv keeps yesterday's rows")
@@ -1388,7 +1444,8 @@ _CATS = ("bi", "query", "de", "pa", "prog", "method", "cloud", "lang")
 # somebody who has never seen this repo.
 _COLUMNS = [
     ("role_id", "Opaque stable id for the role — a normalised slug derived from company and title (punctuation and corporate suffixes dropped), so DO NOT split it: use the company and title columns. It is the join key for roles_text.jsonl."),
-    ("company", "Employer name as it appears on the board we read."),
+    ("company", "The employer's brand name where company-intel evidenced one (the same rule the board renders by), else the registry name. Group by this."),
+    ("company_registry", "The registry/record name — the stable join key to this repo's other files (firmographics, the ledger); role_id derives from it. Equal to company when no brand is evidenced."),
     ("title", "Job title as posted."),
     ("location", "Location as posted (free text, usually an Israeli city)."),
     ("url", "The posting's own address on the employer's careers board."),
@@ -1421,6 +1478,7 @@ _COLUMNS = [
     ("description_len", "Characters of description text we hold. 0 when we captured none."),
     ("description_truncated", "true when the text sits exactly on the 6,000-character capture cap, i.e. the real posting is longer."),
     ("description_sha1", "sha1 of the description text; join to roles_text.jsonl to read it."),
+    ("description_quality", "Whether the text we hold reads as a job description (jdfill.looks_like_jd). Empty = text exists but could not be judged this run."),
     ("sector", "Company sector (firmographics)."),
     ("sub_sector", "Narrower niche (firmographics, free text)."),
     ("stage", "Company stage (firmographics)."),
@@ -1447,6 +1505,14 @@ LIST_COLUMNS = ["sources", "repost_dates", "degree_fields", "ai", "skills"] + [
     "skills_" + c for c in _CATS]
 
 _ENUMS = {
+    "description_quality": {
+        "jd": "the stored text passes the same two tests a fresh fetch must "
+              "(jdfill.looks_like_jd): >= 300 characters of body and >= 2 section families",
+        "snippet": "we hold text but it fails that test — a search snippet, page furniture "
+                   "or a fragment; description_len says how much; do not read it as the "
+                   "full posting (the test can also fail a genuinely terse real ad)",
+        "none": "we hold no description text for this role",
+    },
     "status": {
         "open": "still listed on the employer's own careers board when we last looked",
         "closed": "we looked at that board again and the posting was gone",
@@ -1757,8 +1823,16 @@ def _company_earliest(records):
     return out
 
 
-def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS, archive=False):
+def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS, archive=False,
+               texts=None):
     """(rows, counts) for the dataset. Pure: no I/O, no network, no store.
+
+    `texts` is {role_id: {description, sha1, ...}} — the loaded roles_text.jsonl. It feeds
+    ONE column, `description_quality`, judged here at export rather than stamped on the
+    record: the verdict is rule×content-derived (`jdfill.looks_like_jd`), so a rule change
+    must re-judge every row on the next export instead of stranding 169 stale stamps.
+    `texts=None` (a caller without the file, a corrupt-file day) leaves the column empty —
+    "could not measure", never a guess.
 
     `archive=True` selects the COMPLEMENT on the date axis — the open/closed roles whose
     `last_seen` is before the window start — with the same columns and the same cell
@@ -1778,6 +1852,7 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
     """
     firmographics = firmographics or {}
     from .firmographics import identity_key
+    from . import rolecard          # the board's display resolver; lazy like jdfill below
     by_ident = {}
     for name, rec in firmographics.items():
         by_ident.setdefault(identity_key(name), rec)
@@ -1845,10 +1920,29 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
             match = "identity" if fm is not None else "none"
         fm = fm if isinstance(fm, dict) else {}
         counts["firmo:" + match] += 1
+        # The company CELL shows the evidenced brand the board and mail already show
+        # (rolecard.display_name — the guarded resolver, never the raw JSON field: it
+        # refuses junk, homoglyphs and a brand that collides with another company's
+        # identity). The registry name stays in company_registry, the stable join key.
+        # The victim set passed to the guard is the full firmographics union — a superset
+        # of the board's morning dict — so the two surfaces can diverge only in the safe
+        # direction: the CSV showing the honest slug where the board shows the brand.
+        disp = rolecard.display_name(fm, company, firmographics)
         dlen = _int(rec.get("desc_len"))
+        dq = ""
+        if dlen == 0:
+            dq = "none"
+        elif isinstance(texts, dict):
+            t = texts.get(rid)
+            if (isinstance(t, dict) and t.get("sha1") == (rec.get("desc_sha1") or "")
+                    and isinstance(t.get("description"), str)):
+                from .jdfill import looks_like_jd   # enrich layer: import only when judging
+                dq = "jd" if looks_like_jd(t["description"]) else "snippet"
+        counts["text:" + (dq or "unmeasured")] += 1
         row = {
             "role_id": rid,
-            "company": company,
+            "company": disp or company,
+            "company_registry": company,
             "title": rec.get("title") or "",
             "location": rec.get("location") or "",
             "url": rec.get("url") or "",
@@ -1884,6 +1978,7 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
             # reader to a line of roles_text.jsonl that does not exist. An empty cell means
             # "we hold no text", which is what the conventions block promises it means.
             "description_sha1": (rec.get("desc_sha1") or "") if dlen else "",
+            "description_quality": dq,
             # The capture cap is 6,000 characters in all three layers that touch the text
             # (fetchers, jdfill, the store), and it cuts mid-sentence — Amazon's ends "...If
             # you have a". The true length is already gone by the time it reaches the store,
@@ -1986,6 +2081,8 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
              "unreadable": counts.get("unreadable", 0)}
     pages = _http_url(pages_url)
     archive_pages = _http_url(os.environ.get(ARCHIVE_PAGES_URL_ENV, ""))
+    text_pages = _http_url(os.environ.get(TEXT_PAGES_URL_ENV, ""))
+    quality = {k: counts.get("text:" + k, 0) for k in ("jd", "snippet", "none", "unmeasured")}
     return {
         "dataset": DATASET,
         # The Pages address when infra's publish step copies the file there (it says so via
@@ -2073,9 +2170,17 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
             "why": "the full text is up to 6,000 characters per role with embedded newlines: "
                    "it breaks naive parsers, and this file is committed to git every day",
             "file": TEXT,
-            "raw_url": RAW_BASE + TEXT,     # not beside the CSV on Pages: fetch it from here
+            "raw_url": RAW_BASE + TEXT,
+            # the Pages copy, once infra's publish step copies the file there (it says so
+            # via ROLES_TEXT_PAGES_URL); until then the raw address is where the text is
+            "download_url": text_pages or RAW_BASE + TEXT,
+            "published_on_pages": bool(text_pages),
             "join": "role_id",
-            "columns_here": ["description_len", "description_truncated", "description_sha1"],
+            "columns_here": ["description_len", "description_truncated",
+                             "description_sha1", "description_quality"],
+            # description_quality, counted: an identity so a reader can check nothing was
+            # silently skipped — jd + snippet + none + unmeasured == rows
+            "quality": {**quality, "holds": sum(quality.values()) == len(rows)},
         },
         "funnel": {"file": FUNNEL,
                    "what": "one row per full daily run: postings fetched -> Israel -> judged "
@@ -2095,13 +2200,18 @@ def export_files(records, db_path, *, run_date, firmographics=None, window_days=
     against the STORE while the files it described did not exist. Returns
     (rows, archived, counts, meta)."""
     csv_path, meta_path, _f = dataset_paths(db_path)
+    # the text file feeds description_quality; a missing/corrupt file leaves the column
+    # empty ("could not measure"), and the export still ships
+    texts, t_status, _skipped = load(ledger_paths(db_path)[1])
+    if t_status != "ok":
+        texts = None
     rows, counts = build_rows(records, run_date=run_date, firmographics=firmographics,
-                              window_days=window_days)
+                              window_days=window_days, texts=texts)
     # ...and the archive: the same row builder over the roles the window has aged out.
     # Regenerated WHOLE from the ledger every run (no append machinery, so it cannot drift
     # from the record), header-only until the first eviction.
     archived, _ac = build_rows(records, run_date=run_date, firmographics=firmographics,
-                               window_days=window_days, archive=True)
+                               window_days=window_days, archive=True, texts=texts)
     meta = build_meta(rows, counts, records, run_date=run_date, window_days=window_days,
                       earliest_run=earliest_run, pages_url=os.environ.get(PAGES_URL_ENV, ""),
                       archived=archived)
