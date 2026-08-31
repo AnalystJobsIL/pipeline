@@ -26100,7 +26100,9 @@ def test_the_listing_page_is_never_offered_as_a_posting_however_it_is_written():
     `docs/BACKLOG.md` 480 in miniature — the hole was found, closed, and left unguarded
     (wave C found both mutants silent). A listing page is exactly what `is_job_url` refuses,
     so handing it back as "this role's own address" sends the row to the address it is
-    already stuck at. Kills: removing the skip, and reverting it to a full-URL compare.
+    already stuck at. Kills `donor-selflink-string-compare` — catalogued rather than killing
+    in range because the fix shipped one commit before this test, and `guard_kill` measures
+    "new since the last push".
 
     (The `www.` variant is suppressed by `_page_links`' same-origin check, not by this rule,
     so it is deliberately not the case under test.)"""
@@ -26117,8 +26119,9 @@ def test_an_address_that_mixes_raw_hebrew_with_an_existing_escape_is_not_encoded
     """`%` in `wire_url`'s safe set only ever decides a MIXED address: a fully encoded url is
     all-ASCII and returns before `quote` is reached. There are 0 such urls in the caches
     today, so this is the defensive case pinned deliberately rather than a live one — without
-    it, `%D7%90` becomes `%25D7%2590` and the address 404s. Kills: dropping `%` from the safe
-    set."""
+    it, `%D7%90` becomes `%25D7%2590` and the address 404s. Kills `wire-url-double-encodes`
+    — catalogued for the same reason as the guard above: the fix is one commit older than
+    its test."""
     from pipeline.jdfill import wire_url
     mixed = "https://x.com/jobs/%D7%90-דיגיטל/"
     out = wire_url(mixed)

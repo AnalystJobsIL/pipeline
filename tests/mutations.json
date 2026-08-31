@@ -2440,5 +2440,25 @@
     "replace": "        elif False:\n            del rec[DISPLAY_NAME_KEY]\n            rep[\"removed\"] += 1",
     "why": "company-intel guard: withdrawn evidence must RETRACT the name, and this branch is the only thing that can express it -- `merge`'s fill-forward carries a stale one forward for ever, which is how a cleared name kept coming back from the sqlite side (wave 1b, 2026-08-30).",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "donor-selflink-string-compare",
+    "file": "pipeline/jdfill.py",
+    "symbol": "role_addresses_on",
+    "class": "M4-guard-removal",
+    "find": "        if _same_page(u):\n            continue                        # the listing page linking to itself",
+    "replace": "        if u.rstrip(\"/\") == (page_url or \"\").rstrip(\"/\"):\n            continue                        # MUTANT: the full-URL compare this replaced",
+    "why": "shipped defeat: the self-link skip was a full-URL string compare, so every query, fragment and trailing-slash variant of the listing page came back as this role's own address -- and a listing page is exactly what `is_job_url` refuses, so the row is handed back the address it is already stuck at. Found by wave C 2026-08-31; the fix shipped one commit before its test, which is why the test is catalogued rather than killing in range.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "wire-url-double-encodes",
+    "file": "pipeline/jdfill.py",
+    "symbol": "wire_url",
+    "class": "M16-escaping",
+    "find": "quote(parts.path, safe=\"/%:@&=+$,;~!*'()\")",
+    "replace": "quote(parts.path, safe=\"/:@&=+$,;~!*'()\")",
+    "why": "shipped defeat: with `%` out of the safe set, an address that mixes raw non-ASCII with an existing percent-escape is encoded twice (`%D7%90` -> `%25D7%2590`) and 404s. 0 such urls in the caches today, so this is the defensive case pinned deliberately. Found by wave C 2026-08-31; fix shipped one commit before its test.",
+    "must_be_killed_by_behavioural": true
   }
 ]
