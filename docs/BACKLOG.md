@@ -9549,10 +9549,26 @@ Record: `docs/sessions/2026-08-31-jd-text.md`.
      removes that phrase — its sole carrier — the next night. A one-night membership the
      rehearsal correctly calls a loss. The streak was **six** runs, not four (33381636676,
      33383497644, 33384129188, 33386238895, 33389300315, 33396868611 — checked job-by-job).
-     Fixed by carrying the dated fact forward (`_fold_empty`) with a drop-guard for
-     saturated cells (`_keep_selectors`); rule and evidence in `ARCHITECTURE.md` §2, "a fact
-     another pool selects on". `rehearse (worst, seed 1)` green, `validate_empty` flat at 65
-     across 14 nights, 0 orphans.
+     Fixed by carrying the dated fact forward (`_fold_empty`) behind a guard that refuses
+     to write anything the row would pay for (`_keep_selectors`); rule and evidence in
+     `ARCHITECTURE.md` §2, "a fact another pool selects on". `rehearse (worst, seed 1)`
+     green, `validate_empty` flat at 65 across 14 nights, 0 orphans.
+
+     **The first version of that fix was net-harmful and an adversarial pass caught it.**
+     The folded segment carries `no open israel roles`, which `notes._PROTECTED_EXTRA`
+     protects, where the plain `still unreachable` segment it replaces was evictable — so
+     the cell filled with protected facts and stopped accepting the one verdict that ENDS a
+     row's life. Measured over the 26 rows of the 02:30 pool: a `domain-dead` stamp lands on
+     **26** after a plain night and on **20** after that fold. A row that can never be
+     parked is worse than a re-check it is missing, and it is the bug class `notes.py`
+     exists to prevent — reintroduced by a fix for its sibling. The guard now takes a LIST
+     of candidate segments (with `still`, without it, without `date0`) and writes the first
+     that costs nothing, measured against the real predicates — `validate_empty`'s
+     membership, this tool's own pool, and `_can_still_be_retired` (a 48-char reserve, the
+     width of `scan_dead_domains`'s longest stamp). Final: **`validate_empty` 22 of 22,
+     terminal lands 26 of 26, 23 of 26 still get tonight's date.** The earlier guard also
+     compared the literal PHRASE, a proxy that gets `Syte` wrong (its membership is held by
+     `empty-but-suspect`), freezing a row with nothing to lose.
 
      **The "restore the lost verdicts" half of this item is REFUSED, with the measurement,
      and no row edit shipped.** Three verdicts were evicted across the two nights, not two:

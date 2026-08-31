@@ -26,6 +26,7 @@ from resolve_deep import ATS_PATTERNS, _verify
 from scrape_universal import ISRAEL_LOC, scrape
 from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
+from pipeline.notes import append as _note_append
 from pipeline.notes import replace_own as _note_replace
 from pipeline.verdicts import is_terminal
 
@@ -191,7 +192,7 @@ _OWN_EMPTY = re.compile(r"retry (\d{4}-\d{2}-\d{2}): [^|]*no open israel roles"
 
 
 def _fold_empty(note, today):
-    """Carry a PAST empty scan forward into tonight's still-unreachable segment, or "".
+    """Candidate segments carrying a PAST empty scan forward, longest first; [] if none.
 
     `validate_empty`'s pool membership is the literal phrase `no open israel roles`
     (`validate_empty.in_validate_empty_pool`), and on a row this tool scanned empty the ONLY
@@ -213,9 +214,16 @@ def _fold_empty(note, today):
     """
     m = _OWN_EMPTY.search(note or "")
     if not m:
-        return ""
+        return []
     date0 = m.group(2) or m.group(1)          # a folded date first, else the scan's own stamp
-    return f"retry {today}: still unreachable; no open Israel roles {date0}"
+    # Most informative first. A saturated cell cannot afford the long form AND a terminal
+    # verdict (`_can_still_be_retired`), and the fact is worth more than the adverb: the
+    # second form drops `still`, the third drops the date rather than the phrase, because
+    # the phrase is what `validate_empty` selects on. `_keep_selectors` takes the first that
+    # costs the row nothing.
+    return [f"retry {today}: still unreachable; no open Israel roles {date0}",
+            f"retry {today}: unreachable; no open Israel roles {date0}",
+            f"retry {today}: unreachable; no open Israel roles"]
 
 
 def _row_for(name, url, kind, payload, cache, note=""):
@@ -256,34 +264,84 @@ def _row_for(name, url, kind, payload, cache, note=""):
     # still unreachable: the token STAYS (it is this tool's and bd_rescue's selector) and
     # nothing else on the row is touched -- the base note is exactly what came in.
     today = _today()
-    seg = _fold_empty(note, today) or f"retry {today}: still unreachable"
-    return [name, "scrape", url, url, "false", _keep_selectors(note, seg)]
+    plain = f"retry {today}: still unreachable"
+    return [name, "scrape", url, url, "false",
+            _keep_selectors(name, url, note, _fold_empty(note, today) + [plain])]
 
 
-def _keep_selectors(note, segment):
-    """`_note(note, segment, disproved=False)`, unless writing it would COST a pool.
+# The longest terminal segment a nightly writer actually produces -- `scan_dead_domains`'s
+# `domain-dead <date> (conn-dead (URLError))` is 44 characters. A row that cannot fit one of
+# these can never be RETIRED, which is worse than any re-check it is missing.
+_RETIRE_RESERVE = 48
+
+
+def _can_still_be_retired(note):
+    """Could a terminal verdict still land on this cell tomorrow?
+
+    `notes.append` refuses to evict a protected segment and drops the newcomer instead, so a
+    cell that fills with protected facts stops accepting the one verdict that ends a row's
+    life. That is the failure `pipeline/notes.py` was written against, and this tool can
+    cause it: the folded segment carries `no open israel roles`, which `_PROTECTED_EXTRA`
+    protects, where the plain `still unreachable` segment it replaces was evictable.
+    Measured over the 26 rows of this tool's pool: a `domain-dead` stamp lands on 26 after a
+    plain night and on **20** after a folded one. Hence this check, and the fallback order
+    in `_keep_selectors`.
+    """
+    probe = "domain-dead " + "x" * (_RETIRE_RESERVE - len("domain-dead "))
+    return probe in _note_append(note or "", probe)
+
+
+def _keep_selectors(name, url, note, segments):
+    """The first of `segments` that costs the row NOTHING, else the note unchanged.
 
     `notes.append` drops a newcomer WHOLE when the cell is at its 220-char cap and every
-    remaining segment is protected (`pipeline/notes.py`, "Dropping the newcomer costs that
-    tool tonight's date on a saturated row, never a pool"). That guarantee holds for a tool
-    that only ADDS -- but `replace_own` deletes this tool's previous segment first, so on a
-    saturated row the pair can delete a fact and then fail to write its replacement. The
-    fold makes the segment ~33 characters longer, which is what brings live rows into
-    range: of the 10 rows carrying the phrase in their own retry segment today, 9 fold
-    within the cap and `Syte` (208 chars, 4 of 4 segments protected) does not -- its note
-    would lose both the phrase and this tool's stamp outright.
+    remaining segment is protected (`pipeline/notes.py`: "dropping the newcomer costs that
+    tool tonight's date on a saturated row, never a pool"). That guarantee is written for a
+    tool that only ADDS -- but `replace_own` DELETES this tool's previous segment first, so
+    the pair can delete a fact and then fail to write its replacement. Three things can be
+    lost that way, and this tool must not trade any of them for a date:
 
-    So: compare the candidate cell against the one we hold, and if a selector we came in
-    with is not in it, keep the note we have. The cost is tonight's date on one saturated
-    row, which is the trade `notes.append` already makes; the alternative -- writing the
-    short unfolded segment instead -- still deletes the phrase's only carrier on any row
-    without a second one, so it is not a fallback.
+    1. membership of `validate_empty`'s pool -- on a row this tool scanned empty, its own
+       segment is often the only carrier of `no open israel roles` (`docs/BACKLOG.md` 514);
+    2. membership of this tool's OWN pool, and `bd_rescue`'s, which select on `unreachable`;
+    3. the row's ability to be RETIRED at all (`_can_still_be_retired`).
+
+    An earlier version of this guard compared the literal phrase before and after, which is
+    a PROXY for (1) and gets `Syte` wrong -- its membership is held by `empty-but-suspect`,
+    not by the phrase, so the proxy froze a row that had nothing to lose. The pool
+    predicates are the rule; ask them. Measured over the 26 rows: this order keeps
+    `validate_empty` at 22 of 22, leaves a terminal verdict landing on 26 of 26, and still
+    writes tonight's date on 23. The rows it declines to stamp are the saturated ones, and
+    the thing they keep instead is the ability to be parked.
     """
-    candidate = _note(note, segment, disproved=False)
-    for sel in (_EMPTY_PHRASE, _UNREACHABLE):
-        if sel.search(note or "") and not sel.search(candidate):
-            return note or ""
-    return candidate
+    note = note or ""
+    row = [name, "scrape", url, url, "false", note]      # a PROBE for the pool predicates
+    was_empty_pool = _in_validate_empty(row)             # below, never a row this writes
+    was_retry_pool = in_retry_pool(row)
+    for segment in segments:
+        cand = _note(note, segment, disproved=False)
+        after = row[:5] + [cand]
+        if was_empty_pool and not _in_validate_empty(after):
+            continue                     # (1) it would leave the pool that re-checks empties
+        if was_retry_pool and not in_retry_pool(after):
+            continue                     # (2) ...or this tool's own pool, and bd_rescue's
+        if not _can_still_be_retired(cand):
+            continue                     # (3) ...or become a row nothing can ever park
+        return cand
+    return note
+
+
+def _in_validate_empty(row):
+    """`validate_empty`'s membership rule, asked rather than guessed. Imported lazily: the
+    02:30 chain must not pay for that module at import time, and it imports us back."""
+    try:
+        from validate_empty import in_validate_empty_pool
+    except Exception:                                             # noqa: BLE001
+        return False
+    try:
+        return bool(in_validate_empty_pool(row))
+    except Exception:                                             # noqa: BLE001
+        return False
 
 
 def main():

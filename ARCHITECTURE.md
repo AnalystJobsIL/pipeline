@@ -1408,17 +1408,37 @@ validate_empty (Sun 04:00) lost 1 rows it should keep: ['Israel Opera']*.
 
 `retry_unreachable._fold_empty` is the answer: the still-unreachable segment carries the
 older dated fact forward (`retry <today>: still unreachable; no open Israel roles <date0>`),
-stating two true facts and re-extracting `date0` each night so it never accumulates. **Two
-things a future writer must know.** First, the guard beside it (`_keep_selectors`): a folded
-segment is ~33 characters longer, and `notes.append` drops a newcomer whole on a cell at the
-220-char cap whose every segment is protected — a guarantee written for a tool that only
-ADDS, but `replace_own` deletes first, so the pair can delete a fact and then fail to write
-its replacement. Of the rows carrying the phrase in their own retry segment, `Syte` (208
-chars, 4 of 4 protected) is that row; the tool now compares the candidate cell against the
-one it holds and keeps the old note rather than lose a selector, costing one saturated row
-tonight's date. Second, do not "fix" this by widening the reading pool or by exempting the
-rehearsal: `tests/rehearse_registry.py` has no `_OWN_STAMP` entry for `validate_empty`, and
-that is correct — the tool that re-checks empties is not the tool that writes the emptiness.
+stating two true facts and re-extracting `date0` each night so it never accumulates.
+
+**And carrying a fact forward COSTS the cell, which is the part that took two attempts.**
+The folded segment contains `no open israel roles`, so `notes._PROTECTED_EXTRA` protects it
+— where the plain `still unreachable` segment it replaces was evictable — and it is longer.
+`notes.append` refuses to evict a protected segment and drops the newcomer instead, so a
+cell that fills with protected facts stops accepting the one verdict that ENDS a row's life.
+Measured over the 26 rows of the 02:30 pool: a `domain-dead` stamp lands on 26 after a plain
+night and on **20** after the first version of this fold. A row that can never be parked is
+a worse outcome than a re-check it is missing, and it is the failure `pipeline/notes.py` was
+written against.
+
+So `_keep_selectors` takes a LIST of candidate segments, longest first, and writes the first
+that costs the row nothing — measured against the actual predicates, never a proxy:
+`validate_empty`'s membership, this tool's own pool (and `bd_rescue`'s), and
+`_can_still_be_retired` (a 48-character reserve, the width of `scan_dead_domains`'s
+`domain-dead <date> (conn-dead (TimeoutError))`, which is the longest terminal segment any
+NIGHTLY writer produces). `_fold_empty` therefore offers three forms — with `still`, without
+it, and without `date0` — because on a saturated cell the fact is worth more than the adverb
+and the phrase is worth more than the date. Result over the same 26 rows: `validate_empty`
+holds at **22 of 22**, a terminal verdict lands on **26 of 26**, and 23 still get tonight's
+date. The three that do not are saturated rows, and what they keep instead is the ability to
+be retired.
+
+An earlier version of that guard compared the literal PHRASE before and after. That is a
+proxy for pool membership and it gets `Syte` wrong — its membership is held by
+`empty-but-suspect`, not by the phrase — so it froze a row that had nothing to lose. Ask the
+pool predicate; it is the rule. And do not "fix" any of this by widening the reading pool or
+by exempting the rehearsal: `tests/rehearse_registry.py` has no `_OWN_STAMP` entry for
+`validate_empty`, and that is correct — the tool that re-checks empties is not the tool that
+writes the emptiness.
 
 **The pool is still spelled in THREE places** — `verdicts.TOKENS`, `listing_hunt.HUNT_POOL`,
 `check_invariants.POOL` — and since 2026-08-25 `TOKENS` is a superset of both inline copies
@@ -2153,14 +2173,21 @@ on the other side of it. Two changes, both keyed on evidence that was already on
 
 * **The drain refuses to start disarmed.** `queue_resolve_search._refuse_to_run_disarmed`
   runs before `ranked_targets`, so no name is selected and nothing is recorded: unrecorded
-  names stay never-searched and sort first tomorrow. It reads `DEEP_BD_SEARCH_CAP` exactly
-  as `deep_validate` does, because a cap of 0 short-circuits before the key is even looked
-  at and is indistinguishable downstream from a missing one. A test that stubs the search
-  must therefore declare the rung armed; `tests/conftest.py` bans the transport, so a dummy
-  key buys nothing.
+  names stay never-searched and sort first tomorrow. It checks **four** conditions, because
+  the rung has four ways to be dead and they are indistinguishable downstream: no
+  `BRIGHTDATA_API_KEY`; no `BRIGHTDATA_ZONE` (`bd_rescue.unlock_status` reads it OUTSIDE its
+  own `try`, so this one RAISES per name rather than returning `[]` — ~112 `search-error`
+  attempts, no credit); `DEEP_BD_SEARCH_CAP` ≤ 0; and `BD_RUN_CAP` ≤ 0, a job-scoped knob
+  that short-circuits before the key is read. A test that stubs the search must therefore
+  declare the rung armed; `tests/conftest.py` bans the transport, so a dummy key buys
+  nothing.
 * **The stamp tells the three apart.** `empty_search_share` is published every night
   (healthy: **0.5 %** — 7 of 1,463 search-llm attempts, 08-29..31; disarmed: 100 %), and
-  ≥ 90 % over ≥ 10 attempts raises `queue drain BOUGHT NOTHING`, naming the fingerprint and
+  ≥ 90 % over ≥ 10 attempts raises `queue drain BOUGHT NOTHING`. The share is computed
+  **per night and the worst night wins**, not over the window: the window is two days wide
+  because the stamp runs hours after the drain and often past midnight UTC, and a healthy
+  100 followed by a disarmed 100 averages to 50 % — silent through the exact failure the
+  alarm exists for, naming the fingerprint and
   saying in words that these are not companies without a board. When nothing was searched at
   all, `cloud_state/bd_spend.jsonl` separates the remaining two: `bd_rescue`'s atexit hook
   writes one line per process and only when it spent, so shards that bought and then died

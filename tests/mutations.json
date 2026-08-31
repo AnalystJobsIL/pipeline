@@ -1043,9 +1043,9 @@
   "file": "retry_unreachable.py",
   "symbol": "_row_for",
   "class": "M7-constant-drift",
-  "find": "    return [name, \"scrape\", url, url, \"false\", _keep_selectors(note, seg)]",
+  "find": "    return [name, \"scrape\", url, url, \"false\",\n            _keep_selectors(name, url, note, _fold_empty(note, today) + [plain])]",
   "replace": "    return [name, \"scrape\", url, url, \"false\", \"unreachable; could not scan\"]",
-  "why": "the 2026-08-25 defect textually: a still-unreachable night rebuilt the cell from a literal and erased listing-hunt's and bd_rescue's segments on 9 rows nightly (b3d1d49). Re-anchored 2026-08-31: the same mutation, on the line the fold moved it to -- the record is about rebuilding the cell from a literal, not about which expression builds it.",
+  "why": "the 2026-08-25 defect textually: a still-unreachable night rebuilt the cell from a literal and erased listing-hunt's and bd_rescue's segments on 9 rows nightly (b3d1d49). Re-anchored 2026-08-31 (b) onto the line the guard refactor moved it to.",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -2406,9 +2406,9 @@
   "file": "retry_unreachable.py",
   "symbol": "_row_for",
   "class": "M5-population-widening",
-  "find": "    seg = _fold_empty(note, today) or f\"retry {today}: still unreachable\"",
-  "replace": "    seg = f\"retry {today}: still unreachable\"",
-  "why": "this tool OWNS the only carrier of `no open israel roles` on a row it scanned empty, and replace_own deletes its own segment before appending. Without the fold, the first unreachable night retires the row from validate_empty's pool - four consecutive tests.yml runs red on `rehearse (worst, seed 1)`, BACKLOG 514. Killed by test_a_still_unreachable_night_does_not_retire_the_row_from_validate_empty.",
+  "find": "            _keep_selectors(name, url, note, _fold_empty(note, today) + [plain])]",
+  "replace": "            _keep_selectors(name, url, note, [plain])]",
+  "why": "this tool OWNS the only carrier of `no open israel roles` on a row it scanned empty, and replace_own deletes its own segment before appending. Without the fold, the first unreachable night retires the row from validate_empty's pool - four consecutive tests.yml runs red on `rehearse (worst, seed 1)`, BACKLOG 514. Killed by test_a_still_unreachable_night_does_not_retire_the_row_from_validate_empty. Re-anchored 2026-08-31 (b): the fold is now a LIST of candidate forms; dropping it leaves only the plain segment, which is the original defect.",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -2416,9 +2416,9 @@
   "file": "retry_unreachable.py",
   "symbol": "_keep_selectors",
   "class": "M6-fallback-removal",
-  "find": "    candidate = _note(note, segment, disproved=False)",
-  "replace": "    return _note(note, segment, disproved=False)\n    candidate = _note(note, segment, disproved=False)",
-  "why": "notes.append drops a newcomer whole on a cell at the cap whose every segment is protected - a guarantee written for a tool that only ADDS. Paired with replace_own it deletes the segment and then fails to write the replacement, so the ~33-char-longer fold costs Syte (208 chars, 4/4 protected) both the phrase and this tool's stamp. Killed by test_the_fold_is_skipped_when_writing_it_would_cost_the_pool_it_protects.",
+  "find": "        if was_empty_pool and not _in_validate_empty(after):",
+  "replace": "        if False:",
+  "why": "notes.append drops a newcomer whole on a cell at the cap whose every segment is protected - a guarantee written for a tool that only ADDS. Paired with replace_own it deletes the segment and then fails to write the replacement, so the ~33-char-longer fold costs Syte (208 chars, 4/4 protected) both the phrase and this tool's stamp. Killed by test_the_fold_is_skipped_when_writing_it_would_cost_the_pool_it_protects. Re-anchored 2026-08-31 (b): the guard now asks the POOL PREDICATE, not the literal phrase (the proxy got Syte wrong). Removing the check is the same defeat.",
   "must_be_killed_by_behavioural": true
  }
 ]

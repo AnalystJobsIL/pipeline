@@ -138,20 +138,32 @@ def _refuse_to_run_disarmed():
     counts those attempts as work. Refusing here is what keeps the queue honest; the names
     stay never-searched and sort first tomorrow.
 
-    The cap is read the way `deep_validate` reads it (same env var, same default), because a
-    cap of 0 is indistinguishable downstream from a missing key.
+    FOUR conditions, because the rung has four ways to be dead and all of them look alike
+    from here. The first version of this preflight checked two, and an adversarial pass
+    named the other two: `bd_rescue.unlock_status` reads `os.environ["BRIGHTDATA_ZONE"]`
+    OUTSIDE its own `try`, so a missing zone is a `KeyError` per name -- ~112 attempts
+    recorded `search-error`, no credit bought, preflight green; and `BD_RUN_CAP=0` (a
+    job-scoped knob `listing-hunt.yml` sets at the workflow level) short-circuits
+    `unlock_status` before the key is read, which is the same 112 refusals again. Caps are
+    read the way their own consumers read them, defaults included, because a cap of 0 is
+    indistinguishable downstream from a missing key.
     """
+    def _int(name, default):
+        try:
+            return int((os.environ.get(name) or default).strip())
+        except (AttributeError, ValueError):
+            return 0
+
     why = ""
     if not (os.environ.get("BRIGHTDATA_API_KEY") or "").strip():
         why = "BRIGHTDATA_API_KEY is unset or empty"
-    else:
-        try:
-            cap = int(os.environ.get("DEEP_BD_SEARCH_CAP", "150"))
-        except ValueError:
-            cap = 0
-        if cap <= 0:
-            why = "DEEP_BD_SEARCH_CAP=%s buys nothing" % os.environ.get(
-                "DEEP_BD_SEARCH_CAP", "")
+    elif not (os.environ.get("BRIGHTDATA_ZONE") or "").strip():
+        # not merely empty results: `bd_rescue.unlock_status` raises KeyError per name
+        why = "BRIGHTDATA_ZONE is unset or empty (every fetch would raise, not return)"
+    elif _int("DEEP_BD_SEARCH_CAP", "150") <= 0:
+        why = "DEEP_BD_SEARCH_CAP=%s buys nothing" % os.environ.get("DEEP_BD_SEARCH_CAP", "")
+    elif (os.environ.get("BD_RUN_CAP") or "").strip() and _int("BD_RUN_CAP", "0") <= 0:
+        why = "BD_RUN_CAP=%s buys nothing" % os.environ.get("BD_RUN_CAP", "")
     if not why:
         return
     print("::error::" + DISARMED % why, flush=True)

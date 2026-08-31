@@ -648,23 +648,34 @@ _BD_SPEND_LOG = os.path.join("cloud_state", "bd_spend.jsonl")
 
 
 def _recent_empty_share(st, recent):
-    """(attempts that bought nothing, attempts scored) over this rung's recent attempts.
+    """(bought nothing, scored) for the WORST single day in `recent`, and the window total.
 
     `no-search-results` is what a silent `[]` from the unlocker becomes, and `search-error…`
     is what a transport failure becomes; both are the SEARCH failing, never a verdict about
     the company. Counting them is the only way the stamp can tell a rung that answered from
-    one that could not: the attempt log has carried the verdict all along and this alarm
+    one that could not -- the attempt log has carried the verdict all along and this alarm
     read only the rung and the date.
+
+    PER DAY, not over the window, and that distinction is the whole alarm: the window is two
+    days wide (the stamp runs hours after the drain, often past midnight UTC), so a healthy
+    night of 100 followed by a fully disarmed night of 100 averages to 0.5 and clears a 90%
+    threshold comfortably. Judged a night at a time the disarmed one reads 1.0. Returns the
+    worst qualifying day so one bad night cannot hide behind a good one.
     """
-    empty = scored = 0
+    per_day = {}
     for n in st:
         for a in (st[n].get("tried") or []):
             if a.get("rung") != "search-llm" or a.get("date") not in recent:
                 continue
-            scored += 1
+            e, s = per_day.get(a.get("date"), (0, 0))
             v = (a.get("verdict") or "").strip().lower()
-            empty += v == "no-search-results" or v.startswith("search-error")
-    return empty, scored
+            per_day[a.get("date")] = (
+                e + (v == "no-search-results" or v.startswith("search-error")), s + 1)
+    if not per_day:
+        return 0, 0
+    # the worst day that scored enough to mean anything, else the busiest
+    ranked = sorted(per_day.values(), key=lambda t: (t[1] >= 10, t[0] / float(t[1] or 1)))
+    return ranked[-1]
 
 
 def _recent_qrs_spend(hours=48, path=_BD_SPEND_LOG):
@@ -692,10 +703,14 @@ def _recent_qrs_spend(hours=48, path=_BD_SPEND_LOG):
                 continue
             when = dt.datetime.strptime(r["at"], "%Y-%m-%dT%H:%M:%SZ").replace(
                 tzinfo=dt.timezone.utc)
+            row = (int(r["credits"]), r["at"], bool(r.get("ci")))
         except Exception:                                         # noqa: BLE001
-            continue                        # a torn or half-written line is not a signal
+            continue      # a torn line, or `credits: "abc"` -- neither is a signal, and
+            # NOTHING here may raise: this runs inside the stamp, and an exception escaping
+            # it takes the whole `queue:` mail line with it (`main` catches only
+            # QueueStateUnreadable). The int() and the subscripts belong INSIDE this try.
         if when >= cut:
-            out.append((int(r.get("credits") or 0), r["at"], bool(r.get("ci"))))
+            out.append(row)
     return sorted(out, key=lambda t: t[1], reverse=True)
 
 

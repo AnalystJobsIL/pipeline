@@ -22335,6 +22335,7 @@ def test_drain_stops_scoring_at_the_budget_and_records_nothing_for_the_rest(
     # the preflight refuses a disarmed rung before selecting; this test stubs `search_one`,
     # so it declares the rung armed (`tests/conftest.py` bans the transport regardless).
     monkeypatch.setenv("BRIGHTDATA_API_KEY", "test-key-not-a-real-one")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "test-zone")
     monkeypatch.setenv("DEEP_BD_SEARCH_CAP", "5")
     clock = iter([0, 0, 10, 20, 30, 40, 70, 100, 130, 200, 300, 400, 500, 600, 700])
     monkeypatch.setattr(QRS.time, "monotonic", lambda: next(clock))
@@ -22494,6 +22495,7 @@ def test_the_drain_makes_its_own_output_directory(tmp_path, monkeypatch):
     # name, so a test that stubs the search must say the rung is armed. Nothing can be
     # bought: `tests/conftest.py` bans the transport itself.
     monkeypatch.setenv("BRIGHTDATA_API_KEY", "test-key-not-a-real-one")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "test-zone")
     monkeypatch.setenv("DEEP_BD_SEARCH_CAP", "5")
     (tmp_path / "research_companies.json").write_text("[]", encoding="utf-8")
     monkeypatch.setattr(QRS, "targets", lambda *a, **k: [])
@@ -24900,15 +24902,18 @@ def test_a_still_unreachable_night_does_not_retire_the_row_from_validate_empty()
 
     n1 = RU._row_for(row[0], row[3], "unreachable", None, {}, note=row[5])[5]
     assert in_validate_empty_pool(row[:5] + [n1]), "one unreachable night retired the row"
-    assert "still unreachable" in n1, "the tool's own selector is gone"
+    assert RU._UNREACHABLE.search(n1), "the tool's own (and bd_rescue's) selector is gone"
+    assert RU.in_retry_pool(row[:5] + [n1]), "the row left the pool that re-attempts it"
     # the fold states a PAST scan and dates it -- it must never read as tonight's
     assert "no open Israel roles 2026-08-31" in n1
 
     # ...and it must not accumulate: a second night re-extracts the SAME date0
-    n2 = RU._keep_selectors(n1, RU._fold_empty(n1, "2026-09-02"))
+    n2 = RU._keep_selectors(row[0], row[3], n1,
+                            RU._fold_empty(n1, "2026-09-02")
+                            + ["retry 2026-09-02: still unreachable"])
     assert in_validate_empty_pool(row[:5] + [n2])
     assert n2.count("no open Israel roles") == 1 and "2026-08-31" in n2
-    assert "2026-09-02: still unreachable" in n2
+    assert "retry 2026-09-02:" in n2 and RU._UNREACHABLE.search(n2)
 
 
 def test_the_fold_is_skipped_when_writing_it_would_cost_the_pool_it_protects():
@@ -24921,6 +24926,7 @@ def test_the_fold_is_skipped_when_writing_it_would_cost_the_pool_it_protects():
     carrying the phrase in their own retry segment, `Syte` (208 chars, every segment
     protected) is the one the fold does not fit. Writing the SHORT unfolded segment instead
     is not a fallback -- it deletes the phrase's only carrier just the same."""
+    import datetime as _dtm
     import retry_unreachable as RU
     from validate_empty import in_validate_empty_pool
 
@@ -24933,12 +24939,18 @@ def test_the_fold_is_skipped_when_writing_it_would_cost_the_pool_it_protects():
 
     out = RU._row_for(saturated[0], saturated[3], "unreachable", None, {},
                       note=saturated[5])[5]
-    assert out == saturated[5], "the guard let a saturated row lose its selector"
-    assert in_validate_empty_pool(saturated[:5] + [out])
-    # and the guard is not a blanket no-op: an unsaturated row still gets tonight's date
+    # Whatever it wrote (or declined to write), the row keeps BOTH pools...
+    assert in_validate_empty_pool(saturated[:5] + [out]), "left the empties pool"
+    assert RU.in_retry_pool(saturated[:5] + [out]), "left this tool's own pool"
+    # ...and, the point of the guard, can still be RETIRED tomorrow. `notes.append` refuses
+    # to evict a protected segment, so a cell that fills with them stops accepting the one
+    # verdict that ends a row's life -- and the fold is protected where the plain segment
+    # was not. This row could not take a terminal verdict before the night either.
+    assert RU._can_still_be_retired(out), "a saturated row became impossible to park"
+    # and the guard is not a blanket no-op: a roomy row still gets tonight's date
     roomy = saturated[:5] + ["retry 2026-08-31: scanned; no open Israel roles now"]
-    assert "still unreachable" in RU._row_for(
-        roomy[0], roomy[3], "unreachable", None, {}, note=roomy[5])[5]
+    got = RU._row_for(roomy[0], roomy[3], "unreachable", None, {}, note=roomy[5])[5]
+    assert RU._UNREACHABLE.search(got) and _dtm.date.today().isoformat() in got
 
 
 def _qs(names, verdict, date, rung="search-llm"):
@@ -25004,47 +25016,79 @@ def test_the_two_ways_a_drain_records_nothing_name_themselves_differently():
     assert QP._recent_qrs_spend(path=_os.path.join(d, "nope.jsonl")) == []
 
 
-def test_the_drain_refuses_to_run_when_its_paid_rung_cannot_answer():
-    """Better to record NOTHING than 112 confident refusals nothing measured.
+def test_one_disarmed_night_cannot_hide_behind_a_healthy_one():
+    """The window is two days wide; the judgement must not be.
 
-    A cap of 0 is indistinguishable downstream from a missing key -- `google_via_unlocker`
-    short-circuits on `_BD["used"] >= cap` before it ever looks at the key -- so the
-    preflight reads the cap the same way `deep_validate` does."""
+    `_drain_liveness` looks back two days because the stamp runs hours after the drain and
+    often past midnight UTC. Averaged over that window, a healthy night of 100 followed by a
+    fully disarmed night of 100 is a 50% empty share — under any threshold worth having, so
+    the alarm stays silent through the exact failure it was written for. Judged a night at a
+    time the disarmed one reads 100%."""
+    import datetime as _dtm
+    import queue_pipeline as QP
+    today = _dtm.date.today().isoformat()
+    yday = (_dtm.date.today() - _dtm.timedelta(days=1)).isoformat()
+
+    def state(*spec):
+        out, i = {}, 0
+        for date, verdict, n in spec:
+            for _ in range(n):
+                out["n%d" % i] = {"tried": [{"rung": "search-llm", "date": date,
+                                             "verdict": verdict}]}
+                i += 1
+        return out
+
+    recent = {today, yday}
+    empty, scored = QP._recent_empty_share(
+        state((yday, "documented", 100), (today, "no-search-results", 100)), recent)
+    assert (empty, scored) == (100, 100), "the disarmed night was averaged away"
+    assert empty >= 0.9 * scored and scored >= 10, "this must trip the alarm"
+    # a healthy fortnight must stay silent — an alarm that cries wolf is one people skip
+    empty, scored = QP._recent_empty_share(
+        state((yday, "documented", 100), (today, "found", 100)), recent)
+    assert empty == 0 and scored == 100
+    # and a day too small to mean anything must not trip it on its own
+    empty, scored = QP._recent_empty_share(state((today, "no-search-results", 4)), recent)
+    assert scored < 10
+
+
+def test_the_preflight_knows_all_four_ways_the_paid_rung_is_dead():
+    """Two of these were missed the first time, and both produce the poisoning verbatim.
+
+    `bd_rescue.unlock_status` reads `os.environ["BRIGHTDATA_ZONE"]` OUTSIDE its own `try`, so
+    a missing zone raises per name — ~112 attempts recorded `search-error`, no credit bought.
+    `BD_RUN_CAP=0` short-circuits the same function before the key is even read. Both look
+    exactly like the disarmed key this preflight exists to refuse."""
     import os as _os
-    import queue_resolve_search as QRS
     import pytest as _pytest
+    import queue_resolve_search as QRS
 
-    def _refuses(**env):
-        keep = {k: _os.environ.get(k) for k in ("BRIGHTDATA_API_KEY", "DEEP_BD_SEARCH_CAP")}
+    keys = ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE", "DEEP_BD_SEARCH_CAP", "BD_RUN_CAP")
+
+    def run(**env):
+        keep = {k: _os.environ.get(k) for k in keys}
         try:
-            for k, v in env.items():
+            for k in keys:
+                v = env.get(k)
                 _os.environ.pop(k, None) if v is None else _os.environ.__setitem__(k, v)
-            with _pytest.raises(SystemExit) as e:
+            try:
                 QRS._refuse_to_run_disarmed()
-            return e.value.code
+                return "ran"
+            except SystemExit as e:
+                return e.code
         finally:
             for k, v in keep.items():
                 _os.environ.pop(k, None) if v is None else _os.environ.__setitem__(k, v)
 
-    assert _refuses(BRIGHTDATA_API_KEY=None, DEEP_BD_SEARCH_CAP="500") == 2
-    assert _refuses(BRIGHTDATA_API_KEY="  ", DEEP_BD_SEARCH_CAP="500") == 2
-    assert _refuses(BRIGHTDATA_API_KEY="k", DEEP_BD_SEARCH_CAP="0") == 2
-    # armed: it must NOT refuse (this guard's whole risk is refusing a good night)
-    keep = {k: _os.environ.get(k) for k in ("BRIGHTDATA_API_KEY", "DEEP_BD_SEARCH_CAP")}
-    try:
-        _os.environ["BRIGHTDATA_API_KEY"] = "k"
-        _os.environ["DEEP_BD_SEARCH_CAP"] = "500"
-        QRS._refuse_to_run_disarmed()
-        _os.environ.pop("DEEP_BD_SEARCH_CAP")      # unset means deep_validate's own default
-        QRS._refuse_to_run_disarmed()
-    finally:
-        for k, v in keep.items():
-            _os.environ.pop(k, None) if v is None else _os.environ.__setitem__(k, v)
-# --------------------------------------------------------------------------- #
-# 2026-08-31 — the dataset's verdict backfill, and the seam defect the contract
-# drain's first unattended run exposed
-# (lane: classifier; ARCHITECTURE.md 7b, docs/decisions/2026-08-31-domain-scope.md)
-# --------------------------------------------------------------------------- #
+    armed = dict(BRIGHTDATA_API_KEY="k", BRIGHTDATA_ZONE="z", DEEP_BD_SEARCH_CAP="500")
+    assert run(**armed) == "ran", "a healthy night must not be refused"
+    assert run(**dict(armed, BD_RUN_CAP="250")) == "ran"
+    assert run(**dict(armed, BRIGHTDATA_API_KEY=None)) == 2
+    assert run(**dict(armed, BRIGHTDATA_ZONE=None)) == 2      # KeyError per name, not []
+    assert run(**dict(armed, BRIGHTDATA_ZONE="  ")) == 2
+    assert run(**dict(armed, DEEP_BD_SEARCH_CAP="0")) == 2
+    assert run(**dict(armed, BD_RUN_CAP="0")) == 2            # buys nothing, silently
+
 def test_the_domain_rule_reaches_the_model_and_moves_the_contract():
     """The operator's 2026-08-31 ruling: the DOMAIN never decides — most data analysts are
     domain specific — and only FP&A, SOC and market intelligence stay named exclusions. It
@@ -25354,3 +25398,60 @@ def test_the_backfill_queue_is_only_what_the_dataset_publishes(tmp_path):
     assert ids[0] in [r for r, _ in class_backfill.candidates(recs)]
     recs[ids[0]]["class"] = {"decision": "accept", "path": "llm"}
     assert ids[0] not in [r for r, _ in class_backfill.candidates(recs)]
+
+
+
+def test_the_spend_reader_cannot_take_the_mail_line_down_with_it():
+    """It runs inside the stamp, and `main` catches only `QueueStateUnreadable`.
+
+    The first version parsed `credits` and `at` OUTSIDE its try, so one `"credits": "abc"`
+    line — a torn write, or another tool's schema drift — raised through `_drain_liveness`
+    and `stamp_queue` and deleted the whole `queue:` line from the mail."""
+    import json as _json
+    import os as _os
+    import tempfile
+    import queue_pipeline as QP
+    d = tempfile.mkdtemp()
+    p = _os.path.join(d, "bd_spend.jsonl")
+    with open(p, "w", encoding="utf-8") as f:
+        for bad in ('{"at":"2026-08-31T00:00:00Z","tool":"queue_resolve_search.py","credits":"abc"}',
+                    '{"at":"2026-08-31T00:00:00Z","tool":"queue_resolve_search.py","credits":[1]}',
+                    '{"tool":"queue_resolve_search.py","credits":1}',          # no `at`
+                    '{"at":"not-a-date","tool":"queue_resolve_search.py","credits":1}',
+                    '{"at":"2026-08-31T00:00:00Z","tool":"queue_resolve_search.py"}',
+                    'not json at all', ''):
+            f.write(bad + "\n")
+    assert QP._recent_qrs_spend(path=p) == []                  # no raise, no false signal
+
+
+def test_the_guard_would_rather_write_nothing_than_drop_the_row_out_of_validate_empty():
+    """The three checks in `_keep_selectors` are not interchangeable, and this one survived.
+
+    A mutation that removes the `validate_empty` check left the suite green: the other two
+    tests exercise rows where a fold fits, so the plain fallback is never reached and the
+    check never decides anything. The row that separates them is one where every FOLD is
+    refused for headroom (`_can_still_be_retired`) but the short plain segment fits — there,
+    and only there, does the pool check decide between "write the plain stamp and silently
+    retire the row from `validate_empty`" and "write nothing tonight". Writing nothing is
+    correct: the phrase is this tool's own, and dropping it is the `514` defect exactly."""
+    import retry_unreachable as RU
+    from validate_empty import in_validate_empty_pool
+
+    note = ("dark-triage 2026-08-30: url-dead (unreachable (dns/conn)xxxxxxxxxxxxxxxxx) | "
+            "probe-woken 2026-08-31: re-hunt pending | "
+            "retry 2026-08-20: scanned; no open Israel roles now")
+    row = ["Fixture", "scrape", "", "https://fixture.example/careers", "false", note]
+    assert in_validate_empty_pool(row) and RU.in_retry_pool(row), "fixture drifted"
+
+    segs = RU._fold_empty(note, "2026-09-01") + ["retry 2026-09-01: still unreachable"]
+    # the shape that makes this row the discriminating one, asserted so it cannot drift:
+    # every fold is refused on headroom, and the plain segment fits but costs the pool.
+    assert not any(RU._can_still_be_retired(RU._note(note, s, disproved=False))
+                   for s in segs[:-1]), "a fold now fits; the fixture no longer discriminates"
+    plain = RU._note(note, segs[-1], disproved=False)
+    assert RU._can_still_be_retired(plain)
+    assert not in_validate_empty_pool(row[:5] + [plain]), "the plain segment kept the phrase"
+
+    out = RU._row_for(row[0], row[3], "unreachable", None, {}, note=note)[5]
+    assert out == note, "it wrote a stamp that cost the row its pool"
+    assert in_validate_empty_pool(row[:5] + [out])
