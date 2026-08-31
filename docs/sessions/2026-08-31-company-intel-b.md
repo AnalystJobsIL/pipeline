@@ -265,6 +265,28 @@ company if `registry` ever activated the parked Opera Group row under that bare 
 `522` now says the row must be retired or **renamed off the bare word**, never activated as
 `Oak`.
 
+### The one CI caught that neither wave did, and it could spend money
+
+`tests.yml` run `33439962130` on `ba6dbb3`: **`guard` FAILED**, one test —
+`test_the_digest_hook_asks_with_the_posting_every_board_company_has` — with `seen` empty.
+Green on this laptop five times, red on the runner, and the reason is the half that matters:
+the test called `enrich_for_run(use_llm=True)` with the BLURB loop live. On a machine with
+`claude` on PATH the blurb seam answers, research runs, the assertion passes — and a real
+sonnet call is spent summarising `Oak` on every local suite run. On the runner there is no
+CLI, so the seam raised `missing`, `rep["blurb_outage"]` latched, `_enrich` skipped research
+entirely, and nothing reached the spy.
+
+So the test read its ENVIRONMENT rather than the code, in both directions at once. Fixed by
+stubbing `_blurbs` and wiring `F.ask` to `pytest.fail("this test must never spend")`, which
+is the assertion that should have been there from the start: this test is about the research
+path, and it now proves nothing else is touched. The lane's other two `enrich_for_run` call
+sites were checked and are safe (`use_llm=False`, and the `env` fixture's fake CLI on PATH).
+
+**Declared, because it is spend:** roughly 5-8 unbudgeted sonnet blurb calls, one per local
+full-suite run, on top of the 11 research calls this session declared. `python -m pytest`
+can no longer buy Bright Data (`tests/conftest.py` bans that transport) but it can still
+reach `claude`, and this is what that costs when a test forgets to say so.
+
 ## 4. Clause 4 — what this cost and what it removed
 
 - **Deleted / unified:** `_row_anchor`, `_posting_anchor` and `_context_for`'s research use

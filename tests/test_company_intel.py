@@ -2807,13 +2807,23 @@ def test_a_record_about_a_different_company_is_held_and_the_echo_is_never_stored
 
 def test_the_digest_hook_asks_with_the_posting_every_board_company_has(tmp_path, monkeypatch):
     """Behavioural: the hook's own evidence must REACH the call. A board company always has
-    a live role -- this is the caller that must never conclude "cannot identify"."""
+    a live role -- this is the caller that must never conclude "cannot identify".
+
+    The BLURB loop is stubbed, and that is not tidiness. Its first version left it live with
+    `use_llm=True`, which made the test read the environment: on a laptop with the CLI on
+    PATH it spent real calls to summarise `Oak`, and on the runner there is no `claude`, so
+    the blurb seam raised `missing`, `rep["blurb_outage"]` latched, `_enrich` skipped
+    research altogether and `seen` was empty. Green here, red in CI, for the one reason
+    CLAUDE.md names -- and a test that can spend money is the worse half of that. Nothing
+    below reaches the seam: `F.ask` is wired to fail loudly if anything tries."""
     seen = {}
 
     def _spy(company, ev=None, **kw):
         seen[company] = F.evidence_context(company, **(ev or {}))
         return _rec(), ""
     monkeypatch.setattr(CI, "research_with_evidence", _spy)
+    monkeypatch.setattr(CI, "_blurbs", lambda *a, **k: ({}, []))
+    monkeypatch.setattr(F, "ask", lambda *a, **k: pytest.fail("this test must never spend"))
     jobs = [{"company": "Oak", "title": "Product Analyst", "location": "Tel Aviv",
              "url": "https://il.indeed.com/viewjob?jk=9784", "posted_date": TODAY,
              "description": "Oak is an identity security platform"},
@@ -2822,7 +2832,8 @@ def test_the_digest_hook_asks_with_the_posting_every_board_company_has(tmp_path,
     st = store.SeenStore(str(tmp_path / "t.db"))
     monkeypatch.setattr(F, "SHARED_EXPORT", str(tmp_path / "export.json"))
     monkeypatch.setattr(F, "SHARED_FAILURES", str(tmp_path / "failed.json"))
-    CI.enrich_for_run(st, board_jobs=jobs, run_date=TODAY, use_llm=True, scoped=True)
+    rep = CI.enrich_for_run(st, board_jobs=jobs, run_date=TODAY, use_llm=True, scoped=True)[2]
+    assert not rep["blurb_outage"] and not rep["error"], rep
     ctx = seen.get("Oak", "")
     assert "il.indeed.com/viewjob?jk=9784" in ctx, "the hook asked the bare name"
     assert "Product Analyst" in ctx and "Data Engineer" in ctx
