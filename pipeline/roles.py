@@ -2369,10 +2369,14 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
         blocker = _blocker(rec, dq)
         if blocker:
             counts["blocked:" + blocker] += 1
-            if BLOCKED_POLICY == "exclude":
-                # the audit's ruling, if it comes: the row leaves WITH its reason counted
-                # in the meta (`description_text.blocked`), never silently — and every
-                # per-row identity stays whole (the row was counted above; uncount it)
+            if BLOCKED_POLICY == "exclude" and not archive:
+                # the audit's ruling, if it comes: the IN-WINDOW row leaves WITH its
+                # reason counted in the meta (`description_text.blocked`), never silently
+                # — and every per-row identity stays whole (the row was counted above;
+                # uncount it). The ARCHIVE keeps it whatever the policy: retention is the
+                # product, and the main build counts an archived row before ever judging
+                # its blocker, so excluding there would silently diverge
+                # `meta.archive.rows` from `reconciliation.archived`.
                 counts["blocked_excluded"] += 1
                 counts["rows"] -= 1
                 counts["text:" + (dq or "unmeasured")] -= 1

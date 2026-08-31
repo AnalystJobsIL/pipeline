@@ -26509,5 +26509,13 @@ def test_the_meta_counts_blocked_rows_and_the_exclude_policy_keeps_the_identitie
         assert meta2["reconciliation"]["holds"], meta2["reconciliation"]
         assert "blocked_excluded" in meta2["reconciliation"]["identity"]
         assert meta2["description_text"]["quality"]["holds"]
+        # the ARCHIVE keeps a blocked row whatever the policy: the main build counts an
+        # archived row before ever judging its blocker, so excluding there would diverge
+        # meta.archive.rows from reconciliation.archived — and retention is the product
+        recs[rid]["last_seen"] = "2026-01-05"
+        arch, _ac = roles.build_rows(recs, run_date="2026-08-30", archive=True)
+        assert rid in {r["role_id"] for r in arch}, "the archive must keep blocked history"
+        assert next(r for r in arch if r["role_id"] == rid)["description_blocker"] == "gone"
+        recs[rid]["last_seen"] = "2026-08-29"
     finally:
         roles.BLOCKED_POLICY = old
