@@ -366,7 +366,12 @@ def _sha1(text):
 # --------------------------------------------------------------------------- #
 # identity
 # --------------------------------------------------------------------------- #
-_PLACE_WORDS = {"israel", "il", "remote", "hybrid", "office", "site", "on"}
+_PLACE_WORDS = {"israel", "il", "remote", "hybrid", "office", "site", "on",
+                # schedule furniture a job card glues onto a title exactly the way it
+                # glues a place ("Data Analyst Raanana Full-time", Modellama's real
+                # twin): never role semantics — the prefix rule still refuses
+                # "Part Time Analyst" vs "Analyst" and ", Growth" stays a second role
+                "full", "part", "time"}
 
 
 def _titles_agree(a, b):
@@ -510,19 +515,32 @@ def same_role_twin(a, b, weak_ids=frozenset()):
     (`_is_id_shaped` admits `0`, so `_strong_ids` alone cannot demote it). One shared id
     with neither a key nor an agreeing title (Guardio developer/engineer, Percepto) stays
     two records: the cost is a duplicate archive row, the alternative is folding two real
-    openings."""
+    openings.
+
+    Wave A rebuilt this predicate before it shipped, with the population that broke the
+    first draft: a bare `identical posting key` arm folded 7 genuinely different pairs in
+    the live scrape cache (the href ladder binds several cards to one url — 85
+    `(company, url)` pairs carry 2+ titles; `Legit Security`'s `Senior Software Engineer`
+    folded into `Head of Engineering`), and a bare `>= 2 shared ids` arm counted two
+    url-fallback `scrape:` sids — sidebar junk a board-wide mis-scrape stamps on several
+    records at once (`Nift` holds five foreign LinkedIn urls on ONE record) — as two
+    independent witnesses. So: arm 1 demands two PLATFORM-ISSUED id spaces agreeing
+    (an ashby uuid AND a linkedin id — the retitle carries both across; a url-fallback
+    sid never counts toward the two), and everything else is exactly `same_posting`,
+    the cross-company gate with its four-guard retitle bypass intact — titles must agree
+    (or differ only by an added bare seniority word at an id-shaped address), which is
+    what refused every one of the 7 wrong pairs."""
     pa, pb = _seniority_pole(a), _seniority_pole(b)
     if pa and pb and pa != pb:
         return False
     shared = (_strong_ids(a) & _strong_ids(b)) - set(weak_ids)
     if not shared:
         return False
-    if len(shared) >= 2:
+    platform_shared = {s for s in shared
+                       if not s.partition(":")[2].lower().startswith("http")}
+    if len(platform_shared) >= 2:
         return True
-    ka, kb = _pk(a.get("url")), _pk(b.get("url"))
-    if ka and ka == kb:
-        return True
-    return _titles_agree(a, b)
+    return same_posting(a, b)
 
 
 _JUNK_TOKENS = {"com", "net", "org", "www", "inc", "ltd", "team", "group", "the", "and"}
@@ -581,22 +599,38 @@ def _alias_fold_target(name, url, registry_names, active_by_identity, origins):
 
     Hard refusals, in order: a REGISTRY name (active or parked) is never rewritten — a
     parked twin like `Meta Israel` keeps its historical string, and Bounce / Bounce AI are
-    both active rows besides having different identity keys; an identity two active rows
+    both active rows besides having different identity keys; an identity that is EMPTY
+    (a pure-Cyrillic or pure-punctuation name — `identity_key` deletes those scripts, so
+    `''` must never become a bucket junk names fold through); an identity two active rows
     answer to (Amazon/AWS/Amazon Israel — 11 such groups, deliberately separate scanner
-    rows) folds onto neither. Then ONE of three evidence gates must pass:
+    rows) folds onto neither. Then ONE of two evidence gates must pass:
       casefold — the strings differ only in case/width/whitespace (Helfy / helfy);
       declared — the name IS a `firmographics.ALIASES` key for this identity (a curated,
                  dated declaration: `nvidia ai` -> `nvidia`), tested via `_plain_norm`
-                 (see there for why never via the stem);
-      board    — the posting's own address passes `store._same_origin` against the
-                 canonical row's board (inert on aggregators by construction).
-    Bare suffix-strip equality with none of the three is REFUSED — that is the AppSec
-    class, and it stays two employers with a `title-twin` warning at render."""
+                 (see there for why never via the stem).
+    Bare suffix-strip equality with neither is REFUSED — that is the AppSec class, and it
+    stays two employers with a `title-twin` warning at render.
+
+    A third gate — `store._same_origin(url, origins[R])`, "the posting sits on the
+    canonical row's own board" — shipped in the first draft and was DELETED on wave A's
+    measurement before this ever ran: its tenant branch never looks at the host, so
+    `_same_origin(<Bounce AI's comeet posting>, 'Bounce')` is True (the token names a
+    path segment), and every suffix-strip variant — `Bounce Labs`, `Bounce Ltd`,
+    `Bounce Israel` — folded onto the OTHER employer, board-authoritative and free to
+    donate its url and text (the exact irreversible failure `_same_origin`'s own
+    docstring names). Against that, the gate bought ZERO live folds: 0 of 2,355 stored
+    urls produce one, while 7 pass `_same_origin` against a FOREIGN active row
+    (OTORIO->Armis, finbounce->Bounce, DealHub->DealHub.ai, ...). The `url` parameter
+    stays in the signature so a future gate has the seam, and so the sweep and intake
+    call sites do not churn."""
     name = str(name or "")
     if not name or name in registry_names:
         return None
+    _ = url                                   # see the docstring: the deleted third gate
     from .firmographics import ALIASES, identity_key
     ident = identity_key(name)
+    if not ident:
+        return None
     targets = active_by_identity.get(ident) or set()
     if len(targets) != 1:
         return None
@@ -605,8 +639,6 @@ def _alias_fold_target(name, url, registry_names, active_by_identity, origins):
         return (r, "casefold")
     if ALIASES.get(_plain_norm(name)) == ident:
         return (r, "declared")
-    if _store._same_origin(url, (origins or {}).get(r)):
-        return (r, "board")
     return None
 
 
@@ -737,7 +769,14 @@ def reconcile(row, rec):
     pd_new, pd_old = str(newer.get("posted_date") or ""), str(older.get("posted_date") or "")
     out["posted_date"] = pd_new if (_iso(pd_new) or not _iso(pd_old)) else pd_old
     ja = [x for x in (row.get("jd_attempted"), rec.get("jd_attempted")) if x]
-    out["jd_attempted"] = max(ja) if ja else ""
+    # by DATE first: a bare `max()` let `2026-08-30 transient` beat `2026-08-30 gone`
+    # lexically ('t' > 'g'), losing a terminal verdict to a same-day transient one —
+    # the blocker under-reports and `jdfill.due` keeps retrying a 404 (wave B, finding
+    # 5). On one date, gone outranks any other marker; a LATER date still wins outright.
+    # The " gone" literal is jdfill.GONE_MARK, pinned equal by a test — importing the
+    # enrich layer here would tax every tool that reads the ledger.
+    out["jd_attempted"] = (max(ja, key=lambda s: (str(s)[:10], str(s).endswith(" gone"), str(s)))
+                           if ja else "")
     # jd-text's per-row verdict: sqlite is where the driver writes, so its non-empty copy
     # is always the newest; the record's carry covers the snapshot window where the column
     # does not exist yet (2026-08-31 contract with jd-text)
@@ -950,6 +989,12 @@ class Ledger:
         desc = core.get("description") or ""
         changed = False
         for c in CORE:
+            if c == "jd_why" and not core[c] and c not in rec:
+                # writing an EMPTY carry onto a record that never had the key would
+                # `_touch` all 193 records the morning this ships, collapsing every
+                # `updated` stamp to one date and adding a `"jd_why": ""` line noise-wide
+                # (wave B, finding 7). The key lands when a verdict does.
+                continue
             if rec.get(c) != core[c]:
                 rec[c] = core[c]
                 changed = True
@@ -1092,6 +1137,24 @@ class Ledger:
     def _supersede(self, loser_key, winner_key):
         if loser_key == winner_key:           # "Acme Ltd" and "Acme" share one mkey
             return
+        # Follow the winner's OWN supersede chain to its terminal record first. Two seams
+        # apply fold verdicts (the at-rest sweep, then the run-time claim arm), and their
+        # winner rules can disagree — superseding A into an already-superseded B whose
+        # `superseded_by` is A closes a CYCLE: both halves off the board, the email and
+        # roles.csv, `ledger N = store N` still green, no alarm (wave B, finding 1). A
+        # chain that leads back to the loser means the fold already exists in the other
+        # direction: refuse, never reverse — reversing is the flip-flop `_winner`'s
+        # incumbency key exists to prevent.
+        seen = {loser_key}
+        while True:
+            w = self.records.get(winner_key)
+            if w is None or w.get("status") != "superseded":
+                break
+            nxt = w.get("superseded_by") or ""
+            if not nxt or nxt in seen:
+                return
+            seen.add(winner_key)
+            winner_key = nxt
         self.st.supersede(loser_key, winner_key)
         rec = self.records.get(loser_key)
         if rec is not None and rec.get("status") != "superseded":
@@ -1193,6 +1256,14 @@ class Ledger:
             sids |= {x for x in ((rows.get(_store.merge_key(j)) or {}).get("seen_ids") or []) if x}
             aug.append(dict(j, seen_ids=sorted(sids - {""})))
         for g in self._groups(aug, twins=True):
+            # a member whose stored row is already superseded means SOME arm has folded
+            # this pair — re-electing by today's source ranks can pick the other member
+            # and close a supersede CYCLE with the at-rest sweep (both halves off every
+            # product, `ledger N = store N` still green — wave B, finding 1). The
+            # existing verdict stands; `_supersede`'s chain guard is the second lock.
+            if any((rows.get(_store.merge_key(merged[alive[i]])) or {}).get("status")
+                   == "superseded" for i in g):
+                continue
             win = self._twin_winner(aug, g)
             if win is None:
                 continue                      # a tie is not a retitle we can call
@@ -1292,6 +1363,22 @@ class Ledger:
                 continue
             new_key = _store.merge_key({"company": r, "title": rec.get("title")})
             w = self.records.get(new_key)
+            if w is None or w.get("status") in ("superseded", "purged", "withdrawn"):
+                # no same-TITLE twin: the pair may still be an alias twin AND a retitle
+                # twin at once (`'NVIDIA AI'|'Senior BI Analyst'` beside
+                # `'NVIDIA'|'BI Analyst'` sharing two platform ids) — a shape neither arm
+                # could reach alone, split forever with a daily nag line (wave B,
+                # finding 2). Ask `same_role_twin` against the canonical company's own
+                # records; at rest a tie takes the later-seen record (the sweep's rule).
+                cands = [c for c in self.records.values()
+                         if c.get("company") == r
+                         and c.get("status") not in ("superseded", "purged", "withdrawn")
+                         and same_role_twin(rec, c)]
+                if cands:
+                    w = max(cands, key=lambda c: ((c.get("status") or "open") == "open",
+                                                  str(c.get("last_seen") or ""),
+                                                  c.get("role_id") or ""))
+                    new_key = w["role_id"]
             if w is not None and w.get("status") not in ("superseded", "purged", "withdrawn"):
                 # a twin exists under the canonical name: the resolve_claims loser
                 # treatment at rest — union ids and sent marks so `filter_new` keeps
@@ -2234,16 +2321,25 @@ def _blocker(rec, dq):
     why = str(rec.get("jd_why") or "")
     if why.startswith("structural:"):
         return why
-    from .jdfill import GONE_MARK, unfillable       # enrich layer: import only when weak
-    if str(rec.get("jd_attempted") or "").endswith(GONE_MARK):
-        return "gone"
-    url = str(rec.get("url") or "")
-    if url:
-        u = unfillable(url)
-        if u:
-            return f"unfillable:{u}"
-        if not _store._is_aggregator_url(url) and _pk(url) == "":
-            return "listing-page"
+    # Guarded like `_pk`, and for the same reason a level up: `jdfill.unfillable` calls
+    # `urlsplit`, which RAISES on a bracket-mangled netloc — and `[email protected]` is
+    # Cloudflare's email-obfuscation placeholder, a string scrapers routinely lift off a
+    # careers page. One such row must degrade to "no blocker", never take the whole
+    # day's dataset down through `export_dataset`'s catch (wave B, finding 3 — latent:
+    # 0 of 503 stored urls raise today).
+    try:
+        from .jdfill import GONE_MARK, unfillable   # enrich layer: import only when weak
+        if str(rec.get("jd_attempted") or "").endswith(GONE_MARK):
+            return "gone"
+        url = str(rec.get("url") or "")
+        if url:
+            u = unfillable(url)
+            if u:
+                return f"unfillable:{u}"
+            if not _store._is_aggregator_url(url) and _pk(url) == "":
+                return "listing-page"
+    except Exception:  # noqa: BLE001 — a mark is a nicety; the dataset is not
+        return ""
     return ""
 
 

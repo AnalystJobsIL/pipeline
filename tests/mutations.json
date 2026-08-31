@@ -2496,9 +2496,9 @@
   "file": "pipeline/roles.py",
   "symbol": "same_role_twin",
   "class": "M5-population-widening",
-  "find": "    if len(shared) >= 2:\n        return True",
-  "replace": "    if len(shared) >= 1:\n        return True",
-  "why": "within one company a single shared id is the SpearUAV/listing-id shape: Guardio's developer and engineer share one comeet id and are two openings. Arm 1 requires two independent id spaces to agree. Killed by test_one_shared_id_alone_never_folds_twins.",
+  "find": "    if len(platform_shared) >= 2:\n        return True",
+  "replace": "    if len(platform_shared) >= 1:\n        return True",
+  "why": "within one company a single shared id is the SpearUAV/listing-id shape: Guardio's developer and engineer share one comeet id and are two openings. Arm 1 requires two independent PLATFORM id spaces to agree. Killed by test_one_shared_id_alone_never_folds_twins. Re-anchored 2026-08-31 (b, post-wave): the arm now counts platform-issued ids only — wave A folded 7 real wrong pairs through the looser draft.",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -2549,6 +2549,46 @@
   "find": "            if wc and wc == sup[k].get(\"company\"):\n                continue",
   "replace": "            if False:\n                continue",
   "why": "the morning a board closes a posting while its stale aggregator card lingers, every pre-guard reclaim condition holds for the twin key - reclaiming re-splits the role, and the at-rest sweep then crowns the stale title (open beats closed). Reclaim is for cross-company parking only. Killed by test_a_twin_superseded_record_never_reclaims_itself.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "twin-fold-counts-a-url-fallback-id",
+  "file": "pipeline/roles.py",
+  "symbol": "same_role_twin",
+  "class": "M5-population-widening",
+  "find": "    platform_shared = {s for s in shared\n                       if not s.partition(\":\")[2].lower().startswith(\"http\")}",
+  "replace": "    platform_shared = set(shared)",
+  "why": "a url-fallback `scrape:` sid is sidebar junk a board-wide mis-scrape stamps on several records at once (Nift holds five foreign LinkedIn urls on ONE record); counting two of them as two independent witnesses folds two real openings with no title test. Wave A, finding 6. Killed by test_the_arms_that_folded_seven_real_wrong_pairs_are_gone.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "twin-fold-pk-arm-without-the-titles-guard",
+  "file": "pipeline/roles.py",
+  "symbol": "same_role_twin",
+  "class": "M5-population-widening",
+  "find": "    return same_posting(a, b)",
+  "replace": "    return same_posting(a, b) or _pk(a.get(\"url\")) == _pk(b.get(\"url\")) != \"\"",
+  "why": "the first draft's bare identical-pk arm: the scraper's href ladder binds several cards to one url (85 (company,url) pairs carry 2+ titles), and it folded Legit Security's Senior Software Engineer into Head of Engineering — 7 wrong pairs in the live cache. same_posting's four-guard bypass is the whole difference. Wave A, findings 1-2. Killed by test_the_arms_that_folded_seven_real_wrong_pairs_are_gone.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "supersede-follows-no-chain",
+  "file": "pipeline/roles.py",
+  "symbol": "_supersede",
+  "class": "M6-fallback-removal",
+  "find": "        seen = {loser_key}\n        while True:\n            w = self.records.get(winner_key)\n            if w is None or w.get(\"status\") != \"superseded\":\n                break\n            nxt = w.get(\"superseded_by\") or \"\"\n            if not nxt or nxt in seen:\n                return\n            seen.add(winner_key)\n            winner_key = nxt",
+  "replace": "        seen = {loser_key}",
+  "why": "the at-rest sweep and the run-time arm elect winners by different rules; superseding A into a B whose superseded_by is A closes a CYCLE — both halves off the board, the email and roles.csv, `ledger N = store N` still green, no alarm. Wave B, finding 1. Killed by test_the_two_twin_arms_can_never_close_a_supersede_cycle.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "blocker-unguarded-against-a-bracket-url",
+  "file": "pipeline/roles.py",
+  "symbol": "_blocker",
+  "class": "M6-fallback-removal",
+  "find": "    except Exception:  # noqa: BLE001 — a mark is a nicety; the dataset is not\n        return \"\"",
+  "replace": "    except ValueError:\n        raise",
+  "why": "jdfill.unfillable -> urlsplit RAISES on a bracket-mangled netloc, and `[email protected]` is Cloudflare's obfuscation placeholder scrapers lift off careers pages; one such row rode export_dataset's catch and kept yesterday's roles.csv for the day. Wave B, finding 3. Killed by test_one_bracket_url_cannot_take_the_days_dataset_down.",
   "must_be_killed_by_behavioural": true
  }
 ]

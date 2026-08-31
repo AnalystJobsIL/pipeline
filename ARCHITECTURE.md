@@ -5819,21 +5819,35 @@ records — HoneyBook's `product data analyst` (kept alive by a stale LinkedIn c
 the board's `senior product analyst`, one sent kill-switch across two rows, one of them
 never emailable, and a duplicate board card besides. `merge_duplicates` cannot see the
 pair (two keys) and the cross-company guard refuses same-company pairs by design, so
-`roles.same_role_twin` is the sibling predicate with a deliberately HIGHER bar: a
-junior-pole title never folds with a senior-pole one whatever the evidence; then two
-shared strong seen_ids (two id spaces agreeing), or one shared id plus an identical
-non-empty posting key, or one shared id plus `_titles_agree` — and an id borne by three
-or more of one company's records is demoted to weak first (F5's `workday:0` above names
-four REAL postings; a single shared id with disagreeing titles, Guardio's
-developer/engineer, stays two records at the cost of a duplicate archive row). It runs in
-two arms: `_resolve_claims` folds a pair both fetched today, testing with the STORED ids
-folded in (today's cards alone share nothing) and keeping the best `_source_rank` — the
-native board carries the title the employer shows today; a TIE refuses the group whole —
-and `sweep_store` folds the pair whose stale half never returns (winner: open beats
-closed, then later `last_seen`, full tie refuses). Losers supersede with their seen_ids
-and `sent` mirror unioned into the winner, so `filter_new` keeps seeing every delivery
-and nothing is re-emailed. The mail says `retitle folds N (…)` (run arm) and
-`twin folds N` (sweep arm) on the `Roles:` line.
+`roles.same_role_twin` is the sibling predicate with a deliberately HIGHER bar — and the
+bar was REBUILT by an adversarial wave before it ever ran, with the population that broke
+the first draft: a bare identical-posting-key arm folded **7 genuinely different pairs**
+in the live scrape cache (the href ladder binds several cards to one url — 85
+`(company, url)` pairs carry 2+ titles; Legit Security's `Senior Software Engineer`
+folded into `Head of Engineering`), and a bare two-shared-ids arm counted two
+url-fallback `scrape:` sids — sidebar junk a mis-scrape stamps board-wide — as two
+witnesses. What survives: a junior-pole title never folds with a senior-pole one
+whatever the evidence; an id borne by three or more of one company's records is demoted
+to weak (F5's `workday:0` names four REAL postings); then EITHER two shared
+**platform-issued** id spaces agree (an ashby uuid AND a linkedin id — the retitle
+carries both across; url-fallback sids never count toward the two), OR plain
+`same_posting` holds — the cross-company gate with its four-guard retitle bypass intact,
+which is what refused every one of the 7 wrong pairs (a single shared id with
+disagreeing titles, Guardio's developer/engineer or Percepto's two analysts, stays two
+records at the cost of a duplicate archive row). It runs in two arms:
+`_resolve_claims` folds a pair both fetched today, testing with the STORED ids folded in
+(today's cards alone share nothing) and keeping the best per-run `_source_rank` — the
+native board carries the title the employer shows today; a TIE refuses the group whole,
+and a group holding an already-superseded member is SKIPPED (the standing verdict wins —
+re-electing by today's ranks once closed a supersede CYCLE with the sweep, both halves
+off every product with `ledger N = store N` still green; `_supersede` also follows the
+winner's chain and refuses one that leads back, as the second lock) — and `sweep_store`
+folds the pair whose stale half never returns (winner: open beats closed, then later
+`last_seen`, full tie refuses). A twin-superseded record also never RECLAIMS itself (the
+reclaim path is for cross-company parking; the twin's winner record IS the role). Losers
+supersede with their seen_ids and `sent` mirror unioned into the winner, so `filter_new`
+keeps seeing every delivery and nothing is re-emailed. The mail says
+`retitle folds N (…)` (run arm) and `twin folds N` (sweep arm) on the `Roles:` line.
 
 **Why there was no migration.** `upsert_matched` unions a record's old `seen_ids` with the new
 ones, and `run.py` upserts *before* `filter_new` reads the store, so a role keeps its old key
@@ -5999,17 +6013,23 @@ a LinkedIn showcase page, not an employer.
 `roles._alias_fold_target` decides, and the decision is evidence-driven, never a string
 rule. A non-registry name C folds onto active registry name R only when
 `identity_key(C) == identity_key(R)`, exactly ONE active name matches that identity, and
-one of three gates passes: **casefold** (the strings differ only in case/width/whitespace
-— `Helfy`/`helfy`); **declared** (the name is a `firmographics.ALIASES` key for that
+one of two gates passes: **casefold** (the strings differ only in case/width/whitespace
+— `Helfy`/`helfy`); or **declared** (the name is a `firmographics.ALIASES` key for that
 identity — a curated, dated declaration like `nvidia ai → nvidia`; tested via the
 plain-normalized name, never the post-strip stem, because `identity_key("NVIDIA Labs")`
-is also `nvidia` and a stem test would fold an undeclared name); or **board** (the
-posting's own address passes `store._same_origin` against R's board — inert on
-aggregators). Refused hard, each pinned: any REGISTRY name, active or parked (`Bounce`
+is also `nvidia` and a stem test would fold an undeclared name). A third gate — the
+posting's address passing `store._same_origin` against R's board — shipped in the first
+draft and was DELETED on an adversarial wave's measurement before it ever ran:
+`_same_origin`'s tenant branch never looks at the host, so Bounce AI's COMEET posting
+proved Bounce's ASHBY board and every suffix-strip variant (`Bounce Labs`, `Bounce Ltd`,
+`Bounce Israel`) folded onto the OTHER employer — against **0 live folds bought** over
+2,355 stored urls, while 7 of them pass `_same_origin` against a foreign active row.
+Refused hard, each pinned: any REGISTRY name, active or parked (`Bounce`
 and `Bounce AI` are both rows and different identities besides — the 489 lesson; a parked
-`Meta Israel` keeps its historical string); an identity two active rows answer to (the
-Amazon/AWS class — 11 such groups are deliberately separate scanner rows); and bare
-suffix-strip equality with no declaration and no board evidence (`AppSec Labs` /
+`Meta Israel` keeps its historical string); an EMPTY identity (a pure-Cyrillic or
+fullwidth name — never a bucket junk folds through); an identity two active rows answer
+to (the Amazon/AWS class — 11 such groups are deliberately separate scanner rows); and
+bare suffix-strip equality with no declaration (`AppSec Labs` /
 `AppSec`, two employers, BACKLOG 144 — that pair stays a render `title-twin` warning).
 
 It applies in two places, both before anything downstream can split: `run.py` folds the

@@ -82,3 +82,30 @@ HoneyBook and Fetcherr fold at run time, Modellama at the sweep, Guardio and Per
 stay two records as the accepted cost of never folding two real openings.
 
 lane: `roles`. Session record: `docs/sessions/2026-08-31-roles-b.md`.
+
+
+## Post-wave amendments (same evening, before the push)
+
+Two Opus waves attacked the committed draft (`f703726`); every reproduced finding was
+fixed and pinned before anything left the branch. The design above changed in three ways:
+
+1. **Gate (iii) — board corroboration — is DELETED**, not shipped: `_same_origin`'s
+   tenant branch never checks the host, so `_same_origin(<Bounce AI's comeet posting>,
+   'Bounce')` is True and every suffix-strip variant (`Bounce Labs`, `Bounce Ltd`,
+   `Bounce Israel`) folded onto the OTHER employer — board-authoritative and free to
+   donate its url and text. Measured against it: **0 live folds bought** (of 2,355
+   stored urls), 7 urls passing `_same_origin` against a foreign active row. The gate's
+   seam stays in the signature; an empty identity_key is also refused outright.
+2. **`same_role_twin`'s arms were rebuilt on the wave's population**: the bare
+   identical-pk arm folded 7 genuinely different live pairs (the scraper's href ladder
+   binds several cards to one url — 85 `(company,url)` pairs carry 2+ titles), and the
+   bare >=2-ids arm counted two url-fallback `scrape:` sids as two witnesses (the Nift
+   sidebar-junk shape). Now: two shared PLATFORM-ISSUED id spaces, or plain
+   `same_posting` (its four-guard bypass restored). `_PLACE_WORDS` gained the schedule
+   furniture (`full`/`part`/`time`) so the real Modellama twin still folds.
+3. **Cycle and reclaim locks**: the run-time arm skips a group holding an
+   already-superseded member and `_supersede` follows the winner's chain, refusing one
+   that leads back (the two arms' winner rules can disagree — the reproduced cycle took
+   both halves off every product with `ledger N = store N` green); a same-company
+   superseded record never reclaims itself; the compound alias+retitle twin folds at the
+   ledger via `same_role_twin` over the canonical company's records.

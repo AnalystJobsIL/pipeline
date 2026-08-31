@@ -26203,15 +26203,34 @@ def test_alias_fold_declaration_is_the_alias_key_not_the_stripped_stem():
         "an ALIASES key is not normal-form; roles._plain_norm can no longer match it"
 
 
-def test_alias_fold_board_corroboration_folds_a_scraped_alias_form():
-    """Gate (iii): a non-declared identity-equal name whose posting sits on the canonical
-    row's OWN board (`store._same_origin`, the merge layer's origin gate verbatim). Inert
-    on aggregators — the same name on a LinkedIn url folds nothing."""
-    org = {"Acme": "acmetoken"}
+def test_alias_fold_has_no_board_gate_because_same_origin_never_checks_the_host():
+    """The deleted third gate, pinned deleted (wave A, finding 3): `_same_origin`'s
+    tenant branch asks only whether the token names a path segment, so Bounce AI's
+    COMEET posting proved Bounce's ASHBY board, and every suffix-strip variant —
+    `Bounce Labs`, `Bounce Ltd`, `Bounce Israel` — folded onto the OTHER employer,
+    board-authoritative and free to donate its url and text. The gate bought 0 live
+    folds against 7 foreign-row passes; it is gone, and this asserts it stays gone."""
+    import csv
+    from pipeline import roles
+    from pipeline.firmographics import identity_key
+    regs = list(csv.DictReader(open("companies.csv", encoding="utf-8")))
+    rn = {r["company_name"] for r in regs}
+    abi, org = {}, {}
+    for r in regs:
+        org[r["company_name"]] = (r.get("token") or "").strip() or r.get("api_url") or ""
+        if (r.get("active") or "").strip().lower() == "true":
+            abi.setdefault(identity_key(r["company_name"]), set()).add(r["company_name"])
+    burl = "https://www.comeet.com/jobs/bounce/E9.00C/data-analyst/3E.E6D"
+    for n in ("Bounce Labs", "Bounce Ltd", "Bounce Israel", "Bounce Technologies"):
+        assert roles._alias_fold_target(n, burl, rn, abi, org) is None, n
+    # a synthetic same-board form refuses too: on-board evidence is not identity evidence
+    org2 = {"Acme": "acmetoken"}
     url = "https://www.comeet.com/jobs/acmetoken/12.005/data-analyst/9.AAA"
-    assert _fold("Acme Technologies", url, origins=org) == ("Acme", "board")
-    assert _fold("Acme Technologies", "https://il.linkedin.com/jobs/view/1",
-                 origins=org) is None
+    assert _fold("Acme Technologies", url, origins=org2) is None
+    # and an EMPTY identity is never a bucket (identity_key deletes Cyrillic/fullwidth)
+    rn3, abi3, org3 = _fold_env()
+    abi3[""] = {"Acme"}
+    assert roles._alias_fold_target("Данные", "", rn3, abi3, org3) is None
 
 
 def test_alias_sweep_supersedes_the_stored_twin_and_unions_its_ids(tmp_path):
@@ -26545,4 +26564,146 @@ def test_a_twin_superseded_record_never_reclaims_itself(tmp_path):
     row = next(r for r in st.get_matched_since("0000-01-01", include_superseded=True)
                if r["title"] == "Product Data Analyst")
     assert row["status"] == "superseded"
+    st.close()
+
+
+def test_the_arms_that_folded_seven_real_wrong_pairs_are_gone():
+    """Wave A ran the first draft over the live scrape cache and folded 7 genuinely
+    different pairs: a bare identical-pk arm (the href ladder binds several cards to one
+    url — Legit Security's `Senior Software Engineer` folded into `Head of Engineering`)
+    and a bare >=2-shared-ids arm counting two url-fallback `scrape:` sids (the Nift
+    sidebar-junk shape). Arm 1 now demands two PLATFORM-ISSUED id spaces; everything
+    else is `same_posting` with its four-guard bypass intact."""
+    from pipeline import roles
+    url = "https://www.comeet.com/jobs/legitsecurity.com/37.004/senior-software-engineer/C3.93C"
+    a = {"company": "L", "title": "Senior Software Engineer", "url": url,
+         "seen_ids": ["scrape:" + url]}
+    b = {"company": "L", "title": "Head of Engineering", "url": url,
+         "seen_ids": ["scrape:" + url]}
+    assert roles.same_role_twin(a, b) is False, "identical pk alone must not fold"
+    n1 = {"company": "N", "title": "Data Analyst", "url": "https://x.example/a1",
+          "seen_ids": ["scrape:https://il.linkedin.com/jobs/view/f-1",
+                       "scrape:https://il.linkedin.com/jobs/view/f-2"]}
+    n2 = {"company": "N", "title": "Office Manager", "url": "https://x.example/b2",
+          "seen_ids": ["scrape:https://il.linkedin.com/jobs/view/f-1",
+                       "scrape:https://il.linkedin.com/jobs/view/f-2"]}
+    assert roles.same_role_twin(n1, n2) is False, "two url-fallback sids are one witness"
+    t1 = {"company": "X", "title": "Head of Engineering",
+          "url": "https://careers.x.com/en/jobs/detail?ref=111",
+          "seen_ids": ["scrape:https://careers.x.com/en/jobs/detail?ref=111"]}
+    t2 = {"company": "X", "title": "Junior Support Rep",
+          "url": "https://careers.x.com/en/jobs/detail?ref=222",
+          "seen_ids": ["scrape:https://careers.x.com/en/jobs/detail?ref=111"]}
+    assert roles.same_role_twin(t1, t2) is False, "a tracking-param pk collapse never folds"
+    # ...and the schedule-furniture glue folds the REAL Modellama twin without any of them
+    m1 = {"company": "M", "title": "Data Analyst", "location": "Ra'anana, Center District, IL",
+          "url": "https://www.comeet.com/jobs/M/26.00E/data-analyst/E8.138",
+          "seen_ids": ["scrape:https://www.comeet.com/jobs/M/26.00E/data-analyst/E8.138"]}
+    m2 = {"company": "M", "title": "Data Analyst Raanana Full-time", "location": "Raanana",
+          "url": "https://www.comeet.com/jobs/M/26.00E/data-analyst/E8.138",
+          "seen_ids": ["scrape:https://www.comeet.com/jobs/M/26.00E/data-analyst/E8.138"]}
+    assert roles.same_role_twin(m1, m2) is True
+
+
+def test_the_two_twin_arms_can_never_close_a_supersede_cycle(tmp_path):
+    """Wave B, finding 1: the at-rest sweep and the run-time arm elect by different rules,
+    and superseding each half into the other left BOTH off the board, the email and
+    roles.csv with `ledger N = store N` still green. Two locks now: the run-time arm
+    skips a group holding an already-superseded member (the existing verdict stands),
+    and `_supersede` follows the winner's chain and refuses one that leads back."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    both = ["ashby:9d5a89da-0e05", "discovery-linkedin:linkedin:4456923326"]
+    a = _role("HoneyBook", "Product Data Analyst",
+              "https://il.linkedin.com/jobs/view/p-4456923326",
+              "linkedin:4456923326", src="discovery-linkedin")
+    b = _role("HoneyBook", "Senior Product Analyst",
+              "https://jobs.ashbyhq.com/honeybook/9d5a89da-0e05", "9d5a89da-0e05", src="ashby")
+    for j in (a, b):
+        j["seen_ids"] = both
+        st.upsert_matched(j, "2026-08-30")
+    st.conn.execute("update matched set last_seen='2026-08-29' where title like 'Senior%'")
+    st.conn.commit()                       # the at-rest winner is now the OTHER half
+    L = roles.Ledger(st, run_date="2026-08-31")
+    assert L.open_sync()["twin_folds"] == 1
+    kept, _lines = L.resolve_claims(store.merge_duplicates(
+        [dict(a, seen_ids=["discovery-linkedin:linkedin:4456923326"]),
+         dict(b, seen_ids=["ashby:9d5a89da-0e05"])]))
+    visible = [r["mkey"] for r in st.get_matched_since("0000-01-01")]
+    assert len(visible) == 1, "a fold left %d visible rows: %r" % (len(visible), visible)
+    sup = [r for r in L.records.values() if r.get("status") == "superseded"]
+    assert len(sup) == 1 and sup[0]["superseded_by"] == visible[0]
+    # the chain guard alone: superseding A into a B already superseded by A is refused
+    L._supersede(visible[0], sup[0]["role_id"])
+    assert L.records[visible[0]].get("status") != "superseded", "cycle refused"
+    st.close()
+
+
+def test_a_compound_alias_and_retitle_twin_folds_at_the_ledger(tmp_path):
+    """Wave B, finding 2: `NVIDIA AI`|`Senior BI Analyst` beside `NVIDIA`|`BI Analyst`
+    sharing two platform ids is an alias twin AND a retitle twin at once — the sweep
+    needs company equality the fold has not produced, and the fold looked only for a
+    same-title twin. The no-twin branch now asks `same_role_twin` against the canonical
+    company's own records."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    both = ["ashby:1a2b3c4d-9e", "discovery-linkedin:linkedin:555001"]
+    ai = _role("NVIDIA AI", "Senior BI Analyst", "https://il.linkedin.com/jobs/view/x-555001",
+               "linkedin:555001", src="discovery-linkedin")
+    nv = _role("NVIDIA", "BI Analyst", "https://jobs.ashbyhq.com/nvidia/1a2b3c4d-9e",
+               "1a2b3c4d-9e", src="ashby")
+    for j in (ai, nv):
+        j["seen_ids"] = both
+        st.upsert_matched(j, "2026-08-30")
+    L = roles.Ledger(st)
+    L.open_sync()
+    rn, abi, org = _fold_env()
+    lines = L.fold_aliases(lambda n, u: roles._alias_fold_target(n, u, rn, abi, org))
+    assert any("alias folds" in x for x in lines), lines
+    lose = L.records["nvidia ai|senior bi analyst"]
+    assert lose["status"] == "superseded" and lose["superseded_by"] == "nvidia|bi analyst"
+    assert set(both) <= set(L.records["nvidia|bi analyst"]["seen_ids"])
+    st.close()
+
+
+def test_one_bracket_url_cannot_take_the_days_dataset_down():
+    """Wave B, finding 3: `jdfill.unfillable` -> `urlsplit` RAISES on a bracket-mangled
+    netloc, and `[email protected]` is Cloudflare's obfuscation placeholder — a string
+    scrapers lift off careers pages. `_blocker` degrades to no mark, exactly as `_pk`
+    does a level down."""
+    from pipeline import roles
+    for u in ("https://[email protected]/jobs", "http://[::1/jobs", "https://[abc/jobs"):
+        assert roles._blocker({"url": u}, "snippet") == ""
+    rows, counts = roles.build_rows(
+        {"x|y": _rec("x|y", url="https://[email protected]/jobs", desc_len=20,
+                     description="tiny")}, run_date="2026-08-30")
+    assert len(rows) == 1 and rows[0]["description_blocker"] == ""
+
+
+def test_a_same_day_transient_never_beats_a_gone_verdict():
+    """Wave B, finding 5: bare max() ranked `2026-08-30 transient` over `2026-08-30 gone`
+    lexically, losing a terminal verdict and re-buying the 404. Date first, gone wins the
+    tie; a LATER date still wins outright. The ' gone' literal is jdfill.GONE_MARK."""
+    from pipeline import roles
+    from pipeline.jdfill import GONE_MARK
+    assert GONE_MARK == " gone", "reconcile's tie-break literal just drifted"
+    m = roles.reconcile({"jd_attempted": "2026-08-30 transient"},
+                        {"jd_attempted": "2026-08-30 gone"})
+    assert m["jd_attempted"] == "2026-08-30 gone"
+    m = roles.reconcile({"jd_attempted": "2026-08-31"},
+                        {"jd_attempted": "2026-08-30 gone"})
+    assert m["jd_attempted"] == "2026-08-31", "a newer attempt still supersedes"
+
+
+def test_an_empty_jd_why_carry_does_not_touch_every_record(tmp_path):
+    """Wave B, finding 7: an empty carry onto 193 records that never had the key would
+    collapse every `updated` stamp to one date and add `"jd_why": ""` noise-wide. The
+    key lands when a verdict does."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.upsert_matched(_role("A", "X", "https://a.example/jobs/1/x1", "1"), "2026-08-30")
+    L = roles.Ledger(st)
+    L.open_sync()
+    rec = next(iter(L.records.values()))
+    assert "jd_why" not in rec, rec
     st.close()
