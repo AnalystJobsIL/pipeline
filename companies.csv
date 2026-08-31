@@ -2101,3 +2101,10 @@ Hikvision,scrape,,https://www.hikvision.com/en/about-us/careers/,false,queue-hun
 Hilti Israel,scrape,,https://careers.hilti.group/en/jobs/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
 Hiriya Recycling Park,scrape,,https://www.hiriya.co.il/jobs,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
 Ideodigital,scrape,,https://apply.workable.com/ideo-digital-1/?lng=en,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+L.Raphael,scrape,http://www.l-raphael.com,http://www.l-raphael.com,false,scanned; no open Israel roles now
+Voodoo,ashby,voodoo,https://api.ashbyhq.com/posting-api/job-board/voodoo,true,auto-expand slug-probe; 103/1 IL
+MotoRad Ltd.,scrape,https://motorad.com,https://motorad.com,false,scanned; no open Israel roles now | own-site 2026-08-31: motorad.com linkback
+Massivit 3D Printing Technologies Ltd.,scrape,https://www.massivit3d.com/,https://www.massivit3d.com/,false,scanned; no open Israel roles now | own-site 2026-08-31: www.massivit3d.com linkback
+University of Notre Dame,smartrecruiters,universityofnotredame,https://api.smartrecruiters.com/v1/companies/universityofnotredame/postings,true,auto-expand slug-probe; 91/1 IL
+NeaMob Tech,scrape,https://www.neamob.com/,https://www.neamob.com/,false,scanned; no open Israel roles now | own-site 2026-08-31: www.neamob.com linkback
+GetsMine,scrape,https://getsmine.io,https://getsmine.io,false,scanned; no open Israel roles now | own-site 2026-08-31: getsmine.io linkback
