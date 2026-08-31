@@ -521,7 +521,7 @@ def test_a_name_with_no_ascii_cannot_vouch_for_every_page_on_earth():
     """`identity_ok` answered True for ANY url when the name had no ASCII to match on, and
     `board_vouches` vouched outright — so on 2026-08-30 the drain proposed TheMarker's
     labour-news section as an employer with `10/10 IL`, ten bylined articles counted as
-    jobs, and `apply_proposals` would have written it ACTIVE (`509`).
+    jobs, and `apply_proposals` would have written it ACTIVE (`510`).
 
     `is_foreign` cannot judge a name it has no ASCII form of: it answers False for every
     domain on earth, and the gate read that as "nothing objects"."""

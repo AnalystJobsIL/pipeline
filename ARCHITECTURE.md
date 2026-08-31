@@ -1502,7 +1502,7 @@ entirely in English (`מטריקס` → matrixdna.ai, 0 occurrences), so the gat
 `unverified` rather than stamping a claim it cannot support. Measured over the five active
 rows in this class: 1 activates on its own page, 4 defer (2 English/JS-rendered, 2 bot-walled)
 — **the residue of the class is unactivatable by default, and none of it is accused**.
-`docs/BACKLOG.md` 509; `510` is the same blindness in `queue_resolve_search._is_ours`, where
+`docs/BACKLOG.md` 510; `511` is the same blindness in `queue_resolve_search._is_ours`, where
 it cost 13 false refusals of 67 in one night.
 
 `test_every_activation_path_checks_company_identity` walks the AST of every root script for
