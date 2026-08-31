@@ -95,7 +95,8 @@ unchanged (Ashley 2,395, Questar 4,931) and activations over the stored corpus s
 morning after, a row refused for `not-a-job-url` was indistinguishable from one refused for
 `auth-walled`. A `structural:` value may only be written once **every** donor class has
 actually been enumerated — it is a statement about the world, not about a budget — and the
-`roles` lane reads it verbatim into the published dataset's `description_blocker` column
+`roles` lane will read it verbatim into the published dataset's `description_blocker` column
+(agreed 2026-08-31; that column does not exist yet, so nothing published reads it today)
 (contract agreed with that lane's session on 2026-08-31: `ok:`/`refused:` are never blockers,
 a row whose text passes `looks_like_jd` never carries one, and MARK-never-exclude stands per
 `2026-08-31-snippet-rows.md`).

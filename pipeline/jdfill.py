@@ -575,11 +575,14 @@ def wire_url(url):
     with its description the moment the path is encoded. Half of what this board publishes is
     Hebrew, and the caches carry such addresses today (KPMG, Isracard).
 
-    `%` is in the safe set, so an address that is ALREADY percent-encoded passes through
-    unchanged rather than being encoded twice — the common case, and the one a naive quote
-    breaks. Measured over the 3,815 distinct URLs in both caches: **3,812 are ASCII and 0 of
-    them change**, and the 3 that change are exactly the non-ASCII ones (KPMG ×1, Isracard ×2)
-    which no rung could fetch at all before. Idempotent on all 3,815.
+    `%` is in the safe set so a percent-escape already in the address is not encoded a second
+    time. Be honest about what that clause buys: a FULLY encoded url is all-ASCII and returns
+    at the guard above without ever reaching `quote`, so the safe set only decides a MIXED
+    address — raw non-ASCII beside an existing escape — and over the 3,934 distinct urls in
+    both caches plus the store there are **0** of those (wave C). It is defensive, not the
+    common case. What is measured: **3,812 of 3,815 cache urls are ASCII and 0 of them
+    change**, the 3 that change are exactly the non-ASCII ones (KPMG ×1, Isracard ×2) which no
+    rung could fetch at all before, and the function is idempotent on all of them.
 
     It normalises the HOST as well, which is why `_host_of` runs the same normalisation: the
     refusal gates (`unfillable`, `paid_only`) read a host, and if this function could turn

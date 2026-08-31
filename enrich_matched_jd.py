@@ -407,7 +407,7 @@ def _ensure_columns(conn):
 
     The `structural:` prefix is written only by `_donor_pass`, and only once every donor class
     has actually been enumerated — it is a statement about the world, not about a budget. The
-    `roles` lane reads it verbatim into `description_blocker` in the published dataset
+    `roles` lane WILL read it verbatim into `description_blocker` in the published dataset
     (agreed 2026-08-31 with that lane's session b; `ok:`/`refused:` are never blockers)."""
     cols = {r[1] for r in conn.execute("PRAGMA table_info(matched)")}
     for name, decl in (("jd_attempted", "TEXT"), ("jd_tries", "INTEGER"), ("jd_why", "TEXT")):

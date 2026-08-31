@@ -26093,3 +26093,35 @@ def test_the_donor_rung_is_reachable_by_every_monkeypatch_the_suite_already_uses
         assert not hasattr(E, name), (
             "%s is bound in enrich_matched_jd's namespace; call it as jdfill.%s so the "
             "suite's monkeypatches reach it" % (name, name))
+
+
+def test_the_listing_page_is_never_offered_as_a_posting_however_it_is_written():
+    """The self-link skip shipped with the `(host, path)` fix and WITHOUT a test, which is
+    `docs/BACKLOG.md` 480 in miniature — the hole was found, closed, and left unguarded
+    (wave C found both mutants silent). A listing page is exactly what `is_job_url` refuses,
+    so handing it back as "this role's own address" sends the row to the address it is
+    already stuck at. Kills: removing the skip, and reverting it to a full-URL compare.
+
+    (The `www.` variant is suppressed by `_page_links`' same-origin check, not by this rule,
+    so it is deliberately not the case under test.)"""
+    from pipeline.jdfill import role_addresses_on
+    page = "https://acme.co.il/jobs/data-analyst/"
+    for variant in (page, page + "?page=2", page + "#top", page.rstrip("/")):
+        assert role_addresses_on(_listing_page([variant]), page, "Data Analyst", "") == [], variant
+    # the same link seen from a DIFFERENT page is a posting, so the rule suppresses nothing else
+    assert role_addresses_on(_listing_page([page]), "https://acme.co.il/jobs/",
+                             "Data Analyst", "") == [page]
+
+
+def test_an_address_that_mixes_raw_hebrew_with_an_existing_escape_is_not_encoded_twice():
+    """`%` in `wire_url`'s safe set only ever decides a MIXED address: a fully encoded url is
+    all-ASCII and returns before `quote` is reached. There are 0 such urls in the caches
+    today, so this is the defensive case pinned deliberately rather than a live one — without
+    it, `%D7%90` becomes `%25D7%2590` and the address 404s. Kills: dropping `%` from the safe
+    set."""
+    from pipeline.jdfill import wire_url
+    mixed = "https://x.com/jobs/%D7%90-דיגיטל/"
+    out = wire_url(mixed)
+    assert "%25" not in out, out
+    assert out.startswith("https://x.com/jobs/%D7%90-"), out
+    assert wire_url(out) == out

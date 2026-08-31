@@ -4769,7 +4769,9 @@ Every outcome is recorded per row in **`matched.jd_why`** — `ok:<class>:<host>
 after, a row refused for `not-a-job-url` was indistinguishable from one refused for
 `auth-walled`. A `structural:` value may only be written once every donor class has actually
 been enumerated, and the `roles` lane reads it verbatim into the published dataset's
-`description_blocker` column (agreed with that lane 2026-08-31; `ok:`/`refused:` are never
+`description_blocker` column — **agreed with that lane on 2026-08-31 and not yet in the
+export**, so today the reason is durable in `matched` and nothing published reads it
+(`ok:`/`refused:` are never
 blockers, and a row whose text passes `looks_like_jd` never carries one).
 
 **`seen_ids` is not a list of this role's own addresses**, which is why every **cache** sibling

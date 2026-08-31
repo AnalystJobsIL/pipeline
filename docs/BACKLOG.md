@@ -8208,7 +8208,8 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      card**: `matched.jd_why` (added by `enrich_matched_jd._ensure_columns`, the `jd_tries`
      precedent) records `ok:<class>:<host>` / `refused:identity(N)` /
      `structural:<reason>(donors:N)` per row, so the reason a fill failed now outlives the run
-     and the `roles` export reads `structural:` verbatim into `description_blocker`. The
+     and the `roles` export will read `structural:` verbatim into `description_blocker` (agreed
+     2026-08-31; not yet built on that side). The
      `scraper` half — the same reason on a `scraped_cache.json` card, which needs
      `run_backfill`'s `save(item, text, stamp)` contract widened to carry `jd.reason` — is
      still open and still that lane's.
