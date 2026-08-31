@@ -50,3 +50,21 @@ markers do carry Hebrew), and **2** rows hold no text at all (Bylith open, Taboo
 The enum doc claims only "fails the test" — `looks_like_jd` can fail a genuinely terse real
 ad (its own docstring records a 394-char remainder judged correctly-False), so `snippet`
 must never be read as "not a posting".
+
+
+## Addendum, 2026-08-31 evening — the WHY beside the mark, and the policy made flippable
+
+`description_blocker` closes the loop this record opened: a snippet/none row now says WHY
+it is structurally hard to complete, or says nothing. Contract agreed live with `jd-text`
+(both sessions, via SendMessage): a recorded `matched.jd_why` verdict of `structural:*`
+(donors exhausted) ships VERBATIM and beats the derived reasons (`gone` from the
+GONE_MARK stamp; `unfillable:<why>`; `listing-page` for a non-aggregator canonical whose
+posting key is empty). The mark is gated on the text actually FAILING — a `gone` posting
+that gained a donor copy carries no blocker, because GONE_MARK judges the ADDRESS.
+
+The MARK-never-exclude decision above stands tonight, and is now ONE constant instead of
+a shape: `roles.BLOCKED_POLICY = "mark"`. The exclude branch is built, pinned, and keeps
+every meta identity whole (a removed row's reason stays counted;
+`reconciliation` gains `blocked_excluded`) — so the operator's row-by-row audit can flip
+the policy without touching the derivation, per the orchestrator's condition. The meta's
+`description_text.blocked` block names the live policy beside the counts.

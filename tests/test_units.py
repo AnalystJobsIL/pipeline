@@ -26128,3 +26128,386 @@ def test_an_address_that_mixes_raw_hebrew_with_an_existing_escape_is_not_encoded
     assert "%25" not in out, out
     assert out.startswith("https://x.com/jobs/%D7%90-"), out
     assert wire_url(out) == out
+# --- roles, 2026-08-31 (b): the alias fold, the twin collapse, the blocker column ---------
+# lane: roles — 533's class (one employer, two strings), the seen-id collision class
+# (one posting, two merge_keys), and the structural-blocker loop agreed with jd-text.
+def _fold_env(active=("NVIDIA", "AppSec", "Acme", "Bounce", "Bounce AI"),
+              parked=("Meta Israel",), origins=None):
+    """registry facts in the run.py shape: every row's exact name; active names by identity."""
+    from pipeline.firmographics import identity_key
+    rn = set(active) | set(parked)
+    abi = {}
+    for n in active:
+        abi.setdefault(identity_key(n), set()).add(n)
+    return rn, abi, (origins or {})
+
+
+def _fold(name, url="", **kw):
+    from pipeline import roles
+    rn, abi, org = _fold_env(**kw)
+    return roles._alias_fold_target(name, url, rn, abi, org)
+
+
+def test_alias_fold_rewrites_a_declared_showcase_name_onto_the_registry_row():
+    """`NVIDIA AI` is a LinkedIn showcase page, not an employer: run 33387229779 judged one
+    posting twice and emailed it twice under two names (533). The fold consumes the curated
+    `ALIASES` declaration and the original string rides `_claimed_by` for the audit."""
+    from pipeline import roles
+    assert _fold("NVIDIA AI") == ("NVIDIA", "declared")
+    rn, abi, org = _fold_env()
+    jobs = [{"company": "NVIDIA AI", "title": "Senior BI Analyst",
+             "url": "https://il.linkedin.com/jobs/view/x-4458885094"}]
+    out, folds = roles.fold_company_aliases(jobs, registry_names=rn,
+                                            active_by_identity=abi, origins=org)
+    assert out[0]["company"] == "NVIDIA" and out[0]["_claimed_by"] == ["NVIDIA AI"]
+    assert folds == {"NVIDIA<-NVIDIA AI": 1}
+
+
+def test_alias_fold_never_rewrites_a_registry_name():
+    """A registry name — active or parked — is never rewritten: Bounce and Bounce AI are
+    both rows (and different identities besides); a parked `Meta Israel` keeps its
+    historical string; and an identity two active rows answer to folds onto neither."""
+    from pipeline.firmographics import identity_key
+    assert _fold("Bounce") is None and _fold("Bounce AI") is None
+    assert _fold("Meta Israel") is None, "parked rows are still registry rows"
+    # ambiguity: two active rows on one identity (the Amazon/AWS class)
+    rn, abi, org = _fold_env(active=("Acme", "Acme Israel"))
+    from pipeline import roles
+    assert identity_key("Acme") == identity_key("Acme Israel")
+    assert roles._alias_fold_target("Acme Ltd", "", rn, abi, org) is None
+    # ...and a case-twin ambiguity refuses WHICHEVER member an arbitrary pick would take:
+    # a mutant that folds onto "any one of them" folds here on every iteration order
+    rn2, abi2, org2 = _fold_env(active=("Acme", "acme"))
+    assert roles._alias_fold_target("ACME", "", rn2, abi2, org2) is None
+
+
+def test_alias_fold_refuses_bare_suffix_strip_equality():
+    """`identity_key("AppSec Labs") == identity_key("AppSec")` because `labs` is a stripped
+    suffix — and those were two different employers (BACKLOG 144). Equality that arrives
+    only via the strip, with no declaration and no board evidence, must stay two names."""
+    from pipeline.firmographics import identity_key
+    assert identity_key("AppSec Labs") == identity_key("AppSec")
+    assert _fold("AppSec Labs", "https://il.linkedin.com/jobs/view/1") is None
+
+
+def test_alias_fold_declaration_is_the_alias_key_not_the_stripped_stem():
+    """The `in ALIASES.values()` leak, pinned closed: `identity_key("NVIDIA Labs")` is
+    `nvidia` (strip), which IS an alias VALUE — but `nvidia labs` is not an alias KEY, so
+    there is no declaration and no fold. And every alias key must stay a fixed point of
+    `_plain_norm`, or the declaration test silently stops matching that key (drift wire)."""
+    from pipeline import roles
+    from pipeline.firmographics import ALIASES, identity_key
+    assert identity_key("NVIDIA Labs") == "nvidia" and "nvidia" in set(ALIASES.values())
+    assert _fold("NVIDIA Labs") is None
+    assert all(roles._plain_norm(a) == a for a in ALIASES), \
+        "an ALIASES key is not normal-form; roles._plain_norm can no longer match it"
+
+
+def test_alias_fold_board_corroboration_folds_a_scraped_alias_form():
+    """Gate (iii): a non-declared identity-equal name whose posting sits on the canonical
+    row's OWN board (`store._same_origin`, the merge layer's origin gate verbatim). Inert
+    on aggregators — the same name on a LinkedIn url folds nothing."""
+    org = {"Acme": "acmetoken"}
+    url = "https://www.comeet.com/jobs/acmetoken/12.005/data-analyst/9.AAA"
+    assert _fold("Acme Technologies", url, origins=org) == ("Acme", "board")
+    assert _fold("Acme Technologies", "https://il.linkedin.com/jobs/view/1",
+                 origins=org) is None
+
+
+def test_alias_sweep_supersedes_the_stored_twin_and_unions_its_ids(tmp_path):
+    """The committed store's live case: `nvidia ai|senior business intelligence analyst`
+    beside `nvidia|…` — one employer, one title, two records, both emailed 2026-08-31.
+    The sweep supersedes the alias record into the canonical one, unions seen_ids and the
+    sent mirror, and `filter_new` still sees the delivery — nothing is ever re-emailed."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    nv = _role("NVIDIA", "Senior Business Intelligence Analyst",
+               "https://il.indeed.com/viewjob?jk=745", "indeed:745", src="discovery-indeed")
+    ai = _role("NVIDIA AI", "Senior Business Intelligence Analyst",
+               "https://il.linkedin.com/jobs/view/x-4458885094", "linkedin:4458885094",
+               src="discovery-linkedin")
+    for j in (nv, ai):
+        j["seen_ids"] = [store.seen_id(j)]
+        st.upsert_matched(j, "2026-08-30")
+    st.mark_sent(ai, "2026-08-30")            # the alias twin was the one delivered
+    L = roles.Ledger(st)
+    L.open_sync()
+    # the delivery lives in the `sent` TABLE; the record's mirror is record_run's job —
+    # stamp it by hand so the fold's mirror-union is exercised too
+    L.records["nvidia ai|senior business intelligence analyst"]["sent"] = {
+        "discovery-linkedin:linkedin:4458885094": "2026-08-30"}
+    rn, abi, org = _fold_env()
+    lines = L.fold_aliases(lambda n, u: roles._alias_fold_target(n, u, rn, abi, org))
+    assert any("alias folds" in x and "NVIDIA<-NVIDIA AI" in x for x in lines), lines
+    win = L.records["nvidia|senior business intelligence analyst"]
+    lose = L.records["nvidia ai|senior business intelligence analyst"]
+    assert lose["status"] == "superseded" and lose["superseded_by"] == win["role_id"]
+    assert "discovery-linkedin:linkedin:4458885094" in win["seen_ids"]
+    assert "NVIDIA AI" in (win.get("attribution") or {}).get("claimed_by", [])
+    assert "discovery-linkedin:linkedin:4458885094" in (win.get("sent") or {})
+    row = next(r for r in st.get_matched_since("0000-01-01") if r["company"] == "NVIDIA")
+    assert st.filter_new([row]) == [], "the delivered twin's id suppresses the winner too"
+    assert not L.frozen
+    st.close()
+
+
+def test_alias_sweep_casefold_rename_keeps_the_role_id(tmp_path):
+    """`Helfy` vs the registry's `helfy`: `_norm` lowercases, so the merge_key half is
+    already identical — the sweep repairs the FIELD and the role_id, episodes and text
+    join never move."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Helfy", "Marketing Analyst",
+              "https://www.comeet.com/jobs/helfy/11.001/m/1.AAA", "1.AAA", src="comeet")
+    st.upsert_matched(j, "2026-08-30")
+    L = roles.Ledger(st)
+    L.open_sync()
+    rn, abi, org = _fold_env(active=("helfy",))
+    L.fold_aliases(lambda n, u: roles._alias_fold_target(n, u, rn, abi, org))
+    assert set(L.records) == {"helfy|marketing analyst"}
+    rec = L.records["helfy|marketing analyst"]
+    assert rec["company"] == "helfy" and rec["status"] == "open"
+    assert st.conn.execute("select company from matched").fetchone() == ("helfy",)
+    st.close()
+
+
+def test_alias_sweep_leaves_a_foldable_record_with_no_twin(tmp_path):
+    """No twin under the canonical name: the record stays (a role_id rename is a
+    full-store migration — roles_text joins on it and the shrink guard reads a rename as
+    a drop), the mail says so, and future sightings arrive already folded."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("NVIDIA AI", "Analytics Lead", "https://il.linkedin.com/jobs/view/9",
+              "linkedin:9", src="discovery-linkedin")
+    st.upsert_matched(j, "2026-08-30")
+    L = roles.Ledger(st)
+    L.open_sync()
+    rn, abi, org = _fold_env()
+    lines = L.fold_aliases(lambda n, u: roles._alias_fold_target(n, u, rn, abi, org))
+    assert any("left 1 record" in x and "NVIDIA AI" in x for x in lines), lines
+    assert L.records["nvidia ai|analytics lead"]["status"] == "open"
+    assert L.records["nvidia ai|analytics lead"]["company"] == "NVIDIA AI"
+    st.close()
+
+
+def test_two_shared_strong_ids_fold_a_retitled_twin_and_keep_the_native_titled_job(tmp_path):
+    """The HoneyBook shape (today's `worst x2`): the employer retitled `Product Data
+    Analyst` to `Senior Product Analyst`; the stale title rides a LinkedIn card, the
+    current one the ashby board, and the store's id union put BOTH ids on BOTH records —
+    one sent kill-switch across two merge_keys, one of them never emailable. Today's
+    cards alone share nothing; the run-time arm tests with the STORED ids folded in,
+    keeps the native-sourced title, and unions everything into it."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    both = ["ashby:9d5a89da-0e05", "discovery-linkedin:linkedin:4456923326"]
+    for title, url in (("Product Data Analyst", "https://il.linkedin.com/jobs/view/p-4456923326"),
+                       ("Senior Product Analyst", "https://jobs.ashbyhq.com/honeybook/9d5a89da-0e05")):
+        r = _role("HoneyBook", title, url, "x", src="ashby")
+        r["seen_ids"] = both
+        st.upsert_matched(r, "2026-08-30")
+    st.conn.execute("update matched set seen_ids=?", ("+".join(both),))
+    st.conn.commit()
+    L = roles.Ledger(st)
+    L.open_sync()
+    assert all(r.get("status") != "superseded" for r in L.records.values()), \
+        "the at-rest sweep must NOT guess between two open twins with tied last_seen"
+    ashby_job = _role("HoneyBook", "Senior Product Analyst",
+                      "https://jobs.ashbyhq.com/honeybook/9d5a89da-0e05",
+                      "9d5a89da-0e05", src="ashby")
+    li_job = _role("HoneyBook", "Product Data Analyst",
+                   "https://il.linkedin.com/jobs/view/p-4456923326",
+                   "linkedin:4456923326", src="discovery-linkedin")
+    # the stale card FIRST, so a winner that ignores source rank (and falls back to list
+    # order) keeps the wrong title — the mutant this ordering exists to catch
+    merged = store.merge_duplicates([li_job, ashby_job])
+    assert len(merged) == 2, "different merge_keys: merge_duplicates cannot see the pair"
+    kept, lines = L.resolve_claims(merged)
+    assert [j["title"] for j in kept] == ["Senior Product Analyst"]
+    assert any("retitle folds 1" in x for x in lines), lines
+    w = kept[0]
+    assert set(both) <= set(w["seen_ids"])
+    assert L.records["honeybook|product data analyst"]["status"] == "superseded"
+    st.mark_sent(w, "2026-08-31")
+    assert st.filter_new([w]) == [], "every id burned: the fold cannot re-email anything"
+    st.close()
+
+
+def test_one_shared_id_alone_never_folds_twins():
+    """The Guardio/Percepto refusals: one shared id with disagreeing titles and different
+    posting keys is the SpearUAV listing-id shape, not a retitle. The cost of refusing is
+    a duplicate archive row; the cost of folding is two real openings collapsed."""
+    from pipeline import roles
+    a = {"company": "Guardio", "title": "Senior BI Developer", "seen_ids": ["comeet:0B.B60"],
+         "url": "https://www.comeet.com/jobs/guardio/22.002/senior-bi-developer/0B.B60"}
+    b = {"company": "Guardio", "title": "Senior BI Engineer", "seen_ids": ["comeet:0B.B60"],
+         "url": "https://www.comeet.com/jobs/guardio/22.002/senior-bi-engineer/1C.C71"}
+    assert roles.same_role_twin(a, b) is False
+
+
+def test_a_shared_id_with_identical_posting_key_folds_the_location_glued_twin_at_sweep(tmp_path):
+    """The Modellama shape: one comeet page, one shared scrape id, the second title with
+    the location glued on — its record closed on 08-25 while the clean title stayed open.
+    The at-rest sweep folds it into the OPEN record and counts `twin_folds`."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    url = "https://www.comeet.com/jobs/Modellama/26.00E/data-analyst/E8.138"
+    a = _role("Modellama", "Data Analyst", url, url, src="scrape")
+    b = _role("Modellama", "Data Analyst Raanana Full Time", url, url, src="scrape")
+    for j, seen in ((a, "2026-08-31"), (b, "2026-08-25")):
+        j["seen_ids"] = ["scrape:" + url]
+        j["location"] = "Raanana, Full Time"
+        st.upsert_matched(j, seen)
+    st.conn.execute(
+        "update matched set last_seen='2026-08-25' where title like '%Raanana%'")
+    st.conn.commit()
+    L = roles.Ledger(st)
+    rep = L.open_sync()
+    assert rep["twin_folds"] == 1
+    assert L.records["modellama|data analyst raanana full time"]["status"] == "superseded"
+    win = L.records["modellama|data analyst"]
+    assert win["status"] == "open" and "scrape:" + url in win["seen_ids"]
+    st.close()
+
+
+def test_an_id_borne_by_three_records_of_one_company_is_never_twin_evidence():
+    """F5's `workday:0` (BACKLOG 311): one junk id over four genuinely different postings
+    of one company. `_is_id_shaped` admits `0`, so the demotion is population-derived —
+    an id on >= 3 of a company's records identifies the BOARD, not a posting."""
+    from pipeline import roles
+    f5 = [{"company": "F5", "title": t, "url": "https://careers.f5.com/jobs/role-%d/x%d7" % (i, i),
+           "seen_ids": ["workday:0"]} for i, t in enumerate(["A One", "B Two", "C Three", "D Four"])]
+    assert roles.Ledger._groups(f5, twins=True) == []
+    # the discriminating population: two of the three records would fold on the
+    # location-glue titles arm if the board-wide id were allowed to count as evidence
+    th = [{"company": "Thales", "title": "Data Analyst", "location": "Tel Aviv",
+           "url": "https://careers.thales.com/jobs/a/x17", "seen_ids": ["workday:0"]},
+          {"company": "Thales", "title": "Data Analyst Tel Aviv", "location": "Tel Aviv",
+           "url": "https://careers.thales.com/jobs/b/y27", "seen_ids": ["workday:0"]},
+          {"company": "Thales", "title": "Platform Engineer", "location": "Haifa",
+           "url": "https://careers.thales.com/jobs/c/z37", "seen_ids": ["workday:0"]}]
+    assert roles.Ledger._groups(th, twins=True) == [], \
+        "an id on 3 records of one company is a board fingerprint, never twin evidence"
+
+
+def test_junior_and_senior_never_fold_whatever_the_shared_evidence():
+    from pipeline import roles
+    a = {"company": "X", "title": "Junior Data Analyst", "url": "",
+         "seen_ids": ["ashby:9d5a89da-1", "discovery-linkedin:linkedin:123456"]}
+    b = {"company": "X", "title": "Senior Data Analyst", "url": "",
+         "seen_ids": ["ashby:9d5a89da-1", "discovery-linkedin:linkedin:123456"]}
+    assert roles.same_role_twin(a, b) is False
+
+
+def test_twin_fold_tie_on_source_refuses(tmp_path):
+    """Two equally-sourced live titles is not a retitle we can call: a wrong winner
+    renames a role on the public dataset. The group is skipped whole — both stay."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    both = ["comeet:A5.D67", "discovery-linkedin:linkedin:4431037547"]
+    a = _role("Fetcherr", "Data Analyst",
+              "https://www.comeet.com/jobs/fetcherr/68.006/data-analyst/A5.D67",
+              "A5.D67", src="comeet")
+    b = _role("Fetcherr", "Data Analyst Tableau",
+              "https://www.comeet.com/jobs/fetcherr/68.006/data-analyst--tableau/A5.D67",
+              "A5.D67", src="comeet")
+    for j in (a, b):
+        j["seen_ids"] = both
+        st.upsert_matched(j, "2026-08-31")
+    L = roles.Ledger(st)
+    L.open_sync()
+    kept, _lines = L.resolve_claims(store.merge_duplicates([dict(a), dict(b)]))
+    assert sorted(j["title"] for j in kept) == ["Data Analyst", "Data Analyst Tableau"]
+    assert all(r.get("status") != "superseded" for r in L.records.values())
+    st.close()
+
+
+def test_a_recorded_structural_verdict_ships_verbatim_and_beats_the_derived_reason():
+    """The jd-text contract (2026-08-31): a `structural:*` value in `matched.jd_why` means
+    every donor class was enumerated and failed — it ships verbatim, over any derived
+    guess. `ok:*` / `refused:*` are never blockers; without a verdict the derived ladder
+    answers (gone-mark first)."""
+    from pipeline import roles
+    weak = {"jd_attempted": "2026-08-30 gone", "url": "https://www.bylith.com/careers",
+            "jd_why": "structural:not-a-job-url(donors:0)"}
+    assert roles._blocker(weak, "snippet") == "structural:not-a-job-url(donors:0)"
+    assert roles._blocker(dict(weak, jd_why="ok:indeed:745"), "snippet") == "gone"
+    assert roles._blocker(dict(weak, jd_why=""), "none") == "gone"
+
+
+def test_a_blocker_never_marks_a_row_whose_text_passes():
+    """jd-text's caveat, pinned: GONE_MARK stays a verdict about the ADDRESS — a gone row
+    that gained a donor copy (Mobileye), or a listing-canonical row whose text was filled
+    from the posting's own page (Bylith), carries NO blocker."""
+    from pipeline import roles
+    rec = {"jd_attempted": "2026-08-30 gone", "url": "https://www.bylith.com/careers",
+           "jd_why": "structural:gone(donors:linkedin-404)"}
+    assert roles._blocker(rec, "jd") == ""
+    assert roles._blocker(rec, "") == ""
+
+
+def test_the_listing_page_blocker_and_the_unfillable_host():
+    """Derived reasons: a non-aggregator canonical whose `_posting_key` is '' is a shared
+    listing (the Bylith class); a host family no rung reads is `unfillable:*`; an
+    AGGREGATOR url is never blocked — the paid rung reads those."""
+    from pipeline import roles
+    assert roles._blocker({"url": "https://www.bylith.com/careers"}, "none") == "listing-page"
+    assert roles._blocker({"url": "https://app.secrethunter.io/jobs/1"},
+                          "snippet") == "unfillable:js-shell"
+    assert roles._blocker({"url": "https://il.linkedin.com/jobs/view/1-234"}, "snippet") == ""
+
+
+def test_jd_why_rides_reconcile_and_a_missing_column_is_tolerated(tmp_path):
+    """The column lands via jd-text's `_ensure_columns` on the driver's NEXT run, so a
+    snapshot may lack it entirely — the read degrades to the contract columns; when the
+    column exists, sqlite's copy (the driver's latest write) beats the record's carry."""
+    from pipeline import roles, store
+    m = roles.reconcile({"last_seen": "2026-08-31", "jd_why": "ok:indeed:745"},
+                        {"last_seen": "2026-08-30", "jd_why": "structural:gone(x)"})
+    assert m["jd_why"] == "ok:indeed:745"
+    assert roles.reconcile({"last_seen": "2026-08-31"},
+                           {"jd_why": "structural:gone(x)"})["jd_why"] == "structural:gone(x)"
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    st.upsert_matched(_role("A", "X", "https://a.example/jobs/1/x1", "1"), "2026-08-30")
+    rows = st.get_matched_since("0000-01-01")
+    assert rows and "jd_why" not in rows[0], "no column: the contract shape, no raise"
+    st.conn.execute("ALTER TABLE matched ADD COLUMN jd_why TEXT")
+    st.conn.execute("UPDATE matched SET jd_why='structural:gone(donors:0)'")
+    st.conn.commit()
+    st.close()
+    st2 = store.SeenStore(str(tmp_path / "t.db"))
+    rows = st2.get_matched_since("0000-01-01")
+    assert rows[0]["jd_why"] == "structural:gone(donors:0)"
+    st2.close()
+
+
+def test_the_meta_counts_blocked_rows_and_the_exclude_policy_keeps_the_identities(tmp_path):
+    """The policy is a one-line switch ON TOP of the derivation (the orchestrator's
+    condition): `mark` keeps the row with its reason in the column; `exclude` removes it
+    with the reason still counted and every meta identity whole. Flipping the constant is
+    the audit's whole diff — the derivation never moves."""
+    from pipeline import roles
+    recs = _ledger(3)
+    rid = sorted(recs)[0]
+    recs[rid]["desc_len"] = 30
+    recs[rid]["description"] = "too short to be a JD"
+    recs[rid]["jd_attempted"] = "2026-08-28 gone"
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    got = {r["role_id"]: r["description_blocker"] for r in rows}
+    assert got[rid] == "gone" and all(v == "" for k, v in got.items() if k != rid)
+    assert counts["blocked:gone"] == 1 and not counts.get("blocked_excluded")
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
+    assert meta["description_text"]["blocked"] == {"policy": "mark", "gone": 1}
+    assert "description_blocker" in meta["description_text"]["columns_here"]
+    assert meta["reconciliation"]["holds"] and meta["description_text"]["quality"]["holds"]
+    old = roles.BLOCKED_POLICY
+    roles.BLOCKED_POLICY = "exclude"
+    try:
+        rows2, counts2 = roles.build_rows(recs, run_date="2026-08-30")
+        assert len(rows2) == 2 and rid not in {r["role_id"] for r in rows2}
+        assert counts2["blocked_excluded"] == 1 and counts2["blocked:gone"] == 1
+        meta2 = roles.build_meta(rows2, counts2, recs, run_date="2026-08-30")
+        assert meta2["reconciliation"]["holds"], meta2["reconciliation"]
+        assert "blocked_excluded" in meta2["reconciliation"]["identity"]
+        assert meta2["description_text"]["quality"]["holds"]
+    finally:
+        roles.BLOCKED_POLICY = old

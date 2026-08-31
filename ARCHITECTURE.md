@@ -5809,7 +5809,31 @@ At run time `Ledger.id_collisions` re-asks the same question of the run's own me
 format-independent, so it survives any future change to the key — and puts
 `roles seen-id collision (…)` on the bold `Stages:` line. Postings that share an *address* are
 not a collision: that is one posting fetched by two registry rows, which is what
-`resolve_claims` below is for.
+`resolve_claims` below is for. The alarm is run-scoped (it sees only ids both fetched
+today), so it can read smaller than the store's truth: on 2026-08-31 it said `2 id(s)`
+while 13 stored seen_ids named two-plus role_ids each.
+
+**The SAME-company half of that alarm is repaired since 2026-08-31, not only announced.**
+A retitle mints a new `merge_key`, and the id union then puts the same seen_ids on BOTH
+records — HoneyBook's `product data analyst` (kept alive by a stale LinkedIn card) beside
+the board's `senior product analyst`, one sent kill-switch across two rows, one of them
+never emailable, and a duplicate board card besides. `merge_duplicates` cannot see the
+pair (two keys) and the cross-company guard refuses same-company pairs by design, so
+`roles.same_role_twin` is the sibling predicate with a deliberately HIGHER bar: a
+junior-pole title never folds with a senior-pole one whatever the evidence; then two
+shared strong seen_ids (two id spaces agreeing), or one shared id plus an identical
+non-empty posting key, or one shared id plus `_titles_agree` — and an id borne by three
+or more of one company's records is demoted to weak first (F5's `workday:0` above names
+four REAL postings; a single shared id with disagreeing titles, Guardio's
+developer/engineer, stays two records at the cost of a duplicate archive row). It runs in
+two arms: `_resolve_claims` folds a pair both fetched today, testing with the STORED ids
+folded in (today's cards alone share nothing) and keeping the best `_source_rank` — the
+native board carries the title the employer shows today; a TIE refuses the group whole —
+and `sweep_store` folds the pair whose stale half never returns (winner: open beats
+closed, then later `last_seen`, full tie refuses). Losers supersede with their seen_ids
+and `sent` mirror unioned into the winner, so `filter_new` keeps seeing every delivery
+and nothing is re-emailed. The mail says `retitle folds N (…)` (run arm) and
+`twin folds N` (sweep arm) on the `Roles:` line.
 
 **Why there was no migration.** `upsert_matched` unions a record's old `seen_ids` with the new
 ones, and `run.py` upserts *before* `filter_new` reads the store, so a role keeps its old key
@@ -5962,6 +5986,49 @@ also why its board says 135 against the 61 the production run published on 08-24
 (Port<-Port.io, HP<-HP Indigo)`** — the HP pair was not known before the run found it.
 Unverified against a production run until the 2026-08-26 mail.
 
+### One employer under two name strings — the alias fold (closes BACKLOG 533)
+
+The guard above answers "one POSTING under two names". This one answers the split a level
+higher: one EMPLOYER under two name strings, where the postings share nothing —
+run 33387229779 judged `NVIDIA | Senior Business Intelligence Analyst` and
+`NVIDIA AI | …` thirteen seconds apart (two LLM calls, two records, two board cards, both
+emailed), and no board-based evidence can ever connect them: both postings sit on
+aggregators, where `_posting_key` and `_tenant` are `''` by construction. `NVIDIA AI` is
+a LinkedIn showcase page, not an employer.
+
+`roles._alias_fold_target` decides, and the decision is evidence-driven, never a string
+rule. A non-registry name C folds onto active registry name R only when
+`identity_key(C) == identity_key(R)`, exactly ONE active name matches that identity, and
+one of three gates passes: **casefold** (the strings differ only in case/width/whitespace
+— `Helfy`/`helfy`); **declared** (the name is a `firmographics.ALIASES` key for that
+identity — a curated, dated declaration like `nvidia ai → nvidia`; tested via the
+plain-normalized name, never the post-strip stem, because `identity_key("NVIDIA Labs")`
+is also `nvidia` and a stem test would fold an undeclared name); or **board** (the
+posting's own address passes `store._same_origin` against R's board — inert on
+aggregators). Refused hard, each pinned: any REGISTRY name, active or parked (`Bounce`
+and `Bounce AI` are both rows and different identities besides — the 489 lesson; a parked
+`Meta Israel` keeps its historical string); an identity two active rows answer to (the
+Amazon/AWS class — 11 such groups are deliberately separate scanner rows); and bare
+suffix-strip equality with no declaration and no board evidence (`AppSec Labs` /
+`AppSec`, two employers, BACKLOG 144 — that pair stays a render `title-twin` warning).
+
+It applies in two places, both before anything downstream can split: `run.py` folds the
+candidate list BEFORE `classify_grouped` (one group, one classifier call — the folded
+name rides `_claimed_by` into `attribution.claimed_by`; the cache pays at most one
+re-judge under the canonical key on a folded name's first sighting), and
+`Ledger.fold_aliases` applies the same gate to the records the store already holds: a
+casefold twin is a FIELD repair (`_norm` lowercases, so the role_id never moves), a twin
+under the canonical key is superseded with seen_ids and `sent` mirror unioned (nothing
+re-emailed), and a foldable record with NO twin is left in place and named on the mail —
+a role_id rename is a full-store migration (`roles_text.jsonl` joins on it; the shrink
+guard reads a rename as a drop), while future sightings arrive folded and `_alive` ages
+the relic out with its ids already in `sent`. Measured on the 2026-08-31 store: 3
+casefold repairs (Appcharge, GE HEALTHCARE, Helfy), 1 supersede (NVIDIA AI), 0 left. The
+mail says `alias folds: N superseded (…) · M renamed (…)`. `merge_key` itself never
+changed: a pure key function has nowhere to put an evidence gate, and identity_key
+equality alone merges the AppSec pair — the decision record is
+`docs/decisions/2026-08-31-roles-alias-fold.md`.
+
 ### Judged once per role per text (closes BACKLOG 124)
 
 Classification now happens after the fetch loop, in `roles.classify_grouped`: candidates
@@ -6088,7 +6155,9 @@ this run); the same words after `excluded` are running totals over the store.
 the run did not judge that were open before (a scoped run), plus a held cohort on a
 mass-close morning — so it can exceed `board` (measured: `open 64` against `board 61` on
 a scoped A/B); `ledger N = store N` is the reconciliation — a
-`!=` is an alarm; `rehydrated N` appears when sqlite had lost rows. On the FIRST run after
+`!=` is an alarm; `rehydrated N` appears when sqlite had lost rows; `alias folds N`,
+`retitle folds N` and `twin folds N` appear only when the identity fold or the twin
+collapse acted (their sections above). On the FIRST run after
 this lands `reposted` counts every historical bump at once (the record is new); from then
 on it is the day's. A run that finds NO ledger beside a populated store says
 `roles ledger missing — N role(s) absorbed from sqlite` on the `Stages:` line and
@@ -6109,8 +6178,8 @@ by `pipeline/roles.py` beside the ledger and committed by the digest's existing
 
 | file | what |
 |---|---|
-| `cloud_state/roles.csv` | one row per role, 56 columns, `last_seen` inside the window |
-| `cloud_state/roles_archive.csv` | the same 56 columns for every role the window has aged OUT — regenerated whole from the ledger each run, so nothing is ever evicted (header-only until the first eviction, ~2026-11-14) |
+| `cloud_state/roles.csv` | one row per role, 57 columns, `last_seen` inside the window |
+| `cloud_state/roles_archive.csv` | the same 57 columns for every role the window has aged OUT — regenerated whole from the ledger each run, so nothing is ever evicted (header-only until the first eviction, ~2026-11-14) |
 | `cloud_state/roles.csv.meta.json` | what the CSV cannot say about itself: window, exclusions, the `withdrawn` list, per-column null counts, every enum's values spelled out, and a reconciliation identity |
 | `cloud_state/roles_retractions.jsonl` | **hand-written**: the postings a human withdrew, with the reason (below) |
 | `cloud_state/funnel.csv` | one row per FULL run: postings → Israel → judged → matched → alive → board → emailed |
@@ -6284,7 +6353,22 @@ at export, never stamped on the record, so a rule change re-judges every row on 
 export. A weak text never takes a row out (the exclusion classes are verdicts about the
 ROLE; these roles are real market facts, and excluded rows would flap back in the day
 `jd-text` fills them); the meta's `description_text.quality` block carries the counts with
-their own identity, and the mail's dataset line says `weak text N` while any remain. `description_truncated` is `true` when a row sits exactly on the capture cap
+their own identity, and the mail's dataset line says `weak text N` while any remain.
+Beside it since 2026-08-31 (evening), `description_blocker` says WHY a weak text is
+structurally hard to complete, or is empty — derived only for `snippet`/`none` rows (a
+text that passes is never marked, whatever its address history: a `gone` posting can gain
+a donor copy). Precedence, per the contract agreed live with `jd-text`: a recorded
+`matched.jd_why` verdict of `structural:*` (donors exhausted) ships VERBATIM — the column
+travels sqlite → ledger via `reconcile`, read defensively because the column lands on the
+enrich driver's next run; else derived `gone` (the GONE_MARK stamp), `unfillable:<why>`
+(`jdfill.unfillable`), or `listing-page` (a non-aggregator canonical whose
+`_posting_key` is `''` — the Bylith class; aggregator urls are never blocked, the paid
+rung reads them). The meta's `description_text.blocked` counts by reason and names the
+POLICY: `roles.BLOCKED_POLICY` is `mark` (rows stay) and is the ONE constant the
+operator's row-by-row audit flips if it rules toward exclusion — the exclude branch is
+built and pinned, removes a row with its reason still counted, and every meta identity
+stays whole (`reconciliation` gains `blocked_excluded`). The mail's dataset line adds
+`blocked N` while any exist. `description_truncated` is `true` when a row sits exactly on the capture cap
 (`store.DESC_MAX`, 6,000 — the same number as `fetchers._DESC_MAX` and `jdfill.DESC_MAX`, all
 three pinned equal by a test): 7 of 143 rows today, one of them Amazon's, cut mid-sentence at
 "...If you have a". The true length is already gone before the store sees it, so it cannot be

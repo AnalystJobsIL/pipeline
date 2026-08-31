@@ -334,6 +334,20 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         if k not in _live_idents})
     _never_ours.update({_ident(n): roles.PURGE_REASON for n in _agg_named
                         if _ident(n) not in _live_idents})
+    # lane: roles (ARCHITECTURE 7c, the alias fold — BACKLOG 533). The fold's registry
+    # facts: EVERY row's exact name (a registry name, active or parked, is never
+    # rewritten — Bounce and Bounce AI are both rows; Meta Israel keeps its historical
+    # string), and the active names per identity (two active rows on one identity —
+    # Amazon/AWS — fold onto neither).
+    from .firmographics import identity_key as _ik
+    _registry_names = {r["company_name"] for r in _all_rows}
+    _active_by_ident = {}
+    for _r in _all_rows:
+        if (_r.get("active") or "").strip().lower() == "true":
+            _active_by_ident.setdefault(_ik(_r["company_name"]), set()).add(_r["company_name"])
+
+    def _fold_resolver(name, url):
+        return roles._alias_fold_target(name, url, _registry_names, _active_by_ident, _origins)
     if only:
         want = {o.strip().lower() for o in only}
         rows = [r for r in rows if r["company_name"].strip().lower() in want]
@@ -386,6 +400,11 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # role fetched from two rows is judged once, on its longest description; copies count
     # as `merged-copy` so `sum(paths) == israel_matched` still reconciles below
     _phase(f"classify {len(candidates)} Israel-matched postings")
+    # lane: roles (533): a provable alias name is canonicalized BEFORE `classify_grouped`
+    # groups by merge_key — one employer, one group, one classifier call, one record.
+    candidates, _fold_notes = roles.fold_company_aliases(
+        candidates, registry_names=_registry_names,
+        active_by_identity=_active_by_ident, origins=_origins)
     accepted = roles.classify_grouped(candidates, clf, jdfill, stats, paths)
     print("  " + jdfill.summary(), flush=True)
     # the enrich stage's verdict on itself (both backfill scripts stamp it) and the inline fill's
@@ -407,6 +426,11 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         stats["jobs_fetched"] += len(gjobs)
         gcands = [j for j in gjobs if israel.is_israel_job(j)]
         stats["israel_matched"] += len(gcands)
+        gcands, _gf = roles.fold_company_aliases(
+            gcands, registry_names=_registry_names,
+            active_by_identity=_active_by_ident, origins=_origins)
+        for _k, _n in _gf.items():
+            _fold_notes[_k] = _fold_notes.get(_k, 0) + _n
         accepted += roles.classify_grouped(gcands, clf, jdfill, stats, paths)
 
     # THE DATASET BACKFILL (lane: classifier, ARCHITECTURE §7b; hook applied 2026-08-31 with
@@ -484,6 +508,15 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
 
     _phase("role record")
     stats["accepted"] = len(accepted)
+    # lane: roles (533): the alias fold over what the STORE already holds — the NVIDIA AI
+    # record supersedes into NVIDIA's, a casefold twin's company field is repaired in
+    # place. Runs before the upserts so the folded state greets this run's writes.
+    if _fold_notes:
+        _line = ("alias folds at intake: "
+                 + ", ".join(f"{k} x{n}" for k, n in sorted(_fold_notes.items())))
+        print(f"::warning::roles {_line}", flush=True)
+    for _line in ledger.fold_aliases(_fold_resolver):
+        print(f"::warning::roles {_line}", flush=True)
     merged = store.merge_duplicates(accepted, _origins)
     # one posting fetched under two company names (two registry rows on one board) is ONE
     # role: kept under one name, the other named in the mail — never published twice

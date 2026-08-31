@@ -802,21 +802,35 @@ class SeenStore:
                     "sources", "seen_ids", "description", "first_seen", "last_seen",
                     "jd_attempted", "status", "superseded_by"]
 
+    def _matched_cols_live(self):
+        """MATCHED_COLS plus the optional columns another lane's driver adds in place.
+        `jd_why` is jd-text's (added by `enrich_matched_jd._ensure_columns` on its next
+        run, 2026-08-31 contract), so any snapshot between their commit and that run lacks
+        it — the read must tolerate both states, whichever commit landed first."""
+        if getattr(self, "_mcols", None) is None:
+            try:
+                have = {r[1] for r in self.conn.execute("PRAGMA table_info(matched)")}
+            except Exception:  # noqa: BLE001 — degrade to the contract columns
+                have = set()
+            self._mcols = self.MATCHED_COLS + [c for c in ("jd_why",) if c in have]
+        return self._mcols
+
     def get_matched_since(self, cutoff_iso, include_superseded=False):
         """Return matched roles with first_seen >= cutoff (ISO date), newest first.
 
         A `superseded` row is the same posting another company row also fetched (one job
         under two names); it stays in the store but is off the board and the archive unless
         asked for."""
+        cols = self._matched_cols_live()
         cur = self.conn.execute(
-            f"""SELECT {', '.join(self.MATCHED_COLS)} FROM matched
+            f"""SELECT {', '.join(cols)} FROM matched
                 WHERE first_seen >= ?
                 {'' if include_superseded else "AND COALESCE(status,'') != 'superseded'"}
                 ORDER BY first_seen DESC, posted_date DESC""",
             (cutoff_iso,))
         rows = []
         for r in cur.fetchall():
-            d = dict(zip(self.MATCHED_COLS, r))
+            d = dict(zip(cols, r))
             d["sources"] = (d["sources"] or "").split("+") if d["sources"] else []
             d["seen_ids"] = (d["seen_ids"] or "").split("+") if d["seen_ids"] else []
             rows.append(d)

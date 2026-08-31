@@ -92,7 +92,12 @@ _PLUMBING = {"jobs", "job", "careers", "career", "en", "en-us", "v1", "boards", 
              "openings", "opportunities", "vacancies", "external", "externaljobs", "jobdetail"}
 
 CORE = ["company", "title", "location", "url", "posted_date", "seniority", "sources",
-        "seen_ids", "first_seen", "last_seen", "jd_attempted", "status", "superseded_by"]
+        "seen_ids", "first_seen", "last_seen", "jd_attempted", "status", "superseded_by",
+        # jd-text's per-row fill verdict (`matched.jd_why`, 2026-08-31 contract: `ok:*` /
+        # `structural:*` / `refused:*`), carried VERBATIM onto the record. READ-only here:
+        # the enrich driver writes the column; `update_matched` filters it from sqlite
+        # writes by MATCHED_COLS, and the column may not exist yet in a given snapshot
+        "jd_why"]
 
 
 # --------------------------------------------------------------------------- #
@@ -474,6 +479,52 @@ def same_posting(a, b):
     return bool(ua) and ua == ub
 
 
+def _seniority_pole(job):
+    """'junior' / 'senior' / '' — which pole the title's bare seniority words sit on."""
+    ws = set(_store._norm(job.get("title")).split())
+    if ws & {"junior", "jr"}:
+        return "junior"
+    if ws & {"senior", "sr"}:
+        return "senior"
+    return ""
+
+
+def same_role_twin(a, b, weak_ids=frozenset()):
+    """Two SAME-company jobs/records that are provably one posting — the retitle class the
+    seen-id collision alarm counts (`id_collisions`: HoneyBook's `product data analyst`
+    kept alive by a stale LinkedIn card beside the board's `senior product analyst`, both
+    carrying the same ashby uuid AND the same linkedin id; one of them could never be
+    emailed because `filter_new` is `not any(is_sent)`). `merge_duplicates` cannot see the
+    pair (different merge_keys) and `_groups`' cross-company arm refuses it by design, so
+    this predicate is its same-company sibling — with a HIGHER bar, because within one
+    company a single shared id is exactly the SpearUAV/F5 listing-id shape:
+
+      refusal first — a junior-pole title never folds with a senior-pole one, whatever
+                      the evidence (the same absolute rule `same_posting`'s bypass has);
+      arm 1 — >= 2 shared strong seen_ids (two independent id spaces agreeing);
+      arm 2 — 1 shared strong id AND an identical non-empty posting key;
+      arm 3 — 1 shared strong id AND `_titles_agree` (the location-glue arm).
+
+    `weak_ids`: ids borne by >= 3 records of one company in the population being grouped —
+    a value like F5's `workday:0` is a board fingerprint, not a posting id
+    (`_is_id_shaped` admits `0`, so `_strong_ids` alone cannot demote it). One shared id
+    with neither a key nor an agreeing title (Guardio developer/engineer, Percepto) stays
+    two records: the cost is a duplicate archive row, the alternative is folding two real
+    openings."""
+    pa, pb = _seniority_pole(a), _seniority_pole(b)
+    if pa and pb and pa != pb:
+        return False
+    shared = (_strong_ids(a) & _strong_ids(b)) - set(weak_ids)
+    if not shared:
+        return False
+    if len(shared) >= 2:
+        return True
+    ka, kb = _pk(a.get("url")), _pk(b.get("url"))
+    if ka and ka == kb:
+        return True
+    return _titles_agree(a, b)
+
+
 _JUNK_TOKENS = {"com", "net", "org", "www", "inc", "ltd", "team", "group", "the", "and"}
 
 
@@ -503,6 +554,81 @@ def _source_rank(job):
     if any(s and s != "scrape" and not s.startswith("discovery") for s in srcs):
         return 0
     return 1 if "scrape" in srcs else 2
+
+
+# --------------------------------------------------------------------------- #
+# the alias fold — one employer under two name strings (docs/BACKLOG.md 533)
+# --------------------------------------------------------------------------- #
+def _plain_norm(name):
+    """Case/width/whitespace-insensitive form of a name, with NO suffix stripping.
+
+    This is the declaration test's left hand: an `ALIASES` key is matched against THIS,
+    never against the post-strip stem — `identity_key("NVIDIA Labs") == "nvidia"` because
+    `labs` is a stripped suffix, and an `in ALIASES.values()` test would have folded that
+    hypothetical onto NVIDIA with no declaration at all. `_plain_norm("NVIDIA Labs")` is
+    `"nvidia labs"`, which is not an alias key, so it refuses (pinned)."""
+    import unicodedata
+    s = unicodedata.normalize("NFKC", str(name or "")).casefold()
+    return " ".join(re.sub(r"[^0-9a-z֐-׿]+", " ", s).split())
+
+
+def _alias_fold_target(name, url, registry_names, active_by_identity, origins):
+    """(canonical registry name, evidence label) when `name` is a provable alias of
+    exactly one ACTIVE registry row — else None. The evidence-driven half of the 533 fix;
+    `merge_key` itself never changes (a pure key has nowhere to put an evidence gate, and
+    identity_key equality alone merges AppSec Labs with AppSec — two real employers,
+    BACKLOG 144).
+
+    Hard refusals, in order: a REGISTRY name (active or parked) is never rewritten — a
+    parked twin like `Meta Israel` keeps its historical string, and Bounce / Bounce AI are
+    both active rows besides having different identity keys; an identity two active rows
+    answer to (Amazon/AWS/Amazon Israel — 11 such groups, deliberately separate scanner
+    rows) folds onto neither. Then ONE of three evidence gates must pass:
+      casefold — the strings differ only in case/width/whitespace (Helfy / helfy);
+      declared — the name IS a `firmographics.ALIASES` key for this identity (a curated,
+                 dated declaration: `nvidia ai` -> `nvidia`), tested via `_plain_norm`
+                 (see there for why never via the stem);
+      board    — the posting's own address passes `store._same_origin` against the
+                 canonical row's board (inert on aggregators by construction).
+    Bare suffix-strip equality with none of the three is REFUSED — that is the AppSec
+    class, and it stays two employers with a `title-twin` warning at render."""
+    name = str(name or "")
+    if not name or name in registry_names:
+        return None
+    from .firmographics import ALIASES, identity_key
+    ident = identity_key(name)
+    targets = active_by_identity.get(ident) or set()
+    if len(targets) != 1:
+        return None
+    r = next(iter(targets))
+    if _plain_norm(name) == _plain_norm(r):
+        return (r, "casefold")
+    if ALIASES.get(_plain_norm(name)) == ident:
+        return (r, "declared")
+    if _store._same_origin(url, (origins or {}).get(r)):
+        return (r, "board")
+    return None
+
+
+def fold_company_aliases(jobs, *, registry_names, active_by_identity, origins):
+    """Rewrite each provable alias name onto its canonical registry row's exact string,
+    BEFORE `classify_grouped` groups by `merge_key` — so one employer's role is one group,
+    one classifier call, one record, one card (the 533 class at intake). The original
+    string rides `_claimed_by`, the channel `record_run` already writes into
+    `attribution.claimed_by`. Returns (jobs, {"R<-orig": n})."""
+    folds = {}
+    for j in jobs:
+        hit = _alias_fold_target(j.get("company"), j.get("url"),
+                                 registry_names, active_by_identity, origins)
+        if not hit:
+            continue
+        r, _gate = hit
+        orig = str(j.get("company") or "")
+        j["_claimed_by"] = sorted(set(j.get("_claimed_by") or []) | {orig})
+        j["company"] = r
+        key = f"{r}<-{orig}"
+        folds[key] = folds.get(key, 0) + 1
+    return jobs, folds
 
 
 def tenant_slug(url):
@@ -612,6 +738,10 @@ def reconcile(row, rec):
     out["posted_date"] = pd_new if (_iso(pd_new) or not _iso(pd_old)) else pd_old
     ja = [x for x in (row.get("jd_attempted"), rec.get("jd_attempted")) if x]
     out["jd_attempted"] = max(ja) if ja else ""
+    # jd-text's per-row verdict: sqlite is where the driver writes, so its non-empty copy
+    # is always the newest; the record's carry covers the snapshot window where the column
+    # does not exist yet (2026-08-31 contract with jd-text)
+    out["jd_why"] = str(row.get("jd_why") or rec.get("jd_why") or "")
     for c in ("sources", "seen_ids"):
         out[c] = sorted({*(row.get(c) or []), *(rec.get(c) or [])} - {""})
     out["description"] = better_description(row.get("description") or "",
@@ -704,6 +834,9 @@ class Ledger:
         self.counts = {}                # this run's status tally, for the funnel record
         self.alarms = []
         self.claims = []                # "Winner<-Loser" strings
+        self.retitle_folds = []         # same-company twin folds ("Co: new<-old")
+        self.alias_folds = []           # company-string folds ("R<-orig"), fold_aliases'
+        self.twin_folds = 0             # sweep_store's at-rest twin count
         # The hand-written retractions, read OUTSIDE `_guard` and before any seam: `run.py`'s
         # `_alive` consults them directly, so a frozen (corrupt) ledger day cannot put a
         # withdrawn posting back on the board — the file is its own authority.
@@ -771,8 +904,11 @@ class Ledger:
                 rep["rehydrated"] += 1
                 continue
             merged = reconcile(row, rec)
+            # `jd_why` is never written back: sqlite's copy is the enrich driver's, and a
+            # ledger-only value must not count as a "merged" diff (`update_matched` would
+            # drop the field anyway — it is not in MATCHED_COLS)
             changed = {c: merged[c] for c in CORE + ["description"]
-                       if merged[c] != _rowval(row, c)}
+                       if c != "jd_why" and merged[c] != _rowval(row, c)}
             # sqlite only ever learns `superseded`; open/closed live in the ledger alone
             if merged["status"] != "superseded":
                 changed.pop("status", None)
@@ -800,6 +936,7 @@ class Ledger:
             self.alarms.append(f"roles ledger holds {rep['unrehydratable']} record(s) with no "
                                f"ISO first_seen/last_seen — not rehydrated, fix the line")
         rep["superseded"] = self.sweep_store()
+        rep["twin_folds"] = self.twin_folds
         self._dataset_alarm()
         rep["sqlite"] = len(rows) + rep["rehydrated"]
         rep["ledger_n"] = len(self.records)
@@ -833,10 +970,16 @@ class Ledger:
 
     # ---- claims: one posting under two company names ----------------------------
     @staticmethod
-    def _groups(jobs):
+    def _groups(jobs, twins=False):
         """Indices of `jobs` grouped by `same_posting` ACROSS companies (union-find over
         shared strong seen_ids and shared urls, every pair in a bucket tested — a same-company
-        pair is merge_duplicates' job and never an edge)."""
+        pair is merge_duplicates' job and never an edge).
+
+        `twins=True` flips the whole pass to the SAME-company arm: pairs of one company
+        tested by `same_role_twin` (the retitle class), with ids borne by >= 3 of that
+        company's records demoted to weak. The default is byte-identical to the pre-twins
+        behavior — the cross-company clique rule used to auto-pass same-company pairs, and
+        must keep doing so."""
         n = len(jobs)
         parent = list(range(n))
 
@@ -845,6 +988,20 @@ class Ledger:
                 parent[i] = parent[parent[i]]
                 i = parent[i]
             return i
+
+        weak = frozenset()
+        if twins:
+            idc = {}
+            for j in jobs:
+                for sid in _strong_ids(j):
+                    k = (j.get("company"), sid)
+                    idc[k] = idc.get(k, 0) + 1
+            weak = {sid for (_c, sid), cnt in idc.items() if cnt >= 3}
+
+        def pair_ok(a_, b_):
+            if twins:
+                return a_.get("company") == b_.get("company") and same_role_twin(a_, b_, weak)
+            return a_.get("company") != b_.get("company") and same_posting(a_, b_)
 
         buckets = {}
         for i, j in enumerate(jobs):
@@ -861,22 +1018,53 @@ class Ledger:
         for idxs in buckets.values():
             for x in range(len(idxs)):
                 for y in range(x + 1, len(idxs)):
-                    a_, b_ = jobs[idxs[x]], jobs[idxs[y]]
-                    if a_.get("company") != b_.get("company") and same_posting(a_, b_):
+                    if pair_ok(jobs[idxs[x]], jobs[idxs[y]]):
                         parent[find(idxs[y])] = find(idxs[x])
         groups = {}
         for i in range(n):
             groups.setdefault(find(i), []).append(i)
         out = []
         for g in groups.values():
-            if len({jobs[i].get("company") for i in g}) < 2:
+            if not twins and len({jobs[i].get("company") for i in g}) < 2:
+                continue
+            if twins and len(g) < 2:
                 continue
             # `_titles_agree` is not transitive (its word-set is the longer job's location):
-            # A~B and B~C with A≁C is three roles, not one. Only a clique collapses.
-            if all(jobs[g[x]].get("company") == jobs[g[y]].get("company") or same_posting(jobs[g[x]], jobs[g[y]])
+            # A~B and B~C with A≁C is three roles, not one. Only a clique collapses. In
+            # twins mode the same-company auto-pass would be the whole gate, so every pair
+            # must satisfy `same_role_twin` itself.
+            if all(pair_ok(jobs[g[x]], jobs[g[y]])
+                   or (not twins and jobs[g[x]].get("company") == jobs[g[y]].get("company"))
                    for x in range(len(g)) for y in range(x + 1, len(g))):
                 out.append(g)
         return out
+
+    @staticmethod
+    def _twin_winner(jobs, idxs):
+        """Which of a twin group's members keeps the record AT RUN TIME: the best
+        `_source_rank` — the native board's card carries the title the employer shows
+        today, the stale one rides a discovery card. A TIE refuses the whole group (None):
+        two equally-sourced live titles is not a retitle we can call, and a wrong winner
+        here renames a role on the public dataset."""
+        ranked = sorted(idxs, key=lambda i: (_source_rank(jobs[i]), i))
+        if len(ranked) >= 2 and _source_rank(jobs[ranked[0]]) == _source_rank(jobs[ranked[1]]):
+            return None
+        return ranked[0]
+
+    @staticmethod
+    def _twin_winner_at_rest(recs, idxs):
+        """The sweep's winner rule: an `open` record beats a closed one, then the later
+        `last_seen` (the title the board still showed most recently). A full tie refuses
+        (None) — the run-time arm owns live ties, this one never guesses."""
+        def srank(i):
+            return 0 if (recs[i].get("status") or "open") == "open" else 1
+        best = min(srank(i) for i in idxs)
+        tier = [i for i in idxs if srank(i) == best]
+        if len(tier) == 1:
+            return tier[0]
+        top = max(str(recs[i].get("last_seen") or "") for i in tier)
+        lead = [i for i in tier if str(recs[i].get("last_seen") or "") == top]
+        return lead[0] if len(lead) == 1 else None
 
     @staticmethod
     def _winner(jobs, idxs, held):
@@ -916,6 +1104,7 @@ class Ledger:
 
     def _resolve_claims(self, merged, failed=(), scanned=None):
         self.claims = []                      # this call's, not the instance's history
+        self.retitle_folds = []               # same-company twin folds, this call's
         """This run's postings: a group under >=2 company names keeps ONE (`_winner`).
         Losers' seen_ids and sources are unioned into the winner (filter_new keeps seeing
         them sent), losers are named on the winner and in the mail, and loser rows already
@@ -981,8 +1170,45 @@ class Ledger:
             w["sources"] = sorted(srcs - {""})
             w["_claimed_by"] = sorted(set(losers) | set(w.get("_claimed_by") or []))
             self.claims.append(f"{w.get('company')}<-{'/'.join(sorted(set(losers)))}")
+        # ---- same-company twins: one posting whose retitle minted a second merge_key.
+        # The shared evidence lives in the STORE (upsert unions ids run over run), so each
+        # surviving job is tested with its stored record's seen_ids folded in — today's
+        # cards alone share nothing (HoneyBook's board card vs the stale LinkedIn card).
+        # This is the repair for what `id_collisions` below can only alarm about: two
+        # merge_keys behind one sent kill-switch, one of them never emailable.
+        alive = [i for i in range(len(merged)) if i not in drop]
+        aug = []
+        for i in alive:
+            j = merged[i]
+            sids = set(j.get("seen_ids") or [_store.seen_id(j)])
+            sids |= {x for x in ((rows.get(_store.merge_key(j)) or {}).get("seen_ids") or []) if x}
+            aug.append(dict(j, seen_ids=sorted(sids - {""})))
+        for g in self._groups(aug, twins=True):
+            win = self._twin_winner(aug, g)
+            if win is None:
+                continue                      # a tie is not a retitle we can call
+            w = merged[alive[win]]
+            sids = set(w.get("seen_ids") or [_store.seen_id(w)])
+            srcs = set(w.get("sources") or [w.get("ats_platform") or ""])
+            for i in g:
+                if i == win:
+                    continue
+                lo = merged[alive[i]]
+                sids |= set(aug[i].get("seen_ids") or [])
+                srcs |= set(lo.get("sources") or [lo.get("ats_platform") or ""])
+                lk = _store.merge_key(lo)
+                if lk in held or lk in self.records:
+                    self._supersede(lk, _store.merge_key(w))
+                drop.add(alive[i])
+                self.retitle_folds.append(
+                    f"{w.get('company')}: {w.get('title')}<-{lo.get('title')}")
+            w["seen_ids"] = sorted(sids - {""})
+            w["sources"] = sorted(srcs - {""})
         kept = [j for i, j in enumerate(merged) if i not in drop]
         lines = [f"claim conflicts {len(self.claims)} ({', '.join(self.claims)})"] if self.claims else []
+        if self.retitle_folds:
+            lines.append(f"retitle folds {len(self.retitle_folds)} "
+                         f"({'; '.join(self.retitle_folds)[:200]})")
         if reclaimed:
             lines.append(f"{reclaimed} reclaimed (superseded, winner no longer fetched)")
         return kept, lines
@@ -990,7 +1216,14 @@ class Ledger:
     def sweep_store(self):
         """The same rule over what the store ALREADY holds: a double whose other half is
         no longer fetched (its registry row was parked) would otherwise stay on the board
-        or in the archive forever. Returns the number superseded this sweep."""
+        or in the archive forever. Returns the number superseded this sweep.
+
+        A second pass folds SAME-company twins at rest (`_groups(twins=True)`): the
+        run-time arm in `_resolve_claims` folds a pair both fetched today, this one folds
+        the pair whose stale half never appears in a run again (Modellama's location-glued
+        closed twin). The winner keeps the loser's seen_ids and sent marks so `filter_new`
+        keeps seeing every delivery — nothing is re-emailed. Count in `self.twin_folds`,
+        surfaced on the `Roles:` line."""
         recs = [r for r in self.records.values()
                 if r.get("status") not in ("superseded", "purged", "withdrawn")]
         open_keys = {r["role_id"] for r in recs if (r.get("status") or "open") == "open"}
@@ -1001,7 +1234,90 @@ class Ledger:
                 if i != win:
                     self._supersede(recs[i]["role_id"], recs[win]["role_id"])
                     n += 1
+        self.twin_folds = 0
+        recs = [r for r in self.records.values()
+                if r.get("status") not in ("superseded", "purged", "withdrawn")]
+        for idxs in self._groups(recs, twins=True):
+            win = self._twin_winner_at_rest(recs, idxs)
+            if win is None:
+                continue                      # a full tie: the run-time arm owns live ties
+            w = recs[win]
+            for i in idxs:
+                if i == win:
+                    continue
+                lo = recs[i]
+                w["seen_ids"] = sorted((set(w.get("seen_ids") or [])
+                                        | set(lo.get("seen_ids") or [])) - {""})
+                merged_sent = dict(lo.get("sent") or {})
+                merged_sent.update(w.get("sent") or {})     # the winner's own marks win
+                w["sent"] = merged_sent
+                self.st.update_matched(w["role_id"], seen_ids=w["seen_ids"])
+                self._supersede(lo["role_id"], w["role_id"])
+                self._touch(w)
+                self.twin_folds += 1
         return n
+
+    def fold_aliases(self, resolve):
+        """Apply the alias fold to what the store ALREADY holds (`_alias_fold_target` is
+        the shared gate; `resolve(name, url)` wraps it with the run's registry facts).
+        Guarded like every seam. Returns mail/warning lines."""
+        return self._guard("fold_aliases", lambda: self._fold_aliases(resolve), [])
+
+    def _fold_aliases(self, resolve):
+        renamed, left = [], []
+        for rid, rec in list(self.records.items()):
+            if rec.get("status") in ("superseded", "purged", "withdrawn"):
+                continue
+            hit = resolve(rec.get("company"), rec.get("url"))
+            if not hit:
+                continue
+            r, _gate = hit
+            orig = str(rec.get("company") or "")
+            if _store._norm_company(orig) == _store._norm_company(r):
+                # casefold-class: the merge_key half is already identical (`_norm` lower-
+                # cases), so this is a FIELD repair — role_id, episodes, text join intact
+                rec["company"] = r
+                self._touch(rec)
+                self.st.update_matched(rid, company=r)
+                renamed.append(f"{r}<-{orig}")
+                continue
+            new_key = _store.merge_key({"company": r, "title": rec.get("title")})
+            w = self.records.get(new_key)
+            if w is not None and w.get("status") not in ("superseded", "purged", "withdrawn"):
+                # a twin exists under the canonical name: the resolve_claims loser
+                # treatment at rest — union ids and sent marks so `filter_new` keeps
+                # seeing every delivery, name the folded string on the winner
+                w["seen_ids"] = sorted((set(w.get("seen_ids") or [])
+                                        | set(rec.get("seen_ids") or [])) - {""})
+                merged_sent = dict(rec.get("sent") or {})
+                merged_sent.update(w.get("sent") or {})
+                w["sent"] = merged_sent
+                attr = w.setdefault("attribution", {})
+                attr["claimed_by"] = sorted(set(attr.get("claimed_by") or []) | {orig})
+                self.st.update_matched(new_key, seen_ids=w["seen_ids"])
+                self._supersede(rid, new_key)
+                self._touch(w)
+                self.alias_folds.append(f"{r}<-{orig}")
+            else:
+                # no twin: leave the record — a role_id rename is a full-store migration
+                # (roles_text joins on it, a rename reads as a drop to the shrink guard),
+                # while future sightings arrive folded and `_alive` ages this one out with
+                # its seen_ids already in `sent`. Measured empty on the committed store.
+                left.append(orig)
+        lines = []
+        if self.alias_folds or renamed:
+            parts = []
+            if self.alias_folds:
+                parts.append(f"{len(self.alias_folds)} superseded "
+                             f"({', '.join(sorted(set(self.alias_folds)))})")
+            if renamed:
+                parts.append(f"{len(renamed)} renamed "
+                             f"({', '.join(sorted(set(renamed)))})")
+            lines.append("alias folds: " + " · ".join(parts))
+        if left:
+            lines.append(f"alias fold left {len(left)} record(s) in place, no twin "
+                         f"({', '.join(sorted(set(left))[:5])})")
+        return lines
 
     # ---- close --------------------------------------------------------------------
     def closed_keys(self):
@@ -1342,6 +1658,9 @@ class Ledger:
                 + (f" · purged {c['purged']}" if c["purged"] else "")
                 + (f" · withdrawn {c['withdrawn']}" if c["withdrawn"] else "")
                 + (f" · merged-copy {paths['merged-copy']}" if paths and paths.get("merged-copy") else "")
+                + (f" · alias folds {len(self.alias_folds)}" if self.alias_folds else "")
+                + (f" · retitle folds {len(self.retitle_folds)}" if self.retitle_folds else "")
+                + (f" · twin folds {self.twin_folds}" if self.twin_folds else "")
                 + (f" · class-backfilled {c['class_backfilled']}" if c["class_backfilled"] else "")
                 + (f" · absorbed {self.report.get('absorbed')} ({c['fresh_closed']} already closed)"
                    if self.report.get("absorbed") else "")
@@ -1385,6 +1704,11 @@ class Ledger:
             weak = counts.get("text:snippet", 0) + counts.get("text:none", 0)
             wk = (f" · weak text {weak} ({counts.get('text:snippet', 0)} snippet, "
                   f"{counts.get('text:none', 0)} none)") if weak else ""
+            blocked = sum(v for k, v in counts.items() if k.startswith("blocked:"))
+            if blocked:
+                wk += (f" · blocked {blocked}"
+                       + (f" ({counts['blocked_excluded']} excluded)"
+                          if counts.get("blocked_excluded") else ""))
             unm = counts.get("text:unmeasured", 0)
             if unm:
                 # a collapsed measurement must never read as an IMPROVEMENT: on a stale or
@@ -1524,6 +1848,7 @@ _COLUMNS = [
     ("description_truncated", "true when the text sits exactly on the 6,000-character capture cap, i.e. the real posting is longer."),
     ("description_sha1", "sha1 of the description text; join to roles_text.jsonl to read it."),
     ("description_quality", "Whether the text we hold reads as a job description (jdfill.looks_like_jd). Empty = text exists but could not be judged this run."),
+    ("description_blocker", "Why a weak text (description_quality snippet/none) is structurally hard to complete, or empty. Recorded verdicts (jd-text's matched.jd_why, 'structural:*') verbatim; else derived: 'gone' (the posting 404s on the employer's own board), 'unfillable:<why>' (a host no rung we own can read), 'listing-page' (the only address we hold is a shared listing, not the posting's own). Rows stay in the file whatever this says (the 2026-08-31 snippet-rows decision)."),
     ("sector", "Company sector (firmographics)."),
     ("sub_sector", "Narrower niche (firmographics, free text)."),
     ("stage", "Company stage (firmographics)."),
@@ -1869,6 +2194,50 @@ def _company_earliest(records):
     return out
 
 
+# mark | exclude — what the dataset DOES about a structurally blocked weak-text row.
+# The DERIVATION (`_blocker`) is policy-free on purpose (the orchestrator's condition on
+# the 2026-08-31 contract): tonight ships "mark" per docs/decisions/2026-08-31-snippet-rows.md,
+# and the operator's row-by-row audit flips this ONE constant if it rules toward exclusion —
+# never the derivation, never the column. An excluded row leaves WITH its reason in the
+# meta counts, not silently.
+BLOCKED_POLICY = "mark"
+
+
+def _blocker(rec, dq):
+    """Why this row's weak text is structurally hard to complete, or ''.
+
+    Gated on the text actually FAILING (`dq` snippet/none): a gone posting that gained a
+    donor copy, or a listing-canonical row whose text was filled from the posting's own
+    address, carries NO blocker (jd-text's 2026-08-31 contract — GONE_MARK stays a verdict
+    about the ADDRESS, never about the text). Precedence:
+      1. jd-text's recorded verdict (`matched.jd_why`, carried onto the record): a
+         `structural:*` value is copied VERBATIM — it means every donor class was
+         enumerated and failed. `ok:*`/`refused:*` are never blockers.
+      2. derived `gone` — the GONE_MARK suffix on `jd_attempted` (404/410 at the
+         employer's own board).
+      3. derived `unfillable:<why>` — a host family no rung we own can read
+         (`jdfill.unfillable`, pure).
+      4. derived `listing-page` — a non-aggregator canonical whose `_posting_key` is ''
+         (a shared listing, nobody's posting — the Bylith class). Aggregator urls are NOT
+         blocked: the paid rung reads them."""
+    if dq not in ("snippet", "none"):
+        return ""
+    why = str(rec.get("jd_why") or "")
+    if why.startswith("structural:"):
+        return why
+    from .jdfill import GONE_MARK, unfillable       # enrich layer: import only when weak
+    if str(rec.get("jd_attempted") or "").endswith(GONE_MARK):
+        return "gone"
+    url = str(rec.get("url") or "")
+    if url:
+        u = unfillable(url)
+        if u:
+            return f"unfillable:{u}"
+        if not _store._is_aggregator_url(url) and _pk(url) == "":
+            return "listing-page"
+    return ""
+
+
 def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS, archive=False,
                texts=None):
     """(rows, counts) for the dataset. Pure: no I/O, no network, no store.
@@ -1997,6 +2366,19 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
                 from .jdfill import looks_like_jd
                 dq = "jd" if looks_like_jd(t["description"]) else "snippet"
         counts["text:" + (dq or "unmeasured")] += 1
+        blocker = _blocker(rec, dq)
+        if blocker:
+            counts["blocked:" + blocker] += 1
+            if BLOCKED_POLICY == "exclude":
+                # the audit's ruling, if it comes: the row leaves WITH its reason counted
+                # in the meta (`description_text.blocked`), never silently — and every
+                # per-row identity stays whole (the row was counted above; uncount it)
+                counts["blocked_excluded"] += 1
+                counts["rows"] -= 1
+                counts["text:" + (dq or "unmeasured")] -= 1
+                counts["basis:" + (basis or "none")] -= 1
+                counts["firmo:" + match] -= 1
+                continue
         row = {
             "role_id": rid,
             "company": disp or company,
@@ -2037,6 +2419,7 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
             # "we hold no text", which is what the conventions block promises it means.
             "description_sha1": (rec.get("desc_sha1") or "") if dlen else "",
             "description_quality": dq,
+            "description_blocker": blocker,
             # The capture cap is 6,000 characters in all three layers that touch the text
             # (fetchers, jdfill, the store), and it cuts mid-sentence — Amazon's ends "...If
             # you have a". The true length is already gone by the time it reaches the store,
@@ -2137,10 +2520,16 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
              "outside_window": counts.get("outside_window", 0),
              "undatable": counts.get("undatable", 0),
              "unreadable": counts.get("unreadable", 0)}
+    if counts.get("blocked_excluded"):
+        # only under BLOCKED_POLICY == "exclude"; absent otherwise so the identity string
+        # below stays the literal truth on a "mark" day
+        parts["blocked_excluded"] = counts["blocked_excluded"]
     pages = _http_url(pages_url)
     archive_pages = _http_url(os.environ.get(ARCHIVE_PAGES_URL_ENV, ""))
     text_pages = _http_url(os.environ.get(TEXT_PAGES_URL_ENV, ""))
     quality = {k: counts.get("text:" + k, 0) for k in ("jd", "snippet", "none", "unmeasured")}
+    blocked = {k[len("blocked:"):]: v for k, v in counts.items()
+               if k.startswith("blocked:") and v}
     return {
         "dataset": DATASET,
         # The Pages address when infra's publish step copies the file there (it says so via
@@ -2211,7 +2600,9 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
             **parts,
             "store_records": len(records),
             "identity": "rows + archived + superseded + purged + withdrawn + outside_window "
-                        "+ undatable + unreadable == store_records",
+                        "+ undatable + unreadable"
+                        + (" + blocked_excluded" if "blocked_excluded" in parts else "")
+                        + " == store_records",
             "holds": sum(parts.values()) == len(records),
         },
         "conventions": {
@@ -2235,10 +2626,17 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
             "published_on_pages": bool(text_pages),
             "join": "role_id",
             "columns_here": ["description_len", "description_truncated",
-                             "description_sha1", "description_quality"],
+                             "description_sha1", "description_quality",
+                             "description_blocker"],
             # description_quality, counted: an identity so a reader can check nothing was
             # silently skipped — jd + snippet + none + unmeasured == rows
             "quality": {**quality, "holds": sum(quality.values()) == len(rows)},
+            # description_blocker, counted by reason string (the 2026-08-31 jd-text
+            # contract: recorded `structural:*` verbatim, else derived gone / unfillable:*
+            # / listing-page). `policy` says what the file DOES about a blocked row —
+            # "mark" keeps it (the snippet-rows decision), "exclude" removes it with the
+            # reason still counted here and in reconciliation.blocked_excluded.
+            "blocked": {"policy": BLOCKED_POLICY, **blocked},
         },
         "funnel": {"file": FUNNEL,
                    "what": "one row per full daily run: postings fetched -> Israel -> judged "

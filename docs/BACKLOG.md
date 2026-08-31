@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**591 filed · 427 open · 164 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**591 filed · 426 open · 165 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -441,30 +441,6 @@ closure convention in the header.
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 
-### roles — 21 open
-
-- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
-- **3** `3@roles` **`pipeline/dates.py`**
-- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
-- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
-- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
-- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
-- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
-- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
-- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
-- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
-- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
-- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
-- **533** `533@roles` **One employer, two company strings, two paid LLM calls
-- **534** `534@roles` **One posting, two `merge_key`s
-
 ### ats-fetch — 20 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
@@ -510,6 +486,29 @@ closure convention in the header.
 - **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 - **506** `506@company-intel` **OPERATOR DECISION
 - **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
+
+### roles — 20 open
+
+- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
+- **3** `3@roles` **`pipeline/dates.py`**
+- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
+- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
+- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
+- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
+- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
+- **534** `534@roles` **One posting, two `merge_key`s
 
 ### classifier — 13 open
 
@@ -9945,8 +9944,16 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      agency boundary got on 2026-08-28: a named case, a measurement over the golden fixture,
      and a written decision.
 
-533. **One employer, two company strings, two paid LLM calls — the classifier cannot see that
-     `NVIDIA` and `NVIDIA AI` are one company** — lane: `roles`. Filed by `classifier`
+533. ~~**One employer, two company strings, two paid LLM calls — the classifier cannot see that
+     `NVIDIA` and `NVIDIA AI` are one company**~~ — **CLOSED 2026-08-31 (`roles`, evening)**:
+     the alias fold — `roles.fold_company_aliases` canonicalizes a provable alias BEFORE
+     `classify_grouped` (one group, one call), `Ledger.fold_aliases` superseded the stored
+     `NVIDIA AI` twin with seen_ids/sent unioned. Evidence-gated (casefold | the curated
+     `ALIASES` declaration | `_same_origin`), never a registry name, never an ambiguous
+     identity; the cache key is untouched — the fold changes what the classifier is ASKED.
+     Decision record `docs/decisions/2026-08-31-roles-alias-fold.md` (rejected: the
+     merge_key migration, on the AppSec pair). Audit on the committed store: 4 fold / 3
+     refuse / 0 ambiguous. Original text — lane: `roles`. Filed by `classifier`
      2026-08-31. Run 33387229779 judged `NVIDIA | Senior Business Intelligence Analyst` at
      12:03:28Z and `NVIDIA AI | Senior Business Intelligence Analyst` at 12:03:41Z — two calls,
      two cache rows, two board cards for what the mail itself flags as
