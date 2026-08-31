@@ -2916,7 +2916,12 @@ def test_no_override_ships_a_name_that_render_would_refuse():
     company — reading the whole firmographics union, not the day's board (wave 2). An
     override that cannot appear is worse than none: it makes a backlog item claim a
     user-visible fix that no reader can see. Every entry is checked against the REAL export
-    for exactly that."""
+    for exactly that.
+
+    A STANDING invariant, not a fix: the table is correct today, so reverting this branch
+    cannot make this fail. Kills `ci-display-name-impersonation-guard-off` — with render's
+    guard removed, `finbounce` renders `Bounce AI` beside the active `Bounce AI` row and
+    this test says so."""
     import json as _json
     import os as _os
     from pipeline import rolecard
@@ -3027,7 +3032,12 @@ def test_an_override_the_table_does_not_claim_leaves_the_registry_name(tmp_path)
     `apply_display_names`' REPORT dict (which never has one) and then in a dict literal
     built inline and passed to nothing (wave 1). Absent is the honest outcome for a name we
     have no evidence about, and a confidently wrong name is worse than a slug — so say it
-    about the record that was actually passed."""
+    about the record that was actually passed.
+
+    A STANDING invariant, not a fix: both halves already held, so reverting this branch
+    cannot make it fail. Kills `ci-display-name-never-retracted` — the clearing branch is
+    the only thing that can express withdrawn evidence, and `merge`'s fill-forward carries
+    a stale name forward for ever without it."""
     recs = {"Elsewhere": {"sector": "x"}}
     rep = F.apply_display_names(recs, {})
     assert "display_name" not in recs["Elsewhere"], "a name we cannot evidence gained one"
