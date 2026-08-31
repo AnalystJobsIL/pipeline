@@ -24800,12 +24800,19 @@ def test_a_keyless_indeed_url_spends_nothing_and_a_dry_run_report_survives_no_un
     viewjob page itself — 1 credit for a guaranteed nothing, outside `JDFILL_INDEED_CAP`,
     which counts by jk. Kills: dropping the keyless refusal above the spend. (P0-2) the
     matched driver's --dry-run builds no Unlocker and the report line read `bd.used` —
-    AttributeError after the whole walk. Kills: reverting the getattr shapes."""
+    AttributeError after the whole walk. Kills: reverting the getattr shapes.
+    The keyless refusal is asserted BESIDE a keyed fill from the same double: against a
+    FULL revert of the branch (guard-kill's move) the keyless half coincides with the old
+    world's refusal and passed vacuously — the keyed half cannot (`ok-indeed` does not
+    exist there). CI run 33383497644 caught exactly that: CANNOT-FAIL 1 of 12."""
     from pipeline import jdfill
     bd = _J6BD(body=_i31_body())
     jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=notahexkey16char", bd=bd)
     assert (jd.reason, bd.used) == ("auth-walled", 0)
     assert not jd.transient, "a keyless indeed url is definitive: no rung can ever read it"
+    keyed = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=" + _I31_JK, bd=bd)
+    assert (keyed.reason, bd.used) == ("ok-indeed", 1), \
+        "the SAME armed double fills a keyed url: the refusal above is the key's absence"
     # the dry-run report line: main() must exit 0 with bd=None end to end
     import enrich_matched_jd as emj
     from pipeline import stages
