@@ -1501,7 +1501,13 @@ def _indeed_jd(body, jk):
         return ""
     info = pane.get("jobInfoWrapperModel") or {}
     info = info.get("jobInfoModel") if isinstance(info, dict) else None
-    raw = (info or {}).get("sanitizedJobDescription") or pane.get("sanitizedJobDescription") or ""
+    if not isinstance(info, dict):
+        # `(info or {})` guards a MISSING model, not a malformed one: a non-dict truthy value
+        # sails through it and raises `AttributeError: 'str' object has no attribute 'get'` on
+        # a paid path with no `try` between here and the digest step (wave C; the same shape
+        # is on master, so this is a hardening rather than a regression fix).
+        info = {}
+    raw = info.get("sanitizedJobDescription") or pane.get("sanitizedJobDescription") or ""
     if isinstance(raw, dict):
         raw = raw.get("content") or ""
     if not isinstance(raw, str) or not raw.strip():
@@ -1635,9 +1641,20 @@ def role_addresses_on(body, page_url, title, job_id=""):
     want = str(job_id or "").strip().lower()
     t_words = _named_words(title)
     by_id, by_title = [], []
-    page = (page_url or "").rstrip("/")
+
+    def _same_page(u):
+        """Is this link the listing page itself? Compared by (host, path), not as a string:
+        a full-URL compare admitted `…/jobs/data-analyst/?page=2` and the `#top` and `www.`
+        variants as "this role's own address" (wave C)."""
+        try:
+            a, b = urlsplit(u), urlsplit(page_url or "")
+        except ValueError:
+            return False
+        return (_host_of(u) == _host_of(page_url or "")
+                and a.path.rstrip("/").lower() == b.path.rstrip("/").lower())
+
     for u in _page_links(body, page_url):
-        if u.rstrip("/") == page:
+        if _same_page(u):
             continue                        # the listing page linking to itself
         try:
             segs = [s for s in urlsplit(u).path.split("/") if s]
@@ -1697,9 +1714,13 @@ def declared_identity(body, jk=""):
             return ""
         info = pane.get("jobInfoWrapperModel") or {}
         info = info.get("jobInfoModel") if isinstance(info, dict) else {}
-        header = (info or {}).get("jobInfoHeaderModel") or {}
-        parts = [pane.get("jobTitle"), (header or {}).get("jobTitle"),
-                 (header or {}).get("companyName"), (header or {}).get("subtitle")]
+        if not isinstance(info, dict):
+            info = {}                      # a malformed pane declares nothing; it never raises
+        header = info.get("jobInfoHeaderModel") or {}
+        if not isinstance(header, dict):
+            header = {}
+        parts = [pane.get("jobTitle"), header.get("jobTitle"),
+                 header.get("companyName"), header.get("subtitle")]
         return " ".join(str(p) for p in parts if isinstance(p, str) and p.strip())
     out = []
     for rx in (_HTML_TITLE, _OG_TITLE):

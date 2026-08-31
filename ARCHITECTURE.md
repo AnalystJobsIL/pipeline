@@ -4772,9 +4772,13 @@ been enumerated, and the `roles` lane reads it verbatim into the published datas
 `description_blocker` column (agreed with that lane 2026-08-31; `ok:`/`refused:` are never
 blockers, and a row whose text passes `looks_like_jd` never carries one).
 
-**`seen_ids` is not a list of this role's own addresses**, which is why every sibling passes
-two gates — the cache entry must be filed under **this company**, and the address must
-positively name it (`roles.names_in_url`, the same evidence rule the role record uses).
+**`seen_ids` is not a list of this role's own addresses**, which is why every **cache** sibling
+passes two gates — the entry must be filed under **this company**, and the address must
+positively name it (`roles.names_in_url`, the same evidence rule the role record uses). A
+donor `copy` is drawn from those same `seen_ids` and passes NEITHER: it is text from somebody
+else's site, so it answers to `doc_names_role` on the fetched document instead, and an address
+whose own slug names a different employer (`company_identity.url_names_other_company`) is
+dropped before it is fetched at all.
 `merge_key` is `company|title` and `upsert_matched` unions `seen_ids` for ever, while
 `roles._resolve_claims` unions a losing company's ids into the winner's row: on 2026-08-26 the
 live row `nift|data analyst` carried **five other employers'** LinkedIn postings

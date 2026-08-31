@@ -25641,14 +25641,14 @@ def test_a_donor_that_does_not_name_the_role_is_refused_and_the_row_says_so(monk
     import sqlite3
     from types import SimpleNamespace
     import enrich_matched_jd as E
-    from pipeline import jdfill
+    from pipeline import jdfill  # patched THROUGH the module: E does not bind these names
     row = ("nift|data analyst", "Nift", "Data Analyst",
            "https://nift.example/careers", "", "discovery-linkedin:linkedin:4458892364",
            "", 0, "2026-08-31")
-    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: jdfill.JD(
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda url, **k: jdfill.JD(
         _jd_of(2000), "html", "ok", False,
         decl="Senior Data Analyst at Elad Software Systems | LinkedIn"))
-    monkeypatch.setattr(E, "plain_fetch", lambda *a, **k: (200, ""))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda *a, **k: (200, ""))
     conn = sqlite3.connect(str(tmp_path / "s.db"))
     conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
     conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
@@ -25670,11 +25670,12 @@ def test_a_structural_verdict_is_written_only_after_every_donor_class_was_enumer
     import sqlite3
     from types import SimpleNamespace
     import enrich_matched_jd as E
+    from pipeline import jdfill
     row = ("taboola|product analyst", "Taboola", "Product Analyst",
            "https://www.taboola.com/careers/job/8035268?gh_jid=8035268",
            "2026-08-28 gone", "greenhouse:8035268", "", 3, "2026-08-17")
-    monkeypatch.setattr(E, "wayback_snapshot", lambda *a, **k: "")   # asked, none held
-    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: (_ for _ in ()).throw(
+    monkeypatch.setattr(jdfill, "wayback_snapshot", lambda *a, **k: "")   # asked, none held
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda url, **k: (_ for _ in ()).throw(
         AssertionError("nothing to fetch: there is no donor")))
     conn = sqlite3.connect(str(tmp_path / "s.db"))
     conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
@@ -25695,13 +25696,13 @@ def test_a_donor_never_overwrites_a_better_description(monkeypatch, tmp_path):
     import sqlite3
     from types import SimpleNamespace
     import enrich_matched_jd as E
-    from pipeline import jdfill
+    from pipeline import jdfill  # patched THROUGH the module: E does not bind these names
     have = _jd_of(4000)
     row = ("acme|data analyst", "Acme", "Data Analyst", "https://acme.example/careers",
            "", "scrape:1", have, 0, "2026-08-31")
-    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: jdfill.JD(
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda url, **k: jdfill.JD(
         _jd_of(600), "html", "ok", False, decl="Data Analyst at Acme"))
-    monkeypatch.setattr(E, "plain_fetch", lambda *a, **k: (200, _listing_page(
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda *a, **k: (200, _listing_page(
         ["https://acme.example/careers/data-analyst"])))
     conn = sqlite3.connect(str(tmp_path / "s.db"))
     conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
@@ -25720,13 +25721,13 @@ def test_an_archived_role_reaches_the_free_rungs_and_not_the_paid_one(monkeypatc
     import sqlite3
     from types import SimpleNamespace
     import enrich_matched_jd as E
-    from pipeline import jdfill
+    from pipeline import jdfill  # patched THROUGH the module: E does not bind these names
     seen = []
     # a role with a real donor to try: its own LinkedIn copy, named by its `seen_ids`
     row = ("closed|data analyst", "Closed Co", "Data Analyst",
            "https://closed.example/jobs/data-analyst", "",
            "discovery-linkedin:linkedin:4409973742", "", 0, "2026-08-01")
-    monkeypatch.setattr(E, "fetch_jd",
+    monkeypatch.setattr(jdfill, "fetch_jd",
                         lambda url, **k: (seen.append(k.get("bd"))
                                           or jdfill.JD("", "none", "shell", False)))
     conn = sqlite3.connect(str(tmp_path / "s.db"))
@@ -25855,13 +25856,13 @@ def test_a_donor_may_not_replace_text_that_already_reads_as_this_roles_posting(m
     import sqlite3
     from types import SimpleNamespace
     import enrich_matched_jd as E
-    from pipeline import jdfill
+    from pipeline import jdfill  # patched THROUGH the module: E does not bind these names
     have = _jd_of(400)
     row = ("x|data analyst", "X Co", "Data Analyst", "https://x.co/careers", "",
            "scrape:1", have, 0, "2026-08-31")
-    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: jdfill.JD(
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda url, **k: jdfill.JD(
         _jd_of(4000), "html", "ok", False, decl="Data Analyst at X Co"))
-    monkeypatch.setattr(E, "plain_fetch", lambda *a, **k: (200, _listing_page(
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda *a, **k: (200, _listing_page(
         ["https://x.co/careers/data-analyst"])))
     conn = sqlite3.connect(str(tmp_path / "s.db"))
     conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
@@ -25881,7 +25882,8 @@ def test_a_class_that_could_not_be_asked_is_never_written_down_as_a_world_fact(m
     import sqlite3
     from types import SimpleNamespace
     import enrich_matched_jd as E
-    monkeypatch.setattr(E, "plain_fetch", lambda *a, **k: (None, ""))   # no answer
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda *a, **k: (None, ""))   # no answer
     conn = sqlite3.connect(str(tmp_path / "s.db"))
     conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
     rows = [("a|data analyst", "A Corp", "Data Analyst", "https://a.co/careers", "",
@@ -25927,12 +25929,13 @@ def test_two_cache_cards_claiming_one_role_are_both_refused(tmp_path, monkeypatc
     import sqlite3
     from types import SimpleNamespace
     import enrich_matched_jd as E
+    from pipeline import jdfill
     mk = "acme|senior software engineer"
     cache = {mk: [("https://acme.example/jobs/senior-software-engineer-1", _jd_of(900)),
                   ("https://acme.example/jobs/senior-software-engineer-2", _jd_of(1200))]}
     row = (mk, "Acme", "Senior Software Engineer",
            "https://acme.example/jobs/senior-software-engineer-1", "", "scrape:1", "", 0, "x")
-    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: (_ for _ in ()).throw(
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda url, **k: (_ for _ in ()).throw(
         AssertionError("no fetch: the canonical is a job url and the cache is ambiguous")))
     conn = sqlite3.connect(str(tmp_path / "s.db"))
     conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
@@ -25952,7 +25955,7 @@ def test_a_refused_copy_is_counted_even_when_a_later_donor_fills_the_row(monkeyp
     import sqlite3
     from types import SimpleNamespace
     import enrich_matched_jd as E
-    from pipeline import jdfill
+    from pipeline import jdfill  # patched THROUGH the module: E does not bind these names
     # two copies of this role, in seen_ids order: the first names another employer and is
     # refused, the second names ours and fills
     row = ("mizar|data analyst", "Mizar", "Data Analyst", "https://mizar.co/jobs/data-analyst", "",
@@ -25964,7 +25967,7 @@ def test_a_refused_copy_is_counted_even_when_a_later_donor_fills_the_row(monkeyp
             return jdfill.JD(_jd_of(800), "html", "ok", False,
                              decl="Data Analyst at Gotfriends")
         return jdfill.JD(_jd_of(900), "html", "ok", False, decl="Data Analyst at Mizar")
-    monkeypatch.setattr(E, "fetch_jd", fake)
+    monkeypatch.setattr(jdfill, "fetch_jd", fake)
     conn = sqlite3.connect(str(tmp_path / "s.db"))
     conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
     conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
@@ -25973,3 +25976,99 @@ def test_a_refused_copy_is_counted_even_when_a_later_donor_fills_the_row(monkeyp
         conn, [row], {}, None, set(),
         SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
     assert (filled, refused) == (1, 1)
+
+
+def test_the_listing_page_is_not_offered_as_its_own_roles_address():
+    """The self-link skip was a full-URL string compare, so every query, fragment and `www.`
+    variant of the listing page came back as "the address naming this role" — and a listing
+    page is exactly what `is_job_url` refuses, so the row would have been sent back to the
+    address it was already stuck on. Kills: comparing `u.rstrip("/") == page`."""
+    from pipeline.jdfill import role_addresses_on
+    body = _listing_page(["https://acme.co.il/jobs/data-analyst/?page=2",
+                          "https://acme.co.il/jobs/data-analyst/#top",
+                          "https://www.acme.co.il/jobs/data-analyst/"])
+    assert role_addresses_on(body, "https://acme.co.il/jobs/data-analyst/",
+                             "Data Analyst", "") == []
+    # ...and a genuinely deeper posting on the same page is still found
+    ok = _listing_page(["https://acme.co.il/jobs/data-analyst/36"])
+    assert role_addresses_on(ok, "https://acme.co.il/jobs/data-analyst/",
+                             "Data Analyst", "36") == ["https://acme.co.il/jobs/data-analyst/36"]
+
+
+def test_a_word_every_israeli_employer_shares_cannot_prove_the_employer():
+    """`_EMPTY_WORDS` is the difference between an identity check and a coincidence: without
+    it `israel` alone pays the employer half of `doc_names_role`, which is the same defect as
+    the `data` in `Bright Data` one word over. Kills: emptying the stoplist."""
+    from pipeline.jdfill import doc_names_role
+    decl = "Bank Leumi hiring Senior Risk Analyst in Israel | LinkedIn"
+    assert not doc_names_role(decl, "Risk Analyst", "Israel Aerospace Industries")
+    # the same declaration still admits the employer it actually names
+    assert doc_names_role(decl, "Risk Analyst", "Bank Leumi")
+
+
+def test_a_donor_write_goes_through_the_ratchet_and_not_a_raw_update(monkeypatch, tmp_path):
+    """Both sides can fail `looks_like_jd` — `extract_jd`'s `_ROLE_START` slice re-checks a
+    length but not the two-family bar — and then the only thing standing between 1,240
+    characters of stored nav furniture and 300 characters of fresh nav furniture is
+    `_store_text`'s length ratchet. A raw UPDATE in the donor pass would also skip the
+    `DESC_MAX` cap and the stale-`structural:` clear. Kills: writing `description` directly."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    from pipeline.jdfill import looks_like_jd
+    have, donor = "Careers menu " * 95, "Careers menu " * 23
+    assert not looks_like_jd(have) and not looks_like_jd(donor) and len(donor) < len(have)
+    row = ("acme|data analyst", "Acme", "Data Analyst", "https://acme.example/careers", "",
+           "scrape:1", have, 0, "2026-08-31")
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda url, **k: jdfill.JD(
+        donor, "html", "ok", False, decl="Data Analyst at Acme"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda *a, **k: (200, _listing_page(
+        ["https://acme.example/careers/data-analyst"])))
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], have, ""))
+    conn.commit()
+    E._donor_pass(conn, [row], {}, None, set(),
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert conn.execute("SELECT description FROM matched").fetchone()[0] == have
+
+
+def test_a_copy_that_names_another_employer_is_dropped_before_it_is_fetched(monkeypatch, tmp_path):
+    """`seen_ids` is full of other employers' LinkedIn postings, and their own slugs say so
+    (`…-at-other-corp-4389427569`). Refusing them on the fetched document is correct and
+    costs a request each — on a paid host, a credit each — for evidence the address already
+    gave away for free. Kills: dropping the `url_names_other_company` filter from
+    enumeration."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    tried = []
+    row = ("acme|data analyst", "ACME", "Data Analyst", "https://acme.example/careers", "",
+           "discovery-linkedin:https://il.linkedin.com/jobs/view/data-analyst-at-other-corp-4389427569",
+           "", 0, "2026-08-31")
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda url, **k: (tried.append(url)
+                                          or jdfill.JD("", "none", "shell", False)))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda *a, **k: (200, ""))
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
+    conn.commit()
+    E._donor_pass(conn, [row], {}, None, set(),
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert tried == [], tried
+
+
+def test_the_donor_rung_is_reachable_by_every_monkeypatch_the_suite_already_uses():
+    """`enrich_matched_jd` must not bind `fetch_jd`/`plain_fetch`/`wayback_snapshot` into its
+    own namespace: 43 tests disarm them on `pipeline.jdfill`, and a local binding escapes
+    every one — four tests that believed they had stubbed the fetcher were making real
+    requests to LinkedIn, on the public repo's CI runner, on every push (wave C). Kills:
+    re-adding any of the three to the `from pipeline.jdfill import (...)` list."""
+    import enrich_matched_jd as E
+    for name in ("fetch_jd", "plain_fetch", "wayback_snapshot"):
+        assert not hasattr(E, name), (
+            "%s is bound in enrich_matched_jd's namespace; call it as jdfill.%s so the "
+            "suite's monkeypatches reach it" % (name, name))

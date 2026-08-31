@@ -34,7 +34,7 @@ entry claimed: only the `viewjob` page is closed.
 | the BD Indeed **dataset** (`gd_l4dx9j9sscpvs7no2`) | `discover_new` mode: five straight days of `dataset_size: 0` (rate-limited by Indeed), the documented do-not-re-enable; collect-by-URL was held as the fallback and never needed — the SERP form filled 5/5 first |
 | rendered `viewjob` (the untried form the render discovery suggested) | not reached: E1 (raw SERP) hit the 4-of-5 promotion bar before E2 spent a credit; raw is also 1 credit vs 2 and off the 45 s render clock |
 | letting `extract_jd`/`jsonld_jd` read the bought SERP as a fallback | `extract_jd` returned the SAME 3,028 characters of page furniture for three different jks (identity check 0/5), and a JobPosting ld+json on a SERP is some other job's — the pane parser with the `jobKey == jk` anchor is the only reader |
-| a second cap env var for the matched driver | its failures stamp `jd_attempted` and ride the 7/14/28 ladder (~13 credits/month on today's 6 rows); only the inline layer, which stamps nothing against cards re-offered nightly, needed a bound (`JDFILL_INDEED_CAP`, then 8 → ceiling 240/month, 4.8 % of the pool) |
+| a second cap env var for the matched driver | its failures stamp `jd_attempted` and ride the 7/14/28 ladder (~13 credits/month on today's 6 rows); only the inline layer, which stamps nothing against cards re-offered nightly, needed a bound (`JDFILL_INDEED_CAP`, then 8 → ceiling 240/month, 4.8 % of the pool; **now 25 → 750/month, 15 %** — see the addendum) |
 
 ## Addendum, 2026-08-31 evening: the cap was 8 for one night, and the night measured it
 

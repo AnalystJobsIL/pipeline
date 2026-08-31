@@ -39,12 +39,17 @@ import time
 
 from pipeline import jdfill
 from pipeline.jdfill import (DESC_MAX, GONE_MARK, MIN_DESC, RETRY_DAYS, Item, Unlocker,
-                             _REPO_ROOT, alarm_for, doc_names_role, due, fetch_jd, is_job_url,
+                             _REPO_ROOT, alarm_for, doc_names_role, due, is_job_url,
                              jd_body, jd_quality, load_secrets, retry_days_for,
-                             looks_like_jd, native_candidates, plain_fetch, quality_suspect,
+                             looks_like_jd, native_candidates, quality_suspect,
                              role_addresses_on, source_copy_url, title_in_slug,
                              record_enrich, run_backfill, stamp_path_for,
-                             unfillable as _unfillable, wayback_snapshot, why_string)
+                             unfillable as _unfillable, why_string)
+# `fetch_jd`, `plain_fetch` and `wayback_snapshot` are deliberately NOT imported into this
+# namespace and are called as `jdfill.<name>`: 43 tests monkeypatch them on `pipeline.jdfill`,
+# and a local binding escapes every one of them -- four tests that believed they had disarmed
+# the fetcher were making real requests to LinkedIn, on the public repo's CI runner, on every
+# push (wave C).
 
 for _s in (sys.stdout, sys.stderr):        # a cp1252 pipe must not kill the report
     try:
@@ -429,7 +434,6 @@ def _ensure_columns(conn):
 # (`doc_names_role`). That is deliberately not `names_in_url`, which `store._same_origin`
 # refuses by measurement as an admission gate on foreign content, and deliberately not
 # byte-similarity, which is the fanout SYMPTOM (`370`), not an identity.
-DONOR_CLASSES = ("own-address", "cache", "copy", "archive")
 # The donor pass runs AFTER the fetch passes have spent `MATCHED_JD_TIME_BUDGET_MIN` (20)
 # inside a step `daily-digest.yml` gives 25 minutes, so it needs a bound of its own or it
 # becomes the thing that ends the step. It is cheap per row today — 7 rows measured at ~2
@@ -479,7 +483,7 @@ def _donor_candidates(row, cache_by_key, log):
             if ":" in sid and not sid.split(":", 1)[1].lower().startswith("http"):
                 job_id = sid.split(":", 1)[1]
                 break
-        status, body = plain_fetch(url, timeout=25)
+        status, body = jdfill.plain_fetch(url, timeout=25)
         found = role_addresses_on(body, url, title, job_id) if body else []
         if not body:
             complete = False               # the page did not answer: we did not look
@@ -491,19 +495,34 @@ def _donor_candidates(row, cache_by_key, log):
     #    without it — a `+` inside a url is indistinguishable from the store's own `+` join,
     #    and re-parsing by hand yielded a TRUNCATED address that was then fetched (wave B).
     #    The discovery ids are `<source>:<platform>:<id>`, which no rung could ever ask for.
+    #    A copy whose own address NAMES ANOTHER EMPLOYER is dropped before it is fetched, not
+    #    after: `.../data-analyst-at-other-corp-4389427569` is the shape `seen_ids` is full of
+    #    (the nift five), and `company_identity.url_names_other_company` is the repo's free
+    #    negative-evidence rule for exactly it — the same one `fetch_discovery` uses, after a
+    #    run attributed 147 board rows to the wrong employer this way. It answers False
+    #    whenever it cannot tell, so an Indeed `viewjob?jk=` (which names nobody) is still a
+    #    candidate and still faces `doc_names_role` on the document.
+    def _names_someone_else(addr):
+        try:
+            from pipeline.company_identity import url_names_other_company
+            return bool(url_names_other_company(comp, addr))
+        except Exception:  # noqa: BLE001 - no evidence is not evidence
+            return False
+
     for addr in sibling_urls(seen_ids, url or ""):
-        if addr not in [u for _k, u, _t in out]:
+        if addr not in [u for _k, u, _t in out] and not _names_someone_else(addr):
             out.append(("copy", addr, ""))
     for sid in str(seen_ids or "").split("+"):
         if ":" not in sid:
             continue
         addr = source_copy_url(sid.split(":", 1)[1])
-        if addr and addr != url and addr not in [u for _k, u, _t in out]:
+        if (addr and addr != url and addr not in [u for _k, u, _t in out]
+                and not _names_someone_else(addr)):
             out.append(("copy", addr, ""))
     # 4. the archive, for an address that no longer answers. Identity is exact: it is a
     #    snapshot OF this role's own url.
     if str(att or "").endswith(GONE_MARK) and str(url or "").startswith("http"):
-        snap = wayback_snapshot(url)
+        snap = jdfill.wayback_snapshot(url)
         if snap is None:
             complete = False               # the CDX call failed: the archive was not asked
         elif snap:
@@ -512,7 +531,7 @@ def _donor_candidates(row, cache_by_key, log):
 
 
 def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
-                retry_days=RETRY_DAYS, count_cap=0):
+                retry_days=RETRY_DAYS, count_cap=0, attempted_before=None):
     """Fill what the ladder could not, from another copy of the same role. Returns
     (filled, refused, Counter of `jd_why` values written).
 
@@ -573,7 +592,8 @@ def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
             # exactly as the fetch pass above: the 2026-08-26 lesson (a closed Taboola row
             # bought a credit while the pool stood at 118 %) is a budget rule, and it is not
             # repealed by a new rung. The free rungs run for every row, whatever its status.
-            jd = fetch_jd(addr, bd=row_bd, company=comp, title=title, want_identity=True)
+            jd = jdfill.fetch_jd(addr, bd=row_bd, company=comp, title=title,
+                                 want_identity=True)
             if not jd.text:
                 # A page we READ and found no posting in is evidence; a page we could not
                 # reach is not. `jd.transient` is the ladder's own word for the second — a
