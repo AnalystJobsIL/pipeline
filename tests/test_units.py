@@ -26698,7 +26698,8 @@ def test_a_same_day_transient_never_beats_a_gone_verdict():
 def test_an_empty_jd_why_carry_does_not_touch_every_record(tmp_path):
     """Wave B, finding 7: an empty carry onto 193 records that never had the key would
     collapse every `updated` stamp to one date and add `"jd_why": ""` noise-wide. The
-    key lands when a verdict does."""
+    key lands WHEN A VERDICT DOES — and then it genuinely lands (the second half is what
+    a tree without the carry cannot do)."""
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
     st.upsert_matched(_role("A", "X", "https://a.example/jobs/1/x1", "1"), "2026-08-30")
@@ -26706,4 +26707,13 @@ def test_an_empty_jd_why_carry_does_not_touch_every_record(tmp_path):
     L.open_sync()
     rec = next(iter(L.records.values()))
     assert "jd_why" not in rec, rec
+    st.conn.execute("ALTER TABLE matched ADD COLUMN jd_why TEXT")
+    st.conn.execute("UPDATE matched SET jd_why='structural:gone(donors:0)'")
+    st.conn.commit()
     st.close()
+    st2 = store.SeenStore(str(tmp_path / "t.db"))
+    L2 = roles.Ledger(st2)
+    L2.open_sync()
+    rec2 = next(iter(L2.records.values()))
+    assert rec2.get("jd_why") == "structural:gone(donors:0)", rec2
+    st2.close()
