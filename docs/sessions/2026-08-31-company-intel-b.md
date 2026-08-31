@@ -267,7 +267,7 @@ company if `registry` ever activated the parked Opera Group row under that bare 
 
 ### The one CI caught that neither wave did, and it could spend money
 
-`tests.yml` run `33439962130` on `ba6dbb3`: **`guard` FAILED**, one test —
+`tests.yml` run `33439962130` on `ba6dbb3`: **`guard` FAILED**, one test — and the fix is run **`33442508283`, `success`, 13 of 13 jobs**, mutation gate included. The red:
 `test_the_digest_hook_asks_with_the_posting_every_board_company_has` — with `seen` empty.
 Green on this laptop five times, red on the runner, and the reason is the half that matters:
 the test called `enrich_for_run(use_llm=True)` with the BLURB loop live. On a machine with
