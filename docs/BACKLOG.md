@@ -9521,9 +9521,28 @@ Record: `docs/sessions/2026-08-31-jd-text.md`.
        partner webinars; "שירותים תשתיות ואינטגרציה סייבר ואבטחת"). `השמה` appears once,
        in marketing copy. A real Israeli employer whose listings need a render, not a
        terminal token.
-     * Novo Nordisk, Diageo, Glassbox, Oak (Opera Group teamtailor) and Wipro all answer
-       200 with **zero** Israel text in raw HTML — JS shells, so they need the render rung
-       and cannot be settled by a cheap GET. The remaining names are untouched.
+     * **The render rung then settled five of them for 5 Bright Data credits**
+       (`python deep_validate.py --only "…"`, the sanctioned rung 4):
+       **Glassbox Ltd. resolves to `greenhouse:glassboxltd`** — verified **5 jobs / 3
+       Israel** (DevOps Engineer, DevOps Team Lead, Product Manager – Data Platform, all
+       Petah Tikva) and `identity_gate.activation_verdict` = `ok`. I activated it, and
+       `test_no_two_active_rows_scan_the_same_board` refused the push: an ACTIVE row named
+       **`Glassbox`** already reads that byte-identical board. The company was covered all
+       along; `Glassbox Ltd.` is a NAME twin, the same shape as `Viber`/`Rakuten Viber`
+       above. Filed instead as `alias-of Glassbox 2026-08-31: identical board URL
+       (BACKLOG 133)`. **The gate cannot catch this** — it asks "is this board this
+       company's", which was TRUE; the duplicate is a registry-level question, and the
+       lesson is to grep `api_url` before activating a name that looks new.
+       **Diageo** resolves to `workday:diageo/Diageo_Careers` and that board is **empty**
+       (0 jobs) — stamped, still parked, and note the contradiction with its own
+       `listing-hunt 2026-08-28: verified 10 IL`, which was deliberately kept beside it.
+       **Nestlé** and **Wipro Limited** are `successfactors` tenants — WIRE status, so a
+       fetcher exists and only the tenant needs cracking (`registry_health.py --ats`).
+       **Oak** renders with no ATS; no stamp was written, because the only one worth adding
+       would have evicted `another company's board`, which is the better fact about a row
+       whose URL is Opera Group's shared Teamtailor. Indeed-only inactive rows: **21, unchanged** — the twin stays parked, correctly.
+       Novo Nordisk was inside its 30-day deep-validate cooldown and was not re-read. The
+       remaining names are untouched.
 514. **`retry_unreachable` OVERWROTE a notes cell and the row fell out of its re-check pool —
      the rehearsal caught it on the next push** — lane: `registry`. Filed by `roles`
      2026-08-31. Commit `93dc8fd` (schedule run 33374511068, `[skip ci]`) rewrote
