@@ -2405,7 +2405,7 @@ def test_union_store_applies_the_display_pass_so_the_board_matches_the_file(env,
 
 
 # --- 2026-08-31: the empty context that made a strike permanent ------------------------
-def test_the_bulk_pass_anchors_an_obscure_name_to_the_board_it_came_from():
+def test_the_bulk_pass_anchors_an_obscure_name_to_the_board_it_came_from(monkeypatch):
     """21 of the 28 names in the 2026-08-31 backlog carried a strike reading `model could
     not identify the name`, every one asked with an EMPTY context — and the weekly retry
     re-asked the same unanswerable question for ever. An ACTIVE row's url passed
@@ -2420,6 +2420,16 @@ def test_the_bulk_pass_anchors_an_obscure_name_to_the_board_it_came_from():
     # ...and the query string never travels: 190 active rows carry a Comeet `token=<hex>`
     assert RF._row_anchor({**row, "api_url": "https://comeet.com/j/x?token=deadbeef"}) \
         .endswith("https://comeet.com/j/x.")
+    # an API endpoint names the ATS, not the employer: `Finagra` came back unidentifiable
+    # anchored to its Ashby posting-api url, so the anchor uses the page a person reads
+    assert "jobs.ashbyhq.com/finagra" in RF._row_anchor(
+        {**row, "api_url": "https://api.ashbyhq.com/posting-api/job-board/finagra"})
+    # ...but never through Comeet's arm, which learns the page with a GET: this builds an
+    # anchor for EVERY active row, so one network call there is ~205 of them
+    comeet = "https://www.comeet.com/careers-api/2.0/company/A4.000/positions"
+    monkeypatch.setattr(RF._IG, "_comeet_human_url",
+                        lambda *a, **k: pytest.fail("the anchor path must never hit the network"))
+    assert comeet in RF._row_anchor({**row, "api_url": comeet + "?token=abc"})
     # a name with no active row is anchored to the posting we SAW it on, which claims
     # strictly less -- it has to, because 37 of the 43 such names sit on an aggregator
     anchor = RF._posting_anchor("Trade Marketing Analyst", "https://il.linkedin.com/jobs/view/1")

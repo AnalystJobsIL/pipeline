@@ -32,6 +32,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from pipeline import board_verify as BV
 from pipeline import firmographics as F
+from pipeline import identity_gate as _IG
 from pipeline import stages
 from pipeline.companies import load_companies
 from pipeline.firmographics import (ResearchUnavailable, band_for, identity_key,
@@ -193,6 +194,14 @@ def _row_anchor(row):
     url = _clean_url(row.get("api_url")) or _clean_url(row.get("token"))
     if not url:
         return ""     # a bare ATS token names no host and anchors nothing
+    # An API endpoint names the ATS, not the employer: `Finagra` was researched against
+    # `api.ashbyhq.com/posting-api/job-board/finagra` and came back unidentifiable.
+    # `identity_gate.human_board_url` is the repo's own endpoint -> readable-page map, so
+    # that becomes `jobs.ashbyhq.com/finagra`. Its Comeet arm learns the page with a GET,
+    # which must NEVER fire here -- this builds an anchor for every active row, so one GET
+    # would be ~205 of them; that form keeps the plain url instead.
+    if not _IG._COMEET_API.match(url):
+        url = _IG.human_board_url(url) or url
     return f"We read this employer's job postings from their careers board at {url}."
 
 

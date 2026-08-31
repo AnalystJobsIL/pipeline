@@ -177,4 +177,51 @@ Two more strike-clear records had the same vacuous shape and got behavioural tes
 
 ## 8. Numbers
 
-_Filled in below once the drain has run; nothing here is written before it is measured._
+**The queue: 28 -> 7.** Re-derived with §7's own gauge before and after, from the same
+command. 21 names researched (3 in a first pass that was killed at 90 s, 18 in the pass that
+replaced it, 2 more on a retry after the `human_board_url` fix); 4 refused by the model; 3
+bought records **stripped** by the audit in §7 and returned to the gauge rather than shipped.
+
+**Spend: 29 `claude -p` calls** (3 + 22 + 4), all sonnet, 632 s, 39 searches, against a
+declared ceiling of 40. **Bright Data: 0** — this lane's only paid rung is the subscription,
+and `research_firmographics` imports nothing that disarms it.
+
+**The strike ledger: 28 -> 8.** The 21 target strikes were cleared through the sanctioned
+`save_failures(cleared=...)` path (deletion is the only way that file can say "researched
+since"), and the run then cleared three more *on its own* — `cleared 3 strike(s) whose record
+is already on disk: Peak Innovation, Steakholder Foods, Varonis`, which is BACKLOG 390 firing
+live, with the date guard correctly keeping the four strikes that same run had just written.
+The 8 that remain are `Agency`, `Discovery`, `Sivo`, `Tel Aviv` (all pre-existing) and this
+session's four residuals.
+
+### The 7 residuals, each with its reason
+
+| name | why it is still in the gauge |
+|---|---|
+| `Ecommerce Guide` | an e-commerce **content site**; research refused it twice, anchored to its own careers page both times. `524`, registry to retire |
+| `Konsortium Ziviler Friedensdienst` | the German **civil peace service**; never bought a profile — the one name this session refused on the "not plausibly an Israeli employer" rule. `524` |
+| `Oak` | not an employer: the string is a Teamtailor **division filter** on Opera Group's shared board. `522` |
+| `Hila & Co.` | the row resolved to `hila.mt` (**Malta**) and is parked, so the anchor correctly refuses it. A real Israeli posting exists — a resolution failure, not a junk name. `523` |
+| `Landacorp` | STRIPPED: the board is Landa Digital Printing, the record was a US healthcare-IT firm. `525`, cause `521` |
+| `Kidum Rehab Projects` | STRIPPED: two Israeli companies named קידום; the board is the test-prep group, the record was the rehab operator. `525` |
+| `Rockerbox` | STRIPPED: acquired by DoubleVerify (closed 2025-03-13); the record said "no IPO or acquisition found" and the careers url now redirects. `525` |
+
+### What the audit corrected rather than stripped
+
+`Tailor Brands` founded 2014 -> 2015; `Paz - yellow` il_center Haifa/Ashdod -> **Yakum** (Paz
+Oil's HQ; Ashdod is the refinery); `Computer Guard` employees 150 -> ~70 (its own site says
+"over 70 professionals"); `Galil Systems` 250 -> 200; `Replai` il_center Unknown -> Tel Aviv;
+`Nascompany` and `Golan` gained a dated correction in `stage_note`. Every `employees_global`
+change re-derives `size_band` — 0 band/count contradictions after.
+
+**`employees_global` is the least reliable field in the batch** and that is worth carrying
+forward: it was overstated on two of the seven checked and is unsupported on three more.
+
+### A trap this session hit
+
+**A local `research_firmographics.py` run stamps the shared `firmo` stage.** That stamp is the
+cron's own liveness and queue measurement, read by `stages.alarms("firmo", 2)` and printed in
+the mail as `bulk cron: last ran ...`. My runs overwrote it with a laptop's numbers
+(`attempted 4, budget_min 5.0`), and it was restored with `git checkout` before the commit.
+`--dry-run` does not stamp; nothing else protects you. Do not commit
+`cloud_state/pipeline_stages.json` from a hand-run.

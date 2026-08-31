@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**571 filed · 411 open · 160 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**579 filed · 418 open · 161 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 521.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 529.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 140 open
+### registry — 146 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -234,6 +234,12 @@ closure convention in the header.
 - **516** `516@registry` **`bd_rescue`'s `empt` branch REBUILDS the row instead of patching it**
 - **517** `517@registry` **One Osem posting is on the live board under TWO employer names, and a third parked
 - **520** `520@registry` **Two of the drain's `N/M IL` activations from 2026-08-29/31 are false, measured against
+- **522** `522@registry` **`Oak` is a Teamtailor DIVISION FILTER, not an employer, and it reached the public
+- **523** `523@registry` **`Hila & Co.`'s board resolved to a Maltese domain and the name cannot be researched
+- **524** `524@registry` **`Ecommerce Guide` and `Konsortium Ziviler Friedensdienst` are not Israeli employers and
+- **526** `526@registry` **Five active rows have no Israeli site at all, and their `N IL` verification notes are
+- **527** `527@registry` **`Peak Innovation` is a staffing agency and it feeds 45 listings into the board** —
+- **528** `528@registry` **The registry row `Galil Systems` names a company that does not exist; the board is
 
 ### infra — 108 open
 
@@ -430,6 +436,30 @@ closure convention in the header.
 - **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
 - **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
 
+### company-intel — 21 open
+
+- **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
+- **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
+- **6** `6@company-intel` **Company aliases**
+- **10** `10@company-intel` **Let company-death knowledge flow back.** Firmographics research keeps discovering
+- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
+- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
+- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
+- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
+- **389** `389@company-intel` **The strike ledger is a union, and a union cannot express a retraction**
+- **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
+- **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
+- **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
+- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
+- **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
+- **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
+- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
+- **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
+- **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
+- **506** `506@company-intel` **OPERATOR DECISION
+- **521** `521@company-intel` **A Comeet API row anchors research to an opaque tenant uid, and the model then answers
+- **525** `525@company-intel` **Three bought profiles described a DIFFERENT company than the board they were anchored
+
 ### ats-fetch — 20 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
@@ -452,29 +482,6 @@ closure convention in the header.
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
-
-### company-intel — 20 open
-
-- **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
-- **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
-- **6** `6@company-intel` **Company aliases**
-- **10** `10@company-intel` **Let company-death knowledge flow back.** Firmographics research keeps discovering
-- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
-- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
-- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
-- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
-- **389** `389@company-intel` **The strike ledger is a union, and a union cannot express a retraction**
-- **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
-- **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
-- **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
-- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
-- **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
-- **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
-- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
-- **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
-- **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
-- **506** `506@company-intel` **OPERATOR DECISION
-- **512** `512@company-intel` **`entrypoint` still renders as a slug on every surface
 
 ### roles — 18 open
 
@@ -9451,7 +9458,7 @@ pass over the night's own 172 proposals, not reasoned from the code.*
      examined were correctly refused, so the check is not one-sided.
      Second, smaller cause in the same 67: `_fetch` reads 400,000 bytes and two Wix pages hit
      exactly that cap, so the run judged a **truncated** page (`Eyecontrol`, `Nanoghost`).
-512. **`entrypoint` still renders as a slug on every surface — no display evidence exists** —
+512. ~~**`entrypoint` still renders as a slug on every surface — no display evidence exists**~~ **CLOSED 2026-08-31 (`company-intel`): it is not a slug — the company writes its own name in lower case.** `entrypoint.co.il`'s footer reads *"2004-2026 (c) All rights reserved to entrypoint"*, and the site describes the IT-services / systems-integration business the stored record already holds (Petah Tikva, Registrar 513513267, founded 2004). So the registry key IS the employer's own styling: no `DISPLAY_NAME_OVERRIDES` row is warranted, the table stays at 4, and `display_names` stays put. The agency question is answered too — the captured JD (`cloud_state/roles_text.jsonl`) is an in-house BI role (*"collaborating with various business units across the organization"*, Power BI / Azure / Fabric / DWH) and LinkedIn's own furniture names the employer `אנטריפוינט ישראל`; the company does sell technical recruitment (its record's `sub_sector` says so) but this posting is not a placement, so `recruiters.is_recruiter` was right. What IS still wrong is the registry row, not the display: it is parked with a LinkedIn *job view* as its url and `wrong-url 2026-08-30: board names Entry Point USA` — `registry`'s to re-resolve. Original report follows. —
      lane: `company-intel`. Filed by `roles` 2026-08-31 while making the dataset's `company`
      cell show the evidenced brand (`docs/decisions/2026-08-31-company-column-shows-the-brand.md`).
      `firmographics["entrypoint"]` exists with NO `display_name`, the row is a parked
@@ -9658,3 +9665,112 @@ Record: `docs/sessions/2026-08-31-registry.md`.
      (`_is_ours` cannot read what it is looking at) and want the same fix; the immediate
      question is how many of the 08-29..31 `queue-drain` activations share it, which is one
      pass over the rows carrying that stamp.
+
+## From the `company-intel` lane, 2026-08-31 (the anchor session)
+
+Record: `docs/sessions/2026-08-31-company-intel.md`.
+
+521. **A Comeet API row anchors research to an opaque tenant uid, and the model then answers
+     about whoever else has the name** — lane: `company-intel`, found by this session's own
+     data audit. The 2026-08-31 anchor gives an active row its board URL, and
+     `identity_gate.human_board_url` turns an ATS *endpoint* into the page a person reads —
+     which recovered `Finagra` (`api.ashbyhq.com/posting-api/job-board/finagra` →
+     `jobs.ashbyhq.com/finagra`) on a retry after it had failed unanchored. **Comeet is the
+     hole**: `human_board_url`'s Comeet arm learns the page with a GET, which must never fire
+     while building an anchor for every active row (~205 Comeet API rows = ~205 requests), so
+     those rows keep an anchor of the shape
+     `https://www.comeet.com/careers-api/2.0/company/A4.000/positions` — a uid that names no
+     employer. Live cost: **`Landacorp`** (row `A4.000`, notes `14/4 IL`) came back as a US
+     healthcare-IT firm "acquired by ExlService in 2012", `il_center` literally
+     `"Unknown / not identified in research"` — a company with no Israeli presence, on a board
+     whose scope is Israeli employers. Fix: resolve Comeet human URLs ONCE per run for the
+     rows being researched (a handful, not 205 — the anchor is only built for `todo`), or
+     cache `_comeet_human_url` results in `cloud_state/`; failing that, refuse a Comeet-uid
+     anchor rather than send a url that identifies nothing. Check: no new record whose
+     `il_center` admits it found no Israel site.
+522. **`Oak` is a Teamtailor DIVISION FILTER, not an employer, and it reached the public
+     dataset as a company** — lane: `registry` (the row) / `roles` (the published cell), found
+     by `company-intel` 2026-08-31. `companies.csv` has `Oak` parked with
+     `https://operagroup.teamtailor.com/jobs?...&division=Oak` and its own notes already say
+     it: `dark-triage 2026-08-28: wrong-page (LLM: not Oak's careers page (This is the Opera
+     Group's shared Teamtai))` and `listing-hunt 2026-08-29: another company's board`. Yet a
+     matched role (`Product Analyst`, `il.indeed.com/viewjob?jk=9784c063c918d237`, last seen
+     2026-08-31) is published under the name. Research refused it twice, correctly and
+     expensively: there is nothing to identify, because the string is a query parameter. Note
+     the near-miss recorded in the same session — folding `oak identity security os` → `oak`
+     in `ALIASES` would have made this row wear a real company's facts, which is the
+     Bounce/Bounce AI failure with an alias table instead of a name. Needed: the row retired
+     (or resolved to whichever Opera Group division actually hires), and the role's company
+     re-derived from the posting rather than the division filter.
+523. **`Hila & Co.`'s board resolved to a Maltese domain and the name cannot be researched
+     until the row is** — lane: `registry`. `companies.csv` carries `hila.mt/careers/`
+     (Malta's ccTLD) with `queue-search 2026-08-30: no address found; needs re-resolution`
+     and `dark-triage 2026-08-30: page-empty`. The row is parked, so the 2026-08-31 anchor
+     correctly refuses to use that url, and the name has carried a research strike since
+     2026-08-27. Its one role (`Consumer & Market Insights (CMI) Manager`, LinkedIn) is a
+     real Israeli posting, so the employer exists — this is a resolution failure, not a junk
+     name. Needed: re-resolve the row; the profile follows for free once it has an address.
+524. **`Ecommerce Guide` and `Konsortium Ziviler Friedensdienst` are not Israeli employers and
+     should leave the registry** — lane: `registry`. `Ecommerce Guide`
+     (`ecommerceguide.com/jobs/`, `auto-expand scrape; 1 IL`) is an e-commerce
+     content/publisher site; research refused it twice, anchored to its own careers page both
+     times. `Konsortium Ziviler Friedensdienst` (`ziviler-friedensdienst.org/de/jobs`,
+     `queue-drain 2026-08-29 hunt; 1/1 IL`) is the German civil peace service — this session
+     never bought a profile for it, by the rule that a name which is not plausibly an Israeli
+     employer is left to `registry` rather than researched. Both are active rows today, so
+     both count against this lane's gauge for as long as they stay active. Check: `python
+     registry_health.py --explain "Ecommerce Guide"`.
+525. **Three bought profiles described a DIFFERENT company than the board they were anchored
+     to, and an adversarial audit is the only thing that caught them** — lane:
+     `company-intel`. All three were stripped before the commit, so this item is the
+     *method*, not an outstanding defect. `Landacorp`: Comeet `A4.000` is **Landa Digital
+     Printing** (Benny Landa, Rehovot; the board's own jobs are "Backend .NET Developer —
+     Rehovot"), and the record described the defunct US healthcare-IT firm EXL absorbed in
+     2012 — `il_center` was literally `"Unknown / not identified in research"`, which is the
+     tell (`521` is the cause: an opaque Comeet uid anchors nothing). `Kidum Rehab Projects`:
+     two unrelated Israeli companies are called קידום — the anchor board `kidum.com` is the
+     test-prep group, the record was `kidumpro.co.il`, the mental-health hostel operator.
+     `Rockerbox`: right company, materially false — DoubleVerify closed its $85M acquisition
+     2025-03-13 and `rockerbox.com/careers` now 301s to `doubleverify.com/careers`, while the
+     record's `stage_note` read "no IPO or acquisition found". **The lesson for the next
+     session: `_coerce` validates SHAPE and the seam counts searches, and neither can tell
+     you the record is about someone else.** 3 of 23 bought records (13 %) were wrong that
+     way in one batch, every one of them plausible, schema-valid and search-backed. The
+     stripped names return to the gauge rather than shipping as facts. Wanted: a cheap
+     post-research check that the record's own claims (`il_center`, `stage_note`) can be
+     reconciled with the anchor's host before the record is cached until 2027-02.
+526. **Five active rows have no Israeli site at all, and their `N IL` verification notes are
+     artefacts of remote multi-city postings** — lane: `registry`, measured by
+     `company-intel`'s 2026-08-31 record audit (each verified against the row's own board).
+     `ImagineArt` (Ashby `imagineart`: a Pakistan-based GenAI company, jobs in Islamabad,
+     China, Indonesia, Brazil, SF — the row's note claims `33/1 IL`); `Jove` (Workable
+     `jove`: JoVE, HQ Cambridge MA, jobs India/Australia/Korea/LatAm — note claims `122/1
+     IL`; an Israeli founder is not an Israeli site); `Abakus Center` (Workable
+     `abakus-center`: Abakus School, jobs Moscow/Minsk/Almaty/Tbilisi/Warsaw/Dubai, **zero**
+     Israel — note claims `1 IL`); `Happy Mammoth` (Happy Koala LLC, Miami; Tel Aviv appears
+     only as 1 of 10 interchangeable cities on two remote reqs — note claims `2/2 IL`);
+     `Finagra` (Ashby `finagra`: commercial agriculture in emerging markets, jobs Kenya and
+     India; its own record honestly says "no identified Israel presence" — note claims `9/2
+     IL`). The bought profiles are CORRECT about who these companies are; the rows are wrong
+     about where they hire, so they publish non-Israeli jobs to an Israeli board. The shared
+     cause is worth its own look: a remote posting that lists Tel Aviv among ten cities is
+     being counted as an Israeli listing.
+527. **`Peak Innovation` is a staffing agency and it feeds 45 listings into the board** —
+     lane: `registry` / `classifier`. `peak-innovation.co/career/` describes itself as
+     "connecting leading talents with the most successful companies in the economy" through
+     an "outsourcing model", and its listings (Data Analyst, Data Engineer, QA, DBA, Ramat
+     Gan / Central District) are placements at client companies. The profile bought on
+     2026-08-31 is accurate — `hr tech / staffing` — which is exactly what makes this
+     decidable: the record itself now names the class the board excludes (agencies, since
+     2026-08-28). `Recruitx`/`Jobgether`/`comblack` were handled as the same class. Check:
+     `python registry_health.py --explain "Peak Innovation"`, then park or let the agency
+     filter take it.
+528. **The registry row `Galil Systems` names a company that does not exist; the board is
+     Galil Software** — lane: `registry`. `galilsoftware.com` is **Galil Software Ltd**,
+     Israel's onshore-outsourcing house in Nazareth (150+ engineers, ~90 % Israeli-Arab
+     workforce, founded 2008); no employer named "Galil Systems" exists. The profile is keyed
+     under the registry name, so the card will read `Galil Systems` over Galil Software's
+     facts. This is `459`'s class (a rename orphans intel and role history, so the key cannot
+     simply change) and the answer is the same as `Faye`/`withfaye`: an evidenced
+     `display_name`, which this lane can write once `board_verify` reads that page — filed
+     here so the registry knows the row's name is the wrong half of the pair.

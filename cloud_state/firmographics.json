@@ -293,6 +293,19 @@
     "stage_note": "Subsidiary of Amazon.com (NASDAQ: AMZN); Annapurna Labs acquired by Amazon in 2015",
     "sub_sector": "hyperscale cloud infrastructure & platform services (IaaS/PaaS), incl. custom silicon (Graviton/Trainium via Annapurna Labs)"
   },
+  "Abakus Center": {
+    "as_of": "2026-08-31",
+    "business_model": "Franchise-based mental arithmetic education centers for children",
+    "customer_type": "Consumer (parents/children), franchisees",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Unknown",
+    "sector": "education",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Franchise-owned education chain, not venture-backed; no public funding info found",
+    "sub_sector": "Children's mental arithmetic / after-school education franchise"
+  },
   "Abbott": {
     "as_of": "2026-08-22",
     "business_model": "Sells medical devices (e.g. FreeStyle Libre CGM), diagnostics systems and assays, nutrition products and branded generics worldwide",
@@ -386,6 +399,20 @@
     "stage": "public",
     "stage_note": "Listed on Toronto Stock Exchange (TSX: ADCO, up-listed from TSXV in 2021); also traded on TASE",
     "sub_sector": "AI/machine-learning powered advertising automation and effortless marketing for search & e-commerce campaigns (Feeditor, Semdoc, Effortless Marketing)"
+  },
+  "Adi Il": {
+    "as_of": "2026-08-31",
+    "business_model": "Nonprofit rehabilitation and social services",
+    "customer_type": "Individuals with disabilities and their families; government/public sector funding",
+    "display_name": "ADI",
+    "employees_global": null,
+    "founded": 2005,
+    "il_center": "Negev (Ofakim area), Israel",
+    "sector": "nonprofit / social & healthcare services",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Registered Israeli nonprofit (amuta), not venture-backed",
+    "sub_sector": "Rehabilitation village for people with disabilities"
   },
   "Adobe": {
     "as_of": "2026-08-21",
@@ -3591,6 +3618,19 @@
     "stage_note": "Nasdaq & TASE: CGEN",
     "sub_sector": "computational (AI-driven) predictive drug discovery, clinical-stage immuno-oncology antibodies"
   },
+  "Computer Guard Technologies LTD": {
+    "as_of": "2026-08-31",
+    "business_model": "Identity/loyalty solutions provider - smart cards, RFID, ID/access solutions, and customer loyalty club management",
+    "customer_type": "B2B",
+    "employees_global": 70,
+    "founded": 1982,
+    "il_center": "Petah Tikva (HQ)",
+    "sector": "enterprise software / identity & loyalty solutions",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Long-established privately-held Israeli company (founded 1982), official HID Global partner in Israel; no venture funding identified",
+    "sub_sector": "ID Solutions (smart cards, RFID) and Customer Loyalty Club Management"
+  },
   "Confluent": {
     "as_of": "2026-08-21",
     "business_model": "Subscriptions/consumption for fully managed cloud data-streaming service (Confluent Cloud) plus self-managed platform licenses and support",
@@ -5272,6 +5312,19 @@
     "stage_note": "NYSE: FIG, IPO priced 2025 at ~$24B valuation",
     "sub_sector": "Design & Collaboration Software / AI"
   },
+  "Finagra": {
+    "as_of": "2026-08-31",
+    "business_model": "Capital and technology platform for climate-smart farming operations (agtech/agri-fintech), providing agronomy operations and farmer financing in emerging markets",
+    "customer_type": "Smallholder farmers, agricultural cooperatives",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "No identified Israel presence",
+    "sector": "agtech / fintech",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Private, India-based agtech startup; funding stage unconfirmed",
+    "sub_sector": "Climate-smart farming finance"
+  },
   "Finallyrobotic": {
     "as_of": "2026-08-31",
     "business_model": "B2B",
@@ -5798,6 +5851,20 @@
     "stage_note": "Listed as GSK plc — LSE: GSK, NYSE: GSK (ADR)",
     "sub_sector": "Global biopharma (vaccines and specialty medicines) with an AI/ML drug-discovery hub in Tel Aviv"
   },
+  "Galil Systems": {
+    "as_of": "2026-08-31",
+    "business_model": "IT outsourcing / R&D services provider (staff augmentation, QA automation, DevOps, turnkey development)",
+    "customer_type": "B2B enterprises (global tech companies outsourcing R&D)",
+    "display_name": "Galil Software",
+    "employees_global": 200,
+    "founded": 2008,
+    "il_center": "Nazareth (HQ)",
+    "sector": "it services",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned, minimal outside funding (~$2.9M raised per Crunchbase), not VC-growth backed",
+    "sub_sector": "R&D outsourcing / QA automation / DevOps services"
+  },
   "Gamida Cell": {
     "as_of": "2026-08-21",
     "business_model": "Sells its FDA-approved cell therapy Omisirge to transplant centers; pipeline (NK-cell therapy GDA-201) licensed/partnered via Ayrmid",
@@ -5836,6 +5903,19 @@
     "stage": "private-enterprise",
     "stage_note": "Privately owned Israeli IT services/outsourcing group, not VC-backed",
     "sub_sector": "IT outsourcing, staffing, managed services, and technology consulting"
+  },
+  "Gdolim Mehachaim": {
+    "as_of": "2026-08-31",
+    "business_model": "Nonprofit / charitable organization",
+    "customer_type": "N/A",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Givatayim",
+    "sector": "nonprofit",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Nonprofit organization (Larger Than Life / Gedolim Mehachaim), not venture-backed",
+    "sub_sector": "Charitable / welfare organization"
   },
   "GenCell": {
     "as_of": "2026-08-25",
@@ -6164,6 +6244,19 @@
     "stage_note": "Raised ~$19M total, investors include DK Innovation, iAngels",
     "sub_sector": "AI-driven Safety Intelligence Platform"
   },
+  "Golan": {
+    "as_of": "2026-08-31",
+    "business_model": "Manufacturer of cross-linked polyethylene (PE-X) pipe systems for plumbing, heating, and industrial fluid transport",
+    "customer_type": "B2B",
+    "employees_global": 300,
+    "founded": 1963,
+    "il_center": "Kibbutz Sha'ar HaGolan (HQ & manufacturing)",
+    "sector": "industrial manufacturing",
+    "size_band": "M",
+    "stage": "public",
+    "stage_note": "Traded on Tel Aviv Stock Exchange as GRIN.TA; majority-owned by Kibbutz Sha'ar HaGolan Renamed Golan Renewable Industries in 2024-05.",
+    "sub_sector": "Piping systems / polymer products"
+  },
   "Gong": {
     "as_of": "2026-08-21",
     "business_model": "Per-seat SaaS subscriptions for its revenue-intelligence platform sold to sales organizations",
@@ -6452,6 +6545,19 @@
     "stage": "growth-private",
     "stage_note": "VC-backed; peaked at $1.2B valuation after $120M Series C extension (Apr 2024), then valuation fell below $500M; Microchip Technology signed a definitive agreement to acquire Hailo on 2026-07-24, undisclosed terms, expected to close by 2026-09-30 (not yet closed)",
     "sub_sector": "Edge AI accelerator chips and vision/robotics processors with an accompanying model-compilation software stack"
+  },
+  "Happy Mammoth": {
+    "as_of": "2026-08-31",
+    "business_model": "D2C supplements/e-commerce",
+    "customer_type": "B2C",
+    "employees_global": 171,
+    "founded": 2016,
+    "il_center": "None identified",
+    "sector": "consumer health/wellness",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped/privately held DTC supplement brand, HQ Miami, FL, no public funding info found",
+    "sub_sector": "Dietary supplements e-commerce"
   },
   "Harel Insurance & Finance": {
     "as_of": "2026-08-22",
@@ -7163,6 +7269,19 @@
     "stage_note": "VC-backed; ~$28-30M raised across seed rounds (Target Global, Entrée Capital, Collaborative Fund); Danone Manifesto Ventures strategic investment Apr 2023",
     "sub_sector": "animal-free dairy proteins (whey/casein) made by precision fermentation"
   },
+  "ImagineArt": {
+    "as_of": "2026-08-31",
+    "business_model": "B2C SaaS - subscription-based generative AI creative suite (image, video, music generation)",
+    "customer_type": "Consumers and creators",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "",
+    "sector": "artificial intelligence",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Bootstrapped by three founders, no disclosed VC round found; not confirmed as Israeli company",
+    "sub_sector": "Generative AI - creative content generation"
+  },
   "Imagry": {
     "as_of": "2026-08-21",
     "business_model": "Licenses its vision-based autonomous driving software stack to automakers, bus OEMs, and transit operators (e.g. UNVI, eVersum partnerships)",
@@ -7720,6 +7839,19 @@
     "stage_note": "NYSE: JBL; FY2026 revenue outlook ~$34B",
     "sub_sector": "Contract electronics manufacturing, engineering and supply-chain services; optics R&D in Israel"
   },
+  "Jafi": {
+    "as_of": "2026-08-31",
+    "business_model": "Nonprofit/NGO providing immigration, education, and social programs",
+    "customer_type": "Individuals/Communities (Jewish diaspora, immigrants to Israel)",
+    "employees_global": null,
+    "founded": 1929,
+    "il_center": "Jerusalem (HQ)",
+    "sector": "nonprofit / public sector",
+    "size_band": "XL",
+    "stage": "private-enterprise",
+    "stage_note": "Nonprofit quasi-governmental organization (The Jewish Agency for Israel), not VC-backed",
+    "sub_sector": "Jewish/Israel-diaspora nonprofit organization"
+  },
   "Jamf": {
     "as_of": "2026-08-22",
     "business_model": "Subscription SaaS licenses per managed Apple device (management + security tiers)",
@@ -7852,6 +7984,20 @@
     "stage": "public",
     "stage_note": "NYSE: JNJ, Dow 30 component, listed since 1944",
     "sub_sector": "Pharmaceuticals and medical devices (Innovative Medicine + MedTech)"
+  },
+  "Jove": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B/B2C subscription platform providing scientific video protocols and educational content for labs, universities, and biopharma companies",
+    "customer_type": "Universities, research institutions, pharmaceutical/biotech companies, libraries",
+    "display_name": "JoVE",
+    "employees_global": 739,
+    "founded": 2006,
+    "il_center": "Unclear/not confirmed; HQ in Cambridge, MA, USA (Israeli-founded by Moshe Pritsker)",
+    "sector": "edtech / scientific publishing",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Privately held, VC-backed since founding in 2006; no recent funding round details published",
+    "sub_sector": "Scientific video education & research protocols"
   },
   "Jurni AI": {
     "as_of": "2026-08-29",
@@ -9043,6 +9189,20 @@
     "stage_note": "Emerged from stealth Nov 2025 with $100M raised",
     "sub_sector": "AI server hardware / memory architecture"
   },
+  "Make Gems": {
+    "as_of": "2026-08-31",
+    "business_model": "Performance-based marketing and growth partnerships (affiliate/media buying technology)",
+    "customer_type": "B2B (brands and advertisers)",
+    "display_name": "GEMS",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "adtech / performance marketing",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "No public funding/round information found; appears privately held, bootstrapped performance marketing agency",
+    "sub_sector": "Performance marketing / growth partnerships"
+  },
   "Malam": {
     "as_of": "2026-08-30",
     "business_model": "B2B IT services and solutions provider",
@@ -10210,6 +10370,20 @@
     "stage": "public",
     "stage_note": "NASDAQ: NNOX, ~$122M market cap (mid-2026)",
     "sub_sector": "digital X-ray medical imaging systems (Nanox.ARC) with AI teleradiology and population-health analytics"
+  },
+  "Nascompany": {
+    "as_of": "2026-08-31",
+    "business_model": "Media/content production and digital agency (Nas Daily brand), plus tech/events ventures",
+    "customer_type": "B2B (brands, governments) and B2C (content audience)",
+    "display_name": "Nas",
+    "employees_global": 200,
+    "founded": 2017,
+    "il_center": "Tel Aviv (1000 Media agency branch)",
+    "sector": "media & content",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Privately held, VC-backed media/tech company founded by Nuseir Yassin (Nas Daily); opened Israeli agency arm \"1000 Media\" in 2024 Israeli arm (1000 Media) announced 2025-02, not 2024.",
+    "sub_sector": "Digital media/content production and social media agency"
   },
   "Natural Intelligence": {
     "as_of": "2026-08-21",
@@ -11515,6 +11689,32 @@
     "stage_note": "NASDAQ: PAYO since June 2021 (FTAC Olympus SPAC merger)",
     "sub_sector": "cross-border payments and financial services platform for SMBs, freelancers and marketplaces"
   },
+  "Paz - yellow": {
+    "as_of": "2026-08-31",
+    "business_model": "Retail convenience store chain (B2C), part of Paz energy/fuel conglomerate",
+    "customer_type": "B2C",
+    "employees_global": null,
+    "founded": 1999,
+    "il_center": "Yakum (Paz Oil HQ); nationwide retail",
+    "sector": "retail",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "Yellow is the convenience-store brand of Paz Oil Company Ltd, publicly traded on TASE (PZOL)",
+    "sub_sector": "Convenience stores / fuel retail"
+  },
+  "Peak Innovation": {
+    "as_of": "2026-08-31",
+    "business_model": "Tech staffing/outsourcing and recruitment services connecting talent with Israeli tech companies",
+    "customer_type": "B2B (Israeli tech companies seeking outsourced tech talent)",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Israel (HQ, exact city not specified)",
+    "sector": "hr tech / staffing",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held Israeli recruitment/outsourcing firm; no public funding rounds identified",
+    "sub_sector": "Tech recruitment and outsourcing"
+  },
   "Pecan AI": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS subscriptions to its low-code predictive modeling / Predictive GenAI platform",
@@ -11776,6 +11976,19 @@
     "stage": "acquired-by-bigtech",
     "stage_note": "Acquired by Aristocrat Leisure in 2017 for $500M; resold to Sweden's Modern Times Group (MTG, Nasdaq Stockholm) for $620M fixed plus up to $200M earn-out, deal completed February 2025",
     "sub_sector": "free-to-play mobile/social midcore RPG and strategy games (RAID: Shadow Legends, Vikings: War of Clans, Mech Arena)"
+  },
+  "Plateful": {
+    "as_of": "2026-08-31",
+    "business_model": "DTC e-commerce brand selling cookware and food storage products",
+    "customer_type": "B2C",
+    "employees_global": 60,
+    "founded": null,
+    "il_center": "Remote (Israel); HQ in US",
+    "sector": "consumer/e-commerce",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Fast-growing DTC brand, funding details not publicly confirmed",
+    "sub_sector": "Kitchenware & food storage DTC brand"
   },
   "Play Perfect": {
     "as_of": "2026-08-22",
@@ -12686,6 +12899,19 @@
     "stage": "public",
     "stage_note": "TSE: 6723; acquired Celeno (Israel) in 2021",
     "sub_sector": "Microcontrollers, analog & connectivity ICs, automotive/IoT chips"
+  },
+  "Replai": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B SaaS / AI platform for legacy system modernization",
+    "customer_type": "Enterprises (banks, insurance, reinsurance, system integrators)",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Tel Aviv",
+    "sector": "enterprise software / ai",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Small AI startup; no public funding round data found",
+    "sub_sector": "Legacy system modernization / AI code understanding"
   },
   "Revolut": {
     "as_of": "2026-08-22",
@@ -13838,6 +14064,19 @@
     "stage_note": "$25M Series D led by Qumra Capital (Apr 2024) at ~$180-200M valuation, ~$130M total raised",
     "sub_sector": "corporate gifting platform for employee and client recognition"
   },
+  "Snke": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B",
+    "customer_type": "Enterprise (Healthcare providers, hospitals)",
+    "employees_global": 150,
+    "founded": 2020,
+    "il_center": "Tel Aviv (satellite office); HQ in Munich, Germany",
+    "sector": "healthtech",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Spun off from Brainlab in 2020, part of Snke Holding SE (announced June 2025)",
+    "sub_sector": "Digital health / surgical data platform"
+  },
   "Snowflake": {
     "as_of": "2026-08-21",
     "business_model": "consumption-based pricing for compute/storage on its cloud data platform, plus capacity contracts",
@@ -14591,6 +14830,19 @@
     "stage": "growth-private",
     "stage_note": "Series C of $27M led by Delek Motors with Porsche Ventures and Goodyear Ventures (Oct 2021); $47M raised total",
     "sub_sector": "Software-based tactile sensing — AI that infers road-surface and vehicle-dynamics data from existing in-vehicle sensors for OEMs"
+  },
+  "Tailor Brands": {
+    "as_of": "2026-08-31",
+    "business_model": "SaaS platform for AI-powered branding, logo design, and business formation services for SMBs",
+    "customer_type": "SMB",
+    "employees_global": 256,
+    "founded": 2015,
+    "il_center": "Tel Aviv (R&D); HQ in New York, US",
+    "sector": "software / smb tech",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Series C, $50M led by GoDaddy; ~$70.6M total raised",
+    "sub_sector": "Branding & business formation platform (design, logo maker, LLC formation)"
   },
   "Take-Two Interactive": {
     "as_of": "2026-08-22",
@@ -15451,6 +15703,19 @@
     "stage": "growth-private",
     "stage_note": "$100M Series C led by Insight Partners (2022) at $1.2B valuation; first BaaS unicorn",
     "sub_sector": "Banking-as-a-service / embedded finance platform (accounts, cards, payments, lending APIs)"
+  },
+  "Unity": {
+    "as_of": "2026-08-31",
+    "business_model": "Software platform (game engine, monetization/ad tech via ironSource)",
+    "customer_type": "B2B",
+    "employees_global": 5000,
+    "founded": 2004,
+    "il_center": "Tel Aviv (major hub, ex-ironSource); HQ in San Francisco, US",
+    "sector": "gaming / adtech / software",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NYSE: U; IPO 2020; acquired Israeli ironSource in 2022",
+    "sub_sector": "Game engine & app monetization platform"
   },
   "Unlimited Robotics": {
     "as_of": "2026-08-22",
