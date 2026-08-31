@@ -25267,23 +25267,33 @@ def test_record_run_applies_the_backfill_map_and_never_overwrites_a_live_verdict
     assert any("class-backfilled 1" in ln for ln in lines)
 
 
-def test_a_backfill_retraction_line_shape_validates(tmp_path):
-    """A record judged NO keeps its line and its reason; it leaves the PUBLIC file only when
-    a human writes a retraction — the `roles` lane's machinery, and the only sanctioned way a
-    published row disappears. The template this lane writes must round-trip that reader, or
-    the row stays on the board with a `reject` verdict beside it."""
+def test_the_backfill_retraction_lines_this_lane_shipped_are_well_formed():
+    """The SHIPPED lines, not a fixture of them. A record judged NO keeps its line and its
+    reason; it leaves the PUBLIC file only when a human writes a retraction, and each of
+    those lines takes a row off the board permanently — nothing re-checks one.
+
+    The first version of this test built a dict and validated that, which `guard-kill`
+    correctly called CANNOT-FAIL: it passed identically without the commit, because it
+    asserted on nothing the commit contains. This reads
+    `cloud_state/roles_retractions.jsonl` itself, so it fails on any tree where those 14
+    lines are absent or malformed — and it is what catches the next hand-edit that breaks
+    one."""
     from pipeline import roles
-    p = str(tmp_path / roles.RETRACTIONS)
-    line = {"url": "https://acme.com/jobs/1", "status": "withdrawn",
-            "reason": ("re-judged NO under contract %s (dataset class backfill 2026-08-31): "
-                       "out of the product's analyst scope" % seniority.CONTRACT),
-            "on": "2026-08-31", "evidence": "LLM verdict: an FP&A role, not analytics",
-            "by": "classifier backfill 2026-08-31"}
-    with open(p, "w", encoding="utf-8") as fh:
-        fh.write(json.dumps(line, ensure_ascii=False) + "\n")
-    r = roles.Retractions.load(p)
-    assert r.bad == 0 and len(r.entries) == 1
-    assert r.entries[0]["status"] in roles.RETRACTABLE and r.entries[0]["reason"].strip()
+    r = roles.Retractions.load(roles.retractions_path(
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "cloud_state", "seen.db")))
+    assert r.bad == 0, "a malformed line is silently NOT applied"
+    mine = [e for e in r.entries if "classifier backfill" in (e.get("by") or "")]
+    assert len(mine) == 14, [e.get("url") for e in mine]
+    urls = [e["url"] for e in mine]
+    assert len(set(urls)) == len(urls), "two lines naming one posting"
+    for e in mine:
+        assert e["status"] == "withdrawn" and e["status"] in roles.RETRACTABLE
+        assert e["on"] == "2026-08-31" and e["reason"].strip() and e["evidence"].strip()
+        assert "re-judged OUT OF SCOPE under contract" in e["reason"]
+        # published in `meta.removed[].reason`: never end on a partial word. The seam's own
+        # `llm._ascii(reason, 160)` can cut a stored `class.reason` mid-word, so the test is
+        # "does it read as finished", not "did this lane cut it"
+        assert e["reason"].rstrip().endswith((".", "!", "?", ")", "…", '"')), e["reason"][-40:]
 
 
 def test_a_backfill_reject_is_counted_at_every_tier_and_only_when_published(monkeypatch):
