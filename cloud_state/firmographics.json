@@ -6790,11 +6790,11 @@
     "customer_type": "B2B (employers hiring through an agency)",
     "employees_global": null,
     "founded": null,
-    "il_center": "Shoham",
+    "il_center": "",
     "sector": "hr services / recruitment",
     "size_band": "S",
     "stage": "private-enterprise",
-    "stage_note": "Independent boutique headhunting practice run by Hila Malka; evidence is the posting itself (LinkedIn 4457744315, 2026-08-31): the job poster is the headhunter and the hiring employer is an unnamed FMCG company",
+    "stage_note": "Independent boutique headhunting practice run by Hila Malka; evidence is the posting itself (LinkedIn 4457744315, 2026-08-31): the job poster is the headhunter and the hiring employer is an unnamed FMCG company. Its own site is not identified; the posting's Shoham location is the CLIENT's, not the a",
     "sub_sector": "Headhunting & Talent Acquisition"
   },
   "Hippo": {
@@ -8267,12 +8267,12 @@
     "customer_type": "Consumers (students, high schoolers, adults preparing for exams)",
     "display_name": "Kidum",
     "employees_global": null,
-    "founded": 1985,
-    "il_center": "Israel (nationwide branches; HQ in central Israel)",
+    "founded": 1981,
+    "il_center": "Holon (HQ, HaMashbir 1); branches nationwide",
     "sector": "education",
     "size_band": "M",
     "stage": "private-enterprise",
-    "stage_note": "Largest private test-prep/education company in Israel, ~40 years operating, privately owned (not VC-backed)",
+    "stage_note": "Largest private test-prep/education group in Israel; founded 1981 per its own About page (kidum.com/about: 'רשת קידום הוקמה בשנת 1981'), legal entity קידום ידע והשכלה בע\"מ; privately owned, not VC-backed",
     "sub_sector": "Test prep and tutoring services (matriculation, psychometric, English)"
   },
   "Kimberly-Clark": {
@@ -8517,7 +8517,6 @@
     "as_of": "2026-08-31",
     "business_model": "Hardware manufacturer - digital printing presses using Nanography technology",
     "customer_type": "B2B",
-    "display_name": "Landa",
     "employees_global": 460,
     "founded": 2002,
     "il_center": "Rehovot (HQ)",

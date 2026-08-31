@@ -204,7 +204,7 @@ def _row_evidence(row):
     # `identity_gate.human_board_url` is the repo's own endpoint -> readable-page map, so
     # that becomes `jobs.ashbyhq.com/finagra`. Its Comeet arm learns the page with a GET,
     # which must NEVER fire here -- this builds evidence for every active row, so one GET
-    # would be ~205 of them. `_resolve_comeet` does those few, after the batch is cut.
+    # would be 190 of them. `_resolve_comeet` does those few, after the batch is cut.
     if not _IG._COMEET_API.match(url):
         url = _IG.human_board_url(url) or url
     return {"board_url": url}
@@ -284,22 +284,30 @@ def _resolve_comeet(evidence, todo):
     names no employer, and the model then answers about whoever else carries the registry
     name -- `Landacorp` (tenant A4.000, which is Landa Digital Printing in Rehovot) came
     back as a defunct US healthcare-IT firm. `identity_gate.human_board_url`'s Comeet arm
-    learns the page with a GET, so it can never run while building evidence for ~205 active
-    rows; here the batch is already cut to what this run will pay for, so it is a handful.
+    learns the page with a GET, so it can never run while building evidence for the 190
+    active Comeet-API rows; here the batch is already cut to what this run will pay for, so it is a handful.
 
-    A uid we cannot resolve is DROPPED rather than sent: it identifies nothing, and leaving
-    it in would also make `has_evidence` call the name answerable on evidence that answers
-    nothing."""
-    done = 0
+    A uid we ASKED about and could not resolve is DROPPED rather than sent: we know it
+    identifies nothing, and leaving it in would also make `has_evidence` call the name
+    answerable on evidence that answers nobody.
+
+    A name past the cap is left EXACTLY as it was. Dropping those too was the first
+    version, and it silently made the cap decide which names get a second call: an active
+    Comeet row's board url is often its ONLY evidence (the matched harvest fills `postings`
+    only when there is none), so a dropped uid means `has_evidence` False, no disambiguation
+    and a straight strike — chosen by `todo` order, on a queue where all 190 Comeet records
+    go stale in the same refresh window (wave 1). The cap bounds REQUESTS; it must not
+    decide verdicts.
+
+    Returns the number RESOLVED, not attempted: `done` counted attempts, so a morning where
+    all ten GETs failed and all ten anchors were dropped printed `resolved 10`."""
+    asked = resolved = 0
     for name in todo:
         ev = evidence.get(name) or {}
         url = ev.get("board_url") or ""
-        if not _IG._COMEET_API.match(url):
+        if not _IG._COMEET_API.match(url) or asked >= COMEET_RESOLVE_MAX:
             continue
-        if done >= COMEET_RESOLVE_MAX:
-            ev.pop("board_url", None)   # unresolved uid: no anchor is better than a wrong one
-            continue
-        done += 1
+        asked += 1
         human = ""
         try:
             human = _IG.human_board_url(url) or ""
@@ -307,9 +315,10 @@ def _resolve_comeet(evidence, todo):
             human = ""
         if human and not _IG._COMEET_API.match(human):
             ev["board_url"] = human
+            resolved += 1
         else:
             ev.pop("board_url", None)
-    return done
+    return resolved
 
 
 def is_stale(rec, refresh_days):
@@ -366,6 +375,12 @@ def main():
     only = [n.strip() for n in (a.only or "").split(",") if n.strip()]
     if a.only and not only:
         ap.error("--only was given but names no company")
+    if only and (a.export or a.display_report):
+        # `--export` and `--display-report` return before the research path, so pairing
+        # either with `--only` silently did nothing at all -- and "nothing happened" is the
+        # one outcome a session tool must never report as success (wave 1).
+        ap.error("--only researches names; --export and --display-report do not. Run them "
+                 "as separate commands.")
     t0 = time.time()        # the RUN's clock, from here: `minutes` in the stamp is wall time
 
     if a.display_report:
@@ -561,11 +576,21 @@ def main():
         # answers to "who should we spend on next", and neither is a reason to refuse a
         # name a human asked for by hand. `not_a_company` is not in that class -- it is the
         # money gate, and it stays.
-        todo = [n for n in only if not not_a_company(n)]
+        # ...and `pseudo` is in that class too. The pseudo-row is excluded from `names`
+        # above by PLATFORM, which this branch skips, and `not_a_company` does not refuse
+        # it (nor should it -- a real company shares that name). So naming it here would
+        # research the aggregator LAYER as an employer and `--export` would publish facts
+        # for it (wave 1).
+        todo, seen_only = [], set()
+        for n in only:
+            if not_a_company(n) or n in pseudo or n in seen_only:
+                continue
+            seen_only.add(n)        # `--only "Wix,Wix"` is one company, not two calls
+            todo.append(n)
         missing = [n for n in todo if n not in set(names)]
-        refused = [n for n in only if not_a_company(n)]
+        refused = [n for n in only if not_a_company(n) or n in pseudo]
         if refused:
-            print(f"--only refused {len(refused)} name(s) that are not companies: "
+            print(f"--only refused {len(refused)} name(s) that are not employers: "
                   f"{', '.join(refused)}", flush=True)
         if missing:
             print(f"--only: {len(missing)} name(s) are in neither companies.csv nor "
@@ -779,7 +804,18 @@ def main():
     # abort nor an all-fail run (soft outage: exit-0 prose, broken WebSearch grant) is
     # evidence about company names
     struck, mass_failure = [], False
-    if infra_streak >= 3:
+    if only:
+        # A hand retry is not evidence about a NAME. `--only` exists so a session can
+        # re-ask a hard name, and it bypasses the 7-day gate to do it -- so recording a
+        # strike each time would let four honest retries reach `att >= 4`, which is
+        # `refresh_abandoned`: the record evicted from the refresh layer for ever, in a
+        # TRACKED file, by a laptop. That is the one piece of shared state `--only` was
+        # still writing (wave 1). Clearing an ANSWERED strike stays on, because that is a
+        # deletion the evidence justifies and the run just proved.
+        if failed_names:
+            print(f"--only: {failed} failure(s) NOT recorded — a hand retry says nothing "
+                  f"about the name: {', '.join(failed_names[:5])}")
+    elif infra_streak >= 3:
         print(f"infra abort: {failed} soft failures NOT recorded")
     elif done == 0 and attempted < queued and failed:
         # the budget (or the cap) stopped the run BELOW the mass-failure guard: four refusals

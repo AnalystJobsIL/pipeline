@@ -3511,13 +3511,33 @@ render set / 5 without facts). The export holds **1,351** records, and of the **
 companies that can render a card — active registry rows ∪ every company with a role record,
 minus the `discovery` pseudo-row and the names `not_a_company` refuses — **every one has
 facts**: the gauge below reads **0**, from **3** that morning (`Hila & Co.`, `Oak`,
-`University of Notre Dame`). The published dataset agrees: **0 of 167** rows in
-`cloud_state/roles.csv` join to no record, by the dataset's own two-rung rule.
+`University of Notre Dame`). **The published dataset does NOT say that yet, and the
+distinction is the whole of §5's stale-artefact rule:** the committed `cloud_state/roles.csv`
+was generated at 12:15Z, before this evening's records existed, and its own `firmo_match`
+column still stamps **8 of 167** rows `none` — including `Hila & Co.` and `Oak`, which are
+`emailed: true` with empty facts. Re-joining those same 167 rows against the export as it
+stands now gives **0**; the FILE says 0 only after the next digest regenerates it, which is
+the 09-01 morning check and not a claim about today. Quote the column, not the rejoin, when
+you are describing what a downloader gets:
+
+```
+python -c "import csv,collections;print(collections.Counter(r['firmo_match'] for r in csv.DictReader(open('cloud_state/roles.csv',encoding='utf-8-sig'))))"
+```
 
 Treat that 0 as a **floor that a night can lift, not a pin**. The registry grows faster than
 any single drain — a handful of fresh rows with no facts yet is a normal morning, and
 `tests/test_company_intel.py` asserts `<= 10` for exactly that reason. What is never normal
 is the shape this rule closed: a name no amount of re-asking could ever answer.
+
+**Two values in that export were written by HAND and no field says so.** `Hila & Co.`'s whole
+record (the seam answered it on one attempt of three, so it is this session's reading of the
+posting rather than the model's) and `University of Notre Dame`'s `il_center` (patched from
+the row's own board after the model returned it empty). Each carries its provenance in
+`stage_note`, which is prose a refresh will overwrite, and — the part that matters — **both
+bypassed `_coerce`, so neither passed the two checks this same commit added**. The record
+schema has no provenance field; `docs/BACKLOG.md` 539 asks for one. Until then, a hand-written
+value is indistinguishable from a researched one, and `--refresh-days 180` will silently
+replace both around 2027-02.
 
 ```
 python -c "import json,csv,sqlite3;from pipeline.firmographics import identity_key as k,display_index,not_a_company;d=json.load(open('cloud_state/firmographics.json',encoding='utf-8'));i=display_index(d);r=list(csv.DictReader(open('companies.csv',encoding='utf-8-sig')));a={x['company_name'] for x in r if x['active'].strip().lower()=='true'};p={x['company_name'] for x in r if (x['ats_platform'] or '').strip().lower()=='discovery'};m={x[0] for x in sqlite3.connect('cloud_state/seen.db').execute('SELECT DISTINCT company FROM matched')};s={n for n in (a|m)-p if not not_a_company(n)};g=sorted(n for n in s if not (d.get(n) or i.get(k(n))));print(len(d),len(s),len(s)-len(g),g)"
@@ -3578,6 +3598,16 @@ published `Oak` card and the active `Oak - Identity Security OS` row are **the s
 two strings, beside a third thing that merely shares the word. The test that pinned the
 refusal now pins the fold, and says why it turned over. Fold on what the ROLE proves, never
 on what the name suggests — in either direction.
+
+**And this alias DOES change render, where NVIDIA's did not** — named here because the
+paragraph above documents the opposite for the NVIDIA pair and a reader would otherwise
+carry it over. `rolecard._SITE_WORDS` folds `NVIDIA`/`NVIDIA AI` on its own, so that alias
+only fixed the dataset join; `identity`, `security` and `os` are not site words, so
+`Oak`/`Oak - Identity Security OS` become one employer to `cross_check` only now — which
+adds a `title-twin Oak/Oak - Identity Security OS` line to the mail's *Needs a look*. That
+warning is CORRECT (they are the same Product Analyst) and it is the mail asking `roles` for
+the merge `533` owns. It does not collapse the two cards: `roles.csv` still carries both
+rows, one open on Indeed and one closed on Ashby.
 One side effect, named because it is undocumented otherwise: `rolecard`'s `_SITE_WORDS`
 already folded the pair at render, so the alias fixes the dataset's `firmo_match` and NOT the
 `title-twin NVIDIA/NVIDIA AI` warning — and it does suppress an `also listed as NVIDIA AI`
@@ -3802,7 +3832,9 @@ used 2m22s). In order:
    decision: `empties`/`empty_names` still decide what is ROLLED BACK (only an empty answer
    cached a `''` row), `stalls` decides when to stop walking the list;
 3. **research** for board companies with no record under any identity, email companies first,
-   at most `FIRMO_MAX_PER_RUN` (5) inside what is left of the clock. A name failure is a
+   at most `FIRMO_MAX_PER_RUN` (5) NAMES inside what is left of the clock — up to **10**
+   calls since 2026-08-31, because a refusal on a name with a posting buys a second ask.
+   A name failure is a
    `firmo_failed` strike and a weekly retry, **with its reason carried into the mail**; an
    infrastructure failure records nothing; `SOFT_OUTAGE_MIN_FAILS` (3) failures with no
    success is an outage too, no strikes;
@@ -3880,8 +3912,8 @@ publish.** Concretely, in `pipeline/firmographics.py`:
 **active** row *the careers board we read this name from*; `_posting_evidence` gives
 everything else — matched-only discovery names (`Paz - yellow`, `Computer Guard Technologies
 LTD`) and parked rows — *the posting we saw the name on*, which is strictly less. It has to
-be less: **37 of the 43** matched-only names sit on `il.linkedin.com` or `il.indeed.com`, so
-a first-party claim would be false for nearly all of them. The modesty is the point on the
+be less: **38 of the 44** matched-only names sit on LinkedIn or Indeed (29 of them on the
+`il.` hosts), so a first-party claim would be false for nearly all of them. The modesty is the point on the
 row side too — `check_invariants.py` prints **14 active rows whose endpoint names a different
 company**, so "it passed `identity_gate`, therefore it identifies the employer" would be
 exactly the confident-and-untrue sentence §8 is about. What *active* buys is that the url has
@@ -3900,8 +3932,10 @@ against a `kidum.com` anchor whose own six listings are teachers and tutors. Tit
 **Comeet uids are resolved for the attempted batch only** (`docs/BACKLOG.md` 521).
 `.../company/A4.000/positions` names no employer — it is why `Landacorp` came back as a
 defunct US healthcare-IT firm — and `identity_gate.human_board_url`'s Comeet arm learns the
-page with a GET, which can never run while building evidence for ~205 active rows.
-`_resolve_comeet` runs **after** `todo` is cut, capped at `COMEET_RESOLVE_MAX` = 10 GETs, and
+page with a GET, which can never run while building evidence for the **190** active rows
+whose `api_url` is a Comeet API endpoint. `_resolve_comeet` runs **after** `todo` is cut,
+capped at `COMEET_RESOLVE_MAX` = **10 resolutions** (not 10 GETs: each goes through
+`pipeline.http`, whose default is 3 attempts, so the true ceiling is 30 requests), and
 a uid it cannot resolve is **dropped** rather than sent: evidence that identifies nothing
 must not make `has_evidence` call the name answerable.
 
@@ -3918,7 +3952,7 @@ plausible, schema-valid and search-backed):
 | the check | what it catches, and what it must NOT catch |
 |---|---|
 | `_ADMITS_UNIDENTIFIED` on `il_center` | the 521 tell — `"Unknown / not identified in research"`. It demands an identification-FAILURE word, so the five honest `no Israel presence` records of `526` (correct profiles on wrong rows) cache normally. Both halves are pinned |
-| the `employer_name` echo | an optional, never-`required` schema key: the model says who it profiled, and `_same_company` (stem, edge-containment, acronym) holds the record when that is not this name. The echo is **popped before storing** — `display_name` is evidence-only, and a model-authored name on a card is the Bounce/Bounce AI failure |
+| the `employer_name` echo | an optional, never-`required` schema key: the model says who it profiled, and `_same_company` (stem, edge-containment, acronym) holds the record when that is a **differently-named** company. Be exact about the scope — it compares NAMES, so it cannot catch `525`'s literal shape, a different company of the SAME name: `_same_company("Kidum Rehab Projects", "Kidum")` is True, as it must be. It catches the model wandering to another name; **prevention catches the same-named twin**. The echo is **popped before storing** — `display_name` is evidence-only, and a model-authored name on a card is the Bounce/Bounce AI failure |
 
 Both produce a **routable** refusal, so a name with a posting gets the second question rather
 than a strike. **The residual risk, stated rather than discovered later:** a same-named

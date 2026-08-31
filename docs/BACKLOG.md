@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**589 filed · 425 open · 164 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**591 filed · 427 open · 164 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 539.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 541.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -242,7 +242,7 @@ closure convention in the header.
 - **528** `528@registry` **Three registry rows name a company that is not the one their board belongs to, and
 - **538** `538@registry` **Three registry rows carry a name that is not their board's company, with the evidence
 
-### infra — 108 open
+### infra — 109 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -352,6 +352,7 @@ closure convention in the header.
 - **494** `494@infra` **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
 - **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
 - **515** `515@infra` **A cron commit carries `[skip ci]`, so a row a cron corrupts is only ever caught on
+- **540** `540@infra` **Every company-intel mutant scores `killed` whether or not a behavioural test noticed,
 
 ### discovery — 29 open
 
@@ -487,7 +488,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### company-intel — 19 open
+### company-intel — 20 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -508,6 +509,7 @@ closure convention in the header.
 - **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
 - **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 - **506** `506@company-intel` **OPERATOR DECISION
+- **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
 
 ### classifier — 13 open
 
@@ -9758,12 +9760,26 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      Group's shared Teamtai))` and `listing-hunt 2026-08-29: another company's board`. Yet a
      matched role (`Product Analyst`, `il.indeed.com/viewjob?jk=9784c063c918d237`, last seen
      2026-08-31) is published under the name. Research refused it twice, correctly and
-     expensively: there is nothing to identify, because the string is a query parameter. Note
-     the near-miss recorded in the same session — folding `oak identity security os` → `oak`
-     in `ALIASES` would have made this row wear a real company's facts, which is the
-     Bounce/Bounce AI failure with an alias table instead of a name. Needed: the row retired
-     (or resolved to whichever Opera Group division actually hires), and the role's company
-     re-derived from the posting rather than the division filter.
+     expensively: there is nothing to identify **on that url**, because the string is a query
+     parameter. **SUPERSEDED IN PART, 2026-08-31 evening (`company-intel`), and this
+     paragraph said the opposite for six hours:** it read "folding `oak identity security os`
+     → `oak` in `ALIASES` would have made this row wear a real company's facts, which is the
+     Bounce/Bounce AI failure". That fold has now SHIPPED, on the operator's evidence, and
+     the reasoning above is why it was refused in the morning — kept here because a lane that
+     reads only its own item must not act on a verdict the code no longer holds. What
+     changed: the published `Oak` card and our ACTIVE Ashby row `Oak - Identity Security OS`
+     are the SAME live `Product Analyst` posting, so this is one company under two strings
+     beside a third thing that shares the word — not two companies, which is what
+     Bounce/Bounce AI were. Judge a fold on what the ROLE proves, never on what the name
+     suggests. **Still open, and still `registry`'s:** the parked `Oak` row itself, whose url
+     is a division filter on somebody else's board — retire it, or resolve it to whichever
+     Opera Group division actually hires **under a different NAME**. It must never be
+     activated as the bare string `Oak`: the alias folds that string, so an activated Opera
+     row would wear Oak Identity Security OS's sector, stage and size chips, and
+     `research_firmographics`' identity dedup would never research it on its own. That is
+     the Bounce/Bounce AI shape the fold otherwise avoids, and a rename is what keeps it
+     avoided. The role's company needs no re-derivation now: the
+     alias joins it to the right facts, and `533@roles` owns merging the two strings.
 523. **`Hila & Co.`'s board resolved to a Maltese domain and the name cannot be researched
      until the row is** — lane: `registry`. `companies.csv` carries `hila.mt/careers/`
      (Malta's ccTLD) with `queue-search 2026-08-30: no address found; needs re-resolution`
@@ -9792,8 +9808,13 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      What closed it: (1) **prevention** — up to three of the board's OWN live titles now
      travel with every call (`matched` where a role exists, `scraped_cache.json` otherwise),
      and `kidum.com`'s six listings are teachers and tutors, which no hostel operator
-     posts; the re-research came back `education / test prep, founded 1985`, the right
-     קידום. (2) **detection, two cheap reads before caching** — `_ADMITS_UNIDENTIFIED` on
+     posts; the re-research came back `education / test prep`, the right
+     קידום — its `founded` corrected 1985 → **1981** by wave 2 against the board's
+     own About page (*"רשת קידום הוקמה בשנת 1981"*), which also gave the legal entity
+     (קידום ידע והשכלה בע"מ) and the Holon HQ the record had left vague. The one
+     checkable number in a record bought three times, on a page this session had
+     already opened: **prevention put the right company in the record and did not
+     make its numbers true.** (2) **detection, two cheap reads before caching** — `_ADMITS_UNIDENTIFIED` on
      `il_center` catches this item's own tell (`"Unknown / not identified in research"`)
      while deliberately sparing `526`'s five honest `no Israel presence` records, and an
      optional `employer_name` echo lets the model name who it profiled, held by
@@ -9991,17 +10012,71 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `A4.000`): the board's own API returns `company_name: "Landa Corporation"` on all 13
      positions, Rehovot/Dublin/Frankfurt/Munich/Anaheim. Note `528` says "Landa Digital
      Printing" — that is the operating brand; the corporate name is what the board writes.
-     There is ALSO a second row, **`Landa`** (parked, its own `about-landa/careers` page on landa.com,
-     `wrong-url 2026-08-30: board names Landa / Kärcher North America`), which is the same
-     employer's own careers page: one company, two rows, and they share an `identity_key`.
+     **The real duplicate is a different row than this item first said** (wave 2 —
+     the first version named the parked `Landa` row, which is Kärcher's pressure-washer
+     brand on `landa.com`, an unrelated company with an empty `api_url`). It is
+     **`Landa Digital Printing`** (ACTIVE, `landanano.com/about-us/careers`), which carries
+     its OWN firmographics record — `employees_global: 460`, `founded: 2002`, `il_center:
+     Rehovot` — byte-for-byte the same employer as `Landacorp`. Two ACTIVE rows, two paid
+     records, one company; their `identity_key`s differ (`landacorp` vs `landa digital
+     printing`), so nothing in the pipeline can see it. That is the merge this item is
+     really asking for.
      **`Kidum Rehab Projects`** (active, `kidum.com/career/`): the board is the test-prep
      group — its own six listings are teachers and tutors, its schema.org `sameAs` gives
      `facebook.com/Kidumltd` and `linkedin.com/company/kidum` — while the row's NAME belongs
      to `kidumpro.co.il`, an unrelated mental-health hostel operator. **`Galil Systems`**:
-     unchanged from `528` (the board is Galil Software Ltd, Nazareth). `company-intel` has
-     shipped the user-visible half for the first two as evidenced `display_name`s (`Landa`,
-     `Kidum` — each byte-identical to what `display_name_from_evidence` would write from the
-     page it was read off), so a card already renders the right name; what is left is
-     registry's: the row NAME, and the `Landacorp`/`Landa` duplicate. Both rows publish no
-     role today, so nothing is mis-attributed on the board while this waits. Check: `python
+     unchanged from `528` (the board is Galil Software Ltd, Nazareth). `company-intel` shipped
+     `Kidum` as an evidenced `display_name` (what `display_name_from_evidence` would itself
+     write from that page), so that card renders the right name. **It shipped `Landa` for
+     `Landacorp` and then withdrew it the same evening**, because it could never render:
+     `rolecard.display_name` refuses a derived name whose identity is another company's, and
+     `Landa Digital Printing`'s record makes it exactly that — measured, `""` against the
+     real export and `"Landa"` only against a one-record dict. An override that cannot
+     appear is worse than none, since it makes an item claim a fix no reader can see. So the
+     name follows the MERGE here; it does not substitute for it. None of the three rows
+     publishes a role today, so nothing is mis-attributed on the board while this waits. Check: `python
      registry_health.py --explain "Landacorp"`.
+539. **A firmographics record cannot say where its values came from, so a hand-written
+     one is indistinguishable from a researched one — and it skips the checks that guard the
+     researched path** — lane: `company-intel`, found by this session's own wave 2 on this
+     session's own data. Two values shipped on 2026-08-31 evening were written by hand:
+     `Hila & Co.`'s whole record (the seam refused it on two attempts of three, so the stored
+     record is a reading of the posting rather than a model answer) and `University of Notre
+     Dame`'s `il_center` (patched to `Jerusalem (Tantur Ecumenical Institute)` after the model
+     returned it empty, from the row's own SmartRecruiters board). Both are defensible and
+     both are invisible: the schema is `sector … as_of` with no `source` field, so a reader
+     — and `--refresh-days 180`, around 2027-02 — cannot tell them from the other 1,349. Two
+     concrete consequences, not hypotheses: (1) each bypassed `_coerce`, so neither passed
+     `_ADMITS_UNIDENTIFIED` or the `employer_name` echo, the two checks this same commit added
+     against exactly this class of error; (2) the provenance lives in `stage_note` prose,
+     which a refresh overwrites wholesale, so the correction and its evidence vanish together
+     with nothing to notice. The `employees_*` rung already solved this shape for one field
+     (`employees_source`, `employees_as_of`, on 105 records), which is the pattern to copy —
+     a `sources` map, or at minimum a `hand_fields` list — and `newer`/`merge` must treat it
+     the way `display_name` is treated today: `_EVIDENCE_EXEMPT`, so bookkeeping can never
+     win a tie. Check: no record carries a hand-written value that `--facts` cannot name.
+540. **Every company-intel mutant scores `killed` whether or not a behavioural test noticed,
+     so that shard's number is not evidence** — lane: `infra` (the harness) / `company-intel`
+     (the test), found by an adversarial pass on 2026-08-31 evening.
+     `tests/test_company_intel.py::test_every_company_intel_mutation_still_aims_at_real_code`
+     asserts that each record's `find` string occurs exactly once in its file. Applying any
+     mutation deletes that string, so the anchor test goes red under EVERY mutant and
+     `tools/mutate.py` scores it killed — by the test whose only job is to notice that the
+     catalogue drifted. Measured: `ci-cached-board-titles-never-read` reported
+     `killed / test_every_company_intel_mutat (direct)`, and with the anchor test deselected
+     the same mutant SURVIVED the whole suite (`176 passed, 1 deselected`). Worse, it is
+     scored `direct` — "calls the predicate itself: real behaviour" — because
+     `mutate._classify_killer`'s `_STATIC_MARKERS` looks for `inspect.getsource` / `ast.parse`
+     / `ast.walk` and this test reads its file with `open(...).read()`. **What it hid, live:**
+     `_cached_board_titles`'s CALL SITE in `research_firmographics.main()` had no behavioural
+     guard at all — `main()` could stop calling it with every test green — and that is the
+     signal `525` turns on. A behavioural test now covers it
+     (`test_the_boards_own_titles_reach_the_call_the_bulk_pass_makes`), which is the row-level
+     fix; the shard-level one is this item. Two candidate fixes, both `infra`'s call: teach
+     `_classify_killer` that a test reading source with `open()` is STATIC (the marker list is
+     the bug — it enumerates three spellings of "reads the source" and misses the commonest),
+     or have `mutate.py` deselect a catalogue's own anchor test the way it already filters
+     tests red at HEAD. Until one lands, **a company-intel mutation record proves nothing on
+     its own** and this lane must not quote its shard count as evidence — `guard_kill` and a
+     named behavioural test are what count. The same shape exists wherever a lane keeps its
+     own catalogue: `tests/fixtures/classifier/` has an anchor test too.

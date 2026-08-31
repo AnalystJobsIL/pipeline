@@ -4,7 +4,7 @@ one line in the mail's run audit that says what it did (ARCHITECTURE.md §7).
     company_info, firmo_display, report = enrich_for_run(st, board_jobs=..., ...)
     mail_lines, warnings = audit_lines(report)
 
-`enrich_for_run` never raises, spends at most BLURB_MAX_PER_RUN + FIRMO_MAX_PER_RUN `claude`
+`enrich_for_run` never raises, spends at most BLURB_MAX_PER_RUN + 2*FIRMO_MAX_PER_RUN `claude`
 calls inside FIRMO_TIME_BUDGET_MIN minutes, stops at the first infrastructure failure, and
 publishes the union back to the export unless the run is scoped or the export was corrupt.
 The record, identity and the export live in `pipeline/firmographics.py`; the blurb prompt in
@@ -24,11 +24,6 @@ from . import stages as _stages
 from .firmographics import (ResearchUnavailable, all_failures, display_index,  # noqa: F401
                             identity_key, load_shared_status, not_a_company, save_shared,
                             sync_store, union_store)
-
-
-def research_company(*a, **kw):
-    """Late-bound so a test can stub `firmographics.research_company` in one place."""
-    return _F.research_company(*a, **kw)
 
 
 def research_company_detail(*a, **kw):
@@ -443,7 +438,7 @@ def _research_targets(st, board_jobs, email_jobs, firmo, run_date):
     # sqlite UNION the committed ledger. Reading sqlite alone made the two tiers disagree
     # about the same name: the 10:00 cron struck Sivo / ImagineArt / Chalk / Instacart on
     # 2026-08-27 and this hook would re-buy any of them that reached a board the next
-    # morning, at up to FIRMO_MAX_PER_RUN calls, because the cron's strikes never landed in
+    # morning, at up to FIRMO_MAX_PER_RUN names, because the cron's strikes never landed in
     # a store this side reads (`firmographics.load_failures`).
     failures = all_failures(st, run_date)
     cutoff = (_dt.date.fromisoformat(run_date) - _dt.timedelta(days=STRIKE_RETRY_DAYS)).isoformat()
@@ -556,7 +551,7 @@ def _enrich(st, *, board_jobs, email_jobs, all_companies, run_date, use_llm, sco
             profiles_path, rep, holder, llm_off_reason=""):
     """The work behind `enrich_for_run`; `holder` carries partial results out on failure.
 
-    Never raises. Spends at most BLURB_MAX_PER_RUN + FIRMO_MAX_PER_RUN `claude` calls and
+    Never raises. Spends at most BLURB_MAX_PER_RUN + 2*FIRMO_MAX_PER_RUN `claude` calls and
     FIRMO_TIME_BUDGET_MIN minutes on research; stops at the first infrastructure failure.
     Reads sqlite ∪ the shared export, seeds sqlite from the export, and writes the union
     back — except on a scoped run (`--only`/`--limit`), which must leave the committed

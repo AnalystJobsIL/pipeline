@@ -650,7 +650,7 @@
   {
     "id": "ci-admission-record-cached-anyway",
     "file": "pipeline/firmographics.py",
-    "find": "    if _ADMITS_UNIDENTIFIED.search(out.get(\"il_center\") or \"\"):\n        return None, REASON_ADMITS",
+    "find": "    if _admits_unidentified(out.get(\"il_center\")):\n        return None, REASON_ADMITS",
     "replace": "    if False:\n        return None, REASON_ADMITS",
     "class": "M1",
     "symbol": "research_company_detail",
@@ -659,8 +659,8 @@
   {
     "id": "ci-admission-eats-an-honest-no-israel-record",
     "file": "pipeline/firmographics.py",
-    "find": "    r\"(?i)\\b(unidentified|not identified|could ?n.t (?:be )?identif|unable to identif\"",
-    "replace": "    r\"(?i)(unknown|none|no )\"  # noqa",
+    "find": "    return bool(_ADMITS_UNIDENTIFIED.match(\" \".join(str(il_center or \"\").split())))",
+    "replace": "    return bool(re.search(r\"(?i)unknown|not identified\", str(il_center or \"\")))",
     "class": "M5",
     "symbol": "_ADMITS_UNIDENTIFIED",
     "why": "company-intel guard: BACKLOG 526's five rows are CORRECT records about companies with no Israel site"
@@ -695,8 +695,8 @@
   {
     "id": "ci-comeet-resolution-unbounded",
     "file": "research_firmographics.py",
-    "find": "        if done >= COMEET_RESOLVE_MAX:",
-    "replace": "        if False:",
+    "find": "        if not _IG._COMEET_API.match(url) or asked >= COMEET_RESOLVE_MAX:",
+    "replace": "        if not _IG._COMEET_API.match(url):",
     "class": "M5",
     "symbol": "_resolve_comeet",
     "why": "company-intel guard: ~205 active Comeet rows, one GET each, is the explosion the gather path refuses"
@@ -704,8 +704,8 @@
   {
     "id": "ci-comeet-failure-keeps-the-uid",
     "file": "research_firmographics.py",
-    "find": "        if human and not _IG._COMEET_API.match(human):\n            ev[\"board_url\"] = human\n        else:\n            ev.pop(\"board_url\", None)",
-    "replace": "        ev[\"board_url\"] = human or url",
+    "find": "        if human and not _IG._COMEET_API.match(human):\n            ev[\"board_url\"] = human\n            resolved += 1\n        else:\n            ev.pop(\"board_url\", None)",
+    "replace": "        ev[\"board_url\"] = human or url\n        resolved += 1",
     "class": "M6",
     "symbol": "_resolve_comeet",
     "why": "company-intel guard: BACKLOG 521 - a tenant uid names no employer and would make has_evidence call the name answerable"
@@ -745,5 +745,32 @@
     "class": "M5",
     "symbol": "_cached_board_titles",
     "why": "company-intel guard: a live posting outranks a cached listing; the cache can be a day old"
+  },
+  {
+    "id": "ci-our-own-clamp-reads-as-an-outage",
+    "file": "pipeline/firmographics.py",
+    "find": "        if second < timeout and getattr(e, \"kind\", \"\") == \"transient\" \\\n                and f\"timeout({second:g}s)\" in str(e):\n            return rec, why     # OUR clamp, not the CLI: the first call's verdict stands",
+    "replace": "        if False:\n            return rec, why",
+    "class": "M6",
+    "symbol": "research_with_evidence",
+    "why": "company-intel guard: a second call killed by our own budget clamp reported an outage that never happened, and three of those is infra-abort (every strike suppressed)"
+  },
+  {
+    "id": "ci-session-retry-writes-a-strike",
+    "file": "research_firmographics.py",
+    "find": "    if only:\n        # A hand retry is not evidence about a NAME.",
+    "replace": "    if False:\n        # A hand retry is not evidence about a NAME.",
+    "class": "M1",
+    "symbol": "main",
+    "why": "company-intel guard: four hand retries reach att>=4 = refresh_abandoned, evicting the record for ever, in a tracked file, from a laptop"
+  },
+  {
+    "id": "ci-disambig-swap-silently-no-ops",
+    "file": "pipeline/firmographics.py",
+    "find": "    if old not in text:\n        raise ImportError(",
+    "replace": "    if False:\n        raise ImportError(",
+    "class": "M6",
+    "symbol": "_swap",
+    "why": "company-intel guard: a reworded base prompt would make the disambiguation call a copy of the first, carrying the opposite instruction, with every prompt assertion still true"
   }
 ]
