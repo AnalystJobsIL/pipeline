@@ -2057,3 +2057,47 @@ LTX,greenhouse,ltx,https://boards-api.greenhouse.io/v1/boards/ltx/jobs,true,auto
 Finagra,ashby,finagra,https://api.ashbyhq.com/posting-api/job-board/finagra,true,auto-expand slug-probe; 9/2 IL
 Geniussports,scrape,https://www.geniussports.com/,https://www.geniussports.com/,false,scanned; no open Israel roles now | own-site 2026-08-31: www.geniussports.com linkback
 PB Israel,scrape,https://www.pbisrael.com/,https://www.pbisrael.com/,false,scanned; no open Israel roles now | own-site 2026-08-31: www.pbisrael.com linkback
+Moonsite Software Ltd,scrape,,https://jobs.moonsite.co.il,true,queue-drain 2026-08-31 search-llm; 1/1 IL
+Morinside,scrape,,https://morinside.co.il/jobs,true,queue-drain 2026-08-31 search-llm; 1/1 IL
+Mench,scrape,,https://apply.workable.com/mench/,true,queue-drain 2026-08-31 search-llm; 4/4 IL
+Fattal Hotels,scrape,,https://www.fattal.co.il/careers,true,queue-drain 2026-08-31 search-llm; 3/3 IL
+Fitness22,scrape,,https://careers.fitness22.com/jobs,true,queue-drain 2026-08-31 search-llm; 4/4 IL
+Fayrix,scrape,,https://fayrix.com/vacancies,true,queue-drain 2026-08-31 search-llm; 6/6 IL
+Histadrut,scrape,,https://www.histadrut.org.il/jobs/,true,queue-drain 2026-08-31 search-llm; 3/3 IL
+Finonex,scrape,,https://www.finonex.com/careers/,true,queue-drain 2026-08-31 search-llm; 1/1 IL
+Nanomotion,scrape,,https://www.nanomotion.com/jobs/,true,queue-drain 2026-08-31 search-llm; 3/3 IL
+Nascompany,scrape,,http://job-boards.greenhouse.io/nascompany,true,queue-drain 2026-08-31 search-llm; 1/1 IL
+IFF,scrape,,https://iff.wd5.myworkdayjobs.com/IFF_Careers,true,queue-drain 2026-08-31 search-llm; 1/1 IL
+Finallyrobotic,scrape,,https://www.finallyrobotic.com/careers,true,queue-drain 2026-08-31 search-llm; 1/1 IL
+Ifor Fintech,scrape,,https://www.iforfintech.com/open-positions,true,queue-drain 2026-08-31 search-llm; 1/1 IL
+Arbitrip,scrape,,https://arbitrip.com/careers/,true,queue-drain 2026-08-31 search-llm; 1/1 IL
+Automat-it,scrape,,https://www.automat-it.com/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Holmes Place,scrape,,https://www.holmesplace.co.il/jobs/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Hoopo,scrape,,https://www.hoopo.tech/careers,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Hyperstrong,scrape,,https://www.hyperstrong.com/en/join-us/openings,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Igt,scrape,,https://jobs.igt.com,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Imdsoft,scrape,,https://imd-soft.com/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Levant,scrape,,https://www.levant.co.il/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Fingular,scrape,,https://fingular.com/careers,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Firstsource Solutions Limited,scrape,,https://www.firstsource.com/careers,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Five Sigma,scrape,,https://fivesigmalabs.com/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Herzoglaw,scrape,,https://herzoglaw.co.il/en/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Idt,scrape,,https://www.idt.net/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Imerit,scrape,,https://imerit.ai/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Allyable,scrape,,https://allyable.com/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Kroll Consulting,scrape,,https://careers.kroll.com/en,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+ZutaCore,scrape,,https://zutacore.com/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+FinYX Quants,scrape,,https://finyx.io/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Fedex,scrape,,https://careers.fedex.com,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Fieldcorefieldservices,scrape,,https://jobs.jobvite.com/fieldcore,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Hitachienergy,scrape,,https://www.hitachienergy.com/careers,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Israaid,scrape,,https://www.israaid.org/about/jobs/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Movement The Wellness Group,scrape,,https://movement-group.com/en/jobs/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Faas Fpa As A Service,scrape,,https://faas.co.il/career/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Feverup,scrape,,https://careers.feverup.com/jobs/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Filigran,scrape,,https://jobs.ashbyhq.com/filigran,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Fives Intralogistics,scrape,,https://jobs.fivesgroup.com/en/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Hikvision,scrape,,https://www.hikvision.com/en/about-us/careers/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Hilti Israel,scrape,,https://careers.hilti.group/en/jobs/,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Hiriya Recycling Park,scrape,,https://www.hiriya.co.il/jobs,false,queue-hunt 2026-08-31: careers page documented; monitored candidate
+Ideodigital,scrape,,https://apply.workable.com/ideo-digital-1/?lng=en,false,queue-hunt 2026-08-31: careers page documented; monitored candidate

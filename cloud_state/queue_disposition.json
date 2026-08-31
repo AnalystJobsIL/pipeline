@@ -2007,39 +2007,20 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Automat-it": {
-  "date": "2026-08-30",
-  "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.automat-it.com/careers",
-     "https://www.automat-it.com/careers/",
-     "https://www.automat-it.com/join-us"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us"
-    ]
-   },
-   "read_page": "https://www.automat-it.com/careers/",
-   "search_pages": [
-    "https://www.automat-it.com/careers/",
-    "https://www.comeet.com/jobs/automatit/26.003?coref\\u003d1.11.p22_4E4"
-   ],
-   "verify": []
-  },
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
   "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Automat-it is a real, active AWS Premier Partner employer with a working careers page listing 17 open roles, backed by a Comeet job board. None of the negative categories apply (not acquired, duplicate, defunct, or non-employer), and it clearly does have a machine-readable board, so \"real-company-no"
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
  },
  "Avero": {
   "board_url_if_any": "",
@@ -7952,41 +7933,36 @@
   "why": "genielabs.tech is a real company (Genie, game art content platform); careers-path probe of 12 paths found no job board."
  },
  "Geniussports": {
-  "date": "2026-08-30",
-  "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.geniussports.com/careers",
-     "https://www.geniussports.com/careers/"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
-    ]
-   },
-   "read_page": "https://www.geniussports.com/careers/",
-   "search_pages": [
-    "https://www.geniussports.com/careers/",
-    "http://job-boards.greenhouse.io/geniussportssn",
-    "https://hub.globalsportsjobs.com/company/new-customer-36",
-    "https://investors.geniussports.com"
-   ],
-   "verify": []
-  },
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
   "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Genius Sports is a legitimate, operating employer (~2,000 staff, 18 locations) with a live careers page and an automatable Greenhouse job board (job-boards.greenhouse.io/geniussportssn). It is not acquired, duplicate, defunct, or a non-employer, and \"real-company-no-board\" is contradicted by the fou"
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "slug-probe",
+     "probe-no-il"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
  },
  "Gentex Corporation": {
   "date": "2026-08-30",
@@ -19624,40 +19600,48 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "PB Israel": {
-  "date": "2026-08-30",
-  "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://jobs.paloaltonetworks.com/about/careers",
-     "https://jobs.paloaltonetworks.com/company/careers",
-     "https://jobs.paloaltonetworks.com/careers/open-positions"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions"
-    ]
-   },
-   "read_page": "https://jobs.paloaltonetworks.com/en/location/israel-jobs/47263/294640/2",
-   "search_pages": [
-    "https://jobs.paloaltonetworks.com/en/location/israel-jobs/47263/294640/2",
-    "https://www.pbisrael.com/משרות/",
-    "https://jobs.appliedmaterials.com/location/israel-jobs/95/294640/2",
-    "https://www.nbn.org.il/jobboard/"
-   ],
-   "verify": []
-  },
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
   "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Search results are mostly unrelated employers (Palo Alto Networks, Applied Materials, NBN job board). The only plausible own-site hit is pbisrael.com/משרות/ (a jobs page), but its content wasn't retrieved, and the careers probe was run against jobs.paloaltonetworks.com — another company's domain — s"
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "search",
+     "walked-nothing-found"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "another company's board"
+    ],
+    [
+     "hunt",
+     "llm-cannot-tell"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
  },
  "PCB Technologies Ltd.": {
   "date": "2026-08-30",
@@ -23286,5 +23270,767 @@
   "raw_verdict": "real-company-no-board",
   "verdict": "no-board",
   "why": "Real small Israeli environmental planning consultancy (founded 2016, Wix site); careers-path probe of sadotproj.co.il found no careers/jobs page."
+ },
+ "Levant": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Kroll Consulting": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Level App": {
+  "date": "2026-08-31",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "UserWay",
+  "why": "a rung found this name's board and the registry row 'UserWay' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "UserWay",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.levelaccess.com/careers/"
+    ]
+   ]
+  }
+ },
+ "ZutaCore": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Israaid": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Moonsite Software Ltd": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Morinside": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Movement The Wellness Group": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Mprest": {
+  "date": "2026-08-31",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "mPrest Systems",
+  "why": "a rung found this name's board and the registry row 'mPrest Systems' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "mPrest Systems",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://mprest.com/mprest_careers/"
+    ]
+   ]
+  }
+ },
+ "Nanomotion": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Nascompany": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Mench": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "FinYX Quants": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "IFF": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Faas Fpa As A Service": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Fattal Hotels": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Fayrix": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Fedex": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Feverup": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Fieldcorefieldservices": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Filigran": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Finallyrobotic": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Fingular": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Finonex": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Fireberry Software Ltd": {
+  "date": "2026-08-31",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Fireberry",
+  "why": "a rung found this name's board and the registry row 'Fireberry' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Fireberry",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.fireberry.com/careers"
+    ]
+   ]
+  }
+ },
+ "Firstsource Solutions Limited": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Fitness22": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Five Sigma": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Fives Intralogistics": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Herzoglaw": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Hikvision": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Hilti Israel": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Hio AI": {
+  "date": "2026-08-31",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Hailo",
+  "why": "a rung found this name's board and the registry row 'Hailo' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Hailo",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://hailo.ai/company-overview/careers/"
+    ]
+   ]
+  }
+ },
+ "Hiriya Recycling Park": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Histadrut": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Hitachienergy": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Holmes Place": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Hoopo": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Hyperstrong": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Iai": {
+  "date": "2026-08-31",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "IAI - Israel Aerospace Industries",
+  "why": "a rung found this name's board and the registry row 'IAI - Israel Aerospace Industries' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "IAI - Israel Aerospace Industries",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://jobs.iai.co.il/jobs"
+    ]
+   ]
+  }
+ },
+ "Ideodigital": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Idt": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Ifor Fintech": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Igt": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Imdsoft": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Imerit": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
+ },
+ "Arbitrip": {
+  "date": "2026-08-31",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "found"
+    ]
+   ]
+  }
  }
 }
