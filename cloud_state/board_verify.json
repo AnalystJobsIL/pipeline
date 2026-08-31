@@ -1533,6 +1533,20 @@
   "verdict": "ok",
   "why": "AutoDS's own /jobs page; no listings rendered (mostly nav/marketing content), mentions \"Careers - we're hiring\" but no positions shown and no statement of none."
  },
+ "automat-it|https://www.automat-it.com/careers/": {
+  "chars": 355752,
+  "date": "2026-08-31",
+  "employer_named": "Automat-it",
+  "model": "opus",
+  "name": "Automat-it",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.automat-it.com/careers/",
+  "verdict": "ok",
+  "why": "Automat-it's own careers page listing 17 openings including Tel-Aviv, Israel."
+ },
  "avero|https://averoinc.com/careers/": {
   "chars": 139901,
   "date": "2026-08-29",
@@ -3698,6 +3712,25 @@
   "verdict": "ok",
   "why": "Dentsply Sirona's own careers site showing 2 Israel jobs in Bar Lev."
  },
+ "deutsch & co.|https://www.deutsch.com/careers": {
+  "chars": 39130,
+  "date": "2026-08-31",
+  "employer_named": "Deutsch Inc.",
+  "model": "opus",
+  "name": "Deutsch & Co.",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Deutsch Inc."
+  },
+  "states_no_openings": false,
+  "text_chars": 588,
+  "url": "https://www.deutsch.com/careers",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Deutsch Inc."
+ },
  "develeap|https://www.develeap.com/careers/": {
   "chars": 151959,
   "date": "2026-08-29",
@@ -4394,6 +4427,34 @@
   "verdict": "ok",
   "why": "ExpressVPN's own careers page describing benefits and linking to job openings; no listings shown."
  },
+ "extreme technologies|https://www.extremenetworks.com/about-extreme-networks/career": {
+  "chars": 399933,
+  "date": "2026-08-31",
+  "employer_named": "Extreme Networks",
+  "model": "opus",
+  "name": "Extreme Technologies",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.extremenetworks.com/about-extreme-networks/career",
+  "verdict": "ok",
+  "why": "Extreme Networks' own careers landing page with links to open positions; global company, no listings shown."
+ },
+ "exyte group|https://careers.exyte.net": {
+  "chars": 115246,
+  "date": "2026-08-31",
+  "employer_named": "Exyte Group",
+  "model": "opus",
+  "name": "Exyte Group",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 4424,
+  "url": "https://careers.exyte.net",
+  "verdict": "ok",
+  "why": "Exyte's own careers site (careers.exyte.net), global company, no listings shown."
+ },
  "exyte|https://careers.exyte.net/global/en/c/engineering-jobs": {
   "chars": 1313403,
   "date": "2026-08-29",
@@ -4478,6 +4539,34 @@
   "verdict": "ok",
   "why": "Factify's own careers page (factify.com), Tel Aviv mentioned; no positions listed but no statement of none."
  },
+ "fattal hotels|https://www.fattal.co.il/careers": {
+  "chars": 328897,
+  "date": "2026-08-31",
+  "employer_named": "רשת מלונות פתאל / חברת מלונות פתאל בע\"מ (Fattal Hotels)",
+  "model": "opus",
+  "name": "Fattal Hotels",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.fattal.co.il/careers",
+  "verdict": "ok",
+  "why": "Fattal's own Hebrew careers page listing job categories with open-position counts."
+ },
+ "fayrix|https://fayrix.com/vacancies": {
+  "chars": 218109,
+  "date": "2026-08-31",
+  "employer_named": "Fayrix",
+  "model": "opus",
+  "name": "Fayrix",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 3575,
+  "url": "https://fayrix.com/vacancies",
+  "verdict": "ok",
+  "why": "Fayrix's own vacancies page listing openings; HQ Raanana, Israel."
+ },
  "fdna|https://www.fdna.com/jobs": {
   "chars": 68474,
   "date": "2026-08-30",
@@ -4525,6 +4614,39 @@
   "verdict": "ok",
   "why": "Workable-hosted company profile for Fetcher itself (ATS page, not an aggregator listing many employers); it explicitly states \"No job openings right now\". Nothing ties it to another country's Fetcher."
  },
+ "fido credit|https://gh.fido.money/careers": {
+  "chars": 84080,
+  "date": "2026-08-31",
+  "employer_named": "Fido (Fido Microcredit)",
+  "model": "opus",
+  "name": "Fido Credit",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 7734,
+  "url": "https://gh.fido.money/careers",
+  "verdict": "ok",
+  "why": "Fido's own careers page listing open roles including an Israel R&D position."
+ },
+ "fiducial|https://fiducial.com/careers": {
+  "chars": 399996,
+  "date": "2026-08-31",
+  "employer_named": "Fiducial",
+  "model": "opus",
+  "name": "Fiducial",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "ok",
+   "why": "Official fiducial.com careers page published by Fiducial itself, describing its own hiring, benefits and \"Opportunities\". No job listings rendered and no statem"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://fiducial.com/careers",
+  "verdict": "UNVERIFIABLE",
+  "why": "two reads disagreed (NOT-THEIRS then ok); a verdict that does not reproduce is not a verdict"
+ },
  "fieldin|https://www.comeet.com/jobs/fieldintech/68.001": {
   "chars": 122142,
   "date": "2026-08-30",
@@ -4543,6 +4665,25 @@
   "url": "https://www.comeet.com/jobs/fieldintech/68.001",
   "verdict": "UNVERIFIABLE",
   "why": "a wall or an empty shell we could not read"
+ },
+ "filipino contractors|https://filipinocontractors.com/jobs-list": {
+  "chars": 399994,
+  "date": "2026-08-31",
+  "employer_named": "Filipino Contractors",
+  "model": "opus",
+  "name": "Filipino Contractors",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://filipinocontractors.com/jobs-list",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
  },
  "finaro|https://finaro.ch/en/career": {
   "chars": 33560,
@@ -4600,6 +4741,20 @@
   "url": "https://recruiterflow.com/fionics/jobs",
   "verdict": "NOT-THEIRS",
   "why": "the page is an aggregator"
+ },
+ "fitness22|https://careers.fitness22.com/jobs": {
+  "chars": 67006,
+  "date": "2026-08-31",
+  "employer_named": "Fitness22",
+  "model": "opus",
+  "name": "Fitness22",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 3039,
+  "url": "https://careers.fitness22.com/jobs",
+  "verdict": "ok",
+  "why": "Fitness22's own Teamtailor career site listing 4 jobs, mostly at Petah Tiqwa main office."
  },
  "flashy|https://flashy.app/he/career/": {
   "chars": 59829,
@@ -5961,6 +6116,25 @@
   "verdict": "NOT-THEIRS",
   "why": "belongs to GSI Service Group, Inc."
  },
+ "gt technologies|https://www.gttechnologies.com/careers/": {
+  "chars": 56408,
+  "date": "2026-08-31",
+  "employer_named": "GT Technologies",
+  "model": "opus",
+  "name": "GT Technologies",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to GT Technologies"
+  },
+  "states_no_openings": false,
+  "text_chars": 1007,
+  "url": "https://www.gttechnologies.com/careers/",
+  "verdict": "NOT-THEIRS",
+  "why": "a namesake abroad (GT Technologies)"
+ },
  "gth software|http://gthsoftware.com/career.html": {
   "chars": 5175,
   "date": "2026-08-29",
@@ -6007,6 +6181,25 @@
   "url": "https://careers.haat.delivery/careers",
   "verdict": "ok",
   "why": "HAAT's own careers site listing departments with open roles; Hebrew cookie notice indicates Israeli entity. Some departments say \"No open roles\" but overall openings exist."
+ },
+ "hacerem spirits|https://gwspirits.co.il/career/": {
+  "chars": 133745,
+  "date": "2026-08-31",
+  "employer_named": "Global Wine & Spirits",
+  "model": "opus",
+  "name": "Hacerem Spirits",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Global Wine & Spirits"
+  },
+  "states_no_openings": false,
+  "text_chars": 4833,
+  "url": "https://gwspirits.co.il/career/",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Global Wine & Spirits"
  },
  "hackerseye|https://hackerseye.com/careers/": {
   "chars": 279273,
@@ -6261,6 +6454,25 @@
   "verdict": "ok",
   "why": "Herbalife's own iCIMS careers search page filtered to Israel; no results text rendered but no statement of no openings."
  },
+ "here for you ministries|https://chministries.org/employment/": {
+  "chars": 205652,
+  "date": "2026-08-31",
+  "employer_named": "Christian Healthcare Ministries (CHM)",
+  "model": "opus",
+  "name": "Here For You Ministries",
+  "page_kind": "board",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Christian Healthcare Ministries (CHM)"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://chministries.org/employment/",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Christian Healthcare Ministries (CHM)"
+ },
  "hexight|https://www.hexight.io/careers": {
   "chars": 32598,
   "date": "2026-08-29",
@@ -6322,6 +6534,34 @@
   "verdict": "NOT-THEIRS",
   "why": "belongs to HILA"
  },
+ "hilan|https://www.facebook.com/hilancareer/": {
+  "chars": 399990,
+  "date": "2026-08-31",
+  "employer_named": "חילן קריירה Hilan Career",
+  "model": "opus",
+  "name": "Hilan",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.facebook.com/HilanCareer/",
+  "verdict": "ok",
+  "why": "Facebook careers page titled \"חילן קריירה Hilan Career | Tel Aviv\" — Hilan's own hiring page, Israeli; no listings visible, only script boilerplate."
+ },
+ "hio ai|https://hailo.ai/company-overview/careers/": {
+  "chars": 148061,
+  "date": "2026-08-31",
+  "employer_named": "Hailo (Hailo Technologies Ltd.)",
+  "model": "opus",
+  "name": "Hio AI",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 4213,
+  "url": "https://hailo.ai/company-overview/careers/",
+  "verdict": "ok",
+  "why": "Hailo Technologies Ltd's own careers page with openings in Tel Aviv-Yafo; \"Hio AI\" is a rendering of Hailo.ai."
+ },
  "hire-match|http://hirematch.com/site/opportunities/list_vacancy.htm": {
   "chars": 15000,
   "date": "2026-08-31",
@@ -6360,6 +6600,44 @@
   "verdict": "NOT-THEIRS",
   "why": "belongs to Hire Match"
  },
+ "hisky ltd|https://pilotcareercenter.com/air-carrier-pcc-profile/4933/hisky-europe": {
+  "chars": 79436,
+  "date": "2026-08-31",
+  "employer_named": "HiSky Europe",
+  "model": "opus",
+  "name": "Hisky Ltd",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 4395,
+  "url": "https://pilotcareercenter.com/Air-Carrier-PCC-Profile/4933/HiSky-Europe",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
+ },
+ "hm stealth|https://stealthgi.com/career/": {
+  "chars": 97792,
+  "date": "2026-08-31",
+  "employer_named": "Stealth Group Holdings Ltd",
+  "model": "opus",
+  "name": "Hm Stealth",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Stealth Group Holdings Ltd"
+  },
+  "states_no_openings": false,
+  "text_chars": 7072,
+  "url": "https://stealthgi.com/career/",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Stealth Group Holdings Ltd"
+ },
  "hms - strategic financial it|https://investstrategic.com/about/careers/": {
   "chars": 102580,
   "date": "2026-08-29",
@@ -6379,6 +6657,20 @@
   "verdict": "NOT-THEIRS",
   "why": "belongs to Strategic Financial Services"
  },
+ "holmes place|https://www.holmesplace.co.il/jobs/": {
+  "chars": 193097,
+  "date": "2026-08-31",
+  "employer_named": "הולמס פלייס ישראל (Holmes Place)",
+  "model": "opus",
+  "name": "Holmes Place",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.holmesplace.co.il/jobs/",
+  "verdict": "ok",
+  "why": "Official Holmes Place Israel site jobs page listing its own openings."
+ },
  "honeywell|https://careers.honeywell.com/us/en/search-results?keywords=israel": {
   "chars": 10124,
   "date": "2026-08-30",
@@ -6389,6 +6681,20 @@
   "url": "https://careers.honeywell.com/us/en/search-results?keywords=Israel",
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (90 visible chars via plain-thin)"
+ },
+ "hoopo|https://www.hoopo.tech/careers": {
+  "chars": 63521,
+  "date": "2026-08-31",
+  "employer_named": "Hoopo",
+  "model": "opus",
+  "name": "Hoopo",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 2063,
+  "url": "https://www.hoopo.tech/careers",
+  "verdict": "ok",
+  "why": "Hoopo's own careers page listing Israel-based roles."
  },
  "horizon trade|https://horizon.trade/careers": {
   "chars": 199444,
@@ -6403,6 +6709,25 @@
   "url": "https://horizon.trade/careers",
   "verdict": "ok",
   "why": "Horizon Trade's own careers page listing 3 open roles in Ramat Gan, Israel."
+ },
+ "hoyleton|https://hoyleton.org/careers/": {
+  "chars": 399983,
+  "date": "2026-08-31",
+  "employer_named": "Hoyleton Youth and Family Services",
+  "model": "opus",
+  "name": "Hoyleton",
+  "page_kind": "board",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "a namesake abroad (Hoyleton Youth and Family Services)"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://hoyleton.org/careers/",
+  "verdict": "NOT-THEIRS",
+  "why": "a namesake abroad (Hoyleton Youth and Family Services)"
  },
  "hsbc global services limited|https://mycareer.hsbc.com/en_gb/external/searchjobs?scrolltojobssection=true&location=israel": {
   "chars": 231796,
@@ -6510,6 +6835,20 @@
   "verdict": "UNVERIFIABLE",
   "why": "llm-error timeout(180s)"
  },
+ "hyperstrong|https://www.hyperstrong.com/en/join-us/openings": {
+  "chars": 129995,
+  "date": "2026-08-31",
+  "employer_named": "HyperStrong (Beijing HyperStrong Technology Co., LTD)",
+  "model": "opus",
+  "name": "Hyperstrong",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 8351,
+  "url": "https://www.hyperstrong.com/en/join-us/openings",
+  "verdict": "ok",
+  "why": "Official HyperStrong (Beijing HyperStrong Technology Co., LTD) careers openings page listing 6 roles; own board. Global company site, could include Israel."
+ },
  "i4valley|https://i4valley.com/apply/": {
   "chars": 55494,
   "date": "2026-08-29",
@@ -6542,6 +6881,20 @@
   "url": "https://jobs.iai.co.il/jobs/",
   "verdict": "ok",
   "why": "IAI's own careers job board (jobs.iai.co.il), Hebrew, listings rendered via template placeholders; \"no jobs found\" is template text, not a statement."
+ },
+ "iai|https://jobs.iai.co.il/jobs": {
+  "chars": 65305,
+  "date": "2026-08-31",
+  "employer_named": "התעשייה האווירית IAI",
+  "model": "opus",
+  "name": "Iai",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 1383,
+  "url": "https://jobs.iai.co.il/jobs",
+  "verdict": "ok",
+  "why": "Israel Aerospace Industries' own Hebrew jobs board; listings render via unloaded template placeholders."
  },
  "ibi בית השקעות|https://www.ibi.co.il/career/": {
   "chars": 33115,
@@ -6633,6 +6986,25 @@
   "verdict": "NOT-THEIRS",
   "why": "the page is an aggregator"
  },
+ "idor next|https://idornext.co.il/jobs/": {
+  "chars": 84114,
+  "date": "2026-08-31",
+  "employer_named": "Idor Next (IDOR GROUP)",
+  "model": "opus",
+  "name": "Idor Next",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 4481,
+  "url": "https://idornext.co.il/jobs/",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
+ },
  "idx|https://integraldiagnostics.wd105.myworkdayjobs.com/idx_careers": {
   "chars": 7014,
   "date": "2026-08-29",
@@ -6677,6 +7049,20 @@
   "verdict": "ok",
   "why": "IgniteTech's own careers site listing open remote roles worldwide."
  },
+ "igt|https://jobs.igt.com": {
+  "chars": 68030,
+  "date": "2026-08-31",
+  "employer_named": "IGT",
+  "model": "opus",
+  "name": "Igt",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 6738,
+  "url": "https://jobs.igt.com",
+  "verdict": "ok",
+  "why": "IGT's own careers site (jobs.igt.com), global with locations/language options; landing page with categories but no listed positions."
+ },
  "imagindairy|https://imagindairy.com/careers/": {
   "chars": 60109,
   "date": "2026-08-29",
@@ -6690,6 +7076,20 @@
   "url": "https://imagindairy.com/careers/",
   "verdict": "ok",
   "why": "Own careers page with \"Current Openings\" section but no listings shown; no statement that there are none."
+ },
+ "imdsoft|https://imd-soft.com/careers/": {
+  "chars": 133038,
+  "date": "2026-08-31",
+  "employer_named": "iMDsoft",
+  "model": "opus",
+  "name": "Imdsoft",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 6374,
+  "url": "https://imd-soft.com/careers/",
+  "verdict": "ok",
+  "why": "Official iMDsoft careers page listing two open positions; Israeli phone +972 confirms entity."
  },
  "imubit|https://imubit.com/careers": {
   "chars": 26657,
@@ -6941,6 +7341,39 @@
   "verdict": "ok",
   "why": "IQVIA's own careers site (jobs.iqvia.com) listing its global openings, with Israel filter available."
  },
+ "iron fitness ltd|https://oakandironfitness.com/careers/": {
+  "chars": 399973,
+  "date": "2026-08-31",
+  "employer_named": "Oak and Iron Fitness",
+  "model": "opus",
+  "name": "Iron Fitness Ltd",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Oak and Iron Fitness"
+  },
+  "states_no_openings": false,
+  "text_chars": 486,
+  "url": "https://oakandironfitness.com/careers/",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Oak and Iron Fitness"
+ },
+ "irregular com|https://jobs.ashbyhq.com/irregular": {
+  "chars": 22380,
+  "date": "2026-08-31",
+  "employer_named": "Irregular",
+  "model": "opus",
+  "name": "Irregular Com",
+  "page_kind": "board",
+  "route": "render",
+  "states_no_openings": false,
+  "text_chars": 835,
+  "url": "https://jobs.ashbyhq.com/irregular",
+  "verdict": "ok",
+  "why": "Ashby-hosted board titled \"Irregular Jobs\" with 9 Tel Aviv roles — company's own board."
+ },
  "isracard|https://marketing.isracard.co.il/careershome/": {
   "chars": 138183,
   "date": "2026-08-29",
@@ -6954,6 +7387,25 @@
   "url": "https://marketing.isracard.co.il/careershome/",
   "verdict": "ok",
   "why": "Isracard's own careers site listing 25 open positions by department."
+ },
+ "israco|http://www.israco.co.il/careers": {
+  "chars": 26403,
+  "date": "2026-08-31",
+  "employer_named": "ישראקו (Israco)",
+  "model": "opus",
+  "name": "Israco",
+  "page_kind": "error",
+  "route": "render",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "dead-url",
+   "why": "the page loads and says it does not exist"
+  },
+  "states_no_openings": false,
+  "text_chars": 1563,
+  "url": "http://www.israco.co.il/careers",
+  "verdict": "dead-url",
+  "why": "the page loads and says it does not exist"
  },
  "israel aerospace industries|https://jobs.iai.co.il/": {
   "chars": 480,
@@ -8504,6 +8956,25 @@
   "verdict": "ok",
   "why": "Leumit Health Services' own English careers section (\"Come work and volunteer at Leumit\"), linking to Hebrew job pages; no positions listed and no statement of none."
  },
+ "lev equity|https://portfoliocareers.levelequity.com/jobs": {
+  "chars": 293991,
+  "date": "2026-08-31",
+  "employer_named": "Level Equity",
+  "model": "opus",
+  "name": "Lev Equity",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://portfoliocareers.levelequity.com/jobs",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
+ },
  "lev haolam|https://jobs.ashbyhq.com/levhaolam": {
   "chars": 18787,
   "date": "2026-08-29",
@@ -8517,6 +8988,39 @@
   "url": "https://jobs.ashbyhq.com/levhaolam",
   "verdict": "ok",
   "why": "Ashby-hosted board for Lev Haolam World Ltd. with 3 openings, one in Jerusalem, Israel."
+ },
+ "levant|https://www.levant.co.il/careers/": {
+  "chars": 160811,
+  "date": "2026-08-31",
+  "employer_named": "Levant Technologies Ltd.",
+  "model": "opus",
+  "name": "Levant",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 3641,
+  "url": "https://www.levant.co.il/careers/",
+  "verdict": "ok",
+  "why": "Own careers page of Levant Technologies Ltd., Herzliya, Israel; only placeholder \"Coming Soon\" roles, no statement of no openings."
+ },
+ "level app|https://www.levelaccess.com/careers/": {
+  "chars": 141300,
+  "date": "2026-08-31",
+  "employer_named": "Level Access",
+  "model": "opus",
+  "name": "Level App",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Level Access"
+  },
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.levelaccess.com/careers/",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Level Access"
  },
  "leverate|https://leverate.com/careers/": {
   "chars": 276441,
@@ -9712,6 +10216,20 @@
   "verdict": "ok",
   "why": "Aviv by Melisron (אביב מליסרון) careers page listing its own jobs in Israel; Melisron-affiliated entity."
  },
+ "mench|https://apply.workable.com/mench/": {
+  "chars": 382645,
+  "date": "2026-08-31",
+  "employer_named": "Mench",
+  "model": "opus",
+  "name": "Mench",
+  "page_kind": "board",
+  "route": "render",
+  "states_no_openings": false,
+  "text_chars": 1772,
+  "url": "https://apply.workable.com/mench/",
+  "verdict": "ok",
+  "why": "Workable-hosted \"Careers at Mench\" board with 9 Tel Aviv jobs, matching the Israeli agency."
+ },
  "merck healthcare|https://careers.merckgroup.com/global/en/job-search-healthcare?ns_country=isr": {
   "chars": 197986,
   "date": "2026-08-29",
@@ -10283,6 +10801,39 @@
   "verdict": "ok",
   "why": "Monto's own careers page listing open roles in Tel Aviv, Israel."
  },
+ "moonsite software ltd|https://jobs.moonsite.co.il": {
+  "chars": 86943,
+  "date": "2026-08-31",
+  "employer_named": "Moonsite (מונסייט)",
+  "model": "opus",
+  "name": "Moonsite Software Ltd",
+  "page_kind": "board",
+  "route": "render",
+  "states_no_openings": false,
+  "text_chars": 2754,
+  "url": "https://jobs.moonsite.co.il",
+  "verdict": "ok",
+  "why": "Moonsite's own Hebrew jobs site (jobs.moonsite.co.il, Rehovot address) listing many open roles."
+ },
+ "moov innovations ltd|https://moov.co/careers": {
+  "chars": 285732,
+  "date": "2026-08-31",
+  "employer_named": "Moov Technologies, Inc.",
+  "model": "opus",
+  "name": "Moov Innovations Ltd",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Moov Technologies, Inc."
+  },
+  "states_no_openings": true,
+  "text_chars": 4761,
+  "url": "https://moov.co/careers",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Moov Technologies, Inc."
+ },
  "morgan stanley|https://www.morganstanley.com/careers/career-opportunities-search": {
   "chars": 133649,
   "date": "2026-08-29",
@@ -10296,6 +10847,58 @@
   "url": "https://www.morganstanley.com/careers/career-opportunities-search",
   "verdict": "ok",
   "why": "Morgan Stanley's own careers search page on morganstanley.com; no job listings visible in text, global site."
+ },
+ "morinside|https://morinside.co.il/jobs": {
+  "chars": 41644,
+  "date": "2026-08-31",
+  "employer_named": "מור אינסייד – בדיקות MRI (Morinside)",
+  "model": "opus",
+  "name": "Morinside",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 949,
+  "url": "https://morinside.co.il/jobs",
+  "verdict": "ok",
+  "why": "Hebrew site of Mor Inside MRI clinics listing its own openings (service rep, radiographer, shift physician) across Israel."
+ },
+ "mornex|https://jobhunt.co.il/jobs/חברת-mornex-הממוקמת-בחדרה-מהמובילות-בתחום-שירותי-it-ותמיכה-טכנית-69282477aeae714170d44638": {
+  "chars": 89822,
+  "date": "2026-08-31",
+  "employer_named": "Mornex",
+  "model": "opus",
+  "name": "Mornex",
+  "page_kind": "aggregator",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator"
+  },
+  "states_no_openings": false,
+  "text_chars": 3787,
+  "url": "https://jobhunt.co.il/jobs/חברת-mornex-הממוקמת-בחדרה-מהמובילות-בתחום-שירותי-it-ותמיכה-טכנית-69282477aeae714170d44638",
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator"
+ },
+ "mosaic by ask ai|https://www.mosaic.pe/careers": {
+  "chars": 30896,
+  "date": "2026-08-31",
+  "employer_named": "Mosaic",
+  "model": "opus",
+  "name": "Mosaic By Ask AI",
+  "page_kind": "board",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Mosaic"
+  },
+  "states_no_openings": false,
+  "text_chars": 2310,
+  "url": "https://www.mosaic.pe/careers",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Mosaic"
  },
  "motorola solutions|https://motorolasolutions.wd5.myworkdayjobs.com/wday/cxs/motorolasolutions/careers/jobs": {
   "chars": 135,
@@ -10322,6 +10925,20 @@
   "verdict": "ok",
   "why": "mPrest's own careers page listing openings in Petah Tikva, Israel."
  },
+ "msd global|https://jobs.msd.com/uk": {
+  "chars": 320265,
+  "date": "2026-08-31",
+  "employer_named": "MSD (Merck & Co., Inc., Rahway, NJ, USA)",
+  "model": "opus",
+  "name": "Msd Global",
+  "page_kind": "careers-landing",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 8547,
+  "url": "https://jobs.msd.com/uk",
+  "verdict": "ok",
+  "why": "MSD's own global careers site (UK landing page); MSD is the international brand of Merck & Co., which hires in Israel too. No job listings shown, just careers content."
+ },
  "msd|https://jobs.msd.com/gb/en/search-results?k=israel&s=1": {
   "chars": 281820,
   "date": "2026-08-29",
@@ -10335,6 +10952,25 @@
   "url": "https://jobs.msd.com/gb/en/search-results?k=Israel&s=1",
   "verdict": "ok",
   "why": "Official MSD careers job-search page (jobs.msd.com) for EMEA/APAC etc., searching \"Israel\". Results didn't render — only an unfilled \"No results for ${...}\" template placeholder, so it isn't a genuine"
+ },
+ "municipality of tel aviv jaffa|https://www.tel-aviv.gov.il/en/live/newresidents/pages/employment.aspx": {
+  "chars": 193024,
+  "date": "2026-08-31",
+  "employer_named": "Municipality of Tel Aviv-Yafo",
+  "model": "opus",
+  "name": "Municipality Of Tel Aviv Jaffa",
+  "page_kind": "other",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "not-a-board",
+   "why": "page_kind=other"
+  },
+  "states_no_openings": false,
+  "text_chars": 5729,
+  "url": "https://www.tel-aviv.gov.il/en/Live/NewResidents/Pages/Employment.aspx",
+  "verdict": "not-a-board",
+  "why": "page_kind=other"
  },
  "mylo ai|https://www.mylo.dating/careers": {
   "chars": 49231,
@@ -10393,6 +11029,20 @@
   "url": "https://nanomedic.com/careers",
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (130 visible chars via render-thin)"
+ },
+ "nanox imaging|https://www.nanox.vision/careers": {
+  "chars": 136392,
+  "date": "2026-08-31",
+  "employer_named": "Nanox",
+  "model": "opus",
+  "name": "Nanox Imaging",
+  "page_kind": "board",
+  "route": "plain",
+  "states_no_openings": false,
+  "text_chars": 9000,
+  "url": "https://www.nanox.vision/careers",
+  "verdict": "ok",
+  "why": "Nanox's own careers page listing open roles including Nanox.AI Israel."
  },
  "nebius|https://careers.nebius.com/": {
   "chars": 399731,
@@ -12320,6 +12970,25 @@
   "url": "https://physicalaijobs.co/",
   "verdict": "NOT-THEIRS",
   "why": "the page is an aggregator"
+ },
+ "sleek|https://careers.smartrecruiters.com/sleek1": {
+  "chars": 98319,
+  "date": "2026-08-31",
+  "employer_named": "SLEEK",
+  "model": "opus",
+  "name": "Sleek",
+  "page_kind": "board",
+  "route": "plain",
+  "second_read": {
+   "mechanical_said": true,
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to SLEEK"
+  },
+  "states_no_openings": false,
+  "text_chars": 718,
+  "url": "https://careers.smartrecruiters.com/SLEEK1",
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to SLEEK"
  },
  "smartech - a hexion company|https://careers.hexion.com/go/all_jobs/9047000/?q=&location=israel": {
   "chars": 64820,
