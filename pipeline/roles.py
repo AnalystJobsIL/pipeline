@@ -413,9 +413,15 @@ def _pk(url):
     and a trailing `/`, and answers '' for aggregators, board roots and listing pages,
     which is exactly the refusal the titles bypass in `same_posting` leans on. A local
     copy would drift (BACKLOG 488 chose reuse). Lazy because rolecard imports roles at
-    module load; in the digest rolecard is long imported before any ledger runs."""
-    from . import rolecard
-    return rolecard._posting_key(url)
+    module load; in the digest rolecard is long imported before any ledger runs. And
+    guarded: a render-layer breakage must degrade `same_posting` to its pre-pk arms —
+    an unguarded raise here froze the WHOLE ledger open (rehydration, sent marks and
+    `closed_keys` with it) in a wave-A simulation."""
+    try:
+        from . import rolecard
+        return rolecard._posting_key(url)
+    except Exception:  # noqa: BLE001 — degrade, never freeze the day
+        return ""
 
 
 # words a board bolts onto a title without minting a new opening ("Data Analyst" retitled
@@ -438,19 +444,28 @@ def same_posting(a, b):
     carried one).
 
     ONE exception to the titles arm, and it is deliberately narrow: an identical posting
-    KEY whose last segment is id-shaped names one opening even when the employer retitled
-    it — `bounce ai|data analyst` and `finbounce|data analyst senior` sat on the identical
-    comeet page (…/data-analyst/3E.E6D) and the titles arm kept them two rows forever
-    (BACKLOG 488). The bypass needs all three: a non-empty `_pk` match (so aggregators,
-    roots and listing pages can never qualify), an id-shaped final segment (a digit-less
-    prose page like /teams/analytics does not), and titles equal once bare seniority
-    words are stripped ("Data Analyst, Growth" stays a second role)."""
+    KEY whose last PATH segment is id-shaped names one opening even when the employer
+    retitled it — `bounce ai|data analyst` and `finbounce|data analyst senior` sat on the
+    identical comeet page (…/data-analyst/3E.E6D) and the titles arm kept them two rows
+    forever (BACKLOG 488). The bypass needs all four: a non-empty `_pk` match (so
+    aggregators, roots and listing pages can never qualify); an id-shaped final PATH
+    segment — never the host, which is what a query-only key like
+    `careers.f5.com?jobId=…` leaves as its tail, and 138 registry hosts carry a digit
+    (wave A); titles equal once bare seniority words are stripped ("Data Analyst, Growth"
+    stays a second role); and the difference must be ADDITIVE — at least one title is the
+    bare form, so "Data Analyst" folds with "Data Analyst Senior" while "Junior Data
+    Analyst" NEVER folds with "Senior Data Analyst" (wave A: junior ≡ senior is not a
+    retitle, whatever the address)."""
     pa, pb = _pk(a.get("url")), _pk(b.get("url"))
     exact = bool(pa) and pa == pb
-    tail = pa.split("?")[0].rsplit("/", 1)[-1] if exact else ""
-    near = (exact and _store._is_id_shaped(tail)
-            and _title_sans_seniority(a)
-            and _title_sans_seniority(a) == _title_sans_seniority(b))
+    near = False
+    if exact:
+        path_part = pa.split("?")[0]
+        tail = path_part.rsplit("/", 1)[-1] if "/" in path_part else ""
+        na, nb = _store._norm(a.get("title")), _store._norm(b.get("title"))
+        sa, sb = _title_sans_seniority(a), _title_sans_seniority(b)
+        near = (bool(sa) and sa == sb and (sa == na or sb == nb)
+                and _store._is_id_shaped(tail))
     if not _titles_agree(a, b) and not near:
         return False
     if exact or (_strong_ids(a) & _strong_ids(b)):
@@ -1349,6 +1364,15 @@ class Ledger:
             weak = counts.get("text:snippet", 0) + counts.get("text:none", 0)
             wk = (f" · weak text {weak} ({counts.get('text:snippet', 0)} snippet, "
                   f"{counts.get('text:none', 0)} none)") if weak else ""
+            unm = counts.get("text:unmeasured", 0)
+            if unm:
+                # a collapsed measurement must never read as an IMPROVEMENT: on a stale or
+                # wrecked text day `weak` shrinks while the column dies for most rows, and
+                # `load()` says `ok` for a stale-but-well-formed file — so the gap itself
+                # alarms (wave B, finding 1)
+                wk += f" · text unmeasured {unm}"
+                self.alarms.append(f"roles dataset description_quality unmeasured for {unm} "
+                                   f"of {len(rows)} row(s) — the column is dying, not clean")
             return [f"dataset {len(rows)} roles ({counts['window_start']}..{counts['window_end']})"
                     f" · archived {len(archived)} · excluded {ex}"
                     f" · firmo {counts.get('firmo:none', 0)} of {len(rows)} unmatched{wk}"]
@@ -1443,7 +1467,7 @@ _CATS = ("bi", "query", "de", "pa", "prog", "method", "cloud", "lang")
 # (name, doc) — the doc reaches the reader through the meta file, so it is written for
 # somebody who has never seen this repo.
 _COLUMNS = [
-    ("role_id", "Opaque stable id for the role — a normalised slug derived from company and title (punctuation and corporate suffixes dropped), so DO NOT split it: use the company and title columns. It is the join key for roles_text.jsonl."),
+    ("role_id", "Opaque stable id for the role — a normalised slug derived from company_registry and title (punctuation and corporate suffixes dropped), so DO NOT split it: use the company_registry and title columns. It is the join key for roles_text.jsonl."),
     ("company", "The employer's brand name where company-intel evidenced one (the same rule the board renders by), else the registry name. Group by this."),
     ("company_registry", "The registry/record name — the stable join key to this repo's other files (firmographics, the ledger); role_id derives from it. Equal to company when no brand is evidenced."),
     ("title", "Job title as posted."),
@@ -1490,7 +1514,7 @@ _COLUMNS = [
     ("customer_type", "Who buys from it (firmographics, free text)."),
     ("il_center", "Its main Israeli site(s) (firmographics)."),
     ("firmo_as_of", "The date those company facts were researched."),
-    ("firmo_match", "How the company facts were matched to this row."),
+    ("firmo_match", "How the company facts were matched to this row's company_registry (the brand in `company` renders only on an exact match)."),
 ] + [(f"skills_{c}", f"Skills of category '{c}' only, separated by ';' — group by this without parsing.")
      for c in _CATS]
 
@@ -1511,7 +1535,8 @@ _ENUMS = {
         "snippet": "we hold text but it fails that test — a search snippet, page furniture "
                    "or a fragment; description_len says how much; do not read it as the "
                    "full posting (the test can also fail a genuinely terse real ad)",
-        "none": "we hold no description text for this role",
+        "none": "this record holds no description text (description_len 0); a stale line "
+                "may linger in roles_text.jsonl under the same role_id",
     },
     "status": {
         "open": "still listed on the employer's own careers board when we last looked",
@@ -1927,16 +1952,28 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
         # The victim set passed to the guard is the full firmographics union — a superset
         # of the board's morning dict — so the two surfaces can diverge only in the safe
         # direction: the CSV showing the honest slug where the board shows the brand.
-        disp = rolecard.display_name(fm, company, firmographics)
+        # Display only on the EXACT firmographics key — the same lookup the board makes
+        # (`rolecard._fill` never falls back to `by_ident`), so the board stays a review
+        # surface for every brand the CSV prints; an identity-matched record still donates
+        # its firmo COLUMNS, just never a name the board would not show (wave B, finding 3).
+        disp = rolecard.display_name(fm, company, firmographics) if match == "exact" else ""
         dlen = _int(rec.get("desc_len"))
         dq = ""
+        desc = rec.get("description")
         if dlen == 0:
             dq = "none"
+        elif isinstance(desc, str) and desc.strip():
+            # a run's records carry the reconciled text in memory (`open_sync` set it,
+            # sqlite-sourced on a frozen-text day) — judge THAT, never a disk file that can
+            # be a wreck or a stale dump the shrink guard refused (wave B, findings 1-2)
+            from .jdfill import looks_like_jd       # enrich layer: import only when judging
+            dq = "jd" if looks_like_jd(desc) else "snippet"
         elif isinstance(texts, dict):
             t = texts.get(rid)
-            if (isinstance(t, dict) and t.get("sha1") == (rec.get("desc_sha1") or "")
+            if (isinstance(t, dict) and rec.get("desc_sha1")
+                    and t.get("sha1") == rec.get("desc_sha1")
                     and isinstance(t.get("description"), str)):
-                from .jdfill import looks_like_jd   # enrich layer: import only when judging
+                from .jdfill import looks_like_jd
                 dq = "jd" if looks_like_jd(t["description"]) else "snippet"
         counts["text:" + (dq or "unmeasured")] += 1
         row = {

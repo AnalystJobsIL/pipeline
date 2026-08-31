@@ -20272,7 +20272,10 @@ def test_the_export_seam_never_freezes_the_ledger_and_never_raises(tmp_path, mon
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
     lg = roles.Ledger(st, "2026-08-30")
-    lg.records = _ledger(2)
+    # records carry their text so description_quality is measurable — a desc_len with no
+    # judgeable text is the one benign export that DOES alarm (the column dying is a
+    # wave-B finding, not noise), and this test is about spurious alarms only
+    lg.records = _ledger(2, description=_JD_TEXT)
     lines = lg.export_dataset("2026-08-30", firmographics={})
     assert os.path.exists(roles.dataset_paths(st.path)[0])
     assert lines and "dataset 2 roles" in lines[0]
@@ -24281,3 +24284,163 @@ def test_a_brand_the_impersonation_guard_refuses_falls_back_to_the_registry_name
                                                   company="finbounce")}
     rows, _ = roles.build_rows(recs, run_date="2026-08-31", firmographics=fm)
     assert rows[0]["company"] == "finbounce" and rows[0]["company_registry"] == "finbounce"
+
+
+# --- roles, 2026-08-31: the adversarial wave's reproduced breaks, pinned ------------------
+def test_a_competitor_canonical_is_never_handed_our_board_url():
+    """Wave A, finding 1 (REPRODUCED then fixed). A non-inherited competitor card scraped
+    off our own careers page can WIN the canonical sort; handing it our board url would
+    launder its JD under our own address — the one shape no downstream check catches,
+    because `names_in_url` then sees only our host. The url donation is therefore allowed
+    only over an aggregator (or url-less) canonical."""
+    from pipeline import store
+    origins = {"Acme": "https://acme.com/careers/"}
+    rival = _role("Acme", "Data Analyst", "https://rival.com/jobs/data-analyst-1", "1",
+                  src="scrape", desc="RIVAL LTD is hiring a Data Analyst. " * 3,
+                  posted_date="")
+    ours = _role("Acme", "Data Analyst", "https://acme.com/careers/data-analyst-77",
+                 "https://acme.com/careers/data-analyst-77", src="scrape",
+                 desc="RIVAL LTD is hiring a Data Analyst. " * 3, posted_date="",
+                 _inherited=True)
+    for order in ([rival, ours], [ours, rival]):
+        m = store.merge_duplicates([dict(j) for j in order], origins=origins)
+        assert m[0]["url"] == "https://rival.com/jobs/data-analyst-1", \
+            "wrong-but-self-consistent beats laundered: the rival's url stays on its own JD"
+
+
+def test_the_board_url_donor_is_order_independent():
+    """Wave A, finding 4 (REPRODUCED then fixed). Two bare board cards under one
+    location-blind merge_key are two real openings; the donated url must not flip with
+    scrape order. Every donor in this branch is `_inherited` by construction, so the
+    tiebreak is the url itself."""
+    import itertools
+    from pipeline import store
+    origins = {"Acme": "https://acme.com/careers/"}
+    agg = _role("Acme", "Data Analyst", "https://il.indeed.com/viewjob?jk=1", "1",
+                src="discovery-indeed", desc="snip" * 40, posted_date="2026-08-25")
+    b1 = _role("Acme", "Data Analyst", "https://acme.com/careers/tel-aviv-data-analyst",
+               "https://acme.com/careers/tel-aviv-data-analyst", src="scrape", desc="x",
+               posted_date="", _inherited=True)
+    b2 = _role("Acme", "Data Analyst", "https://acme.com/careers/haifa-data-analyst",
+               "https://acme.com/careers/haifa-data-analyst", src="scrape", desc="x",
+               posted_date="", _inherited=True)
+    urls = {store.merge_duplicates([dict(x) for x in p], origins=origins)[0]["url"]
+            for p in itertools.permutations([agg, b1, b2])}
+    assert urls == {"https://acme.com/careers/haifa-data-analyst"}
+
+
+def test_a_junior_and_a_senior_posting_never_fold_even_at_one_address():
+    """Wave A, finding 6 (REPRODUCED then fixed). Stripping seniority words from BOTH
+    sides made Junior ≡ Senior. The bypass now requires the difference to be ADDITIVE —
+    at least one title is the bare form — so a retitle folds and a level change never
+    does."""
+    from pipeline import roles
+    u = "https://www.comeet.com/jobs/bounce/E9.00C/data-analyst/3E.E6D"
+    jr = {"company": "A", "title": "Junior Data Analyst", "url": u, "seen_ids": []}
+    sr = {"company": "B", "title": "Senior Data Analyst", "url": u, "seen_ids": []}
+    assert not roles.same_posting(jr, sr) and not roles.same_posting(sr, jr)
+    plain = {"company": "A", "title": "Data Analyst", "url": u, "seen_ids": []}
+    assert roles.same_posting(plain, sr) and roles.same_posting(sr, plain), \
+        "the bare form plus a seniority word is still the Bounce retitle shape"
+
+
+def test_a_query_only_posting_key_never_arms_the_titles_bypass():
+    """Wave A, finding 5 (REPRODUCED then fixed). A posting key with an empty path
+    (`careers.f5.com?jobId=…`) left the HOST as its tail, and 138 registry hosts carry a
+    digit — one digit in a brand name armed the bypass for a whole board. The id-shaped
+    check now reads a PATH segment or nothing."""
+    from pipeline import roles
+    u = "https://careers.f5.com?jobId=RP1030034"
+    a = {"company": "A", "title": "Data Analyst", "url": u, "seen_ids": []}
+    b = {"company": "B", "title": "Senior Data Analyst", "url": u, "seen_ids": []}
+    assert not roles.same_posting(a, b)
+    # equal titles on the same query-keyed page still collapse via the exact arm
+    c = {"company": "B", "title": "Data Analyst", "url": u, "seen_ids": []}
+    assert roles.same_posting(a, c)
+
+
+def test_a_render_layer_breakage_degrades_same_posting_not_the_ledger(monkeypatch):
+    """Wave A, finding 7 (REPRODUCED then fixed). `_pk` reaches into rolecard; unguarded,
+    a render-layer breakage froze the ENTIRE open_sync — rehydration, sent marks and
+    `closed_keys` with it. It now degrades to the pre-pk arms."""
+    from pipeline import roles, rolecard
+    monkeypatch.setattr(rolecard, "_posting_key", lambda u: 1 / 0)
+    u = "https://acme.com/careers/data-analyst-77"
+    a = {"company": "A", "title": "Data Analyst", "url": u, "seen_ids": []}
+    b = {"company": "B", "title": "Data Analyst", "url": u, "seen_ids": []}
+    assert roles.same_posting(a, b), "the raw-url arm still answers"
+    assert not roles.same_posting(a, dict(b, title="Data Analyst Senior")), \
+        "and the bypass is simply unavailable, never an exception"
+
+
+def test_an_empty_url_never_blanks_a_stored_one(tmp_path):
+    """Wave A, finding 8 (REPRODUCED then fixed). `_is_aggregator_url(None)` is False, so
+    the ratchet skipped the WORSE downgrade: a merged job with no url wrote NULL over a
+    stored board address."""
+    from pipeline import store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("Zipher", "Data Analyst", "https://zipher.ai/careers/data-analyst/", "1",
+              src="scrape")
+    st.upsert_matched(j, "2026-08-29")
+    st.upsert_matched(dict(j, url=""), "2026-08-30")
+    st.upsert_matched(dict(j, url=None), "2026-08-30")
+    got = st.conn.execute("SELECT url FROM matched").fetchone()[0]
+    assert got == "https://zipher.ai/careers/data-analyst/"
+    st.close()
+
+
+def test_the_csv_brand_renders_only_on_the_exact_key_the_board_reads():
+    """Wave B, finding 3 (REPRODUCED then fixed). `build_rows` falls back to `by_ident`
+    for the firmo COLUMNS, but the board resolves display on the exact key only — an
+    identity-matched brand would make the CSV print a name the board never reviews. The
+    brand now renders only when firmo_match is `exact`; the identity-matched record still
+    donates its facts."""
+    from pipeline import roles
+    fm = {"Acme Technologies Ltd": {"display_name": "AcmeCloud", "sector": "Cloud"}}
+    recs = {"acme technologies|analyst": _rec("acme technologies|analyst",
+                                              company="Acme Technologies")}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31", firmographics=fm)
+    assert rows[0]["firmo_match"] == "identity" and rows[0]["sector"] == "Cloud"
+    assert rows[0]["company"] == "Acme Technologies", "no brand the board would not show"
+
+
+def test_a_run_records_in_memory_text_is_judged_even_when_the_disk_file_is_a_wreck():
+    """Wave B, findings 1-2 (REPRODUCED then fixed). The run's records carry the
+    reconciled description in memory (sqlite-sourced on a frozen-text day); the export
+    used to ignore it and re-read the disk file, so a stale-but-well-formed dump silently
+    killed the column for most rows while the mail's only number IMPROVED. In-memory text
+    wins; the file is the CLI's fallback; the gap alarms."""
+    from pipeline import roles
+    recs = {"a|x": _rec("a|x", desc_len=500, desc_sha1="whatever",
+                        description=_JD_TEXT)}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31", texts=None)
+    assert rows[0]["description_quality"] == "jd" and counts["text:jd"] == 1
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31",
+                                    texts={"a|x": {"description": "stale", "sha1": "old"}})
+    assert rows[0]["description_quality"] == "jd", "memory outranks a stale disk entry"
+
+
+def test_an_unmeasured_quality_column_alarms_instead_of_reading_as_an_improvement(tmp_path):
+    """Wave B, finding 1 (REPRODUCED then fixed). On a stale-text day `weak text` SHRANK
+    (snippet rows went unmeasured) — a collapsed measurement read as a better number. The
+    mail line now names the gap and a Stages alarm fires."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "seen.db"))
+    lg = roles.Ledger(st, "2026-08-31")
+    lg.open_sync()
+    lg.records = {"a|x": _rec("a|x", desc_len=500, desc_sha1="abc", description="")}
+    lines = lg.export_dataset("2026-08-31")
+    assert "text unmeasured 1" in lines[0]
+    assert any("description_quality unmeasured" in a for a in lg.alarms)
+    st.close()
+
+
+def test_an_empty_desc_sha1_is_never_a_wildcard_for_the_text_join():
+    """Wave B, finding 5 (REPRODUCED then fixed). `"" == ""` matched a texts entry with an
+    empty sha1, publishing quality=jd on a row whose own sha1 cell says "no text held"."""
+    from pipeline import roles
+    recs = {"d|x": _rec("d|x", desc_len=10, desc_sha1="", description="")}
+    rows, counts = roles.build_rows(
+        recs, run_date="2026-08-31",
+        texts={"d|x": {"description": _JD_TEXT, "sha1": ""}})
+    assert rows[0]["description_quality"] == "" and counts["text:unmeasured"] == 1

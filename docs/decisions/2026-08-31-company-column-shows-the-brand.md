@@ -27,6 +27,13 @@ surfaces can diverge only in the safe direction — the CSV showing the honest s
 board shows the brand — never toward an impersonation. Pinned by
 `test_a_brand_the_impersonation_guard_refuses_falls_back_to_the_registry_name`.
 
+**And the brand renders only on the EXACT firmographics key** — the same lookup the board
+makes (`rolecard._fill` never falls back to `identity_key`). An adversarial wave showed the
+first version breaking its own divergence claim through `by_ident`: an identity-matched
+record could print a brand the board never renders, making the board no review surface for
+it. Identity-matched records still donate their firmo COLUMNS; they never donate a name.
+Pinned by `test_the_csv_brand_renders_only_on_the_exact_key_the_board_reads`.
+
 ## The contract break, said plainly
 
 The dataset is one day old (`DATASET_SINCE 2026-08-30`); a day-one downloader grouping on

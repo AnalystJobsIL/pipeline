@@ -5311,16 +5311,24 @@ read as HiBob's own board.
 
 **3. Only an address DEEPER than the board's own may be promoted or donate the url, and ONE
 donor supplies both the link and the text — with one asymmetry since 2026-08-31: an
-`_inherited` copy on the employer's own board may donate its ADDRESS, never its text.** A
-board card whose list endpoint carries no description inherits its verdict, and the old donor
-pool excluded it entirely, so Zipher's real `zipher.ai/careers/data-analyst/` could never
-displace the Indeed copy's link (the text stays whatever the group had — a snippet the
-`description_quality` column then names, and one `jd-text`'s enrich can now complete from the
-role's OWN address). The origin gate, not the `_inherited` flag, is what keeps a competitor
-card out of the donor pool. The same downgrade is refused at the two write paths behind the
-merge: `upsert_matched` and `roles.reconcile` never replace a stored non-aggregator url with
-an aggregator one (the exact mechanism the first Zipher fix regressed by — a scrape-cache
-refresh blanked the board donor and the next sighting overwrote the url unconditionally).
+`_inherited` copy on the employer's own board may donate its ADDRESS, never its text, and
+only over an AGGREGATOR (or url-less) canonical.** A board card whose list endpoint carries
+no description inherits its verdict, and the old donor pool excluded it entirely, so
+Zipher's real `zipher.ai/careers/data-analyst/` could never displace the Indeed copy's link
+(the text stays whatever the group had — a snippet the `description_quality` column then
+names, and one `jd-text`'s enrich can now complete from the role's OWN address). The
+aggregator-canonical restriction is a wave-A find, not caution: a non-inherited COMPETITOR
+card scraped off our own page can win the canonical sort, and donating our board url to it
+launders its JD under our own address — the one shape `names_in_url` and every downstream
+check then read as clean; against such a canonical nothing donates and the old
+wrong-but-self-consistent record stands. Every donor in this branch is `_inherited` by
+construction (a non-inherited own posting page would have been the canonical), so the donor
+is chosen by url — order-independent when two bare board cards share one location-blind
+`merge_key`. Two downgrades are refused at the write paths behind the merge:
+`upsert_matched` and `roles.reconcile` never replace a stored non-aggregator url with an
+aggregator one (the exact mechanism the first Zipher fix regressed by — a scrape-cache
+refresh blanked the board donor and the next sighting overwrote the url unconditionally),
+and `upsert_matched` never blanks a stored url at all.
 Being on the employer's domain is not enough —
 the two Meta records on that address were promoted to `metacareers.com/jobs?offices[0]=…`,
 a search page this
@@ -5364,8 +5372,11 @@ roots and listing pages — and it closes BACKLOG 488's two live pairs: `checkou
 `checkout` shared one Ashby posting under two url spellings and two seen-id prefixes, and
 `bounce ai` / `finbounce` sat on the IDENTICAL comeet page under two titles ("Data Analyst"
 retitled "Data Analyst Senior"), which is the ONE case where the titles arm may be
-bypassed — an identical non-empty posting key whose last segment is id-shaped and whose
-titles are equal once bare seniority words (`senior/sr/junior/jr`) are stripped. Never a
+bypassed — an identical non-empty posting key whose last PATH segment is id-shaped (never
+the host: a query-only key like `careers.f5.com?jobId=…` leaves the host as its tail, and
+138 registry hosts carry a digit), whose titles are equal once bare seniority words
+(`senior/sr/junior/jr`) are stripped, AND where at least one title is the bare form — a
+retitle folds, "Junior" vs "Senior" never does. Never a
 url alone (Meta's url is the listing page, shared by every Meta role) and
 never an id alone (a scrape row's `job_id` is sometimes the listing page, `#` or a
 `mailto:` — six SpearUAV roles carried one id); "Data Analyst" vs "Data Analyst, Growth"
@@ -5740,10 +5751,13 @@ firmographics field), falling back to the registry name, so `withfaye` reads Fay
 dataset exactly as it does in the mail. The registry name moves to `company_registry` — the
 stable join key `role_id` derives from — rather than vanishing; this deliberately supersedes
 BACKLOG 504's additive-only proposal on the operator's word, one day into the dataset's life
-(`docs/decisions/2026-08-31-company-column-shows-the-brand.md`). The victim set passed to the
-impersonation guard is the FULL firmographics union, a superset of the board's morning dict,
-so the two surfaces can diverge only toward the honest slug, never toward an impersonation
-(`finbounce` stays `finbounce` while a real Bounce AI row exists).
+(`docs/decisions/2026-08-31-company-column-shows-the-brand.md`). Two rules keep the board a
+review surface for every brand the CSV prints (both wave-tested): the brand renders only on
+an EXACT firmographics key — the same lookup the board makes; an identity-matched record
+still donates its firmo columns, never a name the board would not show — and the victim set
+passed to the impersonation guard is the FULL firmographics union, a superset of the board's
+morning dict, so the two surfaces can diverge only toward the honest slug, never toward an
+impersonation (`finbounce` stays `finbounce` while a real Bounce AI row exists).
 
 **Every cell is sanitised, and that is not decoration.** A title and a location come from an
 employer's own careers board — outside the trust boundary — and `fetchers._clean` only

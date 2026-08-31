@@ -25,10 +25,15 @@ markers do carry Hebrew), and **2** rows hold no text at all (Bylith open, Taboo
   machinery is built for permanent verdicts, not oscillation.
 - `description_len` already told the truth; the mark makes it explicit and filterable.
   `description_len`/`description_sha1` stay — honest measurements, and the join key.
-- Judged **at export** from `roles_text.jsonl` (sha1-matched), never stamped on the record:
-  the verdict is rule×content-derived, so a `looks_like_jd` change re-judges every row on
-  the next export instead of stranding 169 stale stamps. `texts=None` (corrupt/missing
-  file) leaves the column empty — "could not measure", never a guess.
+- Judged **at export**, never stamped on the record: the verdict is rule×content-derived,
+  so a `looks_like_jd` change re-judges every row on the next export instead of stranding
+  169 stale stamps. The run's own in-memory description (reconciled by `open_sync`,
+  sqlite-sourced on a frozen-text day) is judged FIRST; the disk `roles_text.jsonl`
+  (sha1-matched, and an empty sha1 is never a wildcard) is the CLI's fallback — an
+  adversarial wave showed the disk-only version silently killing the column for 159 of 161
+  rows on a stale-but-well-formed dump while the mail's `weak text` number IMPROVED. A row
+  that can't be judged leaves the cell empty — "could not measure", never a guess — and any
+  unmeasured count now rides the mail line (`text unmeasured N`) plus a Stages alarm.
 - Closed rows: same treatment (their quality is final; the column says what we hold).
 - Surfaces: the meta's `description_text.quality` counts with their own identity
   (`jd+snippet+none+unmeasured == rows`), and the mail's dataset line gains

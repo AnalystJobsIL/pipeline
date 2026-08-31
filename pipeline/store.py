@@ -317,8 +317,9 @@ def merge_duplicates(jobs, origins=None):
     JD) published the SNIPPET and linked to the AGGREGATOR, because the canonical is elected
     on having an ISO date and scrape rows carry `posted_date: ""` (BACKLOG 260 / 109 / 151;
     109's stated mechanism — that `upsert_matched` refuses to replace `url` — was false for
-    every url until 2026-08-31; `upsert_matched` now refuses exactly ONE downgrade, a stored
-    non-aggregator url replaced by an aggregator one, and overwrites every other case).
+    every url until 2026-08-31; `upsert_matched` now refuses exactly TWO downgrades, a
+    stored non-aggregator url replaced by an aggregator one and any stored url blanked, and
+    overwrites every other case).
 
     `origins` is `{company_name: token-or-api_url}` from the registry. Without it the
     rescues are inert and this behaves exactly as it did before: every degraded path here
@@ -381,23 +382,30 @@ def merge_duplicates(jobs, origins=None):
         # link, or the aggregator copy's url ships forever (BACKLOG 488's sibling defect).
         # The origin gate, not the flag, is what keeps a competitor card out of `deep`.
         deep = [m for m in members if _is_posting_page(m, origins) and m.get("url")]
-        # The donor is whichever member supplies the LINK, and the text comes from the same
-        # address. Taking the url from one member and the longest description from another
-        # published a Tel Aviv posting's link with a Haifa posting's JD: `merge_key` is
-        # location-independent by design, so two members can be different openings with one
-        # title. When the canonical already IS a posting on the company's board it donates to
-        # itself, and only a member at the very same address may lengthen its text.
+        # The donor is whichever member supplies the LINK, and own-board text may only come
+        # from the donor's own address. Taking the url from one member and the longest
+        # description from another published a Tel Aviv posting's link with a Haifa
+        # posting's JD: `merge_key` is location-independent by design, so two members can be
+        # different openings with one title. When the canonical already IS a posting on the
+        # company's board it donates to itself. The ONE exception to one-donor-for-both
+        # (2026-08-31, §7c): a bare `_inherited` board card donating its ADDRESS over an
+        # aggregator canonical pairs the board link with the aggregator's snippet of the
+        # same role — deliberate, marked by `description_quality`, and self-healing (the
+        # enrich layer can now fill from the role's own address).
         if _is_posting_page(out, origins):
             donor_url = str(out.get("url") or "")
-        elif deep:
-            # prefer a donor whose text may also donate (not inherited), longest text first
-            donor_url = min(
-                deep,
-                key=lambda m: (
-                    1 if m.get("_inherited") else 0,
-                    -len(str(m.get("description") or "").strip()),
-                ),
-            )["url"]
+        elif deep and (_is_aggregator_url(out.get("url"))
+                       or not str(out.get("url") or "").strip()):
+            # Donate ONLY over an aggregator (or url-less) canonical. A non-inherited
+            # competitor card scraped off our own page can be the canonical, and handing it
+            # our board url would launder its JD under our own address — the one shape no
+            # downstream check can catch (wave A). Over an aggregator canonical this is the
+            # deliberate asymmetry §7c documents: the board ADDRESS ships and the text stays
+            # the group's. Every member of `deep` here is `_inherited` by construction (a
+            # non-inherited posting page would have been the canonical), so no donor can
+            # also give text; the url tiebreak keeps the choice order-independent when two
+            # bare board cards share one merge_key.
+            donor_url = min(deep, key=lambda m: str(m.get("url") or ""))["url"]
             out["url"] = donor_url
         else:
             donor_url = None
@@ -715,13 +723,16 @@ class SeenStore:
         new_url = job.get("url")
         if prev:
             old_sources, old_sids, old_pd, old_last, old_url = prev
-            # A stored board url is never regressed to an aggregator link. merge_duplicates
-            # promotes the employer's own posting page when the group offers one, but on a
-            # cache-blink day the group holds only the aggregator copy — and this overwrite
-            # is exactly how the Zipher fix regressed (the 08-27 scrape-cache refresh blanked
-            # the donor and the Indeed url came straight back). Board→board moves and
-            # aggregator→aggregator refreshes still overwrite; only the downgrade is refused.
-            if old_url and _is_aggregator_url(new_url) and not _is_aggregator_url(old_url):
+            # A stored board url is never regressed to an aggregator link, and no stored
+            # url is ever blanked. merge_duplicates promotes the employer's own posting
+            # page when the group offers one, but on a cache-blink day the group holds only
+            # the aggregator copy — and this overwrite is exactly how the Zipher fix
+            # regressed (the 08-27 scrape-cache refresh blanked the donor and the Indeed
+            # url came straight back). Board→board moves and aggregator→aggregator
+            # refreshes still overwrite; the two downgrades are refused.
+            if old_url and (not str(new_url or "").strip()
+                            or (_is_aggregator_url(new_url)
+                                and not _is_aggregator_url(old_url))):
                 new_url = old_url
             new_sources |= set((old_sources or "").split("+")) - {""}
             new_sids |= set((old_sids or "").split("+")) - {""}

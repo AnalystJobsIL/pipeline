@@ -2356,9 +2356,9 @@
   "file": "pipeline/store.py",
   "symbol": "upsert_matched",
   "class": "M2-gate-inversion",
-  "find": "if old_url and _is_aggregator_url(new_url) and not _is_aggregator_url(old_url):",
+  "find": "if old_url and (not str(new_url or \"\").strip()\n                            or (_is_aggregator_url(new_url)\n                                and not _is_aggregator_url(old_url))):",
   "replace": "if old_url:",
-  "why": "the 2026-08-31 anti-regression ratchet refuses exactly ONE downgrade (board url -> aggregator url); inverted to 'a stored url never changes', an employer moving hosts is pinned to a dead address forever. Killed by the host-move assertion in test_a_stored_board_url_is_never_regressed_to_an_aggregator_link.",
+  "why": "the 2026-08-31 anti-regression ratchet refuses exactly TWO downgrades (board url -> aggregator url, and any stored url blanked); inverted to 'a stored url never changes', an employer moving hosts is pinned to a dead address forever. Killed by the host-move assertion in test_a_stored_board_url_is_never_regressed_to_an_aggregator_link.",
   "must_be_killed_by_behavioural": true
  },
  {
