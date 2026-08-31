@@ -11102,21 +11102,29 @@ def _j6_ld(desc, kind="JobPosting", wrap="{node}"):
 
 
 def test_unfillable_names_only_hosts_no_rung_of_ours_can_read(monkeypatch):
-    """il.indeed.com answered 401/403 to a plain GET on 22 of 22 urls sampled 2026-08-26 and
-    `reject_authwall` to the Unlocker; every secrethunter.io/jobz/<id> returns a
-    BYTE-IDENTICAL 33,495-byte JS shell (776 characters of text). Matching is host-or-subdomain, never substring: `is_aggregator`'s
+    """Every secrethunter.io/jobz/<id> returns a BYTE-IDENTICAL 33,495-byte JS shell (776
+    characters of text; 5 of 5 sampled 2026-08-26). indeed.com LEFT this list on 2026-08-31 —
+    `_indeed_jd` reads it through the paid rung, so it is `paid_only`, not unfillable: the
+    free rungs keep the `auth-walled` verdict and the plain GET is still never spent.
+    Matching is host-or-subdomain, never substring, on BOTH predicates: `is_aggregator`'s
     regex (which also lists linkedin.) matches `indeed.com.evil.co`, and over-matching here
-    means refusing to read a page we can read."""
+    means refusing to read (or paying to fetch) a page that is somebody else's."""
     from pipeline import jdfill
+    assert jdfill.unfillable("https://secrethunter.io/jobz/54dbf0dd1c?utm_source=telegram")
     for u in ("https://il.indeed.com/viewjob?jk=abc", "https://indeed.com/viewjob?jk=abc",
               "https://user:pw@IL.INDEED.COM.:443/viewjob?jk=abc",
-              "https://secrethunter.io/jobz/54dbf0dd1c?utm_source=telegram"):
-        assert jdfill.unfillable(u), u
-    for u in ("https://notindeed.com/viewjob?jk=abc", "https://indeed.com.evil.co/viewjob?jk=1",
+              "https://notindeed.com/viewjob?jk=abc", "https://indeed.com.evil.co/viewjob?jk=1",
               "https://il.indeed.com.x.net/viewjob?jk=1", "https://myindeed.com/jobs/1",
               "https://www.linkedin.com/jobs/view/data-analyst-at-wix-4123456789",
               "https://www.comeet.com/jobs/port/59.004/senior-bi-analyst/15.F68"):
         assert not jdfill.unfillable(u), u
+    # the paid-only predicate carries the host rule the deleted entry had
+    for u in ("https://il.indeed.com/viewjob?jk=abc", "https://indeed.com/viewjob?jk=abc",
+              "https://user:pw@IL.INDEED.COM.:443/viewjob?jk=abc"):
+        assert jdfill.paid_only(u) == "auth-walled", u
+    for u in ("https://notindeed.com/viewjob?jk=abc", "https://indeed.com.evil.co/viewjob?jk=1",
+              "https://il.indeed.com.x.net/viewjob?jk=1", "https://myindeed.com/jobs/1"):
+        assert not jdfill.paid_only(u), u
     # the aggregator list is NOT this list: LinkedIn is on it and is the layer's biggest
     # source of fills (91 of 110 inline on 2026-08-26)
     from pipeline import aggregators
@@ -11134,34 +11142,42 @@ def test_a_native_rung_always_beats_the_unfillable_set(monkeypatch):
 
 def test_an_unfillable_url_costs_no_fetch_no_credit_and_is_not_a_failure(monkeypatch):
     """22 of the 38 inline failures on 2026-08-26 were addresses nothing could ever read, each
-    charged a 15-second GET, and `enrich_matched_jd` sent one of them to the Unlocker."""
+    charged a 15-second GET, and `enrich_matched_jd` sent one of them to the Unlocker.
+    Since 2026-08-31 the secrethunter half of that morning is the whole refused population —
+    an indeed url is `paid_only` instead: FREE runs keep the old refusal to the byte, and an
+    ARMED run spends (its contract is the `..._buys_the_transformed_address` test below)."""
     from pipeline import jdfill
     fetched = []
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (fetched.append(u), (200, ""))[1])
     bd = _J6BD(body=_jd_page())
-    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=abc", bd=bd)
-    assert (jd.via, jd.reason, bd.used, fetched) == ("none", "auth-walled", 0, [])
+    # free run (bd=None): `jk=abc` is not a job key, so this is the KEYLESS shape — the
+    # refusal keeps the old tuple to the byte, definitive included (no rung will ever
+    # read it); a KEYED url's free run is transient instead (the test two above)
+    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=abc")
+    assert (jd, fetched) == (jdfill.JD("", "none", "auth-walled", False, ""), [])
     jd = jdfill.fetch_jd("https://secrethunter.io/jobz/abc", bd=bd)
     assert (jd.reason, bd.used, fetched) == ("js-shell", 0, [])
     # ...and the backfill books it as `unfillable`, never as `fail` -- a failure count that
     # includes what we chose not to fetch cannot be read as "the layer is broken"
-    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
+    items = [jdfill.Item(i, f"https://secrethunter.io/jobz/{i}", "A | B") for i in range(3)]
     c = jdfill.run_backfill(items, save=lambda *a: None, minutes=None, bd=bd, dry_run=True)
     # all 3 are refusals; the 3rd is additionally the once-per-process canary. A refusal is
     # never `tried` and never `fail`: counting it as an attempt made a morning of nothing but
-    # Indeed rows raise a bold `jd-massfail` while the layer behaved perfectly (wave 1).
+    # refused rows raise a bold `jd-massfail` while the layer behaved perfectly (wave 1).
     assert (c["unfillable"], c["probe"], c["filled"], c["tried"], bd.used) == (3, 1, 0, 1, 0)
     assert c["fail"] == 1          # the canary was fetched and really did fail
 
 
 def test_exactly_one_refused_url_per_run_is_probed_anyway(monkeypatch):
     """A permanent refusal must stay falsifiable. One canary per run, never through Bright
-    Data -- so 'Indeed became readable' costs one request a day to discover instead of never."""
+    Data -- so 'secrethunter became readable' costs one request a day to discover instead of
+    never. (Indeed WAS the proof: its 2026-08-26 refusal was falsified 2026-08-31 and the
+    host moved to `paid_only`.)"""
     from pipeline import jdfill
     seen = []
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (seen.append(u), (403, ""))[1])
     bd = _J6BD(body=_jd_page())
-    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(4)]
+    items = [jdfill.Item(i, f"https://secrethunter.io/jobz/{i}", "A | B") for i in range(4)]
     c = jdfill.run_backfill(items, save=lambda *a: None, minutes=None, bd=bd, dry_run=True)
     assert len(seen) == 1 and c["probe"] == 1 and bd.used == 0     # probed, but never paid for
 
@@ -11399,21 +11415,21 @@ def test_the_inline_gate_runs_before_the_counter_so_the_ratio_means_something(mo
     def fake(u, **k):
         fetched.append(u)
         # the canary really does fetch, and here the refused host really is unreadable
-        return jdfill.JD("" if "indeed" in u else _jd_of(400), "none", "http-403", False)
+        return jdfill.JD("" if "secrethunter" in u else _jd_of(400), "none", "http-403", False)
     monkeypatch.setattr(jdfill, "fetch_jd", fake)
     monkeypatch.setenv("JDFILL", "1")
     f = jdfill.JDFiller(budget_min=10)
-    for jk in (1, 2, 3):
+    for i in (1, 2, 3):
         assert f.maybe_fill({"title": "Data Analyst", "description": "",
-                             "url": f"https://il.indeed.com/viewjob?jk={jk}",
-                             "ats_platform": "discovery-indeed"}) is False
+                             "url": f"https://secrethunter.io/jobz/{i}",
+                             "ats_platform": "discovery-telegram"}) is False
     assert f.maybe_fill({"title": "Data Analyst", "description": "",
                          "url": "https://careers.dhl.com/global/en/search-results?keywords=Israel"}) is False
     # 4 refusals, none of them an attempt; exactly ONE canary fetch among them, and a listing
     # page is never a canary (only a refused HOST is a claim worth testing)
     assert (f.tried, f.unfillable, f.probe, f.probe_ok) == (1, 4, 1, 0)
-    assert fetched == ["https://il.indeed.com/viewjob?jk=1"]
-    assert "4 unfillable" in f.summary() and "discovery-indeed auth-walled 3" in f.summary()
+    assert fetched == ["https://secrethunter.io/jobz/1"]
+    assert "4 unfillable" in f.summary() and "discovery-telegram js-shell 3" in f.summary()
     assert f.maybe_fill({"title": "Data Analyst", "description": "",
                          "url": "https://x/jobs/1"}) is True and f.tried == 2
 
@@ -11907,7 +11923,7 @@ def test_the_inline_refusal_outranks_a_spent_budget(monkeypatch):
     f = jdfill.JDFiller(budget_min=10)
     f.seconds = 3600.0                                    # the budget is long gone
     assert f.maybe_fill({"title": "Data Analyst", "description": "",
-                         "url": "https://il.indeed.com/viewjob?jk=1"}) is False
+                         "url": "https://secrethunter.io/jobz/1"}) is False
     assert (f.unfillable, f.skipped_budget, f.tried) == (1, 0, 0)
 
 
@@ -11974,13 +11990,14 @@ def test_a_credit_that_filled_nothing_alarms_even_when_a_free_rung_filled_plenty
 
 def test_a_morning_of_nothing_but_refused_addresses_is_healthy_and_silent(monkeypatch):
     """A refusal was booked as `tried`, so a todo of Indeed rows — the exact population
-    `_UNFILLABLE` was written for — raised a bold `jd-massfail(auth-walled x11)` while the
+    `_UNFILLABLE` was written for (secrethunter since 2026-08-31, Indeed having moved to
+    `paid_only`) — raised a bold `jd-massfail(auth-walled x11)` while the
     layer behaved perfectly. Refusals also burnt `count_cap`: five refused rows ahead of five
     readable ones deferred every readable row to tomorrow."""
     from pipeline import jdfill
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
     monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
-    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(12)]
+    items = [jdfill.Item(i, f"https://secrethunter.io/jobz/{i}", "A | B") for i in range(12)]
     c = jdfill.run_backfill(items, save=lambda *a: None, minutes=None, dry_run=True,
                             log=lambda s: None)
     # the canary is a real fetch, so it is a real attempt -- otherwise `summary()` prints 1/0
@@ -11996,14 +12013,14 @@ def test_the_canary_probes_once_per_process_and_shouts_when_it_succeeds(monkeypa
     """Three defects in one: the canary lived only in `run_backfill` while 257 of the 260
     refused addresses in the state files belong to the INLINE filler; the matched driver
     walked the loop twice and probed twice; and a probe that came back with a real JD was
-    indistinguishable from an ordinary fill, so nothing would ever say Indeed had become
-    readable."""
+    indistinguishable from an ordinary fill, so nothing would ever say the host had become
+    readable. (Indeed's 08-26 refusal was falsified exactly this way on 2026-08-31.)"""
     from pipeline import jdfill
     seen = []
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (seen.append(u), (200, _jd_page()))[1])
     monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     cell = set()          # host families already probed this process
-    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
+    items = [jdfill.Item(i, f"https://secrethunter.io/jobz/{i}", "A | B") for i in range(3)]
     kw = dict(save=lambda *a: None, minutes=None, dry_run=True, probe_cell=cell,
               log=lambda s: None)
     c1 = jdfill.run_backfill(items, **kw)
@@ -12021,10 +12038,21 @@ def test_a_refused_address_is_never_stamped_so_the_canary_cannot_sleep_for_a_wee
     stamped = []
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
     monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
-    items = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
+    items = [jdfill.Item(i, f"https://secrethunter.io/jobz/{i}", "A | B") for i in range(3)]
     jdfill.run_backfill(items, save=lambda it, t, s: stamped.append(it.key), minutes=None,
                         log=lambda s: None)
     assert stamped == [], "a refusal is not an attempt and must leave no cooldown behind"
+    # an INDEED row is the opposite by design since 2026-08-31: it is `paid_only`, walks
+    # the ladder, and IS stamped — but a free-only pass (bd=None: the archived pass, the
+    # dead-ledger fallback, the cooldown pass) stamps it TRANSIENT, because the one rung
+    # that reads the host never ran: a definitive stamp there put 7/14/28-day verdicts on
+    # evidence nobody collected, and the cooldown pass re-stamped daily so the paid rung's
+    # turn never came (wave B). The definitive stamp is the BOUGHT miss's, one test down.
+    items = [jdfill.Item(0, "https://il.indeed.com/viewjob?jk=0123456789abcdef", "A | B")]
+    jdfill.run_backfill(items, save=lambda it, t, s: stamped.append(s), minutes=None,
+                        log=lambda s: None)
+    assert len(stamped) == 1 and stamped[0].endswith("transient"), \
+        "a paid_only miss with NO paid rung run is about the ladder, not the page"
 
 
 def test_every_alarm_clause_reaches_the_mail_and_names_its_driver():
@@ -12208,8 +12236,8 @@ def test_the_inline_mass_failure_alarm_survived_the_refusal_gate(monkeypatch):
     f = jdfill.JDFiller(budget_min=10)
     for i in range(22):
         f.maybe_fill({"title": "Data Analyst", "description": "",
-                      "url": f"https://il.indeed.com/viewjob?jk={i}",
-                      "ats_platform": "discovery-indeed"})
+                      "url": f"https://secrethunter.io/jobz/{i}",
+                      "ats_platform": "discovery-telegram"})
     for i in range(8):
         f.maybe_fill({"title": "Data Analyst", "description": "", "url": f"https://x.co/jobs/{i}",
                       "ats_platform": "scrape"})
@@ -12249,7 +12277,7 @@ def test_probe_never_reaches_bright_data_even_if_a_caller_passes_one(monkeypatch
     monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
     bd = _J6BD(body=_jd_page())
-    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=1", bd=bd, probe=True)
+    jd = jdfill.fetch_jd("https://secrethunter.io/jobz/1", bd=bd, probe=True)
     assert bd.used == 0 and not jd.text
 
 
@@ -12465,7 +12493,7 @@ def test_the_canary_costs_neither_the_operators_limit_nor_the_budget(monkeypatch
     from pipeline import jdfill
     monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (403, ""))
     monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
-    refused = [jdfill.Item(i, f"https://il.indeed.com/viewjob?jk={i}", "A | B") for i in range(3)]
+    refused = [jdfill.Item(i, f"https://secrethunter.io/jobz/{i}", "A | B") for i in range(3)]
     readable = [jdfill.Item(9 + i, f"https://x.co/jobs/{i}", "A | B") for i in range(3)]
     c = jdfill.run_backfill(refused + readable, save=lambda *a: None, minutes=None, count_cap=3,
                             dry_run=True, log=lambda s: None)
@@ -12475,7 +12503,7 @@ def test_the_canary_costs_neither_the_operators_limit_nor_the_budget(monkeypatch
     f = jdfill.JDFiller(budget_min=10)
     f.seconds = 3600.0                                      # the budget is long gone
     assert f.maybe_fill({"title": "Data Analyst", "description": "",
-                         "url": "https://il.indeed.com/viewjob?jk=1"}) is False
+                         "url": "https://secrethunter.io/jobz/1"}) is False
     assert f.probe == 0, "a spent budget stops the canary too"
 
 
@@ -17249,11 +17277,12 @@ def test_the_naked_open_role_rule_reports_readable_hosts_and_only_those():
     ]
     texts = {"a|x": "", "b|x": _jd_of(1500), "c|x": "", "d|x": "", "e|x": "", "f|x": "", "g|x": wall}
     got = sorted(r["company"] for r in naked_open_roles(rows, texts))
-    # A naked + readable; D `unfillable` is an exact-host rule and `notindeed.com` is somebody
-    # else's host; G 4,000 characters of furniture is not a description (`looks_like_jd`, never
-    # a length); H has no text record at all -- the HiBob shape. Not B (has a posting), not C
-    # (Indeed is refused by policy), not E/F (not open).
-    assert got == ["A", "D", "G", "H"]
+    # A naked + readable; C an Indeed row IS actionable since 2026-08-31 (the paid rung reads
+    # it — refusing it here would hide exactly the rows the rung exists for); D `unfillable`
+    # is an exact-host rule and `notindeed.com` is somebody else's host; G 4,000 characters
+    # of furniture is not a description (`looks_like_jd`, never a length); H has no text
+    # record at all -- the HiBob shape. Not B (has a posting), not E/F (not open).
+    assert got == ["A", "C", "D", "G", "H"]
 
 
 def _newboards():
@@ -24444,3 +24473,332 @@ def test_an_empty_desc_sha1_is_never_a_wildcard_for_the_text_join():
         recs, run_date="2026-08-31",
         texts={"d|x": {"description": _JD_TEXT, "sha1": ""}})
     assert rows[0]["description_quality"] == "" and counts["text:unmeasured"] == 1
+
+
+# =====================================================================================
+# jd-text lane, 2026-08-31 — Indeed is readable: the paid_only rung and the marker-bar
+# calibration. Record: docs/sessions/2026-08-31-jd-text.md. The 2026-08-26 "auth-walled"
+# verdict was falsified live: the viewjob page is still walled to every client we own, but
+# the SERP's two-pane view (`?vjk=<jk>`) embeds the FULL viewjob response, raw, one credit
+# — measured 90 of 92 cached Indeed postings filled (76 of the 78 still live at source,
+# plus all 14 expired, whose pane still answers with the text).
+# =====================================================================================
+
+
+_I31_JK = "0123456789abcdef"
+
+
+def _i31_body(jk=_I31_JK, desc=None, decoy="WRONG JOB do not publish this text. " * 40):
+    """A minimal SERP two-pane body in the measured live shape: `window._initialData` holds
+    `autoOpenTwoPaneViewjobResponse.body.jobKey` + `jobInfoWrapperModel.jobInfoModel.
+    sanitizedJobDescription`, and the jobcards rail holds OTHER jobs' text (the decoy)."""
+    desc = desc or ("<p>About the role: you will own dashboards and analysis. " * 8
+                    + "Requirements: 5+ years of experience with SQL.</p>")
+    blob = {"autoOpenTwoPaneJobKey": "ffffffffffffffff",   # a SERP artefact, NOT the anchor
+            "autoOpenTwoPaneViewjobResponse": {"status": "success", "body": {
+                "jobKey": jk,
+                "jobInfoWrapperModel": {"jobInfoModel": {"sanitizedJobDescription": desc}}}},
+            "results": [{"jobkey": "eeeeeeeeeeeeeeee", "snippet": decoy}]}
+    return ("<html><body><div>nav nav nav</div><script>window._initialData="
+            + _j6_json.dumps(blob) + ";</script><p>" + decoy + "</p></body></html>")
+
+
+def test_indeed_jk_takes_only_a_real_job_key_on_a_real_indeed_host():
+    """Kills: widening the 16-hex anchor, `endswith`->substring on the host, dropping the
+    vjk alternation, and reading a jk off somebody else's host (`indeed.com.evil.co`)."""
+    from pipeline import jdfill
+    assert jdfill.indeed_jk("https://il.indeed.com/viewjob?jk=" + _I31_JK.upper()) == _I31_JK
+    assert jdfill.indeed_jk("https://il.indeed.com/jobs?q=a&vjk=" + _I31_JK) == _I31_JK
+    for u in ("https://indeed.com.evil.co/viewjob?jk=" + _I31_JK,
+              "https://notindeed.com/viewjob?jk=" + _I31_JK,
+              "https://il.indeed.com/viewjob?jk=0123456789abcde",      # 15 hex
+              "https://il.indeed.com/viewjob?jk=0123456789abcdefg",    # 17 chars
+              "https://il.indeed.com/jobs?q=data+analyst&l=Israel"):   # no key at all
+        assert jdfill.indeed_jk(u) == "", u
+
+
+def test_fetch_jd_never_plain_gets_an_indeed_page_and_a_free_run_is_transient(monkeypatch):
+    """Kills: deleting the `paid` plain-GET skip (17 pages x 15 s a morning, the waste the
+    old gate existed for), and flipping the free-run transience either way: with a job key
+    it is TRANSIENT (the one rung that reads the host did not run — definitive let three
+    free-only passes stamp 7/14/28 verdicts on evidence nobody collected, wave B), and
+    with no key it is DEFINITIVE (nothing will ever read it)."""
+    from pipeline import jdfill
+    fetched = []
+    monkeypatch.setattr(jdfill, "plain_fetch",
+                        lambda u, **k: (fetched.append(u), (200, _jd_page()))[1])
+    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=" + _I31_JK)
+    assert jd == jdfill.JD("", "none", "auth-walled", True, "")
+    assert fetched == [], "an indeed page must never cost the free rung its 15 seconds"
+
+
+def test_the_indeed_rung_buys_the_transformed_address_and_takes_this_jks_text(monkeypatch):
+    """Kills: buying the walled `viewjob` url instead of `indeed_fetch_url`; taking the
+    decoy (another job's text on the same SERP); and mislabelling the fill so `why_string`
+    reports a healthy morning as its own top failure."""
+    from pipeline import jdfill
+    bought = []
+
+    class BD(_J6BD):
+        def __call__(self, url, timeout=90):
+            bought.append(url)
+            self.used += 1
+            return 200, _i31_body(), ""
+
+    bd = BD()
+    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=" + _I31_JK, bd=bd)
+    assert (jd.via, jd.reason) == ("bd", "ok-indeed")
+    # the LITERAL address, not `indeed_fetch_url(...)` — comparing the shipped code against
+    # itself pinned nothing, and a revert to the walled viewjob page left the whole suite
+    # green (wave C). The SERP two-pane form IS the discovery; it gets pinned by value.
+    assert bought == [f"https://il.indeed.com/jobs?q=a&l=Israel&vjk={_I31_JK}"]
+    assert bd.used == 1 and "viewjob" not in bought[0]
+    assert "WRONG JOB" not in jd.text and "dashboards" in jd.text
+    assert jdfill.looks_like_jd(jd.text)
+    assert jdfill.why_string(_j6_Counter({"reason:ok-indeed": 3})) == ""
+    # a pane that answers with a SNIPPET-sized field is not a fill (the marker gate inside
+    # `_indeed_jd`): 7 of the 92 sweep panes were under the bar, and without the gate a
+    # 160-char search teaser would be booked `ok-indeed` and end the row's todo for ever
+    bd2 = _J6BD(body=_i31_body(desc="a short teaser under the bar"))
+    jd2 = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=" + _I31_JK, bd=bd2)
+    assert jd2.text == "" and jd2.reason == "bd-no-markers"
+
+
+def test_a_bought_serp_whose_pane_is_not_our_job_fills_nothing(monkeypatch):
+    """Kills: dropping the `body.jobKey == jk` anchor (a SERP holds fifteen OTHER jobs'
+    text, and `autoOpenTwoPaneJobKey` at the top level is a decoy that on the live page
+    NAMES A DIFFERENT JOB while the pane is ours), and letting `extract_jd` read the SERP
+    (it returned the same 3,028 chars of page furniture for three different jks, live)."""
+    from pipeline import jdfill
+    bd = _J6BD(body=_i31_body(jk="9999999999999999"))   # the pane belongs to another job
+    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=" + _I31_JK, bd=bd)
+    assert jd.text == "" and jd.via == "bd" and jd.reason == "bd-no-markers"
+    assert not jd.transient, "a bought SERP with no posting for our key is a definitive miss"
+
+
+def test_an_indeed_search_url_stays_refused_even_with_bd_armed():
+    """Kills: loosening `is_job_url`'s jk anchor — a search url identifies no posting and
+    must never be paid for, whatever host it is on."""
+    from pipeline import jdfill
+    bd = _J6BD(body=_i31_body())
+    for u in ("https://il.indeed.com/jobs?q=data+analyst&l=Israel",
+              "https://il.indeed.com/jobs?q=x&vjk=" + _I31_JK):
+        jd = jdfill.fetch_jd(u, bd=bd)
+        assert (jd.reason, bd.used) == ("not-a-job-url", 0), u
+
+
+def test_the_inline_indeed_cap_bounds_the_nightly_respend(monkeypatch):
+    """The inline layer stamps nothing, so an unfilled discovery card is re-offered every
+    night until it ages out at 21 days: without a per-run bound a 92-card backlog spends
+    the whole shared `JDFILL_BD_CAP` on one host nightly. Kills: `>=` -> `>`, counting
+    non-Indeed fetches against the Indeed cap, and losing the alarm clause."""
+    from pipeline import jdfill
+    monkeypatch.setenv("JDFILL", "1")
+    monkeypatch.setenv("JDFILL_INDEED_CAP", "2")
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda u, **k: jdfill.JD("", "bd" if "bd" in k else "none",
+                                                 "bd-no-markers" if "bd" in k else "auth-walled",
+                                                 False))
+    f = jdfill.JDFiller(budget_min=10, bd=_J6BD())   # armed double: conftest blanks the key
+    for i in range(5):
+        f.maybe_fill({"title": "Data Analyst", "description": "",
+                      "url": "https://il.indeed.com/viewjob?jk=%016x" % i,
+                      "ats_platform": "discovery-indeed"})
+    assert (f.indeed_tried, f.indeed_capped, f.bd_tried) == (2, 3, 2)
+    assert any("Indeed cap bound at 2" in a for a in f.alarms())
+    # a non-Indeed url neither burns nor is burned by the Indeed cap
+    f.maybe_fill({"title": "Data Analyst", "description": "",
+                  "url": "https://x.co/jobs/1", "ats_platform": "scrape"})
+    assert (f.indeed_tried, f.bd_tried) == (2, 3)
+
+
+def test_a_failing_indeed_row_is_stamped_and_backs_off_7_14_28(monkeypatch):
+    """The matched driver's cooldown is what turns 'unfetchable' from a nightly re-buy into
+    a STATE with a ladder behind it. Kills: re-adding a refusal path that skips `save`, and
+    transient-stamping a definitive paid miss."""
+    from pipeline import jdfill
+    import datetime as _dt
+    stamps = []
+    bd = _J6BD(body=_i31_body(jk="9999999999999999"))    # bought, no posting for our key
+    items = [jdfill.Item(0, "https://il.indeed.com/viewjob?jk=" + _I31_JK, "A | B")]
+    jdfill.run_backfill(items, save=lambda it, t, s: stamps.append(s), minutes=None,
+                        bd=bd, log=lambda s: None)
+    assert bd.used == 1, "the definitive stamp below must come from a BOUGHT miss"
+    assert len(stamps) == 1 and not stamps[0].endswith(("transient", "gone"))
+    # ...and the same row with NO paid rung stamps transient (the free-only passes)
+    free = []
+    jdfill.run_backfill(items, save=lambda it, t, s: free.append(s), minutes=None,
+                        log=lambda s: None)
+    assert free == [stamps[0][:10] + " transient"]
+    today = _dt.date.fromisoformat(stamps[0][:10])
+    assert not jdfill.due(stamps[0], today + _dt.timedelta(days=6),
+                          definitive=jdfill.retry_days_for(1))
+    assert jdfill.due(stamps[0], today + _dt.timedelta(days=7),
+                      definitive=jdfill.retry_days_for(1))
+    assert (jdfill.retry_days_for(1), jdfill.retry_days_for(2),
+            jdfill.retry_days_for(3)) == (7, 14, 28)
+
+
+def test_jsonld_on_a_bought_indeed_body_never_runs_but_still_works_elsewhere(monkeypatch):
+    """The pane parser is the ONLY reader of a jk-keyed body — a JobPosting ld+json on a
+    SERP is some other job's (the similar-jobs-rail rule) — while a bought body with NO jk
+    keeps the ordinary pair. Kills: swapping `_from_paid_body` back to `_from_body`."""
+    from pipeline import jdfill
+    ld = _j6_ld("Own the dashboards and the analysis. " * 12 + "Requirements: experience.")
+    assert jdfill._from_paid_body(ld, jk="")[1] == "ok-jsonld"
+    assert jdfill._from_paid_body(ld, jk=_I31_JK) == ("", "")
+
+
+def test_the_matched_address_prefers_a_readable_sibling_over_a_paid_only_canonical(
+        tmp_path, monkeypatch):
+    """END TO END through `emj.main`, because `_address` is a closure and the first draft
+    of this test never invoked it (wave C: both `paid_only` clauses could be deleted with
+    the suite green). The Zipher shape: the canonical is a paid Indeed address, the role's
+    own `seen_ids` name an own-board page NOT in any cache, and the fill must come from
+    the FREE fetch of that sibling — zero credits. Kills: dropping either `paid_only`
+    clause in `_address` (the fetch then targets the Indeed canonical: the free rungs
+    refuse it and the fill never happens), and reverting the dry-run Unlocker guard
+    (`bd = None if args.dry_run ...`): the second run asserts no Unlocker is even
+    CONSTRUCTED on --dry-run, which is what keeps a rehearsal from buying real pages."""
+    import enrich_matched_jd as emj
+    from pipeline import jdfill, stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    monkeypatch.setenv("JD_QUALITY", "0")
+    import sqlite3 as _sq
+    db = tmp_path / "seen.db"
+    conn = _sq.connect(db)
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, company TEXT, title TEXT, "
+                 "url TEXT, jd_attempted TEXT, seen_ids TEXT, description TEXT, "
+                 "jd_tries INT, last_seen TEXT, status TEXT)")
+    url = "https://il.indeed.com/viewjob?jk=" + _I31_JK
+    sib = "https://zipher.ai/careers/data-analyst/"
+    conn.execute("INSERT INTO matched VALUES ('zipher|data analyst','Zipher','Data Analyst',"
+                 "?, '', ?, 's'*170, 0, '', NULL)",
+                 (url, "discovery-indeed:" + url + "+scrape:" + sib))
+    conn.execute("CREATE TABLE llm_cache (title_key TEXT PRIMARY KEY, verdict TEXT)")
+    conn.commit(); conn.close()
+    fetched, posting = [], _jd_of(1200)
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (
+        fetched.append(u), (200, "<html><p>" + posting + "</p></html>") if u == sib
+        else (403, ""))[1])
+    bd = _J6BD()
+    monkeypatch.setattr(emj, "Unlocker", lambda *a, **k: bd)
+    (tmp_path / "c.json").write_text("{}", encoding="utf-8")
+    assert emj.main(["--db", str(db), "--cache", str(tmp_path / "c.json")]) == 0
+    got = _sq.connect(db).execute(
+        "SELECT description FROM matched WHERE mkey='zipher|data analyst'").fetchone()[0]
+    assert len(got) >= 1200 and bd.used == 0 and sib in fetched,         "the free own-board sibling fills the row; the paid canonical costs nothing"
+    # and --dry-run constructs NO Unlocker at all
+    def _boom(*a, **k):
+        raise AssertionError("--dry-run must not construct an Unlocker")
+    monkeypatch.setattr(emj, "Unlocker", _boom)
+    assert emj.main(["--db", str(db), "--dry-run", "--cache", str(tmp_path / "c.json")]) == 0
+
+
+def test_the_requirement_idiom_markers_pass_real_postings_and_still_refuse_the_junk():
+    """The 2026-08-31 calibration: 149 of 1,478 stored bodies >= 300 chars failed the
+    two-family bar, three of them PUBLISHED rows holding complete postings; the tightened
+    idiom line promotes 8, every one a real posting. Kills: deleting ANY single idiom
+    (each is exercised below -- wave C reverted six of nine unnoticed in the first draft);
+    un-folding the idioms back into separate families (an FAQ's idiom pair was two
+    families and a pass); dropping the take-advantage guard (a marketing blurb passed on
+    "take advantage of ... experience"); and the 08-28 class, weakening until a login
+    wall passes."""
+    from pipeline import jdfill
+    # each idiom, alone beside ONE classic family, must clear the bar
+    filler = "The analytics team owns dashboards, modeling and reporting for the group. "
+    for idiom in ("SQL and BI tools - Advantage.", "Python skills are a major plus.",
+                  "Bachelor's degree required.", "שליטה ב-SQL - יתרון.",
+                  "דרוש/ה אנליסט/ית נתונים.", "תואר ראשון בכלכלה.", "תואר שני - חובה."):
+        t = filler * 5 + "Experience with data. " + idiom
+        assert jdfill.looks_like_jd(t), idiom
+    # the idioms FOLD to one family: no combination of them alone reaches two
+    faq = ("Frequently asked questions about our newsletter. תואר ראשון - יתרון. "
+           "Bachelor's degree is a major plus for subscribers of this newsletter. ") * 5
+    assert not jdfill.looks_like_jd(faq), "idioms are one family; a classic one is required"
+    # the marketing verb never counts
+    marketing = ("Our platform lets teams take advantage of real-time data and we deliver "
+                 "a seamless customer experience at scale for every client. ") * 6
+    assert not jdfill.looks_like_jd(marketing)
+    benefits = ("Benefits: private health insurance and hybrid work. Take advantage of our "
+                "great experience programs for employees and their families. ") * 5
+    assert not jdfill.looks_like_jd(benefits)
+    # `must have`/`nice to have` were DROPPED: 1 corpus flip against three junk classes
+    cookie = ("We use cookies to improve your experience. Strictly necessary cookies. "
+              "You must have JavaScript enabled to continue browsing this site. ") * 5
+    assert not jdfill.looks_like_jd(cookie)
+    wall = ("Sign in to view this job. Forgot password? " * 10
+            + "New to the site? Join now. We use your experience and skills. Advantage of "
+            + "signing in: your profile is ready. " * 5)
+    assert not jdfill.looks_like_jd(jdfill.jd_body(wall)), (
+        "a login wall stuffed with the new idioms must still fail (jd_body cuts it)")
+
+
+def test_a_wall_first_page_yields_its_posting_and_a_rail_only_page_yields_nothing():
+    """Measured live 2026-08-31: Ashley Digital's guest page holds the full posting at
+    offset 2,240 while `furniture_at` fires at 326 — the sign-in block renders FIRST, six
+    stacked copies of it, and `jd_body`'s earliest-marker cut kept 325 chars of header.
+    `_after_the_wall` opens a candidate at each SIGN-IN mark's end (never at a rail mark:
+    a segment opened at `similar jobs` is other employers' titles). Kills: dropping the
+    fallback from `extract_jd`; opening candidates at rail marks; shrinking the hit bound
+    under a LinkedIn page's 18 pre-posting wall hits."""
+    from pipeline import jdfill
+    posting = ("About the role: own the dashboards and the analysis pipeline. " * 6
+               + "Requirements: 5+ years of experience with SQL. ")
+    wall_block = ("Sign in Welcome back Email Password Forgot password? New to LinkedIn? "
+                  "Join now By clicking Continue you agree to the User Agreement. ")
+    page = "<html><body>" + wall_block * 7 + posting + "Similar jobs Analyst at Other Co, "            "Data Analyst at Second Co full-time. Requirements: experience.</body></html>"
+    jd = jdfill.extract_jd(page)
+    assert jdfill.looks_like_jd(jd) and "own the dashboards" in jd
+    assert "Other Co" not in jd, "the rail must be cut off the tail"
+    rail_only = "<html><body>" + wall_block * 7 + ("Similar jobs Analyst at Other Co "
+                "full-time roles with experience and skills requirements. " * 12) + "</body></html>"
+    assert jdfill.extract_jd(rail_only) == "", (
+        "a page whose only 'content' is the similar-jobs rail must not fill")
+    # ...and a RAIL mark must never OPEN a candidate: this page's one long marker-rich
+    # segment sits after `Similar jobs` with no trailing furniture, so adding a rail mark
+    # to `_WALL_MARKS` returns other employers' titles as the posting (wave B, M19 — the
+    # first draft's rail repeated its own header, and jd_body's cut did the work instead)
+    rail_trap = ("<html><body><div>short head</div>Similar jobs "
+                 + "Analyst at Other Co. Own dashboards with experience and skills in SQL. " * 8
+                 + "</body></html>")
+    assert jdfill.extract_jd(rail_trap) == "", "a rail mark opened a candidate"
+    # ...and a wall-opened candidate must clear BOTH tests: long-but-marker-poor prose
+    # after the wall (company history, no section headers) is not a posting (wave B, M20)
+    poor = ("<html><body>" + wall_block * 7
+            + "A long paragraph about the company history and culture and offices, "
+              "with no section headers at all, just prose about the founding story. " * 5
+            + "</body></html>")
+    assert jdfill.extract_jd(poor) == "", "the family bar applies to wall candidates too"
+    # ...and an ordinary page never takes the fallback path: its head already passes
+    plain = "<html><body>" + posting + "</body></html>"
+    assert "own the dashboards" in jdfill.extract_jd(plain)
+
+
+def test_a_keyless_indeed_url_spends_nothing_and_a_dry_run_report_survives_no_unlocker(monkeypatch, tmp_path):
+    """Wave A (2026-08-31): (P2-2) a paid_only url with no 16-hex jk bought the walled
+    viewjob page itself — 1 credit for a guaranteed nothing, outside `JDFILL_INDEED_CAP`,
+    which counts by jk. Kills: dropping the keyless refusal above the spend. (P0-2) the
+    matched driver's --dry-run builds no Unlocker and the report line read `bd.used` —
+    AttributeError after the whole walk. Kills: reverting the getattr shapes."""
+    from pipeline import jdfill
+    bd = _J6BD(body=_i31_body())
+    jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=notahexkey16char", bd=bd)
+    assert (jd.reason, bd.used) == ("auth-walled", 0)
+    assert not jd.transient, "a keyless indeed url is definitive: no rung can ever read it"
+    # the dry-run report line: main() must exit 0 with bd=None end to end
+    import enrich_matched_jd as emj
+    from pipeline import stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    db = tmp_path / "seen.db"
+    import sqlite3 as _sq
+    conn = _sq.connect(db)
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, company TEXT, title TEXT, "
+                 "url TEXT, jd_attempted TEXT, seen_ids TEXT, description TEXT, "
+                 "jd_tries INT, last_seen TEXT, status TEXT)")
+    conn.execute("INSERT INTO matched VALUES ('a|b','A','Data Analyst',"
+                 "'https://il.indeed.com/viewjob?jk=" + _I31_JK + "','', '', '', 0, '', NULL)")
+    conn.execute("CREATE TABLE llm_cache (title_key TEXT PRIMARY KEY, verdict TEXT)")
+    conn.commit(); conn.close()
+    monkeypatch.setenv("JD_QUALITY", "0")
+    assert emj.main(["--db", str(db), "--dry-run", "--cache", str(tmp_path / "c.json")]) == 0

@@ -79,25 +79,50 @@ _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 # re-fetched it every morning for ever. Measured 2026-08-28 over all 424 stored bodies (the
 # ledger's texts and every card in `scraped_cache.json`): the addition promotes exactly one
 # body — that one — and no page furniture.
+# The requirement-idiom line (advantage/יתרון, major plus, דרוש/ה, the degree ask) was
+# measured 2026-08-31 over all 1,478 stored bodies: 149 bodies ≥300 chars failed the
+# two-family bar, and three were PUBLISHED rows holding complete real postings (ONE datAI
+# ends with its application email, Modellama's research row ends at LinkedIn's own "Show
+# more"). Three rules keep the loosening from re-opening the door the bar exists to close
+# (an adversarial wave passed a cookie banner, an FAQ and a benefits paragraph through the
+# first draft):
+#   1. Every idiom in the line counts as ONE family (`_REQ_IDIOM` in `_marker_families`),
+#      so a text must still carry a CLASSIC section family beside it — "must have: a valid
+#      email address. Nice to have: a phone" was two families and a pass.
+#   2. `advantage` refuses the marketing verb: `take/taking advantage` is 10 of the 804
+#      corpus occurrences and every one is a benefits blurb (Plarium, Cognyte, TELUS...).
+#   3. Rejected outright, each on its measurement: bare `דרושים` (the Israeli nav-link word
+#      for a careers section), `a plus` (Plus500's "Career WITH A PLUS" slogan), `must
+#      have`/`nice to have` (1 corpus flip against three junk classes that pass on them:
+#      cookie banners' "must have JavaScript enabled", FAQs, browser requirements),
+#      CV-submission phrases (flip two careers LANDING pages), and `you will` (26 flips,
+#      9 of them cookie banners and multilingual nav).
+# The tightened line promotes 8 of the 149 — the three published rows plus five scrape
+# cards (BrancoWeiss ×2, C2A Security, IBI, zap group), every one carrying a real posting —
+# and none of the wave's synthesized junk texts (cookie banner, FAQ, benefits paragraph,
+# marketing prose, Hebrew nav: all refused; the one synthetic that passes carries TWO
+# classic families and passes the 08-28 bar as well).
 _JD_MARKERS = re.compile(
     r"(requirements?|responsibilit|qualifications?|experience|what you.?ll|"
     r"we.?re looking|about the (role|job|position)|skills|full[- ]time|"
     r"you should apply if|who you are|"
-    r"דרישות|אחריות|ניסיון|תיאור (ה)?משרה|כישורים)", re.I)
+    r"(?<!take )(?<!takes )(?<!taking )(?<!took )advantage|major plus|bachelor'?s degree|"
+    r"דרישות|אחריות|ניסיון|תיאור (ה)?משרה|כישורים|"
+    r"יתרון|דרוש/ה|תואר ראשון|תואר שני)", re.I)
+
+# The 2026-08-31 requirement idioms fold to ONE family: they are synonyms of the same
+# concept ("this bullet is a requirement"), and counting `advantage` + `יתרון` as two let a
+# single bilingual sentence clear a bar meant to demand two distinct SECTIONS.
+_REQ_IDIOM = ("advantage", "major plu", "bachelor", "יתרון", "דרוש/ה",
+              "תואר ראשון", "תואר שני")   # "major plu": the fold sees POST-rstrip("s") keys
 
 
 def load_secrets():
-    """KEY=VALUE lines of the gitignored secrets.env into the environment (local runs only;
-    in Actions the same names are repo secrets and the file is absent). Environment wins."""
-    path = os.path.join(_REPO_ROOT, "secrets.env")
-    if not os.path.exists(path):
-        return
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                k, v = line.split("=", 1)
-                os.environ.setdefault(k.strip(), v.strip())
+    """The one secrets loader (`pipeline/secretsenv`), kept under this module's public name.
+    `setdefault` semantics survive the move, so `tests/conftest.py`'s disarm still holds
+    (backlog 468, applied 2026-08-31)."""
+    from . import secretsenv
+    secretsenv.load(_REPO_ROOT)
 
 
 # --------------------------------------------------------------------------- text
@@ -210,6 +235,40 @@ def furniture_at(text):
     return m.start() if m else None
 
 
+# The SIGN-IN subset of `_PAGE_FURNITURE`: the markers a wall-first page renders BEFORE the
+# posting. The rail markers (`similar jobs`, `people also viewed`, `הצג עוד מקומות תעסוקה`,
+# `referrals increase...`) are deliberately NOT here — they END a posting and never precede
+# one, and a candidate segment opened at a rail marker would be the similar-jobs rail
+# itself: other employers' titles, with this row's company still attached.
+_WALL_MARKS = re.compile(
+    r"(agree & join|new to linkedin|forgot password|by clicking (continue|agree)|"
+    r"sign in to (set job alerts|create|save|view)|"
+    r"פעם ראשונה שלך ב-linkedin|שכחת סיסמה|כדי להגדיר התראות עבודה|דוא”ל או טלפון)", re.I)
+
+
+def _after_the_wall(text):
+    """The posting on a WALL-FIRST page, or "".
+
+    On a LinkedIn guest page the sign-in block renders BEFORE the posting, so `jd_body`'s
+    earliest-marker cut keeps ~325 characters of header and throws the description away —
+    measured live on 2026-08-31: Ashley Digital's page carries the full posting at offset
+    2,240 with `furniture_at` firing at 326. The 08-28 answer ("keep the full text, fail the
+    bar, go to the fetch") is right for STORED text and circular at fetch time: the fetch
+    returns the same wall-first page. So when the head fails the bar, each sign-in marker's
+    END opens a candidate, `jd_body` closes it at the next furniture of any kind, and the
+    first candidate that passes the same two tests wins. An ordinary page never reaches
+    this (its head already passed), and a wall-only page fails every candidate."""
+    # a LinkedIn guest page stacks the SAME wall block six times over before the posting
+    # (3 marks a block: measured 18 hits above Ashley Digital's posting), so the bound is
+    # per-page work, not a small constant
+    hits = list(_WALL_MARKS.finditer(text or ""))
+    for m in hits[:24]:
+        seg = jd_body(text[m.end():]).lstrip(" .:;·|-\n")
+        if len(seg) >= MIN_DESC and len(_marker_families(seg)) >= 2:
+            return seg
+    return ""
+
+
 def jd_body(text):
     """`text` with the page furniture cut off the tail -- the posting's own words, and the one
     thing every other test in this module should be asking about.
@@ -228,11 +287,16 @@ def extract_jd(html):
     The tail cut runs before the marker gate, not after, so the gate judges the posting rather
     than the page: a body that is a login wall with four words of job on top is `""` here, and
     the role stays in the todo instead of being declared finished. It also runs before the
-    `DESC_MAX` cap, so a page cannot smuggle furniture in by being long enough to truncate."""
+    `DESC_MAX` cap, so a page cannot smuggle furniture in by being long enough to truncate.
+    A WALL-FIRST page — sign-in block above the posting — gets one more look through
+    `_after_the_wall` before the "" verdict."""
     from .seniority import _ROLE_START
-    text = jd_body(html_to_text(html))
+    full = html_to_text(html)
+    text = jd_body(full)
     if len(text) < MIN_DESC or len(_marker_families(text)) < 2:
-        return ""
+        text = _after_the_wall(full)
+        if not text:
+            return ""
     rs = _ROLE_START.search(text)
     if rs and len(text) - rs.start() >= MIN_DESC:
         text = text[rs.start():]
@@ -240,14 +304,23 @@ def extract_jd(html):
 
 
 def _marker_families(text):
-    """Distinct section markers, singular and plural folded ("requirement"/"requirements" is one)."""
-    return {m[0].rstrip("s") for m in _JD_MARKERS.findall(text.lower())}
+    """Distinct section markers, singular and plural folded ("requirement"/"requirements" is
+    one) — and every 2026-08-31 requirement idiom folded to ONE family (`_REQ_IDIOM`), so
+    the idioms can supply at most one of the two families the bar demands."""
+    out = set()
+    for m in _JD_MARKERS.findall(text.lower()):
+        fam = m[0].rstrip("s")
+        out.add("req-idiom" if any(fam.startswith(i) for i in _REQ_IDIOM) else fam)
+    return out
 
 
 def looks_like_jd(text):
-    """Would `extract_jd` accept this text as a job description? The SAME two tests it applies
+    """Would `extract_jd` accept this text as a job description? The same two tests it applies
     to a freshly fetched body — long enough, and carrying at least two distinct section
-    families — asked of text we have already stored.
+    families — asked of text we have already stored. (Since 2026-08-31 `extract_jd` has one
+    path this function deliberately lacks: `_after_the_wall`, which digs a posting out of a
+    wall-FIRST page. Stored text was already extracted once; re-digging it would resurrect
+    the login walls this bar exists to refuse.)
 
     This exists because "we have a description" was decided by `len(...) >= MIN_DESC` alone, in
     both selectors, and a length test cannot tell a JD from page furniture. The ladder's card
@@ -1241,17 +1314,15 @@ def is_job_url(url, title=""):
 
 # Host families no rung we own can read. Every entry carries its measurement, because this
 # list can only ever COST coverage:
-#   indeed.com       every job page answers 401 or 403 to a plain GET (22 of 22 sampled
-#                    2026-08-26) and `reject_authwall` to the Unlocker. The card snippet the
-#                    discovery source already stored is the best text obtainable.
 #   secrethunter.io  every discovery-telegram URL. A JS shell that returns the SAME
 #                    776-character body for every job id (5 of 5 sampled 2026-08-26).
+# indeed.com LEFT this list on 2026-08-31: a rung of ours reads it now (`_indeed_jd`, below) —
+# it is `paid_only`, not unfillable.
 # This is NOT `pipeline.aggregators.is_aggregator`, which answers "whose board is this?" and
 # lists `linkedin.` — LinkedIn guest pages are this layer's biggest source of fills (91 of 110
 # on 2026-08-26). Its regex also matches `indeed.com.evil.co`: fail-safe for a blocklist,
 # wrong for a list that decides what we refuse to read.
 _UNFILLABLE = (
-    ("indeed.com", None, "auth-walled"),
     ("secrethunter.io", None, "js-shell"),
 )
 
@@ -1276,6 +1347,100 @@ def unfillable(url):
     return ""
 
 
+def paid_only(url):
+    """The free rungs' standing verdict for a host only the PAID rung can read, or "".
+
+    indeed.com answered 401/403 to a plain GET on 22 of 22 urls (2026-08-26), and buying
+    that 403 for 15 seconds a page is what its old `_UNFILLABLE` entry existed to stop. The
+    entry itself was wrong by 2026-08-31: the Unlocker's `reject_authwall` was measured
+    before render support existed, and the SERP two-pane form reads every posting raw
+    (`_indeed_jd`). So the refusal is a STATE the paid rung ends, not a verdict (the
+    2026-08-28 operator rule), and this predicate only spares the doomed plain GET.
+    Exact host or subdomain, never a substring — the same rule as `unfillable`."""
+    host = _host_of(url)
+    if host == "indeed.com" or host.endswith(".indeed.com"):
+        return "auth-walled"
+    return ""
+
+
+# The one address class the paid rung buys for an Indeed posting. `viewjob?jk=` itself is
+# auth-walled to every client including the rendered Unlocker, but the SERP served with a
+# `vjk=` (selected-job) parameter auto-opens that posting's two-pane view and embeds the FULL
+# viewjob response — `window._initialData.autoOpenTwoPaneViewjobResponse.body`, whose
+# `jobKey` names the posting it belongs to and whose `jobInfoModel.sanitizedJobDescription`
+# is the employer's own HTML. Measured 2026-08-31 on 5 of 5 sampled jks (306–6,670 chars,
+# every `body.jobKey` == the vjk asked for), with a throwaway `q=a` — the pane opens keyed
+# to the vjk whatever the query returns. One raw credit per posting; render not needed.
+_INDEED_JK = re.compile(r"[?&]v?jk=([0-9a-f]{16})\b", re.I)
+INDEED_MAX_BLOB = 3_000_000     # a hydration blob past this is not parsed (the _LD_SCRIPT lesson)
+
+
+def indeed_jk(url):
+    """The 16-hex job key from an indeed.com `?jk=`/`?vjk=` url, lowercased, or "".
+
+    Host-checked with `paid_only`'s exact-host-or-subdomain rule, so
+    `indeed.com.evil.co/viewjob?jk=…` yields "" and is nobody's paid fetch."""
+    if not paid_only(url):
+        return ""
+    m = _INDEED_JK.search("?" + urlsplit(url).query)
+    return m.group(1).lower() if m else ""
+
+
+def indeed_fetch_url(jk):
+    """The address `_indeed_jd` knows how to read, for one job key (see the note above)."""
+    return f"https://il.indeed.com/jobs?q=a&l=Israel&vjk={jk}"
+
+
+def _indeed_jd(body, jk):
+    """This posting's description out of a SERP two-pane body, or "".
+
+    The pane response carries its OWN `jobKey`, and the text is taken only when that key is
+    the one we asked for — a SERP holds fifteen other jobs' snippets, and the ld+json lesson
+    (a "similar jobs" rail is not this page's posting) applies doubly here. Anything else —
+    the pane didn't open, a different job's pane, a snippet-sized field — returns "", and the
+    ladder's ordinary shell/no-markers accounting takes over."""
+    if len(body) > INDEED_MAX_BLOB:
+        return ""
+    # a regex, not a literal find: one space from Indeed's minifier and a literal anchor
+    # returns "" on every posting for ever — booked `bd-no-markers`, definitive, with the
+    # credit spent, and silent on any night the LinkedIn rows fill normally (wave C)
+    m = re.search(r"window\._initialData\s*=\s*", body)
+    if not m:
+        return ""
+    try:
+        data = json.JSONDecoder().raw_decode(body, m.end())[0]
+    except (ValueError, RecursionError):
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    pane = (data.get("autoOpenTwoPaneViewjobResponse") or {})
+    pane = pane.get("body") if isinstance(pane, dict) else None
+    if not isinstance(pane, dict) or (pane.get("jobKey") or "").lower() != jk.lower():
+        return ""
+    info = pane.get("jobInfoWrapperModel") or {}
+    info = info.get("jobInfoModel") if isinstance(info, dict) else None
+    raw = (info or {}).get("sanitizedJobDescription") or pane.get("sanitizedJobDescription") or ""
+    if isinstance(raw, dict):
+        raw = raw.get("content") or ""
+    if not isinstance(raw, str) or not raw.strip():
+        return ""
+    text = jd_body(html_to_text(_html_mod.unescape(raw)))
+    # the marker gate stays: a pane field the size of a search snippet is not a fill
+    return text[:DESC_MAX] if len(text) >= MIN_DESC and len(_marker_families(text)) >= 2 else ""
+
+
+def _from_paid_body(body, jk=""):
+    """The parsers over one BOUGHT body. When a job key is known the body is a SERP, and the
+    pane parser is the ONLY one allowed to read it: `extract_jd` on a SERP returns the page's
+    own furniture as a passing "description" (measured 2026-08-31: the same 3,028 characters
+    from three different jks' pages), and a JobPosting ld+json there is some OTHER job's —
+    the "similar jobs rail" rule, one layer up. No key, ordinary body, ordinary pair."""
+    if jk:
+        jd = _indeed_jd(body, jk)
+        return (jd, "ok-indeed") if jd else ("", "")
+    return _from_body(body)
+
+
 def naked_open_roles(rows, texts):
     """Ledger records that are OPEN, carry no job description, and sit on a host some rung
     of ours could read. `rows` are `cloud_state/roles.jsonl` records, `texts` maps role_id to
@@ -1296,7 +1461,7 @@ def naked_open_roles(rows, texts):
 class JD(NamedTuple):
     text: str
     via: str         # native | html | bd | none      -- which FETCH produced the body
-    reason: str      # ok | ok-jsonld | no-url | not-a-job-url | auth-walled | js-shell |
+    reason: str      # ok | ok-jsonld | ok-indeed | no-url | not-a-job-url | auth-walled | js-shell |
                      # shell | no-markers | http-NNN | timeout | bd-...
     transient: bool  # retry tomorrow rather than in RETRY_DAYS
     native: str = "" # why the native rung failed, when one applied ("" if none did / it won)
@@ -1344,7 +1509,10 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
     auth-walled host used to cost a 15-second fetch every morning and were booked as failed
     fetches: on 2026-08-26 that was Meta's search URL, 17 Indeed pages and 5 secrethunter
     shells, 22 of the 38 inline failures. `probe=True` fetches an unfillable host anyway —
-    the once-a-run canary that keeps the refusal falsifiable."""
+    the once-a-run canary that keeps the refusal falsifiable. A `paid_only` host (Indeed) is
+    a fourth shape: its plain GET is still never bought — the free rungs keep their
+    `auth-walled` verdict — but the paid rung reads it through `indeed_fetch_url`, so with
+    `bd` armed the refusal ends where it can and stands where it must."""
     if not (url or "").startswith("http"):
         return JD("", "none", "no-url", False)
     text, native_why = native_jd(url, company, seen_ids)
@@ -1377,12 +1545,24 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
         return JD("", "none", "gone" if gone else (native_why or "cooldown"), False, native_why)
     if not is_job_url(url, title):
         return JD("", "none", "gone" if gone else "not-a-job-url", False, native_why)
-    status, body = plain_fetch(url, timeout=timeout)
+    paid = paid_only(url)
+    # a paid_only host's plain GET is a bought 403 costing 15 s: skip it, keep the free
+    # rungs' standing verdict (definitive — only the paid rung below can change it)
+    status, body = (None, "") if paid else plain_fetch(url, timeout=timeout)
     if body:
         jd, why = _from_body(body)
         if jd:
             return JD(jd, "html", why, False, native_why)
         reason, transient = ("shell" if len(html_to_text(body)) < MIN_DESC else "no-markers"), False
+    elif paid:
+        # The free rungs cannot read this host BY DESIGN, so their miss is a statement
+        # about the ladder, never the page: transient while a paid rung could still run
+        # tomorrow. Definitive would let the three free-only passes (the archived pass,
+        # the dead-ledger fallback, `free_rungs_ignore_cooldown`) stamp 7/14/28 verdicts
+        # on evidence nobody collected — and the cooldown pass would RE-stamp daily, so
+        # the paid rung's turn never came (wave B). A KEYLESS paid_only url is the one
+        # exception: no rung will ever read it, and that verdict may rest.
+        reason, transient = (native_why or paid), bool(indeed_jk(url))
     else:
         reason, transient = (f"http-{status}" if status else "timeout"), (status is None or status >= 500)
     if gone:
@@ -1396,7 +1576,16 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
     # exactly that), so the first paid call renders. A page the plain GET could not read at
     # all (403, 429, a timeout) is a bot wall, and the cheap raw copy is tried first; if
     # THAT comes back a shell, one rendered call follows. At most two credits per page.
-    status, body, bd_reason = _bd_call(bd, url, render=(reason == "shell"))
+    # An Indeed posting is bought at the ONE address its parser reads (`indeed_fetch_url`) —
+    # the posting's own `viewjob` page answers `reject_authwall` to every client we own.
+    jk = indeed_jk(url) if paid else ""
+    if paid and not jk:
+        # a paid_only url with no job key has no address the parser can read: the only
+        # thing a credit could buy is the walled page itself (and `maybe_fill`'s Indeed
+        # cap counts by jk, so a keyless card must not spend outside it — wave A, P2-2)
+        return JD("", "none", reason, False, native_why)
+    buy = indeed_fetch_url(jk) if jk else url
+    status, body, bd_reason = _bd_call(bd, buy, render=(reason == "shell"))
     empty_bought = bool(body) and len(html_to_text(body)) < MIN_DESC
     if empty_bought:
         _mark_shell(bd, url)                 # every bought body counts toward the host breaker
@@ -1404,14 +1593,14 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
     if empty_bought and reason != "shell" and _renders(bd):
         # the raw copy of a bot-walled page came back empty: one rendered call may still open
         # it, and that second credit is the one the breaker above is counting
-        _s2, body2, r2 = _bd_call(bd, url, render=True)
+        _s2, body2, r2 = _bd_call(bd, buy, render=True)
         capped_render = r2 == "bd-render-capped"
         if body2:
             body = body2
             if len(html_to_text(body2)) < MIN_DESC:
                 _mark_shell(bd, url)
     if body:
-        jd, why = _from_body(body)          # the credit is spent either way: read it twice
+        jd, why = _from_paid_body(body, jk)  # the credit is spent either way: read it twice
         if jd:
             return JD(jd, "bd", why, False, native_why)
         empty = "shell" if len(html_to_text(body)) < MIN_DESC else "no-markers"
@@ -1646,7 +1835,7 @@ def why_string(c, n=4):
     shape the `collect` stamp already uses (`no-markers2+timeout1`). Without it the mail's
     `scrape_fail=6` cannot tell a WAF from a 404 from a parser regression."""
     bad = sorted(((k[7:], v) for k, v in c.items()
-                  if k.startswith("reason:") and k[7:] not in ("ok", "ok-jsonld")),
+                  if k.startswith("reason:") and k[7:] not in ("ok", "ok-jsonld", "ok-indeed")),
                  key=lambda kv: (-kv[1], kv[0]))
     return "+".join(f"{r}{v}" for r, v in bad[:n])
 
@@ -1800,6 +1989,14 @@ class JDFiller:
         rcap = int(os.environ.get("JDFILL_RENDER_CAP", "0"))
         self.bd = bd if bd is not None else (Unlocker(cap=cap, render_cap=rcap) if cap > 0 else None)
         self.bd_tried = self.bd_filled = 0
+        # Indeed's own bound, INSIDE the shared cap. Unlike every other host this rung buys,
+        # an unfilled discovery card is re-offered NIGHTLY until it ages out at 21 days —
+        # the inline layer stamps nothing — so without a per-run bound a 92-card backlog
+        # spends the whole `JDFILL_BD_CAP` on one host every night. 8 × 30 nights is 240
+        # credits a month, 4.8 % of the shared pool; `0` closes the rung inline and leaves
+        # it to the matched driver, whose failures stamp and back off 7/14/28.
+        self.indeed_cap = int(os.environ.get("JDFILL_INDEED_CAP", "8"))
+        self.indeed_tried = self.indeed_capped = 0
         # work the paid rung WOULD have taken and could not. This counter exists because the
         # step this runs in does not carry `BRIGHTDATA_API_KEY` (`daily-digest.yml`, the
         # `Run the pipeline` step, 2026-08-30): the rung is configured, armed by default, and
@@ -1849,6 +2046,20 @@ class JDFiller:
         if self.spent():
             self.skipped_budget += 1
             return False
+        # A paid_only card whose paid rung is NOT running this call is a REFUSAL, decided
+        # before `tried` — the free ladder on it is a foregone no-op, and booking it as an
+        # attempt re-created the 2026-08-26 defect in mirror image: `jd-fill: 0/28` and a
+        # bold "every fetch failed" about fetches that never happened (wave B).
+        jk = indeed_jk(url)
+        if jk and (self.bd is None or self.bd.unavailable
+                   or self.indeed_tried >= self.indeed_cap):
+            self.unfillable += 1
+            self.refused[(platform, "auth-walled")] += 1
+            if self.bd is not None and self.bd.unavailable:
+                self.bd_unavailable_work += 1
+            elif self.bd is not None:
+                self.indeed_capped += 1     # the card returns tomorrow; `alarms()` says so
+            return False
         self.tried += 1
         _t = time.time()
         jd = fetch_jd(url, company=job.get("company") or "", title=title)
@@ -1858,6 +2069,7 @@ class JDFiller:
             if self.bd.unavailable:
                 self.bd_unavailable_work += 1
             else:
+                self.indeed_tried += bool(jk)
                 self.bd_tried += 1
                 jd = fetch_jd(url, bd=self.bd, company=job.get("company") or "", title=title)
                 self.bd_filled += bool(jd.text)
@@ -1926,6 +2138,11 @@ class JDFiller:
             # that runs before the classifier
             out.append(f"inline jd-fill: {self.bd_tried} paid fetches filled 0 "
                        f"({getattr(self.bd, 'used', 0)} credits)")
+        if self.indeed_capped and self.indeed_cap:
+            # cap 0 is the documented OFF switch, not a nightly emergency: an alarm that
+            # fires every morning while a rung is deliberately closed trains itself away
+            out.append(f"inline jd-fill: the Indeed cap bound at {self.indeed_cap} — "
+                       f"{self.indeed_capped} Indeed postings judged on their snippet tonight")
         if self.skipped_budget:
             out.append(f"inline jd-fill budget spent ({self.budget:g}m) — {self.skipped_budget} "
                        f"roles judged with no text")

@@ -511,11 +511,12 @@ def _run(args, stamp):
 
         A role canonical url is whichever copy won `store.merge_duplicates`, and that contest
         is decided by who carries a posted-date -- not by who can be read. Zipher Data Analyst
-        is the worked example: the record kept an Indeed address, Indeed answers 401/403 to
-        every client we own, and the company own posting at `zipher.ai/careers/data-analyst/`
-        sat in that same role `seen_ids` being refused before a byte was fetched. When the
-        published address is one no rung of ours can read and the role own `seen_ids` name one
-        that can, we fetch the one that can.
+        is the worked example: the record kept an Indeed address (then unreadable to every
+        client we owned; a paid rung reads Indeed since 2026-08-31, `jdfill.paid_only`), and
+        the company own posting at `zipher.ai/careers/data-analyst/` sat in that same role
+        `seen_ids` being refused before a byte was fetched. When the published address is one
+        the FREE rungs cannot read and the role own `seen_ids` name one they can, we fetch
+        the free one -- an own-board page beats a paid aggregator copy on cost AND identity.
 
         The identity gate is the same one the cache rung already trusts -- `roles.names_in_url`
         via `_own_address`. It has to be: `seen_ids` is NOT a list of a role own addresses, and
@@ -525,12 +526,14 @@ def _run(args, stamp):
         # record without one and `store.insert_matched` writes it through), and
         # `unfillable(None)` raises TypeError -- which took the WHOLE driver down for the
         # day behind a continue-on-error step, with 144 roles getting nothing (wave 3).
-        if str(url or "").startswith("http") and not _unfillable(url):
+        if (str(url or "").startswith("http") and not _unfillable(url)
+                and not jdfill.paid_only(url)):
             return url
         for sib in sibling_urls(seen_ids, url):
-            if _own_posting(comp, title, sib) and not _unfillable(sib):
+            if _own_posting(comp, title, sib) and not _unfillable(sib) \
+                    and not jdfill.paid_only(sib):
                 print(f"  [ADR] {(comp + ' | ' + title)[:56]:<56} published address is "
-                      f"unreadable; using the role own {sib[:52]}", flush=True)
+                      f"unreadable free; using the role own {sib[:52]}", flush=True)
                 return sib
         return url
 
@@ -565,7 +568,12 @@ def _run(args, stamp):
         "archived %d)" % (len(every), _accounted, n_ok, from_cache, n_no_address,
                           len(items), len(items_archived)))
 
-    bd = Unlocker(cap=int(os.environ.get("MATCHED_JD_BD_CAP", str(BD_CAP))))
+    # `--dry-run` builds NO Unlocker at all, the scrape driver's rule (wave 2 P0-1 there).
+    # `run_backfill(dry_run=...)` only gates `save`, and until 2026-08-31 every matched row
+    # on a refused host was turned back before the paid rung could spend — with Indeed now
+    # `paid_only`, a rehearsal on an armed machine would buy real pages.
+    bd = None if args.dry_run else Unlocker(cap=int(os.environ.get("MATCHED_JD_BD_CAP",
+                                                                   str(BD_CAP))))
 
     have_by_key = {r[0]: r[6] for r in rows}
 
@@ -652,12 +660,15 @@ def _run(args, stamp):
                       matched_no_address=n_no_address, matched_gone=c["gone"],
                       matched_terminal=n_final_gone, matched_cycle_days=cycle_days,
                       matched_actionable=actionable, matched_why=why_string(c))
+    # `bd` is None on --dry-run (no Unlocker is built at all), so the report reads it
+    # through getattr; the record_enrich block above needs no guard because it is
+    # dry-run-gated, and dry-run is the only way `bd` is None
     print(f"=== matched JD backfill: {c['filled'] + from_cache} filled "
           f"({c['bd']} via Bright Data, {from_cache} from another of the role's own addresses), "
           f"{c['fail']} unfetchable (retry in {args.cooldown_days}d), {c['cooldown']} in cooldown, "
-          f"{bd.used} Bright Data requests spent, {short_left} roles still without a JD "
+          f"{getattr(bd, 'used', 0)} Bright Data requests spent, {short_left} roles still without a JD "
           f"({actionable} of them actionable)"
-          + (f" [{bd.unavailable}]" if bd.unavailable else "") + " ===")
+          + (f" [{bd.unavailable}]" if getattr(bd, "unavailable", "") else "") + " ===")
     return 0
 
 

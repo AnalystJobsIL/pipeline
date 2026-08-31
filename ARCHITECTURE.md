@@ -4019,7 +4019,7 @@ The nine that carry no posting, each with its reason:
 |---|---|---|
 | Taboola · Product Analyst | `gone` — 404 on Taboola own Greenhouse board | nobody; terminal |
 | Mobileye · Experienced Data Analyst | `gone` — 404 on Mobileye own Lever board | nobody; terminal |
-| אסם, Navan · analyst roles | Indeed only, 401/403 to every client we own | `discovery` (a second address), BACKLOG 343 |
+| אסם, Navan · analyst roles | were Indeed-only (401/403 free); the paid rung reads Indeed since 2026-08-31 | `jd-text` (the rung, below); Navan also has `roles`' own-board repoint |
 | Zipher · Data Analyst | own careers page reached and PAID for; JS-rendered, no markers | `scraper` (the browser put it in the cache once) |
 | Ashley Digital, Questar · analyst roles | LinkedIn guest wall; plain GET and one Unlocker credit each both returned `no-markers` | nobody today |
 | Meta ×2 · Data Scientist | the row address is a SEARCH page, not a posting | `registry`, BACKLOG 266/371 |
@@ -4068,6 +4068,41 @@ happened to answer; `_reclean` commits before the fetch loop, so a rate limit or
 would have left a navigation menu on the board with the posting unrecoverable from either
 store. Those rows now keep their full text, fail `looks_like_jd` anyway, and go to the fetch.
 
+**...and the fetch can now read the wall-first shape it lands on** (2026-08-31). "Go to the
+fetch" was circular for a LinkedIn guest page: the fetch returns the same wall-first page
+and `jd_body`'s earliest-marker cut threw the posting away again — measured live on Ashley
+Digital, the full posting at offset 2,240 with `furniture_at` firing at 326, under six
+stacked copies of the sign-in block. `extract_jd` now falls back to `_after_the_wall` when
+the head fails the bar: each SIGN-IN mark's end opens a candidate, `jd_body` closes it at
+the next furniture of any kind, first candidate passing the same two tests wins. Rail marks
+(`similar jobs`, `people also viewed`) never open a candidate — that segment is other
+employers' titles. Measured over all 1,478 stored bodies: **0 spurious activations**; on the
+two live wall-first pages it recovered 2,395 (Ashley) and 4,931 (Questar) characters.
+
+**The bar itself was recalibrated on 2026-08-31, by the same discipline — and then
+TIGHTENED by an adversarial wave the same day.** 149 of 1,478 stored bodies ≥ 300
+characters failed the two-family bar, and three were PUBLISHED rows holding complete real
+postings — ONE datAI's ends with its application email, Modellama's research row ends at
+LinkedIn's own "Show more", Compie's is plain prose — each carrying exactly ONE family.
+The requirement-idiom line joined `_JD_MARKERS` (`advantage`/`יתרון`, `major plus`,
+`דרוש/ה`, `תואר ראשון`/`שני`/`bachelor's degree`) under three rules the wave forced: the
+idioms FOLD to one family (`_REQ_IDIOM` — a classic section family is still required, so
+an FAQ's "must have / nice to have" pair stopped being a pass), `advantage` refuses the
+marketing verb (`take/taking advantage` — 10 of 804 corpus occurrences, every one a
+benefits blurb), and `must have`/`nice to have` were dropped outright (1 corpus flip
+against three junk classes that ride them: cookie banners' "must have JavaScript enabled",
+FAQs, browser requirements). The tightened line promotes **8 stored bodies — the three
+published rows plus five scrape cards, every one carrying real posting text** — and none
+of the wave's synthesized junk (cookie banner, benefits paragraph, marketing prose,
+Hebrew nav: all refused end-to-end). The corpus itself cannot re-test wall safety — the
+walls were cleaned out of it on 08-28, and only 1 body carrying a sign-in mark remains —
+so the wall claim rests on the synthetics pinned in
+`test_the_requirement_idiom_markers_pass_real_postings_and_still_refuse_the_junk`.
+Rejected by the measurements: bare `דרושים` (the Israeli nav-link word for a careers
+section), `a plus` (Plus500's "Career WITH A PLUS" slogan), CV-submission phrases (two
+careers landing pages flip), and `you will` (26 flips, 9 of them cookie banners and
+multilingual nav).
+
 **Cross-lane, and it sprang twice:** `roles.better_description` compares — and now RETURNS —
 `jd_body`, but only when the trimmed text is still a job description: unguarded it returned
 `""` on the wall-first shape and `reconcile` wrote that empty string into BOTH stores, with
@@ -4103,9 +4138,11 @@ only because it sits on `DESC_MAX` is reported, never re-queued: re-fetching ret
 — so `greenhouse:8035268` was thrown away and nothing in the repo turned a
 `<platform>:<job_id>` pair into an endpoint, while **48 of 135 matched rows published a
 LinkedIn guest page** and several of them carried a native id. `native_from_seen_ids` builds
-it, and `_address` swaps an unreadable published url for an own-address sibling (Zipher: the
-record kept an Indeed address while `zipher.ai/careers/data-analyst/` sat in that same role
-`seen_ids`, refused before a byte was fetched).
+it, and `_address` swaps a published url the FREE rungs cannot read for an own-address
+sibling (Zipher: the record kept an Indeed address while `zipher.ai/careers/data-analyst/`
+sat in that same role `seen_ids`; until 2026-08-31 the Indeed address was refused outright,
+and since the paid rung reads it the sibling still wins — an own-board page beats a paid
+aggregator copy on cost and identity both).
 
 **The board is the identity gate, and that is what makes it safe.** The token comes from
 `companies.csv` joined on THIS role own company and never from a `seen_id`; the id half names
@@ -4317,7 +4354,7 @@ and past it the cycle stretches rather than the tail starving in silence.
 native JSON ─▶ [gate] ─▶ plain HTML ─▶ Bright Data Web Unlocker   (each rung only if the previous failed)
  workday cxs             extract_jd     drivers only; never inline
  smartrecruiters         jsonld_jd
- bamboohr                (two parsers   every outcome carries a REASON: ok · ok-jsonld · shell ·
+ bamboohr                (two parsers   every outcome carries a REASON: ok · ok-jsonld · ok-indeed · shell ·
  comeet                   over ONE      no-markers · http-NNN · timeout · not-a-job-url ·
  greenhouse               body)         auth-walled · js-shell · bd-unavailable · bd-capped
                                         transient (timeout / 5xx / bd-*) ⇒ retry tomorrow, else in 7 days
@@ -4329,8 +4366,27 @@ Both are consulted **before the plain GET**, for all three callers — they used
 the Unlocker, so 22 of the 38 inline failures that morning were 15-second fetches of addresses
 nothing could ever read, booked as failed fetches:
 
-* `indeed.com` — **401 or 403 on 22 of 22 job URLs sampled**, and `reject_authwall` to the
-  Unlocker. The discovery card's snippet is the best text obtainable.
+* `indeed.com` — **left the refused list on 2026-08-31; it is `paid_only` now, not
+  unfillable.** The old verdict (401/403 on 22 of 22 free GETs, `reject_authwall` to the
+  Unlocker) was measured 2026-08-26, three days before render support existed, and the wall
+  is real but narrower than it looked: the `viewjob` page is still closed to every client we
+  own, while the SERP's two-pane form (`il.indeed.com/jobs?q=a&l=Israel&vjk=<jk>`) embeds
+  the FULL viewjob response raw — `window._initialData.autoOpenTwoPaneViewjobResponse.body`,
+  whose `jobKey` names the posting and whose `sanitizedJobDescription` is the employer's own
+  HTML. One credit a posting, no render. Measured 2026-08-31 over all 92 cached Indeed
+  postings: **90 filled with 300+ chars passing `looks_like_jd`** — 76 of the 78 still live
+  at source, and all 14 EXPIRED postings, whose pane still answers with the text and whose
+  text still fills the archived role (1 marker-poor residue, 1 fetch error, 0 walls).
+  `paid_only` keeps
+  the free rungs' `auth-walled` verdict so the doomed plain GET is still never spent;
+  `_indeed_jd` is the parser, and it takes text only from a pane whose `jobKey` matches —
+  a SERP holds fifteen other jobs, and the top-level `autoOpenTwoPaneJobKey` names a
+  DIFFERENT job on the live page while the pane is ours. **The anchor is POSTING identity,
+  not employer identity** (rule 5, one level up): the jk↔employer binding is the discovery
+  card's claim, which the rung inherits unverified — אסם and Nestlé are the same posting
+  under two jks and two employer names in `matched` today, and the rung will faithfully
+  give both the same text. The byte-identical guard is `shared-with-sibling` →
+  `jd_quality`, which runs the morning after the fill.
 * `secrethunter.io` — every `discovery-telegram` URL; **a **byte-identical 33,495-byte JS shell (776 characters of text) for 5 of 5
   different job ids**.
 * Matching is exact host or subdomain, parsed (userinfo, port and trailing dot stripped) —
@@ -4340,13 +4396,15 @@ nothing could ever read, booked as failed fetches:
 * The gate is ordered **after** the native rung, so writing a reader for a blocked host makes
   the entry dead rather than harmful; and **one refused address per process is fetched anyway**
   — the canary, never through Bright Data — so the refusal stays a claim that can fail. The
-  inline filler probes too, and that is where it matters: **257 of the 260 refused addresses in
-  the state files are the inline filler's** (every `secrethunter.io` post and 64 of 67 Indeed
-  rows), so a canary that lived only in the backfills was testing a population of three. A
+  inline filler probes too, and that is where it matters: when 257 of the 260 refused
+  addresses in the state files were the inline filler's (every `secrethunter.io` post and 64
+  of 67 Indeed rows, before Indeed moved to `paid_only`), a canary that lived only in the
+  backfills was testing a population of three. A
   refused address is decided **before** the cooldown, the cap and the clock and is never
   stamped — otherwise the canary puts itself to sleep for seven days — and a canary that comes
   back with a JD raises `jd-refusal-falsified`, which is a request to delete the `_UNFILLABLE`
-  entry, not a note.
+  entry, not a note. That is not hypothetical: **Indeed's entry died exactly this way on
+  2026-08-31**, and the deletion took the rung above with it rather than a bare removal.
 * `is_job_url`'s old "3+ path segments" fallback passed every locale-prefixed careers site:
   **30 distinct URLs on 78 cached cards** relied on it, including a cookies policy and a legal
   notice, and one (`careers.dhl.com/global/en/search-results?keywords=Israel`) was charged to
@@ -4429,6 +4487,20 @@ a day go through that path.
 | `enrich_scrape_jd.py` — **title pool** | 05:00, before the pipeline | cards failing `looks_like_jd`, relevance-gated, non-chrome, Israel-passing, at a job address, in `scraped_cache.json`, deduped by url | `JD_ENRICH_BD_CAP` **1000**, `JD_ENRICH_TIME_BUDGET_MIN` 25 |
 | `enrich_scrape_jd.py --archive-only` — **archive pool** | `jd-archive.yml`, 12:30 (§4) | every OTHER Israel-passing card: the ones the title gate drops. Oldest attempt first, round-robin over companies | the same caps; `JD_ENRICH_TIME_BUDGET_MIN` **90** in that workflow |
 | `enrich_matched_jd.py` | 05:00, before the pipeline | every LIVE `matched` row failing `looks_like_jd`, any age, any source | `MATCHED_JD_BD_CAP` **25**, `MATCHED_JD_TIME_BUDGET_MIN` 20 (yml) |
+
+**Indeed has its own bound inside the inline cap: `JDFILL_INDEED_CAP` (8, `0` closes the
+rung inline).** It exists because the inline layer stamps nothing — an unfilled discovery
+card is re-offered every night until it ages out of `discovered_cache.json` at 21 days — so
+without a per-run bound a 92-card backlog would spend the whole `JDFILL_BD_CAP` on one host
+nightly. The arithmetic against the 5,000/month pool that begins 2026-09-01: inline ceiling
+8 × 30 = **240/month (4.8 %)**; the matched driver needs no twin because its failures stamp
+`jd_attempted` and ride the 7/14/28 ladder (~13/month steady drip on today's 6 rows). Be
+honest about what the inline 240 buys: the cache is order-stable (a still-listed posting
+keeps its rank), so the cap's 8 are largely the SAME front-ranked cards re-bought until they
+age out at 21 days — the durable fills are the matched driver's, whose stamps stop the
+re-ask. The cap is a ceiling on waste, not a drain schedule; a keyless indeed URL spends
+nothing at all (`fetch_jd` refuses before the credit). When the cap binds, `alarms()` says
+`inline jd-fill: the Indeed cap bound at N` on the mail's `Stages:` line.
 
 The two caps were 400 and 250 until 2026-08-26 — 650 credits a day, 13 % of the monthly pool in
 one morning, against a shared allowance that stood at **118 % (5,906 / 5,000, projected
@@ -4552,7 +4624,7 @@ morning where a Bright Data state also fired, which is exactly the mornings with
 | `- **Stages:** enrich crash:DatabaseError` | a driver raised; the day's counts are KEPT and the step log has the traceback |
 | `- **Stages:** enrich no-report(scrape,matched)` | the named driver(s) never reached their stamp today (import death, kill, timeout); the stamp's `date` is left where it was |
 | `- **Stages:** inline jd-fill budget spent (25m) — 400 roles judged with no text` | the inline budget bound, which used to be visible in the step log only |
-| `jd-fill: 110/121 … ; 22 unfillable (discovery-indeed auth-walled 17, …)` | step log only (`run.py`); the residue is named rather than counted as failure |
+| `jd-fill: 110/121 … ; N unfillable (discovery-telegram js-shell 4, …)` | step log only (`run.py`); the residue is named rather than counted as failure. Until 2026-08-31 `discovery-indeed auth-walled` was its biggest term (~17); those rows are the paid rung's now, and reappear here only when it is off (`JDFILL_INDEED_CAP=0`), unavailable, or cap-bound |
 
 **Cooldown.** A stamp is `YYYY-MM-DD` (page read, no JD: retry after 7 days) or
 `YYYY-MM-DD transient` (retry after 1 day: timeout, 5xx, Unlocker unavailable/capped/gateway

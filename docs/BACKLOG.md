@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**563 filed · 404 open · 159 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**564 filed · 404 open · 160 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 513.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 514.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 135 open
+### registry — 136 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -229,6 +229,7 @@ closure convention in the header.
 - **505** `505@registry` **8 verified boards name a DIFFERENT employer than their registry row
 - **509** `509@registry` **`BD_RUN_CAP=0`
 - **511** `511@registry` **`queue_resolve_search._is_ours` cannot read a Hebrew title or a spelled-out name: 13 of
+- **513** `513@registry` **22 companies' only live postings reach us through Indeed while their registry row is
 
 ### infra — 107 open
 
@@ -489,12 +490,11 @@ closure convention in the header.
 - **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
 - **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
 
-### jd-text — 15 open
+### jd-text — 14 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
 - **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **343** `343@jd-text` **Three open roles exist only at an Indeed address, and Indeed cannot be read**
 - **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
 - **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
 - **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
@@ -2987,7 +2987,7 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     pool percentage live in the step log only. Proposed: a `discover` stage stamped by
     `discovery_daily.main()` with `new_companies`, `queued`, `queue_depth`, `bd_pct`,
     `blocked`, and one `- **Intake:**` line rendered from it.
-181. ~~**`discovery-indeed` descriptions can never be fetched inline**~~ — **CLOSED 2026-08-26 (`jd-text`)**: `jdfill.unfillable()` names the host families no rung we own can read (indeed.com: 401/403 on 22 of 22 sampled, `reject_authwall` to the Unlocker) and is consulted BEFORE the plain GET by all three callers, so those 17 daily fetches and the weekly credit are gone and the residue is counted, not booked as failure. One canary per process per host family keeps the refusal falsifiable. `test_unfillable_names_only_hosts_no_rung_of_ours_can_read`. Original text: **`discovery-indeed` descriptions can never be fetched inline** — lane: `jd-text`.
+181. ~~**`discovery-indeed` descriptions can never be fetched inline**~~ — **CLOSED 2026-08-26 (`jd-text`)**: `jdfill.unfillable()` names the host families no rung we own can read (indeed.com WAS one: 401/403 on 22 of 22 sampled, `reject_authwall` to the Unlocker — falsified 2026-08-31, when the host moved to `paid_only` and a rung of ours started reading it; the closure's mechanism stands for `secrethunter.io`) and is consulted BEFORE the plain GET by all three callers, so those 17 daily fetches and the weekly credit are gone and the residue is counted, not booked as failure. One canary per process per host family keeps the refusal falsifiable. `test_unfillable_names_only_hosts_no_rung_of_ours_can_read`. Original text: **`discovery-indeed` descriptions can never be fetched inline** — lane: `jd-text`.
     `jd-fill … discovery-indeed http-401 17` on 2026-08-25: `il.indeed.com/viewjob?jk=…`
     answers 401/403 to any non-browser client (verified on two cache URLs). Meanwhile
     `indeed_normalize` already stores the card snippet — 82 of 82 cached Indeed jobs have a
@@ -4578,6 +4578,9 @@ rule). Numbers re-derived 2026-08-26 against cloud run `32934864207`; re-derive 
     every client we own, and it is the single reason open-board JD coverage is 75/76 rather
     than 76/76. If the scraper can read that page, the sibling rung (§7a) fills the role with
     no further work.
+    *2026-08-31 (`jd-text`): the premise half is dead — the paid rung reads Indeed now
+    (`jdfill.paid_only`, §7a), so the role's TEXT no longer depends on this item; the
+    own-board scrape gap is still real and still this item.*
 
 262. **Shopify's careers SPA needs the Chromium rung** — lane: `scraper`. 5 relevant cached
     cards, all `.../careers/<slug>_<uuid>`; a plain GET returns **267 KB of HTML yielding 56
@@ -6290,22 +6293,20 @@ LinkedIn guest-walk worst case, also filed as 70, is untouched). Decisions:
     whoever picks it up: the text under `TechBiz Global GmbH` reads as **Modellama's** posting,
     so `registry`/`roles` may want to look at the row's identity at the same time.
 
-343. **Three open roles exist only at an Indeed address, and Indeed cannot be read** — lane:
-    `jd-text` (with `discovery`), found 2026-08-28. After the 08-28 repair these are the only
-    open ledger rows with no job description:
-
-        Navan  | Senior Product Analyst   172 chars   il.indeed.com/viewjob?jk=736a52986835829a
-        Zipher | Data Analyst             170 chars   il.indeed.com/viewjob?jk=b081baf87df846ea
-        אסם    | CDT commercial analyst   162 chars   il.indeed.com/viewjob?jk=a7cd257b81d9ba1d
-
-    `indeed.com` is in `_UNFILLABLE` (401/403 on 22 of 22 sampled), so the discovery card's
-    snippet is the best text this layer can obtain — the sibling rung found no other address for
-    any of the three. The fix is an ADDRESS, not a fetch: each company has its own board.
-    Probed 2026-08-28: `zipher.ai/careers/data-analyst/` answers `no-markers`, and Zipher's only
-    live analyst posting is the `Senior Data Analyst` one already filled — so that row may be a
-    duplicate rather than a gap, which is a `roles` question.
-    `test_every_open_role_in_the_ledger_carries_a_job_description` skips refused hosts on
-    purpose, so these three do not turn the suite red; it goes red if a NON-refused row appears.
+343. ~~**Three open roles exist only at an Indeed address, and Indeed cannot be read**~~ —
+    **CLOSED 2026-08-31 (`jd-text`)**: Indeed CAN be read — the premise fell, not the rows.
+    `indeed.com` left `_UNFILLABLE` for `jdfill.paid_only`; the SERP two-pane form
+    (`jobs?q=a&l=Israel&vjk=<jk>`) embeds the full viewjob response raw at one credit, and
+    the sweep filled **90 of the 92 cached Indeed postings (76 of 78 live + all 14 expired,
+    whose text still serves the archived role)**, TransUnion (6,670 chars) and אסם (971)
+    among them. A concurrent `roles` session is repointing Navan/Zipher/LTX to their own
+    boards (its record carries the landing; unverified from here) — that supersedes the
+    "fix is an ADDRESS" half for them, and the rung covers them either way.
+    `docs/decisions/2026-08-31-indeed-paid-rung.md` has the rejected alternatives.
+    Original text: **Three open roles exist only at an Indeed address, and Indeed cannot be
+    read** — lane: `jd-text` (with `discovery`), found 2026-08-28: Navan 172 / Zipher 170 /
+    אסם 162 chars of SERP snippet; `_UNFILLABLE` (401/403 on 22 of 22 sampled) made the
+    snippet the best text obtainable, and the sibling rung found no other address.
 
 344. **Sweep for tests that drive a root script's `main()` without `chdir` or explicit paths** —
     lane: `docs` (or whoever runs the sweep), split out of 289 on 2026-08-28. 289 fixed the one
@@ -7519,16 +7520,16 @@ stripped (`ARCHITECTURE.md` §8 — a result from a broken path is not a measure
     isolation and failed in a full run twice tonight while a Playwright audit was running
     beside it. `pytest.approx`, or asserting `<= 25.0` and `> 24.9`, settles it. Filed rather
     than fixed because `enrich_matched_jd.py` is `jd-text`'s and this lane holds `registry`.
-
-## Found by `registry`, 2026-08-29 (the queue)
-
-Record: `docs/sessions/2026-08-29-registry-queue.md`.
-
-
     **CLOSED 2026-08-29 by `jd-text`, and it bit exactly as predicted**: the first push of
     the archive pool was red on `guard` with `24.999999876817068 == 25.0` while the same
     tree was green locally. The assertion now tests the CLAIM — what is left of the whole
     budget — as `24.9 <= minutes <= 25.0`, rather than a wall clock landing on a float.
+    (The closure paragraph sat orphaned below the next section header until 2026-08-31,
+    which kept this item on the `--debt` list for two days after it was fixed.)
+
+## Found by `registry`, 2026-08-29 (the queue)
+
+Record: `docs/sessions/2026-08-29-registry-queue.md`.
 422. **`resolve_llm` resolves at 7.3% on a VERIFIED own-domain and 0% on a search-found page —
     the tier was never broken, it was starved** — lane: `registry`, measured 2026-08-29.
     `278@registry` wrote the tier off at *"0 resolved from 7 asked"*; `_verify` refuses any
@@ -8901,8 +8902,9 @@ the rebase (a collision is what 241–246 are).
      last copy goes. Closes 438 when applied.
      **Applied to `bd_rescue.py` 2026-08-30 (`scraper`, cross-lane debt rule)** — a worktree
      scrape run now arms under `AJIL_SECRETS` (and `validate_bd`, which imports
-    `bd_rescue._load_secrets`, with it). `bd_employees.py:41` and `pipeline/jdfill.py:89`
-     remain — their lanes' three-line diffs above still stand.
+    `bd_rescue._load_secrets`, with it). **Applied to `pipeline/jdfill.py` 2026-08-31
+     (`jd-text`, same rule)** — `load_secrets` now delegates to `secretsenv.load(_REPO_ROOT)`.
+     `bd_employees.py:41` remains — `registry`'s three-line diff above still stands.
 
 469. **The brief's lane table does not name the files the mutation gate failed on** — lane:
      `docs`. `confirm_zero.py`, `queue_disposition.py`, `queue_state.py`, `apply_proposals.py`,
@@ -9456,3 +9458,21 @@ pass over the night's own 172 proposals, not reasoned from the code.*
      `display_name` (likely "EntryPoint"). Check: `curl -s
      https://analystjobsil.github.io/board/roles.csv | grep -c ',entrypoint,entrypoint,'` → 0
      once written (the row ages out of the window ~2026-11 regardless).
+
+
+## From the `jd-text` lane, 2026-08-31 (the Indeed session)
+
+Record: `docs/sessions/2026-08-31-jd-text.md`.
+
+513. **22 companies' only live postings reach us through Indeed while their registry row is
+     parked or dark** — lane: `registry`, found 2026-08-31 while wiring the Indeed rung.
+     Of the 61 distinct companies on the 92 `discovery-indeed` cards, 59 already have a
+     `companies.csv` row and **22 of those rows are inactive** (Nestle: `js-shell`; Horizon
+     Technologies: `url-dead`; GENPACT DS ISRAEL, Software AG-SPL, SemiConductor Devices,
+     MKS Inc.: `no-url`; Prologic LTD, Experda: `no IL listing; monitored`; Oak:
+     `wrong-page`; Novo Nordisk: `unsupported ATS`; Diageo, Google-dup and more), and 2
+     companies have no row at all (Viber, McCANN). TransUnion, Trivago and אסם are the
+     published-row faces of the same class. The paid rung now fills their DESCRIPTIONS, but
+     an employer whose board the registry could resolve would be covered at source instead
+     of through an aggregator with a 21-day discovery window. Derivation:
+     `python -c "import json,csv;d=json.load(open('discovered_cache.json',encoding='utf-8'));ind={j['company'].strip().lower() for j in d if j.get('ats_platform')=='discovery-indeed'};rows={r['company_name'].strip().lower():r for r in csv.DictReader(open('companies.csv',encoding='utf-8-sig'))};print(sorted(n for n in ind if n in rows and rows[n]['active'].strip().lower()!='true'))"`
