@@ -552,10 +552,10 @@
     "id": "ci-transient-caches-the-name",
     "file": "pipeline/company_intel.py",
     "find": "                rep[\"blurbs_transient_reason\"] = str(e)\n                continue",
-    "replace": "                rep[\"blurbs_transient_reason\"] = str(e)\n                company_info[company] = \"\"\n                continue",
+    "replace": "                rep[\"blurbs_transient_reason\"] = str(e)\n                st.save_company_info({company: \"\"}, run_date)\n                continue",
     "class": "M2",
     "symbol": "transient_caches_the_name",
-    "why": "company-intel guard: a call that never answered must cache nothing, or it month-gates a real company"
+    "why": "company-intel guard: a call that never answered must cache nothing -- a '' in the store month-gates a real company (BLURB_RETRY_DAYS)"
   },
   {
     "id": "ci-transient-never-latches",

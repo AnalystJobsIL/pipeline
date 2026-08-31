@@ -608,6 +608,8 @@ def test_one_transient_blurb_does_not_report_the_seam_down_or_skip_research(env)
         "a call that never answered is not an empty answer"
     assert rep["researched"] >= 1 and [c for c in calls if c["tools"]], \
         "research must still run: the gate reads unavailable_after"
+    # nothing cached in the STORE for the skipped name: a '' there is a MONTHLY gate
+    # (BLURB_RETRY_DAYS), so one failed call would cost a real company four weeks of card
     assert st.load_company_info().get("A") is None, \
         "nothing cached for the skipped name -- the next run simply asks again"
     line = CI.audit_lines(rep)[0][0]
