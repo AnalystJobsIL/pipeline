@@ -101,3 +101,9 @@
 {"at":"2026-08-31T09:05:04Z","cap":250,"capped":false,"ci":true,"credits":120,"pid":2952,"tool":"bd_rescue.py"}
 {"at":"2026-08-31T11:32:34Z","cap":250,"capped":false,"ci":true,"credits":17,"pid":2310,"tool":"discovery_daily.py"}
 {"at":"2026-08-31T12:24:51Z","cap":250,"capped":false,"ci":true,"credits":130,"pid":2877,"tool":"resolve_broken.py"}
+{"at":"2026-08-31T09:05:36Z","cap":15,"capped":false,"ci":false,"credits":11,"pid":19524,"tool":"e1_serp_vjk.py"}
+{"at":"2026-08-31T09:08:02Z","cap":4,"capped":false,"ci":false,"credits":2,"pid":29712,"tool":"e1b_confirm.py"}
+{"at":"2026-08-31T09:08:22Z","cap":2,"capped":false,"ci":false,"credits":1,"pid":4164,"tool":"-c"}
+{"at":"2026-08-31T09:21:19Z","cap":95,"capped":false,"ci":false,"credits":87,"pid":5548,"tool":"sweep_92.py"}
+{"at":"2026-08-31T09:29:27Z","cap":3,"capped":false,"ci":false,"credits":2,"pid":4128,"tool":"-c"}
+{"at":"2026-08-31T17:05:45Z","cap":40,"capped":false,"ci":false,"credits":5,"pid":5276,"tool":"deep_validate.py"}
