@@ -2055,3 +2055,5 @@ Munters,scrape,https://www.munters.com/en-us/,https://www.munters.com/en-us/,fal
 Nanit,greenhouse,nanit,https://boards-api.greenhouse.io/v1/boards/nanit/jobs,true,auto-expand slug-probe; 12/5 IL
 LTX,greenhouse,ltx,https://boards-api.greenhouse.io/v1/boards/ltx/jobs,true,auto-expand slug-probe; 7/6 IL
 Finagra,ashby,finagra,https://api.ashbyhq.com/posting-api/job-board/finagra,true,auto-expand slug-probe; 9/2 IL
+Geniussports,scrape,https://www.geniussports.com/,https://www.geniussports.com/,false,scanned; no open Israel roles now | own-site 2026-08-31: www.geniussports.com linkback
+PB Israel,scrape,https://www.pbisrael.com/,https://www.pbisrael.com/,false,scanned; no open Israel roles now | own-site 2026-08-31: www.pbisrael.com linkback
