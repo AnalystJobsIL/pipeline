@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**584 filed · 423 open · 161 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**588 filed · 427 open · 161 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 534.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 538.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -352,7 +352,7 @@ closure convention in the header.
 - **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
 - **515** `515@infra` **A cron commit carries `[skip ci]`, so a row a cron corrupts is only ever caught on
 
-### discovery — 27 open
+### discovery — 29 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -381,6 +381,36 @@ closure convention in the header.
 - **484** `484@discovery` **Twenty agencies still walk past `is_recruiter` by name**
 - **485** `485@discovery` **`discovery_telegram.py` sends a spoofed Chrome UA and keeps only a post's first URL**
 - **519** `519@discovery` **`is_aggregator` does not know `ecommerceguide.com`, a site that says it is one** —
+- **535** `535@discovery` **A role whose own JD names a New York address is published as an Israel role**
+- **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
+
+### scraper — 25 open
+
+- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
+- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
+- **90** `90@scraper` **Per-job strategy provenance in the cache**
+- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
+- **219** `219@scraper` **Strategy 5's model, measured once**
+- **220** `220@scraper` **A `links:` carry has no ceiling**
+- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
+- **222** `222@scraper` **`pipeline/llm.py`
+- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
+- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
+- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
+- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
+- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
+- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
+- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
+- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
+- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
+- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
+- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
+- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
+- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
+- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
+- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
+- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
+- **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
 
 ### docs — 24 open
 
@@ -409,33 +439,6 @@ closure convention in the header.
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 
-### scraper — 24 open
-
-- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
-- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
-- **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
-- **219** `219@scraper` **Strategy 5's model, measured once**
-- **220** `220@scraper` **A `links:` carry has no ceiling**
-- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
-- **222** `222@scraper` **`pipeline/llm.py`
-- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
-- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
-- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
-- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
-- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
-- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
-- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
-- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
-- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
-- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
-- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
-- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
-- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
-- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
-- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
-
 ### company-intel — 21 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
@@ -460,6 +463,30 @@ closure convention in the header.
 - **521** `521@company-intel` **A Comeet API row anchors research to an opaque tenant uid, and the model then answers
 - **525** `525@company-intel` **Three bought profiles described a DIFFERENT company than the board they were anchored
 
+### roles — 21 open
+
+- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
+- **3** `3@roles` **`pipeline/dates.py`**
+- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
+- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
+- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
+- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
+- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
+- **533** `533@roles` **One employer, two company strings, two paid LLM calls
+- **534** `534@roles` **One posting, two `merge_key`s
+
 ### ats-fetch — 20 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
@@ -482,29 +509,6 @@ closure convention in the header.
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
-
-### roles — 20 open
-
-- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
-- **3** `3@roles` **`pipeline/dates.py`**
-- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
-- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
-- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
-- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
-- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
-- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
-- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
-- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
-- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
-- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
-- **533** `533@roles` **One employer, two company strings, two paid LLM calls
 
 ### jd-text — 14 open
 
@@ -8201,6 +8205,15 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      `docs/AGENT_BRIEF.md` carry the stock they CAN measure — 223 attempted scrape cards still
      under 200 characters, 33 cards on a shared JD page — and say the flow is unmeasured.
 
+     **The `jd-text` half is CLOSED 2026-08-31 (evening), on the MATCHED store rather than the
+     card**: `matched.jd_why` (added by `enrich_matched_jd._ensure_columns`, the `jd_tries`
+     precedent) records `ok:<class>:<host>` / `refused:identity(N)` /
+     `structural:<reason>(donors:N)` per row, so the reason a fill failed now outlives the run
+     and the `roles` export reads `structural:` verbatim into `description_blocker`. The
+     `scraper` half — the same reason on a `scraped_cache.json` card, which needs
+     `run_backfill`'s `save(item, text, stamp)` contract widened to carry `jd.reason` — is
+     still open and still that lane's.
+
 444. **Nothing anywhere reports that master's own test gate is red** — lane: `infra`, filed by
     **CLOSED 2026-08-30 (`infra`):** applied with two corrections — the step sits BEFORE `persist` (after it the stamp is never committed) and reads `--status completed` (an in-progress run has no conclusion). `stages.alarms("ci", 1)` in run.py. Proof: morning check 09-01.
      `docs` 2026-08-30 as the exact diff its clause 2 requires. `tests.yml` was non-green on
@@ -9891,3 +9904,52 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      a wasted call. So it is not fixable in the key — it is the same identity gap as
      `merge_key` → `firmographics.identity_key` (132-139), measured from the classifier's
      side, and the cost is one duplicate call per twin per contract change.
+
+
+534. **One posting, two `merge_key`s — Oak's Indeed copy was emailed while its own board row
+     sat closed with the real JD** — lane: `roles` (with `registry`). Filed by `jd-text`
+     2026-08-31. `oak|product analyst` (open, canonical
+     `il.indeed.com/viewjob?jk=9784c063c918d237`) and `oak identity security os|product
+     analyst` (closed 2026-08-21, canonical `jobs.ashbyhq.com/oak/9688f1f5-...`, **3,735
+     characters that pass `looks_like_jd`**) are the same posting: `store.merge_key` is
+     `normalized(company)|normalized(title)`, and the employer names its own board `oak` while
+     Indeed calls it `Oak - Identity Security OS`. So the Indeed row was emailed on 2026-08-31
+     carrying a 172-character SERP snippet while the employer's own text sat one row away, and
+     the closed row is what the archive keeps. `jd-text` filled the Indeed row from its OWN
+     canonical (1 credit) rather than donate across the two keys: that donation would bind on
+     company-NAME similarity, which is the Bounce/Bounce AI and 5-company-fanout shape (`370`).
+     The merge is this lane's to make — the same identity gap as `merge_key` ->
+     `firmographics.identity_key` (132-139, 533).
+
+535. **A role whose own JD names a New York address is published as an Israel role** — lane:
+     `discovery` (with `classifier`). Filed by `jd-text` 2026-08-31.
+     `diageo|performance analytics analyst` came from `discovery-indeed` with
+     `location: מחוז המרכז`, was emailed 2026-08-31, and the description its own Indeed jk
+     (`8018875cc3df2f8b`) serves opens with `Role: Performance Analytics Analyst / Level: 6 /
+     Location: 3 WTC (New York)`. The fill is faithful — same jk, same title, the role's own
+     canonical address — so this is not a jd-text defect: either `il.indeed.com` surfaced a US
+     posting on an Israel-scoped search, or the card's location is the searcher's rather than
+     the job's. Now that the text exists the classifier can see it; what nobody checks is
+     whether a card's claimed location survives contact with its own description. Re-derive:
+     that row's description in `cloud_state/seen.db`.
+
+536. **The scraper stores a listing page as nine cards' address when the page links each
+     posting** — lane: `scraper`. Filed by `jd-text` 2026-08-31. All 9 Bylith cards carry
+     `https://www.bylith.com/careers` and all 3 G Stat cards carry
+     `https://g-stat.com/careers/`, so the board links a visitor to a list rather than to the
+     job. The per-role addresses are on those pages and are now recoverable in one call —
+     `jdfill.role_addresses_on(body, url, title, job_id)` returned exactly one correct address
+     for each (`/careers/position/36`, matching the card id `scrape:36`; the G Stat role's own
+     title slug, with the two sibling analyst slugs correctly refused as ambiguous). `jd-text`
+     used it to fill the TEXT (`ok:own-address:*`), which is all this lane may do: the card's
+     `url` is `scraper`'s, and until it changes the description is right while the link is not.
+
+537. **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
+     until it ages out** — lane: `discovery`. Filed by `jd-text` 2026-08-31. The inline filler
+     writes the fetched text onto the in-memory job dict and stamps nothing, and
+     `discovered_cache.json` keeps the 172-character SERP snippet it was created with — so a
+     card that never matches a role is re-offered, and re-bought, on every run for 21 days.
+     That is what forces `JDFILL_INDEED_CAP` to be a *ceiling on waste* (25, 750/month) rather
+     than a drain schedule: persisting the bought text onto the card would make each jk a
+     one-time purchase (~100 credits once, then a trickle). The cache is `discovery`'s file
+     and the write belongs there, not in the filler.

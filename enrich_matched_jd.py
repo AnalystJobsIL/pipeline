@@ -39,11 +39,12 @@ import time
 
 from pipeline import jdfill
 from pipeline.jdfill import (DESC_MAX, GONE_MARK, MIN_DESC, RETRY_DAYS, Item, Unlocker,
-                             _REPO_ROOT, alarm_for, jd_body, jd_quality, load_secrets,
-                             looks_like_jd, native_candidates, quality_suspect,
-                             title_in_slug,
+                             _REPO_ROOT, alarm_for, doc_names_role, due, fetch_jd, is_job_url,
+                             jd_body, jd_quality, load_secrets, retry_days_for,
+                             looks_like_jd, native_candidates, plain_fetch, quality_suspect,
+                             role_addresses_on, source_copy_url, title_in_slug,
                              record_enrich, run_backfill, stamp_path_for,
-                             unfillable as _unfillable, why_string)
+                             unfillable as _unfillable, wayback_snapshot, why_string)
 
 for _s in (sys.stdout, sys.stderr):        # a cp1252 pipe must not kill the report
     try:
@@ -169,6 +170,41 @@ def cache_texts(path):
     return out, "ok"
 
 
+def cache_by_merge_key(path):
+    """{merge_key: [(url, description)]} over the scrape cache — the SAME cards `cache_texts`
+    reads, indexed by the repo's own role identity instead of by address.
+
+    The existing sibling rung can only see a card whose url is already in this role's
+    `seen_ids`, and a card only gets there by being seen in the same run as the role. Questar
+    is the counterexample that names the gap: its employer board was converted to
+    `questar.applytojob.com` on 2026-08-26, five days after the role closed, so its own
+    6,000-character posting was swept into this cache under a url the role has never heard
+    of. `store.merge_key` is what says they are the same role, and it costs nothing to ask.
+
+    Read-only; the `scraper` lane owns this file. Cards with no text are skipped — an index
+    of empty strings is a slower way to find nothing."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            cache = json.load(f)
+    except Exception:  # noqa: BLE001 - `cache_texts` already alarms on an unreadable cache
+        return {}
+    from pipeline.store import merge_key
+    out = {}
+    for comp, jobs in (cache or {}).items():
+        for j in jobs or []:
+            if not isinstance(j, dict) or not str(j.get("url") or "").startswith("http"):
+                continue
+            text = (j.get("description") or "").strip()
+            if not text:
+                continue
+            # `merge_key` reaches `title`/`company`, which `cache_texts` never touches, so a
+            # card with a non-string there took the whole driver down behind a
+            # continue-on-error step (wave B). That file is the `scraper` lane's.
+            j = dict(j, company=str(j.get("company") or comp), title=str(j.get("title") or ""))
+            out.setdefault(merge_key(j), []).append((j["url"], text))
+    return out
+
+
 def _store_text(conn, mkey, text, have):
     """Write `text` unless what is already stored is a better JD.
 
@@ -182,7 +218,20 @@ def _store_text(conn, mkey, text, have):
         return False
     if looks_like_jd(have) == looks_like_jd(text) and len(text) <= len(have):
         return False
-    conn.execute("UPDATE matched SET description=? WHERE mkey=?", (text, mkey))
+    # A `structural:` reason is a claim that this row has NO readable description, and it is
+    # published as such by the `roles` export. The moment any path writes one, that claim is
+    # false — and the two paths that fill a row without going through the donor pass (the
+    # cache-sibling rung, a re-clean) never touched `jd_why`, so a stale blocker outlived the
+    # text that disproved it (wave A). This is the one choke point every write passes.
+    # ...and the clause is written so a store WITHOUT the column still stores its text: the
+    # column is added by `_ensure_columns` at driver start, but `_store_text` is a library
+    # function and a caller may hand it any `matched`-shaped table.
+    try:
+        conn.execute("UPDATE matched SET description=?, "
+                     "jd_why=CASE WHEN COALESCE(jd_why,'') LIKE 'structural:%' "
+                     "THEN '' ELSE COALESCE(jd_why,'') END WHERE mkey=?", (text, mkey))
+    except sqlite3.OperationalError:
+        conn.execute("UPDATE matched SET description=? WHERE mkey=?", (text, mkey))
     return True
 
 
@@ -335,16 +384,256 @@ def _quality_pass(conn, every, dry_run):
 
 
 def _ensure_columns(conn):
-    """`jd_attempted` is declared by `pipeline/store.py`; `jd_tries` is this layer own and is
-    added here, the same way `jd_attempted` was before the store adopted it. It counts
-    DEFINITIVE failures only, and it exists so the backoff can widen without a role ever
-    leaving the pool (`jdfill.retry_days_for`). Declared to the `roles` and `infra` lanes,
-    who own that table."""
+    """`jd_attempted` is declared by `pipeline/store.py`; `jd_tries` and `jd_why` are this
+    layer's own and are added here, the same way `jd_attempted` was before the store adopted
+    it. `jd_tries` counts DEFINITIVE failures only, and exists so the backoff can widen
+    without a role ever leaving the pool (`jdfill.retry_days_for`). Declared to the `roles`
+    and `infra` lanes, who own that table.
+
+    `jd_why` (2026-08-31 evening) is the per-row REASON, which until now existed only inside
+    a run: `jd_attempted` collapses every outcome to a date plus `transient`/`gone`, so the
+    morning after, a row refused for `not-a-job-url` was indistinguishable from one refused
+    for `auth-walled`, and no lane could state its own number without re-running the night
+    (`docs/BACKLOG.md` 443, this lane's half). It carries both halves of what a reader needs:
+
+        ok:<kind>:<where>     a fill, and WHICH copy of the role produced it
+        structural:<reason>   every copy we hold has been tried and none can be read
+        refused:identity(N)   N copies were found and none of them names this role
+
+    The `structural:` prefix is written only by `_donor_pass`, and only once every donor class
+    has actually been enumerated — it is a statement about the world, not about a budget. The
+    `roles` lane reads it verbatim into `description_blocker` in the published dataset
+    (agreed 2026-08-31 with that lane's session b; `ok:`/`refused:` are never blockers)."""
     cols = {r[1] for r in conn.execute("PRAGMA table_info(matched)")}
-    for name, decl in (("jd_attempted", "TEXT"), ("jd_tries", "INTEGER")):
+    for name, decl in (("jd_attempted", "TEXT"), ("jd_tries", "INTEGER"), ("jd_why", "TEXT")):
         if name not in cols:
             conn.execute("ALTER TABLE matched ADD COLUMN %s %s" % (name, decl))
     conn.commit()
+
+
+# --------------------------------------------------------------- the role's other copies
+# The last rung, and the one that answers the operator's 2026-08-31 rule: a role whose own
+# board gives us nothing is not finished while we still hold another copy of THAT ROLE. Four
+# donor classes, cheapest first, every one bound to the role rather than to the company:
+#
+#   own-address   the employer's own listing page links to this posting (`role_addresses_on`)
+#   cache         a card another pass already swept, whose `store.merge_key` IS this row's
+#   copy          a LinkedIn/Indeed copy this role's own `seen_ids` name
+#   archive       a Wayback snapshot of the role's OWN canonical address
+#
+# `own-address`, `cache` and `archive` are identified structurally — an address on the
+# employer's own page naming this role, the repo's own merge identity, the role's own url —
+# so their text is admitted once it reads as a job description. `copy` is the dangerous one:
+# it is fetched at an address that belongs to somebody else's site, so it is admitted ONLY
+# when the fetched document DECLARES ITSELF to be this title at this employer
+# (`doc_names_role`). That is deliberately not `names_in_url`, which `store._same_origin`
+# refuses by measurement as an admission gate on foreign content, and deliberately not
+# byte-similarity, which is the fanout SYMPTOM (`370`), not an identity.
+DONOR_CLASSES = ("own-address", "cache", "copy", "archive")
+# The donor pass runs AFTER the fetch passes have spent `MATCHED_JD_TIME_BUDGET_MIN` (20)
+# inside a step `daily-digest.yml` gives 25 minutes, so it needs a bound of its own or it
+# becomes the thing that ends the step. It is cheap per row today — 7 rows measured at ~2
+# minutes worst case — but the pool it walks is "every row the ladder could not fill", which
+# grows with the store. A budget in MINUTES rather than rows, for the same reason
+# `run_backfill` uses one: the rows left over resume tomorrow, oldest first, and nothing is
+# silently dropped.
+DONOR_BUDGET_MIN = 4.0
+
+
+def _donor_candidates(row, cache_by_key, log):
+    """`([(kind, url, text)], complete)` — every copy of THIS role we could read, and whether
+    the enumeration itself SUCCEEDED. `text` is set only for a donor we already hold (no
+    fetch); the rest carry an address to try.
+
+    Enumeration is allowed to be generous: nothing here is admitted, and the caller applies
+    the gate that matches the class. It costs at most ONE free GET (the listing page), and
+    only for a row whose canonical address cannot name a posting.
+
+    `complete` is False when a class could not be asked rather than answering nothing — the
+    listing page did not respond, the archive lookup failed. The caller may only write
+    `structural:` when it is True: "no copy of this role can be read" is a claim about the
+    world that another lane PUBLISHES, and a network error is not evidence for it (wave A)."""
+    mkey, comp, title, url, att, seen_ids, _have, _tries, _last = row
+    out, complete = [], True
+    # 1. a card we already hold whose merge identity IS this role's. `store.merge_key` is the
+    #    repo's own answer to "is this the same role", so a card carrying it would have merged
+    #    into this row had the two been seen in one run — Questar's own-board posting was
+    #    scraped five days AFTER the role closed, so it never was.
+    #    A merge key is location-blind, so two requisitions can share it (measured: 1 of 1,305
+    #    keys in today's cache, `applied materials israel|senior software engineer`). Two
+    #    candidates that equally claim to be this role mean the cache cannot tell us which is
+    #    ours, and taking the first is the coin flip `role_addresses_on` already refuses.
+    own = [(c_url, c_text) for c_url, c_text in cache_by_key.get(mkey, [])
+           if _own_posting(comp, title, c_url)]
+    if len(own) == 1:
+        out.append(("cache", own[0][0], own[0][1]))
+    elif own:
+        log(f"  [X  ] {(comp + ' | ' + title)[:56]:<56} {len(own)} cache cards claim this "
+            f"role; none admitted (the cache cannot say which is ours)")
+    # 2. the employer's own listing page names this posting. Only for a canonical that cannot
+    #    identify a posting on its own — that is exactly the `not-a-job-url` class, 9 Bylith
+    #    cards and 3 G Stat cards sharing one address each.
+    if str(url or "").startswith("http") and not is_job_url(url, title):
+        job_id = ""
+        for sid in str(seen_ids or "").split("+"):
+            if ":" in sid and not sid.split(":", 1)[1].lower().startswith("http"):
+                job_id = sid.split(":", 1)[1]
+                break
+        status, body = plain_fetch(url, timeout=25)
+        found = role_addresses_on(body, url, title, job_id) if body else []
+        if not body:
+            complete = False               # the page did not answer: we did not look
+        log(f"  [LST] {(comp + ' | ' + title)[:56]:<56} listing page {status or 'no-answer'}"
+            f" -> {len(found)} address(es) naming this role")
+        out.extend(("own-address", a, "") for a in found)
+    # 3. the copies this role's own seen_ids name. The http ones come through
+    #    `sibling_urls`, which carries the lossy-column guard this used to re-implement
+    #    without it — a `+` inside a url is indistinguishable from the store's own `+` join,
+    #    and re-parsing by hand yielded a TRUNCATED address that was then fetched (wave B).
+    #    The discovery ids are `<source>:<platform>:<id>`, which no rung could ever ask for.
+    for addr in sibling_urls(seen_ids, url or ""):
+        if addr not in [u for _k, u, _t in out]:
+            out.append(("copy", addr, ""))
+    for sid in str(seen_ids or "").split("+"):
+        if ":" not in sid:
+            continue
+        addr = source_copy_url(sid.split(":", 1)[1])
+        if addr and addr != url and addr not in [u for _k, u, _t in out]:
+            out.append(("copy", addr, ""))
+    # 4. the archive, for an address that no longer answers. Identity is exact: it is a
+    #    snapshot OF this role's own url.
+    if str(att or "").endswith(GONE_MARK) and str(url or "").startswith("http"):
+        snap = wayback_snapshot(url)
+        if snap is None:
+            complete = False               # the CDX call failed: the archive was not asked
+        elif snap:
+            out.append(("archive", snap, ""))
+    return out, complete
+
+
+def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
+                retry_days=RETRY_DAYS, count_cap=0):
+    """Fill what the ladder could not, from another copy of the same role. Returns
+    (filled, refused, Counter of `jd_why` values written).
+
+    `paid_keys` is the set of `mkey`s allowed to reach the Unlocker; every other row is
+    worked on the free rungs alone, and inside `paid_keys` the 7/14/28 cooldown still
+    decides whether tonight is this row's turn to spend."""
+    filled, refused, why_written = 0, 0, Counter()
+    budget = float(os.environ.get("MATCHED_DONOR_BUDGET_MIN", str(DONOR_BUDGET_MIN)))
+    today, t0, worked = today or dt.date.today(), time.time(), 0
+    for row in rows:
+        if budget and (time.time() - t0) / 60 > budget:
+            why_written["budget-spent"] += 1
+            continue                       # tomorrow's work, and the counter says so
+        # `--limit N` is an operator saying "do N rows", and it bound the fetch passes while
+        # this one walked everything behind it (wave B: `--limit 1` worked three rows and
+        # spent four credits).
+        if count_cap and worked >= count_cap:
+            why_written["cap-spent"] += 1
+            continue
+        mkey, comp, title, url, att, seen_ids, have, tries, _last = row
+        comp, title = str(comp or ""), str(title or "")
+        # THE COOLDOWN GOVERNS THE PAID RUNG HERE TOO, and that single condition closes three
+        # holes at once (wave B): a row stamped yesterday is not re-bought tonight; a
+        # `gone`-terminal row never spends at all, because `due()` never brings a `gone` stamp
+        # round again; and the nightly re-buy of a row that will never fill cannot happen,
+        # because the fetch passes stamp it and the 7/14/28 ladder widens. The FREE donors run
+        # for every row regardless — that is the whole point of the rung, and it costs nothing
+        # (`run_backfill.free_rungs_ignore_cooldown`, the same split).
+        row_bd = bd if (mkey in paid_keys
+                        and due(att, today, definitive=retry_days_for(tries, retry_days))
+                        ) else None
+        label = (comp + " | " + title)[:56]
+        # A donor is a LAST resort: it may fill a row that has no job description, never
+        # improve one that has. `_store_text`'s ratchet is a LENGTH ratchet once both sides
+        # are job descriptions, and `donor_rows` includes the rows the LLM tier judged
+        # incomplete — which still pass `looks_like_jd` — so a longer DIFFERENT opening
+        # replaced a role's own posting (wave A, reproduced). Nothing in this pass may
+        # overwrite text that already reads as this role's description.
+        if looks_like_jd(have):
+            continue
+        cands, complete = _donor_candidates(row, cache_by_key, log)
+        worked += 1
+        text, why, seen_identity = "", "", 0
+        for kind, addr, held in cands:
+            if _unfillable(addr):
+                continue
+            if held:                       # a donor we already hold: no request at all
+                if looks_like_jd(held):
+                    text, why = held, "ok:%s:%s" % (kind, jdfill._host_of(addr) or "cache")
+                    break
+                continue
+            if jdfill.paid_only(addr) and row_bd is None:
+                # the only rung that could read this copy is not running for this row: that
+                # is a statement about the ladder, never about the page (jdfill's own rule)
+                complete = False
+                continue
+            # An archived role reaches the PAID rung only under --archived-bd (`paid_keys`),
+            # exactly as the fetch pass above: the 2026-08-26 lesson (a closed Taboola row
+            # bought a credit while the pool stood at 118 %) is a budget rule, and it is not
+            # repealed by a new rung. The free rungs run for every row, whatever its status.
+            jd = fetch_jd(addr, bd=row_bd, company=comp, title=title, want_identity=True)
+            if not jd.text:
+                # A page we READ and found no posting in is evidence; a page we could not
+                # reach is not. `jd.transient` is the ladder's own word for the second — a
+                # timeout, a 5xx, an Unlocker that was down, a cap that bound — and a
+                # `structural:` verdict built on one of those is a network error published as
+                # a fact about the world (wave B: 503, `MATCHED_JD_BD_CAP=0` and an unreadable
+                # ledger each produced one).
+                if jd.transient or jd.reason in ("bd-unavailable", "bd-capped", "bd-parked"):
+                    complete = False
+                continue
+            # the gate that matches the class: a copy at somebody else's address has to say
+            # whose posting it is, and the structural classes already said it by construction
+            if kind == "copy" and not doc_names_role(jd.decl, title, comp):
+                seen_identity += 1
+                log(f"  [X  ] {label:<56} {kind} {addr[:44]} REFUSED: the document names "
+                    f"{(jd.decl or '(nothing)')[:60]!r}")
+                continue
+            text, why = jd.text, "ok:%s:%s" % (kind, jdfill._host_of(addr))
+            break
+        # every refusal counts, whether or not a later donor filled the row: the alarm this
+        # feeds is "copies were found and none was admitted", and booking refusals only on
+        # the not-filled path suppressed exactly the case worth seeing (wave A)
+        refused += seen_identity
+        if text and (args.dry_run or _store_text(conn, mkey, text, have)):
+            filled += 1
+            why_written[why.split(":")[1]] += 1
+            log(f"  [OK ] {label:<56} {why} {len(text)}")
+            if not args.dry_run:
+                conn.execute("UPDATE matched SET jd_why=? WHERE mkey=?", (why, mkey))
+                conn.commit()
+            continue
+        if text:
+            # a donor was admitted and the ratchet kept what was already stored: the row is
+            # not short of a description, so nothing structural may be said about it
+            continue
+        # Nothing left to try. The reason says WHICH world we are in, and it may only be
+        # written here — after every class above has actually been enumerated for this row.
+        if seen_identity:
+            why = "refused:identity(%d)" % seen_identity
+        elif not complete:
+            # a class could not be ASKED (the listing page did not answer, the archive lookup
+            # failed, the only rung that reads this copy was not running). The ladder's own
+            # stamp already schedules the retry; writing a world-fact here would publish a
+            # network error as "structurally unfillable" (wave A, P1-1).
+            why = ""
+        elif str(att or "").endswith(GONE_MARK):
+            why = "structural:gone(donors:%d)" % len(cands)
+        elif str(url or "").startswith("http") and not is_job_url(url, title):
+            why = "structural:not-a-job-url(donors:%d)" % len(cands)
+        elif _unfillable(url):
+            why = "structural:%s(donors:%d)" % (_unfillable(url), len(cands))
+        else:
+            why = ""                       # an ordinary miss: the ladder's own stamp says it
+        if why:
+            why_written[why.split(":")[0] if why.startswith("refused") else why.split("(")[0]] += 1
+            log(f"  [-- ] {label:<56} {why}")
+            if not args.dry_run:
+                conn.execute("UPDATE matched SET jd_why=? WHERE mkey=?", (why, mkey))
+                conn.commit()
+    return filled, refused, why_written
 
 
 def main(argv=None):
@@ -476,6 +765,7 @@ def _run(args, stamp):
     texts, cache_status = cache_texts(args.cache)
     if cache_status != "ok":
         alarms.append(f"matched:cache-{cache_status}")
+    cache_by_key = cache_by_merge_key(args.cache)
 
     # The one sibling rung: text we ALREADY hold, for an address that names this company.
     # There is no fetch-the-siblings pass — wave 1 measured its yield at 0 and its risk at
@@ -580,6 +870,10 @@ def _run(args, stamp):
     def save(item, text, stamp_v):
         if text:
             _store_text(conn, item.key, text, have_by_key.get(item.key, ""))
+            # the canonical address answered: record THAT, so `jd_why` never leaves a stale
+            # `structural:` verdict standing on a row that has since been filled
+            conn.execute("UPDATE matched SET jd_why=? WHERE mkey=?",
+                         ("ok:canonical:%s" % (jdfill._host_of(item.url) or "?"), item.key))
         # `jd_tries` counts DEFINITIVE failures only. A transient one (timeout, 5xx, an
         # Unlocker that was down) says nothing about the address, so widening the backoff on
         # it would let one bad morning push a perfectly readable role out to a month.
@@ -615,9 +909,53 @@ def _run(args, stamp):
                           retry_days=args.cooldown_days, count_cap=left_cap,
                           log=lambda s: print(s, flush=True), probe_cell=probe_cell)
 
+    # THE LAST RUNG: the role's other copies of itself, for everything the ladder above could
+    # not fill. It runs here, after the fetches, because that is what makes it a last resort
+    # rather than a shortcut past the role's own address — and because the rows it must reach
+    # include the ones `run_backfill` never walks at all: a `gone`-terminal role is counted
+    # and skipped up there, and an archived role's canonical may have been dead for weeks
+    # while its LinkedIn copy still renders. Re-read from the store so it sees this run's own
+    # fills rather than the snapshot they were computed from.
+    donor_rows = [r for r in conn.execute(
+        """SELECT mkey, COALESCE(company,''), COALESCE(title,''), COALESCE(url,''),
+                  COALESCE(jd_attempted,''),
+                  COALESCE(seen_ids,''), COALESCE(description,''), COALESCE(jd_tries,0),
+                  COALESCE(last_seen,'')
+           FROM matched WHERE COALESCE(status,'') != 'superseded'""").fetchall()
+        if not looks_like_jd(r[6]) or r[0] in incomplete]
+    # Which rows may spend: a LIVE row keeps the paid rung the fetch passes already gave it;
+    # an archived one is free-only unless `--archived-bd`. When the ledger is unreadable
+    # nobody spends, the same rule the fetch passes follow — the day we cannot say which
+    # roles are alive is not the day to buy pages for them.
+    paid_keys = set() if dead is None else {
+        r[0] for r in donor_rows if r[0] not in dead or args.archived_bd}
+    from_donor, donor_refused, donor_why = 0, 0, Counter()
+    if donor_rows:
+        print(f"-- {len(donor_rows)} rows the ladder could not fill: asking the role's own "
+              f"other copies ({len(paid_keys)} may reach the paid rung)", flush=True)
+        from_donor, donor_refused, donor_why = _donor_pass(
+            conn, donor_rows, cache_by_key, bd, paid_keys, args,
+            log=lambda s: print(s, flush=True), retry_days=args.cooldown_days,
+            count_cap=max(0, args.limit - (c["tried"] - c["probe"])) if args.limit else 0)
+        # The one way this rung dies quietly: `doc_names_role` tightens (a source changes how
+        # it writes its own title, a normalisation drifts) and every copy is refused, which
+        # looks exactly like a night with no donors at all. Refusals ARE the rung working
+        # when a copy really is another employer's, so the alarm needs both halves — copies
+        # were found and NONE was admitted — and a floor of 3, because one nift-class row
+        # refusing for ever is the designed behaviour and an alarm that fires every morning
+        # is one that gets trained away.
+        if donor_refused >= 3 and not from_donor:
+            alarms.append(f"matched:donor-all-refused({donor_refused} copies of this role's "
+                          f"own addresses named a different role or employer, 0 admitted)")
+
     # `incomplete` too: a row the model judged a fragment is a row still without the
     # employer posting, and reporting "0 roles still without a JD" on a run that had just
     # judged two of them incomplete is the layer contradicting itself in one stamp (wave 3).
+    # rows standing on a written structural verdict — the count the `roles` export turns into
+    # `description_blocker`, and the one a reader can check between runs
+    n_structural = conn.execute(
+        "SELECT COUNT(*) FROM matched WHERE COALESCE(jd_why,'') LIKE 'structural:%' "
+        "AND COALESCE(status,'') != 'superseded'").fetchone()[0]
     still_short = [r[:2] for r in conn.execute(
         """SELECT mkey, COALESCE(url,''), COALESCE(description,'') FROM matched
            WHERE COALESCE(status,'') != 'superseded'""").fetchall()
@@ -657,14 +995,24 @@ def _run(args, stamp):
                       matched_llm_candidates=q["candidates"],
                       matched_llm_unavailable=q["unavailable"],
                       matched_llm_capped=q["capped"],
+                      matched_via_sibling=from_donor,
+                      matched_sibling_refused=donor_refused,
+                      # a GAUGE, like `matched_terminal` and for the same reason: it counts
+                      # ROWS STANDING in that state, so a second dispatch on one day restates
+                      # it instead of summing the same rows twice
+                      matched_structural=n_structural,
+                      matched_donor_why="+".join(f"{k}{v}" for k, v in
+                                                 sorted(donor_why.items())),
                       matched_no_address=n_no_address, matched_gone=c["gone"],
                       matched_terminal=n_final_gone, matched_cycle_days=cycle_days,
                       matched_actionable=actionable, matched_why=why_string(c))
     # `bd` is None on --dry-run (no Unlocker is built at all), so the report reads it
     # through getattr; the record_enrich block above needs no guard because it is
     # dry-run-gated, and dry-run is the only way `bd` is None
-    print(f"=== matched JD backfill: {c['filled'] + from_cache} filled "
-          f"({c['bd']} via Bright Data, {from_cache} from another of the role's own addresses), "
+    print(f"=== matched JD backfill: {c['filled'] + from_cache + from_donor} filled "
+          f"({c['bd']} via Bright Data, {from_cache} from another of the role's own addresses, "
+          f"{from_donor} from another copy of the role — {donor_refused} copies refused for "
+          f"not naming it, {n_structural} rows standing on a structural reason), "
           f"{c['fail']} unfetchable (retry in {args.cooldown_days}d), {c['cooldown']} in cooldown, "
           f"{getattr(bd, 'used', 0)} Bright Data requests spent, {short_left} roles still without a JD "
           f"({actionable} of them actionable)"

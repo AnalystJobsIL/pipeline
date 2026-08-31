@@ -263,9 +263,19 @@ def _after_the_wall(text):
     # per-page work, not a small constant
     hits = list(_WALL_MARKS.finditer(text or ""))
     for m in hits[:24]:
-        seg = jd_body(text[m.end():]).lstrip(" .:;·|-\n")
-        if len(seg) >= MIN_DESC and len(_marker_families(seg)) >= 2:
-            return seg
+        # The mark is where the wall's LAST SENTENCE begins, not where it ends: `by clicking
+        # Continue` is followed by "to join or sign in, you agree to LinkedIn's User
+        # Agreement , Privacy Policy , and Cookie Policy ." and only then by the posting.
+        # Opening the candidate at the mark's end therefore keeps that clause as the first
+        # line of the description — measured on Mobileye's live guest page 2026-08-31, 97
+        # characters of LinkedIn's terms standing where the day-to-day belongs, which is the
+        # exact complaint this lane exists to answer. So the line the mark sits on is
+        # dropped first, and the raw segment is kept only if that leaves nothing that passes
+        # (a posting that begins on the mark's own line).
+        for start in (text.find("\n", m.end()) + 1 or m.end(), m.end()):
+            seg = jd_body(text[start:]).lstrip(" .:;·|-\n")
+            if len(seg) >= MIN_DESC and len(_marker_families(seg)) >= 2:
+                return seg
     return ""
 
 
@@ -553,6 +563,42 @@ def jsonld_jd(body):
     return ""
 
 # --------------------------------------------------------------------------- fetch
+def wire_url(url):
+    """`url` in the form urllib can actually put on the wire.
+
+    A URL with a Hebrew path is legal on the web and illegal in `urllib`: it raises
+    `UnicodeEncodeError` ("'ascii' codec can't encode characters in position 10-15") before a
+    packet is sent, and `plain_fetch`'s catch-all turns that into the same silent `(None, "")`
+    a timeout produces. So every non-ASCII address this pipeline has ever held has been
+    unfetchable and has reported itself as a network failure — measured 2026-08-31 on
+    `g-stat.com/jobs/אנליסט-ית-דיגיטל/`, which is that role's own posting and answers 200
+    with its description the moment the path is encoded. Half of what this board publishes is
+    Hebrew, and the caches carry such addresses today (KPMG, Isracard).
+
+    `%` is in the safe set, so an address that is ALREADY percent-encoded passes through
+    unchanged rather than being encoded twice — the common case, and the one a naive quote
+    breaks. Measured over the 3,815 distinct URLs in both caches: **3,812 are ASCII and 0 of
+    them change**, and the 3 that change are exactly the non-ASCII ones (KPMG ×1, Isracard ×2)
+    which no rung could fetch at all before. Idempotent on all 3,815.
+
+    It normalises the HOST as well, which is why `_host_of` runs the same normalisation: the
+    refusal gates (`unfillable`, `paid_only`) read a host, and if this function could turn
+    `il.inde<soft-hyphen>ed.com` into `il.indeed.com` after those gates had already answered
+    about the un-normalised spelling, it would be a way past them (wave A)."""
+    parts = urlsplit(url)
+    if all(ord(ch) < 128 for ch in url):
+        return url
+    try:
+        host = parts.netloc.encode("idna").decode("ascii")
+    except (UnicodeError, ValueError):
+        host = parts.netloc
+    from urllib.parse import quote, urlunsplit
+    return urlunsplit((parts.scheme, host,
+                       quote(parts.path, safe="/%:@&=+$,;~!*'()"),
+                       quote(parts.query, safe="/%:@&=+$,;~!*'()?"),
+                       quote(parts.fragment, safe="/%:@&=+$,;~!*'()?")))
+
+
 def plain_fetch(url, timeout=15, accept="text/html,*/*;q=0.8", headers=None):
     """One GET, no retries. Returns (status, body): status None on timeout/network error.
 
@@ -561,7 +607,7 @@ def plain_fetch(url, timeout=15, accept="text/html,*/*;q=0.8", headers=None):
     2026-08-29) must not lose the User-Agent every other host is answered under."""
     h = {"User-Agent": _UA, "Accept": accept, "Accept-Language": "en,he;q=0.8"}
     h.update(headers or {})
-    req = urllib.request.Request(url, headers=h)
+    req = urllib.request.Request(wire_url(url), headers=h)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status, r.read(2_000_000).decode("utf-8", "replace")
@@ -1217,7 +1263,16 @@ _LIST_SEGMENT = {"search-results", "search", "results", "jobs", "job", "careers"
 _LIST_QUERY = re.compile(r"(^|&)(keywords?|q|query|search|offices(\[|%5[Bb])[^=]*)=", re.I)
 
 
-_SLUG_WORD = re.compile(r"[a-z0-9]+")
+# Hebrew is a WORD here, not a stray byte. This was `[a-z0-9]+` until 2026-08-31, so every
+# slug rule in this module answered False for a Hebrew posting by construction — and half of
+# what this pipeline publishes is Hebrew. `g-stat.com/jobs/אנליסט-ית-דיגיטל/` is that role's
+# own address and `slug_names_title` could not see it.
+# Measured over all 4,379 (url, title) pairs the caches hold (`scraped_cache.json` +
+# `discovered_cache.json`): `is_job_url` verdicts change on **0** of them, and
+# `title_in_slug` gains exactly **3** — Isracard ×2 and KPMG, every one a url whose slug
+# really does spell out that card's own title. Widening admits no new address class; it stops
+# refusing an entire language.
+_SLUG_WORD = re.compile(r"[a-z0-9֐-׿]+")
 
 
 def slug_names_title(slug, title):
@@ -1328,11 +1383,25 @@ _UNFILLABLE = (
 
 
 def _host_of(url):
-    """The authority's host: lowercased, without userinfo, port or a trailing dot."""
+    """The authority's host: lowercased, without userinfo, port or a trailing dot, and in the
+    same form the request will actually be sent to.
+
+    The IDNA step is a refusal-gate property, not a cosmetic one. `unfillable` and `paid_only`
+    decide what may never be fetched by comparing this string, and `wire_url` nameprep-encodes
+    the host on its way to the socket — so without the same normalisation here,
+    `il.inde<soft-hyphen>ed.com/viewjob?jk=…` was a host the gates had never heard of and the
+    wire turned back into `il.indeed.com`: a way past every host rule this module has
+    (wave A, 2026-08-31). Unencodable hosts keep their literal spelling rather than raising."""
     host = urlsplit(url).netloc.lower().rsplit("@", 1)[-1]
     if host.startswith("["):                                  # IPv6 literal
         return host.split("]")[0] + "]"
-    return host.split(":")[0].rstrip(".")
+    host = host.split(":")[0].rstrip(".")
+    if host.isascii():
+        return host
+    try:
+        return host.encode("idna").decode("ascii")
+    except (UnicodeError, ValueError):
+        return host
 
 
 def unfillable(url):
@@ -1391,6 +1460,34 @@ def indeed_fetch_url(jk):
     return f"https://il.indeed.com/jobs?q=a&l=Israel&vjk={jk}"
 
 
+def _indeed_pane(body, jk):
+    """The two-pane viewjob response OUR `jk` opened, or None.
+
+    Split out of `_indeed_jd` on 2026-08-31 (evening) because the description is no longer
+    the only thing read from a bought pane: `declared_identity` reads the same object for the
+    posting's own title and employer, and parsing the blob twice would have been two chances
+    to disagree about which job the body belongs to."""
+    if len(body) > INDEED_MAX_BLOB:
+        return None
+    # a regex, not a literal find: one space from Indeed's minifier and a literal anchor
+    # returns "" on every posting for ever — booked `bd-no-markers`, definitive, with the
+    # credit spent, and silent on any night the LinkedIn rows fill normally (wave C)
+    m = re.search(r"window\._initialData\s*=\s*", body)
+    if not m:
+        return None
+    try:
+        data = json.JSONDecoder().raw_decode(body, m.end())[0]
+    except (ValueError, RecursionError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    pane = (data.get("autoOpenTwoPaneViewjobResponse") or {})
+    pane = pane.get("body") if isinstance(pane, dict) else None
+    if not isinstance(pane, dict) or (pane.get("jobKey") or "").lower() != str(jk or "").lower():
+        return None
+    return pane
+
+
 def _indeed_jd(body, jk):
     """This posting's description out of a SERP two-pane body, or "".
 
@@ -1399,23 +1496,8 @@ def _indeed_jd(body, jk):
     (a "similar jobs" rail is not this page's posting) applies doubly here. Anything else —
     the pane didn't open, a different job's pane, a snippet-sized field — returns "", and the
     ladder's ordinary shell/no-markers accounting takes over."""
-    if len(body) > INDEED_MAX_BLOB:
-        return ""
-    # a regex, not a literal find: one space from Indeed's minifier and a literal anchor
-    # returns "" on every posting for ever — booked `bd-no-markers`, definitive, with the
-    # credit spent, and silent on any night the LinkedIn rows fill normally (wave C)
-    m = re.search(r"window\._initialData\s*=\s*", body)
-    if not m:
-        return ""
-    try:
-        data = json.JSONDecoder().raw_decode(body, m.end())[0]
-    except (ValueError, RecursionError):
-        return ""
-    if not isinstance(data, dict):
-        return ""
-    pane = (data.get("autoOpenTwoPaneViewjobResponse") or {})
-    pane = pane.get("body") if isinstance(pane, dict) else None
-    if not isinstance(pane, dict) or (pane.get("jobKey") or "").lower() != jk.lower():
+    pane = _indeed_pane(body, jk)
+    if pane is None:
         return ""
     info = pane.get("jobInfoWrapperModel") or {}
     info = info.get("jobInfoModel") if isinstance(info, dict) else None
@@ -1439,6 +1521,303 @@ def _from_paid_body(body, jk=""):
         jd = _indeed_jd(body, jk)
         return (jd, "ok-indeed") if jd else ("", "")
     return _from_body(body)
+
+
+# ------------------------------------------------------- the role's OTHER copies of itself
+# A role's canonical address is whichever copy won `store.merge_duplicates`, and that contest
+# is decided by who carries a posted-date — not by who can be READ. When that address yields
+# nothing (a listing page with no posting on it, a 404 at the employer's own board, a
+# JS shell), the posting itself may still be legible somewhere we already know about: on the
+# employer's own listing page under its own per-role link, in a card another pass swept, or
+# in the LinkedIn/Indeed copy the discovery layer found. The operator's rule (2026-08-31) is
+# that those copies are EVIDENCE — "its board gives no address" is not an end state for a
+# role we hold another copy of.
+#
+# The danger this whole block is arranged against is the one the `roles` lane measured on
+# 2026-08-31: text admitted on a weak address heuristic is text laundered under our own name.
+# So enumeration is allowed to be generous and ADMISSION is not. A donor's text is admitted
+# only when the identity is ROLE-level:
+#   * an address recovered from the employer's OWN listing page, naming this role by its own
+#     posting id or by its title (`role_addresses_on`), or
+#   * a fetched document that DECLARES ITSELF to be this title at this employer
+#     (`declared_identity` + `doc_names_role`) — the Meridial lesson, where a board's own
+#     `<title>` beat every derived similarity signal.
+# Company membership is never enough (`nift|data analyst` carries five other employers'
+# postings), and neither is byte-similarity (that is the fanout signal, `370`, and it is a
+# symptom to alarm on rather than a rule to admit on).
+
+# A share widget carries the page's OWN canonical url in a query parameter, and on some
+# careers pages it is the ONLY place a per-role address appears: `g-stat.com/careers/`
+# publishes 78 of them and not one as a plain `<a href>` — every one sits inside
+# `facebook.com/sharer.php?u=`, `wa.me/?text=` or `linkedin.com/shareArticle?url=`
+# (measured 2026-08-31). The value is only ever trusted when it is SAME-ORIGIN with the page
+# that carries it, so a share link to somebody else's site is nobody's candidate.
+_SHARE_PARAMS = ("u", "url", "text", "link", "body")
+_HREF = re.compile(r"""href\s*=\s*["']([^"']{1,2000})["']""", re.I)
+MAX_PAGE_LINKS = 4000            # a listing page is links; a bomb is not worth the scan
+
+
+def _page_links(body, page_url):
+    """Every same-origin http address this page points at, in page order, de-duplicated.
+
+    Includes the ones only a share widget carries (see `_SHARE_PARAMS`). Same-origin is the
+    whole trust model here: this function is used to find a posting on the EMPLOYER'S OWN
+    board, so a link that leaves that origin is not a candidate for anything."""
+    from urllib.parse import urljoin
+    origin = _host_of(page_url)
+    if not origin:
+        return []
+    out, seen = [], set()
+
+    def _keep(u):
+        try:
+            if not u.lower().startswith("http") or _host_of(u) != origin or u in seen:
+                return
+        except ValueError:                  # a malformed authority is not a candidate
+            return
+        seen.add(u)
+        out.append(u)
+
+    for n, m in enumerate(_HREF.finditer(body or "")):
+        if n >= MAX_PAGE_LINKS:
+            break
+        raw = _html_mod.unescape(m.group(1)).strip()
+        if not raw or raw.startswith(("#", "javascript:", "mailto:", "tel:")):
+            continue
+        # One malformed href on one careers page must not end the pass: `href="http://["`
+        # raises `ValueError: Invalid IPv6 URL` out of `urljoin`/`urlsplit`, and behind a
+        # `continue-on-error` step that is a driver that dies silently, having stamped
+        # nothing (wave A). A page is arbitrary bytes from the internet; one bad link is
+        # skipped, not fatal.
+        try:
+            absolute = urljoin(page_url, raw)
+            q = parse_qs(urlsplit(absolute).query)
+        except ValueError:
+            continue
+        _keep(absolute)
+        # ...and whatever a share wrapper is carrying, which may be on our origin even when
+        # the wrapper itself is not
+        for key in _SHARE_PARAMS:
+            for val in q.get(key) or []:
+                _keep(_html_mod.unescape(str(val)).strip())
+    return out
+
+
+def role_addresses_on(body, page_url, title, job_id=""):
+    """The addresses on THIS listing page that name THIS role, best evidence first.
+
+    The gap this closes: a scrape card whose url is the careers page it was swept from cannot
+    be read, judged on its own text, or linked to — 9 Bylith cards and 3 G Stat cards share
+    one url each today, and the role is published with no description at all. But the listing
+    page itself links to the postings, and two rules identify ours without inventing a URL
+    vocabulary:
+
+      * the role's own posting id is the last path segment — Bylith's `Product Analyst`
+        carries `seen_ids = ["scrape:36"]` and the page links `/careers/position/36`. The id
+        came off THIS page in the first place, so this is the page agreeing with itself.
+      * the last segment spells out the title (`slug_names_title`) — G Stat publishes
+        `/jobs/אנליסט-ית-דיגיטל/` for `אנליסט/ית דיגיטל`.
+
+    Both are role-level, and neither can reach off the employer's own origin (`_page_links`).
+    A page that links nothing of ours returns [] and the caller says so.
+
+    The title rule here is STRICTER than `slug_names_title`, and that is a measurement rather
+    than caution. `slug_names_title` allows one slug word to miss the title, which is right
+    when asking "is this a posting at all" of a lone url — and wrong when CHOOSING between
+    the postings of one board, because the word it lets miss is exactly the discriminating
+    one. Measured live on G Stat: under that rule `אנליסט/ית דיגיטל` matched three of its
+    own siblings — `אנליסט-ית-דיגיטל`, `אנליסט-ית-אשראי` (credit) and `אנליסט-ית-כלכלן-ית`
+    (economist) — because `אנליסט`+`ית` ("analyst", m/f) is a prefix half a Hebrew board
+    shares. Every significant title word must appear, and an ambiguous title match yields
+    NOTHING: two links that equally name this role mean the page cannot tell us which is
+    ours, and a coin-flip here publishes the credit analyst's posting on the digital
+    analyst's card."""
+    want = str(job_id or "").strip().lower()
+    t_words = _named_words(title)
+    by_id, by_title = [], []
+    page = (page_url or "").rstrip("/")
+    for u in _page_links(body, page_url):
+        if u.rstrip("/") == page:
+            continue                        # the listing page linking to itself
+        try:
+            segs = [s for s in urlsplit(u).path.split("/") if s]
+        except ValueError:                  # `href="http://["` -> Invalid IPv6 URL
+            continue
+        if not segs:
+            continue
+        last = _html_mod.unescape(segs[-1]).lower()
+        seg_words = _named_words(_html_mod.unescape(segs[-1]))
+        if want and last == want:
+            by_id.append(u)
+        # SYMMETRIC, the way `slug_names_title` is: every title word must be in the slug AND
+        # the slug may carry at most one word the title does not. A bare subset test made the
+        # rule a prefix match — `Data Analyst` matched `senior-data-analyst-growth-2042`, and
+        # since `own-address` is a structural class no document check follows it, so a
+        # DIFFERENT opening's text would have been published with no identity gate at all
+        # (wave A). Measured over today's cache: the subset rule admits 15 distinct
+        # different-title adoptions (`Cognyte: Product Manager <= Senior Product Marketing
+        # Manager`, `Asperii: Salesforce Consultant <= Senior Salesforce Consultant`); the
+        # symmetric one admits none of them and still resolves both live rows.
+        elif t_words and t_words <= seg_words and len(seg_words - t_words) <= 1:
+            by_title.append(u)
+    # ...and an ambiguous match on EITHER path yields nothing. The id path had no such guard,
+    # and a short generic id is real: `scrape:36` is a live seen_id, so a page carrying both
+    # `/blog/36` and `/careers/position/36` handed back the blog post first (wave A).
+    return (by_id if len(by_id) == 1 else []) + (by_title if len(by_title) == 1 else [])
+
+
+# What a fetched document says it IS. Every rung above reads a body for its job description;
+# this reads the same body for the posting's own claim about which role and which employer it
+# belongs to, which is what makes a copy at a foreign address admissible at all.
+_HTML_TITLE = re.compile(r"<title[^>]{0,200}>(.{0,400}?)</title>", re.S | re.I)
+_OG_TITLE = re.compile(
+    r"""<meta[^>]{0,300}?(?:property|name)\s*=\s*["']og:title["'][^>]{0,300}?content\s*=\s*"""
+    r"""["']([^"']{0,400})["']""", re.I)
+
+
+def declared_identity(body, jk=""):
+    """The document's own statement of whose posting it is, as one text blob, or "".
+
+    Two shapes, because two shapes is what the sources give us:
+      * an Indeed SERP pane keyed to `jk` — `jobTitle` plus the header's `companyName`
+        ("Manager - Data Science & Analytics" / "TransUnion", measured on the captured
+        bodies). The key must match, exactly as `_indeed_jd` requires: a pane that is not
+        ours declares somebody else.
+      * an ordinary HTML page — `<title>` and `og:title`, which on a LinkedIn guest page is
+        "Mobileye hiring Experienced Data Analyst in Jerusalem District, Israel | LinkedIn"
+        and names both halves in one string.
+
+    Returned as a blob rather than a (title, company) pair on purpose: the sources do not
+    agree on where the boundary is, and `doc_names_role` only ever asks whether the words are
+    THERE."""
+    body = body or ""
+    if jk:
+        pane = _indeed_pane(body, jk)
+        if pane is None:
+            return ""
+        info = pane.get("jobInfoWrapperModel") or {}
+        info = info.get("jobInfoModel") if isinstance(info, dict) else {}
+        header = (info or {}).get("jobInfoHeaderModel") or {}
+        parts = [pane.get("jobTitle"), (header or {}).get("jobTitle"),
+                 (header or {}).get("companyName"), (header or {}).get("subtitle")]
+        return " ".join(str(p) for p in parts if isinstance(p, str) and p.strip())
+    out = []
+    for rx in (_HTML_TITLE, _OG_TITLE):
+        m = rx.search(body[:LD_SCAN_BYTES])
+        if m:
+            out.append(html_to_text(_html_mod.unescape(m.group(1))))
+    return " ".join(o for o in out if o.strip())
+
+
+# words that name no employer and no role: they are in every declaration on the internet and
+# would let a company or a title "match" on nothing at all
+_EMPTY_WORDS = {"the", "and", "for", "job", "jobs", "at", "in", "of", "a", "an", "to", "is",
+                "careers", "career", "hiring", "linkedin", "indeed",
+                # legal forms name no employer: "M Co" was confirmed by the `co` in
+                # "Other Co", which is the employer half passing on a word every second
+                # company shares (found by this file's own refusal test)
+                "ltd", "inc", "llc", "co", "corp", "company", "gmbh", "plc", "bv", "sa",
+                "israel", "tel", "aviv", "ישראל", "משרות", "משרה", "דרושים", "בעמ"}
+
+
+def _named_words(s):
+    return {w for w in _SLUG_WORD.findall(str(s or "").lower())
+            if len(w) > 1 and w not in _EMPTY_WORDS}
+
+
+def doc_names_role(declaration, title, company):
+    """Does this document's own self-declaration name THIS role at THIS employer?
+
+    The admission gate for every copy fetched at an address that is not the role's canonical
+    one. BOTH halves must hit, because each alone is a defect this repo has already paid for:
+
+      * the ROLE half alone publishes a different posting at the right employer — the
+        `percepto|senior product analyst` case, 2,406 characters of the Data Insights
+        Operations posting stored on the Senior Product Analyst row.
+      * the EMPLOYER half alone publishes another company's posting under ours — the reason
+        `store._same_origin` refuses `names_in_url` as an admission gate, having measured it
+        True for Fetcherr's posting under Bright Data's name.
+
+    Two of the title's own significant words (one, when that is all the title has) and one of
+    the company's. Deliberately the same shape as `title_in_slug`, asked of a sentence
+    instead of a slug: a declaration is far more specific than a path segment, so nothing
+    weaker is needed and nothing stronger would survive the punctuation and word order that
+    differ between every source ("Oak - Identity Security OS" vs "Oak")."""
+    decl = _named_words(declaration)
+    if not decl:
+        return False
+    t_words, c_words = _named_words(title), _named_words(company)
+    if not t_words or not c_words:
+        return False                      # nothing to check against is not a pass
+    # The employer half may not be PAID FOR BY THE TITLE. A declaration always contains the
+    # title's words, so a company sharing one with the role got the employer check for free:
+    # `doc_names_role("Fetcherr hiring Data Analyst - Tableau…", "Data Analyst", "Bright
+    # Data")` was True on the word `data` — the exact pair `store._same_origin` names as its
+    # reason for refusing `names_in_url` as an admission gate (wave A). Four live matched rows
+    # stood in that shape (Taboola, אסם, Comcast, Intelligent Business), and the reproduction
+    # published a recruiter's clearance requirement on Intelligent Business' card. So the
+    # employer must be named by a word the title does not already supply; a company whose
+    # every word is in its own role title cannot be confirmed this way at all, and is refused.
+    c_only = c_words - t_words
+    return (bool(c_only) and len(t_words & decl) >= min(2, len(t_words))
+            and bool(c_only & decl))
+
+
+# The archive is the last place a posting that has been taken down still exists, and it is
+# free. Identity here needs no heuristic at all: the snapshot is OF the role's own address,
+# so whatever it holds is what that address served.
+WAYBACK_CDX = "http://web.archive.org/cdx/search/cdx"
+
+
+def wayback_snapshot(url, timeout=30):
+    """The newest archived copy of exactly `url`, `""` when the archive HAS none, or `None`
+    when the lookup itself failed. Never raises.
+
+    The three-way answer is the point: "the archive has no copy of this posting" is evidence
+    a caller may write down as a structural reason, and "the CDX endpoint returned 503" is
+    not. Collapsing them to `""` let a network blip be published as a fact about the world
+    (wave A)."""
+    from urllib.parse import quote
+    q = ("%s?url=%s&output=json&limit=-3&filter=statuscode:200&fl=timestamp,original"
+         % (WAYBACK_CDX, quote(url or "", safe="")))
+    try:
+        with urllib.request.urlopen(q, timeout=timeout) as r:
+            rows = json.loads(r.read(500_000).decode("utf-8", "replace"))
+    except Exception:  # noqa: BLE001 - an archive lookup never costs the run it serves
+        return None
+    if not isinstance(rows, list) or len(rows) < 2:
+        return ""
+    for row in reversed(rows[1:]):
+        if isinstance(row, list) and len(row) >= 2 and str(row[0]).isdigit():
+            return "https://web.archive.org/web/%sid_/%s" % (row[0], row[1])
+    return ""
+
+
+# `seen_ids` holds a role's discovery ids as `<source>:<platform>:<id>` — the store writes
+# `discovery-linkedin:linkedin:4458892364`, so the tail `sibling_urls` reads is not an http
+# address and every existing rung drops it. These are copies of the role we KNOW about and
+# could not previously ask for; the address each maps to is fixed and public.
+# `[0-9]`, never `\d`: `\d` is Unicode-permissive, so `linkedin:٤٤٥٨٨٩٢٣٦٤` matched and built
+# a linkedin.com address with a garbage path. The host is fixed either way, but this guard and
+# `native_from_seen_ids`' `_SAFE_IDENT` answer the same question and must not disagree (wave A).
+_SEEN_LINKEDIN = re.compile(r"^linkedin:([0-9]{6,20})$", re.I)
+_SEEN_INDEED = re.compile(r"^indeed:([0-9a-f]{16})$", re.I)
+
+
+def source_copy_url(ident):
+    """The public address of a discovery id (`linkedin:<id>`, `indeed:<jk>`), or "".
+
+    An address, not an admission: what comes back is fetched and then has to pass
+    `doc_names_role` like any other foreign copy. The id itself is the discovery card's
+    claim, and rule 5 one level up is that a claim is not evidence."""
+    ident = str(ident or "").strip()
+    m = _SEEN_LINKEDIN.match(ident)
+    if m:
+        return "https://www.linkedin.com/jobs/view/%s" % m.group(1)
+    m = _SEEN_INDEED.match(ident)
+    if m:
+        return "https://il.indeed.com/viewjob?jk=%s" % m.group(1).lower()
+    return ""
 
 
 def naked_open_roles(rows, texts):
@@ -1466,6 +1845,10 @@ class JD(NamedTuple):
     transient: bool  # retry tomorrow rather than in RETRY_DAYS
     native: str = "" # why the native rung failed, when one applied ("" if none did / it won)
     pre: str = ""    # what the PLAIN rung found, when the Bright Data rung never ran at all
+    decl: str = ""   # the document's OWN claim about whose posting it is, when the caller
+                     # asked for it (`want_identity`) and a body was read. Populated only on
+                     # request: the donor rung needs it to admit a copy fetched at an address
+                     # that is not the role's own, and no other caller should pay the regex.
 
 
 def _mark_shell(bd, url):
@@ -1502,7 +1885,7 @@ def _from_body(body):
 
 
 def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", seen_ids="",
-             native_only=False):
+             native_only=False, want_identity=False):
     """native JSON -> plain HTML (+ schema.org) -> Bright Data (only when `bd` is given).
 
     The gate runs BEFORE the plain GET, not only before Bright Data. A search page and an
@@ -1552,7 +1935,8 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
     if body:
         jd, why = _from_body(body)
         if jd:
-            return JD(jd, "html", why, False, native_why)
+            return JD(jd, "html", why, False, native_why,
+                      decl=declared_identity(body) if want_identity else "")
         reason, transient = ("shell" if len(html_to_text(body)) < MIN_DESC else "no-markers"), False
     elif paid:
         # The free rungs cannot read this host BY DESIGN, so their miss is a statement
@@ -1602,7 +1986,8 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
     if body:
         jd, why = _from_paid_body(body, jk)  # the credit is spent either way: read it twice
         if jd:
-            return JD(jd, "bd", why, False, native_why)
+            return JD(jd, "bd", why, False, native_why,
+                      decl=declared_identity(body, jk) if want_identity else "")
         empty = "shell" if len(html_to_text(body)) < MIN_DESC else "no-markers"
         if _host_of(url) in getattr(bd, "parked", ()):
             empty += "-parked"              # this host is closed to the paid rung for the run
@@ -1992,10 +2377,25 @@ class JDFiller:
         # Indeed's own bound, INSIDE the shared cap. Unlike every other host this rung buys,
         # an unfilled discovery card is re-offered NIGHTLY until it ages out at 21 days —
         # the inline layer stamps nothing — so without a per-run bound a 92-card backlog
-        # spends the whole `JDFILL_BD_CAP` on one host every night. 8 × 30 nights is 240
-        # credits a month, 4.8 % of the shared pool; `0` closes the rung inline and leaves
-        # it to the matched driver, whose failures stamp and back off 7/14/28.
-        self.indeed_cap = int(os.environ.get("JDFILL_INDEED_CAP", "8"))
+        # spends the whole `JDFILL_BD_CAP` on one host every night. `0` closes the rung
+        # inline and leaves it to the matched driver, whose failures stamp and back off
+        # 7/14/28.
+        #
+        # RAISED 8 -> 25 on 2026-08-31 (evening), because 8 was measured undersized on the
+        # first night it ran: the 11:29Z digest logged `the Indeed cap bound at 8 — 20 Indeed
+        # postings judged on their snippet tonight`, i.e. 28 wanted the rung and 8 got it,
+        # and a posting judged on a 172-character SERP snippet is a verdict made on no
+        # description at all (`oak|product analyst` and `diageo|performance analytics
+        # analyst` were two of those 20, and both were EMAILED that morning).
+        # The arithmetic shipped with the number: 25 × 30 nights = **750/month, 15 %** of the
+        # 5,000-credit pool that begins 2026-09-01, worst case and never expected — it is a
+        # ceiling on waste, not a schedule, and the observed demand (28) falls as the matched
+        # driver's stamps absorb the rows that carry a role. It stays inside the shared
+        # `JDFILL_BD_CAP`, which `daily-digest.yml` pins at 30 and which the whole inline
+        # layer spent 12 of on that same night — so 25 fits beside the LinkedIn class that
+        # bought 4, the night's ceiling is unchanged at 30, and a collision between the two
+        # is ALARMED (`bd-capped`) rather than silent.
+        self.indeed_cap = int(os.environ.get("JDFILL_INDEED_CAP", "25"))
         self.indeed_tried = self.indeed_capped = 0
         # work the paid rung WOULD have taken and could not. This counter exists because the
         # step this runs in does not carry `BRIGHTDATA_API_KEY` (`daily-digest.yml`, the
@@ -2173,7 +2573,13 @@ _FLOW_SUFFIXES = ("_filled", "_bd", "_bd_calls", "_bd_ok", "_fail", "_cooldown",
                   # `bd_ok - bd_shell` is what the credits actually bought; `_bd_rendered`
                   # the calls that asked for JavaScript; `_bd_parked` the calls refused
                   # because the host had already shelled three times this run.
-                  "_bd_shell", "_bd_rendered", "_bd_parked", "_paid_cooldown")
+                  "_bd_shell", "_bd_rendered", "_bd_parked", "_paid_cooldown",
+                  # the donor rung (2026-08-31 evening): both count EVENTS this run — copies
+                  # admitted, and copies refused for not naming the role. `matched_structural`
+                  # is deliberately NOT here: it is a gauge of rows standing on a written
+                  # verdict, and summing it would count the same row twice on a re-dispatch,
+                  # which is the trap `matched_terminal` was spelled around.
+                  "_sibling_refused")
 # `_llm_rejected` and `_llm_truncated` are deliberately NOT here. They are incremented for a
 # CACHED verdict too, so they describe the store as it stands rather than what this run did,
 # and summing them reported 6 rejected rows in a 3-row store on the second dispatch of a day

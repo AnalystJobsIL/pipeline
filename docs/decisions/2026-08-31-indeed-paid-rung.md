@@ -34,7 +34,25 @@ entry claimed: only the `viewjob` page is closed.
 | the BD Indeed **dataset** (`gd_l4dx9j9sscpvs7no2`) | `discover_new` mode: five straight days of `dataset_size: 0` (rate-limited by Indeed), the documented do-not-re-enable; collect-by-URL was held as the fallback and never needed — the SERP form filled 5/5 first |
 | rendered `viewjob` (the untried form the render discovery suggested) | not reached: E1 (raw SERP) hit the 4-of-5 promotion bar before E2 spent a credit; raw is also 1 credit vs 2 and off the 45 s render clock |
 | letting `extract_jd`/`jsonld_jd` read the bought SERP as a fallback | `extract_jd` returned the SAME 3,028 characters of page furniture for three different jks (identity check 0/5), and a JobPosting ld+json on a SERP is some other job's — the pane parser with the `jobKey == jk` anchor is the only reader |
-| a second cap env var for the matched driver | its failures stamp `jd_attempted` and ride the 7/14/28 ladder (~13 credits/month on today's 6 rows); only the inline layer, which stamps nothing against cards re-offered nightly, needed a bound (`JDFILL_INDEED_CAP` 8 → ceiling 240/month, 4.8 % of the pool) |
+| a second cap env var for the matched driver | its failures stamp `jd_attempted` and ride the 7/14/28 ladder (~13 credits/month on today's 6 rows); only the inline layer, which stamps nothing against cards re-offered nightly, needed a bound (`JDFILL_INDEED_CAP`, then 8 → ceiling 240/month, 4.8 % of the pool) |
+
+## Addendum, 2026-08-31 evening: the cap was 8 for one night, and the night measured it
+
+**`JDFILL_INDEED_CAP` is 25, not 8 — ceiling 750/month, 15 % of the pool.** The first digest
+to run the rung (11:29Z) logged `inline jd-fill: the Indeed cap bound at 8 — 20 Indeed
+postings judged on their snippet tonight`: 28 postings wanted the rung and 8 got it, so 20
+roles were classified on a 172-character SERP snippet, which is a verdict reached with no
+description at all. Two of them — `oak|product analyst` and `diageo|performance analytics
+analyst` — were EMAILED that morning carrying the snippet as their text, and both fill with
+3,685 and 6,000 characters for one credit each.
+
+The number is a ceiling on waste and not a schedule: measured demand was 28 and falls as the
+matched driver's stamps absorb the cards that carry a role. It stays inside the shared
+`JDFILL_BD_CAP` (30 in `daily-digest.yml`), of which the whole inline layer spent 12 that
+night, so the night's ceiling is unchanged at 30 and a collision with the LinkedIn class is
+alarmed (`bd-capped`) rather than silent. The real fix for the re-buy dynamic is to persist
+bought text onto the discovery card so a jk is bought once — filed for `discovery`, not this
+lane's file.
 
 ## The wall-first half
 

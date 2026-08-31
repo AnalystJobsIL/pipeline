@@ -4495,10 +4495,15 @@ nothing and reach the Unlocker only under `--archived-bd`. That keeps the 08-26 
 closed Taboola row bought a credit at 118 % of the monthly pool) without paying for it in
 coverage.
 
-**Exactly one state is final.** `GONE_MARK` — a 404 or 410 from a per-job endpoint on the
-COMPANY OWN board — is the only stamp `due()` never brings round again: the board is the
-employer, the id is this role, and the board says no such job. Every other failure describes
-a page we could not read, which is a reason to come back.
+**Exactly one ADDRESS state is final, and it is not a verdict about the role.** `GONE_MARK` —
+a 404 or 410 from a per-job endpoint on the COMPANY OWN board — is the only stamp `due()`
+never brings round again: the board is the employer, the id is this role, and the board says
+no such job. Every other failure describes a page we could not read, which is a reason to come
+back. Since 2026-08-31 (evening) `gone` closes **that address** and not the role: the donor
+rung below still asks the role's other copies of itself, and `mobileye|experienced data
+analyst` — `gone` three times at its own Lever board — carries its description today from the
+LinkedIn copy its own `seen_ids` name. A role is only finished when it has its text or a
+written `structural:` reason saying which copies were tried.
 
 **And only from an AUTHORITATIVE board** (`_authoritative`). The `?gh_jid=` branch of
 `native_url` is host-agnostic and, when the registry has no greenhouse row for the company,
@@ -4668,19 +4673,29 @@ a day go through that path.
 | `enrich_scrape_jd.py --archive-only` — **archive pool** | `jd-archive.yml`, 12:30 (§4) | every OTHER Israel-passing card: the ones the title gate drops. Oldest attempt first, round-robin over companies | the same caps; `JD_ENRICH_TIME_BUDGET_MIN` **90** in that workflow |
 | `enrich_matched_jd.py` | 05:00, before the pipeline | every LIVE `matched` row failing `looks_like_jd`, any age, any source | `MATCHED_JD_BD_CAP` **25**, `MATCHED_JD_TIME_BUDGET_MIN` 20 (yml) |
 
-**Indeed has its own bound inside the inline cap: `JDFILL_INDEED_CAP` (8, `0` closes the
+**Indeed has its own bound inside the inline cap: `JDFILL_INDEED_CAP` (25, `0` closes the
 rung inline).** It exists because the inline layer stamps nothing — an unfilled discovery
 card is re-offered every night until it ages out of `discovered_cache.json` at 21 days — so
 without a per-run bound a 92-card backlog would spend the whole `JDFILL_BD_CAP` on one host
-nightly. The arithmetic against the 5,000/month pool that begins 2026-09-01: inline ceiling
-8 × 30 = **240/month (4.8 %)**; the matched driver needs no twin because its failures stamp
-`jd_attempted` and ride the 7/14/28 ladder (~13/month steady drip on today's 6 rows). Be
-honest about what the inline 240 buys: the cache is order-stable (a still-listed posting
-keeps its rank), so the cap's 8 are largely the SAME front-ranked cards re-bought until they
-age out at 21 days — the durable fills are the matched driver's, whose stamps stop the
-re-ask. The cap is a ceiling on waste, not a drain schedule; a keyless indeed URL spends
-nothing at all (`fetch_jd` refuses before the credit). When the cap binds, `alarms()` says
-`inline jd-fill: the Indeed cap bound at N` on the mail's `Stages:` line.
+nightly. **It was 8 for exactly one night, and that night measured it undersized**: the
+2026-08-31 digest logged `the Indeed cap bound at 8 — 20 Indeed postings judged on their
+snippet tonight`, so 28 wanted the rung and 8 got it — and a posting judged on a 172-character
+SERP snippet is a verdict reached with no description at all. Two of those 20 (`oak|product
+analyst`, `diageo|performance analytics analyst`) were EMAILED that morning carrying the
+snippet as their text. The arithmetic against the 5,000/month pool that begins 2026-09-01:
+inline ceiling 25 × 30 = **750/month (15 %)**, worst case and never expected, against a
+measured demand of 28 that falls as the matched driver's stamps absorb the rows that carry a
+role. It stays INSIDE the shared `JDFILL_BD_CAP`, which `daily-digest.yml` pins at 30 and
+which the whole inline layer spent 12 of that night, so the night's ceiling is unchanged and a
+collision with the LinkedIn class is alarmed (`bd-capped`) rather than silent. The matched
+driver needs no twin because its failures stamp `jd_attempted` and ride the 7/14/28 ladder
+(~13/month steady drip on today's 6 rows). Be honest about what the inline ceiling buys: the
+cache is order-stable (a still-listed posting keeps its rank), so the cap's cards are largely
+the SAME front-ranked ones re-bought until they age out at 21 days — the durable fills are the
+matched driver's, whose stamps stop the re-ask. The cap is a ceiling on waste, not a drain
+schedule; a keyless indeed URL spends nothing at all (`fetch_jd` refuses before the credit).
+When the cap binds, `alarms()` says `inline jd-fill: the Indeed cap bound at N` on the mail's
+`Stages:` line.
 
 The two caps were 400 and 250 until 2026-08-26 — 650 credits a day, 13 % of the monthly pool in
 one morning, against a shared allowance that stood at **118 % (5,906 / 5,000, projected
@@ -4713,14 +4728,49 @@ absent ledger **filters nothing and alarms `ledger-unreadable`**: the first vers
 to `last_seen`, and a test showed that would disable the whole driver after any outage longer
 than three days.
 
-**The sibling rung: text that was already ours, and only ours.** A role's `matched.seen_ids`
+**The sibling rung: text that was already ours.** A role's `matched.seen_ids`
 lists addresses it was seen at, and the canonical URL is whichever copy won
 `store.merge_duplicates` — a contest decided by who carries a posted-date, not by who can be
 read. So a role can render from a 170-character aggregator snippet while its employer's own
 posting sits in `scraped_cache.json`. When the canonical is short, the driver takes the text
 it **already holds** for another of that role's addresses (**Zipher: 170 → 2,021 characters, 0
-requests, 0 credits**). There is no fetch-the-siblings pass: wave 1 measured its yield at zero
-and its risk at publishing another employer's job description under this company's name.
+requests, 0 credits**), and only from a cache entry filed under this company at an address
+that positively names it.
+
+**And then the DONOR rung, when the canonical yields nothing at all** (2026-08-31 evening,
+`_donor_pass`). "Its board gives no address" is not an end state for a role we hold another
+copy of — the operator's rule — so a row the ladder could not fill is offered four donor
+classes, cheapest first: an address recovered from the employer's **own listing page**
+(`role_addresses_on`), a **cache** card whose `store.merge_key` IS this row's, a LinkedIn or
+Indeed **copy** this role's own `seen_ids` name (`source_copy_url`), and a Wayback **archive**
+snapshot of the role's own url. It reaches the rows `run_backfill` never walks — `gone` and
+archived alike — and archived rows stay free-only unless `--archived-bd`.
+
+Enumeration is generous and **admission is not**, because text admitted on a weak address
+heuristic is text laundered under our own name (the defect `roles` measured in
+`store.merge_duplicates` on 2026-08-31). The three structural classes identify themselves —
+a link on the employer's own origin naming this role, the repo's own merge identity, the
+role's own url — while a `copy` is fetched at somebody else's address and is admitted ONLY
+when the fetched document **declares itself** to be this title at this employer
+(`declared_identity` → `doc_names_role`, read from an Indeed pane keyed to our own `jk` or
+from a page's `<title>`/`og:title`). Two of the title's significant words, and one of the
+company's **that the title does not already supply** — an adversarial wave got
+`Bright Data` confirmed by the `data` in `Data Analyst`, which is the exact pair
+`store._same_origin` cites when it refuses `roles.names_in_url` as an admission gate on
+foreign content, and four live rows stood in that shape. Legal forms (`ltd`, `inc`, `co`)
+name no employer and are struck. Byte-similarity is never an admission signal either: that is
+the fanout SYMPTOM (`370`), which `_quality_pass` alarms on the morning after. Measured the evening it shipped:
+**7 published rows with no usable description → 1**, six filled (four free), two credits, and
+the seventh carrying a written reason.
+
+Every outcome is recorded per row in **`matched.jd_why`** — `ok:<class>:<host>`,
+`refused:identity(N)`, or `structural:<reason>(donors:N)` — which is this lane's half of
+`443`: until it existed the reason a fill failed lived only inside the run, and the morning
+after, a row refused for `not-a-job-url` was indistinguishable from one refused for
+`auth-walled`. A `structural:` value may only be written once every donor class has actually
+been enumerated, and the `roles` lane reads it verbatim into the published dataset's
+`description_blocker` column (agreed with that lane 2026-08-31; `ok:`/`refused:` are never
+blockers, and a row whose text passes `looks_like_jd` never carries one).
 
 **`seen_ids` is not a list of this role's own addresses**, which is why every sibling passes
 two gates — the cache entry must be filed under **this company**, and the address must

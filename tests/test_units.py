@@ -25455,3 +25455,521 @@ def test_the_guard_would_rather_write_nothing_than_drop_the_row_out_of_validate_
     out = RU._row_for(row[0], row[3], "unreachable", None, {}, note=note)[5]
     assert out == note, "it wrote a stamp that cost the row its pool"
     assert in_validate_empty_pool(row[:5] + [out])
+
+
+# ---------------------------------------------------------------------------
+# The cross-source donor rung (jd-text, 2026-08-31 evening). Each test below is a
+# defect this rung could ship: text attached to the wrong role, a structural verdict
+# written on evidence nobody collected, or a credit spent where the budget says no.
+# ---------------------------------------------------------------------------
+def _listing_page(links):
+    """A careers page linking to `links` — the shape `role_addresses_on` reads."""
+    return "<html><body>" + "".join('<a href="%s">x</a>' % u for u in links) + "</body></html>"
+
+
+def test_a_listing_page_yields_this_roles_own_address_by_its_own_posting_id():
+    """Bylith's nine cards share ONE url (`/careers`) and publish no description at all, but
+    the page links `/careers/position/36` and the role's `seen_ids` say `scrape:36`. The id
+    came off that page, so this is the page agreeing with itself. Kills: dropping the id
+    branch, and following a link off the employer's own origin."""
+    from pipeline.jdfill import role_addresses_on
+    body = _listing_page(["https://www.bylith.com/careers/position/14",
+                          "https://www.bylith.com/careers/position/36",
+                          "https://evil.example/careers/position/36"])
+    got = role_addresses_on(body, "https://www.bylith.com/careers", "Product Analyst", "36")
+    assert got == ["https://www.bylith.com/careers/position/36"], got
+
+
+def test_a_listing_page_link_must_spell_out_the_whole_title_not_merely_share_a_prefix():
+    """Measured live on G Stat: under `slug_names_title` (one slug word may miss) the role
+    `אנליסט/ית דיגיטל` matched three of its own siblings — digital, credit and economist —
+    because the analyst prefix is one half a Hebrew board shares, and the word that differs
+    is exactly the discriminating one. Every significant title word must appear. Kills:
+    relaxing the subset test back to `slug_names_title`."""
+    from pipeline.jdfill import role_addresses_on, slug_names_title
+    links = ["https://g-stat.com/jobs/%s/" % s for s in
+             ("אנליסט-ית-דיגיטל", "אנליסט-ית-אשראי", "אנליסט-ית-כלכלן-ית")]
+    body = _listing_page(links)
+    # the weaker rule really does match all three -- that is why this test exists
+    assert all(slug_names_title(u.rstrip("/").rsplit("/", 1)[1], "אנליסט/ית דיגיטל")
+               for u in links)
+    got = role_addresses_on(body, "https://g-stat.com/careers/", "אנליסט/ית דיגיטל", "")
+    assert got == [links[0]], got
+
+
+def test_two_links_that_equally_name_the_role_yield_nothing_rather_than_a_coin_flip():
+    """A board with `data-scientist`, `data-scientist-2` and `data-scientist-3` cannot tell us
+    which posting is ours, and picking one publishes another opening's text on this card. The
+    ambiguous case must return NOTHING. Kills: `by_id + by_title` unconditionally."""
+    from pipeline.jdfill import role_addresses_on
+    body = _listing_page(["https://g-stat.com/jobs/data-scientist/",
+                          "https://g-stat.com/jobs/data-scientist-2/"])
+    assert role_addresses_on(body, "https://g-stat.com/careers/", "Data Scientist", "") == []
+
+
+def test_a_per_role_address_is_read_out_of_a_share_widget_when_that_is_all_the_page_has():
+    """G Stat publishes 78 per-role addresses and not one as a plain `<a href>`: every one
+    sits inside a `facebook.com/sharer.php?u=` / `wa.me/?text=` wrapper. The value is trusted
+    only when it is SAME-ORIGIN with the page carrying it. Kills: dropping the share-param
+    read, and trusting a share param that points somewhere else."""
+    from pipeline.jdfill import role_addresses_on
+    body = _listing_page([
+        "https://www.facebook.com/sharer.php?u=https://g-stat.com/jobs/senior-data-analyst/",
+        "https://wa.me/?text=https://evil.example/jobs/senior-data-analyst/"])
+    assert role_addresses_on(body, "https://g-stat.com/careers/", "Senior Data Analyst", "") \
+        == ["https://g-stat.com/jobs/senior-data-analyst/"]
+
+
+def test_a_copy_at_a_foreign_address_is_admitted_only_when_the_document_names_the_role():
+    """The admission gate for every donor fetched somewhere that is not the role's own
+    address. BOTH halves are load-bearing: the role half alone stored 2,406 characters of
+    Percepto's Data Insights Operations posting on its Senior Product Analyst row, and the
+    employer half alone is what `store._same_origin` refuses by measurement. Kills: returning
+    True, dropping either half, or requiring only one title word."""
+    from pipeline.jdfill import doc_names_role
+    decl = "Experienced Data Analyst at Mobileye — Jerusalem District, Israel | LinkedIn"
+    assert doc_names_role(decl, "Experienced Data Analyst", "Mobileye")
+    # right employer, WRONG role (the percepto shape)
+    assert not doc_names_role(decl, "Senior Product Analyst", "Mobileye")
+    # right role, WRONG employer (the nift shape: five other employers in one merge group)
+    assert not doc_names_role(decl, "Experienced Data Analyst", "Elad Software Systems")
+    # a declaration that says nothing admits nothing
+    assert not doc_names_role("", "Experienced Data Analyst", "Mobileye")
+    # ...and neither does a role or company with no significant words of its own
+    assert not doc_names_role(decl, "the job", "Mobileye")
+
+
+def test_the_indeed_pane_declares_its_own_title_and_employer_and_only_for_our_key():
+    """`declared_identity` reads the SAME pane object `_indeed_jd` takes text from, so the two
+    can never disagree about whose posting the body is. A pane keyed to another job declares
+    nothing. Kills: accepting any pane, and reading the declaration from a second parse."""
+    from pipeline.jdfill import declared_identity, doc_names_role
+    body = "window._initialData = " + _json.dumps({
+        "autoOpenTwoPaneViewjobResponse": {"body": {
+            "jobKey": "7349c47d967eb4a7", "jobTitle": "Manager - Data Science & Analytics",
+            "jobInfoWrapperModel": {"jobInfoModel": {"jobInfoHeaderModel": {
+                "jobTitle": "Manager - Data Science & Analytics",
+                "companyName": "TransUnion"}}}}}}) + ";"
+    decl = declared_identity(body, "7349c47d967eb4a7")
+    assert doc_names_role(decl, "Manager - Data Science & Analytics", "TransUnion")
+    assert declared_identity(body, "0000000000000000") == ""
+
+
+def test_an_html_page_declares_itself_through_title_and_og_title():
+    from pipeline.jdfill import declared_identity
+    body = ('<html><head><title>Mobileye hiring Experienced Data Analyst | LinkedIn</title>'
+            '<meta property="og:title" content="Experienced Data Analyst at Mobileye"/>'
+            '</head><body>x</body></html>')
+    decl = declared_identity(body)
+    assert "Mobileye" in decl and "Experienced Data Analyst" in decl
+
+
+def test_a_discovery_id_becomes_an_address_and_a_junk_one_becomes_nothing():
+    """`seen_ids` holds `discovery-linkedin:linkedin:4409973742`, whose tail is not an http
+    address, so every existing rung dropped it. Kills: widening the pattern to anything that
+    could carry path syntax into a URL (the `native_from_seen_ids` traversal lesson)."""
+    from pipeline.jdfill import source_copy_url
+    assert source_copy_url("linkedin:4409973742") == \
+        "https://www.linkedin.com/jobs/view/4409973742"
+    assert source_copy_url("indeed:9784C063C918D237") == \
+        "https://il.indeed.com/viewjob?jk=9784c063c918d237"
+    for junk in ("scrape:36", "linkedin:../../evil", "linkedin:", "indeed:zz", "",
+                 "linkedin:12", "linkedin:4409973742/../x"):
+        assert source_copy_url(junk) == "", junk
+
+
+def test_a_hebrew_address_can_actually_be_fetched_and_an_ascii_one_is_untouched():
+    """`urllib` raises UnicodeEncodeError on a non-ASCII URL before a packet leaves, and
+    `plain_fetch`'s catch-all turned that into the same silent `(None, "")` a timeout gives —
+    so every Hebrew address this repo holds was unfetchable AND indistinguishable from a
+    network failure. Kills: returning the url unchanged, and quoting without `%` in the safe
+    set (which double-encodes every already-escaped address)."""
+    from urllib.parse import urlsplit
+    from pipeline.jdfill import wire_url
+    plain = "https://boards.greenhouse.io/acme/jobs/12345?gh_jid=12345&x=a+b"
+    assert wire_url(plain) == plain                      # ASCII: byte-identical
+    heb = "https://g-stat.com/jobs/אנליסט-ית-דיגיטל/"
+    wired = wire_url(heb)
+    assert wired.isascii() and wired.startswith("https://g-stat.com/jobs/%D7")
+    assert wire_url(wired) == wired                      # idempotent: no double-encoding
+    assert urlsplit(wired).netloc == "g-stat.com"        # the host never moves
+
+
+def test_the_wall_sentence_is_not_kept_as_the_first_line_of_the_description():
+    """`_after_the_wall` opens a candidate at a sign-in mark's END, and the mark is where the
+    wall's last SENTENCE begins: measured on Mobileye's live guest page, 97 characters of
+    LinkedIn's terms stood where the day-to-day belongs. Kills: opening the candidate at
+    `m.end()` alone."""
+    from pipeline.jdfill import _after_the_wall
+    text = ("Experienced Data Analyst\nMobileye\nEmail or phone\n"
+            "By clicking Continue to join or sign in, you agree to LinkedIn's User "
+            "Agreement , Privacy Policy , and Cookie Policy .\n"
+            "You will be part of Mobileye's REM department. Responsibilities:\n"
+            + "Own the analysis pipeline and report to stakeholders. " * 12
+            + "\nRequirements:\n" + "5 years of experience with SQL. " * 12)
+    seg = _after_the_wall(text)
+    assert seg.startswith("You will be part of Mobileye"), repr(seg[:80])
+    assert "Cookie Policy" not in seg
+
+
+def test_the_inline_indeed_cap_ships_the_arithmetic_it_claims():
+    """The cap was measured undersized on its first night: `the Indeed cap bound at 8 — 20
+    Indeed postings judged on their snippet tonight`, i.e. 28 wanted the rung and 8 got it,
+    and two of the 20 were emailed with a 172-character SERP snippet as their description.
+    25 x 30 nights = 750/month, 15 % of the 5,000 pool, and it still nests inside the shared
+    `JDFILL_BD_CAP` the workflow pins at 30. Kills: reverting the default to 8."""
+    import ast as _ast
+    import inspect
+    from pipeline import jdfill
+    f = jdfill.JDFiller(budget_min=1, bd=None)
+    assert f.indeed_cap == 25
+    # the DEFAULT in the source, not the value this process happens to compute: a test that
+    # multiplies two literals it wrote itself passes with the cap reverted (wave B)
+    src = inspect.getsource(jdfill.JDFiller.__init__)
+    default = [n.args[1].value for n in _ast.walk(_ast.parse(src.strip()))
+               if isinstance(n, _ast.Call) and getattr(n.func, "attr", "") == "get"
+               and getattr(n.args[0], "value", "") == "JDFILL_INDEED_CAP"]
+    assert default == ["25"], default
+    assert f.indeed_cap * 30 == 750 and round(f.indeed_cap * 30 / 5000 * 100) == 15
+
+
+def test_a_donor_that_does_not_name_the_role_is_refused_and_the_row_says_so(monkeypatch, tmp_path):
+    """The whole point of the rung, and the shape that would publish another employer's job
+    description under ours. `nift|data analyst` carries five other employers' postings in its
+    `seen_ids`; a copy fetched there must be refused however good its text is. Kills:
+    admitting a `copy` donor without `doc_names_role`."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    row = ("nift|data analyst", "Nift", "Data Analyst",
+           "https://nift.example/careers", "", "discovery-linkedin:linkedin:4458892364",
+           "", 0, "2026-08-31")
+    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: jdfill.JD(
+        _jd_of(2000), "html", "ok", False,
+        decl="Senior Data Analyst at Elad Software Systems | LinkedIn"))
+    monkeypatch.setattr(E, "plain_fetch", lambda *a, **k: (200, ""))
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
+    conn.commit()
+    filled, refused, why = E._donor_pass(
+        conn, [row], {}, None, set(),
+        SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert (filled, refused) == (0, 1)
+    got = conn.execute("SELECT description, jd_why FROM matched").fetchone()
+    assert got[0] == "" and got[1] == "refused:identity(1)", got
+
+
+def test_a_structural_verdict_is_written_only_after_every_donor_class_was_enumerated(monkeypatch, tmp_path):
+    """`structural:` is published by the `roles` export as a per-row blocker, so a false one
+    is a published lie: it may only be written when the role's own copies have actually been
+    looked for and none can be read. Taboola is the true case — a 404 at its own Greenhouse
+    board, no LinkedIn or Indeed copy ever held, no archive snapshot: `donors:0`. Kills:
+    writing the verdict before enumeration, or counting a donor that was never tried."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    row = ("taboola|product analyst", "Taboola", "Product Analyst",
+           "https://www.taboola.com/careers/job/8035268?gh_jid=8035268",
+           "2026-08-28 gone", "greenhouse:8035268", "", 3, "2026-08-17")
+    monkeypatch.setattr(E, "wayback_snapshot", lambda *a, **k: "")   # asked, none held
+    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: (_ for _ in ()).throw(
+        AssertionError("nothing to fetch: there is no donor")))
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
+    conn.commit()
+    filled, refused, why = E._donor_pass(
+        conn, [row], {}, None, set(),
+        SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert (filled, refused) == (0, 0)
+    assert conn.execute("SELECT jd_why FROM matched").fetchone()[0] == \
+        "structural:gone(donors:0)"
+
+
+def test_a_donor_never_overwrites_a_better_description(monkeypatch, tmp_path):
+    """Every write goes through `_store_text`, whose ratchet prefers a real JD and only then
+    the longer text. A donor is a LAST resort and may not undo the ladder's own work. Kills:
+    a raw UPDATE in the donor pass."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    have = _jd_of(4000)
+    row = ("acme|data analyst", "Acme", "Data Analyst", "https://acme.example/careers",
+           "", "scrape:1", have, 0, "2026-08-31")
+    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: jdfill.JD(
+        _jd_of(600), "html", "ok", False, decl="Data Analyst at Acme"))
+    monkeypatch.setattr(E, "plain_fetch", lambda *a, **k: (200, _listing_page(
+        ["https://acme.example/careers/data-analyst"])))
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], have, ""))
+    conn.commit()
+    E._donor_pass(conn, [row], {}, None, set(),
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert conn.execute("SELECT description FROM matched").fetchone()[0] == have
+
+
+def test_an_archived_role_reaches_the_free_rungs_and_not_the_paid_one(monkeypatch, tmp_path):
+    """Liveness is a BUDGET rule in this driver, not a selection rule: an archived role is
+    worked every cycle on the rungs that cost nothing and reaches the Unlocker only under
+    `--archived-bd`. A closed Taboola row bought a credit on 2026-08-26 while the shared pool
+    stood at 118 %, and a new rung does not repeal that. Kills: passing `bd` for every row."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    seen = []
+    # a role with a real donor to try: its own LinkedIn copy, named by its `seen_ids`
+    row = ("closed|data analyst", "Closed Co", "Data Analyst",
+           "https://closed.example/jobs/data-analyst", "",
+           "discovery-linkedin:linkedin:4409973742", "", 0, "2026-08-01")
+    monkeypatch.setattr(E, "fetch_jd",
+                        lambda url, **k: (seen.append(k.get("bd"))
+                                          or jdfill.JD("", "none", "shell", False)))
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
+    conn.commit()
+    bd = _J6BD()
+    E._donor_pass(conn, [row], {}, bd, set(),
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert seen == [None], seen        # not in `paid_keys`: free rungs only
+    E._donor_pass(conn, [row], {}, bd, {row[0]},
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert seen[-1] is bd
+
+
+def test_the_cache_donor_is_found_by_the_repos_own_role_identity(tmp_path):
+    """Questar's own board was converted to `questar.applytojob.com` five days AFTER the role
+    closed, so its 6,000-character posting was swept into the scrape cache under a url the
+    role has never heard of — the existing sibling rung, which enumerates from `seen_ids`,
+    could not see it. `store.merge_key` is what says they are the same role. Kills: indexing
+    the cache by url or by company alone."""
+    import enrich_matched_jd as E
+    from pipeline.store import merge_key
+    cache = {"Questar Auto Technologies": [
+        {"company": "Questar Auto Technologies",
+         "title": "Senior Data Scientist — Individual Contributor",
+         "url": "https://questar.applytojob.com/apply/urCgFQwtYS/Senior-Data-Scientist",
+         "description": _jd_of(6000)},
+        {"company": "Questar Auto Technologies", "title": "Full Stack Developer",
+         "url": "https://questar.applytojob.com/apply/x/Full-Stack",
+         "description": _jd_of(900)}]}
+    p = tmp_path / "c.json"
+    p.write_text(_json.dumps(cache), encoding="utf-8")
+    by_key = E.cache_by_merge_key(str(p))
+    mk = merge_key({"company": "Questar Auto Technologies",
+                    "title": "Senior Data Scientist — Individual Contributor"})
+    assert [u for u, _t in by_key[mk]] == \
+        ["https://questar.applytojob.com/apply/urCgFQwtYS/Senior-Data-Scientist"]
+    assert len(by_key) == 2 and all(t for _u, t in sum(by_key.values(), []))
+
+
+def test_the_donor_counters_are_flows_and_the_structural_count_is_a_gauge():
+    """Two runs in one day ADD what each did and RESTATE what stands: `matched_via_sibling`
+    and `matched_sibling_refused` count events, `matched_structural` counts rows sitting on a
+    written verdict and must not sum the same row twice — the trap `matched_terminal` was
+    spelled around. Kills: adding `_structural` to `_FLOW_SUFFIXES`."""
+    from pipeline import jdfill
+    assert "matched_via_sibling".endswith(jdfill._FLOW_SUFFIXES)
+    assert "matched_sibling_refused".endswith(jdfill._FLOW_SUFFIXES)
+    assert not "matched_structural".endswith(jdfill._FLOW_SUFFIXES)
+
+
+
+# --- what an adversarial wave got past the donor rung on 2026-08-31, one test each ---
+def test_a_listing_link_naming_a_bigger_role_is_not_this_roles_address():
+    """`own-address` is a STRUCTURAL class — no document check follows it — so its title rule
+    is the only thing between a listing page and this row's description. A bare subset test
+    made it a prefix match: `Data Analyst` matched `senior-data-analyst-growth-2042`, and the
+    senior opening's requirements were published on the analyst's card. Measured over the
+    cache, the subset rule admits 15 distinct different-title adoptions (Cognyte, Asperii,
+    Fireberry). Kills: `t_words <= seg_words` without the symmetric half."""
+    from pipeline.jdfill import role_addresses_on
+    body = _listing_page(["https://x.co/careers/senior-data-analyst-growth-2042"])
+    assert role_addresses_on(body, "https://x.co/careers", "Data Analyst", "") == []
+    # ...and the role's own slug, with the one allowed extra word, still resolves
+    ok = _listing_page(["https://x.co/careers/data-analyst-il"])
+    assert role_addresses_on(ok, "https://x.co/careers", "Data Analyst", "") == \
+        ["https://x.co/careers/data-analyst-il"]
+
+
+def test_two_links_carrying_this_roles_posting_id_yield_nothing():
+    """The ambiguity guard was enforced for the title path and not for the id path, and the
+    ids are short and generic — `scrape:36` is a live seen_id. A page carrying `/blog/36`
+    before `/careers/position/36` handed back the blog post. Kills: `by_id` unguarded."""
+    from pipeline.jdfill import role_addresses_on
+    body = _listing_page(["https://b.co/blog/36", "https://b.co/careers/position/36"])
+    assert role_addresses_on(body, "https://b.co/careers", "Product Analyst", "36") == []
+
+
+def test_the_employer_half_of_the_gate_cannot_be_paid_for_by_the_title():
+    """A declaration always contains the title's own words, so a company sharing one with the
+    role got the employer check for free: `Bright Data` was confirmed by the `data` in `Data
+    Analyst`, which is the exact pair `store._same_origin` cites for refusing `names_in_url`
+    as an admission gate. Four live matched rows stand in that shape. Kills: `c_words & decl`
+    without subtracting the title's words."""
+    from pipeline.jdfill import doc_names_role
+    assert not doc_names_role("Fetcherr hiring Data Analyst - Tableau in Israel | LinkedIn",
+                              "Data Analyst", "Bright Data")
+    # the real employer still passes on a word the title does not supply
+    assert doc_names_role("Bright Data hiring Data Analyst | LinkedIn",
+                          "Data Analyst", "Bright Data")
+    # a company whose every word is its own role title cannot be confirmed this way at all
+    assert not doc_names_role("Data Analyst at Data Analyst | LinkedIn",
+                              "Data Analyst", "Data Analyst")
+
+
+def test_a_host_gate_reads_the_host_the_request_will_actually_use():
+    """`wire_url` nameprep-encodes the host on its way to the socket, so a host the refusal
+    gates had never heard of could become one they forbid: `il.inde<soft hyphen>ed.com` was
+    `paid_only('')` — free to fetch — and went on the wire as `il.indeed.com`. Before
+    `wire_url` such a URL raised UnicodeEncodeError and was never fetched at all, so the pair
+    had to move together. Kills: dropping the IDNA step from `_host_of`."""
+    from pipeline.jdfill import _host_of, paid_only, wire_url
+    sneaky = "https://il.inde\xade\xadd.com/viewjob?jk=9784c063c918d237"
+    assert _host_of(sneaky) == "il.indeed.com"
+    assert paid_only(sneaky) == "auth-walled"
+    assert wire_url(sneaky).startswith("https://il.indeed.com/")
+
+
+def test_one_malformed_link_on_a_careers_page_does_not_end_the_pass():
+    """A page is arbitrary bytes: `href="http://["` raises `ValueError: Invalid IPv6 URL` out
+    of urljoin, and behind a continue-on-error step that is a driver that dies having stamped
+    nothing. Kills: removing the try/except around the link parse."""
+    from pipeline.jdfill import role_addresses_on
+    body = _listing_page(["http://[", "https://b.co/careers/position/36"])
+    assert role_addresses_on(body, "https://b.co/careers", "Product Analyst", "36") == \
+        ["https://b.co/careers/position/36"]
+
+
+def test_a_donor_may_not_replace_text_that_already_reads_as_this_roles_posting(monkeypatch, tmp_path):
+    """The donor pass also walks the rows the LLM tier judged incomplete, and those still pass
+    `looks_like_jd`; `_store_text`'s ratchet is a LENGTH ratchet once both sides are job
+    descriptions, so a longer DIFFERENT opening replaced a role's own posting. A donor is a
+    last resort: it fills a row with no description, it never improves one. Kills: dropping
+    the `looks_like_jd(have)` skip at the top of the loop."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    have = _jd_of(400)
+    row = ("x|data analyst", "X Co", "Data Analyst", "https://x.co/careers", "",
+           "scrape:1", have, 0, "2026-08-31")
+    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: jdfill.JD(
+        _jd_of(4000), "html", "ok", False, decl="Data Analyst at X Co"))
+    monkeypatch.setattr(E, "plain_fetch", lambda *a, **k: (200, _listing_page(
+        ["https://x.co/careers/data-analyst"])))
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], have, ""))
+    conn.commit()
+    E._donor_pass(conn, [row], {}, None, set(),
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert conn.execute("SELECT description FROM matched").fetchone()[0] == have
+
+
+def test_a_class_that_could_not_be_asked_is_never_written_down_as_a_world_fact(monkeypatch, tmp_path):
+    """`structural:` is published by the `roles` export as this row's blocker, so it may only
+    be written when every donor class actually ANSWERED. A listing page that did not respond,
+    a failed archive lookup, and a copy only the paid rung can read on a row that may not
+    spend are all "we did not look" — the ladder's own stamp schedules those. Kills: writing
+    the verdict without the `complete` flag."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    monkeypatch.setattr(E, "plain_fetch", lambda *a, **k: (None, ""))   # no answer
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    rows = [("a|data analyst", "A Corp", "Data Analyst", "https://a.co/careers", "",
+             "scrape:1", "", 0, "2026-08-31"),
+            ("c|data analyst", "C Corp", "Data Analyst",
+             "https://c.co/careers", "", "discovery-indeed:indeed:9784c063c918d237", "", 0,
+             "2026-08-31")]
+    for r in rows:
+        conn.execute("INSERT INTO matched VALUES (?,?,?)", (r[0], "", ""))
+    conn.commit()
+    E._donor_pass(conn, rows, {}, None, set(),
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    got = dict(conn.execute("SELECT mkey, COALESCE(jd_why,'') FROM matched").fetchall())
+    assert got["a|data analyst"] == "", got          # the page never answered
+    assert got["c|data analyst"] == "", got          # only the paid rung reads that copy
+
+
+def test_a_structural_reason_does_not_outlive_the_text_that_disproves_it(tmp_path):
+    """Two paths fill a row without going through the donor pass — the cache-sibling rung and
+    a re-clean — and neither knew about `jd_why`, so a row could carry a published "no
+    readable description" blocker while holding one. `_store_text` is the choke point every
+    write passes. Kills: dropping the CASE clause from the UPDATE."""
+    import sqlite3
+    import enrich_matched_jd as E
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES ('k','','structural:not-a-job-url(donors:0)')")
+    conn.commit()
+    assert E._store_text(conn, "k", _jd_of(900), "") is True
+    assert conn.execute("SELECT jd_why FROM matched").fetchone()[0] == ""
+    # ...and a store with no such column still stores its text
+    bare = sqlite3.connect(str(tmp_path / "b.db"))
+    bare.execute("CREATE TABLE matched (mkey TEXT, description TEXT)")
+    bare.execute("INSERT INTO matched VALUES ('k','')")
+    assert E._store_text(bare, "k", _jd_of(900), "") is True
+
+
+def test_two_cache_cards_claiming_one_role_are_both_refused(tmp_path, monkeypatch):
+    """`store.merge_key` is location-blind, so two requisitions can share it — measured, 1 of
+    1,305 keys in today's cache (`applied materials israel|senior software engineer`). Taking
+    the first is the coin flip the listing-page rule already refuses. Kills: dropping the
+    `len(own) == 1` guard."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    mk = "acme|senior software engineer"
+    cache = {mk: [("https://acme.example/jobs/senior-software-engineer-1", _jd_of(900)),
+                  ("https://acme.example/jobs/senior-software-engineer-2", _jd_of(1200))]}
+    row = (mk, "Acme", "Senior Software Engineer",
+           "https://acme.example/jobs/senior-software-engineer-1", "", "scrape:1", "", 0, "x")
+    monkeypatch.setattr(E, "fetch_jd", lambda url, **k: (_ for _ in ()).throw(
+        AssertionError("no fetch: the canonical is a job url and the cache is ambiguous")))
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (mk, "", ""))
+    conn.commit()
+    filled, _refused, _why = E._donor_pass(
+        conn, [row], cache, None, set(),
+        SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert filled == 0
+    assert conn.execute("SELECT description FROM matched").fetchone()[0] == ""
+
+
+def test_a_refused_copy_is_counted_even_when_a_later_donor_fills_the_row(monkeypatch, tmp_path):
+    """The alarm this feeds is "copies were found and none was admitted", and booking
+    refusals only on the not-filled path suppressed exactly the case worth seeing. Kills:
+    moving `refused += seen_identity` back below the fill branch."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    # two copies of this role, in seen_ids order: the first names another employer and is
+    # refused, the second names ours and fills
+    row = ("mizar|data analyst", "Mizar", "Data Analyst", "https://mizar.co/jobs/data-analyst", "",
+           "discovery-linkedin:linkedin:4409973742+discovery-linkedin:linkedin:5511111111",
+           "", 0, "2026-08-31")
+
+    def fake(url, **k):
+        if url.endswith("4409973742"):     # a copy that names somebody else: refused
+            return jdfill.JD(_jd_of(800), "html", "ok", False,
+                             decl="Data Analyst at Gotfriends")
+        return jdfill.JD(_jd_of(900), "html", "ok", False, decl="Data Analyst at Mizar")
+    monkeypatch.setattr(E, "fetch_jd", fake)
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
+    conn.commit()
+    filled, refused, _why = E._donor_pass(
+        conn, [row], {}, None, set(),
+        SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert (filled, refused) == (1, 1)
