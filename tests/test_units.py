@@ -24166,8 +24166,17 @@ def test_a_retitled_posting_on_one_comeet_page_is_one_role(tmp_path):
 def test_titles_are_never_bypassed_without_a_per_posting_id():
     """The bypass must stay narrower than the hole it closes: a LISTING page shared by
     every role (Meta), a strong id alone, and a digit-less prose page that slips past the
-    root words all keep seniority-variant titles as two roles."""
+    root words all keep seniority-variant titles as two roles. Kills
+    `same-posting-exact-widening`: with `exact = pa == pb` two DIFFERENT aggregator urls —
+    both keyed '' — read as one posting, and every same-titled role at two companies on
+    LinkedIn collapses."""
     from pipeline import roles
+    # two different aggregator urls, same title: '' == '' must never mean "same posting"
+    x = {"company": "A", "title": "Data Analyst",
+         "url": "https://il.linkedin.com/jobs/view/data-analyst-at-a-1", "seen_ids": []}
+    y = {"company": "B", "title": "Data Analyst",
+         "url": "https://il.linkedin.com/jobs/view/data-analyst-at-b-2", "seen_ids": []}
+    assert not roles.same_posting(x, y)
     lst = "https://www.metacareers.com/jobs?offices[0]=Tel+Aviv"
     a = {"company": "Meta", "title": "Data Analyst", "url": lst, "seen_ids": []}
     b = {"company": "Meta Israel", "title": "Senior Data Analyst", "url": lst, "seen_ids": []}
@@ -24187,7 +24196,10 @@ def test_titles_are_never_bypassed_without_a_per_posting_id():
 def test_the_bounce_wrong_employer_retraction_withdraws_the_linkedin_row_only(tmp_path):
     """BACKLOG 489: bounce|data analyst is Bounce AI's posting under the luggage company's
     name, on a LinkedIn url no other record shares — so a url-keyed withdrawal is safe,
-    and it must not touch bounce ai|data analyst on its comeet page."""
+    and it must not touch bounce ai|data analyst on its comeet page NOR any other record
+    on the same host. Kills `retraction-url-key-host-only`: a `_url_key` collapsed to the
+    host withdraws every LinkedIn-sourced record at once — the `x/998629` attacker shape
+    with the partial key on the other side."""
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "seen.db"))
     good = _role("Bounce AI", "Data Analyst",
@@ -24197,18 +24209,25 @@ def test_the_bounce_wrong_employer_retraction_withdraws_the_linkedin_row_only(tm
                   "https://www.linkedin.com/jobs/view/data-analyst-at-bounce-4443290013?_l=en",
                   "https://www.linkedin.com/jobs/view/data-analyst-at-bounce-4443290013?_l=en",
                   src="discovery-linkedin-targeted")
+    bystander = _role("Acme", "BI Analyst",
+                      "https://www.linkedin.com/jobs/view/bi-analyst-at-acme-999",
+                      "https://www.linkedin.com/jobs/view/bi-analyst-at-acme-999",
+                      src="discovery-linkedin")
     st.upsert_matched(good, "2026-08-30")
     st.upsert_matched(wrong, "2026-08-30")
+    st.upsert_matched(bystander, "2026-08-30")
     _retract_file(tmp_path, {
         "url": "https://www.linkedin.com/jobs/view/data-analyst-at-bounce-4443290013?_l=en",
         "status": "withdrawn", "reason": "wrong employer: Bounce AI's posting under Bounce's name",
         "on": "2026-08-31"})
     lg = roles.Ledger(st, "2026-08-31")
     lg.open_sync()
-    lg.record_run("2026-08-31", board_jobs=[good], merged=[good],
-                  scanned_ok={"Bounce AI", "Bounce"}, failed=set())
+    lg.record_run("2026-08-31", board_jobs=[good, bystander], merged=[good, bystander],
+                  scanned_ok={"Bounce AI", "Bounce", "Acme"}, failed=set())
     assert lg.records[store.merge_key(wrong)]["status"] == "withdrawn"
     assert lg.records[store.merge_key(good)]["status"] != "withdrawn"
+    assert lg.records[store.merge_key(bystander)]["status"] != "withdrawn", \
+        "a url key never leaks to its host's other postings"
     assert not lg.retractions.unmatched(), "the line found its row"
     st.close()
 
@@ -24321,7 +24340,8 @@ def test_a_competitor_canonical_is_never_handed_our_board_url():
     off our own careers page can WIN the canonical sort; handing it our board url would
     launder its JD under our own address — the one shape no downstream check catches,
     because `names_in_url` then sees only our host. The url donation is therefore allowed
-    only over an aggregator (or url-less) canonical."""
+    only over an aggregator (or url-less) canonical. Kills
+    `merge-donation-over-any-canonical`."""
     from pipeline import store
     origins = {"Acme": "https://acme.com/careers/"}
     rival = _role("Acme", "Data Analyst", "https://rival.com/jobs/data-analyst-1", "1",
@@ -24377,7 +24397,7 @@ def test_a_query_only_posting_key_never_arms_the_titles_bypass():
     """Wave A, finding 5 (REPRODUCED then fixed). A posting key with an empty path
     (`careers.f5.com?jobId=…`) left the HOST as its tail, and 138 registry hosts carry a
     digit — one digit in a brand name armed the bypass for a whole board. The id-shaped
-    check now reads a PATH segment or nothing."""
+    check now reads a PATH segment or nothing. Kills `same-posting-tail-host-fallback`."""
     from pipeline import roles
     u = "https://careers.f5.com?jobId=RP1030034"
     a = {"company": "A", "title": "Data Analyst", "url": u, "seen_ids": []}

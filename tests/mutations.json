@@ -2370,5 +2370,35 @@
   "replace": "exact = pa == pb",
   "why": "the posting-key arm added 2026-08-31 relies on '' meaning nobody's posting: without the bool() guard, any two aggregator or listing urls (both keyed '') become the same posting and the titles bypass opens cross-company. Killed by test_titles_are_never_bypassed_without_a_per_posting_id.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "merge-donation-over-any-canonical",
+  "file": "pipeline/store.py",
+  "symbol": "merge_duplicates",
+  "class": "M1-gate-removal",
+  "find": "elif deep and (_is_aggregator_url(out.get(\"url\"))\n                       or not str(out.get(\"url\") or \"\").strip()):",
+  "replace": "elif deep:",
+  "why": "the 2026-08-31 url donation may fire only over an aggregator (or url-less) canonical; with the gate gone, a competitor card that won the canonical sort is handed OUR board url and its JD ships under our own address (wave A finding 1, reproduced). Killed by test_a_competitor_canonical_is_never_handed_our_board_url.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "same-posting-tail-host-fallback",
+  "file": "pipeline/roles.py",
+  "symbol": "same_posting",
+  "class": "M6-fallback-removal",
+  "find": "tail = path_part.rsplit(\"/\", 1)[-1] if \"/\" in path_part else \"\"",
+  "replace": "tail = path_part.rsplit(\"/\", 1)[-1]",
+  "why": "a query-only posting key (careers.f5.com?jobId=...) has no path; rsplit then returns the HOST, 138 registry hosts carry a digit, and one digit in a brand name arms the titles bypass for a whole board (wave A finding 5, reproduced). Killed by test_a_query_only_posting_key_never_arms_the_titles_bypass.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "retraction-url-key-host-only",
+  "file": "pipeline/roles.py",
+  "symbol": "_url_key",
+  "class": "M5-population-widening",
+  "find": "return host.lower() + (sep + rest.rstrip(\"/\") if sep else \"\")",
+  "replace": "return host.lower()",
+  "why": "a retraction url key collapsed to its host withdraws every record on that host at once - the x/998629 attacker shape (one partial key, many employers' postings) with the truncation on the matcher's side. Killed by test_the_bounce_wrong_employer_retraction_withdraws_the_linkedin_row_only.",
+  "must_be_killed_by_behavioural": true
  }
 ]
