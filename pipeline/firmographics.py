@@ -225,6 +225,12 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     "cadence design": "cadence",  # "Cadence Design Systems" after suffix stripping
     # acquirer/brand annotations in parens keep their token (so divisions stay distinct);
     # these known annotation forms still fold to the base identity
+    # LinkedIn showcase pages post under a sub-brand the parent owns outright, and the
+    # discovery net reads that as the employer's name: `NVIDIA AI` reached the public
+    # dataset unmatched while NVIDIA's record sat on file, and render warned
+    # `title-twin NVIDIA/NVIDIA AI` about the same pair (2026-08-31). No registry row is
+    # named `NVIDIA AI`, so nothing is being folded except the showcase form.
+    "nvidia ai": "nvidia",
     "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
     "vmware broadcom": "vmware",
     "simply joytunes": "simply",

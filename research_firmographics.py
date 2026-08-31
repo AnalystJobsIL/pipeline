@@ -145,6 +145,37 @@ def plan_counts(n_new, n_refresh, limit):
     return attempted, min(max(0, total - attempted), n_refresh)
 
 
+def _row_anchor(row):
+    """One line of ANCHOR for an ACTIVE registry row: the board we read this name from.
+
+    Active only, and that is the whole safety argument: an active row's url passed
+    `identity_gate`, so it is evidence about WHICH company this name is. A parked or dark
+    row's url did not -- `entrypoint`'s pointed at Entry Point USA, and anchoring research
+    to a mis-resolved url buys a confident wrong record cached until 2027-02 (the
+    Bounce/Bounce AI class). Callers pass active rows only; this refuses anything else
+    rather than trusting the caller."""
+    if str(row.get("active", "")).strip().lower() != "true":
+        return ""
+    url = str(row.get("api_url") or "").strip() or str(row.get("token") or "").strip()
+    if not url or "://" not in url:
+        return ""     # a bare ATS token names no host and anchors nothing
+    return f"We read this employer's job postings from their careers board at {url}."
+
+
+def _posting_anchor(title, url):
+    """One line of ANCHOR for a matched-only name: its own newest posting.
+
+    These are the discovery-net names (`Paz - yellow`, `Computer Guard Technologies LTD`)
+    with no registry row at all, and they are the half a bare name identifies worst. The
+    posting is first-party: the url names the host that published it and the title says
+    what they were hiring for."""
+    title, url = str(title or "").strip(), str(url or "").strip()
+    if not url or "://" not in url:
+        return ""
+    return (f"We saw this employer hiring: \"{title}\" at {url}."
+            if title else f"We saw a job posting from this employer at {url}.")
+
+
 def is_stale(rec, refresh_days):
     if not refresh_days:
         return False
@@ -293,7 +324,13 @@ def main():
     if synced:
         print(f"synced {synced} records from the shared export into the local store")
     have = union_store(st)
-    names = [r["company_name"] for r in load_companies()]
+    rows = load_companies()
+    names = [r["company_name"] for r in rows]
+    # An ANCHOR per name, for the prompt (see `_context_for`). A bare obscure name is what
+    # the model cannot identify -- 21 of the 28 names in the 2026-08-31 backlog carried a
+    # strike whose reason was "model could not identify the name", every one of them asked
+    # with an EMPTY context, and the weekly retry re-asked the same empty question for ever.
+    anchors = {r["company_name"]: _row_anchor(r) for r in rows}
     # also cover companies that appear on the actual board (CI's matched table) but are
     # not in companies.csv — CI's discovery layer surfaces jobs from employers we never
     # explicitly listed, and those jobs deserve a profile too
@@ -306,6 +343,15 @@ def main():
         # bought facts for names the board can never render.
         board = [r[0] for r in con.execute(
             "SELECT DISTINCT company FROM matched WHERE COALESCE(status,'') != 'superseded'")]
+        # a matched-only name has no registry row to anchor it, and it is the harder half
+        # (LinkedIn/Indeed discovery names: `Paz - yellow`, `Computer Guard Technologies
+        # LTD`). Its own posting is the anchor -- the url names the employer's host and the
+        # title says what they were hiring for.
+        for c, title, url in con.execute(
+                "SELECT company, title, url FROM matched "
+                "WHERE COALESCE(status,'') != 'superseded' ORDER BY last_seen DESC"):
+            if c and c not in anchors:
+                anchors[c] = _posting_anchor(title, url)
         con.close()
         names += [n for n in board if n not in names]
     # leaked job titles ("Sql developer - X", "my team") are never companies: skip for
@@ -475,7 +521,8 @@ def main():
                 while queue and not aborted and len(pending) < max(1, a.workers) \
                         and (deadline is None or time.time() < deadline):
                     name = queue.pop(0)
-                    pending[ex.submit(research_company, name, "", 240, meta)] = name
+                    pending[ex.submit(research_company, name,
+                                      anchors.get(name, ""), 240, meta)] = name
                     attempted += 1
             _launch()
             while pending:
@@ -553,11 +600,25 @@ def main():
     # cloud. Persisting the strike is only half the fix; this is the other half.
     for n in struck:
         ledger[n] = (F.strike_attempts(failures.get(n, (0, ""))[0]) + 1, today)
-    written, status = F.save_failures(ledger, cleared=done_names)
+    # ...and a name whose record is ALREADY on disk is not a name we are failing on either.
+    # Only this run's own successes were cleared, and the digest hook — which researches
+    # board companies every morning — never appears in `done_names`, so a name it answered
+    # kept its strike for ever: Varonis and Steakholder Foods were struck 2026-08-23,
+    # researched successfully on 08-26, and were still in the ledger on 08-31 (BACKLOG 390).
+    # A strike that outlives its answer is not a gate — `n in have` already skips the name —
+    # it is a counter that walks toward `refresh_abandoned` (4+) and evicts a healthy record
+    # from the refresh layer for ever. Cleared by IDENTITY, which is `save_failures`' own key.
+    answered = {n for n in ledger if identity_key(n) in have_norms}
+    cleared = done_names | answered
+    written, status = F.save_failures(ledger, cleared=cleared)
     if written:
-        print(f"strike ledger: {len(set(ledger) - done_names)} name(s) -> "
+        if answered - done_names:
+            print(f"strike ledger: cleared {len(answered - done_names)} strike(s) whose record "
+                  f"is already on disk: {', '.join(sorted(answered - done_names)[:5])}"
+                  + (" ..." if len(answered - done_names) > 5 else ""), flush=True)
+        print(f"strike ledger: {len(set(ledger) - cleared)} name(s) -> "
               f"cloud_state/firmo_failed.json ({len(struck)} struck, "
-              f"{len(done_names & set(ledger))} cleared)", flush=True)
+              f"{len(cleared & set(ledger))} cleared)", flush=True)
     else:
         print(f"::warning::company-intel strike ledger NOT written "
               f"(cloud_state/firmo_failed.json is {status}) — {len(struck)} strike(s) from "

@@ -103,6 +103,9 @@ def _report():
             "blurb_cap": _knob("BLURB_MAX_PER_RUN"),
             # 2026-08-30: the gap with a DIRECTION, and the bulk cron's last stamp
             "stopped_outage": 0, "blurbs_purged": 0,
+            # 2026-08-31: one blurb call the MODEL failed, skipped and asked again next run,
+            # against the seam being down — which is what it used to be reported as
+            "blurbs_transient": 0, "blurbs_transient_reason": "",
             "backlog_prev": None, "backlog_prev_date": "", "backlog_delta": None,
             "cron": {}, "direction_unreadable": False}
 
@@ -314,7 +317,10 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None, s
     rep["blurbs_waiting"] = len(missing) - len(todo)
     todo = todo[:rep["blurb_cap"]]   # the env-read cap, not the import-time constant
     clock = clock or _Clock(rep["budget_min"])
-    empties, empty_names = 0, []
+    # `stalls` counts CONSECUTIVE failures of any shape and decides when to stop walking the
+    # list; `empties`/`empty_names` stay exactly what they were and decide what to ROLL BACK,
+    # because only an empty answer cached a '' row that would month-gate a real company.
+    empties, empty_names, stalls = 0, [], 0
     for i, company in enumerate(todo):
         # RESERVE research's share. Blurbs run first on the same clock, and at 30 board
         # companies x ~15s they can eat 450s of a 480s budget, leaving research 30s and a
@@ -330,19 +336,35 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None, s
                                          timeout=int(max(10, min(90, clock.remaining()))))
         except ResearchUnavailable as e:
             rep["blurbs_asked"] -= 1
-            rep["unavailable_after"] = i
-            rep["unavailable_in"] = "blurbs"
-            rep["unavailable_reason"] = str(e)
             # the KIND was recorded for the research loop only, so the two consecutive
             # `is_error (api_error_status=None)` mornings (08-28, 08-29) reached the mail
             # with no word on whether the seam thought it was auth, drift or a blip
-            rep["unavailable_kind"] = getattr(e, "kind", "") or "transient"
+            kind = getattr(e, "kind", "") or "transient"
+            stalls += 1
+            # ...and once the kind was IN the report, nothing read it. On 2026-08-31 ONE
+            # blurb call came back `error_max_structured_output_retries` -- the model failed
+            # to emit `{known, blurb}` for one company -- and this latch reported the whole
+            # seam down: the research gate in `_enrich` reads `unavailable_after`, so 6 board
+            # companies went unresearched inside a budget that had spent 81s of 480s, and the
+            # mail said "claude unavailable" on a morning the same token served 14 blurbs and
+            # 192 classifier calls. `auth`/`missing`/`drift` ARE the seam and still latch on
+            # the first hit; a `transient` is one call, so skip the name -- nothing is cached,
+            # so the next run simply asks again -- and latch only when the seam proves itself
+            # down the way the empty-answer rule already defines it: three in a row.
+            if kind == "transient" and stalls < SOFT_OUTAGE_MIN_FAILS:
+                rep["blurbs_transient"] += 1
+                rep["blurbs_transient_reason"] = str(e)
+                continue
+            rep["unavailable_after"] = i
+            rep["unavailable_in"] = "blurbs"
+            rep["unavailable_reason"] = str(e)
+            rep["unavailable_kind"] = kind
             break
         company_info[company] = summ
         st.save_company_info({company: summ}, run_date)
         if summ:
             rep["blurbs_written"] += 1
-            empties, empty_names = 0, []
+            empties, empty_names, stalls = 0, [], 0
             for other in missing:  # the group's other name-forms read the same blurb
                 if identity_key(other) == identity_key(company) and not company_info.get(other):
                     company_info[other] = summ
@@ -350,6 +372,7 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None, s
             rep["blurbs_empty"] += 1
             empties += 1
             empty_names.append(company)
+            stalls += 1
             if empties >= SOFT_OUTAGE_MIN_FAILS:
                 # three UNKNOWN/junk answers in a row: the model is not identifying anything
                 # this morning — stop walking the list (30 x 90 s). If nothing at all was
@@ -723,6 +746,12 @@ def _audit_lines(rep):
         b.append(f"{rep['blurbs_empty']} empty" + (" — stopped" if rep.get("blurbs_stopped") else ""))
     if rep["blurbs_skipped_budget"]:
         b.append(f"{rep['blurbs_skipped_budget']} skipped (budget)")
+    if rep.get("blurbs_transient"):
+        # NOT "empty": the model never answered. Named so the mail can tell a company we
+        # could not summarise from a call that failed to come back at all (2026-08-31)
+        b.append(f"{rep['blurbs_transient']} transient, retried next run"
+                 + (f" ({_ascii(rep.get('blurbs_transient_reason') or '', 60)})"
+                    if rep.get("blurbs_transient_reason") else ""))
     if rep["blurbs_derived"]:
         b.append(f"{rep['blurbs_derived']} derived from facts")
     if rep["blurbs_waiting"]:

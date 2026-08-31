@@ -538,5 +538,59 @@
     "class": "M3",
     "symbol": "mass_failure_is_a_healthy_stage",
     "why": "company-intel guard 2026-08-28 wave 2"
+  },
+  {
+    "id": "ci-transient-latches-the-whole-seam",
+    "file": "pipeline/company_intel.py",
+    "find": "            if kind == \"transient\" and stalls < SOFT_OUTAGE_MIN_FAILS:",
+    "replace": "            if False:",
+    "class": "M2",
+    "symbol": "transient_latches_the_whole_seam",
+    "why": "company-intel guard: one failed blurb call reported the seam down and skipped every research (2026-08-31)"
+  },
+  {
+    "id": "ci-transient-caches-the-name",
+    "file": "pipeline/company_intel.py",
+    "find": "                rep[\"blurbs_transient_reason\"] = str(e)\n                continue",
+    "replace": "                rep[\"blurbs_transient_reason\"] = str(e)\n                company_info[company] = \"\"\n                continue",
+    "class": "M2",
+    "symbol": "transient_caches_the_name",
+    "why": "company-intel guard: a call that never answered must cache nothing, or it month-gates a real company"
+  },
+  {
+    "id": "ci-transient-never-latches",
+    "file": "pipeline/company_intel.py",
+    "find": "            stalls += 1\n            # ...and once the kind was IN the report",
+    "replace": "            # ...and once the kind was IN the report",
+    "class": "M2",
+    "symbol": "transient_never_latches",
+    "why": "company-intel guard: three consecutive transients are still an outage"
+  },
+  {
+    "id": "ci-bulk-research-drops-its-anchor",
+    "file": "research_firmographics.py",
+    "find": "                    pending[ex.submit(research_company, name,\n                                      anchors.get(name, \"\"), 240, meta)] = name",
+    "replace": "                    pending[ex.submit(research_company, name, \"\", 240, meta)] = name",
+    "class": "M2",
+    "symbol": "bulk_research_drops_its_anchor",
+    "why": "company-intel guard: an empty context is what made 21 obscure names unidentifiable and their strikes permanent"
+  },
+  {
+    "id": "ci-anchor-trusts-a-parked-row",
+    "file": "research_firmographics.py",
+    "find": "    if str(row.get(\"active\", \"\")).strip().lower() != \"true\":\n        return \"\"",
+    "replace": "    if False:\n        return \"\"",
+    "class": "M2",
+    "symbol": "anchor_trusts_a_parked_row",
+    "why": "company-intel guard: a parked row's url never passed identity_gate (entrypoint pointed at Entry Point USA)"
+  },
+  {
+    "id": "ci-answered-strike-never-clears",
+    "file": "research_firmographics.py",
+    "find": "    answered = {n for n in ledger if identity_key(n) in have_norms}",
+    "replace": "    answered = set()",
+    "class": "M2",
+    "symbol": "answered_strike_never_clears",
+    "why": "company-intel guard: BACKLOG 390 -- a strike outliving its answer walks to refresh_abandoned and evicts a healthy record"
   }
 ]
