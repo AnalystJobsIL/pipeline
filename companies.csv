@@ -1196,7 +1196,7 @@ Weizmann Institute of Science,scrape,,https://www.weizmann.ac.il/career/en/jobs,
 AGILINA,scrape,,https://hrplus-1669824102.teamtailor.com/jobs,true,"dark-triage 2026-08-24: wrong-page (LLM: not AGILINA's careers page (generic recruiting agency page, no speci)) | listing-hunt 2026-08-24: verified 5 IL via hrplus-1669824102.teamtailor.com"
 Z2A Digital,scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-23: no pages reachable | url-cleared 2026-08-25: secrethunter.io aggregator seed
 Dun & Bradstreet (Israel) Ltd.,scrape,https://secrethunter.io/jobz/5fc7b31ec3,https://secrethunter.io/jobz/5fc7b31ec3,false,"dark-triage 2026-08-24: wrong-page (LLM: not Dun & Bradstreet (Israel) Ltd.'s careers page (generic secrethunter.io homepage, no com))"
-MAX Security,scrape,,https://www.max-security.com/careers-israel/,true,scanned; no open Israel roles now | listing-hunt 2026-08-23: verified 3 IL via www.max-security.com
+MAX Security,comeet,2B.004,https://www.comeet.com/careers-api/2.0/company/2B.004/positions?token=B244DFC4DFC42D8216C216C64444DFC64445920,true,scanned; no open Israel roles now | listing-hunt 2026-08-23: verified 3 IL via www.max-security.com | self-heal 2026-08-31: re-resolved to comeet
 SWAPP.AI,scrape,,,false,scanned; no open Israel roles now | listing-hunt 2026-08-23: no pages reachable | url-cleared 2026-08-25: secrethunter.io aggregator seed
 Qualitest acq,scrape,,,false,scanned; no open Israel roles now | url-cleared 2026-08-25: secrethunter.io aggregator seed | dark-triage 2026-08-25: no-url (no url on the row) | listing-hunt 2026-08-26: no pages reachable
 Keter,scrape,https://secrethunter.io/jobz/7181572a53,https://www.comeet.com/jobs/keter-north-america/E3.001,false,scanned; no open Israel roles now | dark-triage 2026-08-25: extract-gap (19 role phrases after render) | listing-hunt 2026-08-26: no IL listing; monitored candidate
@@ -1291,7 +1291,7 @@ Babysense,scrape,https://babysense.eu/?srsltid\u003dAfmBOopPbro6wBjoYbdJ4VeNkmnV
 Bank Hapoalim בנק הפועלים,scrape,,https://www.bankhapoalim.co.il/he/jobs-site/lobby,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-29: another company's board; no listing found
 Ben-Gurion University of the Negev,scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-29: another company's board; no listing found
 Bond,scrape,https://bond.edu.au/jobs/9500/first-nations-simulated-participants-multiple-positions,,false,dark-triage 2026-08-28: extract-gap (LLM found 1: First Nations Simulated Participants (Multiple Positions)) | wrong-url 2026-08-30: board names Bond Insurance Brokerage Inc; needs re-resolution
-Brenntag,scrape,,https://brenntag.wd3.myworkdayjobs.com/en-US/brenntag_jobs?locationCountry=Israel,true,dark-triage 2026-08-28: no-url (no url on the row) | crack-walled 2026-08-28: skip | listing-hunt 2026-08-29: verified 3 IL via brenntag.wd3.myworkdayjobs.com | query-filter 2026-08-30: honoured 1/3 IL
+Brenntag,workday,brenntag/brenntag_jobs,https://brenntag.wd3.myworkdayjobs.com/wday/cxs/brenntag/brenntag_jobs/jobs,true,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-29: verified 3 IL via brenntag.wd3.myworkdayjobs.com | query-filter 2026-08-30: honoured 1/3 IL | self-heal 2026-08-31: re-resolved to workday
 Bynet Software Systems Ltd.,scrape,https://www.bynet.co.il/en/career/,https://www.bynet.co.il/en/career/,false,listing-hunt 2026-08-28: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-28: page-empty (LLM confirms no open roles (Page is Bynet's careers landing pa) (role phrases were bios/testimonials))
 Cal (Israel Credit Cards),scrape,,,false,dark-triage 2026-08-28: no-url (no url on the row) | listing-hunt 2026-08-29: another company's board; no listing found
 Clalit Health Services,scrape,https://www.clalit.co.il/he/info/career/Pages/default.aspx,https://www.clalit.co.il/he/info/career/Pages/default.aspx,true,listing-hunt 2026-08-28: queue-hunt; verified 6 IL
@@ -1641,7 +1641,7 @@ Questrade Financial Group,scrape,,https://www.questrade.com/about-us/careers,fal
 Glassbox Ltd.,scrape,https://www.glassbox.com/careers/roles/,https://www.glassbox.com/careers/roles/,false,listing-hunt 2026-08-29: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: js-shell (job XHRs seen during render)
 Recolabs,scrape,,,false,dark-triage 2026-08-29: no-url (no url on the row) | queue-search 2026-08-29: no address found; needs re-resolution | queue-search 2026-08-30: no address found; needs re-resolution
 בנק לאומי,scrape,https://www.leumi.co.il/he/leumi_main/searchjobs,https://www.leumi.co.il/he/leumi_main/searchjobs,true,listing-hunt 2026-08-29: queue-hunt; verified 11 IL via www.leumi.co.il
-Abakus Center,scrape,https://apply.workable.com/abakus-center/,https://apply.workable.com/abakus-center/,true,listing-hunt 2026-08-29: queue-hunt; verified 1 IL via apply.workable.com
+Abakus Center,workable,abakus-center,https://apply.workable.com/api/v1/widget/accounts/abakus-center?details=true,true,listing-hunt 2026-08-29: queue-hunt; verified 1 IL via apply.workable.com | self-heal 2026-08-31: re-resolved to workable
 Kinetiqo Ltd.,scrape,,,false,dark-triage 2026-08-29: no-url (no url on the row) | queue-search 2026-08-29: no address found; needs re-resolution | queue-search 2026-08-30: no address found; needs re-resolution
 Avero,scrape,https://averoinc.com/careers/,https://averoinc.com/careers/,false,listing-hunt 2026-08-29: queue-hunt; no IL listing; monitored candidate | dark-triage 2026-08-29: page-empty (LLM confirms no open roles (Page is Avero's own careers page b))
 Hire-Match,scrape,http://www.hirematch.com/site/recruiting/retained_search/retained_search.htm,,false,dark-triage 2026-08-29: wrong-page (LLM: not Hire-Match's careers page (This is Hire-Match's own service descrip)) | wrong-url 2026-08-30: board names Hire Match; needs re-resolution
@@ -1692,11 +1692,11 @@ Latet Ngo,scrape,,https://www.latet.org.il/careers/#positionsBanner,true,queue-d
 Aitechsystems,scrape,,https://www.comeet.com/jobs/aitechsystems/88.004,true,queue-drain 2026-08-29 hunt; 9/9 IL
 Gav Systems,scrape,,https://gav.co.il/jobs/,true,queue-drain 2026-08-29 hunt; 1/1 IL
 Globalbit,scrape,,https://globalbit.co.il/career,true,queue-drain 2026-08-29 hunt; 6/6 IL
-Lev Haolam,scrape,,https://jobs.ashbyhq.com/levhaolam,true,queue-drain 2026-08-29 hunt; 1/1 IL
+Lev Haolam,ashby,levhaolam,https://api.ashbyhq.com/posting-api/job-board/levhaolam,true,queue-drain 2026-08-29 hunt; 1/1 IL | self-heal 2026-08-31: re-resolved to ashby
 Zest Cyber,scrape,,https://www.zestsecurity.io/careers,true,queue-drain 2026-08-29 hunt; 5/5 IL
 Alice IO,scrape,,https://alice.io/careers,true,queue-drain 2026-08-29 hunt; 9/9 IL
 BrancoWeiss,scrape,,https://brancoweiss.org.il/career/,true,queue-drain 2026-08-29 hunt; 18/18 IL
-Forcepoint,scrape,,https://forcepoint.wd1.myworkdayjobs.com/external-careers?locationCountry=b4dbf35ffb1c4467b7fef2c31e57af41,true,queue-drain 2026-08-29 hunt; 2/2 IL | query-filter 2026-08-30: honoured 2/2 IL
+Forcepoint,workday,forcepoint/external-careers,https://forcepoint.wd1.myworkdayjobs.com/wday/cxs/forcepoint/external-careers/jobs,true,queue-drain 2026-08-29 hunt; 2/2 IL | query-filter 2026-08-30: honoured 2/2 IL | self-heal 2026-08-31: re-resolved to workday
 Globaldots,scrape,,https://www.globaldots.com/careers/,true,queue-drain 2026-08-29 hunt; 4/4 IL
 Kenes Group,scrape,,https://kenes.applytojob.com/apply,true,queue-drain 2026-08-29 hunt; 4/4 IL
 Lumissil,scrape,,https://www.lumissil.com/about/career/jobs.html,true,queue-drain 2026-08-29 hunt; 2/2 IL
@@ -1868,14 +1868,14 @@ Advice Electronics,scrape,,https://advice.co.il/en/blogs/careers,true,queue-drai
 Aijobs AI,scrape,,,false,queue-drain 2026-08-29 search-llm; 1/1 IL | wrong-url 2026-08-30: board names aijobs.com; needs re-resolution | queue-search 2026-08-30: no address found; needs re-resolution
 Jafi,scrape,,https://www.comeet.com/jobs/jafi/C8.008,true,queue-drain 2026-08-29 search-llm; 3/3 IL
 Bio Technology General,scrape,,https://www.btgil.com/vacancies/,true,queue-drain 2026-08-29 search-llm; 4/4 IL
-Bitsight,scrape,,https://bitsight.wd1.myworkdayjobs.com/Bitsight,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Bitsight,workday,bitsight/Bitsight,https://bitsight.wd1.myworkdayjobs.com/wday/cxs/bitsight/Bitsight/jobs,true,queue-drain 2026-08-29 search-llm; 1/1 IL | self-heal 2026-08-31: re-resolved to workday
 Blackcube1,scrape,,https://www.blackcube.com/careers,true,queue-drain 2026-08-29 search-llm; 3/3 IL
 Canopy Care,scrape,,https://canopycare.us/careers,true,queue-drain 2026-08-29 search-llm; 3/3 IL
 Centrical,scrape,,https://centrical.com/company/careers/,true,queue-drain 2026-08-29 search-llm; 1/1 IL
 Xcurrent Energy Solutions,scrape,,https://www.xcurrent.tech/careers,true,queue-drain 2026-08-29 search-llm; 4/4 IL
 Malam,scrape,,https://malam-academy.co.il/vacancies/,true,queue-drain 2026-08-29 search-llm; 4/4 IL
 Linearb,scrape,,https://linearb.applytojob.com/apply,true,queue-drain 2026-08-29 search-llm; 2/2 IL
-Beamup,scrape,,http://job-boards.greenhouse.io/beamup,true,queue-drain 2026-08-29 search-llm; 4/4 IL
+Beamup,greenhouse,beamup,https://boards-api.greenhouse.io/v1/boards/beamup/jobs,true,queue-drain 2026-08-29 search-llm; 4/4 IL | self-heal 2026-08-31: re-resolved to greenhouse
 Bilton,scrape,,https://careers.bilton.tech/jobs,true,queue-drain 2026-08-29 search-llm; 3/3 IL
 Brandshield,scrape,,https://www.comeet.com/jobs/brandshield/13.002,true,queue-drain 2026-08-29 search-llm; 1/1 IL
 Citadel Consulting,scrape,,https://www.citadel.co.il/join-us/,true,queue-drain 2026-08-29 search-llm; 3/3 IL
@@ -1894,7 +1894,7 @@ Greylock Partners,scrape,,,false,queue-drain 2026-08-29 search-llm; 1/1 IL | wro
 Bulls Media,scrape,,https://bulls-media.com/career/positions/,true,queue-drain 2026-08-29 search-llm; 3/3 IL
 Bylith,scrape,,https://www.bylith.com/careers,true,queue-drain 2026-08-29 search-llm; 9/9 IL
 City Of David,scrape,,http://www.cityofdavid.org.il/Jobs,true,queue-drain 2026-08-29 search-llm; 9/9 IL
-Clarivate,scrape,,https://clarivate.wd3.myworkdayjobs.com/Clarivate_Careers,true,queue-drain 2026-08-29 search-llm; 1/1 IL
+Clarivate,workday,clarivate/Clarivate_Careers,https://clarivate.wd3.myworkdayjobs.com/wday/cxs/clarivate/Clarivate_Careers/jobs,true,queue-drain 2026-08-29 search-llm; 1/1 IL | self-heal 2026-08-31: re-resolved to workday
 McKinsey & Company,scrape,,https://karriere.mckinsey.de/karriere/search-jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 YouCC Technologies Ltd.,scrape,,https://youcc.co.il/careers/38,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
 Exyte,scrape,,https://careers.exyte.net/global/en/c/engineering-jobs,false,queue-hunt 2026-08-29: careers page documented; monitored candidate
@@ -2059,15 +2059,15 @@ Geniussports,scrape,https://www.geniussports.com/,https://www.geniussports.com/,
 PB Israel,scrape,https://www.pbisrael.com/,https://www.pbisrael.com/,false,scanned; no open Israel roles now | own-site 2026-08-31: www.pbisrael.com linkback
 Moonsite Software Ltd,scrape,,https://jobs.moonsite.co.il,true,queue-drain 2026-08-31 search-llm; 1/1 IL
 Morinside,scrape,,https://morinside.co.il/jobs,true,queue-drain 2026-08-31 search-llm; 1/1 IL
-Mench,scrape,,https://apply.workable.com/mench/,true,queue-drain 2026-08-31 search-llm; 4/4 IL
+Mench,workable,mench,https://apply.workable.com/api/v1/widget/accounts/mench?details=true,true,queue-drain 2026-08-31 search-llm; 4/4 IL | self-heal 2026-08-31: re-resolved to workable
 Fattal Hotels,scrape,,https://www.fattal.co.il/careers,true,queue-drain 2026-08-31 search-llm; 3/3 IL
 Fitness22,scrape,,https://careers.fitness22.com/jobs,true,queue-drain 2026-08-31 search-llm; 4/4 IL
 Fayrix,scrape,,https://fayrix.com/vacancies,true,queue-drain 2026-08-31 search-llm; 6/6 IL
 Histadrut,scrape,,https://www.histadrut.org.il/jobs/,true,queue-drain 2026-08-31 search-llm; 3/3 IL
 Finonex,scrape,,https://www.finonex.com/careers/,true,queue-drain 2026-08-31 search-llm; 1/1 IL
 Nanomotion,scrape,,https://www.nanomotion.com/jobs/,true,queue-drain 2026-08-31 search-llm; 3/3 IL
-Nascompany,scrape,,http://job-boards.greenhouse.io/nascompany,true,queue-drain 2026-08-31 search-llm; 1/1 IL
-IFF,scrape,,https://iff.wd5.myworkdayjobs.com/IFF_Careers,true,queue-drain 2026-08-31 search-llm; 1/1 IL
+Nascompany,greenhouse,nascompany,https://boards-api.greenhouse.io/v1/boards/nascompany/jobs,true,queue-drain 2026-08-31 search-llm; 1/1 IL | self-heal 2026-08-31: re-resolved to greenhouse
+IFF,workday,iff/IFF_Careers,https://iff.wd5.myworkdayjobs.com/wday/cxs/iff/IFF_Careers/jobs,true,queue-drain 2026-08-31 search-llm; 1/1 IL | self-heal 2026-08-31: re-resolved to workday
 Finallyrobotic,scrape,,https://www.finallyrobotic.com/careers,true,queue-drain 2026-08-31 search-llm; 1/1 IL
 Ifor Fintech,scrape,,https://www.iforfintech.com/open-positions,true,queue-drain 2026-08-31 search-llm; 1/1 IL
 Arbitrip,scrape,,https://arbitrip.com/careers/,true,queue-drain 2026-08-31 search-llm; 1/1 IL
