@@ -192,6 +192,20 @@ publish one board's roles under two employer names, and `check_invariants` B2 ca
 either (its key carries the query string). Which row survives is an operator call, so I
 parked nothing — filed.
 
+## Verification
+
+From a CLEAN worktree at `origin/master` (`c975baa`) AFTER the push:
+
+* `python -m pytest` — **1610 passed, 13 skipped**
+* `python check_invariants.py --strict` — `companies.csv OK: 2103 rows, 1102 active, 0 orphans, pool=876` (no B2, with 14 rows newly activated)
+* `python docs/check_docs.py` — **0 error(s), 7 warning(s) over 85 documents**
+* `python tools/guard_kill.py --base origin/master` — **KILLS 9**, no CANNOT-FAIL
+* `python queue_state.py` — **OWED 1**, on cadence 317, answered on disk 0
+* CI **run `33366050922`** on `c975baa`, `event: push` — **`success`, 13 of 13 jobs**
+* Bug `458`: `research_companies.json` is 320 entries on origin and 320 locally — no deletion was resurrected by the merge.
+
+Spent: **187 Bright Data credits** (1 canary + 186 drain), ~172 sonnet calls for the wave plus ~104 for verification, ~0 opus (the dispose pass was not reached). SerpApi untouched (exhausted).
+
 ## Not finished
 
 * The **dispose pass on the ~176-name honest core** — judged retirement is the only exit for
