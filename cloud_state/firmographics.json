@@ -1360,6 +1360,20 @@
     "stage_note": "Nasdaq: ARBE since October 2021 (SPAC merger)",
     "sub_sector": "4D imaging radar chipsets and perception software for ADAS and autonomous vehicles"
   },
+  "Arbitrip": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B SaaS",
+    "customer_type": "B2B",
+    "display_name": "Arbitrip Travel Technologies",
+    "employees_global": 50,
+    "founded": 2015,
+    "il_center": "Ramat Hasharon (HQ)",
+    "sector": "travel tech",
+    "size_band": "S",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by S. Shlomo Holdings (Talma) in 2022",
+    "sub_sector": "Corporate travel & hotel booking platform"
+  },
   "Argus Cyber Security": {
     "as_of": "2026-08-22",
     "business_model": "Licensed embedded security software and vehicle SOC services sold to automakers and tier-1 suppliers (now defunct)",
@@ -5154,6 +5168,32 @@
     "stage_note": "Bootstrapped / angel-backed (Silicon Valley angels), no major VC rounds disclosed on Crunchbase",
     "sub_sector": "AI-powered site search, merchandising and personalization platform for online stores (formerly InstantSearch+)"
   },
+  "Fattal Hotels": {
+    "as_of": "2026-08-31",
+    "business_model": "Hotel ownership, operation and management across Europe and Israel",
+    "customer_type": "B2C",
+    "employees_global": 12000,
+    "founded": 1998,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "hospitality/travel",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "Listed on Tel Aviv Stock Exchange (TASE) since 2018",
+    "sub_sector": "Hotel chain operator"
+  },
+  "Fayrix": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B",
+    "customer_type": "Enterprise/startups outsourcing software development",
+    "employees_global": 1500,
+    "founded": 2014,
+    "il_center": "Herzliya (HQ)",
+    "sector": "it services",
+    "size_band": "L",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held software outsourcing company, no VC funding found",
+    "sub_sector": "Custom software development / outsourcing"
+  },
   "Feedvisor": {
     "as_of": "2026-08-30",
     "business_model": "B2B SaaS",
@@ -5232,6 +5272,20 @@
     "stage_note": "NYSE: FIG, IPO priced 2025 at ~$24B valuation",
     "sub_sector": "Design & Collaboration Software / AI"
   },
+  "Finallyrobotic": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B",
+    "customer_type": "Grocery retailers and e-commerce fulfillment operators",
+    "display_name": "Finally",
+    "employees_global": null,
+    "founded": 2020,
+    "il_center": "Binyamina-Giv'at Ada (HQ)",
+    "sector": "robotics",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Venture-backed Israeli robotics startup founded 2020; funding details not publicly disclosed",
+    "sub_sector": "Grocery fulfillment robotics / AI-powered store automation"
+  },
   "Finaloop": {
     "as_of": "2026-08-21",
     "business_model": "SaaS subscription replacing bookkeepers/accounting software with automated real-time books and tax-ready financials for online sellers",
@@ -5257,6 +5311,19 @@
     "stage": "early-private",
     "stage_note": "~$15M raised total (incl. Magenta Venture Partners); Aug 2025 non-binding $305M acquisition MOU from Diginex stalled — due diligence paused per Diginex Dec 2025 update",
     "sub_sector": "automated third-party / supply chain security & compliance assessments (vendor risk management)"
+  },
+  "Finonex": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B software platform for online trading/brokerage",
+    "customer_type": "Financial institutions and brokerages",
+    "employees_global": 81,
+    "founded": 2010,
+    "il_center": "Israel (HQ/office)",
+    "sector": "fintech",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "No public venture funding rounds identified; established since 2010",
+    "sub_sector": "Online trading platforms"
   },
   "Finout": {
     "as_of": "2026-08-21",
@@ -5338,6 +5405,19 @@
     "stage": "acquired-by-bigtech",
     "stage_note": "Acquired by Nemetschek Group (via subsidiary Bluebeam) in September 2025, deal reported at tens of millions of dollars",
     "sub_sector": "AI/computer-vision review of construction drawing sets to flag design risks, scope gaps and cross-discipline inconsistencies pre-construction"
+  },
+  "Fitness22": {
+    "as_of": "2026-08-31",
+    "business_model": "B2C mobile apps (subscription-based fitness apps)",
+    "customer_type": "Consumers",
+    "employees_global": 50,
+    "founded": 2011,
+    "il_center": "Petah Tikva (HQ)",
+    "sector": "digital health & fitness",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped/unfunded, profitable app portfolio (Gymverse, 5K Runner, Muscle Booster)",
+    "sub_sector": "Mobile fitness applications"
   },
   "Fiverr": {
     "as_of": "2026-08-21",
@@ -6416,6 +6496,7 @@
     "as_of": "2026-08-29",
     "business_model": "B2B SaaS - AI-powered product data enrichment and intelligence platform",
     "customer_type": "enterprise",
+    "display_name": "Harmonya",
     "employees_global": 50,
     "founded": 2021,
     "il_center": "Tel Aviv",
@@ -6622,6 +6703,19 @@
     "stage": "public",
     "stage_note": "NYSE: HIPO, listed via SPAC merger in 2021",
     "sub_sector": "Tech-driven home insurance (homeowners coverage with smart-home prevention and MGA + owned carrier model)"
+  },
+  "Histadrut": {
+    "as_of": "2026-08-31",
+    "business_model": "Trade union / labor federation providing member services",
+    "customer_type": "Members (workers/employees across Israel)",
+    "employees_global": null,
+    "founded": 1920,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "non-profit / labor organization",
+    "size_band": "XL",
+    "stage": "private-enterprise",
+    "stage_note": "National labor federation founded 1920, non-venture, membership-based organization",
+    "sub_sector": "Trade Union Federation"
   },
   "Holisto": {
     "as_of": "2026-08-21",
@@ -6911,6 +7005,19 @@
     "stage_note": "Government-owned (~99.85% state); bonds traded on TASE, files public reports as a government company",
     "sub_sector": "State-owned electric utility — generation, transmission and distribution of electricity across Israel"
   },
+  "IFF": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B",
+    "customer_type": "Enterprise (food, beverage, cosmetics, home & personal care manufacturers)",
+    "employees_global": 21500,
+    "founded": 1958,
+    "il_center": "Ramat Gan / Haifa area (Frutarom & Aromor sites); HQ in New York, USA",
+    "sector": "chemicals / flavors & fragrances",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NYSE: IFF; acquired Israel's Frutarom in 2018 for $7.1B and Aromor in 2014",
+    "sub_sector": "Flavors, fragrances, food ingredients and specialty chemicals"
+  },
   "INGIMA": {
     "as_of": "2026-08-30",
     "business_model": "IT consulting / project outsourcing (AI, Big Data, RPA, Cloud)",
@@ -6988,6 +7095,20 @@
     "stage": "growth-private",
     "stage_note": "Raised $55M Series C led by 83North (2021); ~$114M total funding; still private as of Feb 2026 leadership transition (Yair Heller named CEO)",
     "sub_sector": "AI-powered cancer diagnostics for digital pathology (Galen platform for prostate, breast, gastric biopsies)"
+  },
+  "Ifor Fintech": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B software provider for financial brokers",
+    "customer_type": "B2B - online brokers and financial services companies",
+    "display_name": "iFOR Fintech",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Herzliya (HQ)",
+    "sector": "fintech",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "No public funding rounds found; appears self-funded/private company",
+    "sub_sector": "Trading platforms & broker software (CRM, marketing, billing)"
   },
   "Iguazio": {
     "as_of": "2026-08-22",
@@ -9245,6 +9366,19 @@
     "stage_note": "$37M Series A led by NAdventures (National Bank of Canada VC) announced Jan 2026; ~$47M raised total",
     "sub_sector": "Real-time website impersonation, phishing and account-takeover (digital fraud) protection"
   },
+  "Mench": {
+    "as_of": "2026-08-31",
+    "business_model": "Advertising/creative agency services",
+    "customer_type": "B2B",
+    "employees_global": 30,
+    "founded": 2013,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "marketing & advertising",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Independent small agency, no venture funding identified",
+    "sub_sector": "Creative/Ad Agency"
+  },
   "Mend": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS subscriptions to the Mend AppSec platform (SCA, SAST, container and AI code security), priced per developer/tier",
@@ -9788,6 +9922,20 @@
     "stage_note": "Privately held bootstrapped services firm founded by CEO Boris Sigalov; no VC funding on record (Crunchbase/Tracxn)",
     "sub_sector": "Web & mobile application development house / outsourced dev teams for Israeli businesses"
   },
+  "Moonsite Software Ltd": {
+    "as_of": "2026-08-31",
+    "business_model": "Custom software development / IT services (web & mobile applications)",
+    "customer_type": "B2B",
+    "display_name": "Moonsite",
+    "employees_global": 39,
+    "founded": 2004,
+    "il_center": "Rehovot (HQ)",
+    "sector": "it services",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped, no external funding raised; founder-owned",
+    "sub_sector": "Software development & digital agency (web/mobile apps)"
+  },
   "Moovit": {
     "as_of": "2026-08-21",
     "business_model": "Free consumer transit app monetized via ads plus B2B/B2G MaaS licensing of transit data, APIs and white-label solutions; shifting to power Mobileye robotaxi fleet supply and trip planning",
@@ -9813,6 +9961,19 @@
     "stage": "early-private",
     "stage_note": "seed-stage; raised ~$2.25M total (incl. $1.75M seed), partnered with Nestlé's Tivall/Osem in 2023",
     "sub_sector": "clean-label plant-based meat alternatives made from upcycled pumpkin and sunflower seeds"
+  },
+  "Morinside": {
+    "as_of": "2026-08-31",
+    "business_model": "MRI/medical imaging diagnostic services",
+    "customer_type": "B2C/B2B (patients, doctors, healthcare institutions)",
+    "employees_global": 30,
+    "founded": null,
+    "il_center": "Kfar Saba (HQ)",
+    "sector": "healthcare",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately owned MRI diagnostic services provider, not venture-backed",
+    "sub_sector": "Medical Imaging / Diagnostics"
   },
   "Morphisec": {
     "as_of": "2026-08-23",
@@ -10023,6 +10184,19 @@
     "stage": "early-private",
     "stage_note": "Raised ~$27M (Series B 2021); collapsed — filed for insolvency/court-appointed trustee in Feb 2025, ceased operations",
     "sub_sector": "device-level zero-trust protection for IoT/OT devices, smart meters and industrial equipment"
+  },
+  "Nanomotion": {
+    "as_of": "2026-08-31",
+    "business_model": "B2B",
+    "customer_type": "enterprise",
+    "employees_global": 150,
+    "founded": 1992,
+    "il_center": "Yokneam (HQ)",
+    "sector": "deep tech / industrial hardware",
+    "size_band": "S",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Johnson Electric in 2005",
+    "sub_sector": "Piezoelectric motors and motion systems"
   },
   "Nanox": {
     "as_of": "2026-08-21",
@@ -13597,6 +13771,7 @@
     "as_of": "2026-08-23",
     "business_model": "Sells passenger cars, commercial vehicles, motorcycles and parts through dealer networks, plus captive financing, leasing and insurance",
     "customer_type": "consumers, fleets and dealers",
+    "display_name": "Volkswagen",
     "employees_global": 662942,
     "founded": 1937,
     "il_center": "Tel Aviv (Škoda Auto DigiLab Israel / Volkswagen Group Campus Tel Aviv — innovation & startup scouting); HQ in Wolfsburg, Germany",

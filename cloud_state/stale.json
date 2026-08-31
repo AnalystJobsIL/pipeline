@@ -1,9 +1,4 @@
 {
- "Lightricks": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/lightricks/jobs",
-  "platform": "greenhouse",
-  "reason": "regressed-to-zero"
- },
  "Swimm": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.007/positions",
   "platform": "comeet",
@@ -24,11 +19,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "lakeFS": {
-  "careers_url": "https://lakefs.io/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Radiflow": {
   "careers_url": "https://www.radiflow.com/careers/",
   "platform": "scrape",
@@ -38,10 +28,10 @@
   "careers_url": "https://www.greeneye.ag/careers",
   "platform": "scrape",
   "reason": "fetch-error",
-  "error": "scrape: http:404 (5 nights)"
+  "error": "scrape: http:404 (6 nights)"
  },
- "Apple": {
-  "careers_url": "https://jobs.apple.com/en-us/search",
+ "Sensos": {
+  "careers_url": "https://www.sensos.io/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -80,6 +70,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "SolarEdge": {
+  "careers_url": "https://www.solaredge.com/en/search",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "ASTERRA": {
   "careers_url": "https://asterra.io/careers/",
   "platform": "scrape",
@@ -99,7 +94,7 @@
   "careers_url": "https://akamaicareers.inflightcloud.com/search",
   "platform": "scrape",
   "reason": "fetch-error",
-  "error": "scrape: http:403 (6 nights)"
+  "error": "scrape: http:403 (7 nights)"
  },
  "Deutsche Telekom": {
   "careers_url": "https://telekom-growthhub.eightfold.ai/careers",
@@ -112,13 +107,13 @@
   "reason": "fetch-error",
   "error": "HttpError: HTTP 502 for https://ciena.wd5.myworkdayjobs.com/wday/cxs/ciena/Career"
  },
- "Microsoft (Xbox/Gaming)": {
-  "careers_url": "https://jobs.careers.microsoft.com/global/en/search",
+ "Volkswagen (CARIAD)": {
+  "careers_url": "https://jobs.volkswagen-group.com/cariad/search/",
   "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
+  "reason": "regressed-to-zero"
  },
- "nsKnox": {
-  "careers_url": "https://nsknox.net/jobs/customer-service-professional-part-time-student-position/",
+ "Workiz": {
+  "careers_url": "https://www.workiz.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -132,10 +127,10 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Microsoft Israel": {
-  "careers_url": "https://jobs.careers.microsoft.com/global/en/search",
+ "OpenText": {
+  "careers_url": "https://careers.opentext.com/careers",
   "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
+  "reason": "regressed-to-zero"
  },
  "GenCell": {
   "careers_url": "https://www.gencellprojects.com/jobs",
@@ -167,8 +162,13 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Siemens": {
-  "careers_url": "https://jobs.siemens.com/en_US/externaljobs/SearchJobs",
+ "Sanofi": {
+  "careers_url": "https://jobs.sanofi.com/en/search-jobs/Israel",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Deutsche Post DHL": {
+  "careers_url": "https://careers.dhl.com/global/en/search-results",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -223,8 +223,8 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Intuit": {
-  "careers_url": "https://jobs.intuit.com/",
+ "Arm": {
+  "careers_url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -247,6 +247,16 @@
   "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "MAX Security": {
+  "careers_url": "https://www.max-security.com/careers-israel/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Whalo": {
+  "careers_url": "https://www.whalo.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "scaleops": {
   "careers_url": "https://job-boards.eu.greenhouse.io/scaleops",
@@ -277,6 +287,11 @@
   "careers_url": "https://eni-one-ltd.breezy.hr",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "EPAM Systems, Inc.": {
+  "careers_url": "https://careers.epam.com/en/jobs",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Exodigo": {
   "careers_url": "https://www.comeet.com/jobs/exodigo/89.005",
@@ -318,28 +333,23 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "הפניקס": {
-  "careers_url": "https://www.fnx.co.il/career/open-positions",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "מנורה מבטחים החזקות": {
-  "careers_url": "https://www.menoramivt.co.il/job-posting/open-position",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "rooms": {
   "careers_url": "https://www.working-rooms.co.il/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Challenge Group": {
+  "careers_url": "https://career.challenge-group.com/go/Israel-Airlines-Jobs/9594055/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Dentsply Sirona": {
+  "careers_url": "https://careers.dentsplysirona.com/search/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Gini Apps": {
   "careers_url": "https://www.comeet.com/jobs/gini-apps/66.000",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "finbounce": {
-  "careers_url": "https://www.comeet.com/jobs/finbounce/E9.00C",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
@@ -373,6 +383,11 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "אסם": {
+  "careers_url": "https://www.facebook.com/osem.nestle.career/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Jafi": {
   "careers_url": "https://www.comeet.com/jobs/jafi/C8.008",
   "platform": "scrape",
@@ -400,6 +415,21 @@
  },
  "Clarivate": {
   "careers_url": "https://clarivate.wd3.myworkdayjobs.com/Clarivate_Careers",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Mench": {
+  "careers_url": "https://apply.workable.com/mench/",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Nascompany": {
+  "careers_url": "http://job-boards.greenhouse.io/nascompany",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "IFF": {
+  "careers_url": "https://iff.wd5.myworkdayjobs.com/IFF_Careers",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  }

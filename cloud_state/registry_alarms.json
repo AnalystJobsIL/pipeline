@@ -1,10 +1,4 @@
 {
- "since": "2026-08-30",
- "alarms": [
-  "re-check pool halved: retry_unreachable + bd_rescue 49 -> 22",
-  "re-check pool grew: listing_hunt 435 -> 697 (a predicate widened?)",
-  "re-check pool grew: crack_walled 21 -> 38 (a predicate widened?)",
-  "re-check pool grew: audit_empty_rows 537 -> 817 (a predicate widened?)",
-  "re-check pool grew: deep_validate 537 -> 817 (a predicate widened?)"
- ]
+ "since": "2026-08-31",
+ "alarms": []
 }

@@ -1,39 +1,283 @@
 {
  "dataset": "roles.csv",
- "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
- "published_on_pages": false,
- "generated_at": "2026-08-30T10:52:46Z",
- "run_date": "2026-08-30",
- "rows": 161,
+ "download_url": "https://analystjobsil.github.io/board/roles.csv",
+ "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
+ "published_on_pages": true,
+ "generated_at": "2026-08-31T12:15:47Z",
+ "run_date": "2026-08-31",
+ "rows": 167,
  "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
  "window": {
-  "days": 60,
+  "days": 90,
   "basis": "last_seen",
-  "start": "2026-07-02",
-  "end": "2026-08-30",
-  "rule": "2026-07-02 <= last_seen <= 2026-08-30, both inclusive (60 days) — the role was seen open on its employer's own careers board on some day in that range",
+  "start": "2026-06-03",
+  "end": "2026-08-31",
+  "rule": "2026-06-03 <= last_seen <= 2026-08-31, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
   "fully_covered": false,
-  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-07-02. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
+  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-03. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
  },
  "store": {
-  "records": 172,
+  "records": 193,
   "by_status": {
-   "closed": 52,
-   "open": 109,
-   "purged": 7,
-   "superseded": 4
+   "closed": 48,
+   "open": 119,
+   "purged": 17,
+   "superseded": 6,
+   "withdrawn": 3
   },
   "earliest_first_seen": "2026-08-16",
   "earliest_recorded_run": "2026-08-27",
   "retention": "nothing is ever deleted; a wrong row becomes superseded or purged and keeps its line"
  },
  "excluded": {
-  "superseded": 4,
-  "purged": 7,
-  "purge_reason": "registry row points at an aggregator, so the postings were never this row's",
+  "superseded": 6,
+  "purged": 17,
+  "withdrawn": 3,
   "outside_window": 0,
   "undatable": 0,
-  "note": "superseded = the same posting also fetched under a second company name, kept once. purged = the registry row was never an employer."
+  "note": "superseded = the same posting also fetched under a second company name, kept once. purged = the COMPANY was never an employer (a registry row that points at an aggregator; a name intake rejected as an agency). withdrawn = the employer is real but THIS posting was never in scope (not in Israel, or not this employer's) — it was published in error and is listed under `withdrawn` with its reason and the days it was public. Rows that aged out of the window are not excluded: they are in roles_archive.csv."
+ },
+ "removed": [
+  {
+   "role_id": "abra|data analytics architect",
+   "company": "Abra",
+   "title": "Data Analytics Architect",
+   "status": "purged",
+   "reason": "pipeline/recruiters.is_recruiter names this as a staffing agency, so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "alpha similarweb partner|big data analyst",
+   "company": "Alpha | Similarweb Partner",
+   "title": "Big Data Analyst",
+   "status": "purged",
+   "reason": "pipeline/recruiters.is_recruiter names this as a staffing agency, so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "bounce|data analyst",
+   "company": "Bounce",
+   "title": "Data Analyst",
+   "status": "withdrawn",
+   "reason": "wrong employer: this is Bounce AI's Data Analyst posting, stored under the luggage-storage company Bounce's name by targeted LinkedIn discovery",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "comblack|business intelligence developer",
+   "company": "comblack",
+   "title": "Business Intelligence Developer",
+   "status": "purged",
+   "reason": "pipeline/recruiters.is_recruiter names this as a staffing agency, so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "comblack|senior business intelligence developer",
+   "company": "comblack",
+   "title": "Senior Business Intelligence Developer",
+   "status": "purged",
+   "reason": "pipeline/recruiters.is_recruiter names this as a staffing agency, so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "comcast|analyst enterprise data analytics comcast advertising",
+   "company": "Comcast",
+   "title": "Analyst, Enterprise Data Analytics - Comcast Advertising",
+   "status": "withdrawn",
+   "reason": "the posting is in Pennsylvania, US: the registry query said ?location=Israel and the scraper stamped that word on a card that carried no location of its own",
+   "on": "2026-08-30",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-30"
+   }
+  },
+  {
+   "role_id": "comcast|manager 2 business operations amp analytics",
+   "company": "Comcast",
+   "title": "Manager 2, Business Operations &amp; Analytics",
+   "status": "withdrawn",
+   "reason": "the posting is in Houston, Texas: the registry query said ?location=Israel and the scraper stamped that word on a card that carried no location of its own",
+   "on": "2026-08-30",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-30"
+   }
+  },
+  {
+   "role_id": "jobgether|team lead product analyst",
+   "company": "Jobgether",
+   "title": "Team Lead Product Analyst",
+   "status": "purged",
+   "reason": "intake rejected this name as an agency (cloud_state/intake_rejects.json), so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "nisha pro|analytical consultant",
+   "company": "Nisha Pro",
+   "title": "Analytical Consultant",
+   "status": "purged",
+   "reason": "intake rejected this name as an agency (cloud_state/intake_rejects.json), so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "nogamy|business intelligence developer",
+   "company": "Nogamy",
+   "title": "Business Intelligence Developer",
+   "status": "purged",
+   "reason": "intake rejected this name as an agency (cloud_state/intake_rejects.json), so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "recruitx|data analyst jb 4122",
+   "company": "Recruitx",
+   "title": "Data Analyst JB-4122",
+   "status": "purged",
+   "reason": "pipeline/recruiters.is_recruiter names this as a staffing agency, so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "shavit|data analyst",
+   "company": "Shavit Software",
+   "title": "Data Analyst",
+   "status": "purged",
+   "reason": "intake rejected this name as an agency (cloud_state/intake_rejects.json), so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "tel aviv|business analyst",
+   "company": "Tel Aviv",
+   "title": "Business Analyst",
+   "status": "purged",
+   "reason": "registry row points at an aggregator, so the postings were never this row's",
+   "on": "2026-08-27",
+   "published_in_roles_csv": null
+  },
+  {
+   "role_id": "tel aviv|data analyst",
+   "company": "Tel Aviv",
+   "title": "Data Analyst",
+   "status": "purged",
+   "reason": "registry row points at an aggregator, so the postings were never this row's",
+   "on": "2026-08-27",
+   "published_in_roles_csv": null
+  },
+  {
+   "role_id": "tel aviv|marketing ops analytics manager",
+   "company": "Tel Aviv",
+   "title": "Marketing Ops & Analytics Manager",
+   "status": "purged",
+   "reason": "registry row points at an aggregator, so the postings were never this row's",
+   "on": "2026-08-27",
+   "published_in_roles_csv": null
+  },
+  {
+   "role_id": "tel aviv|product analyst",
+   "company": "Tel Aviv",
+   "title": "Product Analyst",
+   "status": "purged",
+   "reason": "registry row points at an aggregator, so the postings were never this row's",
+   "on": "2026-08-27",
+   "published_in_roles_csv": null
+  },
+  {
+   "role_id": "tel aviv|senior bi analyst",
+   "company": "Tel Aviv",
+   "title": "Senior BI Analyst",
+   "status": "purged",
+   "reason": "registry row points at an aggregator, so the postings were never this row's",
+   "on": "2026-08-27",
+   "published_in_roles_csv": null
+  },
+  {
+   "role_id": "tel aviv|senior product analyst",
+   "company": "Tel Aviv",
+   "title": "Senior Product Analyst",
+   "status": "purged",
+   "reason": "registry row points at an aggregator, so the postings were never this row's",
+   "on": "2026-08-27",
+   "published_in_roles_csv": null
+  },
+  {
+   "role_id": "tel aviv|total rewards people analytics lead",
+   "company": "Tel Aviv",
+   "title": "Total Rewards & People Analytics Lead",
+   "status": "purged",
+   "reason": "registry row points at an aggregator, so the postings were never this row's",
+   "on": "2026-08-27",
+   "published_in_roles_csv": null
+  },
+  {
+   "role_id": "yael korentec|bi developer defense company northern israel",
+   "company": "Yael Korentec Technologies",
+   "title": "BI Developer – Defense Company, Northern Israel",
+   "status": "purged",
+   "reason": "pipeline/recruiters.is_recruiter names this as a staffing agency, so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  }
+ ],
+ "archive": {
+  "file": "roles_archive.csv",
+  "rows": 0,
+  "rule": "status open or closed AND last_seen < 2026-06-03 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
+  "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
+  "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
+  "published_on_pages": false
+ },
+ "reconciliation": {
+  "rows": 167,
+  "archived": 0,
+  "superseded": 6,
+  "purged": 17,
+  "withdrawn": 3,
+  "outside_window": 0,
+  "undatable": 0,
+  "unreadable": 0,
+  "store_records": 193,
+  "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable == store_records",
+  "holds": true
  },
  "conventions": {
   "list_separator": ";",
@@ -62,12 +306,23 @@
   "in_this_file": false,
   "why": "the full text is up to 6,000 characters per role with embedded newlines: it breaks naive parsers, and this file is committed to git every day",
   "file": "roles_text.jsonl",
+  "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_text.jsonl",
+  "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_text.jsonl",
+  "published_on_pages": false,
   "join": "role_id",
   "columns_here": [
    "description_len",
    "description_truncated",
-   "description_sha1"
-  ]
+   "description_sha1",
+   "description_quality"
+  ],
+  "quality": {
+   "jd": 160,
+   "snippet": 4,
+   "none": 3,
+   "unmeasured": 0,
+   "holds": true
+  }
  },
  "funnel": {
   "file": "funnel.csv",
@@ -75,11 +330,15 @@
  },
  "columns": {
   "role_id": {
-   "doc": "Opaque stable id for the role — a normalised slug derived from company and title (punctuation and corporate suffixes dropped), so DO NOT split it: use the company and title columns. It is the join key for roles_text.jsonl.",
+   "doc": "Opaque stable id for the role — a normalised slug derived from company_registry and title (punctuation and corporate suffixes dropped), so DO NOT split it: use the company_registry and title columns. It is the join key for roles_text.jsonl.",
    "nulls": 0
   },
   "company": {
-   "doc": "Employer name as it appears on the board we read.",
+   "doc": "The employer's brand name where company-intel evidenced one (the same rule the board renders by), else the registry name. Group by this.",
+   "nulls": 0
+  },
+  "company_registry": {
+   "doc": "The registry/record name — the stable join key to this repo's other files (firmographics, the ledger); role_id derives from it. Equal to company when no brand is evidenced.",
    "nulls": 0
   },
   "title": {
@@ -104,7 +363,7 @@
   },
   "posted_date": {
    "doc": "The date the EMPLOYER states the role was posted. Empty when the board publishes none.",
-   "nulls": 22
+   "nulls": 20
   },
   "first_seen": {
    "doc": "The first day this pipeline ever saw the role, across all of its spells. Not a posting date.",
@@ -133,7 +392,7 @@
   },
   "closed_on": {
    "doc": "The day we recorded it closed. Empty while open.",
-   "nulls": 109
+   "nulls": 119
   },
   "emailed": {
    "doc": "true if this role went out in a daily digest email.",
@@ -141,7 +400,7 @@
   },
   "emailed_on": {
    "doc": "The date it was first emailed. Empty if never emailed.",
-   "nulls": 85
+   "nulls": 96
   },
   "episodes": {
    "doc": "How many separate spells we have seen this role open (a reappearance after an absence starts a new one).",
@@ -153,7 +412,7 @@
   },
   "repost_dates": {
    "doc": "The posted_date values those bumps landed on, separated by ';'.",
-   "nulls": 139
+   "nulls": 142
   },
   "sources": {
    "doc": "Which fetchers saw it (greenhouse, comeet, scrape, ...), separated by ';'.",
@@ -174,7 +433,7 @@
   },
   "years_experience": {
    "doc": "Years of experience asked for, read from the DESCRIPTION text. Empty when the text does not say.",
-   "nulls": 28
+   "nulls": 24
   },
   "family": {
    "doc": "Role family, from title first and the opening of the description second.",
@@ -201,7 +460,7 @@
   },
   "degree_level": {
    "doc": "Highest degree the posting requires or prefers.",
-   "nulls": 105,
+   "nulls": 99,
    "enum": {
     "PhD": "highest degree the posting names",
     "MSc": "highest degree the posting names",
@@ -210,7 +469,7 @@
   },
   "degree_status": {
    "doc": "Whether that degree is required or merely preferred.",
-   "nulls": 105,
+   "nulls": 99,
    "enum": {
     "required": "stated as a requirement",
     "preferred": "stated as an advantage"
@@ -218,7 +477,7 @@
   },
   "degree_fields": {
    "doc": "Fields of study named alongside it, separated by ';'.",
-   "nulls": 120,
+   "nulls": 118,
    "enum": {
     "CS": "field of study named alongside the degree",
     "Industrial Eng.": "field of study named alongside the degree",
@@ -234,7 +493,7 @@
   },
   "ai": {
    "doc": "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned.",
-   "nulls": 115,
+   "nulls": 126,
    "enum": {
     "AI for efficiency": "Expected to use AI tools (Copilot, ChatGPT, Cursor…) to work faster",
     "AI for automation": "Using AI to automate processes and workflows",
@@ -244,11 +503,11 @@
   },
   "skills": {
    "doc": "Every skill found in title+description, separated by ';', in extraction order.",
-   "nulls": 14
+   "nulls": 8
   },
   "class_decision": {
    "doc": "The classifier's verdict on the role when it was last judged.",
-   "nulls": 48,
+   "nulls": 33,
    "enum": {
     "accept": "judged an analytics role in Israel",
     "reject": "judged not one"
@@ -256,7 +515,7 @@
   },
   "class_path": {
    "doc": "How that verdict was reached: keyword, llm, llm_cache, ...",
-   "nulls": 48
+   "nulls": 33
   },
   "description_len": {
    "doc": "Characters of description text we hold. 0 when we captured none.",
@@ -268,19 +527,28 @@
   },
   "description_sha1": {
    "doc": "sha1 of the description text; join to roles_text.jsonl to read it.",
-   "nulls": 2
+   "nulls": 3
+  },
+  "description_quality": {
+   "doc": "Whether the text we hold reads as a job description (jdfill.looks_like_jd). Empty = text exists but could not be judged this run.",
+   "nulls": 0,
+   "enum": {
+    "jd": "the stored text passes the same two tests a fresh fetch must (jdfill.looks_like_jd): >= 300 characters of body and >= 2 section families",
+    "snippet": "we hold text but it fails that test — a search snippet, page furniture or a fragment; description_len says how much; do not read it as the full posting (the test can also fail a genuinely terse real ad)",
+    "none": "this record holds no description text (description_len 0); a stale line may linger in roles_text.jsonl under the same role_id"
+   }
   },
   "sector": {
    "doc": "Company sector (firmographics).",
-   "nulls": 6
+   "nulls": 8
   },
   "sub_sector": {
    "doc": "Narrower niche (firmographics, free text).",
-   "nulls": 6
+   "nulls": 8
   },
   "stage": {
    "doc": "Company stage (firmographics).",
-   "nulls": 6,
+   "nulls": 8,
    "enum": {
     "acquired-by-bigtech": "company stage, as researched (firmographics)",
     "early-private": "company stage, as researched (firmographics)",
@@ -291,11 +559,11 @@
   },
   "stage_note": {
    "doc": "Ticker or acquisition note behind that stage.",
-   "nulls": 6
+   "nulls": 8
   },
   "size_band": {
    "doc": "Headcount band (firmographics).",
-   "nulls": 6,
+   "nulls": 8,
    "enum": {
     "S": "under 200 employees globally",
     "M": "200-1,000",
@@ -305,30 +573,30 @@
   },
   "employees_global": {
    "doc": "Global headcount, all sites (firmographics).",
-   "nulls": 9
+   "nulls": 16
   },
   "founded": {
    "doc": "Year founded (firmographics).",
-   "nulls": 13
+   "nulls": 17
   },
   "business_model": {
    "doc": "How the company earns money (firmographics, free text).",
-   "nulls": 6
+   "nulls": 8
   },
   "customer_type": {
    "doc": "Who buys from it (firmographics, free text).",
-   "nulls": 6
+   "nulls": 8
   },
   "il_center": {
    "doc": "Its main Israeli site(s) (firmographics).",
-   "nulls": 6
+   "nulls": 8
   },
   "firmo_as_of": {
    "doc": "The date those company facts were researched.",
-   "nulls": 6
+   "nulls": 8
   },
   "firmo_match": {
-   "doc": "How the company facts were matched to this row.",
+   "doc": "How the company facts were matched to this row's company_registry (the brand in `company` renders only on an exact match).",
    "nulls": 0,
    "enum": {
     "exact": "company facts matched this row's company name exactly",
@@ -338,19 +606,19 @@
   },
   "skills_bi": {
    "doc": "Skills of category 'bi' only, separated by ';' — group by this without parsing.",
-   "nulls": 81
+   "nulls": 75
   },
   "skills_query": {
    "doc": "Skills of category 'query' only, separated by ';' — group by this without parsing.",
-   "nulls": 42
+   "nulls": 39
   },
   "skills_de": {
    "doc": "Skills of category 'de' only, separated by ';' — group by this without parsing.",
-   "nulls": 99
+   "nulls": 102
   },
   "skills_pa": {
    "doc": "Skills of category 'pa' only, separated by ';' — group by this without parsing.",
-   "nulls": 137
+   "nulls": 136
   },
   "skills_prog": {
    "doc": "Skills of category 'prog' only, separated by ';' — group by this without parsing.",
@@ -362,11 +630,11 @@
   },
   "skills_cloud": {
    "doc": "Skills of category 'cloud' only, separated by ';' — group by this without parsing.",
-   "nulls": 142
+   "nulls": 146
   },
   "skills_lang": {
    "doc": "Skills of category 'lang' only, separated by ';' — group by this without parsing.",
-   "nulls": 120
+   "nulls": 114
   }
  }
 }
