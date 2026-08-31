@@ -728,10 +728,6 @@
  },
  "Action Item Software Ltd": {
   "date": "2026-08-30",
-  "verdict": "overturned-no-board",
-  "raw_verdict": "",
-  "other_name": "",
-  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -757,6 +753,7 @@
    ],
    "verify": []
   },
+  "other_name": "",
   "overturned_from": {
    "date": "2026-08-30",
    "evidence": {
@@ -788,7 +785,10 @@
    "raw_verdict": "real-company-no-board",
    "verdict": "no-board",
    "why": "Action Item Solutions (action-item.co.il) is a real Tel Aviv software company. Its /join page only lists role titles as static text with a contact form; a 12-path careers probe of its domain returned nothing, so there is no automatically readable job board."
-  }
+  },
+  "raw_verdict": "",
+  "verdict": "overturned-no-board",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under."
  },
  "Actualsignal": {
   "date": "2026-08-30",
@@ -1545,13 +1545,9 @@
  },
  "Alice Flights": {
   "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Alice IO",
-  "why": "a rung found this name's board and the registry row 'Alice IO' already reads it (matched on url, never on the name)",
   "evidence": {
-   "row": "Alice IO",
    "matched_on": "url",
+   "row": "Alice IO",
    "tried": [
     [
      "hunt",
@@ -1564,7 +1560,11 @@
      "https://alice.io/careers"
     ]
    ]
-  }
+  },
+  "other_name": "Alice IO",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Alice IO' already reads it (matched on url, never on the name)"
  },
  "Alice IO": {
   "board_url_if_any": "",
@@ -1668,10 +1668,6 @@
  },
  "Allyable": {
   "date": "2026-08-30",
-  "verdict": "overturned-no-board",
-  "raw_verdict": "",
-  "other_name": "",
-  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [
@@ -1694,6 +1690,7 @@
    ],
    "verify": []
   },
+  "other_name": "",
   "overturned_from": {
    "date": "2026-08-30",
    "evidence": {
@@ -1722,7 +1719,10 @@
    "raw_verdict": "real-company-no-board",
    "verdict": "no-board",
    "why": "Allyable is a real digital-accessibility SaaS employer. Careers-path probe of allyable.com answered, but the careers page only lists an open role as inline HTML text with no ATS/job-board integration."
-  }
+  },
+  "raw_verdict": "",
+  "verdict": "overturned-no-board",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under."
  },
  "Almo Motion Control | אלמו הנע מבוקר בע\"מ": {
   "board_url_if_any": "",
@@ -1736,10 +1736,6 @@
  },
  "Alpa Cosmetics Group": {
   "date": "2026-08-30",
-  "verdict": "overturned-no-board",
-  "raw_verdict": "",
-  "other_name": "",
-  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -1764,6 +1760,7 @@
    ],
    "verify": []
   },
+  "other_name": "",
   "overturned_from": {
    "date": "2026-08-30",
    "evidence": {
@@ -1794,7 +1791,10 @@
    "raw_verdict": "real-company-no-board",
    "verdict": "no-board",
    "why": "Alpa Cosmetics Group is a real Israeli cosmetics importer/distributor. Its site has a hand-written Hebrew \"קריירה\" page listing openings as plain text with \"apply\" links, not a structured job board; a 12-path careers probe of the domain returned nothing machine-readable."
-  }
+  },
+  "raw_verdict": "",
+  "verdict": "overturned-no-board",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under."
  },
  "Alstom": {
   "board_url_if_any": "",
@@ -3162,13 +3162,9 @@
  },
  "Birdaero": {
   "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "BIRD Aerosystems",
-  "why": "a rung found this name's board and the registry row 'BIRD Aerosystems' already reads it (matched on comeet-uid, never on the name)",
   "evidence": {
-   "row": "BIRD Aerosystems",
    "matched_on": "comeet-uid",
+   "row": "BIRD Aerosystems",
    "tried": [
     [
      "search-llm",
@@ -3176,7 +3172,11 @@
      "https://www.comeet.com/jobs/birdaero/97.006"
     ]
    ]
-  }
+  },
+  "other_name": "BIRD Aerosystems",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'BIRD Aerosystems' already reads it (matched on comeet-uid, never on the name)"
  },
  "Biscience": {
   "board_url_if_any": "",
@@ -3370,16 +3370,44 @@
   "why": "blender.global is BLender, a real Israeli embedded-finance/lending company (the intake name \"Blender Loans\" matches its loans business). A 12-path careers probe of its own domain returned nothing, and no machine-readable job board was found."
  },
  "Blink": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-linkback"
+    ],
+    [
+     "slug-probe",
+     "probe-no-il"
+    ],
+    [
+     "hunt",
+     "found"
+    ],
+    [
+     "search-llm",
+     "found"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Blinkinvest": {
   "date": "2026-08-30",
@@ -4503,10 +4531,6 @@
  },
  "Bulwarx": {
   "date": "2026-08-30",
-  "verdict": "overturned-no-board",
-  "raw_verdict": "",
-  "other_name": "",
-  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -4532,6 +4556,7 @@
    ],
    "verify": []
   },
+  "other_name": "",
   "overturned_from": {
    "date": "2026-08-30",
    "evidence": {
@@ -4563,7 +4588,10 @@
    "raw_verdict": "real-company-no-board",
    "verdict": "no-board",
    "why": "Bulwarx is a real Israeli cybersecurity integration company (Ra'anana). Its careers page is a static Wix page listing roles inline with \"send your resume\" links; a 12-path careers probe of bulwarx.com returned nothing machine-readable."
-  }
+  },
+  "raw_verdict": "",
+  "verdict": "overturned-no-board",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under."
  },
  "Business Book Daily": {
   "date": "2026-08-30",
@@ -4644,13 +4672,9 @@
  },
  "Bynet": {
   "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Bynet Software Systems Ltd.",
-  "why": "a rung found this name's board and the registry row 'Bynet Software Systems Ltd.' already reads it (matched on url, never on the name)",
   "evidence": {
-   "row": "Bynet Software Systems Ltd.",
    "matched_on": "url",
+   "row": "Bynet Software Systems Ltd.",
    "tried": [
     [
      "search-llm",
@@ -4658,7 +4682,11 @@
      "https://www.bynet.co.il/en/career/"
     ]
    ]
-  }
+  },
+  "other_name": "Bynet Software Systems Ltd.",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Bynet Software Systems Ltd.' already reads it (matched on url, never on the name)"
  },
  "Bynet Data Communications": {
   "board_url_if_any": "",
@@ -5032,10 +5060,6 @@
  },
  "Callapp": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -5044,7 +5068,11 @@
      "found"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Cameri Theatre": {
   "board_url_if_any": "",
@@ -5308,10 +5336,6 @@
  },
  "Cbre": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -5320,7 +5344,11 @@
      "documented"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Celcomdigi": {
   "board_url_if_any": "",
@@ -5555,16 +5583,27 @@
   "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
  },
  "Ceva, Inc.": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-name",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "matched_on": "name-normalised",
+   "row": "Ceva",
+   "tried": [
+    [
+     "hunt",
+     "found",
+     "https://www.ceva-ip.com/career/location/israel/"
+    ],
+    [
+     "search-llm",
+     "found",
+     "https://www.comeet.com/jobs/ceva/76.005/sales-operations-specialist/DE.B67"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string"
+  "other_name": "Ceva",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "the registry row 'Ceva' is this employer under another spelling (name-normalised)"
  },
  "Cfo Co": {
   "date": "2026-08-30",
@@ -6553,6 +6592,17 @@
   "verdict": "already-a-row",
   "why": "a registry row now covers this name; the queue entry is spent"
  },
+ "DoubleVerify": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+ },
  "Drive Group": {
   "board_url_if_any": "",
   "company_seems_real": true,
@@ -6593,6 +6643,18 @@
   "raw_verdict": "duplicate",
   "verdict": "duplicate-of",
   "why": "\"ELAD HR\" is the HR/recruitment arm of Elad Software Systems; its careers site is careers.eladsoft.com, listing Elad's own openings — a division/brand name rather than a separate employer."
+ },
+ "EPAM Systems": {
+  "date": "2026-08-31",
+  "evidence": {
+   "matched_on": "name-normalised",
+   "row": "EPAM Systems, Inc.",
+   "tried": []
+  },
+  "other_name": "EPAM Systems, Inc.",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "the registry row 'EPAM Systems, Inc.' is this employer under another spelling (name-normalised)"
  },
  "ERGO NEXT Insurance": {
   "date": "2026-08-30",
@@ -6672,6 +6734,17 @@
   },
   "verdict": "already-a-row",
   "why": "a registry row now covers this name; the queue entry is spent"
+ },
+ "Ecommerce Guide": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Egged Transportation Company Ltd": {
   "board_url_if_any": "",
@@ -6771,13 +6844,9 @@
  },
  "Experda.com": {
   "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Experda",
-  "why": "a rung found this name's board and the registry row 'Experda' already reads it (matched on url, never on the name)",
   "evidence": {
-   "row": "Experda",
    "matched_on": "url",
+   "row": "Experda",
    "tried": [
     [
      "hunt",
@@ -6790,7 +6859,23 @@
      "https://www.experda.com/jobs/"
     ]
    ]
-  }
+  },
+  "other_name": "Experda",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Experda' already reads it (matched on url, never on the name)"
+ },
+ "Extreme Technologies": {
+  "date": "2026-08-31",
+  "evidence": {
+   "matched_on": "name-normalised",
+   "row": "Extreme",
+   "tried": []
+  },
+  "other_name": "Extreme",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "the registry row 'Extreme' is this employer under another spelling (name-normalised)"
  },
  "Exyte": {
   "board_url_if_any": "",
@@ -6803,6 +6888,18 @@
   },
   "verdict": "already-a-row",
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
+ },
+ "Exyte Group": {
+  "date": "2026-08-31",
+  "evidence": {
+   "matched_on": "name-normalised",
+   "row": "Exyte",
+   "tried": []
+  },
+  "other_name": "Exyte",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "the registry row 'Exyte' is this employer under another spelling (name-normalised)"
  },
  "FIBI - הבנק הבינלאומי": {
   "date": "2026-08-30",
@@ -6866,14 +6963,10 @@
   "why": "Evidence shows Fast Corporation, LTD is a real IT company (fastcorporate.com, PC app store, AI/ML), but the only listing is a work.ua aggregator profile with 0 vacancies, and the other search hits are unrelated firms (Fast Technologies, Fast Track, Fast Enterprises). The careers probe was run agains"
  },
  "Faye": {
-  "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "withfaye",
-  "why": "a rung found this name's board and the registry row 'withfaye' already reads it (matched on comeet-uid, never on the name)",
+  "date": "2026-08-31",
   "evidence": {
-   "row": "withfaye",
    "matched_on": "comeet-uid",
+   "row": "withfaye",
    "tried": [
     [
      "hunt",
@@ -6886,7 +6979,22 @@
      "https://www.comeet.com/jobs/withfaye/87.00a"
     ]
    ]
-  }
+  },
+  "other_name": "withfaye",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'withfaye' already reads it (matched on comeet-uid, never on the name)"
+ },
+ "Finagra": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Fionics": {
   "board_url_if_any": "",
@@ -7033,14 +7141,10 @@
   "why": "The name \"ForeseeD\" doesn't clearly match any of the returned entities (Foresee Pharmaceuticals, Foresee Medical, Foreseen.dk); the search results are scattered guesses and the probed domain belongs to a different company than the intake name. Nothing settles which, if any, is meant."
  },
  "Foresightauto": {
-  "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Foresight Automotive",
-  "why": "a rung found this name's board and the registry row 'Foresight Automotive' already reads it (matched on url, never on the name)",
+  "date": "2026-08-31",
   "evidence": {
-   "row": "Foresight Automotive",
    "matched_on": "url",
+   "row": "Foresight Automotive",
    "tried": [
     [
      "hunt",
@@ -7053,7 +7157,11 @@
      "https://www.comeet.com/jobs/foresightauto/13.000/foresight-automotive/DA.63B"
     ]
    ]
-  }
+  },
+  "other_name": "Foresight Automotive",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Foresight Automotive' already reads it (matched on url, never on the name)"
  },
  "Formtitan": {
   "date": "2026-08-30",
@@ -7453,16 +7561,56 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Galil Software Ltd": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "found"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Galil Systems": {
   "board_url_if_any": "",
@@ -7662,16 +7810,60 @@
   "why": "All substantive evidence (page text and careers-path probe) belongs to Gem (gem.com), a different employer; other hits are Riskified and GEMS Education. The only Gemified-related result, gemified.net, has no captured content and was never probed. Nothing settles what Gemified is."
  },
  "Genecit Com": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "another company's board"
+    ],
+    [
+     "hunt",
+     "llm-cannot-tell"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Genesis Premium Herbs": {
   "board_url_if_any": "",
@@ -9072,10 +9264,6 @@
  },
  "Gotion High Tech Indonesia Factory": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -9112,7 +9300,11 @@
      "documented"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Gov Il": {
   "date": "2026-08-29",
@@ -9381,16 +9573,52 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Groundcover Com": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "comeet-token",
+     "proposal"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "apply",
+     "held-name-twin"
+    ],
+    [
+     "hunt",
+     "found"
+    ],
+    [
+     "search-llm",
+     "found"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Group19 Tech": {
   "board_url_if_any": "",
@@ -9533,14 +9761,10 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Guideline Group": {
-  "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Guideline",
-  "why": "a rung found this name's board and the registry row 'Guideline' already reads it (matched on name-normalised, never on the name)",
+  "date": "2026-08-31",
   "evidence": {
-   "row": "Guideline",
    "matched_on": "name-normalised",
+   "row": "Guideline",
    "tried": [
     [
      "hunt",
@@ -9553,7 +9777,11 @@
      "https://www.comeet.com/jobs/guideline/89.009"
     ]
    ]
-  }
+  },
+  "other_name": "Guideline",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "the registry row 'Guideline' is this employer under another spelling (name-normalised)"
  },
  "Gytpol": {
   "date": "2026-08-30",
@@ -9609,16 +9837,32 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "HIAS Europe": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "HUNTHEAD": {
   "date": "2026-08-30",
@@ -9721,10 +9965,6 @@
  },
  "Hacerem Spirits": {
   "date": "2026-08-30",
-  "verdict": "overturned-no-board",
-  "raw_verdict": "",
-  "other_name": "",
-  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -9752,6 +9992,7 @@
    ],
    "verify": []
   },
+  "other_name": "",
   "overturned_from": {
    "date": "2026-08-30",
    "evidence": {
@@ -9785,7 +10026,10 @@
    "raw_verdict": "real-company-no-board",
    "verdict": "no-board",
    "why": "Hacerem/Hakerem (הכרם משקאות חריפים בע\"מ) is a real Israeli spirits distributor. Its only careers page is a Hebrew /דרושים/ page listing a couple of roles as static text with an email address; a 12-path careers probe of hacarem.com found no machine-readable careers endpoint or job board."
-  }
+  },
+  "raw_verdict": "",
+  "verdict": "overturned-no-board",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under."
  },
  "Hackerseye": {
   "board_url_if_any": "",
@@ -10089,28 +10333,100 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Harel Finance Company": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Harel Insurance": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Harish Municipality": {
   "date": "2026-08-29",
@@ -10859,6 +11175,22 @@
   "verdict": "already-a-row",
   "why": "a registry row now covers this name; the queue entry is spent"
  },
+ "Infrastructure Team": {
+  "date": "2026-08-30",
+  "evidence": {
+   "queue_state_verdict": "junk",
+   "tried": [
+    [
+     "own-site",
+     "junk"
+    ]
+   ]
+  },
+  "other_name": "",
+  "raw_verdict": "junk",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `junk` for this name; the queue entry is spent"
+ },
  "Inspira Technologies": {
   "board_url_if_any": "",
   "company_seems_real": true,
@@ -11045,14 +11377,10 @@
   "why": "IDI is a real Israeli think tank/employer. Its /about/jobs-idi/ page only gives an HR email for CV submission, with no job listings, and a 12-path careers probe of idi.org.il returned nothing machine-readable."
  },
  "Israel Electric Company": {
-  "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ",
-  "why": "a rung found this name's board and the registry row 'IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ' already reads it (matched on hostpath, never on the name)",
+  "date": "2026-08-31",
   "evidence": {
-   "row": "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ",
    "matched_on": "hostpath",
+   "row": "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ",
    "tried": [
     [
      "hunt",
@@ -11065,7 +11393,11 @@
      "https://www.iec.co.il/content/career/lobbies/lobby"
     ]
    ]
-  }
+  },
+  "other_name": "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ' already reads it (matched on hostpath, never on the name)"
  },
  "Israel Elwyn": {
   "board_url_if_any": "",
@@ -11826,10 +12158,6 @@
  },
  "Jacobs": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -11862,7 +12190,11 @@
      "found"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Jafi": {
   "board_url_if_any": "",
@@ -12541,13 +12873,9 @@
  },
  "KMS Lighthouse": {
   "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Kmslh",
-  "why": "a rung found this name's board and the registry row 'Kmslh' already reads it (matched on comeet-uid, never on the name)",
   "evidence": {
-   "row": "Kmslh",
    "matched_on": "comeet-uid",
+   "row": "Kmslh",
    "tried": [
     [
      "search-llm",
@@ -12555,7 +12883,11 @@
      "https://www.comeet.com/jobs/kmslh/97.008"
     ]
    ]
-  }
+  },
+  "other_name": "Kmslh",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Kmslh' already reads it (matched on comeet-uid, never on the name)"
  },
  "KPMG Israel": {
   "board_url_if_any": "",
@@ -12830,16 +13162,52 @@
   "why": "Real Israeli teacher-training college with its own site; a 12-path careers probe of kaye.ac.il found no job board."
  },
  "Kela Cyber": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "comeet-dup-board"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "found"
+    ],
+    [
+     "search-llm",
+     "found"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kela Technologies": {
   "board_url_if_any": "",
@@ -12962,10 +13330,6 @@
  },
  "Kibbutz Contemporary Dance Company": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -12998,7 +13362,11 @@
      "documented"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kibeeri": {
   "board_url_if_any": "",
@@ -13024,10 +13392,6 @@
  },
  "Kinderzentrum Wei Er Stein Marburg Wehrda Ev": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -13052,7 +13416,11 @@
      "documented"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kinetiqo Ltd.": {
   "board_url_if_any": "",
@@ -13328,10 +13696,6 @@
  },
  "Kone": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -13360,7 +13724,11 @@
      "documented"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Konfidas": {
   "board_url_if_any": "",
@@ -13539,10 +13907,6 @@
  },
  "Krief Group": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -13563,7 +13927,11 @@
      "implied-by-ladder"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kristalino": {
   "date": "2026-08-30",
@@ -13601,10 +13969,6 @@
  },
  "Kucklick Dresdner Fachanwaelte De": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -13625,7 +13989,11 @@
      "implied-by-ladder"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kuehn Gmbh": {
   "board_url_if_any": "",
@@ -13705,6 +14073,17 @@
   "verdict": "duplicate-of",
   "why": "\"L W Ac Il\" is just the domain l-w.ac.il rendered as a name; it is the Levinsky-Wingate Academic Center (המרכז האקדמי לוינסקי-וינגייט), a real Israeli college that does have a working job board at l-w.ac.il/jobs/."
  },
+ "LTX": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+ },
  "La Casa Norte": {
   "board_url_if_any": "",
   "company_seems_real": true,
@@ -13763,16 +14142,48 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Lakefs Treeverse": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Lambadapp": {
   "date": "2026-08-30",
@@ -13818,14 +14229,10 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Landa Corporation": {
-  "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Landacorp",
-  "why": "a rung found this name's board and the registry row 'Landacorp' already reads it (matched on comeet-uid, never on the name)",
+  "date": "2026-08-31",
   "evidence": {
-   "row": "Landacorp",
    "matched_on": "comeet-uid",
+   "row": "Landacorp",
    "tried": [
     [
      "search-llm",
@@ -13833,7 +14240,11 @@
      "https://www.comeet.com/jobs/landacorp/A4.000/senior-digital-front-end-dfe-project-manager/3E.864"
     ]
    ]
-  }
+  },
+  "other_name": "Landacorp",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Landacorp' already reads it (matched on comeet-uid, never on the name)"
  },
  "Landacorp": {
   "board_url_if_any": "",
@@ -14019,10 +14430,6 @@
  },
  "Ledge Finance": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -14043,7 +14450,11 @@
      "implied-by-ladder"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Ledico": {
   "board_url_if_any": "",
@@ -14057,10 +14468,6 @@
  },
  "Legatolegal": {
   "date": "2026-08-30",
-  "verdict": "overturned-no-board",
-  "raw_verdict": "",
-  "other_name": "",
-  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -14088,6 +14495,7 @@
    ],
    "verify": []
   },
+  "other_name": "",
   "overturned_from": {
    "date": "2026-08-30",
    "evidence": {
@@ -14121,7 +14529,10 @@
    "raw_verdict": "real-company-no-board",
    "verdict": "no-board",
    "why": "Legato (legato.legal) is a real Israeli legal-services firm; its homepage lists one open role inline, but a probe of 12 careers paths on its own domain returned nothing machine-readable."
-  }
+  },
+  "raw_verdict": "",
+  "verdict": "overturned-no-board",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under."
  },
  "Legion Security AI": {
   "date": "2026-08-30",
@@ -14223,10 +14634,6 @@
  },
  "Lenox Investments": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -14247,7 +14654,11 @@
      "implied-by-ladder"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Letsgooo": {
   "date": "2026-08-30",
@@ -14362,10 +14773,6 @@
  },
  "Libra Insurance Ltd": {
   "date": "2026-08-30",
-  "verdict": "overturned-no-board",
-  "raw_verdict": "",
-  "other_name": "",
-  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [],
@@ -14393,6 +14800,7 @@
    ],
    "verify": []
   },
+  "other_name": "",
   "overturned_from": {
    "date": "2026-08-30",
    "evidence": {
@@ -14426,7 +14834,10 @@
    "raw_verdict": "real-company-no-board",
    "verdict": "no-board",
    "why": "Libra (ליברה) is a real Israeli insurance company (lbr.co.il). Its careers page lists openings but only accepts CVs by email — no ATS/job board. A 12-path careers probe of their domain returned nothing machine-readable."
-  }
+  },
+  "raw_verdict": "",
+  "verdict": "overturned-no-board",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under."
  },
  "Libre Solidaire Editions": {
   "date": "2026-08-30",
@@ -14464,10 +14875,6 @@
  },
  "Lido As": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -14488,7 +14895,11 @@
      "implied-by-ladder"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Lidwaveil": {
   "date": "2026-08-30",
@@ -14604,10 +15015,6 @@
  },
  "Linkedin": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -14620,7 +15027,11 @@
      "probe-no-il"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Linkedmagic": {
   "date": "2026-08-30",
@@ -14677,10 +15088,6 @@
  },
  "Liposphere": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -14701,7 +15108,11 @@
      "implied-by-ladder"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Lirix Consulting": {
   "date": "2026-08-30",
@@ -14911,31 +15322,27 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Loreal": {
-  "date": "2026-08-30",
+  "date": "2026-08-31",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://careers.loreal.com/careers",
-     "https://careers.loreal.com/careers/",
-     "https://careers.loreal.com/jobs"
+   "matched_on": "name-normalised",
+   "row": "L'Oréal",
+   "tried": [
+    [
+     "hunt",
+     "no-listing",
+     "https://careers.loreal.com/en_US/jobs/SearchJobs?21495=%5B126148%5D&21495_format=6019&listFilterMode=1"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs"
+    [
+     "search-llm",
+     "documented",
+     "https://careers.loreal.com"
     ]
-   },
-   "read_page": "https://careers.loreal.com",
-   "search_pages": [
-    "https://careers.loreal.com",
-    "https://www.loreal.com/nl-nl/netherlands/pages/group/our-purpose/careers-nl/"
-   ],
-   "verify": []
+   ]
   },
   "other_name": "L'Oréal",
-  "raw_verdict": "duplicate",
-  "verdict": "duplicate-of",
-  "why": "\"Loreal\" is simply the unaccented spelling of L'Oréal, the global cosmetics group. It is a genuine employer and the probe found a working job board (careers.loreal.com/jobs), so it is not \"no board\"; the name is just a spelling variant of L'Oréal."
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "the registry row \"L'Oréal\" is this employer under another spelling (name-normalised)"
  },
  "Lsports Data Ltd": {
   "date": "2026-08-30",
@@ -15019,16 +15426,52 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Lubinski Group": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ],
+    [
+     "search-llm",
+     "found"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Ludeoofficial": {
   "date": "2026-08-30",
@@ -15452,14 +15895,10 @@
   "why": "Mabat 3D Technologies is a real Israeli 3D scanning/surveying firm. Site navigation has only About, Services, Projects, Contact; a careers-path probe of mabat3d.com returned only generic responses with no actual job listings or board."
  },
  "Maccabi Health Services": {
-  "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Maccabi Health care Services",
-  "why": "a rung found this name's board and the registry row 'Maccabi Health care Services' already reads it (matched on url, never on the name)",
+  "date": "2026-08-31",
   "evidence": {
-   "row": "Maccabi Health care Services",
    "matched_on": "url",
+   "row": "Maccabi Health care Services",
    "tried": [
     [
      "hunt",
@@ -15472,7 +15911,11 @@
      "https://www.maccabi4u.co.il/careers/"
     ]
    ]
-  }
+  },
+  "other_name": "Maccabi Health care Services",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Maccabi Health care Services' already reads it (matched on url, never on the name)"
  },
  "Madlan": {
   "board_url_if_any": "",
@@ -15598,16 +16041,52 @@
   "why": "Magen Experts (מגן מומחים) is a real Israeli company helping clients realize medical/long-term-care insurance rights, and its own domain has a working careers page (magenexperts.co.il/career) listing open sales roles. So none of the disqualifying categories apply — it is not acquired, duplicate, def"
  },
  "Magentamed": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-linkback"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ],
+    [
+     "search-llm",
+     "found"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Magic Software Enterprises": {
   "date": "2026-08-30",
@@ -16599,14 +17078,10 @@
   "why": "\"Mdaspace\" is MDA Space, a real ~4,000-person space company; the careers probe found working careers pages (mda.space/careers) linking to regional job listings, so it is not a no-board case, and none of the disqualifying categories (acquired, defunct, not-an-employer) apply. No category cleanly fits"
  },
  "Meckano": {
-  "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "mećkano",
-  "why": "a rung found this name's board and the registry row 'mećkano' already reads it (matched on name-normalised, never on the name)",
+  "date": "2026-08-31",
   "evidence": {
-   "row": "mećkano",
    "matched_on": "name-normalised",
+   "row": "mećkano",
    "tried": [
     [
      "hunt",
@@ -16619,7 +17094,11 @@
      "https://www.meckano.co.il/positions/"
     ]
    ]
-  }
+  },
+  "other_name": "mećkano",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "the registry row 'mećkano' is this employer under another spelling (name-normalised)"
  },
  "Meco Architectural Engineering Llc": {
   "date": "2026-08-30",
@@ -16753,14 +17232,10 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Meganet One": {
-  "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Meganet",
-  "why": "a rung found this name's board and the registry row 'Meganet' already reads it (matched on url, never on the name)",
+  "date": "2026-08-31",
   "evidence": {
-   "row": "Meganet",
    "matched_on": "url",
+   "row": "Meganet",
    "tried": [
     [
      "hunt",
@@ -16773,7 +17248,11 @@
      "https://meganet.in/careers.php"
     ]
    ]
-  }
+  },
+  "other_name": "Meganet",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Meganet' already reads it (matched on url, never on the name)"
  },
  "Megapharm": {
   "board_url_if_any": "",
@@ -16789,10 +17268,6 @@
  },
  "Megiddo Y K": {
   "date": "2026-08-30",
-  "verdict": "overturned-no-board",
-  "raw_verdict": "",
-  "other_name": "",
-  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [
@@ -16823,6 +17298,7 @@
    ],
    "verify": []
   },
+  "other_name": "",
   "overturned_from": {
    "date": "2026-08-30",
    "evidence": {
@@ -16859,7 +17335,10 @@
    "raw_verdict": "real-company-no-board",
    "verdict": "no-board",
    "why": "Megido (מגידו), an Israeli development/construction firm in the Aura Group, is a real employer. The careers-path probe on its own domain answered (megido.co.il/jobs), but the page is a static HTML list of openings with applications sent to an email address (megido@app.civi.co.il) — no ATS or machine"
-  }
+  },
+  "raw_verdict": "",
+  "verdict": "overturned-no-board",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under."
  },
  "Megoafek": {
   "board_url_if_any": "",
@@ -17157,16 +17636,52 @@
   "why": "Mend IO is Mend.io, a real, active application/AI security vendor. Its careers page answered and an Ashby job board (jobs.ashbyhq.com/mend-io) exists, so it is not \"no board\"; it is not acquired, defunct, or a non-employer. None of the listed problem categories apply."
  },
  "Menora": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "not-named"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Mentaily": {
   "date": "2026-08-30",
@@ -17918,22 +18433,8 @@
   "verdict": "already-a-row",
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
- "Mindsecurity": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
-  "evidence": {
-   "registry_row": "Mindsecurity"
-  },
-  "verdict": "already-a-row",
-  "why": "a registry row now covers this name; the queue entry is spent"
- },
- "Mindteck": {
+ "Milliman": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -17962,7 +18463,57 @@
      "no-listing"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+ },
+ "Mindsecurity": {
+  "board_url_if_any": "",
+  "company_seems_real": true,
+  "date": "2026-08-29",
+  "evidence": {
+   "registry_row": "Mindsecurity"
+  },
+  "verdict": "already-a-row",
+  "why": "a registry row now covers this name; the queue entry is spent"
+ },
+ "Mindteck": {
+  "date": "2026-08-30",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ]
+   ]
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Mine Marketing": {
   "board_url_if_any": "",
@@ -18121,16 +18672,52 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Minkovsky Media": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-linkback"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Minrav Group Ltd": {
   "date": "2026-08-30",
@@ -18639,10 +19226,6 @@
  },
  "Mornex": {
   "date": "2026-08-30",
-  "verdict": "overturned-no-board",
-  "raw_verdict": "",
-  "other_name": "",
-  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under.",
   "evidence": {
    "careers_probe": {
     "answered": [
@@ -18671,6 +19254,7 @@
    ],
    "verify": []
   },
+  "other_name": "",
   "overturned_from": {
    "date": "2026-08-30",
    "evidence": {
@@ -18705,7 +19289,10 @@
    "raw_verdict": "real-company-no-board",
    "verdict": "no-board",
    "why": "Mornex is a real Israeli IT/cybersecurity services company. A careers-path probe of mornex.co.il answered with a Hebrew careers page that lists openings (e.g., Junior Support Engineer) inline as page content, with no linked ATS or machine-readable job board."
-  }
+  },
+  "raw_verdict": "",
+  "verdict": "overturned-no-board",
+  "why": "retired for lacking an ATS, not for lacking jobs: the judge's own words say this page LISTS ROLES. This repo's standard is that a page is a board if scraping it returns jobs (573 active rows are `scrape`), so the verdict contradicts the rule it was made under."
  },
  "Motorola Solutions": {
   "board_url_if_any": "",
@@ -18716,6 +19303,17 @@
   },
   "verdict": "already-a-row",
   "why": "a registry row now covers this name; the queue entry is spent"
+ },
+ "Munters": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "NATASHA DENONA IL": {
   "date": "2026-08-30",
@@ -18836,6 +19434,17 @@
   "verdict": "already-a-row",
   "why": "a registry row now covers this name; the queue entry is spent"
  },
+ "Nanit": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+ },
  "Nebius Group": {
   "board_url_if_any": "",
   "company_seems_real": true,
@@ -18928,6 +19537,17 @@
   "verdict": "duplicate-of",
   "why": "\"Novartis ACC\" is an internal unit/site designation of Novartis; hiring runs through Novartis' corporate careers site and Workday board."
  },
+ "Nuvoton Technology Israel Ltd": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+ },
  "Nym": {
   "board_url_if_any": "",
   "company_seems_real": true,
@@ -18971,6 +19591,17 @@
   },
   "verdict": "already-a-row",
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
+ },
+ "Optum": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Orpak": {
   "board_url_if_any": "",
@@ -19256,6 +19887,17 @@
   "verdict": "already-a-row",
   "why": "a registry row now covers this name; the queue entry is spent"
  },
+ "Publicis Re:Sources": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+ },
  "PwC | NEXT Technology Solutions": {
   "date": "2026-08-30",
   "evidence": {
@@ -19466,6 +20108,38 @@
   "verdict": "already-a-row",
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
+ "Residenthome": {
+  "date": "2026-08-30",
+  "evidence": {
+   "queue_state_verdict": "found",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "slug-probe",
+     "probe-dup-board"
+    ],
+    [
+     "resolve-llm",
+     "resolved"
+    ],
+    [
+     "resolve-llm",
+     "dup-board"
+    ],
+    [
+     "hunt",
+     "found"
+    ]
+   ]
+  },
+  "other_name": "",
+  "raw_verdict": "found",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `found` for this name; the queue entry is spent"
+ },
  "Rimonim Group - קבוצת רימונים": {
   "date": "2026-08-30",
   "evidence": {
@@ -19507,6 +20181,17 @@
   },
   "verdict": "already-a-row",
   "why": "a registry row now covers this name; the queue entry is spent"
+ },
+ "Rockerbox": {
+  "date": "2026-08-31",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Rosh Electroptics Ltd.": {
   "board_url_if_any": "",
@@ -19957,13 +20642,9 @@
  },
  "Speedata.io": {
   "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Speedata",
-  "why": "a rung found this name's board and the registry row 'Speedata' already reads it (matched on url, never on the name)",
   "evidence": {
-   "row": "Speedata",
    "matched_on": "url",
+   "row": "Speedata",
    "tried": [
     [
      "hunt",
@@ -19971,7 +20652,11 @@
      "https://www.speedata.io/careers-1"
     ]
    ]
-  }
+  },
+  "other_name": "Speedata",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Speedata' already reads it (matched on url, never on the name)"
  },
  "Squaretalk": {
   "board_url_if_any": "",
@@ -20048,14 +20733,10 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Strauss Water Ltd. שטראוס מים",
-  "why": "a rung found this name's board and the registry row 'Strauss Water Ltd. שטראוס מים' already reads it (matched on url, never on the name)",
+  "date": "2026-08-31",
   "evidence": {
-   "row": "Strauss Water Ltd. שטראוס מים",
    "matched_on": "url",
+   "row": "Strauss Water Ltd. שטראוס מים",
    "tried": [
     [
      "own-site",
@@ -20073,7 +20754,11 @@
      "https://www.strauss-group.co.il/career/"
     ]
    ]
-  }
+  },
+  "other_name": "Strauss Water Ltd. שטראוס מים",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Strauss Water Ltd. שטראוס מים' already reads it (matched on url, never on the name)"
  },
  "Super Group (SGHC)": {
   "board_url_if_any": "",
@@ -20376,16 +21061,56 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Teva Pharmaceuticals": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-08-31",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "no-domain-answered"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "hunt",
+     "another company's board"
+    ],
+    [
+     "hunt",
+     "llm-cannot-tell"
+    ],
+    [
+     "search-llm",
+     "found"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ],
+    [
+     "search-llm",
+     "already-a-row"
+    ]
+   ]
   },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "settled-by-a-rung",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Texas Instruments Europe": {
   "date": "2026-08-30",
@@ -20428,10 +21153,6 @@
  },
  "The Ritz-Carlton Hotel Company, L.L.C.": {
   "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -20464,7 +21185,11 @@
      "documented"
     ]
    ]
-  }
+  },
+  "other_name": "",
+  "raw_verdict": "already-a-row",
+  "verdict": "already-a-row",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Thing or Two": {
   "date": "2026-08-30",
@@ -20678,13 +21403,9 @@
  },
  "VOOM Insurance": {
   "date": "2026-08-30",
-  "verdict": "covered-by-row",
-  "raw_verdict": "",
-  "other_name": "Voom",
-  "why": "a rung found this name's board and the registry row 'Voom' already reads it (matched on url, never on the name)",
   "evidence": {
-   "row": "Voom",
    "matched_on": "url",
+   "row": "Voom",
    "tried": [
     [
      "hunt",
@@ -20702,7 +21423,11 @@
      "https://apply.workable.com/voom-insurance/?lng=en"
     ]
    ]
-  }
+  },
+  "other_name": "Voom",
+  "raw_verdict": "",
+  "verdict": "covered-by-row",
+  "why": "a rung found this name's board and the registry row 'Voom' already reads it (matched on url, never on the name)"
  },
  "Vacatures.sr | SurinameJobs.com": {
   "board_url_if_any": "",
@@ -22561,89 +23286,5 @@
   "raw_verdict": "real-company-no-board",
   "verdict": "no-board",
   "why": "Real small Israeli environmental planning consultancy (founded 2016, Wix site); careers-path probe of sadotproj.co.il found no careers/jobs page."
- },
- "Infrastructure Team": {
-  "date": "2026-08-30",
-  "verdict": "settled-by-a-rung",
-  "raw_verdict": "junk",
-  "other_name": "",
-  "why": "a rung recorded `junk` for this name; the queue entry is spent",
-  "evidence": {
-   "queue_state_verdict": "junk",
-   "tried": [
-    [
-     "own-site",
-     "junk"
-    ]
-   ]
-  }
- },
- "Residenthome": {
-  "date": "2026-08-30",
-  "verdict": "settled-by-a-rung",
-  "raw_verdict": "found",
-  "other_name": "",
-  "why": "a rung recorded `found` for this name; the queue entry is spent",
-  "evidence": {
-   "queue_state_verdict": "found",
-   "tried": [
-    [
-     "own-site",
-     "resolved-domain"
-    ],
-    [
-     "slug-probe",
-     "probe-dup-board"
-    ],
-    [
-     "resolve-llm",
-     "resolved"
-    ],
-    [
-     "resolve-llm",
-     "dup-board"
-    ],
-    [
-     "hunt",
-     "found"
-    ]
-   ]
-  }
- },
- "Milliman": {
-  "date": "2026-08-30",
-  "verdict": "already-a-row",
-  "raw_verdict": "already-a-row",
-  "other_name": "",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
-  "evidence": {
-   "queue_state_verdict": "already-a-row",
-   "tried": [
-    [
-     "own-site",
-     "resolved-domain"
-    ],
-    [
-     "search",
-     "search-page-no-ats"
-    ],
-    [
-     "slug-probe",
-     "implied-by-ladder"
-    ],
-    [
-     "comeet-token",
-     "implied-by-ladder"
-    ],
-    [
-     "resolve-llm",
-     "no-proposal"
-    ],
-    [
-     "hunt",
-     "no-listing"
-    ]
-   ]
-  }
  }
 }
