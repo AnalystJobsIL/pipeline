@@ -58,7 +58,11 @@ and 12 are description-blocked (`464@jd-text`). The reason is not the caps — n
 (147 < 250, 3 < 150, 192 attempts < the 370 the reserve allows). The drain is
 **encounter-limited**: it only reaches a superseded verdict when that posting appears in the
 run, so the pool empties at the rate the boards re-list, not at the rate the cap permits.
-89 stale suffixes remain (57 `v2`, 26 legacy, 6 `v3.a517bb77`; 12 prior YES).
+89 stale suffixes remained (57 `v2`, 26 legacy, 6 `v3.a517bb77`; 12 prior YES) — **as of that
+run, under `v3.da2cb878`**. Do not read it as today's queue: the contract bump in §2
+re-supersedes everything, so the number this lane hands on is **541 of 541** and the drain
+starts again from there. That is the price of the bump, stated where the 89 is, so nobody
+subtracts the two.
 
 ## 2. The scope, re-ruled by the operator
 
@@ -214,6 +218,40 @@ What was verified once, by hand, and what protects it from here:
 The lesson worth keeping: **a follow-up commit cannot add a guard for the commit before
 it.** If a test is worth having, it ships in the same commit as the change it guards, or
 it ships as a mutation record.
+
+## 6b. Reading the 2026-09-01 row: two alarms are EXPECTED BACK
+
+The 08-31 row passed partly on `the SUPERSEDED clause GONE`. **Tomorrow it returns, and so
+does the one-directional `drain moved` line — by design, not as a regression.** The contract
+bump in §2 re-supersedes all 541 cached verdicts, so the drain starts again from a full pool
+and moves them one way (a wider scope moves rejects to accepts). Their ABSENCE would be the
+surprise; a `classify:` line naming `v3.7cb6831f` with `re-judged N/cap 250` is the healthy
+shape.
+
+This paragraph lives here rather than in the row itself because `check_docs.py` compares an
+unanswered morning check VERBATIM against the previous commit and calls a re-wording a
+withdrawal — correctly: *"a prediction is not withdrawn by deleting it"*. A prediction gets
+answered, not edited.
+
+## 7. Evidence for `infra`'s 2026-09-01 mutation-shard check, one day early
+
+`mutation-gate (2)` **failed on run 33410420520** (`3508ee0`) with **zero SURVIVED records**:
+`##[error]mutation shard 2 of 5 exceeded its 40-minute budget (job timeout 45; rc 137)`. The
+**same shard passed on run 33411074759** (`b6764c7`), whose `pipeline/` tree is byte-identical
+— the two commits between them touch only tests and docs. So it is wall time, not a mutant
+this lane let live.
+
+The contention is visible and worth recording: **five `Unit guards` runs were in flight at
+once** this afternoon (33409190938, 33410420520, 33411074759, 33411778096, 33412050175) —
+four of them this lane's, because each fix pushed a new commit rather than amending a pushed
+one. `tests.yml` has no cancel-in-progress for this workflow, so they all competed for
+runners.
+
+That is exactly what the 2026-09-01 `infra` row asks about ("every shard's `timing wall`
+under **1,800 s**; over that ⇒ add a matrix entry, never the budget"), and the workflow's own
+error text says the same. Left for `infra` to answer with the timings; recorded here so the
+datum is not lost, and as a note to this lane: **four pushes for one session's work is itself
+the cost** — the guard-kill lesson (§6) is also a lesson about squashing before pushing.
 
 ## Traps this session hit
 
