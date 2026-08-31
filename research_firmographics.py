@@ -145,45 +145,74 @@ def plan_counts(n_new, n_refresh, limit):
     return attempted, min(max(0, total - attempted), n_refresh)
 
 
-def _answered_strikes(ledger, have_norms):
-    """The names in the strike ledger whose record is ALREADY on disk (BACKLOG 390).
+def _answered_strikes(ledger, have):
+    """The names in the strike ledger whose record ANSWERS them -- it exists AND post-dates
+    the strike (BACKLOG 390).
 
     By `identity_key`, which is `save_failures`' own deletion key, so a variant answers for
     the name it was struck under. Used at BOTH of this script's exits: the night this
     matters most is the one with nothing to do, because a drained queue returns early and a
-    strike that outlived its answer would then never be looked at again."""
-    return {n for n in ledger if identity_key(n) in have_norms}
+    strike that outlived its answer would then never be looked at again.
+
+    The DATE is what makes this a clearing rule and not a demolition of the strike ledger.
+    A refresh candidate is `n in have` BY DEFINITION, so a membership test alone would erase
+    every refresh failure's strike in the run that recorded it: `attempts` could never pass
+    1, `refresh_abandoned` (4+) could never fire, and a permanently failing stale name would
+    hold a REFRESH_CAP slot for ever -- the exact squatter this file's own comment says the
+    eviction exists to prevent. Latent until the store's first refresh wave (~2027-02 at
+    --refresh-days 180), which is also the first day anyone would have looked (wave 2)."""
+    newest = {}
+    for name, rec in (have or {}).items():
+        k = identity_key(name)
+        newest[k] = max(newest.get(k, ""), str((rec or {}).get("as_of") or ""))
+    return {n for n, (_att, last) in ledger.items()
+            if newest.get(identity_key(n), "") > str(last or "")}
+
+
+def _clean_url(url):
+    """The url without its query string. 190 active rows carry a Comeet `token=<hex>` and
+    289 carry some query; none of it names an employer, and credential-shaped text in a
+    prompt is text we gain nothing by sending (wave 2)."""
+    url = str(url or "").strip()
+    return "" if "://" not in url else url.split("?", 1)[0].split("#", 1)[0]
 
 
 def _row_anchor(row):
     """One line of ANCHOR for an ACTIVE registry row: the board we read this name from.
 
-    Active only, and that is the whole safety argument: an active row's url passed
-    `identity_gate`, so it is evidence about WHICH company this name is. A parked or dark
-    row's url did not -- `entrypoint`'s pointed at Entry Point USA, and anchoring research
-    to a mis-resolved url buys a confident wrong record cached until 2027-02 (the
-    Bounce/Bounce AI class). Callers pass active rows only; this refuses anything else
-    rather than trusting the caller."""
+    Active only, and the claim is deliberately modest -- *the board we read this name
+    from*, not proof of who owns it. `check_invariants.py` prints **14 active rows whose
+    endpoint names a different company** and 33 whose tenant cannot vouch for the name, so
+    "it passed `identity_gate`, therefore it identifies the company" would be exactly the
+    confident-and-untrue sentence this repo punishes hardest (wave 2). What active buys is
+    that a live row's url has been through the ladder at all: a PARKED row's has not, and
+    `entrypoint`'s points at Entry Point USA. Callers pass active rows only; this refuses
+    anything else rather than trusting the caller."""
     if str(row.get("active", "")).strip().lower() != "true":
         return ""
-    url = str(row.get("api_url") or "").strip() or str(row.get("token") or "").strip()
-    if not url or "://" not in url:
+    url = _clean_url(row.get("api_url")) or _clean_url(row.get("token"))
+    if not url:
         return ""     # a bare ATS token names no host and anchors nothing
     return f"We read this employer's job postings from their careers board at {url}."
 
 
 def _posting_anchor(title, url):
-    """One line of ANCHOR for a matched-only name: its own newest posting.
+    """One line of ANCHOR for a name with no ACTIVE row: the posting we saw it on.
 
     These are the discovery-net names (`Paz - yellow`, `Computer Guard Technologies LTD`)
-    with no registry row at all, and they are the half a bare name identifies worst. The
-    posting is first-party: the url names the host that published it and the title says
-    what they were hiring for."""
-    title, url = str(title or "").strip(), str(url or "").strip()
-    if not url or "://" not in url:
+    and the parked rows, and they are the half a bare name identifies worst. **This claims
+    strictly less than `_row_anchor`** -- where we SAW the name, never whose board it is --
+    and that is what makes it safe for a row `_row_anchor` refuses. It has to be: 37 of the
+    43 matched-only names sit on `il.linkedin.com` / `il.indeed.com`, so a first-party
+    claim would be false for almost all of them, and `entrypoint` reaches this path with
+    the very url the other anchor rejects (wave 2). The title is capped because nothing
+    caps `matched.title`, and the url goes FIRST so the 600-char context cut cannot drop
+    the half we trust and keep the half a job board wrote."""
+    title, url = str(title or "").strip()[:120], _clean_url(url)
+    if not url:
         return ""
-    return (f"We saw this employer hiring: \"{title}\" at {url}."
-            if title else f"We saw a job posting from this employer at {url}.")
+    return (f"We saw this name on a job posting at {url}, hiring: \"{title}\"."
+            if title else f"We saw this name on a job posting at {url}.")
 
 
 def is_stale(rec, refresh_days):
@@ -353,14 +382,18 @@ def main():
         # bought facts for names the board can never render.
         board = [r[0] for r in con.execute(
             "SELECT DISTINCT company FROM matched WHERE COALESCE(status,'') != 'superseded'")]
-        # a matched-only name has no registry row to anchor it, and it is the harder half
+        # a name with no ACTIVE row has no board to anchor it, and it is the harder half
         # (LinkedIn/Indeed discovery names: `Paz - yellow`, `Computer Guard Technologies
-        # LTD`). Its own posting is the anchor -- the url names the employer's host and the
-        # title says what they were hiring for.
+        # LTD`, plus every parked row). The posting we saw it on is the anchor, claiming
+        # only that. Tie-break to the row a reader would call newest: 115 of 187 rows share
+        # today's `last_seen`, and inside a tie sqlite returns INSERTION order, i.e. the
+        # oldest -- 9 of 143 companies got a posting that was not their newest, and the
+        # choice could change silently after any VACUUM (wave 2).
         for c, title, url in con.execute(
                 "SELECT company, title, url FROM matched "
-                "WHERE COALESCE(status,'') != 'superseded' ORDER BY last_seen DESC"):
-            if c and c not in anchors:
+                "WHERE COALESCE(status,'') != 'superseded' "
+                "ORDER BY last_seen DESC, first_seen DESC, rowid DESC"):
+            if c and not anchors.get(c):
                 anchors[c] = _posting_anchor(title, url)
         con.close()
         names += [n for n in board if n not in names]
@@ -440,8 +473,8 @@ def main():
         if not a.dry_run:
             # a drained queue is exactly when a stale strike sits longest: nothing else in
             # this run will look at the ledger, and `refresh_abandoned` counts on regardless
-            _led, _st = F.load_failures()
-            _ans = _answered_strikes(_led, have_norms)
+            _led, _ = F.load_failures(today)
+            _ans = _answered_strikes(_led, have)
             if _ans and F.save_failures(_led, cleared=_ans)[0]:
                 print(f"strike ledger: cleared {len(_ans)} strike(s) whose record is already "
                       f"on disk: {', '.join(sorted(_ans)[:5])}"
@@ -626,7 +659,7 @@ def main():
     # A strike that outlives its answer is not a gate — `n in have` already skips the name —
     # it is a counter that walks toward `refresh_abandoned` (4+) and evicts a healthy record
     # from the refresh layer for ever. Cleared by IDENTITY, which is `save_failures`' own key.
-    answered = _answered_strikes(ledger, have_norms)
+    answered = _answered_strikes(ledger, have)
     cleared = done_names | answered
     written, status = F.save_failures(ledger, cleared=cleared)
     if written:

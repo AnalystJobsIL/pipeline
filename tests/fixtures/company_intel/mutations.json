@@ -551,8 +551,8 @@
   {
     "id": "ci-transient-caches-the-name",
     "file": "pipeline/company_intel.py",
-    "find": "                rep[\"blurbs_transient_reason\"] = str(e)\n                continue",
-    "replace": "                rep[\"blurbs_transient_reason\"] = str(e)\n                st.save_company_info({company: \"\"}, run_date)\n                continue",
+    "find": "                rep[\"blurbs_transient_reason\"] = rep[\"blurbs_transient_reason\"] or str(e)\n                continue",
+    "replace": "                rep[\"blurbs_transient_reason\"] = rep[\"blurbs_transient_reason\"] or str(e)\n                st.save_company_info({company: \"\"}, run_date)\n                continue",
     "class": "M2",
     "symbol": "transient_caches_the_name",
     "why": "company-intel guard: a call that never answered must cache nothing -- a '' in the store month-gates a real company (BLURB_RETRY_DAYS)"
@@ -587,7 +587,7 @@
   {
     "id": "ci-answered-strike-never-clears",
     "file": "research_firmographics.py",
-    "find": "    answered = _answered_strikes(ledger, have_norms)",
+    "find": "    answered = _answered_strikes(ledger, have)",
     "replace": "    answered = set()",
     "class": "M2",
     "symbol": "answered_strike_never_clears",
@@ -596,10 +596,19 @@
   {
     "id": "ci-drained-night-never-cleans-the-ledger",
     "file": "research_firmographics.py",
-    "find": "            _ans = _answered_strikes(_led, have_norms)",
+    "find": "            _ans = _answered_strikes(_led, have)",
     "replace": "            _ans = set()",
     "class": "M2",
     "symbol": "drained_night_never_cleans_the_ledger",
     "why": "company-intel guard: a drained queue returns EARLY, so a strike that outlived its answer is never looked at again"
+  },
+  {
+    "id": "ci-answered-ignores-the-date",
+    "file": "research_firmographics.py",
+    "find": "            if newest.get(identity_key(n), \"\") > str(last or \"\")}",
+    "replace": "            if identity_key(n) in newest}",
+    "class": "M2",
+    "symbol": "answered_ignores_the_date",
+    "why": "company-intel guard: a refresh candidate is in `have` BY DEFINITION, so a membership test erases every refresh failure's strike in the run that made it -- refresh_abandoned could never fire and a squatter holds a cap slot for ever"
   }
 ]

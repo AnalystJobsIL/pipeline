@@ -106,6 +106,7 @@ def _report():
             # 2026-08-31: one blurb call the MODEL failed, skipped and asked again next run,
             # against the seam being down — which is what it used to be reported as
             "blurbs_transient": 0, "blurbs_transient_reason": "",
+            "blurbs_transient_seconds": 0.0,
             "backlog_prev": None, "backlog_prev_date": "", "backlog_delta": None,
             "cron": {}, "direction_unreadable": False}
 
@@ -317,9 +318,14 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None, s
     rep["blurbs_waiting"] = len(missing) - len(todo)
     todo = todo[:rep["blurb_cap"]]   # the env-read cap, not the import-time constant
     clock = clock or _Clock(rep["budget_min"])
-    # `stalls` counts CONSECUTIVE failures of any shape and decides when to stop walking the
-    # list; `empties`/`empty_names` stay exactly what they were and decide what to ROLL BACK,
-    # because only an empty answer cached a '' row that would month-gate a real company.
+    # Two counters, because they answer two different questions. `stalls` counts consecutive
+    # FAILED CALLS and decides when the seam is down; `empties`/`empty_names` count answers
+    # the model DID return and decide when to stop walking the list and what to roll back.
+    # An empty answer is a call that SUCCEEDED -- it is evidence about a name, not about the
+    # CLI -- and counting it toward the outage latch would re-arm the bug this change
+    # removes: `written, empty, empty, transient` is an ordinary morning (2026-08-31 read
+    # `14 asked, 11 written, 3 empty`) and it would latch, skip research and print a mail
+    # byte-indistinguishable from the broken one (wave 1).
     empties, empty_names, stalls = 0, [], 0
     for i, company in enumerate(todo):
         # RESERVE research's share. Blurbs run first on the same clock, and at 30 board
@@ -329,6 +335,7 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None, s
         if clock.remaining() - _RESEARCH_RESERVE_S < 30:
             rep["blurbs_skipped_budget"] = len(todo) - i
             break
+        _left = clock.remaining()
         try:
             rep["blurbs_asked"] += 1
             summ = _ci.summarize_company(company, _context_for(company, board_jobs),
@@ -336,6 +343,13 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None, s
                                          timeout=int(max(10, min(90, clock.remaining()))))
         except ResearchUnavailable as e:
             rep["blurbs_asked"] -= 1
+            # a failed call is spent wall clock that NOTHING counts: `ask` raises before
+            # `record_call`, so `seam: N calls, Ns` cannot see it. Skipping instead of
+            # breaking made that unbounded -- three clamped-out calls are 270 s of a 480 s
+            # budget, after which research reports `4 skipped (budget)`, a sentence that
+            # blames work that was never done. Carry the loss into the mail (wave 1).
+            # measured on the BUDGET's own clock, which is the quantity that matters here
+            rep["blurbs_transient_seconds"] += round(max(0.0, _left - clock.remaining()), 1)
             # the KIND was recorded for the research loop only, so the two consecutive
             # `is_error (api_error_status=None)` mornings (08-28, 08-29) reached the mail
             # with no word on whether the seam thought it was auth, drift or a blip
@@ -353,9 +367,15 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None, s
             # down the way the empty-answer rule already defines it: three in a row.
             if kind == "transient" and stalls < SOFT_OUTAGE_MIN_FAILS:
                 rep["blurbs_transient"] += 1
-                rep["blurbs_transient_reason"] = str(e)
+                # FIRST-wins: the cause a reader needs is the one that started the trouble,
+                # and last-wins printed the newest reason beside a count of all of them
+                rep["blurbs_transient_reason"] = rep["blurbs_transient_reason"] or str(e)
                 continue
-            rep["unavailable_after"] = i
+            # the number of calls that CAME BACK before this one, which is what the mail's
+            # `after N blurbs calls` says and what `blurbs: N asked` and `seam: N calls`
+            # corroborate. `i` is the loop index: identical while every exception broke the
+            # loop, and wrong the moment a transient skips a name (wave 1)
+            rep["unavailable_after"] = rep["blurbs_asked"]
             rep["unavailable_in"] = "blurbs"
             rep["unavailable_reason"] = str(e)
             rep["unavailable_kind"] = kind
@@ -372,7 +392,6 @@ def _blurbs(st, board_jobs, run_date, use_llm, rep, profiles_path, clock=None, s
             rep["blurbs_empty"] += 1
             empties += 1
             empty_names.append(company)
-            stalls += 1
             if empties >= SOFT_OUTAGE_MIN_FAILS:
                 # three UNKNOWN/junk answers in a row: the model is not identifying anything
                 # this morning — stop walking the list (30 x 90 s). If nothing at all was
@@ -750,6 +769,8 @@ def _audit_lines(rep):
         # NOT "empty": the model never answered. Named so the mail can tell a company we
         # could not summarise from a call that failed to come back at all (2026-08-31)
         b.append(f"{rep['blurbs_transient']} transient, retried next run"
+                 + (f" [{rep['blurbs_transient_seconds']:g}s of budget]"
+                    if rep.get("blurbs_transient_seconds") else "")
                  + (f" ({_ascii(rep.get('blurbs_transient_reason') or '', 60)})"
                     if rep.get("blurbs_transient_reason") else ""))
     if rep["blurbs_derived"]:

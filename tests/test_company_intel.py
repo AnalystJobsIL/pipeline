@@ -627,6 +627,37 @@ def test_three_consecutive_transient_blurbs_are_an_outage_after_all(env):
     assert rep["blurbs_transient"] == CI.SOFT_OUTAGE_MIN_FAILS - 1, \
         "the third one latches instead of being counted as skipped"
     assert rep["researched"] == 0, "a latched outage still skips research"
+    # the kind still travels (the 2026-08-30 work this rule is built on), and the count is
+    # calls that CAME BACK -- `i` counted names walked, so it read 2 on a run of 3 calls
+    assert rep["unavailable_kind"] == "transient"
+    assert rep["unavailable_after"] == rep["blurbs_asked"] == 0, \
+        "after N blurbs calls must agree with `blurbs: N asked` and `seam: N calls`"
+    assert "claude unavailable after 0 blurbs calls (transient:" in CI.audit_lines(rep)[0][0]
+
+
+def test_two_empty_answers_do_not_turn_the_next_transient_into_an_outage(env):
+    """An empty answer is a call that SUCCEEDED -- the model came back and said UNKNOWN. It
+    is evidence about a NAME, not about the seam, so it must not count toward the outage
+    latch. Counting it re-armed the exact bug this rule removes: `written, empty, empty,
+    transient` is an ordinary morning -- 2026-08-31 read `14 asked, 11 written, 3 empty` and
+    the transient was call 15 -- and it would latch, skip research, and print a mail
+    byte-indistinguishable from the broken one (wave 1)."""
+    st, _, calls, fake = env
+    answers, seen = ["Co does X. It earns Y.", "UNKNOWN", "UNKNOWN"], []
+
+    def script(prompt, tools):
+        if tools:
+            return json.dumps(REC)
+        seen.append(prompt)
+        return (answers[len(seen) - 1] if len(seen) <= len(answers)
+                else F.ResearchUnavailable("error_max_structured_output_retries: x"))
+
+    fake.script = script
+    _, _, rep = _run(st, [_job(c) for c in "ABCDE"])
+    assert rep["unavailable_after"] is None, \
+        "two empties and a transient is not three consecutive failed calls"
+    assert rep["blurbs_written"] == 1 and rep["blurbs_empty"] == 2 and rep["blurbs_transient"] >= 1
+    assert rep["researched"] >= 1 and [c for c in calls if c["tools"]], "research must still run"
 
 
 def test_an_all_fail_research_run_warns_even_below_the_outage_threshold(env):
@@ -2382,14 +2413,24 @@ def test_the_bulk_pass_anchors_an_obscure_name_to_the_board_it_came_from():
     import research_firmographics as RF
     row = {"company_name": "Jafi", "active": "true", "api_url": "https://jafi.org.il/careers"}
     assert "https://jafi.org.il/careers" in RF._row_anchor(row)
-    # a PARKED row's url did not pass the gate: `entrypoint`'s pointed at Entry Point USA,
-    # and anchoring research to a mis-resolved url buys a confident wrong record until 2027-02
+    # a PARKED row's url has not been through the ladder: `entrypoint`'s points at Entry
+    # Point USA, and anchoring to a mis-resolved url buys a wrong record until 2027-02
     assert RF._row_anchor({**row, "active": "false"}) == ""
     assert RF._row_anchor({**row, "api_url": "greenhouse-token"}) == "", "a token names no host"
-    # a matched-only name has no row at all; its own posting is the first-party anchor
+    # ...and the query string never travels: 190 active rows carry a Comeet `token=<hex>`
+    assert RF._row_anchor({**row, "api_url": "https://comeet.com/j/x?token=deadbeef"}) \
+        .endswith("https://comeet.com/j/x.")
+    # a name with no active row is anchored to the posting we SAW it on, which claims
+    # strictly less -- it has to, because 37 of the 43 such names sit on an aggregator
     anchor = RF._posting_anchor("Trade Marketing Analyst", "https://il.linkedin.com/jobs/view/1")
     assert "Trade Marketing Analyst" in anchor and "il.linkedin.com" in anchor
+    assert "careers board" not in anchor, "an aggregator posting is not the employer's board"
     assert RF._posting_anchor("t", "") == ""
+    # the url goes FIRST: `research_company_detail` cuts context at 600 chars, and nothing
+    # caps `matched.title`, so a long title must not push the half we trust off the end
+    long_anchor = RF._posting_anchor("x" * 400, "https://il.linkedin.com/jobs/view/1")
+    assert long_anchor.index("il.linkedin.com") < long_anchor.index("xxx")
+    assert len(long_anchor) < 300, "the title is capped"
 
 
 def test_the_anchor_actually_reaches_the_call_the_bulk_pass_makes(tmp_path, monkeypatch):
@@ -2447,16 +2488,48 @@ def test_a_strike_whose_answer_is_already_on_disk_is_cleared(tmp_path, monkeypat
         "an unanswered strike keeps gating; an answered one is not a failure any more"
 
 
-def test_both_of_the_bulk_scripts_exits_clean_an_answered_strike():
-    """The night a stale strike sits longest is the one with NOTHING to do: a drained queue
-    returns early, and if only the working path cleaned the ledger the strike would never be
-    looked at again while `refresh_abandoned` (4+) counted on regardless."""
-    import inspect
+def test_only_a_record_that_POSTDATES_the_strike_answers_it():
+    """The date is what makes this a clearing rule and not a demolition of the ledger.
 
+    A refresh candidate is `n in have` BY DEFINITION, so a membership test alone erases every
+    refresh failure's strike in the run that recorded it: `attempts` never passes 1,
+    `refresh_abandoned` (4+) never fires, and a permanently failing stale name holds a
+    REFRESH_CAP slot for ever -- the squatter `main()`'s own comment says eviction prevents.
+    Latent until the store's first refresh wave (~2027-02), which is also the first day
+    anyone would have looked (wave 2)."""
     import research_firmographics as RF
-    assert RF._answered_strikes({"Varonis": (1, "x")}, {F.identity_key("Varonis")}) == {"Varonis"}
-    assert RF._answered_strikes({"Varonis": (1, "x")}, set()) == set()
-    src = inspect.getsource(RF.main)
-    early, _, working = src.partition("queued = len(todo)")
-    assert "_answered_strikes" in early, "the drained-queue exit does not clean the ledger"
-    assert "_answered_strikes" in working, "the working exit does not clean the ledger"
+    have = {"Varonis Systems": {"as_of": "2026-08-26"}}       # a VARIANT answers for the name
+    assert RF._answered_strikes({"Varonis": (1, "2026-08-23")}, have) == {"Varonis"}
+    # the strike this very run recorded against a record we already had: NOT answered
+    assert RF._answered_strikes({"Varonis": (2, "2026-08-31")}, have) == set()
+    assert RF._answered_strikes({"Varonis": (1, "2026-08-23")}, {}) == set()
+    assert RF._answered_strikes({"Nope": (1, "2026-08-23")}, have) == set()
+
+
+def test_a_drained_night_still_clears_a_strike_its_record_has_answered(tmp_path, monkeypatch):
+    """Behavioural, because a source-level `_answered_strikes in src` passed against a call
+    that never ran: the night a stale strike sits longest is the one with NOTHING to do, and
+    `main()` returns on `if a.dry_run or not todo` before the working path's ledger write."""
+    R, _ = _stamp_env(tmp_path, monkeypatch, {"Wix": {**REC, "as_of": "2026-08-30"}})
+    F.save_failures({"Wix": (2, "2026-08-25"), "Nowhere Ltd": (1, "2026-08-30")})
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
+    R.main()                                   # nothing to do: Wix is already researched
+    after, _ = F.load_failures()
+    assert "Wix" not in after, "a drained night left a strike its own record had answered"
+    assert "Nowhere Ltd" in after, "an unanswered strike must keep gating"
+
+
+def test_the_working_exit_clears_an_answered_strike_too(tmp_path, monkeypatch):
+    """The same clearing on the path that researches something -- and a name struck THIS run
+    keeps its strike, which is what stops the refresh layer eating itself."""
+    R, _ = _stamp_env(tmp_path, monkeypatch, {"Wix": {**REC, "as_of": "2026-08-30"}})
+    monkeypatch.setattr(R, "load_companies", lambda **kw: [
+        {"company_name": n, "ats_platform": "greenhouse", "active": "true"}
+        for n in ("Wix", "Newco")])
+    F.save_failures({"Wix": (2, "2026-08-25")})
+    monkeypatch.setattr(R, "research_company", lambda *a, **k: None)      # Newco fails
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py"])
+    R.main()
+    after, _ = F.load_failures()
+    assert "Wix" not in after, "the working exit left an answered strike standing"
+    assert "Newco" in after, "this run's own failure must be recorded"
