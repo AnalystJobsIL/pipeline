@@ -7468,6 +7468,22 @@ def _mutate_module_for_tests():
     return mod
 
 
+def test_a_shard_past_its_wall_ceiling_says_so_on_its_own_run_page():
+    """"Past ~1,800 s, add a matrix entry, never the budget" was a workflow comment and a
+    morning-check row, and nothing read either: all five shards had been over for days
+    (2,096-2,218 s on run 33409190938) and two were being killed at 40 min before anyone
+    looked. The ceiling now announces itself while the shard is still green.
+
+    It cannot be a job-level `if:` -- `test_every_long_tests_step_has_a_named_budget_below_
+    its_job_timeout` forbids `if:` in this workflow -- so it lives in the harness."""
+    src = open(os.path.join(_REPO, "tools", "mutate.py"), encoding="utf-8").read()
+    assert 'MUTATE_WALL_WARN", "1800"' in src, "the ceiling and its override live together"
+    assert "::warning::mutation shard walled" in src and "never the budget" in src, \
+        "the warning must name the fix the workflow's own ::error:: names"
+    assert src.index('print("timing    wall') < src.index("::warning::mutation shard"), \
+        "the timing line is what a reader greps; the warning follows it"
+
+
 def test_every_catalogue_anchor_test_stands_down_inside_a_mutant():
     """An anchor test asserts that each mutation record's `find` still occurs in its file.
     Apply any mutant and that string is gone by construction, so the anchor goes red under

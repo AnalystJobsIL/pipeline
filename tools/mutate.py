@@ -892,10 +892,20 @@ def main():
           % (len(results), sizes[0], sizes[len(sizes) // 2], sizes[-1], len(fb),
              (" (" + ", ".join("%s %d" % kv for kv in sorted(fbc.items())) + ")") if fb else ""))
     slow = max(results, key=lambda r: r["secs"], default=None)
+    wall = time.time() - t_all
     print("timing    wall %.0f s with %d worker(s); pytest time %.0f s; slowest %s %.0f s (%s)"
-          % (time.time() - t_all, jobs, sum(r["secs"] for r in results),
+          % (wall, jobs, sum(r["secs"] for r in results),
              muts[results.index(slow)]["id"] if slow else "-", slow["secs"] if slow else 0,
              slow["mode"] if slow else "-"))
+    # The rule "past ~1,800 s add a matrix entry, never the budget" (195/476) lived only in a
+    # workflow comment and a morning-check row, so it was noticed a fortnight late: all five
+    # shards had been over for days and two were being killed at 40 min. A shard that is over
+    # now says so on its own run page, while it is still green.
+    warn_at = float(os.environ.get("MUTATE_WALL_WARN", "1800"))
+    if warn_at > 0 and wall > warn_at:
+        print("::warning::mutation shard walled %.0f s, past the %.0f s ceiling -- add a "
+              "matrix entry AND bump SHARDS in .github/workflows/tests.yml, never the budget "
+              "(BACKLOG 195/476)" % (wall, warn_at), flush=True)
     print("%d mutation(s): %d killed, %d SURVIVING/failed; %d coverage gap(s)"
           % (len(muts), len(muts) - (bad - len(gaps)), bad - len(gaps), len(gaps)))
     if bad:

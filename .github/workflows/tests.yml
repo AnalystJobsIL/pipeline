@@ -161,13 +161,18 @@ jobs:
   # the real catalogue and fails if the shards ever stop covering it exactly once. When a
   # shard's `timing wall` passes ~1,800 s, add a matrix entry AND bump SHARDS -- never the
   # budget (195). `fail-fast: false`: one shard's surviving mutant must not hide another's.
+  # 5 -> 8 on 2026-09-01: all five walled 2,096-2,218 s on run 33409190938 and two were
+  # killed at 40 min on 08-31. Measured there: ~158 s of baseline per shard plus ~37.5 s per
+  # record, so at 260 records SIX shards land at ~1,808 s -- still over. Eight gives ~1,396 s,
+  # about a week of headroom at the catalogue's measured growth (105 -> 260 records,
+  # 08-24 -> 09-01, ~13/day). `MUTATE_WALL_WARN` makes the wall say so itself.
   mutation-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -178,7 +183,7 @@ jobs:
       - name: Every mutation dies and every writer is covered
         env:
           SHARD: ${{ matrix.shard }}
-          SHARDS: "5"
+          SHARDS: "8"
         run: |
           rc=0
           timeout --signal=INT --kill-after=60 40m python -u tools/mutate.py --all --shard "$SHARD/$SHARDS" || rc=$?
