@@ -54,8 +54,15 @@ def merge(base, ours, theirs):
         if k not in base or base[k] != v:
             out[k] = v            # this run touched it
             changed += 1
-        elif k not in theirs:
-            out[k] = v            # untouched by us and absent from theirs: don't lose it
+        elif k not in theirs and not theirs:
+            # Origin is empty or unreadable: that is not a deletion, so don't lose the key.
+            # It used to rescue the key whatever origin said, which made the two deletion
+            # arms asymmetric -- ours honoured, origin's undone -- so any process holding an
+            # older checkout re-added every key origin had retired since. Measured 2026-08-30
+            # (registry, 458): 44 names retired by 1ce0db5 and a07e743 between 00:28 and
+            # 00:54 were back in research_companies.json at 00:41, put there by 5ccd60e, the
+            # listing-hunt cron's own state commit, checked out before those retirements.
+            out[k] = v
             kept += 1
     for k in base:
         if k not in ours and k in theirs and theirs[k] == base[k]:

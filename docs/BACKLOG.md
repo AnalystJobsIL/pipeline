@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**610 filed · 443 open · 167 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**612 filed · 442 open · 170 closed · 8 half · 40 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -91,6 +91,8 @@ closure convention in the header.
 | 446 | `446@classifier` **open** · `446@docs` closed |
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
+| 546 | `546@scraper` **open** · `546@infra` **open** |
+| 547 | `547@infra` **open** · `547@infra` **open** |
 
 ### registry — 150 open
 
@@ -245,7 +247,7 @@ closure convention in the header.
 - **558** `558@registry` **`rehearse (worst, seed 1)` is RED on master, and the row it names is not lost
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 
-### infra — 110 open
+### infra — 109 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -345,7 +347,6 @@ closure convention in the header.
 - **448** `448@infra` **The inline JD filler's paid rung is armed by default and CANNOT SPEND, because the step
 - **450** `450@infra` **`firmographics.yml`: the budget is not wired, one slot a day measures the gap before
 - **455** `455@infra` **A `bd_rescue` test fails whenever another `bd_rescue` test runs first**
-- **458** `458@infra` **`merge_json_cache.merge` resurrects a key the ORIGIN deleted, so a deletion committed
 - **463** `463@infra` **The drain's counters exist only in the mail**
 - **471** `471@infra` **`schedule_census.py` reports the isolated-drop count and then exits 0**
 - **476** `476@infra` **The fattest mutation class cannot be split, so a fourth shard buys nothing**
@@ -353,10 +354,10 @@ closure convention in the header.
 - **490** `490@infra` **`run.py:803` prints `email (last 48h): N roles` for a count that includes the
 - **491** `491@infra` **The drain's capacity lives in `listing-hunt.yml` and is below intake; four workflow diffs**
 - **494** `494@infra` **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
-- **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
 - **515** `515@infra` **A cron commit carries `[skip ci]`, so a row a cron corrupts is only ever caught on
-- **540** `540@infra` **Every company-intel mutant scores `killed` whether or not a behavioural test noticed,
+- **546** `546@infra` **`s_company_dict` rescues a key the origin deleted, exactly as `merge_json_cache` did
 - **547** `547@infra` **The 06:00 self-heal reads a `stale.json` the digest has not written yet, so a board
+- **547** `547@infra` **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
 
 ### discovery — 29 open
 
@@ -8666,8 +8667,15 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
      It found the live instance on its first run, and the clause is corrected (a disclosed
      one-clause touch in section 7, which `company-intel` owns).
 
-458. **`merge_json_cache.merge` resurrects a key the ORIGIN deleted, so a deletion committed
-    by one process is undone by the next** — lane: `infra`, measured 2026-08-30 by `registry`.
+458. ~~**`merge_json_cache.merge` resurrects a key the ORIGIN deleted, so a deletion committed
+    by one process is undone by the next**~~ — **CLOSED 2026-09-01 (`infra`)**: the fenced
+    diff below applied verbatim at `merge_json_cache.py:57`. The rescue arm now fires only
+    when origin is empty or unreadable, so origin's retirement of a key this run did not
+    touch stands. `test_the_merge_does_not_resurrect_a_key_the_origin_retired` pins all
+    three arms (origin retired it · we wrote it · origin is empty). The closing observation
+    — `s_company_dict` carries the same asymmetry for the `cloud_state/*.json` files — is
+    still true and is now `541`. The original report follows.
+    Lane: `infra`, measured 2026-08-30 by `registry`.
 
     `persist_state.py:344` routes `research_companies.json` through `_keyed_list(_name_key)`,
     which merges with `merge_json_cache.merge`. The two deletion arms are not symmetric:
@@ -9296,7 +9304,17 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      whitespace only; an `html.unescape` there (or in the scraper's `write`) fixes the text,
      and the retraction file is keyed by url precisely so that fix cannot un-retract the row.
 
-498. **`roles_archive.csv` and `roles_text.jsonl` are not on Pages** — lane: `infra`. Filed by
+498. ~~**`roles_archive.csv` and `roles_text.jsonl` are not on Pages**~~ — **CLOSED
+     2026-09-01 (`infra`)**: both names are in all THREE lists in the publish step — the
+     filed diff named two, and the dry-run `ls -l` is a third, so a dry run would have said
+     "WOULD publish" while omitting exactly the files the item is about. `roles_archive.csv`
+     registered in `SINGLE_WRITER` (`roles_text.jsonl` already was);
+     `ROLES_ARCHIVE_PAGES_URL` and `ROLES_TEXT_PAGES_URL` exported beside `ROLES_PAGES_URL`,
+     so `build_meta` says `published_on_pages` instead of pointing at raw.githubusercontent.
+     The unattended proof is the 09-02 morning-check row — until it answers, nothing here is
+     proven. The wave-B half (`run_gates` has no `.csv` shape gate; `PAIRED` could name the
+     trio) is NOT done and is `542`. The original report follows.
+     Lane: `infra`. Filed by
      `roles` 2026-08-30. The meta names both by `raw_url` so nothing overstates; to put them
      beside the board add the two names to the publish step's optional-file loop in
      `.github/workflows/daily-digest.yml` (`for f in docs/archive.html cloud_state/roles.csv
@@ -10379,8 +10397,23 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      standing, flagged (`at-desc-max`) every run. The generic question is `scraper`'s: a
      `_read_position_page` that cannot tell this posting's section from its neighbour's.
 
-540. **Every company-intel mutant scores `killed` whether or not a behavioural test noticed,
-     so that shard's number is not evidence** — lane: `infra` (the harness) / `company-intel`
+540. ~~**Every company-intel mutant scores `killed` whether or not a behavioural test
+     noticed, so that shard's number is not evidence**~~ — **CLOSED 2026-09-01 (`infra`)**:
+     the anchor test stands down under `AJIL_MUTANT` — the escape the registry's anchor has
+     carried since 2026-08-27 — so a mutant is judged by behaviour or honestly survives. The
+     CLASS is closed with it: `test_every_catalogue_anchor_test_stands_down_inside_a_mutant`
+     names any future catalogue anchor that lacks the skip (it resolves same-file helpers,
+     because `test_registry.py` does its counting in one). Re-verified by running the whole
+     company-intel catalogue against the fixed tree — result in
+     `docs/sessions/2026-09-01-infra.md`. **Rejected the `_STATIC_MARKERS` route on
+     measurement**: 45 currently-`direct` tests would reclassify as `static` (most read YAML
+     or Markdown, not the mutated module), every record killed solely by one of them would
+     flip from `killed` to FAIL, and a static-only kill stops short-circuiting the subset —
+     a full-suite run per record, on a gate already over its wall budget. **One correction
+     to the report below**: `tests/fixtures/classifier/` has no anchor test and no
+     catalogue — its fixtures are behavioural golden files — so there were exactly two
+     anchors, not three, and the other was already guarded. The original report follows.
+     Lane: `infra` (the harness) / `company-intel`
      (the test), found by an adversarial pass on 2026-08-31 evening.
      `tests/test_company_intel.py::test_every_company_intel_mutation_still_aims_at_real_code`
      asserts that each record's `find` string occurs exactly once in its file. Applying any
@@ -10716,3 +10749,30 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      company's, run once and then as a guard (`url-cleared` is already the vocabulary and
      `verdicts.TOKENS` already owns it). Check: `python check_invariants.py` C3 count, and the
      four names above under `registry_health.py --explain`.
+## From the `infra` lane, 2026-09-01
+
+546. **`s_company_dict` rescues a key the origin deleted, exactly as `merge_json_cache` did
+     until today** — lane: `infra`, found while closing `458` (which measured the same bug in
+     the other merger: 44 retired names re-added by a cron's own state commit).
+     `persist_state.py:186`'s `s_company_dict` is the strategy for eight `cloud_state/*.json`
+     files, and several of their comments say "deletions honoured" — true only of OURS. Any
+     workflow holding a checkout older than a retirement re-adds every key retired since.
+     The fix is the same shape as 458's and the same one line, but it is NOT the same
+     function and the blast radius is larger (eight state files against one), so it wants its
+     own measurement first: which of the eight ever sees a deletion, and from which writer.
+     Until then, a deletion in those files is only as durable as the next stale checkout.
+
+547. **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
+     lane: `infra`, filed by `roles` (wave B) and deferred while `498` landed.
+     `persist_state.py:434-449` has arms for `.json`/`.jsonl`, `.db`, `.md` and `.html`, and
+     `companies.csv` delegates to `check_invariants.py` — every other `.csv` falls through
+     every branch and is staged unread. The same hole is in `_well_formed`
+     (`persist_state.py:140-164`). Second half: a refused `roles.csv.meta.json` is restored
+     alone while the CSV it describes stands, so origin can carry a meta for a dataset it
+     does not have. `PAIRED` is the existing mechanism but it is a 1:1 dict and **one-way by
+     design** (`persist_state.py:419-422`: a corrupt receipt must never withdraw a good
+     digest, because `mark_sent` has already burned those roles). The dataset trio
+     (`roles.csv` · `roles.csv.meta.json` · `roles_archive.csv`) is symmetric, so naming it
+     needs the value to become a sequence, the mate-restore loop to iterate, and the one-way
+     policy to stay one-way for the digest pair. `_dataset_alarm` catches the staleness the
+     next morning, which is why this is a gap and not a fire.

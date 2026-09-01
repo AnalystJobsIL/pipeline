@@ -359,6 +359,11 @@ SINGLE_WRITER = {   # documented `ours` paths (one cloud writer each); anything 
     # the public dataset beside the board (roles lane, 2026-08-30): rewritten whole each digest
     "cloud_state/roles.csv": "daily-digest", "cloud_state/roles.csv.meta.json": "daily-digest",
     "cloud_state/funnel.csv": "daily-digest",
+    # published to Pages beside them since 2026-09-01 (498). `roles_retractions.jsonl` is
+    # deliberately NOT here: it is hand-written, so it keeps the default `ours` AND its
+    # "origin's version overwritten" warning -- for a file a session edits, that warning is
+    # the point, not noise to be silenced by declaring a writer that does not exist.
+    "cloud_state/roles_archive.csv": "daily-digest",
     "cloud_state/source_health.json": "daily-digest", "cloud_state/telegram_seen.json": "daily-digest",
     "cloud_state/candidate_probe.json": "daily-digest", "cloud_state/registry_census.json": "daily-digest",
     "cloud_state/registry_alarms.json": "daily-digest", "cloud_state/last_run.json": "daily-digest",

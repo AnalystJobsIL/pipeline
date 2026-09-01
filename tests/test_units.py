@@ -7468,6 +7468,32 @@ def _mutate_module_for_tests():
     return mod
 
 
+def test_the_merge_does_not_resurrect_a_key_the_origin_retired():
+    """The two deletion arms were asymmetric: OUR deletion stood, ORIGIN's was undone. So any
+    process holding an older checkout re-added every key origin had retired since it was
+    checked out, and a retirement could never stay retired.
+
+    Measured 2026-08-30 (registry, BACKLOG 458): 44 names retired by `1ce0db5` and `a07e743`
+    between 00:28 and 00:54 were back in `research_companies.json` at 00:41, put there by
+    `5ccd60e` -- the listing-hunt cron's OWN state commit, checked out before the retirements.
+
+    The rescue arm still fires for the case it was written for: an origin file that is empty
+    or unreadable is not a deletion of everything."""
+    import merge_json_cache as mjc
+    base = {"a": 1, "keep": 2}
+    ours = {"a": 1, "keep": 2}                      # we touched neither
+    theirs = {"a": 1}                               # origin retired `keep`
+    out, _changed, kept = mjc.merge(base, ours, theirs)
+    assert "keep" not in out, "origin's retirement of a key we did not touch must stand"
+    assert kept == 0
+    # ours still wins when WE moved it
+    out2, _c2, _k2 = mjc.merge(base, {"a": 1, "keep": 99}, theirs)
+    assert out2["keep"] == 99, "a key this run actually wrote is not origin's to retire"
+    # and an empty/unreadable origin is not a mass deletion
+    out3, _c3, kept3 = mjc.merge(base, ours, {})
+    assert out3 == {"a": 1, "keep": 2} and kept3 == 2, "an empty origin deletes nothing"
+
+
 def test_a_shard_past_its_wall_ceiling_says_so_on_its_own_run_page():
     """"Past ~1,800 s, add a matrix entry, never the budget" was a workflow comment and a
     morning-check row, and nothing read either: all five shards had been over for days
@@ -22224,8 +22250,20 @@ def test_daily_digest_alarm_steps_stamp_before_persist_and_reach_the_mail():
         "the digest's own drain stamps `firmo` today, so the 2-day alarm cannot fire; company-intel's tests pin the 2, so run.py must at least say so (wave 1, 474)"
     # the public dataset beside the board, and never an empty file over a good one
     pub = dd.split("id: publish", 1)[1].split("      - name:", 1)[0]
-    for f in ("cloud_state/roles.csv", "cloud_state/roles.csv.meta.json", "cloud_state/funnel.csv", "docs/archive.html"):
+    for f in ("cloud_state/roles.csv", "cloud_state/roles.csv.meta.json", "cloud_state/funnel.csv", "docs/archive.html",
+              # 498: the operator's "db with descriptions" is one self-contained published
+              # location, not a CSV on Pages and its text at raw.githubusercontent
+              "cloud_state/roles_archive.csv", "cloud_state/roles_text.jsonl"):
         assert f in pub, f
+    # all THREE lists, or a dry run says "WOULD publish" and omits them, and the copy lands
+    # in /tmp/board without ever being staged
+    assert pub.count("roles_text.jsonl") == 3 and "roles_text.jsonl; do" in pub, \
+        "the dry-run ls, the copy loop and the git add basenames each carry the new files"
+    assert "roles_archive.csv roles_text.jsonl" in pub.split("git add", 1)[1]
+    for env in ('ROLES_ARCHIVE_PAGES_URL: "https://analystjobsil.github.io/board/roles_archive.csv"',
+                'ROLES_TEXT_PAGES_URL: "https://analystjobsil.github.io/board/roles_text.jsonl"'):
+        assert env in dd, ("roles.build_meta reads this to say published_on_pages; without it "
+                           "the file is on Pages and the meta still points at raw.github: " + env)
     assert 'if [ -s "$f" ]; then cp "$f"' in pub and "::warning::$f is empty" in pub
     assert "[ -s docs/index.html ] ||" in pub, "the board itself keeps its hard guard"
     assert 'ROLES_PAGES_URL: "https://analystjobsil.github.io/board/roles.csv"' in dd

@@ -281,6 +281,10 @@ jobs:
           # the publish step copies cloud_state/roles.csv beside the board (roles lane, 453);
           # the meta file may read this instead of a hard-coded `published_on_pages: false`
           ROLES_PAGES_URL: "https://analystjobsil.github.io/board/roles.csv"
+          # the archive and the description text land beside it (498); roles.build_meta
+          # reads these to say `published_on_pages` rather than pointing at raw.github
+          ROLES_ARCHIVE_PAGES_URL: "https://analystjobsil.github.io/board/roles_archive.csv"
+          ROLES_TEXT_PAGES_URL: "https://analystjobsil.github.io/board/roles_text.jsonl"
           # inline JD fetch for roles whose ATS list response carries no description —
           # the LLM tier reads the description, so this happens BEFORE classification
           JDFILL: "1"
@@ -382,7 +386,7 @@ jobs:
         run: |
           if [ "$DRY_RUN" = 1 ]; then
             echo "dry run: WOULD publish docs/index.html ($(wc -c < docs/index.html) bytes) to the board repo, plus:"
-            ls -l docs/archive.html cloud_state/roles.csv cloud_state/roles.csv.meta.json cloud_state/funnel.csv 2>/dev/null || true
+            ls -l docs/archive.html cloud_state/roles.csv cloud_state/roles.csv.meta.json cloud_state/funnel.csv cloud_state/roles_archive.csv cloud_state/roles_text.jsonl 2>/dev/null || true
             exit 0
           fi
           [ -z "$DEPLOY_KEY" ] && [ -z "$TOKEN" ] && { echo "::error::no board credentials set; board NOT published"; exit 1; }
@@ -402,7 +406,7 @@ jobs:
           cp docs/index.html /tmp/board/index.html
           # optional files: copied only when NON-EMPTY, so a zero-byte artefact from a broken
           # step never overwrites the board's good copy (roles lane, BACKLOG 453)
-          for f in docs/archive.html cloud_state/roles.csv cloud_state/roles.csv.meta.json cloud_state/funnel.csv; do
+          for f in docs/archive.html cloud_state/roles.csv cloud_state/roles.csv.meta.json cloud_state/funnel.csv cloud_state/roles_archive.csv cloud_state/roles_text.jsonl; do
             if [ -s "$f" ]; then cp "$f" "/tmp/board/$(basename "$f")"
             elif [ -e "$f" ]; then echo "::warning::$f is empty; the board keeps its previous copy"
             fi
@@ -412,7 +416,7 @@ jobs:
           git config user.name  "board-bot"
           git config user.email "board@users.noreply.github.com"
           git add index.html
-          for f in archive.html roles.csv roles.csv.meta.json funnel.csv; do
+          for f in archive.html roles.csv roles.csv.meta.json funnel.csv roles_archive.csv roles_text.jsonl; do
             [ -f "$f" ] && git add "$f"
           done
           git commit -m "board $(date -u +%F)" || { echo "no change"; exit 0; }
