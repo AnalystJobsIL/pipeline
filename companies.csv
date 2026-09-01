@@ -2120,3 +2120,8 @@ Netline Communications Technologies Nct Ltd,scrape,,https://netlinetech.com/care
 Webiks,scrape,,https://webiks.com/careers,false,queue-hunt 2026-09-01: careers page documented; monitored candidate
 "Ormat Technologies, Inc.",scrape,,https://careers.ormat.com/OrmatGlobal/,false,queue-hunt 2026-09-01: careers page documented; monitored candidate
 Zealot,scrape,,https://zealot.applytojob.com/apply,false,queue-hunt 2026-09-01: careers page documented; monitored candidate | crack-walled 2026-09-01: skip
+Palantir Technologies,lever,palantir,https://api.lever.co/v0/postings/palantir?mode=json,true,auto-expand; 309/2 IL
+AspiringIT,scrape,https://aspiringit.com,https://aspiringit.com,false,scanned; no open Israel roles now | own-site 2026-09-01: aspiringit.com linkback
+Nirlat,scrape,https://nirlat.com,https://nirlat.com,false,scanned; no open Israel roles now | own-site 2026-09-01: nirlat.com linkback
+Noga Iso,scrape,https://www.noga-iso.co.il/jobs/,https://www.noga-iso.co.il/jobs/,true,auto-expand scrape; 6 IL
+CloudZone,scrape,https://www.cloudzone.io/,https://www.cloudzone.io/,false,scanned; no open Israel roles now | own-site 2026-09-01: www.cloudzone.io linkback
