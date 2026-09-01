@@ -446,7 +446,7 @@ closure convention in the header.
 - **545** `545@roles` **A stray `seen_id` on one record makes another record's url withdraw it too
 - **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
 - **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
-- **564** `564@roles` **Six catalogued mutations survive the suite, and the eight-shard split is what made
+- **564** `564@roles` **Six catalogued mutations survived the suite; five are closed within the hour, one is
 
 ### docs — 25 open
 
@@ -10860,8 +10860,8 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      splice in only the items you touched (safer when cross-references already exist), or take
      BOTH sides of every conflicted hunk and regenerate the index.
 
-564. **Six catalogued mutations survive the suite, and the eight-shard split is what made
-     them visible** — lanes: `roles` (five) and `jd-text` (one), measured by `infra` on
+564. **Six catalogued mutations survived the suite; five are closed within the hour, one is
+     open** — the eight-shard split is what made them visible — lanes: `roles` (five) and `jd-text` (one), measured by `infra` on
      2026-09-01 from run `33522769201`.
 
      | record | class | added by |
@@ -10875,10 +10875,44 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
      Every one is `fallback:green` — the subset did not kill it and the FULL suite is green
      with the mutation applied, so the gate each names is not actually guarded. **None is
-     `infra`'s and none is new to this push**: `email-gate-after-the-payload` reproduces at
-     `3c12d22`, the commit before it, and run `33520122372` (`roles`' own, red) already named
-     three of the six. They are recorded here because a red that three lanes inherit stops
+     `infra`'s**: `git log -S` puts each record in the commit that introduced it (above), and
+     run `33520122372` (`roles`' own, red) already named three of the six before this push.
+     **Corrected 2026-09-01 by `roles`:** the first draft also offered "reproduces at
+     `3c12d22`, the commit before this push" as evidence of pre-existence. It is not —
+     `a962ec2` is an ANCESTOR of `3c12d22` (`git merge-base --is-ancestor`), so a record
+     introduced there reproduces at both by construction. The `log -S` provenance was always
+     the load-bearing half; the weaker sentence sat beside it looking like corroboration. They are recorded here because a red that three lanes inherit stops
      being read, and because the previous shard geometry hid some of them — a shard killed at
      its 40-minute budget reports nothing about the records it never reached.
      Each wants a behavioural test that fails with its `replace` applied; `python
      tools/mutate.py --id <id> --skip-baseline` is the one-record loop (~4 min each).
+
+     **RESOLVED for `roles` the same evening (`81f884d`), re-verified by `infra` on the
+     pushed tree — each record run singly: 1 killed, 0 surviving.** Four were repaired with a
+     discriminating test (the record stays in the catalogue, which is the outcome that
+     matters); `same-text-bucket-ungated-in-twins-mode` was WITHDRAWN as an equivalent
+     mutant — a twins-mode pair must clear `same_role_twin`, which refuses without a shared
+     strong id, and a shared strong id already puts the pair in the `("id", sid)` bucket, so
+     the sha bucket can only re-test a pair, never add one. The code gate stays as a cost
+     guard and now carries a comment saying why it cannot be mutated. That is `540`'s lesson
+     one file along: a catalogue entry no test can kill is the catalogue vouching for a guard
+     nobody holds.
+
+     **The general hazard `roles` found, which is worth more than the five fixes** — two of
+     the survivors were one defect: *two new keys added to a single ranking function mask
+     each other, and a test case that exercises both proves neither.* Neutering the evidence
+     key still elected the right company (it won on the shorter identity), and the caseless
+     fix was never consulted because the evidence key ranked first. Each key now has a case
+     where it alone decides. The same shape bit `infra` today from the other side: a helper's
+     test passed with the production CALL SITE reverted.
+
+     **STILL OPEN: `refuted-row-reaches-the-paid-rung`** (`jd-text`, from `5fb7f6d`).
+     Re-measured on `origin/master` after `81f884d`: `SURVIVED - the suite is green with this
+     mutation applied` (`fallback:green`, subset 52). A refuted row reaching the paid rung is
+     a rung that spends Bright Data credit on a row the gate already refused, so this one has
+     a price attached.
+
+     **The split paid for itself on the day it landed.** Three of `roles`' five were invisible
+     on its own first run — five shards, two killed at 40 minutes — and a shard killed at its
+     budget reports nothing about the records it never reached. Eight shards turned four
+     latent survivors into a red that its author acted on the same evening.
