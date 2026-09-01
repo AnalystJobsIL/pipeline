@@ -126,3 +126,4 @@
 {"at":"2026-09-01T13:06:31Z","cap":20,"capped":false,"ci":false,"credits":13,"pid":13680,"tool":"deep_validate.py"}
 {"at":"2026-09-01T13:13:48Z","cap":8,"capped":false,"ci":false,"credits":1,"pid":5288,"tool":"-c"}
 {"at":"2026-09-01T13:14:55Z","cap":8,"capped":false,"ci":false,"credits":1,"pid":18940,"tool":"-c"}
+{"at":"2026-09-01T20:46:27Z","cap":250,"capped":false,"ci":true,"credits":2,"pid":3056,"tool":"triage_dark.py"}
