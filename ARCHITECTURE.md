@@ -4427,7 +4427,7 @@ rows** (Holisto is two), and every one of them cleared every bar on this page:
 | `ballerine\|ai fraud data analyst senior` | 2,640 characters of site nav, the real JD truncated behind it | nav is not `_PAGE_FURNITURE`; `furniture_at` is `None` |
 | `holisto\|data analyst` ×2 | trivago's posting — **correct text AND correct row**: the JD's own About says *"trivago Innovation Center (formerly Holisto)"*, Rishon LeZion | not a defect; only the display name is stale (`550`) |
 | `gamida cell\|senior…` | six field-sales bullets spliced mid-posting | **the splice is in the source page** — the board bleeds sibling copy into every posting |
-| `transunion\|manager…`, `diageo\|performance…` | a TransUnion-**India** pre-sales JD; a **New York** posting | faithful fills: each jk really serves that text. Foreign rows, not bad text (`535`) |
+| `transunion\|manager…`, `diageo\|performance…` | a TransUnion-**India** pre-sales JD; a **New York** posting | faithful fills — each jk really serves that text, so no re-fetch helps. Diageo is a foreign posting of the RIGHT role; TransUnion is a foreign posting of a DIFFERENT one (`Manager` appears 0 times in 6,000 characters; the body describes a *Pre Sales Consultant*), so the jk itself is mis-bound and the pane gate cannot see it because the pane's own title matches. Both `535` |
 
 Four guards close what this lane owns; the other three rows are named above and filed.
 
@@ -4440,8 +4440,8 @@ no second credit.
 
 It is deliberately **not** `not doc_names_role(...)`. That function answers False for
 everything it merely cannot confirm, and refusing on it would throw away every fill whose
-page declares nothing — **38 of the 190 rows the driver walks and pass the bar carry no strict
-mention of their own employer** (2026-09-01), most of them honest. So the gate answers the
+page declares nothing — of the **190** rows the driver walks that pass the bar, **39** carry
+no strict mention of their own employer (2026-09-01), most of them honest. So the gate answers the
 narrow question and fires only on a positive contradiction: something was declared, our
 title has words to check, both are in the same alphabet — a Hebrew pane and a Latin title
 share no words *by construction*, on a board that is half Hebrew — and the title half then
@@ -4480,7 +4480,8 @@ calibrated on ten-word declarations and over 6,000 characters its employer half 
 "one company word appears anywhere", which `TechBiz Global` passes on the word `global`.
 
 It buys **one model call and the model decides**, which is the only reason it can be
-generous: 38 of the 190 rows the driver walks carry no strict echo and a posting is not obliged to repeat its
+generous: **38 of those 190 become candidates** (the 39 above, less one already claimed by
+`at-desc-max`) and a posting is not obliged to repeat its
 company name (Zipher, Tavily, OTORIO), an acquisition renames it (Questar), an agency never
 had it. A refusal here would be wrong. Employers whose name has no ASCII token are skipped
 outright — a Hebrew-named company can never echo in the ASCII tokenizer, and flagging every

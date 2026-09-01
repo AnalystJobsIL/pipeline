@@ -10043,6 +10043,14 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      these two plus eight boilerplate mentions ("our New York office"), so it is a candidate
      rule for a model call, never a verdict on its own.
 
+     **And the two are not the same defect** (an adversarial wave, 2026-09-01). Diageo's jk
+     serves a foreign posting of the RIGHT role, so only the Israel gate can see it.
+     TransUnion's serves a different ROLE too: `Manager` appears **0** times in its 6,000
+     characters and the body is a *Pre Sales Consultant* JD. The pane identity gate cannot
+     catch it either, because the pane's own `jobTitle` IS the card's claimed title -- the
+     mis-binding is upstream, in whatever attached that jk to this title. Whoever takes this
+     should check whether Indeed's SERP returned it for an Israel-scoped query at all.
+
 536. **The scraper stores a listing page as nine cards' address when the page links each
      posting** — lane: `scraper`. Filed by `jd-text` 2026-08-31. All 9 Bylith cards carry
      `https://www.bylith.com/careers` and all 3 G Stat cards carry

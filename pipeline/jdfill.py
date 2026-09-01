@@ -122,14 +122,16 @@ _REQ_IDIOM = ("advantage", "major plu", "bachelor", "יתרון", "דרוש/ה",
 # double-unescape in `fetchers._strip_html` leaves the markup escaped rather than parsed)
 # is not a job description, however many marker words the prose inside it happens to carry.
 _MARKUP_SOUP = re.compile(r'(?:\\"|\\u[0-9a-f]{4}|"[a-z_][a-z0-9_]{1,30}"\s*:\s*["\{\[])')
-# Measured over every text this repo holds on 2026-09-01 — 4,684 of them (203 `matched`
+# Measured over every CARD this repo holds on 2026-09-01 — 4,684 of them, ~1,860 carrying
+# any description (203 `matched`
 # rows, 2,219 `scraped_cache` cards, 2,262 `discovered_cache` cards): >= 3 hits in the
 # first 800 characters fires on EXACTLY ONE, `techbiz global|data analyst` (20 hits), and
 # on nothing else at any window from 400 to 1,500 characters.
 #
 # The window is the whole rule, and a tail-inclusive count is what it was rejected for: a
-# real posting may END in serialization — Fayrix's four cards carry a JSON form-field blob
-# from offset ~2,500, Crossriver's nine and Deepdub's carry a literal `’` in ordinary
+# real posting may END in serialization — four of Fayrix's six cards carry a JSON form-field
+# blob inside the first 3,000 characters (from offset ~2,500), and ten of Crossriver's
+# fourteen plus one of Deepdub's carry a literal `’` in ordinary
 # prose — and counting those (>= 8 hits over `text[:3000]`, the first draft) vetoed 4 real
 # JDs to catch the same 1. A document that IS soup is soup from its first characters.
 #
@@ -1855,8 +1857,8 @@ def _pane_denies_role(declaration, title, company=""):
     answers "did the document confirm us", where everything unconfirmable — an absent
     declaration, a company whose every word is in its own title — is False. A REFUSAL may
     not be built on that, because refusing what we merely failed to confirm throws away
-    every fill whose page declares nothing (38 of the 190 rows the driver walks carry no strict mention of
-    their own employer). So this asks the narrow question instead, and answers True only on
+    every fill whose page declares nothing: of the 190 rows the driver walks that pass the
+    bar, 39 carry no strict mention of their own employer. So this asks the narrow question instead, and answers True only on
     a positive contradiction:
 
       * something was declared (an empty declaration denies nothing);

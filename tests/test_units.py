@@ -26895,8 +26895,8 @@ def test_a_bought_pane_that_declares_another_role_fills_nothing_and_is_definitiv
 def test_a_pane_that_declares_nothing_still_fills_and_a_matching_one_is_untouched(monkeypatch):
     """Absence is not contradiction. `doc_names_role` answers False for everything it merely
     cannot confirm, and a refusal built on that would throw away every fill whose page
-    declares nothing — 38 of the 190 rows the driver walks and pass the bar carry no strict mention of
-    their own employer (measured 2026-09-01).
+    declares nothing — of the 190 rows the driver walks that pass the bar, 39 carry no strict
+    mention of their own employer (measured 2026-09-01).
 
     It asserts the GATE IS WIRED and then that it stays quiet, rather than only that nothing
     was refused: "no refusal happened" is equally true of a tree with no gate at all, which is
@@ -26974,7 +26974,8 @@ def test_serialized_markup_is_not_a_job_description_and_a_real_jd_with_a_json_ta
     the markup.
 
     The window is the whole rule. Measured over every text this repo held on 2026-09-01 —
-    4,684 of them — `>= 3 hits in text[:800]` fires on exactly ONE (this class) and on nothing
+    4,684 CARDS of them (~1,860 carrying text) — `>= 3 hits in text[:800]` fires on exactly
+    ONE (this class) and on nothing
     else; a tail-inclusive count (>= 8 over `text[:3000]`, the first draft) also vetoed four
     REAL postings whose pages end in a serialized form-field blob (Fayrix), which is why the
     head window and not the count is what this test pins.
@@ -27172,8 +27173,7 @@ def test_a_partial_verdict_never_refutes_because_partial_is_this_roles_own_posti
     assert jdfill.quality_suspect(body, company="Acme Analytics") == "no-company-echo"
 
     for verdict, should_refute in (("partial", False), ("not-a-jd", True)):
-        monkeypatch.setattr(jdfill, "jd_quality", lambda *a, **k: (False, verdict))
-        monkeypatch.setattr(emj, "jd_quality", jdfill.jd_quality, raising=False)
+        monkeypatch.setattr(emj, "jd_quality", lambda *a, **k: (False, verdict))
         incomplete, refuted, counts = emj._quality_pass(_QPConn(), rows, dry_run=True)
         assert counts["rejected"] == 1, (verdict, counts)
         assert "acme|data analyst" in incomplete, verdict      # re-fetched either way
@@ -27202,7 +27202,8 @@ def test_a_cached_rejection_never_refutes_because_the_column_cannot_say_which_no
     def _boom(*a, **k):                                   # a cache hit must not call out
         raise AssertionError("the model was called for a text already in the cache")
 
-    monkeypatch.setattr(jdfill, "jd_quality", _boom)
+    monkeypatch.setattr(emj, "jd_quality", _boom)          # the name `_quality_pass` calls
+    monkeypatch.setattr(jdfill, "jd_quality", _boom)       # ...and the one it was imported from
     incomplete, refuted, counts = emj._quality_pass(_QPConn({key: 0}), rows, dry_run=True)
     assert counts["cached"] == 1 and counts["rejected"] == 1, counts
     assert incomplete == {"acme|data analyst"}
@@ -27221,7 +27222,11 @@ def test_only_the_echo_suspicion_refutes_and_the_cheaper_ones_never_do(monkeypat
             + " Requirements: 4+ years of experience with SQL. ")
     furn = body + " Sign in to see who you already know. Forgot password?"
     assert jdfill.quality_suspect(furn, company="Acme Analytics") == "furniture"
-    monkeypatch.setattr(jdfill, "jd_quality", lambda *a, **k: (False, "not-a-jd"))
+    # `enrich_matched_jd` imports `jd_quality` into its OWN namespace (line 43) and calls the
+    # local name, so patching `jdfill` alone never reaches it — the trap the 08-31 session
+    # documented for `fetch_jd`. This test passed locally, where the model answers, and made a
+    # LIVE call on the runner, where it does not: `ok is None` -> `unavailable` -> no verdict.
+    monkeypatch.setattr(emj, "jd_quality", lambda *a, **k: (False, "not-a-jd"))
     rows = [_qp_row("acme|data analyst", "Acme Analytics", "Data Analyst", furn)]
     incomplete, refuted, counts = emj._quality_pass(_QPConn(), rows, dry_run=True)
     assert counts["rejected"] == 1 and incomplete == {"acme|data analyst"}

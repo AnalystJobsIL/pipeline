@@ -2648,7 +2648,7 @@
   "class": "M3-branch-narrowing",
   "find": "    return len(_MARKUP_SOUP.findall(str(text or \"\")[:_SOUP_HEAD])) >= _SOUP_HITS",
   "replace": "    return len(_MARKUP_SOUP.findall(str(text or \"\")[:3000])) >= _SOUP_HITS",
-  "why": "The HEAD window is the rule, not the count. A real posting may END in serialization -- Fayrix's four cards carry a JSON form-field blob from offset ~2,500 and nine Crossriver cards a literal escape in ordinary prose -- so widening the window past the head vetoes real job descriptions to catch the same one soup document. Measured over all 4,684 stored texts on 2026-09-01. Killed by test_serialized_markup_is_not_a_job_description_and_a_real_jd_with_a_json_tail_is.",
+  "why": "The HEAD window is the rule, not the count. A real posting may END in serialization -- four of Fayrix's six cards carry a JSON form-field blob from offset ~2,500 and ten of Crossriver's fourteen cards a literal escape in ordinary prose -- so widening the window past the head vetoes real job descriptions to catch the same one soup document. Measured over all 4,684 stored CARDS (~1,860 with text) on 2026-09-01. Killed by test_serialized_markup_is_not_a_job_description_and_a_real_jd_with_a_json_tail_is.",
   "must_be_killed_by_behavioural": true
  },
  {
