@@ -1173,9 +1173,15 @@ class Ledger:
                 buckets.setdefault(("pk", pk), []).append(i)
             # and the TEXT, cross-company only: the Nestlé/אסם pair shares no id, no url
             # and no posting key (two aggregator addresses), so its only evidence is the
-            # byte-identical description `_same_text_posting` reads. Gated to the
-            # cross-company pass because `same_role_twin` cannot reach the text arm and a
-            # same-company sha bucket would only pair-test rows for nothing.
+            # byte-identical description `_same_text_posting` reads.
+            #
+            # `not twins` is a COST guard and nothing more, which is worth saying because
+            # it looks like a safety one: a twins pair must clear `same_role_twin`, which
+            # refuses without a shared strong id — and a shared strong id already puts the
+            # pair in the `("id", sid)` bucket above. So the bucket can never add a
+            # same-company pair, only re-test one. Measured, and a mutation record that
+            # removed this gate SURVIVED for exactly that reason (equivalent mutant, CI run
+            # 33520122372 shard 1); the record was withdrawn rather than the gate.
             if not twins:
                 tk = _text_key(j)
                 if tk:

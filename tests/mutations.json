@@ -2762,16 +2762,6 @@
   "must_be_killed_by_behavioural": true
  },
  {
-  "id": "same-text-bucket-ungated-in-twins-mode",
-  "file": "pipeline/roles.py",
-  "symbol": "_groups",
-  "class": "M1-gate-narrowed",
-  "find": "            if not twins:\n                tk = _text_key(j)",
-  "replace": "            if True:\n                tk = _text_key(j)",
-  "why": "the sha bucket is the cross-company arm's evidence; in twins mode it pair-tests same-company records that `same_role_twin` refuses anyway, and it is the one place a same-company byte-identical pair (a careers page captured twice, BACKLOG 370) could ever be handed to a fold. Killed by test_the_text_arm_refuses_two_real_roles_that_share_a_careers_page.",
-  "must_be_killed_by_behavioural": true
- },
- {
   "id": "winner-ignores-what-the-posting-names",
   "file": "pipeline/roles.py",
   "symbol": "_winner",

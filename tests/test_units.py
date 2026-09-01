@@ -27832,6 +27832,27 @@ def test_the_winner_reads_the_posting_and_stops_calling_hebrew_a_lowercase_stub(
     p = {"company": "kornit", "title": "t", "url": "https://x.co/1", "sources": ["scrape"]}
     q = {"company": "Kornit Digital", "title": "t", "url": "https://x.co/1", "sources": ["scrape"]}
     assert roles.Ledger._winner([p, q], [0, 1], set()) == 1, "the branded row still wins"
+    # ...and each fix has to be shown ALONE, because the other one masks it. Here the
+    # posting names NEITHER company, so the evidence key ties and the caseless key decides:
+    # with `name == name.lower()` alone, אסם is demoted as a stub and the PARKED Latin name
+    # wins; with the fix both score 0 and the shorter identity does.
+    mute = "Analytics role. Requirements: SQL. Responsibilities: dashboards."
+    h = {"company": "אסם", "title": "t", "url": "https://il.indeed.com/viewjob?jk=1",
+         "description": mute, "sources": ["discovery-indeed"]}
+    l = {"company": "Nestlé", "title": "t", "url": "https://il.indeed.com/viewjob?jk=2",
+         "description": mute, "sources": ["discovery-indeed"]}
+    assert not roles._name_in_text("אסם", h) and not roles._name_in_text("Nestlé", l)
+    assert roles.Ledger._winner([h, l], [0, 1], set()) == 0, "a caseless name is not a stub"
+    # and here the evidence key is the ONLY thing standing between the posting's own
+    # employer and the shorter name: without it `beta` wins on identity length alone
+    named = "Alpha Foods is hiring. Requirements: SQL. Responsibilities: dashboards."
+    a1 = {"company": "Alpha Foods", "title": "t", "url": "https://il.indeed.com/viewjob?jk=3",
+          "description": named, "sources": ["discovery-indeed"]}
+    b1 = {"company": "Beta", "title": "t", "url": "https://il.indeed.com/viewjob?jk=4",
+          "description": named, "sources": ["discovery-indeed"]}
+    assert roles._name_in_text("Alpha Foods", a1) and not roles._name_in_text("Beta", b1)
+    assert roles.Ledger._winner([a1, b1], [0, 1], set()) == 0, "the posting names the winner"
+    assert roles.Ledger._winner([b1, a1], [0, 1], set()) == 1, "in either order"
 
 
 def test_name_evidence_refuses_an_empty_token_set_and_a_partial_match():
@@ -27913,6 +27934,17 @@ def test_a_role_held_for_its_text_is_never_marked_sent_and_is_mailed_when_it_lan
     st = store_mod.SeenStore(str(tmp_path / "t.db"))
     assert st.filter_new([dict(weak, seen_ids=[store_mod.seen_id(weak)])]), "still unsent"
     st.close()
+    # ...and again the NEXT morning, through `email_jobs` itself rather than through the
+    # first-scan section. By then the company is known, so the role reaches the list as a
+    # RE-OFFERED candidate (its `held_since` stamp) — and is held a second time, because its
+    # text still has not landed. Both selections are gated and each needs its own case: the
+    # first-scan gate was silently covering for this one, which is how the mutation
+    # `email-gate-after-the-payload` survived CI run 33520122372.
+    p2, _ = _gate_run(monkeypatch, tmp_path, [weak], date="2026-09-02")
+    assert "BI Analyst" not in {j.get("title") for j in p2["jobs"]}, \
+        "still no description: held again, and still not burned"
+    with open(str(tmp_path / "out" / "digest-2026-09-02.json"), encoding="utf-8") as f:
+        assert "BI Analyst" not in _json.dumps(_json.load(f))
     # the next morning the description lands: the role is offered, and mailed
     filled = _acme("BI Analyst", "2", _JD)
     payload2, base2 = _gate_run(monkeypatch, tmp_path, [filled], date="2026-09-02")
@@ -27942,7 +27974,11 @@ def test_a_card_blob_title_is_held_out_of_the_mail_not_burned_at_render(monkeypa
 def test_holding_a_role_off_the_board_never_tells_the_record_it_closed(monkeypatch, tmp_path):
     """`alive_jobs` is taken BEFORE the gate, and the archive is `matched` minus what is
     ALIVE — not minus what was rendered. Otherwise a held role would be archived as filled
-    and then "reopen" the morning its text lands, on every product."""
+    and then "reopen" the morning its text lands, on every product.
+
+    It passes on the base tree for the honest reason that nothing was held there, so the
+    record was open either way. Kills `board-gate-before-the-closure-snapshot`, which moves
+    the gate above the snapshot and closes this role."""
     from pipeline import roles, store as store_mod
     weak = _acme("BI Analyst", "2", "Apply here.")
     _gate_run(monkeypatch, tmp_path, [weak], date="2026-09-01")
@@ -27951,4 +27987,39 @@ def test_holding_a_role_off_the_board_never_tells_the_record_it_closed(monkeypat
     lg.open_sync()
     rec = next(r for r in lg.records.values() if r.get("title") == "BI Analyst")
     assert rec["status"] == "open" and not rec.get("closed_on"), rec
+    st.close()
+
+
+def test_a_role_this_gate_never_held_is_not_re_offered_because_its_text_is_fresh(monkeypatch, tmp_path):
+    """The discriminating case the golden rehearsal found, and the reason the re-offer is
+    keyed on `held_since` rather than on `roles_text.jsonl`'s `updated`.
+
+    `jd-text` backfills descriptions every night, so "any alive unsent role whose text is
+    recent" re-offers roles nothing ever withheld — the unsent backlog, going out under a
+    heading that promises the last 48 hours. Widening that promise is BACKLOG 310's
+    decision; this gate's job is only to give back what it took.
+
+    Kills `readmit-without-the-held-stamp`."""
+    import json as _json
+    good = _acme("Senior Data Analyst", "1", _JD)
+    # ...and a role that is publishable all along, but posted long before the window: it is
+    # never a candidate, never held, and never sent
+    old = _acme("Marketing Analyst", "2", _JD, posted_date="2026-08-01")
+    _gate_run(monkeypatch, tmp_path, [good], date="2026-09-01")        # the company is now known
+    p2, _ = _gate_run(monkeypatch, tmp_path, [good, old], date="2026-09-02")
+    assert "Marketing Analyst" not in {j.get("title") for j in p2["jobs"]}, \
+        "outside the 48h window at a company we already scanned: not a candidate"
+    # its text landed on 09-02 and is still fresh on 09-03 — the mutant re-offers it here
+    p3, base3 = _gate_run(monkeypatch, tmp_path, [good, old], date="2026-09-03")
+    assert "Marketing Analyst" not in {j.get("title") for j in p3["jobs"]}, \
+        "a fresh description is not a reason to mail a role this gate never held"
+    with open(str(tmp_path / "out" / "digest-2026-09-03.json"), encoding="utf-8") as f:
+        assert "Marketing Analyst" not in _json.dumps(_json.load(f))
+    # and the ledger agrees it was never withheld
+    from pipeline import roles, store as store_mod
+    st = store_mod.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-09-03")
+    lg.open_sync()
+    rec = next(r for r in lg.records.values() if r.get("title") == "Marketing Analyst")
+    assert not rec.get("held_since"), "publishable throughout: nothing to give back"
     st.close()
