@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**596 filed · 429 open · 167 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**601 filed · 434 open · 167 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 546.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 555.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 546, 547, 548, 549 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -386,7 +386,7 @@ closure convention in the header.
 - **535** `535@discovery` **A role whose own JD names a New York address is published as an Israel role**
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
 
-### scraper — 25 open
+### scraper — 26 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -413,6 +413,7 @@ closure convention in the header.
 - **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
 - **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
 - **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
+- **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
 
 ### docs — 24 open
 
@@ -467,6 +468,30 @@ closure convention in the header.
 - **544** `544@roles` **A published `class_decision` cannot say which contract judged it, so a bump leaves the
 - **545** `545@roles` **A stray `seen_id` on one record makes another record's url withdraw it too
 
+### company-intel — 21 open
+
+- **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
+- **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
+- **6** `6@company-intel` **Company aliases**
+- **10** `10@company-intel` **Let company-death knowledge flow back.** Firmographics research keeps discovering
+- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
+- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
+- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
+- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
+- **389** `389@company-intel` **The strike ledger is a union, and a union cannot express a retraction**
+- **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
+- **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
+- **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
+- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
+- **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
+- **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
+- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
+- **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
+- **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
+- **506** `506@company-intel` **OPERATOR DECISION
+- **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
+- **550** `550@company-intel` **The board shows `Holisto` for a company that now calls itself trivago Innovation
+
 ### ats-fetch — 20 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
@@ -490,46 +515,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### company-intel — 20 open
-
-- **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
-- **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
-- **6** `6@company-intel` **Company aliases**
-- **10** `10@company-intel` **Let company-death knowledge flow back.** Firmographics research keeps discovering
-- **138** `138@company-intel` **`firmographics` sqlite table is redundant with its export**
-- **359** `359@company-intel` **`cloud_state/firmographics.json` has no collapse alarm anywhere, and its doc site no *(half closed)*
-- **385** `385@company-intel` **`bd_employees.unlock` is a second, uninstrumented spend path**
-- **387** `387@company-intel` **All 997 firmographics records share a birth WEEK, so at `--refresh-days 180` the whole
-- **389** `389@company-intel` **The strike ledger is a union, and a union cannot express a retraction**
-- **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
-- **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
-- **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
-- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
-- **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
-- **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
-- **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
-- **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
-- **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
-- **506** `506@company-intel` **OPERATOR DECISION
-- **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
-
-### classifier — 13 open
-
-- **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
-- **122** `122@classifier` **The cap and the budget bite the same companies every day**
-- **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
-- **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
-- **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
-- **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
-- **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
-- **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
-- **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
-- **503** `503@classifier` **The contract drain still competes with fresh roles for the same call budget; the deferred
-- **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
-- **541** `541@classifier` **A superseded verdict was chosen by sorting contract HASHES, which is alphabetical and
-- **542** `542@classifier` **The title gate rejects `analytics engineer` outright, and the 2026-09-01 boundary is
-
-### jd-text — 13 open
+### jd-text — 15 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -544,6 +530,25 @@ closure convention in the header.
 - **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
 - **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
+- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
+- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
+
+### classifier — 14 open
+
+- **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
+- **122** `122@classifier` **The cap and the budget bite the same companies every day**
+- **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
+- **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
+- **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
+- **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
+- **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
+- **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
+- **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
+- **503** `503@classifier` **The contract drain still competes with fresh roles for the same call budget; the deferred
+- **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
+- **541** `541@classifier` **A superseded verdict was chosen by sorting contract HASHES, which is alphabetical and
+- **542** `542@classifier` **The title gate rejects `analytics engineer` outright, and the 2026-09-01 boundary is
+- **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
 
 ### render — 6 open
 
@@ -10020,6 +10025,21 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      whether a card's claimed location survives contact with its own description. Re-derive:
      that row's description in `cloud_state/seen.db`.
 
+     **A SECOND instance, and the class is now measured** (`jd-text` 2026-09-01, from the
+     operator's dataset audit). `transunion|manager data science analytics` (jk
+     `7349c47d967eb4a7`, **emailed**) carries 6,000 characters of TransUnion's **India** credit
+     bureau (CIBIL) describing a *Pre Sales Consultant* - and the fill is faithful by the same
+     proof as Diageo's: the 163-character discovery snippet is verbatim inside the bought body.
+     Two of the Indeed-sourced rows are foreign, so this is a rate and not an anecdote. It
+     cannot be fixed in `jd-text`: the 09-01 pane identity gate refuses a pane that declares a
+     DIFFERENT ROLE, and both of these declare the right one - the defect is the COUNTRY, which
+     only the Israel gate at admission can see. The stale verdict
+     `v3.da2cb878|transunion|manager - data science & analytics|jd => 1` was reached ON the
+     India text, so re-judging needs that key deleted (`551`). A cheap first rule to measure: a
+     description naming a foreign place with no Israel signal flags **10 of 197** stored rows -
+     these two plus eight boilerplate mentions ("our New York office"), so it is a candidate
+     rule for a model call, never a verdict on its own.
+
 536. **The scraper stores a listing page as nine cards' address when the page links each
      posting** — lane: `scraper`. Filed by `jd-text` 2026-08-31. All 9 Bylith cards carry
      `https://www.bylith.com/careers` and all 3 G Stat cards carry
@@ -10090,6 +10110,88 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      a `sources` map, or at minimum a `hand_fields` list — and `newer`/`merge` must treat it
      the way `display_name` is treated today: `_EVIDENCE_EXEMPT`, so bookkeeping can never
      win a tie. Check: no record carries a hand-written value that `--facts` cannot name.
+553. **A pane we have PROVED serves another role is re-bought for ever** - lane: `jd-text`,
+     filed by this lane 2026-09-01 from an adversarial wave on its own diff. The new
+     `bd-identity` refusal is definitive, so it stamps and rides 7/14/28 to `MAX_RETRY_DAYS`
+     - and then keeps buying the same wrong pane every 30 days, because nothing in this repo
+     can record "this ADDRESS is not this role's". `jd_why` is untouched on a no-text result
+     (that is `443`'s per-card reason, still unbuilt for this path), so the morning after, a
+     row refused for identity is indistinguishable from one that timed out. The honest fix is
+     a terminal state for an address the document itself disowned - either a `jd_why`
+     `refused:identity(pane)` that `due()` treats like `GONE_MARK`, or handing the bad jk
+     back to `discovery` so the card stops carrying it. Cost today: 1 credit per refused row
+     per 30 days, and there are 0 such rows (the gate has never fired in production).
+
+554. **The echo suspicion puts rows that HAVE text at the front of the fetch queue** - lane:
+     `jd-text`, filed 2026-09-01 by this lane from the same wave. `no-company-echo` makes a
+     row an LLM candidate; a rejection puts it in `incomplete`; `incomplete` joins the fetch
+     todo. Measured on the shipped store: the todo goes from **3 rows (0 due)** to as many as
+     **42, 31 of them due**, and because every one has `jd_tries=0, jd_attempted=''` they sort
+     to the FRONT of `every.sort(key=(tries, attempted, -last_seen))`, ahead of the rows that
+     have no description at all. The MONEY half is closed - a refuted row is free-only
+     (`row_bd = bd if (mkey in paid_keys and mkey not in refuted ...)`) - so what is left is
+     the walk order and the 25-minute clock, not credits. It is invisible today because the
+     tier is auth-refused on the runner; **it arrives the morning `infra` fixes that token**,
+     which is exactly when nobody is looking for it. Fix: sort rows with NO description ahead
+     of rows being re-judged, or give the re-judged pool its own small cap.
+
+     **Two more from the second wave, same item.** (a) The echo's 40 new candidates share
+     `QUALITY_CAP` 60 and `QUALITY_BUDGET_MIN` 4.0 with the three older suspicions, and
+     candidates are iterated in `every` ROW order rather than by suspicion, so
+     `at-desc-max`/`furniture`/`shared-with-sibling` can be starved for the first nights (the
+     budget's own comment says "four minutes is about 30 calls"; the pool is now ~51). Sort
+     `cand` by suspicion, or say in the docstring that the drain takes two nights. (b)
+     `jdfill._scripts` returns `"lat"` for anything that is not Hebrew, so a **Cyrillic or
+     Arabic** pane is compared against a Latin title as if they shared an alphabet - the same
+     false-deny class the Hebrew guard exists for. Live corpus: 1 Cyrillic + 2 CJK titles of
+     4,684 cards, and no Arabic yet; latent, not live.
+
+550. **The board shows `Holisto` for a company that now calls itself trivago Innovation
+     Center** - lane: `company-intel` (display name only). Filed by `jd-text` 2026-09-01,
+     **and corrected the same day**: the first version of this item claimed the row published
+     ANOTHER company's postings and asked `registry` to re-attribute it. That was wrong, and
+     the posting's own text says so - the `registry` session challenged it before touching the
+     row, which is the only reason it was caught. `holisto|data analyst`
+     (`comeet.com/jobs/trivago/76.001/data-analyst/24.E6B`) carries, at char 3,468:
+     *"About the Company: About trivago Innovation Center (**formerly Holisto**) - We're part
+     of trivago N.V."*, offices *"in Rishon LeZion, at the iconic Millennium Tower"*. One
+     employer, renamed after the 2025 acquisition, still in Israel - so the ROW IS CORRECT,
+     the tenant slug is correct, and `ARCHITECTURE.md` §2 forbids renaming a row for an
+     acquisition anyway. What is left is cosmetic and belongs to the `display_name` machinery
+     company-intel shipped on 08-30: the board heading says `Holisto` while the employer's own
+     posting says `trivago Innovation Center (formerly Holisto)`. The ledger's separate CLOSED
+     `Trivago|Data Analyst` record (Indeed, Rishon LeZion) is the same employer under a third
+     string and is `roles`' fold to make. Declare the acquisition in
+     `pipeline/identity_facts.DECLARED` rather than renaming anything.
+
+551. **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
+     cannot re-open the verdict at all** - lane: `classifier` (with `roles`). Filed by
+     `jd-text` 2026-09-01. Two halves of one gap. (a) `techbiz global|data analyst` is
+     published `class_decision=accept` while `llm_cache` holds
+     `v3.da2cb878|techbiz global|data analyst|jd => 0` - the accept dates from the `v2` era and
+     nothing re-reads a closed row's verdict, so a flip never reaches the dataset.
+     (b) `seniority.cache_keys` carries **no hash of the description** (only a `has_text`
+     bit), so correcting a row's text re-judges it ONLY on a `bare`->`jd` upgrade; a jd->jd
+     repair leaves the key byte-identical and the verdict that was reached on the WRONG
+     posting stands for ever. `_versioned` serves superseded prefixes by suffix, so an
+     invalidation must delete every prefix, not just the current contract's. This lane
+     deleted the three keys it had evidence for (below) and did not touch the mechanism -
+     the table and the re-judge policy are `classifier`'s. Re-derive:
+     `select title_key,verdict from llm_cache where title_key like '%techbiz global%'`.
+
+552. **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
+     reproduces the splice** - lane: `scraper` (with `jd-text`). Filed by `jd-text` 2026-09-01.
+     `gamida cell|senior business analyst commercial data analytics` carries six
+     field-sales bullets at chars ~429-950 ("Lead engagement across key transplant centers",
+     "Promote products through clinically credible messaging") that belong to the sibling
+     `Director, Regional Accounts` posting. It is **not** an enrichment defect: the 2026-08-22
+     `scraped_cache.json` snapshot (`1f71496`) holds the same bytes, and the surviving
+     `Junior Maintenance Technician` card carries the same Omisirge(R)/APHEXDA(R) corporate
+     block inside a Hebrew maintenance JD. Every honest rung - including Wayback - returns the
+     same page, so no fetch fixes it; the row is closed with no live donor and was left
+     standing, flagged (`at-desc-max`) every run. The generic question is `scraper`'s: a
+     `_read_position_page` that cannot tell this posting's section from its neighbour's.
+
 540. **Every company-intel mutant scores `killed` whether or not a behavioural test noticed,
      so that shard's number is not evidence** — lane: `infra` (the harness) / `company-intel`
      (the test), found by an adversarial pass on 2026-08-31 evening.

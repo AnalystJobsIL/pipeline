@@ -4414,6 +4414,114 @@ repaired row; both being JDs, "longer wins" chose the one with the form and `ope
 it **back into sqlite** — 13 rows, 39,956 characters, restored minutes after being cut out.
 `roles` owns that file.
 
+### Whose posting is this? — the four guards of 2026-09-01
+
+*Everything above asks whether a text IS a job description. None of it asks whose.* A
+row-by-row audit of the published dataset on 2026-09-01 found **seven findings, over eight
+rows** (Holisto is two), and every one of them cleared every bar on this page:
+
+| row | what was stored | why nothing caught it |
+|---|---|---|
+| `techbiz global\|data analyst` | 6,000 characters of a serialized **Recruitee offer object** (`requirements":"&lt;p style=…`) | the marker bar read the posting's own words *inside* the markup |
+| `prisma photonics\|senior product analyst` | the **Data-Engineer** posting, end to end | a complete JD, longer than the true one — the ratchet could not be beaten |
+| `ballerine\|ai fraud data analyst senior` | 2,640 characters of site nav, the real JD truncated behind it | nav is not `_PAGE_FURNITURE`; `furniture_at` is `None` |
+| `holisto\|data analyst` ×2 | trivago's posting — **correct text AND correct row**: the JD's own About says *"trivago Innovation Center (formerly Holisto)"*, Rishon LeZion | not a defect; only the display name is stale (`550`) |
+| `gamida cell\|senior…` | six field-sales bullets spliced mid-posting | **the splice is in the source page** — the board bleeds sibling copy into every posting |
+| `transunion\|manager…`, `diageo\|performance…` | a TransUnion-**India** pre-sales JD; a **New York** posting | faithful fills: each jk really serves that text. Foreign rows, not bad text (`535`) |
+
+Four guards close what this lane owns; the other three rows are named above and filed.
+
+**1. A bought pane must not declare a different role** (`_pane_denies_role`, in `fetch_jd`'s
+paid rung). The 08-31 rung verified `jobKey == jk` and nothing else — and the jk is the
+*discovery card's claim*, which that session recorded as an accepted limit. A card whose jk
+names another posting bought that posting's text under this row's name. The refusal is
+`bd-identity`, definitive (the page was read and answered about someone else), and it costs
+no second credit.
+
+It is deliberately **not** `not doc_names_role(...)`. That function answers False for
+everything it merely cannot confirm, and refusing on it would throw away every fill whose
+page declares nothing — **38 of the 190 rows the driver walks and pass the bar carry no strict
+mention of their own employer** (2026-09-01), most of them honest. So the gate answers the
+narrow question and fires only on a positive contradiction: something was declared, our
+title has words to check, both are in the same alphabet — a Hebrew pane and a Latin title
+share no words *by construction*, on a board that is half Hebrew — and the title half then
+fails the same bar `doc_names_role` sets. The **employer is deliberately not part of it**: a
+pane declaring the right employer and a different role is exactly the defect (Diageo's
+second jk, `8eec28efd124a6d2`, is "VP, Brands in Culture, NAM"), and requiring both halves
+to contradict would have admitted it. It does **not** catch TransUnion or Diageo — their
+panes declare the matching role, and their rows are wrong for a reason no text check reaches.
+
+**2. Serialized markup is not a job description** (`_MARKUP_SOUP`, in `looks_like_jd`). Three
+hits of serialization residue — an escaped quote, a raw `\uXXXX`, a JSON key opening a value
+— in the **first 800 characters**. Measured over every CARD this repo holds — **4,684** on
+the morning it shipped, of which about 1,860 carry any description at all (203 `matched`, 2,219 `scraped_cache`, 2,262
+`discovered_cache`): it fired on exactly one, `techbiz global|data analyst`, and on nothing
+else at any window from 400 to 1,500 characters. Re-run after that row was refilled from its
+LinkedIn copy it fires on **0 of 4,684** — the text it was built for is gone, which is the
+outcome and not a dead rule: from here it guards against recurrence.
+
+**The window is the rule, and the count is not.** A real posting may *end* in serialization:
+four of Fayrix's six cards carry a JSON form-field blob inside the first 3,000 characters
+(from offset ~2,500; the other two carry it later still). The first draft counted 8 hits over
+`text[:3000]` and would have vetoed **exactly those four real postings** — plus three Fattal
+nav blobs that already fail the bar — to catch the same one document.
+
+A second group set the THRESHOLD rather than the window: ten of Crossriver's fourteen cards
+and one of Deepdub's carry a literal `’` in ordinary prose, one or two hits each. They were
+never near the draft's veto (max 2), and they are why the floor is 3 and not 1. A document that IS soup is
+soup from its first characters.
+
+**3. A text that never names its employer is a candidate, never a verdict**
+(`no-company-echo`, the fourth `quality_suspect` suspicion). The other three all ask whether
+a text is *incomplete*; none fires on a complete posting belonging to somebody else. This one
+asks whose, through `company_identity.page_mentions_company(strict=True)` — the
+prose-calibrated primitive, which wants the name's tokens consecutively. `doc_names_role` is
+calibrated on ten-word declarations and over 6,000 characters its employer half degrades to
+"one company word appears anywhere", which `TechBiz Global` passes on the word `global`.
+
+It buys **one model call and the model decides**, which is the only reason it can be
+generous: 38 of the 190 rows the driver walks carry no strict echo and a posting is not obliged to repeat its
+company name (Zipher, Tavily, OTORIO), an acquisition renames it (Questar), an agency never
+had it. A refusal here would be wrong. Employers whose name has no ASCII token are skipped
+outright — a Hebrew-named company can never echo in the ASCII tokenizer, and flagging every
+Hebrew row for ever is a flood, not a signal.
+
+**4. Only a verdict opens the length ratchet** (`_store_text(..., refuted=True)`).
+`_store_text` compares LENGTHS once both sides look like job descriptions, so **a complete
+posting belonging to somebody else is unreplaceable by the shorter true one** — Prisma held
+3,276 characters of the Data-Engineer posting while its own 2,617-character posting sat in
+`scraped_cache.json`, and no rung in this repo could install it. A row the tier **read and
+disowned** (`no-company-echo` + a rejection) is `refuted`: its stored text defends nothing.
+
+Four things keep that from reopening wave A's donor-overwrite defect, and the fourth was
+put there by an adversarial wave on this very diff:
+
+* only a *job description* may take the disowned text's place — blanking the incumbent
+  unconditionally lets every longer string win, including a nav bar, which this function's
+  own refusal test did before the guard was added;
+* only the echo suspicion refutes, so a row the tier called merely *incomplete* still
+  defends its own posting;
+* only a **fresh `not-a-jd`** refutes. `jd_quality` returns `verdict == "complete"`, so
+  `ok is False` also means `partial` — *this role's own posting, truncated* — and refuting
+  on that reopens the 08-31 defect from the other side. `llm_cache.verdict` is a bool and
+  cannot say which "no" it was, so a CACHED rejection re-queues the row and never unlocks
+  the ratchet;
+* and the refutation is **discarded the moment any rung fills the row**. This is the one the
+  wave caught in the shipped code: `cache` and `own-address` donors are gated on the URL
+  (`_own_posting`), not on the document naming the role — only a `copy` runs
+  `doc_names_role` — so a refutation left standing after a fill is a hole a later donor
+  walks into. Reproduced: a 333-character cache donor overwrote a row's own 705-character
+  posting.
+
+So the honest statement of the invariant is narrower than "the donor gate protects it":
+what protects a refuted row is that the hole is open for **one** write and closes behind it.
+
+**What is not delivered.** Guards 3 and 4 are a chain through the LLM tier, and the tier has
+returned **no verdict for two days** (`matched_llm_unavailable=13` of 13 candidates,
+`llm-auth13`): the seam is auth-refused on the runner, which is `infra`'s (HANDOFF Open item
+3). Until that is fixed the echo flags and nothing adjudicates, so the Prisma class self-heals
+**only when a session runs the tier by hand**. The 09-02 morning check is the tripwire.
+
 **The ambiguous ones go to the model** (`jdfill.jd_quality`, operator decision 2026-08-28,
 `docs/decisions/2026-08-28-llm-judges-the-jd.md`, which REVERSES the 08-26 no-LLM decision).
 Keyword rules settle the clear cases; they cannot tell 300 characters of real prose that is a
