@@ -1908,46 +1908,10 @@
   "slug": ""
  },
  {
-  "name": "Viber",
-  "careers_url": "https://il.indeed.com/viewjob?jk=daf0dcdfb64d558d",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "L.Raphael",
-  "careers_url": "http://www.l-raphael.com",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "NVIDIA AI",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-business-intelligence-analyst-at-nvidia-ai-4458885094",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "UNDP Careers",
-  "careers_url": "https://il.linkedin.com/jobs/view/economist-open-to-all-applicants-at-undp-careers-4458280449",
-  "ats": "unknown",
-  "slug": "undpcareers"
- },
- {
   "name": "Sivi-Tech - גיוס איכותי בהייטק",
   "careers_url": "https://il.linkedin.com/jobs/view/enterprise-resources-planning-specialist-at-sivi-tech-%D7%92%D7%99%D7%95%D7%A1-%D7%90%D7%99%D7%9B%D7%95%D7%AA%D7%99-%D7%91%D7%94%D7%99%D7%99%D7%98%D7%A7-4458848938",
   "ats": "unknown",
   "slug": "sivanpeleg"
- },
- {
-  "name": "Strauss Group",
-  "careers_url": "https://il.linkedin.com/jobs/view/risk-analyst-at-strauss-group-4457255393",
-  "ats": "unknown",
-  "slug": "strauss-group"
- },
- {
-  "name": "Blink",
-  "careers_url": "https://il.linkedin.com/jobs/view/customer-retention-manager-at-blink-4458720533",
-  "ats": "unknown",
-  "slug": "blinkinvest"
  },
  {
   "name": "Empire Economic Consulting",
@@ -1968,12 +1932,6 @@
   "slug": "limorcareer-limor-malkieli"
  },
  {
-  "name": "WellyBox",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-marketing-growth-at-wellybox-4457225492",
-  "ats": "unknown",
-  "slug": "wellybox"
- },
- {
   "name": "Minute",
   "careers_url": "https://il.linkedin.com/jobs/view/programmatic-video-monetization-manager-at-minute-4448875948",
   "ats": "unknown",
@@ -1986,36 +1944,6 @@
   "slug": "kolzchut"
  },
  {
-  "name": "EPAM Systems",
-  "careers_url": "https://il.linkedin.com/jobs/view/data-ops-team-leader-at-epam-systems-4459711668",
-  "ats": "unknown",
-  "slug": "epam-systems"
- },
- {
-  "name": "Apester",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-apester-4457738960",
-  "ats": "unknown",
-  "slug": "apester"
- },
- {
-  "name": "YIT - Yedioth Tech",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-yit-yedioth-tech-4459676157",
-  "ats": "unknown",
-  "slug": "yit---yedioth-information-technology"
- },
- {
-  "name": "HUNTHEAD",
-  "careers_url": "https://il.linkedin.com/jobs/view/pmo-%D7%95%D7%90%D7%A0%D7%9C%D7%99%D7%A1%D7%98-%D7%99%D7%AA-%D7%A2%D7%A1%D7%A7%D7%99-%D7%AA-%D7%92-%D7%95%D7%A0%D7%99%D7%95%D7%A8-at-hunthead-4459772623",
-  "ats": "unknown",
-  "slug": "hunthead"
- },
- {
-  "name": "Metriko",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-marketing-associate-ai-native-retail-at-metriko-4457298393",
-  "ats": "unknown",
-  "slug": "https-www.linkedin.com-company-34970857"
- },
- {
   "name": "Spikerz Security",
   "careers_url": "https://il.linkedin.com/jobs/view/senior-product-designer-at-spikerz-security-4458846628",
   "ats": "unknown",
@@ -2026,24 +1954,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-pick-hr-4458863208",
   "ats": "unknown",
   "slug": "pick-hr"
- },
- {
-  "name": "Kela Technologies",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-program-lead-at-kela-technologies-4461076550",
-  "ats": "unknown",
-  "slug": "kela-technologies"
- },
- {
-  "name": "SkyGini",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-designer-at-skygini-4456572966",
-  "ats": "unknown",
-  "slug": "skygini"
- },
- {
-  "name": "Guideline Group",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-lead-at-guideline-group-4459857934",
-  "ats": "unknown",
-  "slug": "kav-manche-group"
  },
  {
   "name": "Webiks",
@@ -2064,34 +1974,10 @@
   "slug": "marssec"
  },
  {
-  "name": "Voodoo",
-  "careers_url": "https://il.linkedin.com/jobs/view/head-of-growth-at-voodoo-4404088655",
-  "ats": "unknown",
-  "slug": "voodoo.io"
- },
- {
-  "name": "Samsung Semiconductor",
-  "careers_url": "https://il.linkedin.com/jobs/view/machine-learning-engineer-at-samsung-semiconductor-4434983896",
-  "ats": "unknown",
-  "slug": "samsungsemiconductor"
- },
- {
-  "name": "COMMIT Offshore",
-  "careers_url": "https://il.linkedin.com/jobs/view/cyber-security-analyst-at-commit-offshore-4455880265",
-  "ats": "unknown",
-  "slug": "commitoffshore"
- },
- {
   "name": "BTC searching",
   "careers_url": "https://il.linkedin.com/jobs/view/senior-algorithm-engineer-at-btc-searching-4461049614",
   "ats": "unknown",
   "slug": "btc-searching"
- },
- {
-  "name": "NBN Connect",
-  "careers_url": "https://il.linkedin.com/jobs/view/computer-vision-engineer-at-nbn-connect-4459848203",
-  "ats": "unknown",
-  "slug": "nbn-connect"
  },
  {
   "name": "Ormat Technologies, Inc.",
@@ -2106,12 +1992,6 @@
   "slug": "delta-galil-usa"
  },
  {
-  "name": "Sysnet Group",
-  "careers_url": "https://il.linkedin.com/jobs/view/talent-acquisition-specialist-at-sysnet-group-4458765428",
-  "ats": "unknown",
-  "slug": "sysnet-group"
- },
- {
   "name": "One Song - שיר אחד",
   "careers_url": "https://il.linkedin.com/jobs/view/%D7%AA%D7%97%D7%A7%D7%99%D7%A8%D7%9F-%D7%99%D7%AA-%D7%9C%D7%9B%D7%90%D7%9F-%D7%97%D7%93%D7%A9%D7%95%D7%AA-at-one-song-%D7%A9%D7%99%D7%A8-%D7%90%D7%97%D7%93-4461049985",
   "ats": "unknown",
@@ -2124,52 +2004,16 @@
   "slug": "tata-consultancy-services"
  },
  {
-  "name": "MotoRad Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/priority-developer-at-motorad-ltd-4460895254",
-  "ats": "unknown",
-  "slug": "motorad"
- },
- {
   "name": "Synapse IONM",
   "careers_url": "https://il.linkedin.com/jobs/view/neurophysiologist-at-synapse-ionm-4459745117",
   "ats": "unknown",
   "slug": "synapse-ionm"
  },
  {
-  "name": "Taglit Group A.S",
-  "careers_url": "https://il.linkedin.com/jobs/view/human-resources-manager-at-taglit-group-a-s-4457765342",
-  "ats": "unknown",
-  "slug": "taglit-group-as"
- },
- {
-  "name": "Teva Pharmaceuticals",
-  "careers_url": "https://il.linkedin.com/jobs/view/%D7%98%D7%9B%D7%A0%D7%90%D7%99-%D7%AA-%D7%90%D7%95%D7%98%D7%95%D7%9E%D7%A6%D7%99%D7%94-at-teva-pharmaceuticals-4461037057",
-  "ats": "unknown",
-  "slug": "teva-pharmaceuticals"
- },
- {
-  "name": "שדות – תכנון וייעוץ סביבתי Sadot – Environmental Planning and Consulting",
-  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%AA%D7%9B%D7%A0-%D7%A0%D7%AA-%D7%A1%D7%91%D7%99%D7%91%D7%94-at-%D7%A9%D7%93%D7%95%D7%AA-%E2%80%93-%D7%AA%D7%9B%D7%A0%D7%95%D7%9F-%D7%95%D7%99%D7%99%D7%A2%D7%95%D7%A5-%D7%A1%D7%91%D7%99%D7%91%D7%AA%D7%99-sadot-%E2%80%93-environmental-planning-and-consulting-4457744854",
-  "ats": "unknown",
-  "slug": "sadot-environmental-projects"
- },
- {
-  "name": "Johnson & Johnson Innovative Medicine",
-  "careers_url": "https://il.linkedin.com/jobs/view/pharmacovigilance-at-johnson-johnson-innovative-medicine-4458788388",
-  "ats": "unknown",
-  "slug": "jnjinnovativemedicine"
- },
- {
   "name": "PayMe",
   "careers_url": "https://il.linkedin.com/jobs/view/customer-support-specialist-at-payme-4458850949",
   "ats": "unknown",
   "slug": "payme-io"
- },
- {
-  "name": "Massivit 3D Printing Technologies Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/application-engineer-at-massivit-3d-printing-technologies-ltd-4459175909",
-  "ats": "unknown",
-  "slug": "massivit3d"
  },
  {
   "name": "Pazu Games",
@@ -2184,52 +2028,16 @@
   "slug": "horizon-technologies-ltd-"
  },
  {
-  "name": "Herzliya Medical Center - הרצליה מדיקל סנטר",
-  "careers_url": "https://il.linkedin.com/jobs/view/embryologist-at-herzliya-medical-center-%D7%94%D7%A8%D7%A6%D7%9C%D7%99%D7%94-%D7%9E%D7%93%D7%99%D7%A7%D7%9C-%D7%A1%D7%A0%D7%98%D7%A8-4418360667",
-  "ats": "unknown",
-  "slug": "herzliya-medical-center"
- },
- {
-  "name": "Ceva, Inc.",
-  "careers_url": "https://il.linkedin.com/jobs/view/c%2B%2B-software-engineer-%E2%80%93-ai-dsp-processor-simulators-at-ceva-inc-4460897372",
-  "ats": "unknown",
-  "slug": "ceva"
- },
- {
   "name": "Veracity",
   "careers_url": "https://il.linkedin.com/jobs/view/splunk-implementation-specialist-at-veracity-4458868031",
   "ats": "unknown",
   "slug": "veracity"
  },
  {
-  "name": "Discreet Company",
-  "careers_url": "https://il.linkedin.com/jobs/view/help-desk-team-lead-at-discreet-company-4442333681",
-  "ats": "unknown",
-  "slug": "discreet-company"
- },
- {
-  "name": "Faye",
-  "careers_url": "https://il.linkedin.com/jobs/view/fp-a-director-at-faye-4458725938",
-  "ats": "unknown",
-  "slug": "fayetravelinsurance"
- },
- {
-  "name": "Gravity Forms",
-  "careers_url": "https://il.linkedin.com/jobs/view/support-engineer-at-gravity-forms-4458678796",
-  "ats": "unknown",
-  "slug": "gravityforms"
- },
- {
   "name": "Wizzo",
   "careers_url": "https://il.linkedin.com/jobs/view/junior-full-stack-engineer-at-wizzo-4458875686",
   "ats": "unknown",
   "slug": "wizzo-software-ltd"
- },
- {
-  "name": "SeerT - Building Your Team",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-planner-at-seert-building-your-team-4457221606",
-  "ats": "unknown",
-  "slug": "seert"
  },
  {
   "name": "Calanit by one",
@@ -2250,12 +2058,6 @@
   "slug": "zealotcyber"
  },
  {
-  "name": "University of Notre Dame",
-  "careers_url": "https://il.linkedin.com/jobs/view/rector-tantur-ecumenical-institute-at-university-of-notre-dame-4421156929",
-  "ats": "unknown",
-  "slug": ""
- },
- {
   "name": "Hillcrest Labs, acquired by CEVA",
   "careers_url": "https://il.linkedin.com/jobs/view/c%2B%2B-software-engineer-%E2%80%93-ai-dsp-processor-simulators-at-hillcrest-labs-acquired-by-ceva-4458841644",
   "ats": "unknown",
@@ -2268,58 +2070,16 @@
   "slug": "superfunnel-ai"
  },
  {
-  "name": "Level App",
-  "careers_url": "https://il.linkedin.com/jobs/view/digital-marketing-specialist-at-level-app-4458829422",
-  "ats": "unknown",
-  "slug": "levelapptech"
- },
- {
   "name": "RealAState.AI",
   "careers_url": "https://il.linkedin.com/jobs/view/we%E2%80%99re-hiring-social-media-growth-manager-realastate-at-realastate-ai-4461041774",
   "ats": "unknown",
   "slug": "realastate-ai"
  },
  {
-  "name": "JNS (Jerusalem News Syndicate)",
-  "careers_url": "https://il.linkedin.com/jobs/view/director-of-growth-marketing-at-jns-jerusalem-news-syndicate-4459666188",
-  "ats": "unknown",
-  "slug": "jns-org"
- },
- {
   "name": "GNS - Cloud Solutions",
   "careers_url": "https://il.linkedin.com/jobs/view/owned-media-content-manager-at-gns-cloud-solutions-4458898817",
   "ats": "unknown",
   "slug": "gns-cloud-of-solutions"
- },
- {
-  "name": "Bishvil Hazahav",
-  "careers_url": "https://il.linkedin.com/jobs/view/digital-marketing-manager-at-bishvil-hazahav-4363189740",
-  "ats": "unknown",
-  "slug": "bishvil-hazahav"
- },
- {
-  "name": "NATASHA DENONA IL",
-  "careers_url": "https://il.linkedin.com/jobs/view/planning-specialist-at-natasha-denona-il-4461066954",
-  "ats": "unknown",
-  "slug": "natasha-denona-il"
- },
- {
-  "name": "Upstep Custom Orthotics",
-  "careers_url": "https://il.linkedin.com/jobs/view/email-marketing-retention-manager-hands-on-at-upstep-at-upstep-custom-orthotics-4456910460",
-  "ats": "unknown",
-  "slug": "upstep-orthotics"
- },
- {
-  "name": "NeaMob Tech",
-  "careers_url": "https://il.linkedin.com/jobs/view/campaign-manager-google-ads-at-neamob-tech-4461072443",
-  "ats": "unknown",
-  "slug": "neamob"
- },
- {
-  "name": "GetsMine",
-  "careers_url": "https://il.linkedin.com/jobs/view/web-design-development-partner-hebrew-at-getsmine-4461040893",
-  "ats": "unknown",
-  "slug": "getsmine"
  },
  {
   "name": "Natick Public Works Dept",

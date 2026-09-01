@@ -164,24 +164,26 @@
   "scanned": 1102
  },
  "queue": {
-  "alarm": "queue GREW by 150 since 2026-08-30 -- the drain is not keeping pace with intake",
-  "date": "2026-08-31",
-  "delta": 150,
-  "direction": "GROWING",
-  "drain_alarm": "queue drain IDLE: 169 names selectable and 0 searched in the last 2 days -- a disarmed key, an exhausted DEEP_BD_SEARCH_CAP or a dead shard all look like this",
-  "finished_at": "2026-08-31T00:55:37+00:00",
-  "new_intake": 169,
-  "owed": 369,
-  "retired": 322,
-  "retired_in_queue": 0,
-  "rows_from_queue": 520,
-  "searched_recently": 0,
-  "selectable": 169,
+  "answered_on_disk": 1,
+  "date": "2026-09-01",
+  "delta": -369,
+  "direction": "falling",
+  "empty_search_share": 0.052,
+  "finished_at": "2026-09-01T02:23:37+00:00",
+  "new_intake": 0,
+  "on_cadence": 361,
+  "owed": 0,
+  "retired": 328,
+  "retired_in_queue": 1,
+  "rows_from_queue": 585,
+  "searched_recently": 229,
+  "selectable": 0,
   "stuck": 0,
+  "unsettled": 361,
   "unverified_rows": 0
  },
  "repair": {
-  "date": "2026-08-31",
-  "finished_at": "2026-08-31T01:18:21+00:00"
+  "date": "2026-09-01",
+  "finished_at": "2026-09-01T02:48:19+00:00"
  }
 }

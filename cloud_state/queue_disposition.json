@@ -3351,7 +3351,11 @@
   "why": "blender.global is BLender, a real Israeli embedded-finance/lending company (the intake name \"Blender Loans\" matches its loans business). A 12-path careers probe of its own domain returned nothing, and no machine-readable job board was found."
  },
  "Blink": {
-  "date": "2026-08-31",
+  "date": "2026-09-01",
+  "verdict": "settled-by-a-rung",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -3384,11 +3388,7 @@
      "already-a-row"
     ]
    ]
-  },
-  "other_name": "",
-  "raw_verdict": "already-a-row",
-  "verdict": "settled-by-a-rung",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+  }
  },
  "Blinkinvest": {
   "date": "2026-08-30",
@@ -5564,10 +5564,14 @@
   "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
  },
  "Ceva, Inc.": {
-  "date": "2026-08-31",
+  "date": "2026-09-01",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Ceva",
+  "why": "the registry row 'Ceva' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "matched_on": "name-normalised",
    "row": "Ceva",
+   "matched_on": "name-normalised",
    "tried": [
     [
      "hunt",
@@ -5580,11 +5584,7 @@
      "https://www.comeet.com/jobs/ceva/76.005/sales-operations-specialist/DE.B67"
     ]
    ]
-  },
-  "other_name": "Ceva",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "the registry row 'Ceva' is this employer under another spelling (name-normalised)"
+  }
  },
  "Cfo Co": {
   "date": "2026-08-30",
@@ -6626,16 +6626,22 @@
   "why": "\"ELAD HR\" is the HR/recruitment arm of Elad Software Systems; its careers site is careers.eladsoft.com, listing Elad's own openings — a division/brand name rather than a separate employer."
  },
  "EPAM Systems": {
-  "date": "2026-08-31",
-  "evidence": {
-   "matched_on": "name-normalised",
-   "row": "EPAM Systems, Inc.",
-   "tried": []
-  },
-  "other_name": "EPAM Systems, Inc.",
-  "raw_verdict": "",
+  "date": "2026-09-01",
   "verdict": "covered-by-row",
-  "why": "the registry row 'EPAM Systems, Inc.' is this employer under another spelling (name-normalised)"
+  "raw_verdict": "",
+  "other_name": "EPAM Systems, Inc.",
+  "why": "the registry row 'EPAM Systems, Inc.' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "EPAM Systems, Inc.",
+   "matched_on": "name-normalised",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://jobs.welcome.epam.in/jobs"
+    ]
+   ]
+  }
  },
  "ERGO NEXT Insurance": {
   "date": "2026-08-30",
@@ -6944,10 +6950,14 @@
   "why": "Evidence shows Fast Corporation, LTD is a real IT company (fastcorporate.com, PC app store, AI/ML), but the only listing is a work.ua aggregator profile with 0 vacancies, and the other search hits are unrelated firms (Fast Technologies, Fast Track, Fast Enterprises). The careers probe was run agains"
  },
  "Faye": {
-  "date": "2026-08-31",
+  "date": "2026-09-01",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "withfaye",
+  "why": "a rung found this name's board and the registry row 'withfaye' already reads it (matched on comeet-uid, never on the name)",
   "evidence": {
-   "matched_on": "comeet-uid",
    "row": "withfaye",
+   "matched_on": "comeet-uid",
    "tried": [
     [
      "hunt",
@@ -6960,11 +6970,7 @@
      "https://www.comeet.com/jobs/withfaye/87.00a"
     ]
    ]
-  },
-  "other_name": "withfaye",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'withfaye' already reads it (matched on comeet-uid, never on the name)"
+  }
  },
  "Finagra": {
   "date": "2026-08-31",
@@ -9378,16 +9384,22 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Gravity Forms": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-09-01",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Gravityforms",
+  "why": "the registry row 'Gravityforms' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "dedup_key": "dup-url",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
-  },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
+   "row": "Gravityforms",
+   "matched_on": "name-normalised",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.gravityforms.com/careers/"
+    ]
+   ]
+  }
  },
  "Gravityforms": {
   "board_url_if_any": "",
@@ -9737,10 +9749,14 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Guideline Group": {
-  "date": "2026-08-31",
+  "date": "2026-09-01",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Guideline",
+  "why": "the registry row 'Guideline' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "matched_on": "name-normalised",
    "row": "Guideline",
+   "matched_on": "name-normalised",
    "tried": [
     [
      "hunt",
@@ -9753,11 +9769,7 @@
      "https://www.comeet.com/jobs/guideline/89.009"
     ]
    ]
-  },
-  "other_name": "Guideline",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "the registry row 'Guideline' is this employer under another spelling (name-normalised)"
+  }
  },
  "Gytpol": {
   "date": "2026-08-30",
@@ -13186,16 +13198,27 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kela Technologies": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-09-01",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "KELA",
+  "why": "the registry row 'KELA' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "dedup_key": "dup-name",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
-  },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string"
+   "row": "KELA",
+   "matched_on": "name-normalised",
+   "tried": [
+    [
+     "hunt",
+     "found",
+     "https://www.kelacyber.com/careers/"
+    ],
+    [
+     "search-llm",
+     "found",
+     "https://www.comeet.com/jobs/kela/2A.004"
+    ]
+   ]
+  }
  },
  "Ken Hator Construction": {
   "date": "2026-08-30",
@@ -20717,10 +20740,14 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-08-31",
+  "date": "2026-09-01",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Strauss Water Ltd. שטראוס מים",
+  "why": "a rung found this name's board and the registry row 'Strauss Water Ltd. שטראוס מים' already reads it (matched on url, never on the name)",
   "evidence": {
-   "matched_on": "url",
    "row": "Strauss Water Ltd. שטראוס מים",
+   "matched_on": "url",
    "tried": [
     [
      "own-site",
@@ -20738,11 +20765,7 @@
      "https://www.strauss-group.co.il/career/"
     ]
    ]
-  },
-  "other_name": "Strauss Water Ltd. שטראוס מים",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Strauss Water Ltd. שטראוס מים' already reads it (matched on url, never on the name)"
+  }
  },
  "Super Group (SGHC)": {
   "board_url_if_any": "",
@@ -21045,7 +21068,11 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Teva Pharmaceuticals": {
-  "date": "2026-08-31",
+  "date": "2026-09-01",
+  "verdict": "settled-by-a-rung",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -21090,11 +21117,7 @@
      "already-a-row"
     ]
    ]
-  },
-  "other_name": "",
-  "raw_verdict": "already-a-row",
-  "verdict": "settled-by-a-rung",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+  }
  },
  "Texas Instruments Europe": {
   "date": "2026-08-30",
@@ -23304,7 +23327,7 @@
   }
  },
  "Level App": {
-  "date": "2026-08-31",
+  "date": "2026-09-01",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -24031,6 +24054,83 @@
      "found"
     ]
    ]
+  }
+ },
+ "L.Raphael": {
+  "date": "2026-09-01",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Voodoo": {
+  "date": "2026-09-01",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "MotoRad Ltd.": {
+  "date": "2026-09-01",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Massivit 3D Printing Technologies Ltd.": {
+  "date": "2026-09-01",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "University of Notre Dame": {
+  "date": "2026-09-01",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "NeaMob Tech": {
+  "date": "2026-09-01",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "GetsMine": {
+  "date": "2026-09-01",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
   }
  }
 }

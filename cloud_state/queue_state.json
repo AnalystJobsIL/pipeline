@@ -43709,5 +43709,701 @@
   ],
   "last": "2026-08-31",
   "verdict": "found"
+ },
+ "קבוצת שיבולת": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no-search-results"
+ },
+ "Empire Economic Consulting": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://careers.oxfordeconomics.com"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "כל זכות (Kol Zchut)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Quicklizard": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://www.comeet.com/jobs/quicklizard/C9.004"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Delta Galil Industries": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://www.comeet.com/jobs/deltagalil/78.000"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "PayMe": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://payme.io/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Wizzo": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Hillcrest Labs, acquired by CEVA": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.ceva-ip.com/career"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Natick Public Works Dept": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.natickma.gov/Jobs.aspx"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Naya Technologies": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.naya-tech.co.il/career"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Neema Official": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://www.neema.co.il/en/platform/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Nesher Israel Cement Enterprises Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.nesher.co.il/en/career"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Netanyamuni": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no candidate was this company's live page"
+ },
+ "New Feldman": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.feldmanauto.com/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Next Legacy Partners": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://jobs.nextlegacy.com/jobs"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Majestic Labs": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://www.comeet.com/jobs/majesticlabs/AA.004"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.clalbit.co.il/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Spikerz Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://www.spikerz.com/careers"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Mars Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://careers.mars.com/global/en"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "One Song - שיר אחד": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Pazu Games": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://pazugames.com/careers"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Calanit by one": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://calanit.co.il/משרות/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "SuperFunnel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.facebook.com/groups/coller.tau.ac.il.career/posts/4174251919453922/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Native Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://www.native.security/careers"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Nayacore": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no-search-results"
+ },
+ "Neo AI Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Ness Ses": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.ness-tech.co.il/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Netivei Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Newcept Technologies": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://newcept.com/career/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Cust2Mate - A2Z (Nasdaq:AZ / FRA - WKN: A3CSQ )": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://cust2mate.com/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "ICON Plc": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://careers.iconplc.com/jobs"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "limorcareer/limor malkieli": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "PICK HR": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://pickpeak.co/en/career/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "BTC searching": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Tata Consultancy Services": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Horizon Technologies LTD.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://horizontech.co.il/שירותים/קריירה/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Native": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no-search-results"
+ },
+ "RealAState.AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Navina AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://www.navina.ai/careers"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Ncs Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://careers.in.ncs-i.com/ncsi/jobslist"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Neopharm Medical": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://neopharmgroup.co.il/pages/career-page"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Nestle S A": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.nestlejobs.com/job-search"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Netline Communications Technologies Nct Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://netlinetech.com/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Newcom Insurance": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://newcomglobal.com/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Sivi-Tech - גיוס איכותי בהייטק": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Minute": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://minute-ly.com/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Webiks": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://webiks.com/careers"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Ormat Technologies, Inc.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://careers.ormat.com/OrmatGlobal/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Synapse IONM": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://synapsesiom.com/careers"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Veracity": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://veracity-us.com/career"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Zealot": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://zealot.applytojob.com/apply"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "GNS - Cloud Solutions": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://www.gns.cloud/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Naviteq Solutions": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://www.naviteq.io/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Needtechlabs": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Neotech Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://www.neotech.com/about-neo-tech/careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
+ },
+ "Netafim Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-01",
+    "url": "https://careers.netafim.com"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "found"
+ },
+ "Netriseweb": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-01",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Nexa Group Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-01",
+    "url": "https://nexateknoloji.com/culture-and-careers/"
+   }
+  ],
+  "last": "2026-09-01",
+  "verdict": "documented"
  }
 }
