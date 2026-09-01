@@ -277,7 +277,7 @@ def load(path):
     return records, "ok", bad
 
 
-_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description", "purge_reason", "withdraw_reason", "retracted_on", "purged_on"]
+_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description", "purge_reason", "withdraw_reason", "retracted_on", "purged_on", "held_since"]
 _LIST_FIELDS = ("sources", "seen_ids", "episodes", "reposts")
 _DICT_FIELDS = ("sent", "tags", "attribution", "class")
 
@@ -484,6 +484,73 @@ def same_posting(a, b):
     return bool(ua) and ua == ub
 
 
+# A description long enough that byte-identical text under two employer names is evidence
+# of one posting rather than a coincidence of boilerplate. Below it, an identical string is
+# an "apply here" stub or a cookie banner two boards happen to share — and a weak row is
+# excluded from the dataset by `text_quality` anyway, so folding it buys nothing.
+SAME_TEXT_MIN = 200
+
+
+def _text_key(x):
+    """The identity of a job's or a record's description text, or ''.
+
+    A RECORD's `desc_sha1` is taken as stored and NEVER re-hashed. The in-memory
+    `description` is not the record's text, it is a COPY of it that may not be there:
+    `flush` strips it, and `_open_sync` seeds it from `roles_text.jsonl`, so on a frozen or
+    corrupt text day every record's description is `""` while `desc_sha1` still names its
+    text exactly. Re-hashing would key those records on the hash of nothing and quietly
+    stop pairing anything. A per-run JOB has no sha1 and is hashed here. The two kinds
+    never meet inside one `_groups` call — `_resolve_claims` groups jobs, `sweep_store`
+    groups records — so the key spaces cannot collide."""
+    if not isinstance(x, dict):
+        return ""
+    sha, dlen = x.get("desc_sha1"), x.get("desc_len")
+    if sha and isinstance(dlen, int) and dlen >= SAME_TEXT_MIN:
+        return str(sha)
+    if sha:                     # a stored record with no usable length is not evidence
+        return ""
+    desc = x.get("description")
+    if isinstance(desc, str) and len(desc) >= SAME_TEXT_MIN:
+        return _sha1(desc)
+    return ""
+
+
+def _same_text_posting(a, b):
+    """One posting listed under two employer names, proven by its TEXT — the arm that no
+    id, url or posting key can reach.
+
+    `Nestlé | אנליסט/ית אפקטיביות מסחרית … אסם סחר` and `אסם | <the same title>` sat on two
+    Indeed `jk=` addresses carrying byte-identical 971-character descriptions (the text
+    names אסם twice and Nestlé never; Osem is Nestlé's Israeli subsidiary). Both urls are
+    aggregators, so `_pk` is '' for both, the seen_ids are two different Indeed ids and the
+    raw urls differ: the pair was in NONE of `_groups`' three evidence buckets and was
+    never even pair-tested, publishing one opening as two roles.
+
+    Deliberately narrower than `same_posting`, and used ONLY by the cross-company arm:
+
+      - byte-identical text, never a normalization. Mobileye's `Business analyst` and
+        `Forecast analyst` are two REAL openings whose 2,835-character texts differ in
+        exactly 8 characters (offsets 35-44); a casefold, whitespace-collapse or n-gram
+        comparator folds them and deletes a live role. sha1 equality separates them.
+      - substantial text (`SAME_TEXT_MIN`) — boilerplate is not evidence.
+      - normalized titles EQUAL, not merely agreeing: `_titles_agree`'s location-glue and
+        the seniority bypass both exist for one address we can see, and here we cannot.
+      - same-company pairs never reach this (the caller's arm refuses them), so a careers
+        PAGE captured as several rows' description — one employer, many titles, BACKLOG
+        370 — stays exactly as unfolded as it is today."""
+    ka, kb = _text_key(a), _text_key(b)
+    if not ka or ka != kb:
+        return False
+    ta, tb = _store._norm(a.get("title")), _store._norm(b.get("title"))
+    if not ta:
+        # a title that normalizes away (mojibake, CJK) is compared raw, as `_titles_agree`
+        # does — never waved through
+        ra = " ".join(str(a.get("title") or "").split()).casefold()
+        rb = " ".join(str(b.get("title") or "").split()).casefold()
+        return bool(ra) and ra == rb
+    return ta == tb
+
+
 def _seniority_pole(job):
     """'junior' / 'senior' / '' — which pole the title's bare seniority words sit on."""
     ws = set(_store._norm(job.get("title")).split())
@@ -563,6 +630,49 @@ def names_in_url(company, url):
     segs = _url_segments(url)
     toks = _identity_tokens(company)
     return any(s == t or (len(t) >= 4 and s.startswith(t)) for t in toks for s in segs)
+
+
+# Punctuation a sentence puts AROUND a name, never inside one: "We are Meta." tokenizes as
+# `meta.` and would miss on exact equality, which is the whole rule below. Edges only —
+# `ex.co`, `at&t` and `d-id` keep their insides.
+_EDGE_PUNCT = ".,;:!?()[]{}<>\"'`«»…‘’“”-–—*|/\\"
+
+
+def _bare_token(word):
+    return word.strip(_EDGE_PUNCT)
+
+
+def _name_in_text(company, job):
+    """Does the POSTING name this company — every word of the name, as a whole word of the
+    title or the description?
+
+    The free attribution signal a text carries, and the only one an aggregator pair has:
+    two Indeed addresses, no tenant slug, no shared id. The אסם posting opens
+    "קבוצת אסם סחר מגייסת…" and names אסם twice; Nestlé appears nowhere in it, and the
+    registry agrees (`אסם` active, both `Nestle` rows parked). Three rules, each bought
+    with a defect:
+
+      - RAW whitespace tokens, casefolded — never `_identity_tokens`, whose `len(t) >= 3`
+        filter returns an EMPTY list for **16 registry names and 2 role companies today**
+        (`HP`, `F5`, `3M`, `EY`, `AT&T`, `D-ID`, `DT`…), and `all()` over an empty set is
+        vacuously True: free evidence handed to exactly the names least able to prove
+        anything — the `identity_ok` hole that vouched for a newspaper (BACKLOG 510). An
+        empty token set is refused outright here.
+        The conservative miss that buys: a name the posting spells differently (`Nestlé`
+        vs `Nestle`) reads as no evidence rather than as evidence. A miss costs today's
+        behaviour; a false match crowns the wrong employer.
+      - EVERY token must appear, exactly. `names_in_url`'s any-token prefix rule is a
+        measured NO-GO for text: `names_in_url("Bright Data", ".../fetcherr/data-analyst/")`
+        is True because `data` matches the JOB TITLE (BACKLOG 260). One token of a
+        two-word brand is a coincidence; `metadata` is not `Meta`.
+      - the title counts as well as the body: `…ליחידת ה CDT אסם סחר` names the employer in
+        the title alone, which is where a short Indeed capture often puts it."""
+    toks = [t for t in (_bare_token(w) for w in str(company or "").casefold().split()) if t]
+    if not toks:
+        return False
+    hay = {_bare_token(w) for w in (str(job.get("title") or "") + " "
+                                    + str(job.get("description") or "")).casefold().split()}
+    return all(t in hay for t in toks)
 
 
 def _source_rank(job):
@@ -1046,7 +1156,8 @@ class Ledger:
         def pair_ok(a_, b_):
             if twins:
                 return a_.get("company") == b_.get("company") and same_role_twin(a_, b_, weak)
-            return a_.get("company") != b_.get("company") and same_posting(a_, b_)
+            return (a_.get("company") != b_.get("company")
+                    and (same_posting(a_, b_) or _same_text_posting(a_, b_)))
 
         buckets = {}
         for i, j in enumerate(jobs):
@@ -1060,6 +1171,15 @@ class Ledger:
             pk = _pk(j.get("url"))
             if pk:
                 buckets.setdefault(("pk", pk), []).append(i)
+            # and the TEXT, cross-company only: the Nestlé/אסם pair shares no id, no url
+            # and no posting key (two aggregator addresses), so its only evidence is the
+            # byte-identical description `_same_text_posting` reads. Gated to the
+            # cross-company pass because `same_role_twin` cannot reach the text arm and a
+            # same-company sha bucket would only pair-test rows for nothing.
+            if not twins:
+                tk = _text_key(j)
+                if tk:
+                    buckets.setdefault(("sha", tk), []).append(i)
         for idxs in buckets.values():
             for x in range(len(idxs)):
                 for y in range(x + 1, len(idxs)):
@@ -1118,8 +1238,10 @@ class Ledger:
              evidence outranks incumbency, or a pre-guard wrong name would be sticky forever
           2. else the company already holding the posting in the store (no flip-flop)
           3. else a native ATS row over a scrape over a discovery card (`_source_rank`)
-          4. else not the "X Israel" site form, not a lowercase stub row ("kornit"), then the
-             shortest identity (the parent), then A-Z"""
+          4. else the company the POSTING ITSELF names (`_name_in_text`) — the only
+             evidence an aggregator pair carries, and the one that decides Nestlé/אסם
+          5. else not the "X Israel" site form, not a lowercase stub row ("kornit"), then
+             the shortest identity (the parent), then A-Z"""
         from .firmographics import identity_key
 
         def rank(i):
@@ -1128,8 +1250,13 @@ class Ledger:
             return (0 if names_in_url(name, j.get("url")) else 1,
                     0 if _store.merge_key(j) in held else 1,
                     _source_rank(j),
+                    0 if _name_in_text(name, j) else 1,
                     1 if re.search(r"\bisrael\b", name.lower()) else 0,
-                    1 if name == name.lower() else 0,
+                    # a lowercase stub row ("kornit" beside "Kornit Digital") — but only
+                    # where case EXISTS. Hebrew, Arabic and CJK are caseless, so
+                    # `name == name.lower()` is true of every one of them and demoted
+                    # `אסם` under a parked `Nestlé` on the pair this key never judged.
+                    1 if (name == name.lower() and name != name.upper()) else 0,
                     len(identity_key(name)),
                     name)
         return min(idxs, key=rank)
@@ -1800,11 +1927,16 @@ class Ledger:
             weak = counts.get("text:snippet", 0) + counts.get("text:none", 0)
             wk = (f" · weak text {weak} ({counts.get('text:snippet', 0)} snippet, "
                   f"{counts.get('text:none', 0)} none)") if weak else ""
-            blocked = sum(v for k, v in counts.items() if k.startswith("blocked:"))
-            if blocked:
-                wk += (f" · blocked {blocked}"
-                       + (f" ({counts['blocked_excluded']} excluded)"
-                          if counts.get("blocked_excluded") else ""))
+            # weak text, split by WHY — a fetch bug and a drained enrich queue look the
+            # same in one number. `structural` is jd-text's donors-exhausted pile;
+            # `pending` is the queue they drain nightly, and a spike in it is the shape a
+            # broken fetch makes.
+            structural = sum(v for k, v in counts.items() if k.startswith("blocked:"))
+            pending = counts.get("pending", 0)
+            if structural or pending:
+                gone = counts.get("blocked_excluded", 0) + counts.get("pending_excluded", 0)
+                wk += (f" · weak {structural + pending} ({structural} structural, "
+                       f"{pending} pending)" + (f" · {gone} excluded" if gone else ""))
             unm = counts.get("text:unmeasured", 0)
             if unm:
                 # a collapsed measurement must never read as an IMPROVEMENT: on a stale or
@@ -2290,17 +2422,49 @@ def _company_earliest(records):
     return out
 
 
-# mark | exclude — what the dataset DOES about a structurally blocked weak-text row.
-# The DERIVATION (`_blocker`) is policy-free on purpose (the orchestrator's condition on
-# the 2026-08-31 contract): this ONE constant is the policy, never the derivation, never
-# the column. "exclude" since 2026-09-01 ON THE OPERATOR'S RULING ("I want there to be no
-# role in the UI and in the db without description. its useless"), superseding the
-# 2026-08-31 snippet-rows MARK decision — the record carries the supersession. An
-# excluded row leaves WITH its reason in the meta counts, never silently; a PENDING row
-# (weak text, no structural signal — the enrich simply has not filled it yet) carries no
-# blocker and stays; and because the blocker is derived per-export, a row is re-admitted
+# mark | exclude — what the dataset DOES about a weak-text row.
+# The DERIVATION (`text_quality`, `_blocker`) is policy-free on purpose (the orchestrator's
+# condition on the 2026-08-31 contract): this ONE constant is the policy, never the
+# derivation, never the column. "exclude" since 2026-09-01 ON THE OPERATOR'S RULING ("I
+# want there to be no role in the UI and in the db without description. its useless"),
+# superseding the 2026-08-31 snippet-rows MARK decision — the record carries the
+# supersession. Widened the same day, on the same ruling read as written: it covered only
+# a STRUCTURALLY blocked row until the 09-01 digest published two fresh PENDING ones
+# (Madanes `Manager Bi`, no text; בנק דיסקונט, a search snippet) to the csv, the board and
+# the mail. Now every weak row leaves — with its reason counted in the meta, never
+# silently — and because the judgement is derived per-export, a row is re-admitted
 # automatically the moment usable text lands. The archive keeps history either way.
 BLOCKED_POLICY = "exclude"
+
+
+_NO_LENGTH = object()   # "I hold the only copy of this text", not "its length is unknown"
+
+
+def text_quality(desc, dlen=_NO_LENGTH):
+    """`jd` | `snippet` | `none` | `''` — is this row's description a real posting?
+
+    The ONE judge, shared by the dataset export (`build_rows`, the `description_quality`
+    column) and by the run's board/email selection (`pipeline.run`), so a role cannot be
+    published on one surface and withheld from another. It was inline in `build_rows` and
+    consulted nowhere else, which is how the board and the mail carried rows the operator's
+    ruling had already excluded from the csv.
+
+    `dlen` is the record's stored `desc_len` where the caller has one, and passing it is
+    what separates "we hold no text" from "we cannot see the text from here":
+      - `dlen == 0` — the store says there is none. `none`.
+      - a non-blank `desc` — judged by `jdfill.looks_like_jd`. `jd` or `snippet`.
+      - a `dlen` that is anything else (a positive length, or `""` for a record that never
+        recorded one) with no text in hand — a description may exist and this caller
+        cannot reach it (a frozen or corrupt `roles_text.jsonl`, a record from before the
+        column). `''`, "could not measure": never a guess, and never an exclusion.
+      - `dlen` not passed at all — the caller holds the row's ONLY copy of the text (a
+        sqlite `matched` row), so an empty one is `none`, not a measurement failure."""
+    if dlen == 0:
+        return "none"
+    if isinstance(desc, str) and desc.strip():
+        from .jdfill import looks_like_jd      # enrich layer: import only when judging
+        return "jd" if looks_like_jd(desc) else "snippet"
+    return "none" if dlen is _NO_LENGTH else ""
 
 
 def _blocker(rec, dq):
@@ -2457,41 +2621,40 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
         # its firmo COLUMNS, just never a name the board would not show (wave B, finding 3).
         disp = rolecard.display_name(fm, company, firmographics) if match == "exact" else ""
         dlen = _int(rec.get("desc_len"))
-        dq = ""
-        desc = rec.get("description")
-        if dlen == 0:
-            dq = "none"
-        elif isinstance(desc, str) and desc.strip():
-            # a run's records carry the reconciled text in memory (`open_sync` set it,
-            # sqlite-sourced on a frozen-text day) — judge THAT, never a disk file that can
-            # be a wreck or a stale dump the shrink guard refused (wave B, findings 1-2)
-            from .jdfill import looks_like_jd       # enrich layer: import only when judging
-            dq = "jd" if looks_like_jd(desc) else "snippet"
-        elif isinstance(texts, dict):
+        # a run's records carry the reconciled text in memory (`open_sync` set it,
+        # sqlite-sourced on a frozen-text day) — judge THAT, never a disk file that can
+        # be a wreck or a stale dump the shrink guard refused (wave B, findings 1-2)
+        dq = text_quality(rec.get("description"), dlen)
+        if not dq and isinstance(texts, dict):
             t = texts.get(rid)
             if (isinstance(t, dict) and rec.get("desc_sha1")
                     and t.get("sha1") == rec.get("desc_sha1")
                     and isinstance(t.get("description"), str)):
-                from .jdfill import looks_like_jd
-                dq = "jd" if looks_like_jd(t["description"]) else "snippet"
+                dq = text_quality(t["description"], dlen)
         counts["text:" + (dq or "unmeasured")] += 1
         blocker = _blocker(rec, dq)
+        weak = dq in ("snippet", "none")
         if blocker:
             counts["blocked:" + blocker] += 1
-            if BLOCKED_POLICY == "exclude" and not archive:
-                # the audit's ruling, if it comes: the IN-WINDOW row leaves WITH its
-                # reason counted in the meta (`description_text.blocked`), never silently
-                # — and every per-row identity stays whole (the row was counted above;
-                # uncount it). The ARCHIVE keeps it whatever the policy: retention is the
-                # product, and the main build counts an archived row before ever judging
-                # its blocker, so excluding there would silently diverge
-                # `meta.archive.rows` from `reconciliation.archived`.
-                counts["blocked_excluded"] += 1
-                counts["rows"] -= 1
-                counts["text:" + (dq or "unmeasured")] -= 1
-                counts["basis:" + (basis or "none")] -= 1
-                counts["firmo:" + match] -= 1
-                continue
+        elif weak:
+            # PENDING: weak text with no structural signal — jd-text's nightly enrich has
+            # simply not filled it yet. Counted unconditionally, here and not inside the
+            # policy branch, so a "mark" day reports the same number it publishes.
+            counts["pending"] += 1
+        if weak and BLOCKED_POLICY == "exclude" and not archive:
+            # The operator's ruling: no role in the dataset without a description. The
+            # IN-WINDOW row leaves WITH its reason counted in the meta
+            # (`description_text.blocked`), never silently — and every per-row identity
+            # stays whole (the row was counted above; uncount it). The ARCHIVE keeps it
+            # whatever the policy: retention is the product, and the main build counts an
+            # archived row before ever judging its text, so excluding there would silently
+            # diverge `meta.archive.rows` from `reconciliation.archived`.
+            counts["blocked_excluded" if blocker else "pending_excluded"] += 1
+            counts["rows"] -= 1
+            counts["text:" + (dq or "unmeasured")] -= 1
+            counts["basis:" + (basis or "none")] -= 1
+            counts["firmo:" + match] -= 1
+            continue
         row = {
             "role_id": rid,
             "company": disp or company,
@@ -2633,10 +2796,11 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
              "outside_window": counts.get("outside_window", 0),
              "undatable": counts.get("undatable", 0),
              "unreadable": counts.get("unreadable", 0)}
-    if counts.get("blocked_excluded"):
+    for k in ("blocked_excluded", "pending_excluded"):
         # only under BLOCKED_POLICY == "exclude"; absent otherwise so the identity string
         # below stays the literal truth on a "mark" day
-        parts["blocked_excluded"] = counts["blocked_excluded"]
+        if counts.get(k):
+            parts[k] = counts[k]
     pages = _http_url(pages_url)
     archive_pages = _http_url(os.environ.get(ARCHIVE_PAGES_URL_ENV, ""))
     text_pages = _http_url(os.environ.get(TEXT_PAGES_URL_ENV, ""))
@@ -2714,7 +2878,8 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
             "store_records": len(records),
             "identity": "rows + archived + superseded + purged + withdrawn + outside_window "
                         "+ undatable + unreadable"
-                        + (" + blocked_excluded" if "blocked_excluded" in parts else "")
+                        + "".join(f" + {k}" for k in ("blocked_excluded", "pending_excluded")
+                                  if k in parts)
                         + " == store_records",
             "holds": sum(parts.values()) == len(records),
         },
@@ -2744,12 +2909,17 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
             # description_quality, counted: an identity so a reader can check nothing was
             # silently skipped — jd + snippet + none + unmeasured == rows
             "quality": {**quality, "holds": sum(quality.values()) == len(rows)},
-            # description_blocker, counted by reason string (the 2026-08-31 jd-text
-            # contract: recorded `structural:*` verbatim, else derived gone / unfillable:*
-            # / listing-page). `policy` says what the file DOES about a blocked row —
-            # "mark" keeps it (the snippet-rows decision), "exclude" removes it with the
-            # reason still counted here and in reconciliation.blocked_excluded.
-            "blocked": {"policy": BLOCKED_POLICY, **blocked},
+            # Every weak-text row, counted by WHY it is weak. `structural` is the sum of
+            # the per-reason counts below (the 2026-08-31 jd-text contract: recorded
+            # `structural:*` verbatim, else derived gone / unfillable:* / listing-page);
+            # `pending` is a weak row with no structural signal — the enrich has not
+            # filled it yet and is expected to. `policy` says what the file DOES with
+            # them: "mark" keeps them (the snippet-rows decision), "exclude" removes
+            # them — every one, since the 2026-09-01 ruling — with the reason still
+            # counted here and in reconciliation.blocked_excluded / pending_excluded.
+            "blocked": {"policy": BLOCKED_POLICY,
+                        "structural": sum(blocked.values()),
+                        "pending": counts.get("pending", 0), **blocked},
         },
         "funnel": {"file": FUNNEL,
                    "what": "one row per full daily run: postings fetched -> Israel -> judged "

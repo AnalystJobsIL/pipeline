@@ -32,6 +32,11 @@ from . import company_intel
 
 EMAIL_MAX_ROLES = 40   # a daily email nobody scrolls is a daily email nobody reads
 FIRST_SCAN_MAX_ROLES = 15  # roles at employers this digest is seeing for the first time
+# How long after its description finally lands a role held by `_publishable` may still be
+# emailed, counted on `roles_text.jsonl`'s `updated` date. It covers the gap the enrich
+# takes to fill a row plus a missed morning or two; it is deliberately not open-ended,
+# because a text REFRESH on a long-unsent old role would otherwise mail it as news.
+EMAIL_READMIT_DAYS = 4
 BOARD_MAX_ROLES = 1500  # page-weight backstop; each role renders a full detail card
 from . import digest as digest_mod
 from . import fetchers, israel, seniority, store
@@ -205,7 +210,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                                                   # several superseded verdicts by them
     # the role record (lane: roles, ARCHITECTURE §7c): sqlite ∪ the text ledger beside it,
     # before anything reads `matched`; its alarms join the bold `Stages:` line below
-    from . import roles
+    from . import roles, rolecard
     ledger = roles.Ledger(st, run_date)
     ledger.open_sync()
 
@@ -624,6 +629,50 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             return True
         return j.get("company") in failed_names and last >= fail_grace
 
+    _held_weak, _held_mangled = [], []
+
+    def _mailable(j):
+        """`_publishable`, plus the title has to render — the EMAIL gate.
+
+        The mangled-title arm is here and not in `_publishable` because the board hides a
+        card blob at RENDER and says so on the `Render:` line (the alarm `scraper` reads);
+        the email's copy of that hiding happened at render too, and `email_jobs` — written
+        to `out/digest-<date>.json` before any of it — carried the role into `mark_sent`
+        anyway. Hidden from the reader, burned as delivered, gone."""
+        if not _publishable(j):
+            return False
+        if rolecard.is_mangled_title(j.get("title")):
+            _held_mangled.append(j)
+            return False
+        return True
+
+    def _publishable(j):
+        """Does this role have a description a reader can use? The BOARD and mail gate.
+
+        lane: roles — the operator's 2026-09-01 ruling as written: *"I want there to be no
+        role in the UI and in the db without description. its useless."* `roles.py` enforces
+        it on the dataset; this is the same verdict on the two surfaces a person actually
+        looks at, from `roles.text_quality` — the one judge — so the board, the mail and
+        `roles.csv` cannot disagree about a role again. On 2026-09-01 they did: the csv
+        excluded a structurally blocked row while the board and the mail carried two
+        pending ones (Madanes `Manager Bi` with no text at all, בנק דיסקונט with a search
+        snippet), and the mail burned both in `sent` forever.
+
+        A held role is NOT marked sent — the gate runs before the payload is built — so it
+        is emailed the morning its text lands (`_readmit` above). That is the difference
+        between withholding a role and losing it. It is not archived either: the archive is
+        `matched` minus what is ALIVE, never minus what was rendered.
+
+        A sqlite `matched` row carries its description itself — there is no second copy to
+        be out of reach of — so no length is passed and an empty one is `none`, not
+        `unmeasured`. (On the dataset side, where a stored length says a text exists that
+        the caller cannot see, `unmeasured` is NOT weak and still publishes: a frozen or
+        corrupt `roles_text.jsonl` must never empty the board.)"""
+        if roles.text_quality(j.get("description")) in ("snippet", "none"):
+            _held_weak.append(j)
+            return False
+        return True
+
     def _cap_per_company(jobs, n):
         """Keep at most n roles per company (most-recent first) so one employer — or a batch
         of freshly-migrated companies — can't flood the digest. Order is otherwise preserved."""
@@ -661,7 +710,36 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # `_alive` (it must still be on its board), `filter_new` (never twice) and the caps.
     email_jobs = [j for j in st.get_matched_since("0000-01-01")
                   if _posted_in(j, cutoff_email) and _alive(j)]
-    email_jobs = st.filter_new(email_jobs)      # never email the same posting twice
+    # ...plus the roles THIS GATE held on an earlier morning, now that their text has
+    # landed. Without this the withholding would be a deletion: the window above is on
+    # `posted_date`, so a role held today for having no description is outside it tomorrow,
+    # and `filter_new` only ever re-offers what was marked sent — which a held role, by
+    # design, never was.
+    #
+    # The re-offer is keyed on the ledger's own `held_since` stamp — the record of THIS
+    # gate having withheld this role — and not on the text merely being fresh. A rule as
+    # loose as "any unsent role whose description was written recently" re-offers roles
+    # nothing ever held: `jd-text` backfills descriptions every night, so it would quietly
+    # mail the unsent backlog and change what the 48h promise means (the golden rehearsal
+    # caught it doing exactly that on the fixture days). Widening that promise may be right
+    # — it is BACKLOG 310, deliberately still open — but it is not this ruling's to make.
+    _readmit_from = (today - dt.timedelta(days=EMAIL_READMIT_DAYS)).isoformat()
+
+    def _readmitted(j):
+        if _posted_in(j, cutoff_email) or not _alive(j):
+            return False                     # already a candidate, or gone from its board
+        held = str((ledger.records.get(store.merge_key(j)) or {}).get("held_since") or "")[:10]
+        return bool(held) and held >= _readmit_from
+    _readmit = [j for j in st.get_matched_since("0000-01-01") if _readmitted(j)]
+    email_jobs = st.filter_new(email_jobs + _readmit)   # never email the same posting twice
+    # No role publishes without a description a reader can use (the operator's 09-01
+    # ruling), and none publishes under a card blob for a title. BEFORE the caps and long
+    # before `out/digest-<date>.json` is written, so a held role is never marked sent.
+    email_jobs = [j for j in email_jobs if _mailable(j)]
+    _readmit = [j for j in _readmit if _mailable(j)]
+    if _readmit:
+        print(f"  email: {len(_readmit)} role(s) re-offered — held for a missing "
+              f"description on an earlier run, text landed since", flush=True)
     # freshest posting first, so the caps below drop the least-fresh rather than the
     # least-recently-first-seen — `get_matched_since` orders by `first_seen`, which is now
     # the wrong axis for this list.
@@ -693,6 +771,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                   if j.get("company") not in seen_before and _alive(j)
                   and (j.get("company"), j.get("title")) not in already]
     first_scan = st.filter_new(first_scan)
+    first_scan = [j for j in first_scan if _mailable(j)]      # same ruling, same gate
     first_scan = _cap_per_company(first_scan, 2)[:FIRST_SCAN_MAX_ROLES]
     for j in first_scan:
         j["_new_company"] = True
@@ -708,6 +787,11 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # an EMAIL problem (capped at 3/company above); the board is sortable and searchable.
     board_jobs = [j for j in st.get_matched_since("0000-01-01") if _alive(j)]
     alive_jobs = list(board_jobs)             # the role record judges closure on THIS, not the capped page
+    # The same ruling on the board — and AFTER `alive_jobs` is taken. A role without a
+    # usable description is still OPEN; withholding its card must never be read by the
+    # record as the posting having closed, or a held role would be archived as filled and
+    # then "reopen" the morning its text lands.
+    board_jobs = [j for j in board_jobs if _publishable(j)]
     if len(board_jobs) > BOARD_MAX_ROLES:
         # Pure page-weight backstop, not a policy: every role renders a full detail card,
         # so an unbounded board is a multi-megabyte page nobody can load on a phone.
@@ -719,6 +803,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     stats["new"] = len(email_jobs)
     stats["board_count"] = len(board_jobs)
 
+    # The stamp that makes tomorrow's re-offer possible, written BEFORE `record_run` — that
+    # is what flushes the ledger. It says WHEN the withholding started, so `EMAIL_READMIT_DAYS`
+    # past that a role stops being re-offered and is an ordinary unsent row again. Never
+    # cleared: once the role is emailed `filter_new` governs and the stamp is inert.
+    for _j in _held_weak:
+        _rec = ledger.records.get(store.merge_key(_j))
+        if isinstance(_rec, dict) and not _rec.get("held_since"):
+            _rec["held_since"] = run_date
+            ledger.dirty = True
+
     # the role record's own verdict on the run: what closed, reopened, was re-posted; the
     # ledger flushed (or why not). Closure is judged only where this run actually looked.
     _role_lines = ledger.record_run(
@@ -727,6 +821,18 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         scoped=bool(only or limit), never_ours=None if _purge_held else _never_ours,
         class_backfill=_class_backfill)
     _role_lines = _role_lines + _claim_lines
+    # What the publish gate withheld, on the line the reader already reads for this lane —
+    # a role held is a role NOT on the board and NOT in the mail, and a silent gate is the
+    # failure class this repo is arranged against. `held` counts ROLES, deduped: the same
+    # role is offered to the gate once per surface.
+    if _held_weak or _held_mangled:
+        _wk = len({store.merge_key(j) for j in _held_weak})
+        _mg = len({store.merge_key(j) for j in _held_mangled})
+        _role_lines.append(
+            f"held {_wk + _mg} role(s) off the board and the mail"
+            + (f" · {_wk} no usable description" if _wk else "")
+            + (f" · {_mg} mangled title" if _mg else "")
+            + " · none marked sent; re-offered when the text lands")
 
     # THE PUBLIC DATASET (lane: roles, ARCHITECTURE §7c). One row per role, a rolling
     # 90-day window on `last_seen` (`roles.WINDOW_DAYS`), joined with tags and firmographics, written beside the
@@ -824,8 +930,13 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         os.environ.get("ANALYTICS_SNIPPET", "")
     contact_url = os.environ.get("CONTACT_URL",
                                  "https://github.com/AnalystJobsIL/board/issues/new")
-    # archive: everything ever matched that is NOT on the current board
-    onboard = {(j["company"], j["title"]) for j in board_jobs}   # = still open
+    # archive: everything ever matched that is NOT still open. The set is ALIVE_jobs, not
+    # the rendered board: the archive page is headed "no longer on the employer's careers
+    # page", so anything the board merely did not RENDER — a role held for having no
+    # description, or one the `BOARD_MAX_ROLES` backstop trimmed — would be published there
+    # as filled while it is live. The comment below always said "= still open"; the set
+    # finally is.
+    onboard = {(j["company"], j["title"]) for j in alive_jobs}   # = still open
     arch = [j for j in st.get_matched_since("0000-01-01")
             if (j["company"], j["title"]) not in onboard
             # a row that was never an employer is off EVERY product, not just the board.

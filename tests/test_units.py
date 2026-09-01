@@ -20258,13 +20258,21 @@ def test_truncated_descriptions_are_declared_rather_than_shipped_silently(tmp_pa
     recs = {"a|x": _rec("a|x", desc_len=store.DESC_MAX),
             "b|y": _rec("b|y", desc_len=5999),
             "c|z": _rec("c|z", desc_len=0)}
-    rows, _ = roles.build_rows(recs, run_date="2026-08-30")
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
     by = {r["role_id"]: r for r in rows}
     assert by["a|x"]["description_truncated"] == "true"
     assert by["b|y"]["description_truncated"] == "false"
-    assert by["c|z"]["description_len"] == "0"
-    assert by["c|z"]["description_sha1"] == "", "sha1('') is not a join key, it is a dead end"
     assert by["a|x"]["description_sha1"] == "abc", "the join key into roles_text.jsonl"
+    # `c|z` holds no text at all, so since the 2026-09-01 ruling it does not publish
+    assert "c|z" not in by and counts["pending_excluded"] == 1
+    # ...and the dead-end rule is pinned on the branch where such a row still does: an
+    # empty sha1 must never be printed as a join key into roles_text.jsonl
+    import unittest.mock as _mock
+    with _mock.patch.object(roles, "BLOCKED_POLICY", "mark"):
+        marked, _ = roles.build_rows(recs, run_date="2026-08-30")
+    mz = {r["role_id"]: r for r in marked}["c|z"]
+    assert mz["description_len"] == "0" and mz["description_quality"] == "none"
+    assert mz["description_sha1"] == "", "sha1('') is not a join key, it is a dead end"
 
 
 def test_company_facts_join_by_name_and_then_by_identity(tmp_path):
@@ -22786,7 +22794,9 @@ def test_a_retraction_withdraws_the_row_and_the_meta_records_when_it_was_public(
     # a DEEP posting url: the shallow "https://w.co/1" of the first version reads as a
     # listing page to the 2026-09-01 exclude policy (`_blocker` -> listing-page) and the
     # survivor row left the CSV for a reason unrelated to what this test pins
-    k = _role("Wix", "Data Analyst", "https://w.co/jobs/data-analyst/123", "1")
+    # ...and a real description: since the 2026-09-01 ruling a textless row does not
+    # publish, and this test is about the withdrawal, not about text quality
+    k = _role("Wix", "Data Analyst", "https://w.co/jobs/data-analyst/123", "1", desc=_JD_TEXT)
     for job in (j, k):
         st.upsert_matched(job, "2026-08-30")
     _retract_file(tmp_path, {"url": "https://jobs.comcast.com/job/houston/manager-2/45483/99862967712",
@@ -23046,7 +23056,9 @@ def test_lifting_a_retraction_off_board_is_loud_and_returns_the_record_to_the_la
     retraction file reverted every withdrawal silently. Both are one alarm now."""
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "seen.db"))
-    j = _role("Comcast", "Analyst", "https://c.co/houston/1", "x", src="scrape")
+    # a real description, so the reinstated row can publish: since the 2026-09-01 ruling a
+    # textless one does not, and what this test pins is the LIFT
+    j = _role("Comcast", "Analyst", "https://c.co/houston/1", "x", src="scrape", desc=_JD_TEXT)
     st.upsert_matched(j, "2026-08-30")
     p = _retract_file(tmp_path, {"url": j["url"], "status": "withdrawn", "reason": "mistake",
                                  "on": "2026-08-30"})
@@ -23206,7 +23218,8 @@ def test_the_run_and_the_cli_write_the_same_archive_and_neither_archives_a_remov
     st.upsert_matched(_role("Comcast", "Analyst", "https://c.co/houston/1", "c1", src="scrape"), "2026-01-12")
     # a DEEP url: shallow "https://n.co/1" reads as a listing page to the 2026-09-01
     # exclude policy and the row left the CSV for a reason this test does not pin
-    st.upsert_matched(_role("New", "Data Analyst", "https://n.co/jobs/data-analyst/77", "n1"), "2026-08-30")
+    st.upsert_matched(_role("New", "Data Analyst", "https://n.co/jobs/data-analyst/77", "n1",
+                            desc=_JD_TEXT), "2026-08-30")   # textless does not publish (09-01)
     _retract_file(tmp_path, {"url": "https://c.co/houston/1", "status": "withdrawn", "reason": "r", "on": "2026-08-30"})
     lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
     lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
@@ -24276,12 +24289,14 @@ def test_the_bounce_wrong_employer_retraction_withdraws_the_linkedin_row_only(tm
     st.close()
 
 
-def test_description_quality_marks_a_snippet_row_instead_of_excluding_it():
-    """A weak text with NO structural blocker is marked, never excluded — these rows are
-    PENDING a fill, and the 2026-09-01 operator ruling that flipped `BLOCKED_POLICY` to
-    exclude explicitly keeps them ('pending must not be permanently excluded'). The
-    fixtures here carry healthy posting urls and no gone-stamp, so all three rows stay
-    whatever the policy — which is exactly the property this test pins."""
+def test_a_pending_weak_row_leaves_the_dataset_and_returns_when_its_text_lands():
+    """SUPERSEDES `..._marks_a_snippet_row_instead_of_excluding_it`, which pinned the
+    2026-08-31 reading — a weak row with no STRUCTURAL blocker was PENDING a fill and stayed
+    published. The 2026-09-01 digest showed what that costs: two fresh pending rows in the
+    csv, on the board and in the mail, one of them with no text at all. The operator's
+    ruling as written is "no role in the UI and in the db without description", so every
+    weak row leaves — counted by reason, and re-admitted with no stamp and no migration the
+    moment usable text lands, because the judgement is derived at export."""
     from pipeline import roles
     recs = {"a|x": _rec("a|x", desc_len=len(_JD_TEXT), desc_sha1=roles._sha1(_JD_TEXT)),
             "b|y": _rec("b|y", desc_len=170, desc_sha1=roles._sha1("x" * 170)),
@@ -24289,11 +24304,28 @@ def test_description_quality_marks_a_snippet_row_instead_of_excluding_it():
     texts = {"a|x": {"role_id": "a|x", "description": _JD_TEXT, "sha1": roles._sha1(_JD_TEXT)},
              "b|y": {"role_id": "b|y", "description": "x" * 170, "sha1": roles._sha1("x" * 170)}}
     rows, counts = roles.build_rows(recs, run_date="2026-08-31", texts=texts)
-    assert len(rows) == 3, "marking never shrinks the file"
-    q = {r["role_id"]: r["description_quality"] for r in rows}
-    assert q == {"a|x": "jd", "b|y": "snippet", "c|z": "none"}
-    assert (counts["text:jd"], counts["text:snippet"], counts["text:none"]) == (1, 1, 1)
+    assert [r["role_id"] for r in rows] == ["a|x"], "only the row with a real JD publishes"
+    assert counts["pending"] == 2 and counts["pending_excluded"] == 2
+    assert not counts.get("blocked_excluded"), "neither is STRUCTURALLY blocked"
+    assert (counts["text:jd"], counts["text:snippet"], counts["text:none"]) == (1, 0, 0), \
+        "an excluded row is uncounted, or the quality identity stops holding"
+    # the ARCHIVE keeps them, whatever the policy: retention is the product
+    arch, _ = roles.build_rows(recs, run_date="2026-08-31", texts=texts, archive=True)
+    assert {r["role_id"] for r in arch} >= set(), "archive builds; it never excludes"
+    # the policy is ONE constant: flipped back, the same rows publish MARKED, and `pending`
+    # reports the same number it publishes
+    import unittest.mock as _mock
+    with _mock.patch.object(roles, "BLOCKED_POLICY", "mark"):
+        marked, mc = roles.build_rows(recs, run_date="2026-08-31", texts=texts)
+    assert len(marked) == 3 and mc["pending"] == 2 and not mc.get("pending_excluded")
+    assert {r["role_id"]: r["description_quality"] for r in marked} == \
+        {"a|x": "jd", "b|y": "snippet", "c|z": "none"}
     assert set(roles._ENUMS["description_quality"]) == {"jd", "snippet", "none"}
+    # ...and the row comes back on its own the day the text lands — no stamp, no migration
+    texts["b|y"] = {"role_id": "b|y", "description": _JD_TEXT, "sha1": roles._sha1(_JD_TEXT)}
+    recs["b|y"]["desc_sha1"] = roles._sha1(_JD_TEXT)
+    back, bc = roles.build_rows(recs, run_date="2026-08-31", texts=texts)
+    assert [r["role_id"] for r in back] == ["a|x", "b|y"] and bc["pending_excluded"] == 1
 
 
 def test_a_text_quality_the_export_cannot_measure_is_empty_not_guessed():
@@ -24323,11 +24355,30 @@ def test_the_meta_and_mail_agree_on_weak_text_and_the_quality_identity_holds(tmp
                {"a|x": {"role_id": "a|x", "description": "x" * 170,
                         "sha1": roles._sha1("x" * 170), "updated": "2026-08-30"}})
     lines = lg.export_dataset("2026-08-31")
-    assert "weak text 2 (1 snippet, 1 none)" in lines[0]
+    # both rows are weak and neither is structurally blocked, so both leave as PENDING —
+    # and the line says which kind, because a fetch bug and a drained enrich queue look
+    # identical in one number
+    assert "weak 2 (0 structural, 2 pending)" in lines[0] and "· 2 excluded" in lines[0]
+    assert "weak text" not in lines[0], "nothing weak is left IN the file to report"
     meta = json.load(open(roles.dataset_paths(st.path)[1], encoding="utf-8"))
     q = meta["description_text"]["quality"]
-    assert q == {"jd": 0, "snippet": 1, "none": 1, "unmeasured": 0, "holds": True}
-    assert q["jd"] + q["snippet"] + q["none"] + q["unmeasured"] == meta["rows"]
+    assert q == {"jd": 0, "snippet": 0, "none": 0, "unmeasured": 0, "holds": True}
+    assert q["jd"] + q["snippet"] + q["none"] + q["unmeasured"] == meta["rows"] == 0
+    assert meta["description_text"]["blocked"] == {"policy": "exclude", "structural": 0,
+                                                  "pending": 2}
+    assert meta["reconciliation"]["pending_excluded"] == 2
+    assert "pending_excluded" in meta["reconciliation"]["identity"]
+    assert meta["reconciliation"]["holds"], meta["reconciliation"]
+    # ...and MARKED, the same two rows publish and the same two are counted
+    import unittest.mock as _mock
+    with _mock.patch.object(roles, "BLOCKED_POLICY", "mark"):
+        mlines = lg.export_dataset("2026-08-31")
+    assert "weak text 2 (1 snippet, 1 none)" in mlines[0]
+    assert "weak 2 (0 structural, 2 pending)" in mlines[0] and "· 2 excluded" not in mlines[0]
+    mmeta = json.load(open(roles.dataset_paths(st.path)[1], encoding="utf-8"))
+    assert mmeta["description_text"]["quality"] == {"jd": 0, "snippet": 1, "none": 1,
+                                                    "unmeasured": 0, "holds": True}
+    assert "pending_excluded" not in mmeta["reconciliation"]["identity"]
     st.close()
 
 
@@ -26536,7 +26587,8 @@ def test_the_meta_counts_blocked_rows_and_the_exclude_policy_keeps_the_identitie
     assert len(rows2) == 2 and rid not in {r["role_id"] for r in rows2}
     assert counts2["blocked_excluded"] == 1 and counts2["blocked:gone"] == 1
     meta2 = roles.build_meta(rows2, counts2, recs, run_date="2026-08-30")
-    assert meta2["description_text"]["blocked"] == {"policy": "exclude", "gone": 1}
+    assert meta2["description_text"]["blocked"] == {"policy": "exclude", "structural": 1,
+                                                   "pending": 0, "gone": 1}
     assert "description_blocker" in meta2["description_text"]["columns_here"]
     assert meta2["reconciliation"]["holds"], meta2["reconciliation"]
     assert "blocked_excluded" in meta2["reconciliation"]["identity"]
@@ -26557,7 +26609,8 @@ def test_the_meta_counts_blocked_rows_and_the_exclude_policy_keeps_the_identitie
         assert got[rid] == "gone" and all(v == "" for k, v in got.items() if k != rid)
         assert counts["blocked:gone"] == 1 and not counts.get("blocked_excluded")
         meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
-        assert meta["description_text"]["blocked"] == {"policy": "mark", "gone": 1}
+        assert meta["description_text"]["blocked"] == {"policy": "mark", "structural": 1,
+                                                      "pending": 0, "gone": 1}
         assert meta["reconciliation"]["holds"] and meta["description_text"]["quality"]["holds"]
     finally:
         roles.BLOCKED_POLICY = old
@@ -26700,7 +26753,10 @@ def test_one_bracket_url_cannot_take_the_days_dataset_down():
     rows, counts = roles.build_rows(
         {"x|y": _rec("x|y", url="https://[email protected]/jobs", desc_len=20,
                      description="tiny")}, run_date="2026-08-30")
-    assert len(rows) == 1 and rows[0]["description_blocker"] == ""
+    # the export COMPLETED, which is the whole point. The row itself leaves as PENDING
+    # (weak text, no blocker the guard could derive) under the 2026-09-01 ruling — never
+    # as an exception out of `export_dataset`.
+    assert rows == [] and counts["pending_excluded"] == 1 and not counts.get("blocked_excluded")
 
 
 def test_a_same_day_transient_never_beats_a_gone_verdict():
@@ -27217,3 +27273,281 @@ def test_a_refuted_row_stops_being_refuted_the_moment_a_rung_fills_it(monkeypatc
     refuted.discard("r")                                   # what the driver now does
     assert emj._store_text(conn, "r", short, own, refuted="r" in refuted) is False
     conn.close()
+
+
+# --- roles, 2026-09-01: the publish gate, and one posting proven by its TEXT -----------
+# The operator's 2026-09-01 ruling read as written ("no role in the UI and in the db
+# without description"), and the Nestlé/אסם pair the audit found published twice.
+
+_OSEM_JD = ("קבוצת אסם סחר מגייסת אנליסט/ית אפקטיביות מסחרית ליחידת ה CDT. "
+            "Requirements: 3+ years of SQL and BI experience, responsibilities include "
+            "building dashboards and owning the KPI layer for the commercial units. ") * 3
+
+
+def test_text_quality_separates_no_text_from_a_text_it_cannot_see():
+    """The distinction the whole gate rests on. `desc_len == 0` is a MEASUREMENT ("there is
+    none"); a stored length with no text in hand is a caller that cannot reach it — a frozen
+    or corrupt roles_text.jsonl — and must stay `''`, because `''` publishes and `none` does
+    not. Collapsing the two would empty the board on a bad text day."""
+    from pipeline import roles
+    assert roles.text_quality(_JD_TEXT, len(_JD_TEXT)) == "jd"
+    assert roles.text_quality("x" * 170, 170) == "snippet"
+    assert roles.text_quality("", 0) == "none" and roles.text_quality(None, 0) == "none"
+    assert roles.text_quality(None, 1200) == "", "a text we hold but cannot see is unmeasured"
+    assert roles.text_quality(None, "") == "", "a record that never recorded a length, too"
+    # ...and with NO length argument the caller holds the only copy, so empty means none
+    assert roles.text_quality("") == "none" and roles.text_quality(None) == "none"
+
+
+def test_the_board_and_the_mail_ask_the_same_question_the_dataset_does():
+    """One judge, three surfaces. On 2026-09-01 the csv excluded a structurally blocked row
+    while the board and the mail published two PENDING ones — the disagreement this
+    function's existence prevents."""
+    from pipeline import roles
+    weak = "Apply here for this position. See more jobs."
+    assert roles.text_quality(weak) in ("snippet", "none")
+    assert roles.text_quality(_JD_TEXT) == "jd"
+    # the dataset reaches the same verdict through build_rows on the same text
+    recs = {"a|x": _rec("a|x", desc_len=len(_JD_TEXT), desc_sha1=roles._sha1(_JD_TEXT),
+                        description=_JD_TEXT),
+            "b|y": _rec("b|y", desc_len=len(weak), desc_sha1=roles._sha1(weak),
+                        description=weak)}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31")
+    assert [r["role_id"] for r in rows] == ["a|x"] and counts["pending_excluded"] == 1
+
+
+def test_a_mangled_title_is_one_predicate_the_board_and_the_selection_share():
+    """`is_mangled_title` was inline in `rolecard._bare`, so the EMAIL could only hide a card
+    blob at render — after `email_jobs` had already been written to the payload `mark_sent`
+    reads. Hidden from the reader and burned as delivered."""
+    from pipeline import rolecard
+    assert rolecard.is_mangled_title("Data Analyst · Tel Aviv, Israel · Full time")
+    assert rolecard.is_mangled_title("x" * 101)
+    assert not rolecard.is_mangled_title("Senior Data Analyst")
+    # and the card still carries the same answer, from the same rule
+    card = rolecard._bare({"title": "Data Analyst | Apply now"}, "2026-09-01")
+    assert card["mangled"] is True
+    assert rolecard._bare({"title": "Senior Data Analyst"}, "2026-09-01")["mangled"] is False
+
+
+def test_one_posting_under_two_employers_is_proven_by_byte_identical_text():
+    """The Nestlé/אסם pair: two Indeed `jk=` addresses, two seen_ids, no posting key (both
+    aggregators) — NONE of the three evidence buckets sees it, so it was never pair-tested
+    and published twice. The text is byte-identical and the title is the same."""
+    from pipeline import roles
+    sha = roles._sha1(_OSEM_JD)
+    a = {"company": "Nestlé", "title": "אנליסט אפקטיביות מסחרית אסם סחר",
+         "url": "https://il.indeed.com/viewjob?jk=c41c2dcdf96c8d07",
+         "seen_ids": ["discovery-indeed:indeed:c41c2dcdf96c8d07"],
+         "desc_sha1": sha, "desc_len": len(_OSEM_JD), "description": _OSEM_JD}
+    b = {"company": "אסם", "title": "אנליסט אפקטיביות מסחרית אסם סחר",
+         "url": "https://il.indeed.com/viewjob?jk=a7cd257b81d9ba1d",
+         "seen_ids": ["discovery-indeed:indeed:a7cd257b81d9ba1d"],
+         "desc_sha1": sha, "desc_len": len(_OSEM_JD), "description": _OSEM_JD}
+    assert not roles.same_posting(a, b), "no id, no url, no key — the old arms cannot see it"
+    assert roles._same_text_posting(a, b) and roles._same_text_posting(b, a)
+    assert roles.Ledger._groups([a, b]) == [[0, 1]], "the sha bucket pairs what nothing else can"
+
+
+def test_the_text_arm_refuses_two_real_roles_that_share_a_careers_page():
+    """The over-merge tripwire, on the real populations. Mobileye's `Business Analyst` and
+    `Forecast Analyst` are two live openings whose 2,835-character texts differ in EIGHT
+    characters — byte equality is the only comparator that keeps them apart. And a
+    same-company byte-identical pair is BACKLOG 370 (the scraper stored the careers PAGE),
+    which the cross-company arm must never reach."""
+    from pipeline import roles
+    base = "Mobileye is looking for a %s who will focus on analyzing automotive markets. " \
+           + _JD_TEXT
+    a = {"company": "Mobileye", "title": "Business Analyst", "url": "https://m.co/1",
+         "desc_sha1": roles._sha1(base % "Business analyst"), "desc_len": 2835,
+         "seen_ids": ["lever:uuid-a"]}
+    b = {"company": "Mobileye", "title": "Forecast Analyst", "url": "https://m.co/2",
+         "desc_sha1": roles._sha1(base % "Forecast Analyst"), "desc_len": 2835,
+         "seen_ids": ["lever:uuid-b"]}
+    assert a["desc_sha1"] != b["desc_sha1"]
+    assert not roles._same_text_posting(a, b), "8 characters apart is two roles"
+    assert roles.Ledger._groups([a, b]) == []
+    # same company, byte-IDENTICAL text (one careers page captured twice): still refused,
+    # because the cross-company arm is the only caller and `same_role_twin` never reaches it
+    c = dict(b, desc_sha1=a["desc_sha1"], title="Business Analyst")
+    assert roles.Ledger._groups([a, c]) == [], "same employer: BACKLOG 370, not a fold"
+    assert not roles.same_role_twin(a, c), "no shared strong id — refused before any arm"
+
+
+def test_the_text_arm_needs_a_substantial_text_and_titles_that_match():
+    """Three refusals, each bought: boilerplate under the floor is not evidence; a differing
+    title is a second role at one address (`_titles_agree`'s own rule, tightened to equality
+    because there is no address here to corroborate); and a record with no text never
+    buckets at all."""
+    from pipeline import roles
+    short = "Apply now."
+    a = {"company": "A", "title": "Data Analyst", "url": "https://a.co/1",
+         "desc_sha1": roles._sha1(short), "desc_len": len(short), "seen_ids": ["x:1"]}
+    b = {"company": "B", "title": "Data Analyst", "url": "https://b.co/1",
+         "desc_sha1": roles._sha1(short), "desc_len": len(short), "seen_ids": ["x:2"]}
+    assert len(short) < roles.SAME_TEXT_MIN
+    assert not roles._same_text_posting(a, b), "under the floor, identical means nothing"
+    long_ = _JD_TEXT
+    c = dict(a, desc_sha1=roles._sha1(long_), desc_len=len(long_))
+    d = dict(b, desc_sha1=roles._sha1(long_), desc_len=len(long_), title="Data Analyst, Growth")
+    assert not roles._same_text_posting(c, d), "a different title is a different role"
+    assert roles._same_text_posting(c, dict(d, title="Data Analyst"))
+    e = {"company": "E", "title": "Data Analyst", "url": "https://e.co/1", "seen_ids": ["x:3"]}
+    f = {"company": "F", "title": "Data Analyst", "url": "https://f.co/1", "seen_ids": ["x:4"]}
+    assert not roles._same_text_posting(e, f), "no text on either side is not agreement"
+    assert roles.Ledger._groups([e, f]) == []
+
+
+def test_a_records_stored_sha1_is_never_re_hashed_from_the_text_it_may_not_have():
+    """`flush` strips the in-memory description and `_open_sync` re-seeds it from the text
+    file — so on a frozen or corrupt roles_text.jsonl day every record's `description` is
+    "" while `desc_sha1` still names its text exactly. Re-hashing would key those records
+    on the hash of nothing and quietly stop pairing anything."""
+    from pipeline import roles
+    rec = {"company": "A", "title": "t", "desc_sha1": "abc123", "desc_len": 900,
+           "description": ""}
+    assert roles._text_key(rec) == "abc123", "the stored digest, not sha1('')"
+    job = {"company": "B", "title": "t", "description": _JD_TEXT}
+    assert roles._text_key(job) == roles._sha1(_JD_TEXT), "a run's job has no sha1: hash it"
+    assert roles._text_key({"desc_sha1": "abc", "desc_len": 10}) == "", "under the floor"
+    assert roles._text_key({"desc_sha1": "abc"}) == "", "a length we cannot read is not evidence"
+    assert roles._text_key(None) == "" and roles._text_key({}) == ""
+
+
+def test_the_winner_reads_the_posting_and_stops_calling_hebrew_a_lowercase_stub():
+    """Two defects in one election. `אסם` is caseless, so `name == name.lower()` demoted it
+    as a "kornit"-shaped stub and crowned a PARKED `Nestlé` — wrong on the registry and
+    wrong on the posting, which names אסם twice and Nestlé never. The evidence key reads the
+    posting itself; the stub key now only fires where case exists."""
+    from pipeline import roles
+    a = {"company": "Nestlé", "title": "אנליסט אסם סחר", "url": "https://il.indeed.com/viewjob?jk=1",
+         "description": _OSEM_JD, "sources": ["discovery-indeed"]}
+    b = {"company": "אסם", "title": "אנליסט אסם סחר", "url": "https://il.indeed.com/viewjob?jk=2",
+         "description": _OSEM_JD, "sources": ["discovery-indeed"]}
+    assert roles._name_in_text("אסם", b) and not roles._name_in_text("Nestlé", a)
+    assert roles.Ledger._winner([a, b], [0, 1], set()) == 1, "the posting names אסם"
+    assert roles.Ledger._winner([b, a], [0, 1], set()) == 0, "and in either order"
+    # the stub key still demotes a real lowercase stub, where case exists
+    p = {"company": "kornit", "title": "t", "url": "https://x.co/1", "sources": ["scrape"]}
+    q = {"company": "Kornit Digital", "title": "t", "url": "https://x.co/1", "sources": ["scrape"]}
+    assert roles.Ledger._winner([p, q], [0, 1], set()) == 1, "the branded row still wins"
+
+
+def test_name_evidence_refuses_an_empty_token_set_and_a_partial_match():
+    """`all()` over an empty set is True, and 16 registry names + 2 role companies (HP, F5,
+    3M, EY, AT&T, D-ID, DT) reduce to NOTHING under `_identity_tokens` — free evidence for
+    exactly the names least able to prove anything (the BACKLOG 510 shape). And one token of
+    a two-word brand is a coincidence: `names_in_url`'s prefix rule handed Fetcherr's JD to
+    Bright Data because `data` matched the job TITLE (BACKLOG 260)."""
+    from pipeline import roles
+    job = {"title": "Data Analyst", "description": "We are Meta. Metadata pipelines here."}
+    assert not roles._name_in_text("", job), "an empty name is never evidence"
+    assert not roles._name_in_text("   ", job)
+    assert roles._name_in_text("Meta", job), "an exact token"
+    assert not roles._name_in_text("Metadata Corp", job), "every token, or none"
+    assert not roles._name_in_text("Met", job), "no prefix matching — `metadata` is not `Meta`"
+    # a name the sentence punctuates is still the name ("We are Meta."), but only at the
+    # EDGES — `ex.co` and `at&t` keep their insides
+    assert roles._name_in_text("ex.co", {"title": "t", "description": "joining ex.co, we"})
+    assert not roles._name_in_text("exco", {"title": "t", "description": "joining ex.co, we"})
+    assert roles._name_in_text("Bright Data", {"title": "t", "description": "Bright Data hires"})
+    assert not roles._name_in_text("Bright Data", {"title": "Data Analyst", "description": "x"})
+
+
+def _gate_run(monkeypatch, tmp_path, jobs, date=None):
+    """Drive a whole run over `jobs` at one company, LLM off. Returns (payload, base)."""
+    from pipeline import run as run_mod, company_intel
+    row = {"company_name": "Acme", "ats_platform": "greenhouse", "token": "acme",
+           "api_url": "https://boards-api.greenhouse.io/v1/boards/acme/jobs",
+           "active": "true", "notes": ""}
+    monkeypatch.setattr(run_mod, "load_companies", lambda: [dict(row)])
+    monkeypatch.setattr(run_mod.fetchers, "fetch_company", lambda r: [dict(j) for j in jobs])
+    monkeypatch.setattr(company_intel, "enrich_for_run",
+                        lambda st, **kw: ({}, {}, {"researched": 0, "blurbs_written": 0}))
+    monkeypatch.setattr(company_intel, "audit_lines", lambda rep: ([], []))
+    kw = {"run_date": date} if date else {}
+    return run_mod.run(use_llm=False, only=["Acme"], out_dir=str(tmp_path / "out"),
+                       db_path=str(tmp_path / "t.db"), **kw)
+
+
+def _acme(title, jid, desc, **kw):
+    return {"company": "Acme", "title": title, "location": "Tel Aviv, Israel",
+            "country_code": "", "url": f"https://job-boards.greenhouse.io/acme/jobs/{jid}",
+            "posted_date": "", "job_id": jid, "description": desc, **kw}
+
+
+def test_a_role_with_no_usable_description_reaches_neither_the_board_nor_the_mail(monkeypatch, tmp_path):
+    """The 2026-09-01 ruling, end to end. The csv already excluded these; the board and the
+    mail did not, and published Madanes `Manager Bi` (no text) and בנק דיסקונט (a search
+    snippet) the same morning."""
+    good = _acme("Senior Data Analyst", "1", _JD)
+    weak = _acme("BI Analyst", "2", "Apply here. See more jobs at Acme.")
+    payload, base = _gate_run(monkeypatch, tmp_path, [good, weak])
+    md = open(base + ".md", encoding="utf-8").read()
+    board = (tmp_path / "out" / "docs-preview" / "index.html").read_text(encoding="utf-8")
+    assert board.count('<tr class="row"') == 1, "the weak role is not a card"
+    assert "BI Analyst" not in board and "BI Analyst" not in md
+    assert "Senior Data Analyst" in board
+    # ...and it is not on the ARCHIVE either: it is OPEN, and the archive is what is not
+    arch = (tmp_path / "out" / "docs-preview" / "archive.html").read_text(encoding="utf-8")
+    assert "BI Analyst" not in arch, "a live role is never published as expired"
+    # the run SAYS so, on the line a reader already reads for this lane
+    held = [l for l in md.splitlines() if "held 1 role(s)" in l]
+    assert held and "no usable description" in held[0], md
+
+
+def test_a_role_held_for_its_text_is_never_marked_sent_and_is_mailed_when_it_lands(monkeypatch, tmp_path):
+    """The difference between withholding a role and losing it. `mark_sent` reads
+    `out/digest-<date>.json`, which is built from `email_jobs` BEFORE any render-time
+    hiding — so a role hidden later is burned undelivered and `filter_new` never offers it
+    again. The gate runs before the payload; the role is mailed the day its text lands."""
+    import json as _json
+    from pipeline import store as store_mod
+    weak = _acme("BI Analyst", "2", "Apply here. See more jobs.")
+    payload, base = _gate_run(monkeypatch, tmp_path, [weak], date="2026-09-01")
+    sent_ids = {j.get("title") for j in payload["jobs"]}
+    assert "BI Analyst" not in sent_ids, "held roles never reach the payload mark_sent reads"
+    with open(str(tmp_path / "out" / "digest-2026-09-01.json"), encoding="utf-8") as f:
+        assert "BI Analyst" not in _json.dumps(_json.load(f))
+    st = store_mod.SeenStore(str(tmp_path / "t.db"))
+    assert st.filter_new([dict(weak, seen_ids=[store_mod.seen_id(weak)])]), "still unsent"
+    st.close()
+    # the next morning the description lands: the role is offered, and mailed
+    filled = _acme("BI Analyst", "2", _JD)
+    payload2, base2 = _gate_run(monkeypatch, tmp_path, [filled], date="2026-09-02")
+    assert "BI Analyst" in {j.get("title") for j in payload2["jobs"]}, "re-admitted"
+    assert "BI Analyst" in open(base2 + ".md", encoding="utf-8").read()
+
+
+def test_a_card_blob_title_is_held_out_of_the_mail_not_burned_at_render(monkeypatch, tmp_path):
+    """`digest.build_markdown` has always dropped a mangled title from the BODY — and
+    `email_jobs` carried it into the payload anyway, so every hidden role was marked
+    delivered. The board keeps hiding it at render (that is `scraper`'s alarm, and it stays
+    on the Render line); the MAIL now never selects it."""
+    good = _acme("Senior Data Analyst", "1", _JD)
+    blob = _acme("BI Analyst ⋅ Tel Aviv ⋅ Apply now", "2", _JD)
+    payload, base = _gate_run(monkeypatch, tmp_path, [good, blob])
+    md = open(base + ".md", encoding="utf-8").read()
+    assert "Apply now" not in {j.get("title") for j in payload["jobs"]}
+    assert not [j for j in payload["jobs"] if "⋅" in str(j.get("title"))], \
+        "a card blob is not marked sent"
+    # the board still reports it, so the scrape bug behind it stays visible
+    line = next(l for l in md.splitlines() if l.startswith("- **Render:** board"))
+    assert "1 hidden: mangled title" in line, line
+    held = [l for l in md.splitlines() if "held 1 role(s)" in l]
+    assert held and "mangled title" in held[0], md
+
+
+def test_holding_a_role_off_the_board_never_tells_the_record_it_closed(monkeypatch, tmp_path):
+    """`alive_jobs` is taken BEFORE the gate, and the archive is `matched` minus what is
+    ALIVE — not minus what was rendered. Otherwise a held role would be archived as filled
+    and then "reopen" the morning its text lands, on every product."""
+    from pipeline import roles, store as store_mod
+    weak = _acme("BI Analyst", "2", "Apply here.")
+    _gate_run(monkeypatch, tmp_path, [weak], date="2026-09-01")
+    st = store_mod.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-09-01")
+    lg.open_sync()
+    rec = next(r for r in lg.records.values() if r.get("title") == "BI Analyst")
+    assert rec["status"] == "open" and not rec.get("closed_on"), rec
+    st.close()

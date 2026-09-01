@@ -85,3 +85,58 @@ keeps history; and every exclusion is counted by reason in the meta
 silently. The first manually retracted instance is
 `taboola|product analyst maternity leave replacement` (url-keyed line in
 `cloud_state/roles_retractions.jsonl`, 2026-09-01).
+
+
+## SUPERSEDED AGAIN, 2026-09-01 (the same ruling, read as written) — PENDING rows leave too
+
+The 09-01 tightening supersedes the paragraph above that kept pending rows published. The
+first `exclude` implementation keyed on the derived BLOCKER, so a weak row with no
+structural signal was "pending a fill" and stayed — and the 2026-09-01 digest published two
+of them: `Madanes Insurance Agency | Manager Bi` (`description_quality none`, no text at
+all) and `בנק דיסקונט | אנליסט.ית אשראי…` (`snippet`). Both went to `roles.csv`, to
+`docs/index.html` AND to the mail, where `mark_sent` burned them in `sent` for ever.
+
+The operator's sentence is "no role in the UI and in the db without description". The
+pending/terminal distinction the 08-31 addendum drew is a distinction about WHY a row is
+weak, not about whether it is publishable — and the churn argument it rested on is answered
+by the mechanism rather than by publishing: the judgement derives per-export, so a row
+returns the moment its text lands, with no stamp and no migration.
+
+**What changed.** `build_rows` keys the exclusion on `description_quality ∈ {snippet,
+none}` rather than on a non-empty blocker; a weak row with no blocker is counted as
+`pending` (unconditionally, at detection, so a `mark` day reports the number it publishes)
+and, under `exclude`, leaves as `pending_excluded`. `reconciliation` gains the second
+conditional term and `description_text.blocked` splits `structural` from `pending`. The
+mail's dataset line reads `weak N (S structural, P pending) · E excluded` — one number
+could not tell a drained enrich queue from a fetch bug.
+
+Measured on a copy of the committed store (2026-09-01, 203 records): **157 → 155 rows**,
+`pending_excluded 2` (exactly the two rows above), `blocked_excluded 1` unchanged, and
+every published row `jd` — `quality {jd: 155, snippet: 0, none: 0, unmeasured: 0}`. All
+three meta identities hold under BOTH policy branches (`mark` re-publishes the same two and
+reports `pending 2`).
+
+**What did NOT change**, deliberately:
+- `unmeasured` still publishes. A stored length whose text this export cannot see is a
+  measurement failure (a frozen or corrupt `roles_text.jsonl`), not an absent description,
+  and treating it as weak turns a bad text day into an empty public file — the mass-zero
+  failure class arriving dressed as a policy verdict. `roles.text_quality` keeps the two
+  apart with a sentinel, and a test pins it.
+- The archive keeps every weak row. Retention is the product, and the main build counts an
+  archived row before ever judging its text.
+- `BLOCKED_POLICY` is still ONE constant, both branches built and pinned.
+
+**And the ruling now reaches the board and the mail**, which it did not before: the same
+judge (`roles.text_quality`) gates the role-selection block of `pipeline/run.py`. The
+mechanism and its three ordering constraints — the gate before the payload, `alive_jobs`
+before the gate, the archive keyed on what is ALIVE rather than on what was RENDERED — are
+in `ARCHITECTURE.md` §7c. A held role is stamped `held_since` on its record and re-offered
+to the mail for `run.EMAIL_READMIT_DAYS` (4) once its text lands, so withholding a role is
+never deleting it.
+
+**Rejected here, with the measurement:** a STATELESS re-offer (any alive unsent role whose
+`roles_text.jsonl` `updated` is recent). It needs no new field and was the first
+implementation — and the golden rehearsal showed it emailing roles that nothing had ever
+held, because `jd-text` backfills descriptions nightly. That is the unsent backlog going
+out under a heading promising the last 48 hours; widening that promise is BACKLOG 310's
+decision to make, not this ruling's.

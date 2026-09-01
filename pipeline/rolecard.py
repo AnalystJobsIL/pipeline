@@ -207,6 +207,18 @@ def sen_canon(chip, title):
     return "—"
 
 
+def is_mangled_title(title):
+    """Is this "title" a card blob rather than a role's name — a scrape that swallowed the
+    bullet list, the location, the whole tile?
+
+    The rule the board has always hidden a card on, named so a second caller can ask the
+    same question. `pipeline.run` asks it while SELECTING the email, because hiding the
+    card at render time left the role in `out/digest-<date>.json` and `mark_sent` burned
+    it as delivered — hidden from the reader and unreachable forever after."""
+    t = _s(title)
+    return bool(jdtext._MANGLED_TITLE.search(t)) or len(t) > 100
+
+
 _LAST_RESORT = {
     "company": "", "display_company": "", "display_name": "", "title": "(untitled)", "hebrew_title": False, "mangled": False,
     "url": "", "loc": "Israel (unspecified)", "posted": "", "age": "", "rel_date": "—", "first_seen": "",
@@ -229,7 +241,7 @@ def _bare(job, run_date):
     card.update({
         "company": company, "display_company": jdtext._display_company(company),
         "title": title, "hebrew_title": bool(jdtext._HEBREW.search(title)),
-        "mangled": bool(jdtext._MANGLED_TITLE.search(_s(job.get("title")))) or len(_s(job.get("title"))) > 100,
+        "mangled": is_mangled_title(job.get("title")),
         "url": _s(job.get("url"), 2000), "loc": jdtext._norm_location(_s(job.get("location"), 200)),
         "posted": pdate, "age": jdtext._age_note(pdate, run_date), "rel_date": jdtext._rel_date(pdate, run_date),
         "first_seen": _s(job.get("first_seen"))[:10], "emp": jdtext._employment_badge(title),

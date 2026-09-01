@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**601 filed · 434 open · 167 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**604 filed · 437 open · 167 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 555.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 546, 547, 548, 549 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 558.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 546, 547, 548, 549 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -415,6 +415,34 @@ closure convention in the header.
 - **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
 - **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
 
+### roles — 25 open
+
+- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
+- **3** `3@roles` **`pipeline/dates.py`**
+- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
+- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
+- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
+- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
+- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
+- **534** `534@roles` **One posting, two `merge_key`s
+- **543** `543@roles` **A drain flip never reaches the published dataset, so a role the seam has re-judged NO
+- **544** `544@roles` **A published `class_decision` cannot say which contract judged it, so a bump leaves the
+- **545** `545@roles` **A stray `seen_id` on one record makes another record's url withdraw it too
+- **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
+- **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
+
 ### docs — 24 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
@@ -441,32 +469,6 @@ closure convention in the header.
 - **467** `467@docs` **`check_unattended_proof` still returns silently on a runner**
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
-
-### roles — 23 open
-
-- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
-- **3** `3@roles` **`pipeline/dates.py`**
-- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
-- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
-- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
-- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
-- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
-- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
-- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
-- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
-- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
-- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
-- **534** `534@roles` **One posting, two `merge_key`s
-- **543** `543@roles` **A drain flip never reaches the published dataset, so a role the seam has re-judged NO
-- **544** `544@roles` **A published `class_decision` cannot say which contract judged it, so a bump leaves the
-- **545** `545@roles` **A stray `seen_id` on one record makes another record's url withdraw it too
 
 ### company-intel — 21 open
 
@@ -515,6 +517,24 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
+### classifier — 15 open
+
+- **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
+- **122** `122@classifier` **The cap and the budget bite the same companies every day**
+- **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
+- **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
+- **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
+- **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
+- **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
+- **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
+- **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
+- **503** `503@classifier` **The contract drain still competes with fresh roles for the same call budget; the deferred
+- **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
+- **541** `541@classifier` **A superseded verdict was chosen by sorting contract HASHES, which is alphabetical and
+- **542** `542@classifier` **The title gate rejects `analytics engineer` outright, and the 2026-09-01 boundary is
+- **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
+- **557** `557@classifier` **LTX has not flipped to its own board
+
 ### jd-text — 15 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
@@ -532,23 +552,6 @@ closure convention in the header.
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 - **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
 - **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
-
-### classifier — 14 open
-
-- **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
-- **122** `122@classifier` **The cap and the budget bite the same companies every day**
-- **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
-- **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
-- **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
-- **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
-- **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
-- **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
-- **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
-- **503** `503@classifier` **The contract drain still competes with fresh roles for the same call budget; the deferred
-- **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
-- **541** `541@classifier` **A superseded verdict was chosen by sorting contract HASHES, which is alphabetical and
-- **542** `542@classifier` **The title gate rejects `analytics engineer` outright, and the 2026-09-01 boundary is
-- **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
 
 ### render — 6 open
 
@@ -10348,3 +10351,47 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      one bad `seen_id` away from deleting a live role, and nothing alarms, because from
      `record_run`'s side two matches look exactly like one.
 
+
+
+## From the `roles` lane, 2026-09-01 (the publish gate, and one posting proven by its text)
+
+555. **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source** — lane:
+     `roles`. Found by `classifier` while reading JDs for the operator's 57-row audit, and
+     confirmed here as the real defect under the duplicate they reported. `oak identity
+     security os|product analyst` (closed, ashby, 3,735 chars — the employer's own ATS) and
+     `oak|product analyst` (open, indeed, 3,685 chars — an aggregator copy) are one posting.
+     The at-rest sweep's winner rule is "open beats closed, then later `last_seen`"
+     (`roles.py`, `_twin_winner_at_rest`), which is right for a RETITLE — the half still
+     being served carries the employer's current title — and wrong when the two halves are
+     different SOURCES: it would keep the Indeed copy and supersede the canonical board one,
+     the exact direction `_source_rank` exists to prevent everywhere else. The run-time arm
+     (`_twin_winner`) ranks on `_source_rank` and would get it right. Note this pair does
+     not fold today at all (different `identity_key`s, no shared id/url/pk, and the texts
+     are 50 characters apart so the new byte-identical text arm correctly refuses them), so
+     nothing is currently mis-elected — this is a latent rule, and the fix is to consult
+     `_source_rank` before `last_seen` in the at-rest rule, with a test on this pair's shape.
+     Do NOT simply add source to the front: an open native row beating a closed native row
+     is the current behaviour and is correct.
+
+556. **A role's employer is the board's TENANT, not always the row that fetched it** — lane:
+     `roles` (evidence from `classifier`, 2026-09-01). `team8|briya medical data analyst`:
+     the JD is Briya's own role end to end ("We are seeking … to join Briya", "Integration
+     of new data providers to the Briya marketplace"); Team8 is the venture builder whose
+     Comeet board carries it, and is not an agency, so no purge or recruiter predicate
+     applies and the role is correctly IN scope. The reader is simply told the wrong
+     employer. This is the Faye/withfaye shape one layer earlier: nothing to FOLD (one
+     posting, one record), so neither the alias fold nor any claim arm can reach it — the
+     company string has to be corrected where it is assigned. `roles._name_in_text` (added
+     2026-09-01 for `_winner`) is the evidence primitive this would use: the posting names
+     Briya and never names Team8. Count the class before building anything: how many active
+     rows are venture builders / parent boards carrying a named subsidiary's posting?
+
+557. **LTX has not flipped to its own board — the classify tier, not the ratchet** — lane:
+     `classifier` (raised by `roles`). The 2026-09-01 morning check FAILED: `LTX` still
+     publishes `il.indeed.com/viewjob?jk=b17171f8cdb4b6c7` while the greenhouse API serves
+     `8644790002 | Commercial Operations Analyst | Jerusalem`, an exact `merge_key` title
+     match with the stored Indeed record. The merge and the aggregator ratchet are both in
+     place and were verified on 08-31; the deep-donor branch only reaches the pair on a run
+     where the classifier ADMITS the greenhouse card, and it has not on two consecutive
+     runs. The FAIL shape was named in advance and this is it. Ask: what verdict does the
+     greenhouse card get, and is it cache-hitting a stale key?

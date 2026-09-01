@@ -2710,5 +2710,135 @@
   "replace": "        row_bd = bd if (mkey in paid_keys",
   "why": "Before the refuted flag existed, a row whose text passed `looks_like_jd` was skipped BEFORE `_donor_candidates` and could not spend. A refuted row now walks the candidates, so without this clause it reaches the Unlocker: an adversarial wave measured 0 paid calls before and 1 (2 with the render retry) after, per refuted row per cooldown window, against the shared 25 cap. A row that already HAS text may work the free rungs; it may not preempt a row that has none.",
   "must_be_killed_by_behavioural": false
+ },
+ {
+  "id": "pending-exclusion-back-to-blocker-only",
+  "file": "pipeline/roles.py",
+  "symbol": "build_rows",
+  "class": "M1-gate-narrowed",
+  "find": "        if weak and BLOCKED_POLICY == \"exclude\" and not archive:",
+  "replace": "        if blocker and BLOCKED_POLICY == \"exclude\" and not archive:",
+  "why": "the 2026-08-31 reading of the ruling, which published two PENDING weak rows on 09-01 (Madanes with no text, בנק דיסקונט with a snippet) to the csv, the board and the mail. The operator's words are 'no role in the UI and in the db without description' — a weak row leaves whether or not a STRUCTURAL blocker can be derived for it. Killed by test_a_pending_weak_row_leaves_the_dataset_and_returns_when_its_text_lands.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "pending-count-moved-inside-the-policy",
+  "file": "pipeline/roles.py",
+  "symbol": "build_rows",
+  "class": "M6-fallback-removal",
+  "find": "            counts[\"pending\"] += 1",
+  "replace": "            counts[\"pending\"] += 0",
+  "why": "the pending census is counted at DETECTION, not inside the exclude branch, so a `mark` day reports the same number it publishes. Zeroed, the meta's description_text.blocked says `pending: 0` while pending rows sit in the file — the silent-collapse shape wave B found in the quality block. Killed by test_the_meta_and_mail_agree_on_weak_text_and_the_quality_identity_holds.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "text-quality-collapses-unmeasured-into-none",
+  "file": "pipeline/roles.py",
+  "symbol": "text_quality",
+  "class": "M1-gate-narrowed",
+  "find": "    return \"none\" if dlen is _NO_LENGTH else \"\"",
+  "replace": "    return \"none\"",
+  "why": "a stored length with no text in hand means the caller cannot SEE the text (a frozen or corrupt roles_text.jsonl), not that there is none. Collapsed to `none`, every such row is weak and the exclude policy empties the board and the csv on a bad text day — the mass-zero failure class, arriving as a policy verdict. Killed by test_text_quality_separates_no_text_from_a_text_it_cannot_see.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "same-text-bucket-floor-removed",
+  "file": "pipeline/roles.py",
+  "symbol": "_text_key",
+  "class": "M1-gate-narrowed",
+  "find": "    if sha and isinstance(dlen, int) and dlen >= SAME_TEXT_MIN:",
+  "replace": "    if sha and isinstance(dlen, int):",
+  "why": "below SAME_TEXT_MIN an identical string is boilerplate two boards share ('Apply now'), not evidence of one posting: without the floor every short-stub pair across two employers becomes a fold candidate and one of two real roles is superseded. Killed by test_the_text_arm_needs_a_substantial_text_and_titles_that_match.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "same-text-arm-drops-the-titles-guard",
+  "file": "pipeline/roles.py",
+  "symbol": "_same_text_posting",
+  "class": "M6-fallback-removal",
+  "find": "    return ta == tb",
+  "replace": "    return True",
+  "why": "byte-identical text under two employers with DIFFERENT titles is two postings sharing a page, not one role. Without the guard the arm folds a careers page's whole card set across employers — the BACKLOG 370 shape, cross-company. Killed by test_the_text_arm_needs_a_substantial_text_and_titles_that_match.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "same-text-bucket-ungated-in-twins-mode",
+  "file": "pipeline/roles.py",
+  "symbol": "_groups",
+  "class": "M1-gate-narrowed",
+  "find": "            if not twins:\n                tk = _text_key(j)",
+  "replace": "            if True:\n                tk = _text_key(j)",
+  "why": "the sha bucket is the cross-company arm's evidence; in twins mode it pair-tests same-company records that `same_role_twin` refuses anyway, and it is the one place a same-company byte-identical pair (a careers page captured twice, BACKLOG 370) could ever be handed to a fold. Killed by test_the_text_arm_refuses_two_real_roles_that_share_a_careers_page.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "winner-ignores-what-the-posting-names",
+  "file": "pipeline/roles.py",
+  "symbol": "_winner",
+  "class": "M6-fallback-removal",
+  "find": "                    0 if _name_in_text(name, j) else 1,",
+  "replace": "                    0,",
+  "why": "with no url evidence, no incumbency and equal source ranks, the posting's own words are the only evidence there is: the אסם/Nestlé pair is decided here, and without this key it falls through to the caseless-name and shortest-identity keys and crowns a PARKED Nestlé over the live אסם the text names twice. Killed by test_the_winner_reads_the_posting_and_stops_calling_hebrew_a_lowercase_stub.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "winner-calls-a-caseless-name-a-lowercase-stub",
+  "file": "pipeline/roles.py",
+  "symbol": "_winner",
+  "class": "M1-gate-narrowed",
+  "find": "                    1 if (name == name.lower() and name != name.upper()) else 0,",
+  "replace": "                    1 if name == name.lower() else 0,",
+  "why": "Hebrew, Arabic and CJK have no case, so `name == name.lower()` is true of every name in them and the 'kornit' stub demotion fires on all of them — demoting אסם under Nestlé. The guard costs nothing where case exists (the kornit/Kornit Digital election is unchanged). Killed by test_the_winner_reads_the_posting_and_stops_calling_hebrew_a_lowercase_stub.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "name-evidence-vacuous-on-an-empty-token-set",
+  "file": "pipeline/roles.py",
+  "symbol": "_name_in_text",
+  "class": "M6-fallback-removal",
+  "find": "    if not toks:\n        return False",
+  "replace": "    if not toks:\n        return True",
+  "why": "`all()` over an empty set is True, so a name that tokenizes to nothing would get free evidence — the BACKLOG 510 shape (identity_ok vouching for a newspaper). Killed by test_name_evidence_refuses_an_empty_token_set_and_a_partial_match.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "email-gate-after-the-payload",
+  "file": "pipeline/run.py",
+  "symbol": "run",
+  "class": "M1-gate-narrowed",
+  "find": "    email_jobs = [j for j in email_jobs if _mailable(j)]",
+  "replace": "    email_jobs = list(email_jobs)",
+  "why": "the whole point of gating at SELECTION: `out/digest-<date>.json` is built from email_jobs and mark_sent burns every row in it, so a role hidden later (as a mangled title already was) is marked delivered and `filter_new` never offers it again. Killed by test_a_role_held_for_its_text_is_never_marked_sent_and_is_mailed_when_it_lands.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "board-gate-before-the-closure-snapshot",
+  "file": "pipeline/run.py",
+  "symbol": "run",
+  "class": "M2-order-swap",
+  "find": "    alive_jobs = list(board_jobs)             # the role record judges closure on THIS, not the capped page\n    # The same ruling on the board",
+  "replace": "    board_jobs = [j for j in board_jobs if _publishable(j)]\n    alive_jobs = list(board_jobs)             # the role record judges closure on THIS, not the capped page\n    # The same ruling on the board",
+  "why": "a role held for having no description is still OPEN. Gating before the closure snapshot tells the record it left its board: it is archived as filled, and 'reopens' the morning its text lands. Killed by test_holding_a_role_off_the_board_never_tells_the_record_it_closed.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "archive-is-what-was-rendered-not-what-is-alive",
+  "file": "pipeline/run.py",
+  "symbol": "run",
+  "class": "M6-fallback-removal",
+  "find": "    onboard = {(j[\"company\"], j[\"title\"]) for j in alive_jobs}   # = still open",
+  "replace": "    onboard = {(j[\"company\"], j[\"title\"]) for j in board_jobs}   # = still open",
+  "why": "the archive is `matched` minus what is ALIVE. Minus what was RENDERED, every role the board did not draw — one held for its text, one trimmed by the BOARD_MAX_ROLES backstop — is published on a page headed 'no longer on the employer's careers page' while it is live. Killed by test_a_role_with_no_usable_description_reaches_neither_the_board_nor_the_mail.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "readmit-without-the-held-stamp",
+  "file": "pipeline/run.py",
+  "symbol": "run",
+  "class": "M1-gate-narrowed",
+  "find": "        held = str((ledger.records.get(store.merge_key(j)) or {}).get(\"held_since\") or \"\")[:10]\n        return bool(held) and held >= _readmit_from",
+  "replace": "        t = (getattr(ledger, \"text\", {}) or {}).get(store.merge_key(j))\n        upd = str((t or {}).get(\"updated\") or \"\")[:10]\n        return bool(upd) and upd >= _readmit_from",
+  "why": "the re-offer exists for roles THIS gate withheld. Keyed on the text merely being fresh instead, it re-offers any alive unsent role whose description jd-text backfilled — quietly mailing the unsent backlog and rewriting what the 48h promise means (BACKLOG 310, deliberately still open). The golden rehearsal caught the loose version doing exactly that. Killed by test_a_role_held_for_its_text_is_never_marked_sent_and_is_mailed_when_it_lands.",
+  "must_be_killed_by_behavioural": true
  }
 ]

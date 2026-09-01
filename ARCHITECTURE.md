@@ -6116,15 +6116,45 @@ url alone (Meta's url is the listing page, shared by every Meta role) and
 never an id alone (a scrape row's `job_id` is sometimes the listing page, `#` or a
 `mailto:` — six SpearUAV roles carried one id); "Data Analyst" vs "Data Analyst, Growth"
 is two roles even at one address, and because that agreement is not transitive (its word-set is the longer
-job's own location) a group collapses only when every pair agrees. Each group keeps ONE
-company (`Ledger._winner`): the one whose own name is in the url or tenant slug (`armis`
+job's own location) a group collapses only when every pair agrees.
+
+**Since 2026-09-01 there is a fourth evidence bucket: the TEXT** (`roles._same_text_posting`,
+cross-company only). The 2026-09-01 audit found `Nestlé` and `אסם` publishing one posting
+twice — two Indeed `jk=` addresses, two seen_ids, and `_pk` is `''` for both because they
+are aggregators, so the pair sat in NONE of the three buckets above and was never even
+pair-tested. Its evidence is that the two descriptions are byte-identical (971 characters,
+one `desc_sha1`) under the same title. The arm demands exactly that: an identical
+`desc_sha1` over `roles.SAME_TEXT_MIN` (200) characters and normalized titles EQUAL — not
+merely agreeing, because the location-glue and seniority bypasses both lean on an address
+we can see and here there is none. Byte equality, never a normalization: Mobileye's
+`Business Analyst` and `Forecast Analyst` are two REAL openings whose 2,835-character
+texts differ in EIGHT characters, and any casefold, whitespace-collapse or n-gram
+comparator folds them and deletes a live role. `same_posting` itself is unchanged, so
+`same_role_twin` cannot reach the text arm and a same-company byte-identical pair — one
+careers PAGE stored as several rows' description, BACKLOG 370 — stays as unfolded as it
+is today. A record's key is its STORED `desc_sha1`, never re-hashed: `flush` strips the
+in-memory copy and `_open_sync` re-seeds it from `roles_text.jsonl`, so on a frozen text
+day hashing what is in memory keys every record on the hash of nothing.
+
+Each group keeps ONE company (`Ledger._winner`): the one whose own name is in the url or tenant slug (`armis`
 in `armissecurity`, `port` in `/jobs/port/`; the ATS hosts themselves and path plumbing
 never count — `Smart Shooter` is not named by every smartrecruiters url; TLD-ish tokens
 ignored, three-letter tokens must match a segment exactly) — evidence outranks
 incumbency, or a wrong name stored before this guard existed would be sticky forever; else
 the one already holding the posting (no flip-flop); else a native-ATS row over a scrape
-over a discovery card; else not the "X Israel" site form, not a lowercase stub row, then
-the shortest identity, then A–Z. The losers' `seen_ids` and sources are unioned into the
+over a discovery card; else **the company the POSTING ITSELF names** (`_name_in_text`);
+else not the "X Israel" site form, not a lowercase stub row, then the shortest identity,
+then A–Z. The text key is what decides an aggregator pair, which by construction has no
+url evidence: the אסם posting opens "קבוצת אסם סחר מגייסת…" and names אסם twice while never
+naming Nestlé, and the registry agrees (אסם active, both `Nestle` rows parked). It reads
+RAW whitespace tokens, requires EVERY token of the name to appear as an exact token of the
+title or body, and refuses an empty token set outright — `_identity_tokens` returns nothing
+for 16 registry names (`HP`, `F5`, `3M`, `EY`, `AT&T`, `D-ID`) and `all()` over empty is
+True, which is the BACKLOG 510 shape; and one token of a two-word brand is a coincidence,
+which is the BACKLOG 260 shape (`names_in_url("Bright Data", …/fetcherr/data-analyst/)` is
+True because `data` matched the job TITLE). The lowercase-stub key now fires only where
+case EXISTS (`name != name.upper()`): Hebrew, Arabic and CJK are caseless, so every name
+in them read as a "kornit"-shaped stub and אסם was demoted under a parked Nestlé. The losers' `seen_ids` and sources are unioned into the
 winner (so `filter_new` still sees them sent — a posting emailed yesterday under the wrong
 name is therefore not re-emailed under the right one), the losers are named on the
 winner's `attribution.claimed_by` and in the mail, and a loser row already in the store
@@ -6520,10 +6550,10 @@ operator's smaller-and-correct rule lands as (`docs/decisions/2026-08-31-snippet
 it (11 of 161 rows on 2026-08-31 held a search snippet with nothing in the file saying so),
 `none` when there is no text, empty when the text file could not be judged this run — judged
 at export, never stamped on the record, so a rule change re-judges every row on the next
-export. A weak text never takes a row out (the exclusion classes are verdicts about the
-ROLE; these roles are real market facts, and excluded rows would flap back in the day
-`jd-text` fills them); the meta's `description_text.quality` block carries the counts with
-their own identity, and the mail's dataset line says `weak text N` while any remain.
+export. Since the operator's 2026-09-01 ruling a weak text DOES take the row out, on every
+surface at once — the reading that changed and why is under POLICY below; the meta's
+`description_text.quality` block carries the counts with their own identity, and the mail's
+dataset line says `weak text N` for whatever is still IN the file.
 Beside it since 2026-08-31 (evening), `description_blocker` says WHY a weak text is
 structurally hard to complete, or is empty — derived only for `snippet`/`none` rows (a
 text that passes is never marked, whatever its address history: a `gone` posting can gain
@@ -6536,12 +6566,39 @@ enrich driver's next run; else derived `gone` (the GONE_MARK stamp), `unfillable
 rung reads them). The meta's `description_text.blocked` counts by reason and names the
 POLICY: `roles.BLOCKED_POLICY` is `exclude` since the operator's 2026-09-01 ruling ("no
 role in the UI and in the db without description"; the supersession is recorded in the
-snippet-rows decision record) — a BLOCKED row leaves `roles.csv` with its reason still
-counted and every meta identity whole (`reconciliation` gains `blocked_excluded`); a
-weak row with NO blocker is pending a fill and still publishes marked; re-admission is
-automatic when text lands (the blocker derives per-export); the archive keeps history
-whatever the policy. The mail's dataset line adds `blocked N (M excluded)` while any
-exist. `description_truncated` is `true` when a row sits exactly on the capture cap
+snippet-rows decision record). It first shipped keyed on the BLOCKER, so a weak row with
+no structural signal was "pending a fill" and still published — and the 09-01 digest put
+two such rows (Madanes `Manager Bi`, no text at all; בנק דיסקונט, a search snippet) in
+`roles.csv`, on the board AND in the mail, which burned both in `sent` for ever. Read as
+written, the ruling covers them: EVERY weak row now leaves, with its reason still counted
+and every meta identity whole (`reconciliation` gains `blocked_excluded` and
+`pending_excluded`; `description_text.blocked` splits `structural` from `pending`). What
+is NOT weak is `unmeasured` — a stored length whose text this export cannot see, on a
+frozen or corrupt `roles_text.jsonl` day: that publishes, because the alternative is a
+policy verdict emptying the file. Re-admission is automatic when text lands (the whole
+judgement derives per-export); the archive keeps history whatever the policy. The mail's
+dataset line reads `weak N (S structural, P pending) · E excluded`.
+
+**And the same judgement gates the BOARD and the MAIL** (`roles.text_quality`, the one
+judge, called from the role-selection block of `pipeline/run.py`). Until 2026-09-01 the
+ruling was enforced on the dataset alone, so the csv and the two surfaces a person
+actually looks at could disagree about a role — and did, the morning it shipped. Three
+things make the gate a withholding rather than a deletion: it runs BEFORE
+`out/digest-<date>.json` is written, so `mark_sent` never burns a held role (the
+mangled-title hiding in `digest.build_markdown` did exactly that, silently, for every card
+blob it ever hid — `rolecard.is_mangled_title` is now one predicate and the MAIL refuses
+such a role at selection, while the board still hides it at render and says so on the
+`Render:` line); it runs AFTER `alive_jobs` is taken, so the record never reads a held
+role as closed; and the archive is `matched` minus what is ALIVE, not minus what was
+RENDERED, so nothing held — or trimmed by the `BOARD_MAX_ROLES` backstop — is published
+as "no longer on the employer's careers page". A held role is stamped `held_since` on its
+record and re-offered to the mail for `run.EMAIL_READMIT_DAYS` (4) once its text lands,
+regardless of the 48h `posted_date` window it has meanwhile fallen out of. The re-offer is
+keyed on that stamp and NOT on the text merely being fresh: `jd-text` backfills
+descriptions nightly, so the looser rule mails the whole unsent backlog and rewrites what
+the 48h promise means — which may be right, and is BACKLOG 310's to decide, not this
+ruling's. The run says what it withheld on the `Roles:` line (`held N role(s) off the
+board and the mail`). `description_truncated` is `true` when a row sits exactly on the capture cap
 (`store.DESC_MAX`, 6,000 — the same number as `fetchers._DESC_MAX` and `jdfill.DESC_MAX`, all
 three pinned equal by a test): 7 of 143 rows today, one of them Amazon's, cut mid-sentence at
 "...If you have a". The true length is already gone before the store sees it, so it cannot be
