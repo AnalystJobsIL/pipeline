@@ -687,6 +687,54 @@ def test_a_repaired_endpoint_faces_the_gate_and_the_twin_check_that_the_proposed
         D._gate, D.verify, D.is_foreign = _real_gate, _real_verify, _real_foreign
 
 
+def test_a_zero_from_a_name_alikes_board_is_not_recorded_as_this_company_being_empty():
+    """`activation_verdict`'s first line is `if not n_jobs: return "empty"` — above every
+    identity test — and `validate_one` renders SEARCH RESULTS as well as the row's own seed.
+    So a name-alike's board that answers zero used to be stamped as THIS row's empty board.
+    Measured 2026-09-01, four rows in one run: `Experda` was handed Expedia's Workday,
+    `Prologic LTD` Prologis's, `Recolabs` Ecolab's, `SemiConductor Devices` Analog Devices' —
+    each 0 jobs, each stamped `verified 0 jobs (empty board)` about a board never read for
+    that company. `Prologic LTD` is the row `docs/BACKLOG.md` 513 had just finished arguing
+    is a real Israeli employer wrongly read as an agency.
+
+    The activation gate was never the hole — no row was activated and cols 2-3 were left
+    alone. The NOTE was, and ARCHITECTURE §2's first verdict rule is about exactly that: no
+    company is recorded as having no roles without evidence about that company."""
+    import deep_validate as D
+    real_gate = D._gate
+    try:
+        # the real gate's own answers: "empty" (0 jobs short-circuit) and a tenant that
+        # cannot vouch for this name — which is what every one of the four looked like.
+        D._gate = type("_G", (), {
+            "activation_verdict": staticmethod(lambda *a, **k: "empty"),
+            "board_vouches": staticmethod(lambda *a, **k: None),
+        })
+        fr = ["Experda", "scrape", "", "https://www.experda.com/career/", "false", "n"]
+        D.apply_verdict(fr, "Experda", "recovered", "workday", "expedia",
+                        "https://expedia.wd5.myworkdayjobs.com/search", 0, 0, "", rows=[])
+        # the row is untouched but for its note: not activated, and the stranger's endpoint
+        # was not written into cols 2-3 (the gate's half, pinned here so a regression in
+        # EITHER half fails this test)
+        assert fr[4] == "false", fr
+        assert fr[1:4] == ["scrape", "", "https://www.experda.com/career/"], fr
+        assert "empty board" not in fr[5], \
+            "a stranger's empty board was recorded as this company having no roles"
+        assert "unvouched" in fr[5], fr[5]
+
+        # ...and a tenant that DOES vouch still gets the plain empty-board verdict: 25 of
+        # the 35 rows carrying that stamp vouch True, and they keep it.
+        D._gate = type("_G2", (), {
+            "activation_verdict": staticmethod(lambda *a, **k: "empty"),
+            "board_vouches": staticmethod(lambda *a, **k: True),
+        })
+        fr2 = ["Aporia", "workable", "aporia", "https://apply.workable.com/aporia/", "false", "n"]
+        D.apply_verdict(fr2, "Aporia", "recovered", "workable", "aporia",
+                        "https://apply.workable.com/aporia/", 0, 0, "", rows=[])
+        assert "verified 0 jobs (empty board)" in fr2[5], fr2[5]
+    finally:
+        D._gate = real_gate
+
+
 # --- "time.com is Time To Know" — two ways the identity check said yes to a stranger ----
 def test_a_common_word_that_is_the_whole_domain_is_not_the_company():
     """`verdict` scored time.com a clean MATCH for "Time To Know": the distinctive token
@@ -26230,6 +26278,42 @@ def test_alias_fold_rewrites_a_declared_showcase_name_onto_the_registry_row():
                                             active_by_identity=abi, origins=org)
     assert out[0]["company"] == "NVIDIA" and out[0]["_claimed_by"] == ["NVIDIA AI"]
     assert folds == {"NVIDIA<-NVIDIA AI": 1}
+
+
+def test_the_live_registry_does_not_park_a_non_employer_on_a_declared_alias_string():
+    """LIVE DATA, and the one thing the fixtures above cannot say: the fold's first refusal
+    is `name in registry_names`, an exact-string test over EVERY row whatever its `active`
+    (`pipeline/run.py` builds it from `load_companies(active_only=False)`). So a row that is
+    not an employer at all, sitting on a string `ALIASES` declares, silently cancels a
+    curated declaration — no log line, no counter, nothing in the ledger (BACKLOG 522).
+
+    Measured: `Oak` was a Teamtailor DIVISION FILTER on Opera Group's shared board
+    (`&division=Oak`, whose own cards read `Oak Isle of Man` / `Oak Guernsey`, offshore
+    fiduciary work, zero Israel). It blocked `ALIASES["oak"] = "oak identity security os"`
+    while the Israeli company's `Product Analyst` published twice — once under `Oak` from
+    Indeed, once under `Oak - Identity Security OS` from its own Ashby board. The row was
+    renamed to its board's real employer on 2026-09-01 and retired `redundant`.
+
+    This asserts the OUTCOME on the shipped registry, so restoring a row named `Oak` reds
+    it. It is deliberately not the general form "no row name may be an ALIASES key": seven
+    keys legitimately name live rows (`AWS`, `JPMorganChase`, `Habana Labs (Intel)`,
+    `VMware (Broadcom)`, ...), which are real separate scanner rows and must never fold."""
+    import csv as _c
+    import os as _o
+    from pipeline import roles
+    from pipeline.firmographics import identity_key
+    root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
+    rows = [r for r in list(_c.reader(open(_o.path.join(root, "companies.csv"),
+                                           encoding="utf-8")))[1:] if r]
+    names = {r[0] for r in rows}
+    origins = {r[0]: ((r[2] or "").strip() or r[3] or "") for r in rows}
+    abi = {}
+    for r in rows:
+        if (r[4] or "").strip().lower() == "true":
+            abi.setdefault(identity_key(r[0]), set()).add(r[0])
+    assert roles._alias_fold_target("Oak", "", names, abi, origins) == \
+        ("Oak - Identity Security OS", "declared"), \
+        "a registry row is holding the string `Oak` again and the declared fold is dead"
 
 
 def test_alias_fold_never_rewrites_a_registry_name():

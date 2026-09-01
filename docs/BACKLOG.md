@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**604 filed · 437 open · 167 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**610 filed · 443 open · 167 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 558.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 546, 547, 548, 549 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 560.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 147 open
+### registry — 150 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -241,8 +241,11 @@ closure convention in the header.
 - **527** `527@registry` **`Peak Innovation` is a staffing agency and it feeds 45 listings into the board** —
 - **528** `528@registry` **Three registry rows name a company that is not the one their board belongs to, and
 - **538** `538@registry` **Three registry rows carry a name that is not their board's company, with the evidence
+- **549** `549@registry` **`deep_validate` recorded a NAME-ALIKE's empty board as this company having no
+- **558** `558@registry` **`rehearse (worst, seed 1)` is RED on master, and the row it names is not lost
+- **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 
-### infra — 109 open
+### infra — 110 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -353,6 +356,7 @@ closure convention in the header.
 - **498** `498@infra` **`roles_archive.csv` and `roles_text.jsonl` are not on Pages**
 - **515** `515@infra` **A cron commit carries `[skip ci]`, so a row a cron corrupts is only ever caught on
 - **540** `540@infra` **Every company-intel mutant scores `killed` whether or not a behavioural test noticed,
+- **547** `547@infra` **The 06:00 self-heal reads a `stale.json` the digest has not written yet, so a board
 
 ### discovery — 29 open
 
@@ -386,7 +390,7 @@ closure convention in the header.
 - **535** `535@discovery` **A role whose own JD names a New York address is published as an Israel role**
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
 
-### scraper — 26 open
+### scraper — 27 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -413,6 +417,7 @@ closure convention in the header.
 - **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
 - **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
 - **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
+- **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
 - **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
 
 ### roles — 25 open
@@ -517,7 +522,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### classifier — 15 open
+### classifier — 16 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -532,6 +537,7 @@ closure convention in the header.
 - **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
 - **541** `541@classifier` **A superseded verdict was chosen by sorting contract HASHES, which is alphabetical and
 - **542** `542@classifier` **The title gate rejects `analytics engineer` outright, and the 2026-09-01 boundary is
+- **548** `548@classifier` **A remote posting is counted as Israeli on the board's `country_code` alone, with no
 - **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
 - **557** `557@classifier` **LTX has not flipped to its own board
 
@@ -9566,6 +9572,49 @@ Record: `docs/sessions/2026-08-31-jd-text.md`.
        whose URL is Opera Group's shared Teamtailor. Indeed-only inactive rows: **21, unchanged** — the twin stays parked, correctly.
        Novo Nordisk was inside its 30-day deep-validate cooldown and was not re-read. The
        remaining names are untouched.
+
+     **WORKED 2026-09-01 (`registry`) — 22 inactive rows re-derived, the render rung run over
+     the 11 eligible, and the class count is 22 → 20.** Two employers are now covered AT
+     SOURCE instead of through Indeed, each verified against the board's own JSON before the
+     row was trusted: **`factify`** → comeet `A9.00F`, whose 6 positions all self-name
+     `Factify` and all read `Tel Aviv, Israel`; **`mPrest Systems`** → comeet `38.005`, 11
+     positions self-naming `mPrest`, all `Petah Tikva, Israel`. Both were activated by
+     `deep_validate --apply` through `identity_gate`, not by hand.
+     **The arithmetic, corrected by this session's own wave — 22 → 20 is not three departures.**
+     Three names left (`factify` and `mPrest Systems` by activation, `Oak` by the rename, whose
+     Indeed cards now fold onto the ACTIVE `Oak - Identity Security OS` row) and **`Akamai`
+     JOINED**, because this same session parked it — 22 − 3 + 1 = 20. `בנק דיסקונט` did NOT
+     leave: it is now `alias-of Discount Bank` (the Hebrew name of the ACTIVE row, whose board
+     is verified 4 IL — the THIRD row for that bank after `Discount Bank בנק דיסקונט` was
+     aliased on 08-28), but an aliased row is still an inactive row with an Indeed card, so it
+     is still one of the 20. A park is not a departure from this class; only coverage is.
+     **Refused, with the reason:** `ICON Plc`, `Questrade Financial Group` and
+     `Software AG-SPL` rendered with no ATS in DOM or network; `GENPACT DS ISRAEL LTD` and
+     `MKS Inc.` returned `unverified (no readable page)`, which stamps no claim and keeps
+     their tokens; `Nestlé`, `Novo Nordisk` and `Wipro Limited` are inside the 30-day
+     `_revalidatable` cooldown AND are `successfactors` WIRE cases, where a re-render buys
+     nothing and cracking the tenant is the actual work; `Diageo`, `TransUnion`,
+     `Glassbox Ltd.`, `Google` and `Horizon Technologies` (`domain-dead` today) were already
+     settled or terminal. **`הראל ביטוח ופיננסים` was attempted and failed honestly**: its
+     `harel-group.co.il/careers` is a js-shell whose XHRs carry no recognisable ATS, so it
+     stays parked in the hunt's pool. While checking it, a separate defect surfaced and was
+     fixed: the row **`Harel Insurance & Finance` stored `geico.wd1.myworkdayjobs.com`** —
+     GEICO's Workday, on a row whose analyst roles the board publishes from LinkedIn. Since
+     `is_foreign` is False on every ATS host by design, that address was a live landmine for
+     any future activation rung; cleared with `url-cleared 2026-09-01`, the row kept and
+     still owned by the hunt and triage.
+     **The run also produced four FALSE verdicts, which were stripped and then made
+     impossible** — see `549`: `Experda` was handed Expedia's Workday, `Prologic LTD`
+     Prologis's, `Recolabs` Ecolab's and `SemiConductor Devices` Analog Devices', each 0 jobs
+     and each stamped `verified 0 jobs (empty board)` about a board never read for that
+     company. `Prologic LTD` is the row this item had just finished defending as a real
+     employer. The four stamps were removed (CLAUDE.md rule 2) and all four rows are back in
+     their pools, unchanged from before the run.
+     **Names with no row: 8** (`consist group`, `kpmg`, `m/a com technolgy solutions`,
+     `majestic labs`, `mccann`, `oak`, `palantir technologies`, `viber`) — up from 4 because
+     the derivation counts Indeed's own spelling: `oak` folds to an active row, `viber` and
+     `mccann` have rows under other names (the item says so), and the rest are intake's.
+     20 inactive rows remain in the class.
 514. **`retry_unreachable` OVERWROTE a notes cell and the row fell out of its re-check pool —
      the rehearsal caught it on the next push** — lane: `registry`. Filed by `roles`
      2026-08-31. Commit `93dc8fd` (schedule run 33374511068, `[skip ci]`) rewrote
@@ -9790,6 +9839,34 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      the Bounce/Bounce AI shape the fold otherwise avoids, and a rename is what keeps it
      avoided. The role's company needs no re-derivation now: the
      alias joins it to the right facts, and `533@roles` owns merging the two strings.
+
+     **CLOSED 2026-09-01 (`registry`) — resolved, not retired anonymously, and the fold is
+     measured lifting.** The board answers its own question: `operagroup.teamtailor.com/jobs`
+     titles itself *Current job openings - Opera*, its filter values are the brands
+     `Opera / Accuro / HFL / Meritus / Oak`, and the `Oak` cards read `Oak Isle of Man`,
+     `Oak Guernsey`, `Oak Bahamas` — Trust and Corporate / Client Accounting work for a
+     company_id the page names `Oak Group`. **0 Israel cards, 0 `Product Analyst`**, so the
+     Indeed posting was never this board's. The row is therefore renamed to the employer its
+     own board names — **`Oak Group (Isle of Man)`** — and retired terminal:
+     `redundant 2026-09-01: was Oak - a division filter; Oak Group, Isle of Man, not an
+     Israeli employer`. **The name, not the parking, was the blocker**: the row had been
+     `active=false` since 08-28 and the fold was refused anyway, because
+     `roles._alias_fold_target` refuses on `name in registry_names` over EVERY row whatever
+     its state (`run.py` builds it `active_only=False`). Measured on the shipped tree:
+     `_alias_fold_target("Oak", …)` → `("Oak - Identity Security OS", "declared")`, and
+     `None` again the moment a row named `Oak` is put back — which is the new guard,
+     `test_the_live_registry_does_not_park_a_non_employer_on_a_declared_alias_string`.
+     **Two traps recorded for the next rename** (ARCHITECTURE §2): `identity_key` strips a
+     trailing `group`, so the obvious `Oak Group` reduces to `oak` and would have folded
+     this FOREIGN row onto the Israeli company's identity — check the key, not the string;
+     and the rename reads as a vanished row to `census_diff`, so the reason was written into
+     the census's own stored note (`removed 2026-09-01: renamed to …`) rather than the key
+     being deleted, so the alarm still fires for anything else. Cost: the newcomer did not
+     fit a 220-char cell saturated by a PROTECTED `dark-triage` segment, so the first
+     attempt was **dropped whole and silently** — the `listing-hunt 2026-08-29: another
+     company's board` segment was evicted to make room, and the terminal verdict says the
+     same thing more precisely. `533@roles` still owns collapsing the two ledger records;
+     the fold now does it at intake without a session.
 523. **`Hila & Co.`'s board resolved to a Maltese domain and the name cannot be researched
      until the row is** — lane: `registry`. `companies.csv` carries `hila.mt/careers/`
      (Malta's ccTLD) with `queue-search 2026-08-30: no address found; needs re-resolution`
@@ -9798,6 +9875,23 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      2026-08-27. Its one role (`Consumer & Market Insights (CMI) Manager`, LinkedIn) is a
      real Israeli posting, so the employer exists — this is a resolution failure, not a junk
      name. Needed: re-resolve the row; the profile follows for free once it has an address.
+
+     **CLOSED 2026-09-01 (`registry`) - identified, and the identification is the retirement.**
+     This item asked for a re-resolution on the premise that "the employer exists". It does,
+     and it is not an employer we cover: `Hila & Co.` is a **boutique headhunting practice**
+     run by an individual. Three independent readings agree - `company-intel`'s record
+     (`sector: hr services / recruitment`; *"the job poster is the headhunter and the hiring
+     employer is an unnamed FMCG company"*), the row's OWN triage note from 08-30 (*"Page is
+     a general careers/recruitm[ent]"*), and a fresh unlocker search for the name, which
+     returns **no company at all** - only individuals called Hila (2 Bright Data credits).
+     The Maltese `hila.mt` IS a mis-resolution — it is titled *Careers - Hila Respite and
+     Residential services … Malta*, a Vassallo Group care provider, and the row's own 08-30
+     triage note was read off THAT page, so that leg of the evidence is contaminated and the
+     other two carry the verdict. The url is cleared; there is no company site to find. Retired terminal, `recruiter 2026-09-01: boutique headhunting practice (Hila
+     Malka); the CMI role places for an unnamed FMCG firm` - the note carries it because
+     `recruiters.is_recruiter("Hila & Co.")` is False, which is the documented reason
+     TERMINAL note tokens exist beside the name test. The CMI posting is an agency placement,
+     the class the board has excluded since `docs/decisions/2026-08-28-analyst-scope.md`.
 524. **`Ecommerce Guide` and `Konsortium Ziviler Friedensdienst` are not Israeli employers and
      should leave the registry** — lane: `registry`. `Ecommerce Guide`
      (`ecommerceguide.com/jobs/`, `auto-expand scrape; 1 IL`) is an e-commerce
@@ -9808,6 +9902,15 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      employer is left to `registry` rather than researched. Both are active rows today, so
      both count against this lane's gauge for as long as they stay active. Check: `python
      registry_health.py --explain "Ecommerce Guide"`.
+
+     **CLOSED 2026-09-01 (`registry`), and it was already done when this item was written.**
+     The item says "Both are active rows today"; both had in fact been parked terminal the
+     same evening it was filed. Verified on the shipped tree: `Ecommerce Guide` carries
+     `redundant 2026-08-31: not an employer - a job aggregator` and `Konsortium Ziviler
+     Friedensdienst` `redundant 2026-08-31: not an employer - a German consortium job
+     board`; both are `active=false`, `is_terminal_row` **True**, `in_pool` **False**, so
+     no pool can re-open either. Nothing to do. `519@discovery` (that `is_aggregator` does
+     not know `ecommerceguide.com`) is the half that is still open, and it is not this lane's.
 525. ~~**Three bought profiles described a DIFFERENT company than the board they were anchored
      to, and an adversarial audit is the only thing that caught them**~~ — **CLOSED
      2026-08-31 evening (`company-intel`)**, and the item was right that the *method* is
@@ -9870,6 +9973,49 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      about where they hire, so they publish non-Israeli jobs to an Israeli board. The shared
      cause is worth its own look: a remote posting that lists Tel Aviv among ten cities is
      being counted as an Israeli listing.
+
+     **RESOLVED 2026-09-01 (`registry`) - TWO of the five, and the first reading of this item
+     was WRONG on a third.** Each row was re-read
+     against its own live board this morning (free API fetches, `fetchers.fetch_company` +
+     `israel.is_israel_job`), and four of the five claims do not survive contact:
+     **`ImagineArt`** 33 cards, 1 Israeli - `Performance Marketing Manager (Web)` at
+     `Israel, Tel Aviv District`, a single location and not a city list; **`Jove`** 118
+     cards, 1 at `Israel`; **`Abakus Center`** 45 cards, 1 at `Israel` (a Hebrew/Russian
+     teaching role) where this item claimed **zero**; **`Happy Mammoth`** 2 cards, **both**
+     at `Tel Aviv, Israel`, where this item claimed Tel Aviv appeared only as 1 of 10
+     interchangeable cities. In each case the row's own `N/M IL` note is ACCURATE and the
+     rows stay ACTIVE and unstamped - restating a verdict a row already carries would only
+     risk evicting a real segment under the 220-char cap (the `TransUnion` precedent of
+     08-31). Only **`Finagra`** is the artefact this item describes, and its shape is worth
+     more than the row: 8 cards in Kenya / India / remote-Europe, and the single "Israeli"
+     one is `Head of Agronomy Operations` at `Remote, Remote UK, Remote Spain, Remote,
+     Remote Ukraine` - Israeli **only** by the ashby `country_code: IL` field, with the word
+     "Israel" appearing zero times in its location text and its description. Its own bought
+     record says `il_center: "No identified Israel presence"`. Retired
+     `redundant 2026-09-01: not an Israeli employer - 8 cards Kenya/India/remote-EU; the 1
+     IL flag is ashby country_code only`. The generic defect is filed as `548@classifier`.
+     **CORRECTED the same evening, by this session's own adversarial wave.** The paragraph above
+     reported `Happy Mammoth` as "2 cards, both `Tel Aviv, Israel`" and marked this item's claim
+     about it FALSE. That was an artefact of the METHOD, and the method is the thing to carry
+     forward: `fetchers.fetch_company` on a **`scrape`** row does not read the board — it returns
+     that row's entry in `scraped_cache.json`, which is already **Israel-filtered**. So asking it
+     "how many of this board's cards are Israeli" can only ever answer "all of them", and it did.
+     The board itself (`happymammoth.applytojob.com/apply`, HTTP 200, 141 KB,
+     `<title>Happy Koala LLC - Career Page</title>`) carries **70 apply permalinks**: roughly
+     seven titles (Copywriter, Designer/Art Director, Marketing Creative Project Coordinator,
+     Senior Media Buyer, UI/UX Designer …) each posted across ~10 European cities — Warsaw,
+     Prague, Riga, Vilnius, Bratislava, Kraków, Ljubljana, Zagreb, Budapest, Tallinn, Sofia,
+     Belgrade, Bucharest, Madrid, Barcelona, Rome, Lisbon, Yerevan, Chișinău — of which
+     **`Tel Aviv, Israel` is 2**. This item's original wording ("Tel Aviv appears only as 1 of 10
+     interchangeable cities on two remote reqs") was **exactly right**, and the row is the same
+     class as `Finagra`: retired `redundant 2026-09-01: not an Israeli employer - Happy Koala
+     LLC, 70 cards = 7 titles x ~10 EU cities, Tel Aviv 2`. So the score is **2 parked
+     (`Finagra`, `Happy Mammoth`), 3 left active** — `ImagineArt`, `Jove` and `Abakus Center`,
+     whose single Israeli card each was read from a NATIVE API (ashby/workable), where
+     `fetch_company` really does read the board and the reading stands.
+     **The rule this leaves behind:** to audit whether a `scrape` row's board is Israeli, fetch
+     the PAGE; `fetch_company` is only evidence for a native-ATS row. Nothing in the tool says so.
+
 527. **`Peak Innovation` is a staffing agency and it feeds 45 listings into the board** —
      lane: `registry` / `classifier`. `peak-innovation.co/career/` describes itself as
      "connecting leading talents with the most successful companies in the economy" through
@@ -9880,6 +10026,13 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      2026-08-28). `Recruitx`/`Jobgether`/`comblack` were handled as the same class. Check:
      `python registry_health.py --explain "Peak Innovation"`, then park or let the agency
      filter take it.
+
+     **CLOSED 2026-09-01 (`registry`) - the registry half was already shipped.** Verified on
+     the tree: `Peak Innovation` is `active=false` carrying `recruiter 2026-08-31:
+     outsourcing/staffing agency by its own page`, `is_terminal_row` **True**, `in_pool`
+     **False** - it can feed nothing to the board and no pool can re-open it. `518@roles`
+     (its already-`closed` role record is filed as a vacancy that ended, rather than as
+     never-ours) is the open half and is not this lane's.
 528. **Three registry rows name a company that is not the one their board belongs to, and
      that is why they cannot be profiled** — lane: `registry`. Each was measured against the
      row's own board by `company-intel`'s 2026-08-31 record audit, and each is the reason a
@@ -10102,6 +10255,29 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      name follows the MERGE here; it does not substitute for it. None of the three rows
      publishes a role today, so nothing is mis-attributed on the board while this waits. Check: `python
      registry_health.py --explain "Landacorp"`.
+
+     **REGISTRY HALF DONE 2026-09-01 - the two rows are one.** The duplicate is confirmed by
+     the pages themselves, not by inference: `landanano.com/about-us/careers` is titled
+     **"Careers | Landa Corporation Ltd."** and its HTML embeds
+     `comeet.com/jobs/landacorp/A4.000/...`, i.e. the very board the `Landacorp` row reads
+     by API, whose 13 positions all return `company_name: "Landa Corporation"` (4 of them
+     Rehovot). Two firmographics records agree on the employer besides - both
+     `employees_global: 460`, `founded: 2002`, Rehovot. The scrape row is therefore the
+     human face of the API row, so **`Landa Digital Printing` is parked**
+     `alias-of Landacorp 2026-09-01: landanano.com embeds comeet A4.000, the board the
+     Landacorp row reads by API` and the native comeet row survives. Note this pair was
+     invisible to every existing guard: `check_invariants` B compares exact names, and B2 /
+     `shared_boards` needs one `identity_key` AND one url - these differ on both
+     (`landacorp` vs `landa digital printing`; API endpoint vs careers page). **Handed back
+     to `company-intel`:** `DISPLAY_NAME_OVERRIDES["Landacorp"] = "Landa"` can return now
+     that the second active row is gone (the comment in `firmographics.py` says "do not
+     re-add this line before those two rows are one"), and the two records can fold. The
+     `Kidum Rehab Projects` and `Galil Systems` halves are NOT renames - per `459` a rename
+     orphans intel and role history - so each row now carries the evidence instead:
+     `identity 2026-09-01: board is kidum.com, the test-prep group (sameAs
+     facebook.com/Kidumltd); the NAME is kidumpro.co.il` and `identity 2026-09-01: board is
+     Galil Software (og:site_name), Nazareth; no employer named Galil Systems exists`, both
+     re-verified against the live pages this morning. Their `display_name`s already render.
 539. **A firmographics record cannot say where its values came from, so a hand-written
      one is indistinguishable from a researched one — and it skips the checks that guard the
      researched path** — lane: `company-intel`, found by this session's own wave 2 on this
@@ -10403,3 +10579,140 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      where the classifier ADMITS the greenhouse card, and it has not on two consecutive
      runs. The FAIL shape was named in advance and this is it. Ask: what verdict does the
      greenhouse card get, and is it cache-hitting a stale key?
+546. **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
+     the row reads as "regressed to zero"** — lane: `scraper`, measured 2026-09-01 by
+     `registry` while judging `Adi Il` (which the intel gap and the digest's
+     `regressed to zero` list both flagged as probably-not-a-board). It is a board, and a
+     live one: `https://adi-il.org.il/careers/` answers **HTTP 200, 923 KB**, titles itself
+     `Careers | ADI`, and carries **39 per-role permalinks of which 38 are non-ASCII**
+     (`/careers/%d7%90%d7%97-%d7%95%d7%aa-%d7%9e%d7%95%d7%a1%d7%9e%d7%9a-%d7%aa-.../`, i.e.
+     `אח-ות-מוסמך-ת-לשיקום`, `טכנאי-ת-eeg`, `מורה-לחקלאות`). `scraped_cache.json` has **no
+     entry for `Adi Il` at all** (`null`), so the row publishes nothing and its
+     `listing-hunt 2026-08-29: verified 23 IL` verdict now looks stale rather than wrong.
+     ADI is a registered Israeli nonprofit (`cloud_state/firmographics.json` carries
+     `display_name: ADI`, `il_center: Negev (Ofakim area)`), so this is coverage lost to an
+     encoding, not a dark company — the row is deliberately LEFT ACTIVE and unparked. Same
+     family as the jd-text finding of 2026-08-31 (an ASCII slug regex plus `urllib` on a
+     non-ASCII url); this is its listing-page half. Check: the count above, then
+     `python -c "import json;print(json.load(open('scraped_cache.json',encoding='utf-8')).get('Adi Il'))"`
+     — a list, not `null`.
+547. **The 06:00 self-heal reads a `stale.json` the digest has not written yet, so a board
+     that broke overnight is invisible to the only tool that repairs ACTIVE rows for a full
+     day** — lane: `infra`, measured 2026-09-01 by `registry`. `self-heal.yml` is
+     `cron: "0 6 * * *"` and its comment states the premise: *"daily 06:00 UTC (after the
+     05:00 digest commits stale.json)"*. On 2026-09-01 the digest committed `stale.json` at
+     **10:57:34Z** (`23fa47a`) and the self-heal had already committed at **10:36:33Z**
+     (`7841e21`) — GitHub dispatched both late and in the wrong order, which §4 says it is
+     free to do. Consequence, measured on that run: its `stale.json` held only
+     `Akamai, Ciena, Decart, Greeneye Technology`, so **Sisense, Hello Heart, Oasis
+     Security, Placer.ai and Mobileye — every fetch error the digest had just found — were
+     never candidates**, and the run spent 9 Bright Data credits bumping five unrelated
+     rows. `companies.csv` is not in that commit. The premise is unfixable by moving the
+     cron (the digest's own start time moved 5 hours that morning); the fix is to make the
+     dependency explicit — `resolve_broken.candidates()` re-reading `stale.json` after a
+     pull, or the self-heal keying off the digest's completion rather than a clock.
+     Registry's workaround today is `resolve_broken.py --only "<names>"`, which sets
+     `force=True` and falls back to `companies.csv`, bypassing both the scope and the
+     7-day `_skip` throttle. Check: on a morning when the digest commits before 06:00, the
+     self-heal's `resolve_attempts.json` diff names a row from that morning's `Failed
+     companies` line.
+548. **A remote posting is counted as Israeli on the board's `country_code` alone, with no
+     Israeli location anywhere in the card** — lane: `classifier` (`pipeline/israel.py`),
+     measured 2026-09-01 by `registry` while auditing `526`'s five rows. `Finagra`'s ashby
+     card `Head of Agronomy Operations` carries `location: "Remote, Remote UK, Remote Spain,
+     Remote, Remote Ukraine"` and `country_code: "IL"`, and `is_israel_job` returns **True**
+     on the metadata against five location strings that name no Israeli place and a
+     description containing the word "Israel" **zero** times. That single card is the whole
+     of the row's `9/2 IL` verdict, and the row has been retired `redundant` on it. The
+     shape generalises past this row: `country_code` is board-authored metadata that a
+     multi-region req sets once, and `audit_query_urls`' own doctrine already says a card is
+     foreign only when the board's OWN routing says so — this is the same question asked of
+     a field that can disagree with every other field on the card. Wanted: when
+     `country_code` is the SOLE Israel signal and the location text names other countries,
+     the card is not Israeli (or is demoted to needing a second signal). Check: the four
+     sibling rows audited the same morning — `ImagineArt`, `Jove`, `Abakus Center`,
+     `Happy Mammoth` — each carry a card whose location text literally reads `Israel` or
+     `Tel Aviv, Israel`, and none of them should change.
+549. ~~**`deep_validate` recorded a NAME-ALIKE's empty board as this company having no
+     roles**~~ — lane: `registry`, found and FIXED 2026-09-01 by the session that tripped it.
+     `identity_gate.activation_verdict`'s first line is `if not n_jobs: return "empty"`,
+     above every identity test, and `validate_one` renders SEARCH RESULTS as well as the
+     row's own seed — so a board belonging to a name-alike that answers zero was written into
+     the row as `deep-validated <date>: verified 0 jobs (empty board)`. Measured on four rows
+     in ONE run: `Experda` was handed Expedia's Workday, `Prologic LTD` Prologis's,
+     `Recolabs` Ecolab's, `SemiConductor Devices` Analog Devices'. The activation gate was
+     never the hole — no row was activated, cols 2-3 were untouched, `board_vouches` returned
+     `None` for all four — the NOTE was, and it is the exact thing ARCHITECTURE §2's first
+     verdict rule forbids: a company recorded as having no roles on evidence about somebody
+     else. `Prologic LTD` is the row `513` had just finished defending as a real Israeli
+     employer misread as an agency. **Fixed**: the empty claim is made only when
+     `board_vouches(...) is True`, otherwise the row reads `0 jobs, unvouched board` — which
+     is what was actually observed. One-sided by design: of the 35 rows carrying the old
+     stamp, the 25 that vouch keep it and the 10 that only ever answered `None` lose a claim
+     they never earned. The stamp has one writer and NO readers (no tool or test parses it)
+     and carries no pool token, so the wording change costs no re-check; the message is also
+     shorter than the longest one beside it, which is what the fixed-length note comment in
+     that block is protecting. Guard:
+     `test_a_zero_from_a_name_alikes_board_is_not_recorded_as_this_company_being_empty`.
+     The four stamps were stripped per CLAUDE.md rule 2 and the rows are back in their pools.
+     **Left open for whoever wants the deeper fix:** `validate_one` returns the endpoint but
+     not WHICH candidate page produced it, so the note still cannot say "this came from a
+     search rather than your own site". Threading that provenance through is the real repair.
+558. **`rehearse (worst, seed 1)` is RED on master, and the row it names is not lost — it is
+     HANDED OFF, which the rehearsal's per-pool check does not model** — lane: `registry`,
+     diagnosed 2026-09-01 (the red was reported by the `classifier` session, whose push was the
+     first CI run to judge it). `python tests/rehearse_registry.py --nights 2 --policy worst
+     --seed 1` fails `night 1: pool listing_hunt (19:00 daily) lost 1 rows it should keep:
+     ['Synopsys Israel']`. **Two diagnoses were offered and BOTH are wrong**, which is why this
+     item states the mechanism rather than a fix:
+     * *"a writer overwrote the cell and dropped `zero-confirm … needs re-resolution`"* — no.
+       Replaying it through the real helper, `notes.replace_own(<the 08-30 cell>, "listing-hunt",
+       …)` drops that segment **by the documented cap rule**: the cell was 188 chars, the
+       incoming segment did not fit, and `zero-confirm` was the oldest UNPROTECTED segment.
+       `pipeline/notes.py` behaved exactly as specified; no rule was broken.
+     * *"the eviction is what removed it from the hunt pool"* — also no. The surviving cell still
+       carries `host documented`, a `HUNT_POOL` token, and `HUNT_POOL.search` is **True** on it.
+     **What actually happens:** on the simulated night `triage_dark` stamps `dark-triage <date>:
+     page-empty`, and `listing_hunt.in_hunt_pool` excludes such rows ON PURPOSE — its own comment
+     says *"triage proved page-empty rows have a live page with no roles"*, and `ARCHITECTURE.md`
+     §2 records the same thing as the one deliberate difference between `HUNT_POOL` and
+     `verdicts.TOKENS` (*"`HUNT_POOL` lacking `dark-triage` (triage owns those rows)"*). The row
+     moves from one pool to another and stays owned: the rehearsal's own `orphans` column reads
+     **0** on both nights, and `registry_health` reports `0 OWNED BY NOTHING` on this tree.
+     So the red is a per-pool membership check that treats a designed hand-off as a loss: its
+     forgiveness set is `active | terminal | no_http | acted_ever[that pool]`, and "another pool
+     took ownership tonight" is not in it. **Do NOT fix this by exempting the rehearsal or by
+     widening a pool** — §2 names both moves as the ones that delete the alarm; the honest repair
+     is to forgive a row that is owned by SOME pool at the end of the night (an orphan check,
+     which is the property that actually matters) while keeping the per-pool check for rows that
+     end the night owned by nothing. Whoever does it must show the rehearsal still catches the
+     08-25 regression it was written for (`e1b55d7`: 19 probe rows and 6 crack rows lost on night
+     one). Until then `tests.yml` is red on this job for every lane, on a data state that arrived
+     in a `[skip ci]` cron commit (`09fdb95`) that no run judged — which is its own hazard and is
+     the reason nobody saw it for a day.
+559. **A row keeps ANOTHER company's board address after the note says it is another company's,
+     and `is_foreign` cannot see it** — lane: `registry`, found 2026-09-01 by this session's own
+     adversarial wave after the session had claimed the class was cleared. `Harel Insurance &
+     Finance` stored `geico.wd1.myworkdayjobs.com/External` — GEICO's Workday — on a row whose
+     analyst roles the board publishes from LinkedIn; `Hila & Co.` stored `hila.mt/careers/`, a
+     Maltese respite-care provider whose page a triage rung then READ and stamped as this row's
+     verdict. Both were cleared (`url-cleared 2026-09-01`). **They are not the class.** Verified
+     instances still on the tree, each with its own note naming the mismatch: `Compedia` →
+     `careers.expediagroup.com/jobs`, `Sedric` → `careers.seddiqiholding.com/job/`, `Noogata` →
+     `www.yolo-japan.com/en/recruit/job`, `Belkin Vision` →
+     `belkin.wd5.myworkdayjobs.com/.../belkin/...`. A crude sweep (note says "another company's
+     board" / "not this company" / "belongs to" AND an http address is still stored) returns
+     **95 rows** — that number needs refining before anyone acts on it, because the phrase also
+     appears on rows whose address was later repaired. `check_invariants` C3 independently warns
+     **14 ACTIVE rows whose endpoint names a different company**, which is the same class on the
+     active side.
+     **Why it is a landmine and not just untidy:** `identity_gate.is_foreign` returns False on
+     every ATS host BY DESIGN, and `activation_verdict` reaches `empty`/`unverified` before any
+     page test on a machine endpoint — so a stored foreign board is a live candidate for any
+     future activation rung, and rung 4 renders and judges whatever address the row holds. The
+     08-31 `Glassbox` incident and `549` are the same family: the gate asks "is this board this
+     company's", and a stored address nobody asked about is how it gets the wrong answer.
+     Wanted: a sweep that clears cols 2-3 wherever a row's own note names the address as another
+     company's, run once and then as a guard (`url-cleared` is already the vocabulary and
+     `verdicts.TOKENS` already owns it). Check: `python check_invariants.py` C3 count, and the
+     four names above under `registry_health.py --explain`.

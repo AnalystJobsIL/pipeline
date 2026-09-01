@@ -54,8 +54,9 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-01 | infra | first scheduled digest after 08-30: log `cron watch: window_days=3`, subject `(schedule run <id>)`, `Stages:` `ci …`/`cron …` or silent; inline filler `bd_tried` > 0 (448); a `tests.yml` run on another lane's commit: 10 jobs, verdicts on all | | not yet due |
 | 2026-09-07 | infra | 7 mornings from 09-01: `Company intel:` backlog **median <= 10**, delta **<= 0 on >= 5 of 7**, `firmo` **left = 0, age <= 1** (`450`); `10:17` lag **< 180 min** (305) | | not yet due |
 | 2026-09-27 | registry | of rows stamped `zero-confirm 2026-08-28: confirmed`, **<=5%** have `health_baseline > 0`; above that, strip that run's verdicts | | |
-| 2026-09-01 | registry | **the `out/` fix works UNATTENDED and a disarmed key would now say so.** Tonight's `listing-hunt` (`event: schedule`, headSha >= this commit; it starts 21:00-22:00Z, not 19:00): the four `queue-resolve-search: N names` lines sum **>= 60** (selectable was **65** at 14:20Z, capacity 112 - NOT the 08-30 row's 112), `s1/` lines carry **non-zero url counts**, `ingested N new attempts` **N >= 60**, **4 `[bd-spend]` lines**. Next digest's `queue:` stamp: `searched_recently >= 60`, `empty_search_share` **< 0.1**, no `drain_alarm`. **Judge on `ingested`, not `owed`** - `owed` read 369 in the 08-31 mail and 65 by 14:20Z (that run's dispose ran after its own stamp) and intake adds 92-169/day. FAIL shapes now self-name: all `s` lines `0 urls` + `BOUGHT NOTHING` = dead key; `IDLE ... but the shards BOUGHT n` = died mid-run; `IDLE ... NO Bright Data credit` = never started | | |
+| 2026-09-01 | registry | **the `out/` fix works UNATTENDED and a disarmed key would say so** — shards >= 60, non-zero `s1/` urls, `ingested >= 60`, 4 `[bd-spend]` lines, `empty_search_share < 0.1`, no `drain_alarm` | 2026-09-01 | PARTIAL — mechanism PASSED, the two counts SHORT. Run `33449138828`: shards **15+14+14+15 = 58** and `ingested 58`, both short of 60, after `retire-settled: queue 414 -> 374` cut 40 names; **4 `[bd-spend]`** (18/18/16/17) and real `s1/` urls, so the key was ARMED and no FAIL shape fired. Stamp `searched_recently=229 empty_search_share=0.052 owed=0` |
 | 2026-09-13 | registry | the night the 14-day cadence lapsed (searches of 08-29), the drain bought NOTHING already answered: `grep -c` of the run log's phase-1 `s1/` names against `cloud_state/queue_disposition.json` RETIRABLE verdicts = **0**, and `retired_in_queue` in the stamp is what `retire-settled` removed that night | | |
+| 2026-09-02 | registry | **the Oak fold fires unattended, and the repairs hold** (`522`): `grep -c '^Oak,' companies.csv` = **0**, `oak\|product analyst` gains a `superseded_by` in `roles.jsonl` (empty ⇒ the fold refused and nothing records why), and `Failed companies:` names neither **Sisense** (repaired greenhouse→ashby) nor `Decart`/`Akamai` (parked) | | |
 | 2026-09-02 | registry | the query-URL parks HELD without a session: `python registry_health.py --query-urls` prints `parked by the audit (in the hunt's pool): 20` (or more), `grep -c 'query-filter 2026-08-30: filter' companies.csv` >= **19**, and no 19:00 log since 08-30 carries `verified N IL via jobs.comcast.com`; `grep -c 'query URL' <listing-hunt log>` >= 1 shows the guard firing | | |
 | 2026-09-05 | registry | `registry_health.py --stale-boards` **<=17** (was 18; only HiBob repaired) (`391`); and on 09-28, `zero-confirm 2026-08-29: confirmed` rows **<=5%** with `health_baseline > 0` | | |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due until 2026-09-07 (`audit-coverage.yml` is `0 4 * * 0`; the first Sunday after the deep rung shipped is 09-06) |
@@ -97,13 +98,12 @@ in two cells; the command is what keeps this honest.
    broken every run, daily. Guard: `test_no_workflow_run_block_fakes_a_line_continuation`;
    **read it before writing a patch script that emits YAML.**
 
-0. **Active rows with an all-time-high of ZERO — this item has been wrong five times and is
-   now a COMMAND plus a record.** `python confirm_zero.py --scrape-only` audits the pool and
-   `cloud_state/zero_confirm.json` is the durable answer per row. 2026-08-29: 215 at the start,
-   ~139 answered, none recorded empty without a rendered page and an LLM read. **Two sibling
-   classes the pool cannot see by construction, because it needs a baseline of exactly 0:**
-   region variants (`registry_health.py --regions`, 32 rows, 1 real) and abandoned tenants
-   (`--stale-boards`, 18 rows whose newest posting is over a year old, one of them EMAILED).
+0. **Active rows with an all-time-high of ZERO — a COMMAND, not a number** (it has been wrong
+   five times): `python confirm_zero.py --scrape-only` audits the pool and
+   `cloud_state/zero_confirm.json` is the durable per-row answer (2026-08-29: 215 at the start,
+   ~139 answered, none recorded empty without a rendered page and an LLM read). Two sibling
+   classes it cannot see, needing a baseline of exactly 0: region variants (`--regions`, 32 rows,
+   1 real) and abandoned tenants (`--stale-boards`, 18 rows over a year old, one EMAILED).
    `docs/sessions/2026-08-28-registry-evening.md`; `399`, `406`, `407`.
 
 1. **`merge_key` should move onto `firmographics.identity_key`.** `ARCHITECTURE.md` §7c
@@ -117,34 +117,29 @@ in two cells; the command is what keeps this honest.
 4. **iCIMS is the only unsupported ATS left** — see Open items 2; `registry_health.py
    --ats` is derived and correct. HiBob is at **1** active row, moving away from the
    3-row trigger.
-6. **~24 active rows are re-checked by NOTHING, and `ARCHITECTURE.md` §2's headline claim
-   ("every state except `defunct:` and `domain-dead` is re-checked on some cadence") is
-   false because of it.** Found by `registry` on 2026-08-27.
-   `health.zero_is_a_measurement()` exempts `israel_scoped` fetchers from `empty-board` for
-   a good, documented reason — 25 healthy Workday boards clogged the self-heal queue on
-   08-24 — but the cost was never written down: such a row never enters `stale.json`, so it
-   never enters `resolve_broken.candidates()` (whose scope IS `stale.json`), and every
-   parked pool excludes it on `active == false`. `repair_dead_urls` is the one pool with no
-   active filter and it selects on the hostname failing to resolve, which a live Workday
-   tenant's does not. Broadcom's note says "Tel Aviv postings confirmed live" while its
-   all-time high is 0; one free POST settles which.
+6. **~24 active rows are re-checked by NOTHING, which falsifies `ARCHITECTURE.md` §2's headline
+   claim that every state but `defunct:`/`domain-dead` is re-checked** (`registry`, 2026-08-27).
+   An ACTIVE `israel_scoped` fetcher returning 0 never enters `stale.json` —
+   `health.zero_is_a_measurement()` exempts it for a documented reason (25 healthy Workday boards
+   clogged the self-heal on 08-24) — so it never reaches `resolve_broken.candidates()`, and every
+   parked pool excludes it on `active == false`. `repair_dead_urls` has no active filter but
+   selects on a hostname that stops resolving, which a live Workday tenant's does not.
 
 5. **GitHub dispatches these crons when it feels like it** — a dropped or +720-min-late slot is a `cron …` clause on the mail's `Stages:` line (`schedule_census.py --alarm`); the recovery-cron decision is the 09-10 row.
 
 ## Open items — highest value first
 
-1. **~370 parked rows carry a triage mode and the hunt is time-budgeted (200 min)**, so it
-   will not clear the pool in one night; expect a trickle. `extract-gap` needs no search and
-   should land first. The mode table that used to sit here was superseded by its own
-   footnote within a day — **run `python registry_health.py` for today's pools** rather than
-   reading a number here.
+1. **~370 parked rows carry a triage mode and the 19:00 hunt is time-budgeted (200 min)**, so
+   expect a trickle; `extract-gap` needs no search and lands first. **Run `python
+   registry_health.py` for today's pools** — the table that sat here was superseded within a day.
 2. **iCIMS** is the one platform with rows and no native fetcher (recipe: `ARCHITECTURE.md`
    §6). The old "3+ rows earns a fetcher" rule was replaced by the operator on 2026-08-26:
    one row earns it.
 3. **`CLAUDE_CODE_OAUTH_TOKEN` may expire.** Symptom: `LLM calls this run: 0` with a large
    `llm_failed_fallback`. Re-run `claude setup-token` and reset the secret.
-4. **SerpApi exhausted until 2026-09-01.** The working search is
-   `deep_validate.google_via_unlocker`.
+4. **SerpApi did NOT reset on 2026-09-01** — measured that morning: `total_searches_left: 0`,
+   `this_month_usage: 250`, Free Plan. Five docs say "exhausted until 2026-09-01", which reads as
+   "back today". The working search stays `deep_validate.google_via_unlocker` (`4@discovery`).
 5. **`--census` rewrites its own baseline every digest run**, so a pool alarms at most once
    and a slow drift never alarms at all. `315@registry`.
 
@@ -161,4 +156,4 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-09-01 `classifier`** — 57-row audit adjudicated: **21 withdrawn, 1 lifted, 7 refuted, 7 deferred**; three records close `531`+`532`; bump → **`v3.0f84ab84`**, rows 157→**137**. Caught first: superseded verdicts ordered by contract HASH, which this bump would have detonated (`541`). CI `33514763993` **10/13**; no red is this diff's, each attributed in the record. **NOT finished:** 09-02 proof, `542`-`544`. Record: `docs/sessions/2026-09-01-classifier.md`.
 - **2026-09-01 `jd-text`** — 7 published rows held another role's text. Guards: a pane may not declare another role (`bd-identity`), soup is not a JD, no-employer-echo is a tier candidate, only a REFUSAL opens the ratchet. **NOT finished:** `535`, `550`-`554`. Record: `docs/sessions/2026-09-01-jd-text.md`.
 - **2026-09-01 `roles`** — the ruling reached the dataset only, and only structural blockers, so the board and mail published two pending weak rows and burned both in `sent`. One judge now gates csv+board+mail, with a `held_since` re-offer. Nestlé/אסם sat in NO evidence bucket. **157→154, every row `jd`.** **NOT finished:** `555`–`557`. Record: `docs/sessions/2026-09-01-roles.md`.
-
+- **2026-09-01 `registry`** — a parked NON-EMPLOYER on a declared alias string cancelled the roles fold (`522`): the veto is `name in registry_names`, any state. `Oak` renamed and retired; Landa's two rows are one (`538`); `526` five→TWO (a wave caught me reading the Israel-FILTERED cache as a board); Sisense repaired, Decart+Akamai parked. **NOT finished:** `546`-`548`, `558`, `559`. Record: `docs/sessions/2026-09-01-registry.md`.

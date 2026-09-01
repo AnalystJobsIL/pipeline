@@ -176,8 +176,8 @@
   "last": "2026-08-22"
  },
  "Decart": {
-  "fails": 2,
-  "last": "2026-08-29"
+  "fails": 3,
+  "last": "2026-09-01"
  },
  "EyeClick": {
   "fails": 1,
@@ -364,8 +364,8 @@
   "last": "2026-08-31"
  },
  "Akamai": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-01"
  },
  "Deutsche Telekom": {
   "fails": 2,
@@ -866,5 +866,9 @@
  "Boa Ideas": {
   "fails": 1,
   "last": "2026-08-31"
+ },
+ "Sisense": {
+  "fails": 1,
+  "last": "2026-09-01"
  }
 }

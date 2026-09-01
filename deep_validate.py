@@ -422,11 +422,40 @@ def apply_verdict(fr, name, verdict, plat, tok, api, n_all, n_il, detail, rows=N
         # since this tool's own filter IS `in_pool`, a row it refused could
         # never be re-examined by it again. Measured against the segment it
         # replaces: 103 chars -> 216/31, this form -> 198/7.
+        #
+        # `empty` is the ONE verdict `activation_verdict` reaches before it asks whose
+        # board this is -- `if not n_jobs: return "empty"` is its first line, above every
+        # identity test. And `validate_one` renders SEARCH RESULTS as well as the row's own
+        # seed, so a board belonging to a name-alike that answers zero was written here as
+        # THIS row's empty board. Measured 2026-09-01 on four rows in one run: `Experda` got
+        # Expedia's Workday, `Prologic LTD` got Prologis's, `Recolabs` got Ecolab's and
+        # `SemiConductor Devices` got Analog Devices' -- each 0 jobs, so each stamped
+        # `verified 0 jobs (empty board)` about a company whose board was never read. The
+        # gate did its job (none was activated, cols 2-3 untouched); the NOTE was the
+        # falsehood, and ARCHITECTURE section 2's first verdict rule is that no company is
+        # recorded as having no roles without evidence about THAT company. So the empty
+        # claim is made only when the tenant vouches for the name; otherwise the row says
+        # what is true -- zero jobs, on a board nothing ties to it. `board_vouches` is
+        # offline and already the gate's own primitive, so this costs no request. It is
+        # deliberately one-sided: 25 of the 35 rows carrying the old stamp vouch True and
+        # keep it, and the 10 that only ever answered None lose a claim they never earned.
+        # The message stays SHORTER than the longest one below it, for the width reason
+        # above.
+        # `_av != "empty"` short-circuits, so `board_vouches` is called ONLY on the empty path:
+        # it is offline (no request in it or in anything it calls), but the other verdicts had
+        # no call here at all and there is no reason to give them an exception surface.
+        # Deliberately NOT added to `verdicts.TOKENS`: neither this string nor the one it
+        # replaces is a pool selector, and registering it would silently ADD these rows to the
+        # re-check pool -- a behaviour change this fix does not intend.
+        _empty_msg = ("verified 0 jobs (empty board)"
+                      if _av != "empty"
+                      or _gate.board_vouches(name, tok or "", _cand) is True
+                      else "0 jobs, unvouched board")
         fr[5] = _note_replace(
             fr[5], "deep-validated",
             f"deep-validated {TODAY}: " + {
                 "not-ours": "not this company's board",
-                "empty": "verified 0 jobs (empty board)",
+                "empty": _empty_msg,
                 "not-listing": "not a listings page",
             }.get(_av, "unverified (no readable page)"))
     elif verdict == "recovered":

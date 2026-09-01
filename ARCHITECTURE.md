@@ -1680,6 +1680,42 @@ commit in that cycle passes; the worked example with hashes is in
    rows**, header excluded — `wc -l` gives one more, and mixing the two is the standing
    confusion `HANDOFF.md` flags.
 
+**A row's NAME is a veto over the roles fold, whatever the row's state** (2026-09-01, lane
+`registry`). `pipeline/roles._alias_fold_target` refuses first on `name in registry_names`,
+and `pipeline/run.py` builds that set from `load_companies(active_only=False)` — so a
+PARKED row, a terminal row, a row that is not an employer at all, cancels a curated
+`firmographics.ALIASES` declaration for that string. Silently: no log line, no counter, no
+ledger field records a refused fold, and the only downstream symptom is render's
+`title-twin` warning, which prevented nothing. Measured: the parked row `Oak` was a
+Teamtailor **division filter** on Opera Group's shared board (`&division=Oak`; that board's
+own cards read `Oak Isle of Man` / `Oak Guernsey`, offshore fiduciary services, zero
+Israel), and while it held the string, `ALIASES["oak"] = "oak identity security os"` could
+not fire, so the Israeli company's `Product Analyst` is TWO ledger records — `oak - identity
+security os|product analyst` (its own Ashby board, closed 08-21) and `oak|product analyst`
+(Indeed, first seen 08-31). They were never open at the same moment, so nothing was emailed
+twice; what it costs is a split history and a card that cannot inherit the right employer's
+facts. **Parking it harder
+does nothing; the row must not WEAR the string.** It was renamed to the employer its board
+names (`Oak Group (Isle of Man)`) and retired `redundant`. Two traps when you do this:
+`identity_key` strips a trailing `group`, so the obvious name `Oak Group` reduces straight
+back to `oak` and would have folded the foreign row onto the Israeli company's identity —
+check the key, never the string; and `registry_health.census_diff` reads the rename as a
+vanished row, so the reason goes into the census's stored note (`removed <date>: renamed
+to …`) in the same commit, which keeps the alarm working instead of muting it. Guard:
+`test_the_live_registry_does_not_park_a_non_employer_on_a_declared_alias_string`.
+
+**And a rename is a delete-plus-add TO THE MERGE LAYER, so it can be undone by a cron that was
+already running.** `merge_csv_rows.merge` matches by `company_name`: a row present in a run's
+`ours` but absent from the target is APPENDED (the resurrection arm §5 documents for
+deletions). Simulated on this very rename — base `origin/master`, ours the same file with one
+ordinary 18:00 triage stamp on `Oak`, target the renamed tree — the merge reports
+`0 applied, 1 appended` and the file ends with **three** rows: `Oak - Identity Security OS`,
+`Oak Group (Isle of Man)` and a resurrected `Oak`. `check_invariants` B does not catch it
+(no duplicate NAME), and the fold is silently dead again. The parked row was in five pools when
+it was renamed, so the window is real. Mitigations, in order: rename when no owning cron is
+mid-run, and make the morning check `grep -c '^Oak,' companies.csv` = 0 — which is why that
+row exists.
+
 **Concurrency has TWO layers — both must be handled.** In-process discipline (above) protects
 writers on one machine. The **git layer** needs `merge_csv_rows.py`: a cloud run commits a
 file whose baseline may be hours old, so `git pull --rebase` hits a content conflict and the
@@ -1991,6 +2027,23 @@ believing any sentence below about how a rung performs.
    platform host guessing, Claude evidence judgment.
 5. Manual Chrome sweep: a human/agent reads the page in a real browser; every miss becomes
    a new detection pattern in the code.
+
+**Rung 4 searches, so a zero it brings back may be a STRANGER's zero** (2026-09-01, lane
+`registry`). `validate_one`'s candidate list is the row's own seed **plus** `ddg(name)` plus
+`google_via_unlocker(name)`, so on a row whose seed is dark the board it renders can belong
+to whatever the search matched on the name. Run over eleven parked rows on 2026-09-01, four
+came back with a name-alike's Workday: `Experda`→Expedia, `Prologic LTD`→Prologis,
+`Recolabs`→Ecolab, `SemiConductor Devices`→Analog Devices. **The activation gate held on all
+four** — 0 jobs is `activation_verdict`'s `empty`, nothing was activated and cols 2-3 were
+untouched — but `empty` is the one verdict it reaches *before* it asks whose board this is,
+so each row was stamped `verified 0 jobs (empty board)`: a company recorded as having no
+roles on evidence about somebody else, which is what §2's first verdict rule forbids. The
+empty claim is now conditional on `board_vouches(...) is True`, and an unvouched zero says
+`0 jobs, unvouched board` instead (`docs/BACKLOG.md` 544). **When you run this rung, read
+the proposed endpoint against the NAME before believing any verdict it writes**, and strip
+the run's verdicts if it brought back a stranger's board — CLAUDE.md rule 2. The two
+recoveries in that same run were checked the other way and held: `factify`'s comeet board
+self-names `Factify` on all 6 positions, `mPrest Systems`' self-names `mPrest` on all 11.
 
 ### The queue could not say what had been tried (2026-08-29)
 

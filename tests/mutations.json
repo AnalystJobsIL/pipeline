@@ -2840,5 +2840,15 @@
   "replace": "        t = (getattr(ledger, \"text\", {}) or {}).get(store.merge_key(j))\n        upd = str((t or {}).get(\"updated\") or \"\")[:10]\n        return bool(upd) and upd >= _readmit_from",
   "why": "the re-offer exists for roles THIS gate withheld. Keyed on the text merely being fresh instead, it re-offers any alive unsent role whose description jd-text backfilled — quietly mailing the unsent backlog and rewriting what the 48h promise means (BACKLOG 310, deliberately still open). The golden rehearsal caught the loose version doing exactly that. Killed by test_a_role_held_for_its_text_is_never_marked_sent_and_is_mailed_when_it_lands.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "deep-empty-claim-unconditional",
+  "file": "deep_validate.py",
+  "symbol": "apply_verdict",
+  "class": "M2-gate-inversion",
+  "find": "                      or _gate.board_vouches(name, tok or \"\", _cand) is True",
+  "replace": "                      or True",
+  "why": "the 2026-09-01 defect restored: `empty` is reached before activation_verdict asks whose board it is, so a name-alike's board answering zero (Expedia for Experda, Prologis for Prologic) is recorded as THIS company having no roles -- the claim ARCHITECTURE section 2's first verdict rule forbids",
+  "must_be_killed_by_behavioural": true
  }
 ]
