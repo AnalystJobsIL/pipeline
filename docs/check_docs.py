@@ -1216,11 +1216,31 @@ def check_scope_claims() -> None:
 
 
 def check_handoff() -> None:
+    """The shape check runs everywhere; the three CAPS are LOCAL, pre-push only.
+
+    The caps exist against narrative accretion, which is a weekly-scale failure. CI is a
+    per-push gate, and the file has five-plus concurrent writers, so what the caps actually
+    caught on 2026-08-31 was a race: three doc-only pushes went red at 3,201, 3,203 and
+    3,206 words against a 3,200 cap (runs 33363762720, 33444708674, 33448417852), each
+    because ANOTHER session's line had landed between the local run and the push. Every one
+    reddened master for every other lane, over prose, and every fix was another doc-only
+    push minutes later -- the third was titled "the race named", written by a session that
+    lost the race while describing it.
+
+    The cap still binds on every local `python docs/check_docs.py` and in
+    `test_handoff_is_bounded_in_every_unit_the_cap_was_gamed_in`, which is where the writer
+    of the long line is the one who pays. What CI keeps is the SHAPE: a missing section is
+    nobody's race."""
     path = os.path.join(ROOT, "HANDOFF.md")
     if not os.path.exists(path):
         err("handoff", "HANDOFF.md is missing")
         return
     text = read(path)
+    for required in HANDOFF_REQUIRED:
+        if required not in text:
+            err("handoff", "HANDOFF.md has no `%s` section" % required)
+    if os.environ.get("GITHUB_ACTIONS"):
+        return
     n = len(text.splitlines())
     if n > HANDOFF_MAX_LINES:
         err("handoff", "HANDOFF.md is %d lines (cap %d). It is the CURRENT-STATE file: move "
@@ -1238,9 +1258,6 @@ def check_handoff() -> None:
                            "narrative, not a handoff line: put it in docs/sessions/ and leave "
                            "the five-part entry behind."
                 % (lineno, len(line.split()), HANDOFF_MAX_LINE_WORDS))
-    for required in HANDOFF_REQUIRED:
-        if required not in text:
-            err("handoff", "HANDOFF.md has no `%s` section" % required)
 
 
 # PASS may stand alone; anything else must say what happened, because "FAIL" with no
@@ -1540,10 +1557,15 @@ def check_morning_rows_survive() -> None:
     can see. Neither available means there is nothing to compare against, and this returns
     silently rather than inventing a verdict.
 
-    FOR A READER OF A GREEN CI RUN: this check, `check_tree_is_current` and
-    `check_unattended_proof` are LOCAL, pre-push guards. `actions/checkout@v5` clones one
+    FOR A READER OF A GREEN CI RUN: this check, `check_tree_is_current`,
+    `check_unattended_proof`, `check_no_ci_skip_marker` and `check_handoff`'s three CAPS
+    (not its section shape) are LOCAL, pre-push guards. `actions/checkout@v5` clones one
     commit deep and this repo pushes straight to master, so on CI the merge-base IS HEAD
-    and all three return silently. A green CI run is not proof that a row survived."""
+    and the first three return silently; the caps and the marker check stand down on
+    `GITHUB_ACTIONS` deliberately -- the marker check because the commit it catches is one
+    no runner ever sees, the caps because in CI they can only catch another session's race
+    (2026-08-31: three doc-only reds at +1, +3 and +6 words). A green CI run is not proof
+    that a row survived."""
     # `AJIL_PUSH_BASE` (github.event.before) when CI set it, the merge-base otherwise.
     base = _baseline_ref()
     if base is None:
@@ -1925,6 +1947,50 @@ RUN_ID = re.compile(r"\brun\s+(\d{9,})\b")
 WORKFLOW_FILE = re.compile(r"^\.github/workflows/[^/]+\.ya?ml$")
 
 
+def check_no_ci_skip_marker() -> None:
+    """A session commit that quotes the CI-skip marker runs no CI at all, and nothing said so.
+
+    The ten state-committing workflows write the marker on purpose -- a cron's own commit
+    must not spend a runner. What nobody expected is that GitHub honours it ANYWHERE in the
+    message, body included, so a commit that merely NAMES it is skipped too. Measured
+    2026-08-31 (BACKLOG 515): commit `20b0e03` closed the item about this trap, quoted the
+    marker verbatim while describing it, and `actions/runs?head_sha=...` returned
+    `total_count 0` -- no check runs, nothing queued, while its parent had one. The push
+    reported green because there was no verdict to be red.
+
+    So the rule cannot be "do not use the marker carelessly" -- the session that wrote the
+    rule is the session that tripped it. Spell it `skip-ci`, or "the CI-skip marker".
+
+    LOCAL, pre-push, like `check_tree_is_current` and `check_unattended_proof`: the commit
+    this catches is by definition one no runner ever sees, so a CI-resident version of this
+    check could never fire. The recovery, once it has happened, is a following commit with a
+    clean message -- CI then runs over both."""
+    if os.environ.get("GITHUB_ACTIONS"):
+        return
+    base = _baseline_ref()
+    if base is None:
+        return
+    log = _git("log", "--format=%H%x00%B%x00%x00", "%s..HEAD" % base)
+    if not log:
+        return
+    marker = "[skip" + " ci]"          # never written as one token: this file is committed too
+    bad = []
+    for entry in log.split("\x00\x00"):
+        if "\x00" not in entry:
+            continue
+        sha, _sep, body = entry.partition("\x00")
+        if marker in body.lower():
+            bad.append(sha.strip()[:8])
+    if bad:
+        err("skip-ci", "commit(s) %s carry the CI-skip marker in the message, so GitHub will "
+                       "run NO checks on this push -- it is honoured in the body as well as "
+                       "the subject, which is how the commit that closed 515 skipped its own "
+                       "CI (20b0e03, 0 runs). Reword with `git rebase -i` / `git commit "
+                       "--amend`, spelling it `skip-ci` or \"the CI-skip marker\". Cron state "
+                       "commits legitimately carry it; they are on origin, before this "
+                       "branch's base." % ", ".join(bad))
+
+
 def check_unattended_proof() -> None:
     """A branch that changes a SCHEDULED workflow must name the morning its run is read.
 
@@ -2097,7 +2163,8 @@ def check_entry_docs() -> None:
 CHECKS = [check_tree_is_current, check_entry_docs, check_paths_exist, check_links,
           check_section_refs, check_module_registry, check_schedule_table,
           check_derived_facts, check_scope_claims, check_handoff, check_morning_checks,
-          check_morning_rows_survive, check_unattended_proof, check_no_home_paths,
+          check_morning_rows_survive, check_unattended_proof, check_no_ci_skip_marker,
+          check_no_home_paths,
           check_no_conflict_markers, check_workflow_command_claims,
           check_session_record_dates, check_backlog, check_debt_on_touched_files]
 

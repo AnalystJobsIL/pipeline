@@ -13252,7 +13252,15 @@ def test_handoff_is_bounded_in_every_unit_the_cap_was_gamed_in():
     and 56,515 BYTES: eighteen sessions had each written their whole narrative as one line,
     the longest 4,960 characters, and thirteen of them already ended with `Record:
     docs/sessions/...` — so the long version existed twice and the HANDOFF copy was the
-    duplicate. The file had been split from 753 lines on 2026-08-23 to fix exactly this."""
+    duplicate. The file had been split from 753 lines on 2026-08-23 to fix exactly this.
+
+    Local, pre-push, since 2026-09-01: on a runner this asserts nothing, for the reason
+    `docs/check_docs.check_handoff` gives -- three doc-only pushes reddened master on
+    2026-08-31 at +1, +3 and +6 words over, each because another session's line landed
+    between the local run and the push. The cap binds where the writer of the long line is
+    the one who pays for it, which is here."""
+    if os.environ.get("GITHUB_ACTIONS"):
+        pytest.skip("the caps are a pre-push gate; on a runner they only catch a race")
     cd = _cd()
     text = cd.read(os.path.join(cd.ROOT, "HANDOFF.md"))
     assert len(text.splitlines()) <= cd.HANDOFF_MAX_LINES
@@ -13260,6 +13268,71 @@ def test_handoff_is_bounded_in_every_unit_the_cap_was_gamed_in():
     over = [(n, len(line.split())) for n, line in cd._handoff_prose_lines(text)
             if len(line.split()) > cd.HANDOFF_MAX_LINE_WORDS]
     assert not over, "session narratives on one line: %s" % over
+
+
+def test_the_handoff_caps_are_a_pre_push_gate_and_the_shape_check_is_not(tmp_path, monkeypatch):
+    """The caps go quiet on a runner; the missing-section check does not. A cap that fires in
+    CI punishes whoever pushed LAST, not whoever wrote the long line -- and the file has five
+    concurrent writers, so on 2026-08-31 it fired three times on doc-only pushes over prose
+    (3,201 / 3,203 / 3,206 words against 3,200) and reddened master for every other lane.
+
+    A missing `## Open items` is nobody's race, so that half still runs everywhere."""
+    cd = _cd()
+    monkeypatch.setattr(cd, "ROOT", str(tmp_path))
+    over = "## State at handoff\n## Watch list\n## Open items\n" + ("word " * 4000)
+    (tmp_path / "HANDOFF.md").write_text(over, encoding="utf-8")
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    cd.ERRORS.clear()
+    cd.check_handoff()
+    assert not cd.ERRORS, "the caps must not fire on a runner: %s" % cd.ERRORS
+    monkeypatch.delenv("GITHUB_ACTIONS")
+    cd.ERRORS.clear()
+    cd.check_handoff()
+    assert any("words (cap" in e for e in cd.ERRORS), "the cap still binds pre-push"
+    # the shape half runs in both places
+    (tmp_path / "HANDOFF.md").write_text("## State at handoff\n", encoding="utf-8")
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    cd.ERRORS.clear()
+    cd.check_handoff()
+    assert any("Watch list" in e for e in cd.ERRORS), \
+        "a missing section is not a race and stays a CI error"
+    cd.ERRORS.clear()
+
+
+def test_a_commit_message_that_quotes_the_ci_skip_marker_is_refused(tmp_path, monkeypatch):
+    """GitHub honours the marker anywhere in the message, body included, so a commit that
+    merely NAMES it runs no CI. Measured 2026-08-31 (BACKLOG 515): `20b0e03` closed the item
+    ABOUT this trap, quoted the marker while describing it, and had `total_count 0` runs
+    while its parent had one. A prose rule was already in place and the session that wrote it
+    is the session that tripped it, which is why this is a check.
+
+    It can only be pre-push: the commit it catches is one no runner ever sees."""
+    cd = _cd()
+    marker = "[skip" + " ci]"
+    repo = tmp_path / "r"
+    repo.mkdir()
+    run = lambda *a: _sp.run(a, cwd=str(repo), capture_output=True, text=True)
+    run("git", "init", "-q", "-b", "master")
+    run("git", "config", "user.email", "t@t"); run("git", "config", "user.name", "t")
+    (repo / "f").write_text("1", encoding="utf-8")
+    run("git", "add", "f"); run("git", "commit", "-qm", "base")
+    monkeypatch.setattr(cd, "ROOT", str(repo))
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.setenv("AJIL_PUSH_BASE", run("git", "rev-parse", "HEAD").stdout.strip())
+    (repo / "f").write_text("2", encoding="utf-8")
+    run("git", "commit", "-qam", "infra: describe the trap\n\nthe marker %s in the body" % marker)
+    cd.ERRORS.clear()
+    cd.check_no_ci_skip_marker()
+    assert any("CI-skip marker" in e for e in cd.ERRORS), \
+        "the marker in a BODY skips the run just as surely as in a subject: %s" % cd.ERRORS
+    # a clean message, and the same range: silent
+    (repo / "f").write_text("3", encoding="utf-8")
+    run("git", "commit", "-qam", "infra: name it skip-ci and nothing is skipped")
+    monkeypatch.setenv("AJIL_PUSH_BASE", run("git", "rev-parse", "HEAD").stdout.strip())
+    cd.ERRORS.clear()
+    cd.check_no_ci_skip_marker()
+    assert not cd.ERRORS, cd.ERRORS
+    cd.ERRORS.clear()
 
 
 def test_the_per_line_cap_exempts_the_things_that_legitimately_wrap():

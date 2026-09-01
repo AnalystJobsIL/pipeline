@@ -273,7 +273,7 @@ push if:
 | the module registry | a new root script nobody classified; a `legacy` module live code imports; a `scheduled` module no workflow runs |
 | the cron table | `ARCHITECTURE.md` §4 and the workflow files disagreeing, in either direction |
 | the continue-on-error ratio | the "a green run proves nothing" number drifting from the workflows |
-| the HANDOFF shape | the current-state file growing back into an archive |
+| the HANDOFF shape | the current-state file growing back into an archive — the **caps** (250 lines / 3,200 words / 60 per line) are a **pre-push** gate since 2026-09-01, not a CI one: with five sessions appending, what CI caught was a race, reddening master for every other lane over prose three times on 08-31 (+1, +3, +6 words). A missing section is nobody's race and still fails on a runner |
 
 It still cannot check whether a *sentence* is true — only that what it points at exists and
 that every number it registers agrees with the code. The rest needs a reader, and the
