@@ -180,19 +180,28 @@ examples: Cato Networks, Edikted, Migdal, Paz-yellow, withfaye, CloudHiro, Sunfl
 NVIDIA, Oak ×2, Team8/Briya, Mobileye Experienced Data Analyst (published reject), Questar
 Auto (published reject).
 
-## 6. The five reinstatement candidates: four refuted, one confirmed
+## 6. The five reinstatement candidates: four refuted, one lifted
 
 All five had been fully withdrawn by the 09-01 digest (`retracted_on` stamped), so a
 reinstatement now costs a real lift with a loud alarm, not a quiet line deletion.
 
-* **`Parametrix | Technical Data Analyst` — REINSTATED**, its line deleted in this commit. It
-  is the only one. Its text is cut mid-word at the capture cap so the qualifications were
-  never read; the seam, re-reading that same partial text under the new rules, says YES on
-  the dashboards it builds "to help the Product and Sales teams see global cloud stability
-  and exposure at a glance". Everywhere else in this seam a verdict on partial text is
-  provisional and re-judged when the text arrives — while a retraction is permanent and
-  nothing re-checks it. That asymmetry is the whole argument, and it is the 08-31 record's
-  own rule, which lifted two rows for exactly this.
+* **`Parametrix | Technical Data Analyst` — WITHDRAWAL LIFTED**, its line deleted in this
+  commit. It is the only one. Its text is cut mid-word at the capture cap so the
+  qualifications were never read; the seam, re-reading that same partial text under the new
+  rules, says YES on the dashboards it builds "to help the Product and Sales teams see global
+  cloud stability and exposure at a glance". Everywhere else in this seam a verdict on partial
+  text is provisional and re-judged when the text arrives — while a retraction is permanent
+  and nothing re-checks it. That asymmetry is the whole argument, and it is the 08-31
+  record's own rule, which lifted two rows for exactly this.
+
+  **"Lifted" is the honest word and "reinstated" was not.** The lift returns the ROW; it does
+  not overturn the verdict. Nothing rewrites `rec["class"]` for a closed role — the live path
+  only stamps roles in `merged`, and the backfill fills empty cells only — so Parametrix comes
+  back into `roles.csv` still reading `class_decision=reject`, under a contract this commit
+  retires. An adversarial wave caught the overclaim before the push. `Central Bottling | BI
+  Developer 17621`, the NO→YES the analytics-engineer record was drawn for, is frozen exactly
+  the same way and has no line to lift at all — which is the clearest argument in the tree for
+  `544@roles`.
 * **Guardio ×2 — REFUTED.** "Building the data pipelines that power our cybersecurity data
   infrastructure"; consumers are "analysts, researchers and security experts" and product
   features; **zero dashboards in 3,300 characters**. Boundary (a) puts them out. (They are
@@ -305,6 +314,73 @@ CloudHiro, withfaye) all held YES in this session's own pass.
   not transfer.
 * **`321@registry` is untouched**: whether these consultancies should be `active` rows is the
   registry's call on all thirteen at once, as the 08-27 record measured.
+
+## 9. Three CI reds, none of them this diff — and my first diagnosis of one was wrong
+
+`tests.yml` on this commit is **run 33514763993, 10 of 13 jobs `success`**. Written out
+because "10/13" must not be read as three defects in one commit:
+
+| red | what it is |
+|---|---|
+| `rehearse (worst, seed 1)` | **inherited** from `09fdb95`; registry's `550`. Below |
+| `mutation-gate (2)` | **rc 137, wall time, 0 SURVIVED records** — every per-record line reads `killed` |
+| `mutation-gate (4)` | the same |
+
+**The mutation gate failed on a budget, not on a mutant, and the numbers say so.** Both
+shards were killed at the 40-minute `timeout`, and neither printed a single SURVIVED record.
+Measured against the last green run of the same catalogue (33448520621), the shards were
+already at 88–96 % of budget before this commit existed:
+
+| shard | 33448520621 (green) | 33514763993 (this) |
+|---|---|---|
+| 0 | 35.0 min | 38.4 |
+| 1 | 38.3 | 32.0 |
+| 2 | 37.4 | **41.1 FAIL** |
+| 3 | 35.9 | 39.5 |
+| 4 | 36.9 | **41.4 FAIL** |
+
+Shard 1 got *faster* (38.3 → 32.0), which is the signature of runner variance rather than a
+workload change. This diff adds 2 tests to the per-record subsets (`subset 1236`,
+`subset 57`) — ~0.16 % more tests on the large ones, not two minutes — so I do not claim a
+zero contribution, only that the cliff pre-dates it. `SHARDS = 5` against a catalogue of 260
+growing records is the number to move, and the workflow's own error text says so ("add a
+matrix entry and bump SHARDS rather than minutes"). It is `infra`'s file and its 2026-09-01
+morning-check row already answers FAIL on exactly this; the timings above were sent to that
+lane. **Twice in two days a lane's push has been marked red by a budget rather than a
+defect** (the 08-31 classifier session hit shard 2, rc 137, zero SURVIVED, on run
+33410420520), and the cost is that "the mutation gate is red" stops meaning "someone let a
+mutant live".
+
+### The rehearsal red
+
+`rehearse (worst, seed 1)` is **not caused by this push**, and I proved that rather than
+asserting it: the same rehearsal run at my commit's PARENT in a separate worktree fails
+byte-identically
+(`FAIL night 1: pool listing_hunt (19:00 daily) lost 1 rows it should keep: ['Synopsys
+Israel']`). Bisected: `c3f9903` (the last CI-green commit) passes; `09fdb95`
+— *listing-hunt 2026-09-01, `[skip ci]`* — fails, and every commit after it does too.
+
+**My causal explanation was wrong, and the registry lane corrected it.** I read the
+`Synopsys Israel` notes diff, saw `zero-confirm 2026-08-29 … needs re-resolution` gone, and
+called it the append-log violation of `CLAUDE.md` rule 3. It is not. Replayed through the
+real helper, `notes.replace_own` evicted that segment because the incoming one did not fit
+under the 220-char cap and it was the oldest UNPROTECTED segment — the append-log doing
+exactly what it documents. And the eviction is not why the row leaves the pool: the
+surviving cell still carries `host documented`, so `HUNT_POOL.search(cell)` is **True**
+(verified). The row leaves because `triage_dark` stamps it `page-empty` and
+`listing_hunt.in_hunt_pool` ends with `and not _triaged_page_empty(...)` — a deliberate
+hand-off, whose comment says "triage proved page-empty rows have a live page with no roles".
+`orphans` is 0 on both nights: nothing is unowned.
+
+So the rehearsal is a per-pool check reading a designed hand-off as a loss, its forgiveness
+set has no "another pool took ownership tonight" clause, and it is registry's (`550`). I
+verified both halves of that correction myself before writing this paragraph, because the
+first version of it was confidently wrong in a document — which is the thing this repo
+punishes hardest, and I had it staged.
+
+**The meta-hazard is worth more than the bug.** All five 2026-09-01 cron commits carry
+`[skip ci]`, so no run judged the data they committed; a guard went red on state that CI
+never looked at, and it surfaced only because an unrelated lane pushed. `550` carries it.
 
 ## Traps this session hit
 
