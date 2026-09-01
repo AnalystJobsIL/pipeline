@@ -521,7 +521,11 @@ def _refusal_kind(kind):
         return kind
     if os.environ.get("CLAUDE_CODE_OAUTH_TOKEN") or os.environ.get("ANTHROPIC_API_KEY"):
         return "auth"
-    return "auth" if os.path.isdir(os.path.expanduser("~/.claude")) else "no-token"
+    # The CREDENTIAL file, not the directory: `~/.claude` is created by the CLI on its first
+    # invocation whether or not anyone logged in, so a directory test would read "a token was
+    # sent and refused" for the second and third steps of a digest whose secret is missing --
+    # the exact misdiagnosis this function exists to end.
+    return "auth" if os.path.exists(_CLI_CREDENTIALS) else "no-token"
 
 
 def jd_quality(text, title, company, *, model=None, timeout=None):

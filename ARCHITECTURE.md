@@ -2092,8 +2092,12 @@ python queue_state.py --name "Wix"    # one name's whole history
 
 Until this date a name left the queue by being **deleted** from `research_companies.json`,
 and a deletion is the one thing this repo's merge cannot keep. `persist_state.py:344` routes
-that file through `merge_json_cache.merge`, which RESCUES a key the origin deleted while we
-held an older checkout. Measured: **44 names retired between 00:28 and 00:54 were back in the
+that file through `merge_json_cache.merge`, which UNTIL 2026-09-01 RESCUED a key the origin
+deleted while we held an older checkout (`458`, fixed by `infra`: origin's deletion now
+stands unless origin lost a quarter of its keys, which is a broken run, not a deletion).
+The retirement-as-a-STATE design below is what made the queue converge while it did, and
+remains the right shape — a lookup that re-applies a durable record does not depend on any
+merge behaving. Measured: **44 names retired between 00:28 and 00:54 were back in the
 file at 00:41**, put there by the listing-hunt cron's own state commit (checked out before the
 retirements, committed after them); 42 were still there at 05:45, each with a judged verdict
 on disk, each due to re-buy a paid search when its 14-day cadence lapsed on 2026-09-12. **Zero
@@ -2422,7 +2426,7 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | `0 18 * * *` | triage-dark | classify every parked row by failure mode (`dark-triage <date>: <mode>`) |
 | `0 19 * * *` | listing-hunt | repair dead hostnames (30 min) → repair-extract-gap (35) → re-hunt woken/eligible dark rows (140) → retire queue names a rung already settled (a lookup, BEFORE the drain since 2026-08-30) → queue drain by search (4 shards, 30) → **ingest its attempt log in its own `if: always()` step** → verify + apply proposals (30) → re-verify aged addresses (20) → walled-ATS re-crack (30). The budgets sum to 327 against a job cap of 350 (GitHub's ceiling is 360; they summed to 365 against 330 until 2026-08-30, BACKLOG 491) |
 | `0 4 * * 0` | audit-coverage | Sunday: wayback rescue, empty cross-validation, full parked-row re-audit (cheap rung, then `deep_validate`'s Chromium rung over what stayed dark — the Saturday cron until 2026-08-26), **liveness re-scan (revives domains), walled-ATS re-crack**, coverage report |
-| on push | tests | three jobs, no `continue-on-error` anywhere: `guard` (`pytest`, which runs `docs/check_docs.py`; `check_invariants.py`; `pipeline.platform_check`), `rehearse` (six jobs, one per registry rehearsal: `worst` and `mixed` seeds 1–5, 14 nights each), `mutation-gate` (**eight** shards, **by record**: `tools/mutate.py --all --shard I/N`, every N-th id -- the class-packed split of 08-28 could not divide `M1-gate-removal`, one class of 89 records, and shard 0 was killed at its budget on every push until 2026-08-30, BACKLOG 476; five shards walled 2,096-2,218 s on 2026-08-31 and two were killed at 40 min, so the split went to eight on 09-01 — ~158 s of baseline plus ~37.5 s per record means six would still have landed at ~1,808 s. A shard past `MUTATE_WALL_WARN` (1,800 s) now prints an `::warning::` on its own run page). **Every long step runs under `timeout` with a budget below its job's `timeout-minutes`**, so an overrun is a failed step that names what it was running, never a cancelled job that names nothing (2026-08-30, below) |
+| on push | tests | four jobs, no `continue-on-error` anywhere: `guard` (`pytest`, which runs `docs/check_docs.py`; `check_invariants.py`; `pipeline.platform_check`), `guard-kill` (a new test must fail without its fix), `rehearse` (six jobs, one per registry rehearsal: `worst` and `mixed` seeds 1–5, 14 nights each), `mutation-gate` (**eight** shards, **by record**: `tools/mutate.py --all --shard I/N`, every N-th id -- the class-packed split of 08-28 could not divide `M1-gate-removal`, one class of 89 records, and shard 0 was killed at its budget on every push until 2026-08-30, BACKLOG 476; five shards walled **2,014-2,317 s** on 2026-08-31 and two were killed at 40 min, so the split went to eight on 09-01 — at a measured **41.3 s per record** over a 125-201 s baseline, six would still have landed at ~1,970 s. A shard past `MUTATE_WALL_WARN` (1,800 s) prints an `::warning::` on its own run page, which is the mechanism that names the next split: the ceiling returns at ~318 records and the catalogue grew 105 → 260 in eight days). **Every long step runs under `timeout` with a budget below its job's `timeout-minutes`**, so an overrun is a failed step that names what it was running, never a cancelled job that names nothing (2026-08-30, below) |
 
 **When the email actually arrives — and it is not ~06:20.** The 05:00 cron is queued by
 GitHub for ~35 min and the job runs ~30 (05:38→06:04 on 2026-08-26, run 32934864207), so the
@@ -4308,12 +4312,15 @@ an argv it cannot classify writes to stderr and exits 3, which the seam reports 
 printed a plausible line and exited 0 regardless.
 `test_the_rehearsal_shim_can_classify_every_argv_the_real_seam_builds` goes red instead.
 
-`tests/fixtures/company_intel/mutations.json` holds **60** records. It used to hold 18 and
+`tests/fixtures/company_intel/mutations.json` holds **86** records. It used to hold 18 and
 **could never have run**: it keyed the class as `cls` where `tools/mutate.py` reads
 `m["class"]`, which is why four records that no longer matched any code went unnoticed. It is
-also in no CI path — `tests.yml` runs `tools/mutate.py --all --shard I/N` under a five-shard
+also in no CI path — `tests.yml` runs `tools/mutate.py --all --shard I/N` under an eight-shard
 matrix over the default catalogue `tests/mutations.json` — so `test_every_company_intel_mutation_still_aims_at_real_code` is
 that path, at zero cost: a mutation whose `find` no longer occurs is a comment, not a guard.
+**It stands down under `AJIL_MUTANT`** (2026-09-01, BACKLOG 540): its own `find` is deleted
+inside every mutant, so without that skip it went red under all of them and scored each one
+`killed` without exercising a line of the code.
 
 ### Known limitations
 

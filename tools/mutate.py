@@ -898,11 +898,18 @@ def main():
              muts[results.index(slow)]["id"] if slow else "-", slow["secs"] if slow else 0,
              slow["mode"] if slow else "-"))
     # The rule "past ~1,800 s add a matrix entry, never the budget" (195/476) lived only in a
-    # workflow comment and a morning-check row, so it was noticed a fortnight late: all five
-    # shards had been over for days and two were being killed at 40 min. A shard that is over
-    # now says so on its own run page, while it is still green.
-    warn_at = float(os.environ.get("MUTATE_WALL_WARN", "1800"))
-    if warn_at > 0 and wall > warn_at:
+    # workflow comment and a morning-check row, so it was noticed a fortnight late: every
+    # shard had been over for days and two were killed at 40 min. A shard that is over now
+    # says so on its own run page, while it is still green.
+    #
+    # Only a SHARDED run: an unsharded `--all` on a laptop is the whole catalogue and is over
+    # the ceiling by construction, and "add a matrix entry" is not advice about that run.
+    # A malformed override must not cost a 35-minute run its verdict, so it falls back.
+    try:
+        warn_at = float(os.environ.get("MUTATE_WALL_WARN") or "1800")
+    except ValueError:
+        warn_at = 1800.0
+    if a.shard and warn_at > 0 and wall > warn_at:
         print("::warning::mutation shard walled %.0f s, past the %.0f s ceiling -- add a "
               "matrix entry AND bump SHARDS in .github/workflows/tests.yml, never the budget "
               "(BACKLOG 195/476)" % (wall, warn_at), flush=True)

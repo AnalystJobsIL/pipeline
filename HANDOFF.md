@@ -3,15 +3,12 @@
 **What this file is:** the state of the system *right now* — what changed last session,
 what is known-broken, what nobody has claimed. Nothing else.
 
-**Three caps, and why there are three.** `docs/check_docs.py` holds this file to 250
-lines, 3,200 words and 60 words per line. The line cap alone was defeated: this file was
-247 lines and **65,338 bytes**, because eighteen sessions had each written their whole
-narrative as one line — the longest 9,011 characters, thirty-six times the cap. The three
-are mutually reinforcing: a narrative that will not fit on one line has to wrap, wrapping
-blows the line count, and that pushes it to `docs/sessions/`, where it already was.
-**The caps are PRE-PUSH only since 2026-09-01** (`infra`): in CI they caught races, not
-narratives — three doc-only reds at +1/+3/+6 words on 08-31. The shape check still runs
-there.
+**Three caps.** `docs/check_docs.py` holds this file to 250 lines, 3,200 words and 60 words
+per line. The line cap alone was defeated — 247 lines and **65,338 bytes**, eighteen whole
+narratives on one line each — so the three reinforce: a narrative that cannot fit one line
+wraps, wrapping blows the line count, and that pushes it to `docs/sessions/`.
+**The caps are PRE-PUSH only since 2026-09-01** (`infra`): in CI they caught races — three
+doc-only reds at +1/+3/+6 words on 08-31. The shape check still runs there.
 
 **The shape of a session entry** (enforced, so "add exactly ONE line" has an upper bound):
 
@@ -88,7 +85,7 @@ Every cell carries the command that re-derives it; the 08-30 table was stale in 
 
 ## Watch list for the next session
 
-0. **`python digest_watchdog.py` is still not installed** (`292@infra`, operator action) — the only tripwire off GitHub's scheduler; a dropped slot is otherwise just a `cron …` mail line.
+0. **`python digest_watchdog.py` is still not installed** (`292@infra`, operator action) — the only tripwire off GitHub's scheduler.
 
 0b. **Before writing a patch script that emits YAML**, read
    `test_no_workflow_run_block_fakes_a_line_continuation`: a literal backslash-n where a

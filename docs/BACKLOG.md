@@ -498,6 +498,7 @@ closure convention in the header.
 - **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 - **506** `506@company-intel` **OPERATOR DECISION
 - **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
+- **548** `548@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 - **550** `550@company-intel` **The board shows `Holisto` for a company that now calls itself trivago Innovation
 
 ### ats-fetch — 20 open
@@ -8674,7 +8675,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     touch stands. `test_the_merge_does_not_resurrect_a_key_the_origin_retired` pins all
     three arms (origin retired it · we wrote it · origin is empty). The closing observation
     — `s_company_dict` carries the same asymmetry for the `cloud_state/*.json` files — is
-    still true and is now `541`. The original report follows.
+    still true and is now `546`. The original report follows.
     Lane: `infra`, measured 2026-08-30 by `registry`.
 
     `persist_state.py:344` routes `research_companies.json` through `_keyed_list(_name_key)`,
@@ -9313,7 +9314,7 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      so `build_meta` says `published_on_pages` instead of pointing at raw.githubusercontent.
      The unattended proof is the 09-02 morning-check row — until it answers, nothing here is
      proven. The wave-B half (`run_gates` has no `.csv` shape gate; `PAIRED` could name the
-     trio) is NOT done and is `542`. The original report follows.
+     trio) is NOT done and is `547`. The original report follows.
      Lane: `infra`. Filed by
      `roles` 2026-08-30. The meta names both by `raw_url` so nothing overstates; to put them
      beside the board add the two names to the publish step's optional-file loop in
@@ -10403,9 +10404,10 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      carried since 2026-08-27 — so a mutant is judged by behaviour or honestly survives. The
      CLASS is closed with it: `test_every_catalogue_anchor_test_stands_down_inside_a_mutant`
      names any future catalogue anchor that lacks the skip (it resolves same-file helpers,
-     because `test_registry.py` does its counting in one). Re-verified by running the whole
-     company-intel catalogue against the fixed tree — result in
-     `docs/sessions/2026-09-01-infra.md`. **Rejected the `_STATIC_MARKERS` route on
+     because `test_registry.py` does its counting in one). **Re-verified by running the whole
+     catalogue against the fixed tree: 86 records, 79 killed, 7 SURVIVING** — the seven the
+     anchor had been reporting as `killed` are now named and filed as `548@company-intel`,
+     which is the point of the fix and the reason a shard count was not evidence. **Rejected the `_STATIC_MARKERS` route on
      measurement**: 45 currently-`direct` tests would reclassify as `static` (most read YAML
      or Markdown, not the mutated module), every record killed solely by one of them would
      flip from `killed` to FAIL, and a static-only kill stops short-circuiting the subset —
@@ -10751,16 +10753,27 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      four names above under `registry_health.py --explain`.
 ## From the `infra` lane, 2026-09-01
 
-546. **`s_company_dict` rescues a key the origin deleted, exactly as `merge_json_cache` did
-     until today** — lane: `infra`, found while closing `458` (which measured the same bug in
-     the other merger: 44 retired names re-added by a cron's own state commit).
-     `persist_state.py:186`'s `s_company_dict` is the strategy for eight `cloud_state/*.json`
-     files, and several of their comments say "deletions honoured" — true only of OURS. Any
-     workflow holding a checkout older than a retirement re-adds every key retired since.
-     The fix is the same shape as 458's and the same one line, but it is NOT the same
-     function and the blast radius is larger (eight state files against one), so it wants its
-     own measurement first: which of the eight ever sees a deletion, and from which writer.
-     Until then, a deletion in those files is only as durable as the next stale checkout.
+546. **`458`'s one line changed the deletion semantics of thirteen state files, not two —
+     measure what it did** — lane: `infra`, filed 2026-09-01 by the session that applied
+     `458`, after an adversarial pass corrected this entry's first draft. **The first draft
+     said the fix "is NOT the same function" and that a deletion in those files "is only as
+     durable as the next stale checkout." Both were false**: `persist_state.s_company_dict`
+     (`persist_state.py:186`) has no rescue arm of its own — it delegates to
+     `merge_json_cache.merge` — so the same line already governs `scraped_cache.json`,
+     `firmographics.json`, `firmo_failed.json`, `health_baseline.json`, `stale.json`,
+     `scan_seen.json`, `auto_expand_seen.json`, `audit_seen.json`, `board_verify.json`,
+     `queue_state.json` and `queue_disposition.json` as well as the two `_keyed_list` files.
+     Origin's deletions now stand in all thirteen.
+     What was done about it in the same commit, rather than left to a later measurement: the
+     rescue arm survives for the case it was accidentally covering — an origin that is empty,
+     unreadable, **or has lost more than a quarter of its keys** is a broken run under
+     `CLAUDE.md` rule 2, not a set of deletions, and our copies are kept
+     (`test_a_broken_origin_is_not_a_deletion_of_a_quarter_of_the_cache`). That mirrors the
+     guard `s_company_dict` already applied to OUR side and that `_keyed_list` never had.
+     **What is still owed is the measurement, not the guard**: which of the thirteen ever
+     sees a genuine deletion, from which writer, and whether 25 % is the right share for a
+     cache of 2,000 scrape rows as well as for a 400-name queue. Until someone does that,
+     the threshold is one number borrowed from another file's guard.
 
 547. **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
      lane: `infra`, filed by `roles` (wave B) and deferred while `498` landed.
@@ -10776,3 +10789,42 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      needs the value to become a sequence, the mate-restore loop to iterate, and the one-way
      policy to stay one-way for the digest pair. `_dataset_alarm` catches the staleness the
      next morning, which is why this is a gap and not a fire.
+
+     **Third half, found by an adversarial pass while `498` landed: the meta can claim Pages
+     hosting for a file that was never pushed.** `published_on_pages` is derived from the env
+     var alone (`pipeline/roles.py:2654/2710/2739`), and `persist` commits
+     `roles.csv.meta.json` BEFORE the `publish` step runs — so a publish that is skipped
+     (`steps.pipeline.outcome != 'success'`), fails its five push attempts, or is a `DRY_RUN`
+     dispatch leaves a committed meta asserting `published_on_pages: true` for three files
+     that are not on Pages. Pre-existing for `roles.csv` since `453`; `498` tripled the
+     surface. The honest fix is for `publish` to write back what it actually copied (a
+     receipt, the way `last_delivered.json` is one for the digest), not for the pipeline step
+     to predict it.
+
+548. **Seven company-intel mutations survive the whole suite, and the anchor test was
+     reporting all seven as `killed`** — lane: `company-intel`, measured by `infra` on
+     2026-09-01 immediately after closing `540`. With the anchor standing down, the full
+     catalogue re-ran against the fixed tree: **86 records, 79 killed, 7 SURVIVING, 18
+     coverage gaps.** Each survivor is a predicate whose behaviour no test asserts:
+
+     | record | class | what it changes with the suite green |
+     |---|---|---|
+     | `ci-blurbs-eat-the-clock` | M2 | the blurb pass ignores its wall-clock budget |
+     | `ci-clamped-timeout-reads-as-outage` | M1 | a clamped timeout is reported as an outage |
+     | `ci-ask-translates-only-llmunavailable` | M2 | only `LLMUnavailable` is translated; other errors escape |
+     | `ci-export-drops-records` | M1 | the export writes fewer records than it holds |
+     | `ci-ledger-pre-run-union` | M1 | the pre-run ledger union is skipped |
+     | `ci-ledger-accepts-a-null-date` | M1 | a null date enters the ledger |
+     | `ci-admission-eats-an-honest-no-israel-record` | M5 | an honest "no Israel" record is swallowed at admission |
+
+     Reproduce: `python -u tools/mutate.py --catalogue
+     tests/fixtures/company_intel/mutations.json --all --jobs 4` (~50 min, no network, no
+     credit). **A behavioural test per row is the ask**, in the shape `540`'s own fix used:
+     `test_the_boards_own_titles_reach_the_call_the_bulk_pass_makes` is what a real guard for
+     one of these looks like.
+     Related and separately worth a look: **11 of the 79 kills are by
+     `test_docs_are_consistent_with_the_code` alone** — a doc-number subprocess test, which is
+     a weak kill of the same family the anchor was (`ci-model-unpinned`,
+     `ci-search-mandate-softened`, `ci-searches-wrong-counter`, `ci-served-by-input-tokens`,
+     `ci-place-arm-substring` and six more). They prove a documented NUMBER moved, not that
+     the code still behaves; `mutate._classify_killer` scores them `direct`.

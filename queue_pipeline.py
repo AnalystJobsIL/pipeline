@@ -1151,14 +1151,15 @@ def retire_settled(apply=False):
                            `cloud_state/queue_disposition.json`, still inside its
                            `REOPEN_DAYS` window.
 
-    The third is what makes a retirement survive. `merge_json_cache.merge` RESCUES a key the
+    The third is what makes a retirement survive. `merge_json_cache.merge` RESCUED a key the
     origin deleted while we held an older checkout (`persist_state.py:344` routes the queue
     through it), so **44 names retired between 00:28 and 00:54 on 2026-08-30 were back in the
     file at 00:41 by the listing-hunt cron's own state commit** -- 42 of them still there, each
     with a verdict on disk, each due to re-buy a paid search when its 14-day cadence lapsed on
-    2026-09-12. That merge is `infra`'s file and `docs/BACKLOG.md` 443 carries the diff; this
-    arm makes the queue converge anyway, because a lookup that re-applies a durable record
-    beats a deletion that one merge can undo.
+    2026-09-12. `infra` fixed that merge on 2026-09-01 (`458`): origin's deletion now stands
+    unless origin lost a quarter of its keys. This arm is still why the queue converges, and
+    is no weaker for it -- a lookup that re-applies a durable record does not depend on any
+    merge behaving.
 
     Nothing here is a judgement: every name pruned must already carry a record, and the
     assertion below refuses to prune one that does not.

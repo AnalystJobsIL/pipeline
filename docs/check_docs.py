@@ -1973,22 +1973,26 @@ def check_no_ci_skip_marker() -> None:
     log = _git("log", "--format=%H%x00%B%x00%x00", "%s..HEAD" % base)
     if not log:
         return
-    marker = "[skip" + " ci]"          # never written as one token: this file is committed too
+    # All six spellings GitHub honours, none written as one token: this file is committed too,
+    # and a checker that skips its own repo's CI would be the joke this check is about.
+    markers = ["[%s ci]" % "skip", "[ci %s]" % "skip", "[no ci]",
+               "[%s actions]" % "skip", "[actions %s]" % "skip", "***NO" + "_CI***"]
     bad = []
     for entry in log.split("\x00\x00"):
         if "\x00" not in entry:
             continue
         sha, _sep, body = entry.partition("\x00")
-        if marker in body.lower():
-            bad.append(sha.strip()[:8])
+        hit = [m for m in markers if m in body.lower()]
+        if hit:
+            bad.append("%s (%s)" % (sha.strip()[:8], hit[0]))
     if bad:
-        err("skip-ci", "commit(s) %s carry the CI-skip marker in the message, so GitHub will "
+        err("skip-ci", "commit(s) %s carry a CI-skip marker in the message, so GitHub will "
                        "run NO checks on this push -- it is honoured in the body as well as "
                        "the subject, which is how the commit that closed 515 skipped its own "
-                       "CI (20b0e03, 0 runs). Reword with `git rebase -i` / `git commit "
-                       "--amend`, spelling it `skip-ci` or \"the CI-skip marker\". Cron state "
-                       "commits legitimately carry it; they are on origin, before this "
-                       "branch's base." % ", ".join(bad))
+                       "CI (20b0e03, 0 runs). All six spellings count. Reword with `git "
+                       "rebase -i` / `git commit --amend`, writing it `skip-ci` or \"the "
+                       "CI-skip marker\". Cron state commits legitimately carry one; they are "
+                       "on origin, before this branch's base." % ", ".join(bad))
 
 
 def check_unattended_proof() -> None:

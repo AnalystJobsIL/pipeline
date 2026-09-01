@@ -6,7 +6,8 @@ name: Unit guards
 #
 # This workflow does NOT use continue-on-error anywhere. It is meant to block.
 #
-# THREE JOBS, AND EVERY LONG STEP CARRIES ITS OWN NAMED BUDGET (lane: infra, 2026-08-30,
+# FOUR JOBS (guard, guard-kill, rehearse, mutation-gate), AND EVERY LONG STEP CARRIES ITS
+# OWN NAMED BUDGET (lane: infra, 2026-08-30,
 # BACKLOG 442/435). Until today `guard` ran the suite AND six 14-night registry rehearsals
 # under one `timeout-minutes: 10`; the rehearsals outgrew it (steps 1-8 = 3m35s, the five
 # seeded rehearsals cut off at 6m38s on run 33294986316) and the job was CANCELLED on every
@@ -161,11 +162,15 @@ jobs:
   # the real catalogue and fails if the shards ever stop covering it exactly once. When a
   # shard's `timing wall` passes ~1,800 s, add a matrix entry AND bump SHARDS -- never the
   # budget (195). `fail-fast: false`: one shard's surviving mutant must not hide another's.
-  # 5 -> 8 on 2026-09-01: all five walled 2,096-2,218 s on run 33409190938 and two were
-  # killed at 40 min on 08-31. Measured there: ~158 s of baseline per shard plus ~37.5 s per
-  # record, so at 260 records SIX shards land at ~1,808 s -- still over. Eight gives ~1,396 s,
-  # about a week of headroom at the catalogue's measured growth (105 -> 260 records,
-  # 08-24 -> 09-01, ~13/day). `MUTATE_WALL_WARN` makes the wall say so itself.
+  # 5 -> 8 on 2026-09-01. Measured over the nine shards that finished on 08-31 (run
+  # 33406913948, `af7b104`, success, walls 2014-2317 s; run 33409190938, `9554c4c`, failure,
+  # four walls 2096-2154 s and shard 3 killed at 40 min): 242 records / 5 = 48-49 a shard,
+  # baseline 125-201 s, and **41.3 s per record** (worst shard 44.7). At today's 260 records
+  # SIX shards land at ~1,970 s -- still over, so one entry buys nothing. Eight gives
+  # ~1,520 s (~1,680 on the worst shard). Headroom is NOT a week: the ceiling returns at
+  # ~318 records, 58 away, and the catalogue grew 105 -> 260 in eight days (19.4/day; 13.3
+  # over the last four), so expect to add entries again within the week. `MUTATE_WALL_WARN`
+  # is what names the day instead of a fortnight passing unnoticed again.
   mutation-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 45

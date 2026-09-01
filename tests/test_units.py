@@ -7494,20 +7494,72 @@ def test_the_merge_does_not_resurrect_a_key_the_origin_retired():
     assert out3 == {"a": 1, "keep": 2} and kept3 == 2, "an empty origin deletes nothing"
 
 
-def test_a_shard_past_its_wall_ceiling_says_so_on_its_own_run_page():
+def test_a_broken_origin_is_not_a_deletion_of_a_quarter_of_the_cache():
+    """`s_company_dict` refuses a run that dropped a quarter of the keys from OUR side
+    (CLAUDE.md rule 2: that is a broken run, not a measurement). Nothing refused it from
+    ORIGIN's side — the unconditional rescue arm was providing that protection by accident,
+    and `_keyed_list` (`research_companies.json`, `discovered_cache.json`) has no other guard
+    at all. Honouring origin's deletions (458) removes the accident, so the rule is now
+    explicit: a few retirements stand, a truncated origin does not.
+
+    Without it, one workflow committing a half-written cache would permanently delete every
+    key the other side still held, with no alarm anywhere."""
+    import merge_json_cache as mjc
+    base = {"k%d" % i: i for i in range(40)}
+    ours = dict(base)                                  # we touched nothing
+    theirs = {k: v for k, v in base.items() if v < 25}  # origin lost 15 of 40 (37%)
+    out, _c, kept = mjc.merge(base, ours, theirs)
+    assert out == base and kept == 15, "a broken origin keeps our copies"
+    # a handful of genuine retirements still stand
+    few = {k: v for k, v in base.items() if v >= 5}     # origin retired 5 of 40 (12%)
+    out2, _c2, kept2 = mjc.merge(base, ours, few)
+    assert kept2 == 0 and all("k%d" % i not in out2 for i in range(5)), \
+        "an ordinary retirement is not a broken run"
+    # the guard needs a cache worth measuring: 3 of 4 gone is not a sample
+    tiny = {"a": 1, "b": 2, "c": 3, "d": 4}
+    out3, _c3, _k3 = mjc.merge(tiny, dict(tiny), {"a": 1})
+    assert out3 == {"a": 1}, "below 20 keys the share is noise; origin's deletion stands"
+
+
+import inspect as _j6_inspect
+import textwrap as _j6_textwrap
+from types import SimpleNamespace as _j6_NS2
+
+
+def test_a_shard_past_its_wall_ceiling_says_so_on_its_own_run_page(capsys, monkeypatch):
     """"Past ~1,800 s, add a matrix entry, never the budget" was a workflow comment and a
-    morning-check row, and nothing read either: all five shards had been over for days
-    (2,096-2,218 s on run 33409190938) and two were being killed at 40 min before anyone
-    looked. The ceiling now announces itself while the shard is still green.
+    morning-check row, and nothing read either: every shard had been over the ceiling for
+    days (2,014-2,317 s on run 33406913948, the green one) and two were killed at 40 min
+    before anyone looked. The ceiling now announces itself while the shard is still green.
 
     It cannot be a job-level `if:` -- `test_every_long_tests_step_has_a_named_budget_below_
-    its_job_timeout` forbids `if:` in this workflow -- so it lives in the harness."""
-    src = open(os.path.join(_REPO, "tools", "mutate.py"), encoding="utf-8").read()
-    assert 'MUTATE_WALL_WARN", "1800"' in src, "the ceiling and its override live together"
-    assert "::warning::mutation shard walled" in src and "never the budget" in src, \
-        "the warning must name the fix the workflow's own ::error:: names"
-    assert src.index('print("timing    wall') < src.index("::warning::mutation shard"), \
-        "the timing line is what a reader greps; the warning follows it"
+    its_job_timeout` forbids `if:` in this workflow -- so it lives in the harness.
+
+    Run for real against the emitting block, rather than grepping for its text: a test that
+    asserts a string is in a file passes just as well when the code around it is inert."""
+    M = _mutate_module_for_tests()
+    src = _j6_inspect.getsource(M.main)
+    start = src.index("    try:\n        warn_at")
+    block = src[start:src.index("flush=True)", src.index("(BACKLOG 195/476)")) + len("flush=True)")]
+
+    def _emit(wall, shard, env=None):
+        ns = {"os": os, "print": print, "wall": wall,
+              "a": _j6_NS2(shard=shard), "__builtins__": __builtins__}
+        for k, v in (env or {}).items():
+            monkeypatch.setenv(k, v)
+        exec(_j6_textwrap.dedent(block), ns)              # noqa: S102 - the shipped block
+        return capsys.readouterr().out
+
+    monkeypatch.delenv("MUTATE_WALL_WARN", raising=False)
+    assert "::warning::mutation shard walled 2317 s" in _emit(2317.0, "1/5")
+    assert "add a matrix entry" in _emit(2317.0, "1/5")
+    assert _emit(1799.0, "1/5") == "", "under the ceiling is silent"
+    # an unsharded local `--all` is the whole catalogue and is over by construction
+    assert _emit(9999.0, "") == "", "only a shard is told to add a matrix entry"
+    assert _emit(9999.0, "1/5", {"MUTATE_WALL_WARN": "0"}) == "", "0 disables"
+    assert "walled 9999 s" in _emit(9999.0, "1/5", {"MUTATE_WALL_WARN": "60"}), "override"
+    # a malformed override must not cost a 35-minute run its verdict
+    assert "walled 9999 s" in _emit(9999.0, "1/5", {"MUTATE_WALL_WARN": "banana"})
 
 
 def test_every_catalogue_anchor_test_stands_down_inside_a_mutant():
@@ -13325,6 +13377,14 @@ def test_a_commit_message_that_quotes_the_ci_skip_marker_is_refused(tmp_path, mo
     cd.check_no_ci_skip_marker()
     assert any("CI-skip marker" in e for e in cd.ERRORS), \
         "the marker in a BODY skips the run just as surely as in a subject: %s" % cd.ERRORS
+    # every spelling GitHub honours, not just the common one
+    for spelling in ("[ci %s]" % "skip", "[no ci]", "[%s actions]" % "skip",
+                     "[actions %s]" % "skip", "***NO" + "_CI***"):
+        (repo / "f").write_text(spelling, encoding="utf-8")
+        run("git", "commit", "-qam", "infra: a commit naming %s in prose" % spelling)
+        cd.ERRORS.clear()
+        cd.check_no_ci_skip_marker()
+        assert cd.ERRORS, "%s skips CI too, and the check must know it" % spelling
     # a clean message, and the same range: silent
     (repo / "f").write_text("3", encoding="utf-8")
     run("git", "commit", "-qam", "infra: name it skip-ci and nothing is skipped")
@@ -19389,18 +19449,26 @@ def test_a_dead_seam_is_asked_once_and_the_rest_are_counted_under_the_same_reaso
         "one timed-out call says nothing about the next; a transient must not stop the run"
 
 
-def test_an_absent_token_is_not_a_rejected_one(monkeypatch):
+def test_an_absent_token_is_not_a_rejected_one(tmp_path, monkeypatch):
     """`llm-auth` told three mornings to re-mint a token that was never sent. The seam reports
     401 and 403 alike as `auth`; only the caller can see whether there was a credential to
     reject, and `JDFiller.unavailable = "no-key"` is the same distinction for the paid rung."""
-    from pipeline import jdfill
+    from pipeline import jdfill, llm
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    monkeypatch.setattr(jdfill.os.path, "isdir", lambda p: False)
+    # the CREDENTIAL file, not the ~/.claude directory: the CLI creates that directory on its
+    # first run whether or not anyone logged in, so a directory probe reads "refused" on a
+    # runner whose secret is missing -- the misdiagnosis this split exists to end
+    monkeypatch.setattr(jdfill, "_CLI_CREDENTIALS", str(tmp_path / "nope.json"))
     assert jdfill._refusal_kind("auth") == "no-token"
     assert jdfill._refusal_kind("transient") == "transient", "only `auth` splits"
+    # and the CALL SITE uses it -- the helper being right is not the same claim
+    monkeypatch.setattr(llm, "call_json",
+                        lambda *a, **k: (_ for _ in ()).throw(llm.LLMUnavailable("401", kind="auth")))
+    assert jdfill.jd_quality("text", "Analyst", "ACME") == (None, "llm-no-token")
     monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "sk-x")
     assert jdfill._refusal_kind("auth") == "auth", "a token that WAS sent and refused"
+    assert jdfill.jd_quality("text", "Analyst", "ACME") == (None, "llm-auth")
 
 
 def test_a_refused_reclean_reaches_the_mail_and_does_not_crash_the_driver(tmp_path, monkeypatch):
@@ -21503,7 +21571,9 @@ def test_a_retirement_survives_the_merge_that_puts_the_name_back(tmp_path, monke
     """A retirement represented ONLY as an absence is undone by the next cron's merge.
 
     `persist_state.py` routes `research_companies.json` through `merge_json_cache.merge`,
-    which RESCUES a key the origin deleted while we held an older checkout. Measured: 44
+    which RESCUED a key the origin deleted while we held an older checkout until `458` landed
+    on 2026-09-01. This test is why the queue converged meanwhile, and it still holds: the
+    cleanup re-applies the verdict rather than trusting any merge. Measured: 44
     names retired between 00:28 and 00:54 on 2026-08-30 were back in the file at 00:41, put
     there by the listing-hunt cron's own state commit; 42 were still there at 05:45, each
     with a verdict on disk, each due to re-buy a paid search when its 14-day cadence lapsed.
