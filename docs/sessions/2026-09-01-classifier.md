@@ -351,6 +351,22 @@ defect** (the 08-31 classifier session hit shard 2, rc 137, zero SURVIVED, on ru
 33410420520), and the cost is that "the mutation gate is red" stops meaning "someone let a
 mutant live".
 
+**Resolved the same evening, and the paragraph above is left standing rather than rewritten
+because it is what the evidence looked like before the fix.** `infra` shipped `SHARDS` 5 → 8
+(`e248526`; CI goes 13 jobs → 16) plus `MUTATE_WALL_WARN`, a `::warning::mutation shard
+walled N s` line so the ceiling announces itself on the run page instead of being noticed a
+fortnight later. That lane also corrected a number of its own against my table — the
+marginal cost is **41.3 s/record** (worst shard 44.7), not the 37.5 it first had, because
+the run it compared was a 242-record day, and six shards would still have landed ~1,970 s,
+which is why it is 8.
+
+**The number the next classifier session should carry: the ceiling returns at ~318
+records.** The catalogue is 260 today and grew 105 → 260 in eight days; at the recent
+~13/day that is roughly four days, and about two on the worst shard. Every lane appends to
+`tests/mutations.json` — **this one did not today**, deliberately (no new activating writer;
+all 260 anchors still match, verified), but the next scope change that adds one will pay
+into the same ceiling.
+
 ### The rehearsal red
 
 `rehearse (worst, seed 1)` is **not caused by this push**, and I proved that rather than
