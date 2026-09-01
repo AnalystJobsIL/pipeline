@@ -419,35 +419,6 @@ closure convention in the header.
 - **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
 - **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
 
-### roles — 26 open
-
-- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
-- **3** `3@roles` **`pipeline/dates.py`**
-- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
-- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
-- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
-- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
-- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
-- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
-- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
-- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
-- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
-- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
-- **534** `534@roles` **One posting, two `merge_key`s
-- **543** `543@roles` **A drain flip never reaches the published dataset, so a role the seam has re-judged NO
-- **544** `544@roles` **A published `class_decision` cannot say which contract judged it, so a bump leaves the
-- **545** `545@roles` **A stray `seen_id` on one record makes another record's url withdraw it too
-- **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
-- **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
-- **564** `564@roles` **Six catalogued mutations survived the suite; five are closed within the hour, one is
-
 ### docs — 25 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
@@ -475,6 +446,34 @@ closure convention in the header.
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 - **563** `563@docs` **Nothing checks that a `NNN@lane` reference resolves to an item that still exists** —
+
+### roles — 25 open
+
+- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
+- **3** `3@roles` **`pipeline/dates.py`**
+- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
+- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
+- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
+- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
+- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
+- **534** `534@roles` **One posting, two `merge_key`s
+- **543** `543@roles` **A drain flip never reaches the published dataset, so a role the seam has re-judged NO
+- **544** `544@roles` **A published `class_decision` cannot say which contract judged it, so a bump leaves the
+- **545** `545@roles` **A stray `seen_id` on one record makes another record's url withdraw it too
+- **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
+- **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
 
 ### company-intel — 22 open
 
@@ -543,7 +542,7 @@ closure convention in the header.
 - **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
 - **557** `557@classifier` **LTX has not flipped to its own board
 
-### jd-text — 15 open
+### jd-text — 16 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -560,6 +559,7 @@ closure convention in the header.
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 - **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
 - **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
+- **564** `564@jd-text` **Six catalogued mutations survived the suite; five are closed within the hour, one is
 
 ### render — 6 open
 
@@ -10861,8 +10861,9 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      BOTH sides of every conflicted hunk and regenerate the index.
 
 564. **Six catalogued mutations survived the suite; five are closed within the hour, one is
-     open** — the eight-shard split is what made them visible — lanes: `roles` (five) and `jd-text` (one), measured by `infra` on
-     2026-09-01 from run `33522769201`.
+     open** — lane: `jd-text`, which owns the one still alive; the five that were `roles`'
+     are closed below, and the eight-shard split is what made all six visible. Measured by
+     `infra` on 2026-09-01 from run `33522769201`.
 
      | record | class | added by |
      |---|---|---|
