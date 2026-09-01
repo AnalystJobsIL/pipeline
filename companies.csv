@@ -307,7 +307,7 @@ Radiflow,scrape,https://www.radiflow.com/careers/,https://www.radiflow.com/caree
 eToro,scrape,https://www.etoro.com/careers/,https://www.etoro.com/careers/,true,universal-scrape; 7 Israel jobs
 Utila,scrape,https://utila.io/careers,https://utila.io/careers,true,universal-scrape; 14 Israel jobs
 Via Transportation,scrape,https://boards.greenhouse.io/via,https://boards.greenhouse.io/via,false,universal-scrape; 37 Israel jobs [deactivated: redundant scrape dup of working ATS twin]
-Greeneye Technology,scrape,https://www.greeneye.ag/careers,https://www.greeneye.ag/careers,true,universal-scrape; 1 Israel jobs
+Greeneye Technology,scrape,https://www.greeneye.ag/careers,https://www.greeneye.ag/careers,false,universal-scrape; 1 Israel jobs | scrape rotted (error 6d) 2026-09-01: extraction yields 0 — no ATS detected; parked for re-hunt
 SAP Israel,scrape,https://jobs.sap.com/search/?locationsearch=Israel,https://jobs.sap.com/search/?locationsearch=Israel,false,alias-of SAP 2026-08-23: identical board URL; one row per company so the board does not list every role twice | universal-scrape; 2 Israel jobs
 Healthy.io,scrape,https://www.healthy.io/careers,https://www.healthy.io/careers,true,universal-scrape; 1 Israel jobs
 Apple,scrape,https://jobs.apple.com/en-us/search?location=israel-ISR,https://jobs.apple.com/en-us/search?location=israel-ISR,true,universal-scrape; 20 Israel jobs | query-filter 2026-08-30: honoured 20/20 IL
@@ -1020,7 +1020,7 @@ Dell Technologies,workday,dell/External,https://dell.wd1.myworkdayjobs.com/wday/
 PTC,workday,ptc/PTC,https://ptc.wd1.myworkdayjobs.com/wday/cxs/ptc/PTC/jobs,true,re-audit 2026-08-21: deep-verified 2/2 IL (was dark)
 Zendesk,workday,zendesk/zendesk,https://zendesk.wd1.myworkdayjobs.com/wday/cxs/zendesk/zendesk/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev 5131d0
 Zoom,scrape,https://careers.zoom.us/jobs/search?location=Israel,https://careers.zoom.us/jobs/search?location=Israel,false,"dark-triage 2026-08-22: page-empty (LLM confirms no open roles (Zoom | query-filter 2026-08-30: filter ignored, 29/30 cards san jose/san jose/mexico; needs re-resolution"
-Booking.com,scrape,,https://employees-holdings-workingatbooking.icims.com/jobs/search?ss=1&searchLocation=Israel,true,crack-walled 2026-08-22: icims via scrape; verified 1 IL | zero-confirm 2026-08-29: http-405; r; ev ab1960
+Booking.com,scrape,,https://employees-holdings-workingatbooking.icims.com/jobs/search?ss=1&searchLocation=Israel,false,crack-walled 2026-08-22: icims via scrape; verified 1 IL | zero-confirm 2026-08-29: http-405; r; ev ab1960 | scrape rotted (error 6d) 2026-09-01: extraction yields 0 — no ATS detected; parked for re-hunt
 Intuit,scrape,,https://jobs.intuit.com/,true,listing-hunt 2026-08-22: verified 4 IL via https://jobs.intuit.com/
 Barclays,workday,barclays/External_Career_Site_Barclays,https://barclays.wd3.myworkdayjobs.com/wday/cxs/barclays/External_Career_Site_Barclays/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev cf2916
 GE HealthCare,phenom,,https://careers.gehealthcare.com/widgets,true,"listing-hunt | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily | converted 2026-08-25: phenom via fetch_company 23 IL (BACKLOG 76)"
