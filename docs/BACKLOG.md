@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**613 filed · 443 open · 170 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**614 filed · 444 open · 170 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 563.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 564.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -419,6 +419,34 @@ closure convention in the header.
 - **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
 - **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
 
+### docs — 25 open
+
+- **87** `87@docs` **Retire `cache_new_rows.py`**
+- **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
+- **146** `146@docs` **Tests reach into `digest`'s private names**
+- **291** `291@docs` **The closed-item split: designed, measured, and its first implementation deleted** —
+- **295** `295@docs` **Three session records are named a day before their own H1**
+- **296** `296@docs` **`docs/POC_COMPANY_PROFILES.md` is a dated POC report filed among live docs**
+- **297** `297@docs` **`docs/check_docs.py`'s `§N` pattern cannot see a lettered section reference**
+- **298** `298@docs` **Nothing checks that a cited `BACKLOG <n>` exists**
+- **299** `299@docs` **The HANDOFF per-line cap can still be evaded four ways**
+- **300** `300@docs` **`parse()` truncates an item whose body contains a column-0 `## ` or numbered
+- **301** `301@docs` **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`**
+- **302** `302@docs` **`check_session_record_dates` inspects only line 1**
+- **303** `303@docs` **ARCHITECTURE section 8's guard-rail table describes guards that have moved**
+- **338** `338@docs` **`HANDOFF.md` is at its word cap, so two lanes finishing on the same day cannot both
+- **344** `344@docs` **Sweep for tests that drive a root script's `main()` without `chdir` or explicit paths** —
+- **360** `360@docs` **ARCHITECTURE.md states the active-row count six ways and two of them carry no date**
+- **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
+- **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
+- **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
+- **445** `445@docs` **The two workflow COUNTS in prose want a structural check, not a registered fact** —
+- **461** `461@docs` **No visitor-facing surface states the quantitative boundary**
+- **467** `467@docs` **`check_unattended_proof` still returns silently on a runner**
+- **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
+- **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
+- **563** `563@docs` **Nothing checks that a `NNN@lane` reference resolves to an item that still exists** —
+
 ### roles — 25 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
@@ -446,33 +474,6 @@ closure convention in the header.
 - **545** `545@roles` **A stray `seen_id` on one record makes another record's url withdraw it too
 - **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
 - **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
-
-### docs — 24 open
-
-- **87** `87@docs` **Retire `cache_new_rows.py`**
-- **112** `112@docs` **`enrich_scrape_jd.py` and `enrich_matched_jd.py` are the same 60-line driver twice** —
-- **146** `146@docs` **Tests reach into `digest`'s private names**
-- **291** `291@docs` **The closed-item split: designed, measured, and its first implementation deleted** —
-- **295** `295@docs` **Three session records are named a day before their own H1**
-- **296** `296@docs` **`docs/POC_COMPANY_PROFILES.md` is a dated POC report filed among live docs**
-- **297** `297@docs` **`docs/check_docs.py`'s `§N` pattern cannot see a lettered section reference**
-- **298** `298@docs` **Nothing checks that a cited `BACKLOG <n>` exists**
-- **299** `299@docs` **The HANDOFF per-line cap can still be evaded four ways**
-- **300** `300@docs` **`parse()` truncates an item whose body contains a column-0 `## ` or numbered
-- **301** `301@docs` **`check_docs.py` uses module-global `ERRORS`/`WARNINGS`**
-- **302** `302@docs` **`check_session_record_dates` inspects only line 1**
-- **303** `303@docs` **ARCHITECTURE section 8's guard-rail table describes guards that have moved**
-- **338** `338@docs` **`HANDOFF.md` is at its word cap, so two lanes finishing on the same day cannot both
-- **344** `344@docs` **Sweep for tests that drive a root script's `main()` without `chdir` or explicit paths** —
-- **360** `360@docs` **ARCHITECTURE.md states the active-row count six ways and two of them carry no date**
-- **361** `361@docs` **An ANSWERED morning-check row is never forced out of `HANDOFF.md`, so the word cap does
-- **362** `362@docs` **Nothing asserts that the test suite leaves the working tree clean**
-- **374** `374@docs` **`check_scope_claims` guards one claim; the next scope change will not be about the
-- **445** `445@docs` **The two workflow COUNTS in prose want a structural check, not a registered fact** —
-- **461** `461@docs` **No visitor-facing surface states the quantitative boundary**
-- **467** `467@docs` **`check_unattended_proof` still returns silently on a runner**
-- **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
-- **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 
 ### company-intel — 22 open
 
@@ -10723,6 +10724,13 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      one). Until then `tests.yml` is red on this job for every lane, on a data state that arrived
      in a `[skip ci]` cron commit (`09fdb95`) that no run judged — which is its own hazard and is
      the reason nobody saw it for a day.
+     **Corroborated from another lane, 2026-09-01 evening:** `jd-text` reports the identical
+     failure string on **33514763993** (`classifier`'s `f3d6c4f`, before any of today's lane
+     pushes), **33519051202** and **33521239034** — so the red is at least three pushes old and
+     is caused by none of the four lanes that have pushed since. Three lanes now name it as
+     inherited and point here rather than claiming a clean board. **The argument does not need
+     the bisect at all:** the red survives pushes from four lanes touching four different file
+     sets, so if today's work had caused it at least one of those pushes would have been green.
 559. **A row keeps ANOTHER company's board address after the note says it is another company's,
      and `is_foreign` cannot see it** — lane: `registry`, found 2026-09-01 by this session's own
      adversarial wave after the session had claimed the class was cleared. `Harel Insurance &
@@ -10826,3 +10834,27 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `ci-search-mandate-softened`, `ci-searches-wrong-counter`, `ci-served-by-input-tokens`,
      `ci-place-arm-substring` and six more). They prove a documented NUMBER moved, not that
      the code still behaves; `mutate._classify_killer` scores them `direct`.
+563. **Nothing checks that a `NNN@lane` reference resolves to an item that still exists** —
+     lane: `docs`, found 2026-09-01 by `registry` losing six items in a rebase, and independently
+     named by `jd-text` the same evening. `docs/check_docs.py` validates that an item's LANE
+     exists, that the per-lane index is current, and that a doc's links and §N pointers resolve —
+     but a reference like `549@registry` in `ARCHITECTURE.md`, or `` `546` `` inside another
+     backlog item, is not checked against the set of item numbers that exist. Measured, live:
+     `docs/BACKLOG.md` conflicts in its GENERATED index on nearly every rebase, and resolving
+     that hunk by taking one side wholesale takes that side on the item bodies beside it — this
+     session lost items 546-549 and two more that way while their cross-references in
+     `ARCHITECTURE.md` and items 513/526 survived, and every gate stayed green. The dangling
+     state is exactly the "confident document that is no longer true" failure this repo punishes
+     hardest, and it is a cheap check: collect `(?<![\d])(\d{3})@[a-z-]+` and `` `\d{3}` ``
+     from the docs, subtract the item numbers `docs/backlog.py` already parses, and error on the
+     remainder. **It reuses a parse that already exists** — `docs/backlog.py` collects every item
+     number to build the index — so the check is a set difference, not a new reader. Keep the
+     false-positive risk out by scope rather than by an allowlist: check the `NNN@lane` form
+     STRICTLY wherever it appears (that syntax is only ever a reference), and the bare
+     backticked `` `NNN` `` form only inside `docs/BACKLOG.md` item bodies, where the
+     convention holds; elsewhere a bare number is as likely to be a year, a count or a run id. The
+     scoping rule and the reuse-the-existing-parse point are `jd-text`'s, offered cross-session
+     while both lanes were recovering from the same rebase conflict. Two recipes for
+     the rebase itself, both proven today: rebuild `docs/BACKLOG.md` from origin's copy and
+     splice in only the items you touched (safer when cross-references already exist), or take
+     BOTH sides of every conflicted hunk and regenerate the index.
