@@ -3,36 +3,36 @@
  "download_url": "https://analystjobsil.github.io/board/roles.csv",
  "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
  "published_on_pages": true,
- "generated_at": "2026-08-31T12:15:47Z",
- "run_date": "2026-08-31",
- "rows": 167,
+ "generated_at": "2026-09-01T10:54:38Z",
+ "run_date": "2026-09-01",
+ "rows": 157,
  "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
  "window": {
   "days": 90,
   "basis": "last_seen",
-  "start": "2026-06-03",
-  "end": "2026-08-31",
-  "rule": "2026-06-03 <= last_seen <= 2026-08-31, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
+  "start": "2026-06-04",
+  "end": "2026-09-01",
+  "rule": "2026-06-04 <= last_seen <= 2026-09-01, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
   "fully_covered": false,
-  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-03. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
+  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-04. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
  },
  "store": {
-  "records": 193,
+  "records": 203,
   "by_status": {
-   "closed": 48,
-   "open": 119,
+   "closed": 35,
+   "open": 123,
    "purged": 17,
-   "superseded": 6,
-   "withdrawn": 3
+   "superseded": 10,
+   "withdrawn": 18
   },
   "earliest_first_seen": "2026-08-16",
   "earliest_recorded_run": "2026-08-27",
   "retention": "nothing is ever deleted; a wrong row becomes superseded or purged and keeps its line"
  },
  "excluded": {
-  "superseded": 6,
+  "superseded": 10,
   "purged": 17,
-  "withdrawn": 3,
+  "withdrawn": 18,
   "outside_window": 0,
   "undatable": 0,
   "note": "superseded = the same posting also fetched under a second company name, kept once. purged = the COMPANY was never an employer (a registry row that points at an aggregator; a name intake rejected as an agency). withdrawn = the employer is real but THIS posting was never in scope (not in Israel, or not this employer's) — it was published in error and is listed under `withdrawn` with its reason and the days it was public. Rows that aged out of the window are not excluded: they are in roles_archive.csv."
@@ -56,6 +56,66 @@
    "title": "Big Data Analyst",
    "status": "purged",
    "reason": "pipeline/recruiters.is_recruiter names this as a staffing agency, so the posting was another employer's",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "amazon|sr gtm ssa analytics emea gtm data and ai specialists solutions architecture",
+   "company": "Amazon",
+   "title": "Sr GTM SSA Analytics, EMEA GTM Data and AI Specialists Solutions Architecture",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a Solutions Architect / GTM sales-engineering role helping customers with data initiatives, not a data analyst role producing analysis of measured data.",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "appsflyer|financial data analyst temporary position 9 months",
+   "company": "AppsFlyer",
+   "title": "Financial Data Analyst - Temporary position (9 months)",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): an FP&A / budgeting and forecasting role, which is an excluded category whatever its length (the model also called it temporary; that is NOT a ground here — three maternity-cover roles were accepted in the same pass)",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "appsflyer|senior finops analyst",
+   "company": "AppsFlyer",
+   "title": "Senior FinOps Analyst",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a FinOps/cost financial planning role (cloud cost reporting, budgeting, forecasting, savings strategy), which falls under the excluded FP&A category…",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "appsflyer|senior product manager analytics",
+   "company": "AppsFlyer",
+   "title": "Senior Product Manager - Analytics",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): engineering/ML/non-data-analyst…",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "arpeely|data scientist team lead",
+   "company": "Arpeely",
+   "title": "Data Scientist Team Lead",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This role centers on developing algorithmic solutions and machine learning models and leading a data science team, which is ML/engineering-focused rather than…",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -123,6 +183,66 @@
    }
   },
   {
+   "role_id": "compugen|senior scientist antibody engineering discovery",
+   "company": "Compugen",
+   "title": "Senior Scientist, Antibody Engineering & Discovery",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a lab-based antibody engineering scientist role, not a data analyst position.",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "freightos|director of global accounting reporting",
+   "company": "Freightos",
+   "title": "Director of Global Accounting & Reporting",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is an accounting/financial reporting and compliance leadership role, not a data analyst position.",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "global e|data analyst chargeback",
+   "company": "Global-e",
+   "title": "Data Analyst (Chargeback)",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is an operational chargeback dispute investigation/resolution role, not a core analytics/reporting/dashboard role.",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "guardio|senior bi developer",
+   "company": "Guardio",
+   "title": "Senior BI Developer",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a data engineering role focused on building ETL/ELT pipelines, dbt models, and Airflow orchestration rather than performing analysis itself.",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "guardio|senior bi engineer",
+   "company": "Guardio",
+   "title": "Senior BI Engineer",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a data engineering role focused on building ETL/ELT pipelines, dbt models, and Airflow orchestration, not analysis producing insights.",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
    "role_id": "jobgether|team lead product analyst",
    "company": "Jobgether",
    "title": "Team Lead Product Analyst",
@@ -159,6 +279,42 @@
    }
   },
   {
+   "role_id": "notraffic|global compensation people analytics manager",
+   "company": "NoTraffic",
+   "title": "Global Compensation & People Analytics Manager",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is primarily a Compensation/HR Operations management role (comp bands, sales commission plans, HRIS ownership) rather than a core analytics role, so it…",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "paragon|operational intelligence analyst team lead",
+   "company": "Paragon",
+   "title": "Operational Intelligence Analyst Team Lead",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is an OSINT/WebInt intelligence analyst role focused on cyber/network intelligence gathering, not quantitative analysis of measured business data.",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "parametrix|technical data analyst tel aviv",
+   "company": "Parametrix GmbH",
+   "title": "Technical Data Analyst (Tel Aviv)",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): The role centers on building/owning ETL/ELT pipelines and data engineering tasks (SQL/Python scripting, dbt/Airflow) rather than primarily producing…",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
    "role_id": "recruitx|data analyst jb 4122",
    "company": "Recruitx",
    "title": "Data Analyst JB-4122",
@@ -180,6 +336,30 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "shila medical services|senior compensation and benefits financial analytics manager",
+   "company": "SHILA Medical Services LTD",
+   "title": "Senior Compensation and Benefits & Financial Analytics Manager",
+   "status": "withdrawn",
+   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a compensation/payroll and cost accounting (FP&A-like) management role, not a core analyst position analyzing data for insights/dashboards.",
+   "on": "2026-08-31",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "taboola|product analyst maternity leave replacement",
+   "company": "Taboola",
+   "title": "Product Analyst (Maternity-Leave Replacement)",
+   "status": "withdrawn",
+   "reason": "description unrecoverable - the posting is gone at its own Greenhouse board (404, GONE stamp 2026-08-28), no donor copy was ever held (jd-text structural verdict: donors exhausted) and no archive snapshot exists; the operator ruled 2026-09-01 that no role publishes without a usable description",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
    }
   },
   {
@@ -261,22 +441,23 @@
  "archive": {
   "file": "roles_archive.csv",
   "rows": 0,
-  "rule": "status open or closed AND last_seen < 2026-06-03 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
+  "rule": "status open or closed AND last_seen < 2026-06-04 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
   "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
   "published_on_pages": false
  },
  "reconciliation": {
-  "rows": 167,
+  "rows": 157,
   "archived": 0,
-  "superseded": 6,
+  "superseded": 10,
   "purged": 17,
-  "withdrawn": 3,
+  "withdrawn": 18,
   "outside_window": 0,
   "undatable": 0,
   "unreadable": 0,
-  "store_records": 193,
-  "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable == store_records",
+  "blocked_excluded": 1,
+  "store_records": 203,
+  "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable + blocked_excluded == store_records",
   "holds": true
  },
  "conventions": {
@@ -314,14 +495,19 @@
    "description_len",
    "description_truncated",
    "description_sha1",
-   "description_quality"
+   "description_quality",
+   "description_blocker"
   ],
   "quality": {
-   "jd": 160,
-   "snippet": 4,
-   "none": 3,
+   "jd": 155,
+   "snippet": 1,
+   "none": 1,
    "unmeasured": 0,
    "holds": true
+  },
+  "blocked": {
+   "policy": "exclude",
+   "listing-page": 1
   }
  },
  "funnel": {
@@ -363,7 +549,7 @@
   },
   "posted_date": {
    "doc": "The date the EMPLOYER states the role was posted. Empty when the board publishes none.",
-   "nulls": 20
+   "nulls": 19
   },
   "first_seen": {
    "doc": "The first day this pipeline ever saw the role, across all of its spells. Not a posting date.",
@@ -392,7 +578,7 @@
   },
   "closed_on": {
    "doc": "The day we recorded it closed. Empty while open.",
-   "nulls": 119
+   "nulls": 122
   },
   "emailed": {
    "doc": "true if this role went out in a daily digest email.",
@@ -400,7 +586,7 @@
   },
   "emailed_on": {
    "doc": "The date it was first emailed. Empty if never emailed.",
-   "nulls": 96
+   "nulls": 72
   },
   "episodes": {
    "doc": "How many separate spells we have seen this role open (a reappearance after an absence starts a new one).",
@@ -412,7 +598,7 @@
   },
   "repost_dates": {
    "doc": "The posted_date values those bumps landed on, separated by ';'.",
-   "nulls": 142
+   "nulls": 137
   },
   "sources": {
    "doc": "Which fetchers saw it (greenhouse, comeet, scrape, ...), separated by ';'.",
@@ -433,7 +619,7 @@
   },
   "years_experience": {
    "doc": "Years of experience asked for, read from the DESCRIPTION text. Empty when the text does not say.",
-   "nulls": 24
+   "nulls": 22
   },
   "family": {
    "doc": "Role family, from title first and the opening of the description second.",
@@ -460,7 +646,7 @@
   },
   "degree_level": {
    "doc": "Highest degree the posting requires or prefers.",
-   "nulls": 99,
+   "nulls": 86,
    "enum": {
     "PhD": "highest degree the posting names",
     "MSc": "highest degree the posting names",
@@ -469,7 +655,7 @@
   },
   "degree_status": {
    "doc": "Whether that degree is required or merely preferred.",
-   "nulls": 99,
+   "nulls": 86,
    "enum": {
     "required": "stated as a requirement",
     "preferred": "stated as an advantage"
@@ -477,7 +663,7 @@
   },
   "degree_fields": {
    "doc": "Fields of study named alongside it, separated by ';'.",
-   "nulls": 118,
+   "nulls": 104,
    "enum": {
     "CS": "field of study named alongside the degree",
     "Industrial Eng.": "field of study named alongside the degree",
@@ -493,7 +679,7 @@
   },
   "ai": {
    "doc": "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned.",
-   "nulls": 126,
+   "nulls": 115,
    "enum": {
     "AI for efficiency": "Expected to use AI tools (Copilot, ChatGPT, Cursor…) to work faster",
     "AI for automation": "Using AI to automate processes and workflows",
@@ -503,11 +689,11 @@
   },
   "skills": {
    "doc": "Every skill found in title+description, separated by ';', in extraction order.",
-   "nulls": 8
+   "nulls": 4
   },
   "class_decision": {
    "doc": "The classifier's verdict on the role when it was last judged.",
-   "nulls": 33,
+   "nulls": 0,
    "enum": {
     "accept": "judged an analytics role in Israel",
     "reject": "judged not one"
@@ -515,7 +701,7 @@
   },
   "class_path": {
    "doc": "How that verdict was reached: keyword, llm, llm_cache, ...",
-   "nulls": 33
+   "nulls": 0
   },
   "description_len": {
    "doc": "Characters of description text we hold. 0 when we captured none.",
@@ -527,7 +713,7 @@
   },
   "description_sha1": {
    "doc": "sha1 of the description text; join to roles_text.jsonl to read it.",
-   "nulls": 3
+   "nulls": 1
   },
   "description_quality": {
    "doc": "Whether the text we hold reads as a job description (jdfill.looks_like_jd). Empty = text exists but could not be judged this run.",
@@ -538,17 +724,21 @@
     "none": "this record holds no description text (description_len 0); a stale line may linger in roles_text.jsonl under the same role_id"
    }
   },
+  "description_blocker": {
+   "doc": "Why a weak text (description_quality snippet/none) is structurally hard to complete, or empty. Recorded verdicts (jd-text's matched.jd_why, 'structural:*') verbatim; else derived: 'gone' (the posting 404s on the employer's own board), 'unfillable:<why>' (a host no rung we own can read), 'listing-page' (the only address we hold is a shared listing, not the posting's own). Under the live policy (meta description_text.blocked.policy — 'exclude' since the operator's 2026-09-01 ruling) a blocked row is excluded from this file with its reason counted in the meta; a weak row with NO blocker is pending a fill and stays; the archive keeps history either way.",
+   "nulls": 157
+  },
   "sector": {
    "doc": "Company sector (firmographics).",
-   "nulls": 8
+   "nulls": 6
   },
   "sub_sector": {
    "doc": "Narrower niche (firmographics, free text).",
-   "nulls": 8
+   "nulls": 6
   },
   "stage": {
    "doc": "Company stage (firmographics).",
-   "nulls": 8,
+   "nulls": 6,
    "enum": {
     "acquired-by-bigtech": "company stage, as researched (firmographics)",
     "early-private": "company stage, as researched (firmographics)",
@@ -559,11 +749,11 @@
   },
   "stage_note": {
    "doc": "Ticker or acquisition note behind that stage.",
-   "nulls": 8
+   "nulls": 6
   },
   "size_band": {
    "doc": "Headcount band (firmographics).",
-   "nulls": 8,
+   "nulls": 6,
    "enum": {
     "S": "under 200 employees globally",
     "M": "200-1,000",
@@ -573,27 +763,27 @@
   },
   "employees_global": {
    "doc": "Global headcount, all sites (firmographics).",
-   "nulls": 16
+   "nulls": 18
   },
   "founded": {
    "doc": "Year founded (firmographics).",
-   "nulls": 17
+   "nulls": 18
   },
   "business_model": {
    "doc": "How the company earns money (firmographics, free text).",
-   "nulls": 8
+   "nulls": 6
   },
   "customer_type": {
    "doc": "Who buys from it (firmographics, free text).",
-   "nulls": 8
+   "nulls": 6
   },
   "il_center": {
    "doc": "Its main Israeli site(s) (firmographics).",
-   "nulls": 8
+   "nulls": 7
   },
   "firmo_as_of": {
    "doc": "The date those company facts were researched.",
-   "nulls": 8
+   "nulls": 6
   },
   "firmo_match": {
    "doc": "How the company facts were matched to this row's company_registry (the brand in `company` renders only on an exact match).",
@@ -606,35 +796,35 @@
   },
   "skills_bi": {
    "doc": "Skills of category 'bi' only, separated by ';' — group by this without parsing.",
-   "nulls": 75
+   "nulls": 65
   },
   "skills_query": {
    "doc": "Skills of category 'query' only, separated by ';' — group by this without parsing.",
-   "nulls": 39
+   "nulls": 29
   },
   "skills_de": {
    "doc": "Skills of category 'de' only, separated by ';' — group by this without parsing.",
-   "nulls": 102
+   "nulls": 95
   },
   "skills_pa": {
    "doc": "Skills of category 'pa' only, separated by ';' — group by this without parsing.",
-   "nulls": 136
+   "nulls": 124
   },
   "skills_prog": {
    "doc": "Skills of category 'prog' only, separated by ';' — group by this without parsing.",
-   "nulls": 98
+   "nulls": 89
   },
   "skills_method": {
    "doc": "Skills of category 'method' only, separated by ';' — group by this without parsing.",
-   "nulls": 49
+   "nulls": 44
   },
   "skills_cloud": {
    "doc": "Skills of category 'cloud' only, separated by ';' — group by this without parsing.",
-   "nulls": 146
+   "nulls": 139
   },
   "skills_lang": {
    "doc": "Skills of category 'lang' only, separated by ';' — group by this without parsing.",
-   "nulls": 114
+   "nulls": 105
   }
  }
 }
