@@ -201,6 +201,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     os.makedirs(out_dir, exist_ok=True)
     st = store.SeenStore(db_path) if db_path else store.SeenStore()
     llm_cache = st.load_llm_cache()
+    llm_cache_dates = st.load_llm_cache_dates()   # judgment dates; the classifier orders
+                                                  # several superseded verdicts by them
     # the role record (lane: roles, ARCHITECTURE §7c): sqlite ∪ the text ledger beside it,
     # before anything reads `matched`; its alarms join the bold `Stages:` line below
     from . import roles
@@ -360,7 +362,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     jdfill = JDFiller()
     # ONE classifier per run (lane: classifier, ARCHITECTURE §7b): the LLM tier's cap, time
     # budget, circuit breaker and verdict staging live on it; the mail line comes from it
-    clf = seniority.Classifier(use_llm=use_llm, llm_cache=llm_cache)
+    clf = seniority.Classifier(use_llm=use_llm, llm_cache=llm_cache,
+                               cache_dates=llm_cache_dates)
     failed_companies = []
     failed_names = set()                      # by NAME: 15 registry names contain " (" themselves
     candidates = []                           # Israel-matched postings, judged once per ROLE below

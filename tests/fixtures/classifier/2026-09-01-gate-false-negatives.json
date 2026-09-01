@@ -1,0 +1,41 @@
+{
+ "contract": "v3.0f84ab84",
+ "rows": [
+  {
+   "company": "Calculum",
+   "title": "Junior Data/Financial Analyst",
+   "gate": "excluded",
+   "verdict": "YES",
+   "reason": "This is a genuine analyst job at Calculum itself, involving cleaning/analyzing large datasets for client analytics projects on working capital/payment terms, qu",
+   "desc_len": 4000,
+   "url": "https://www.calculum.ai/vacancies/junior-data-financial-analyst-position-type"
+  },
+  {
+   "company": "Elbit Systems Israel",
+   "title": "Senior Data Product Owner",
+   "gate": "none",
+   "verdict": "NO",
+   "reason": "This is a Data Product Owner role leading BI architecture, data modeling, and project management for a company's own BI platform-closer to product/architecture ",
+   "desc_len": 1326,
+   "url": "https://www.linkedin.com/jobs/view/senior-data-product-owner-at-elbit-systems-israel-4452422757?_l=en"
+  },
+  {
+   "company": "IAI - Israel Aerospace Industries",
+   "title": "תהליכי בקרה ו-AI",
+   "gate": "none",
+   "verdict": "YES",
+   "reason": "This is an internal management-control/BI analyst role at IAI itself, focused on data analysis, KPI dashboards, and reports for factory management, not ML/engin",
+   "desc_len": 1247,
+   "url": "https://www.linkedin.com/jobs/view/%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99-%D7%91%D7%A7%D7%A8%D7%94-%D7%95-ai-at-iai-israel-aerospace-industries-4456820460?_l=en"
+  },
+  {
+   "company": "Zoll Medical Corporation",
+   "title": "Business Operations, CMS",
+   "gate": "none",
+   "verdict": "YES",
+   "reason": "This role centers on building reporting, dashboards (Power BI/SQL) and data toolsets to support supply chain operational decisions, is a direct hire (not agency",
+   "desc_len": 3175,
+   "url": "https://careers.zoll.com/jobs/R18497"
+  }
+ ]
+}

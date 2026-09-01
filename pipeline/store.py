@@ -572,6 +572,14 @@ class SeenStore:
         cur = self.conn.execute("SELECT title_key, verdict FROM llm_cache")
         return {k: bool(v) for k, v in cur.fetchall()}
 
+    def load_llm_cache_dates(self):
+        """`{title_key: updated}` -- when each verdict was JUDGED (`save_llm_cache` writes a
+        row only when new or changed). The classifier uses it to pick the most recent of
+        several superseded verdicts for one job; nothing else needs it, so it is a second
+        read rather than a shape change to `load_llm_cache`'s 5 call sites."""
+        cur = self.conn.execute("SELECT title_key, updated FROM llm_cache")
+        return {k: (u or "") for k, u in cur.fetchall()}
+
     def save_llm_cache(self, cache, run_date):
         """Write only NEW or CHANGED verdicts, so `updated` is the judgment date. Every row
         used to be upserted on every run (all 247 said 2026-08-24; verdict age unknowable)."""

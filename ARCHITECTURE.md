@@ -5245,6 +5245,48 @@ The contract moves once for both changes (`v3.da2cb878` → `v3.7cb6831f`) and t
 follows it. `docs/decisions/2026-08-31-domain-scope.md`; the paragraph it supersedes is
 marked in the 08-28 record.
 
+**2026-09-01 — the three boundaries an audit of the published dataset forced.** The operator
+read every published row and returned 57 findings; 27 were BORDERLINE and they hinged on
+three lines no record drew. Each ships as a sentence inside an existing condition, so all
+three enter one `CONTRACT` hash (`v3.7cb6831f` → `v3.0f84ab84`), together with item `531`'s
+clause in condition (3) — *"a fixed-term, contract, temporary or maternity-cover position IS
+a job"*.
+
+| the boundary | where | the test |
+|---|---|---|
+| **analytics engineer** (`docs/decisions/2026-09-01-analytics-engineer-boundary.md`, closes `532`) | condition (2) | **who consumes the deliverable.** A reporting layer business/commercial/product decision-makers consume makes the role IN even when the same person builds the ETL beneath it; OUT when the delivered thing ends at datasets, pipelines, platform or model-training data consumed by engineers, researchers or product features. Naming a dashboard does not settle it — weigh which side the posting puts its own core on |
+| **the workplace** (`docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md`) | condition (4) | three tells, strongest together — a requisition number, the workplace given only as an unnamed client, a client-industry experience ask — against the question **does the posting describe a workplace at all?** A company hiring for itself says what it builds, what the team does, or what systems the person would own |
+| **execution** (`docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md`) | condition (5) | analysis that steers the person's OWN execution is not an output. Where responsibilities split, judge which the posting leads with; data analysis offered as "a plus" corroborates that it is the secondary half |
+
+> **Measured through the production seam on 36 postings, one call each** — 24 for the
+> boundaries, 8 for the OUT cohort and item `531`'s, and 4 for the gate false negatives
+> (`542`). Artifacts: `tests/fixtures/classifier/2026-09-01-boundaries.json`,
+> `tests/fixtures/classifier/2026-09-01-boundaries-b.json` and
+> `tests/fixtures/classifier/2026-09-01-gate-false-negatives.json`.
+> Over the 32 boundary rows: **3 NO→YES, 9 YES→NO, 17 held, 3 with no prior verdict**
+> (Parametrix is one of those three, and is the row reinstated). Every NO→YES is a boundary
+> working (Central Bottling and Ecoppia, which land TOGETHER; SuperPlay on the leadership
+> line) and no quantitative analyst role moved to NO for its domain or for being temporary
+> (0 of 4 in the fixed-term cohort). Re-derive:
+> `python tools/measure_scope_rule.py --source ledger --only "<role_id>,…" --workers 4` —
+> `--source ledger` exists because the cache sample cannot reach a CLOSED role at all, and
+> the published dataset is where an audit's rows live.
+
+**What the audit changed in the file**, and the shape it exposed: **21 published rows leave
+by the standard withdraw path** and one — `Parametrix | Technical Data Analyst`, whose text
+is cut mid-word at the capture cap — has its **withdrawal lifted**, on the rule that a
+verdict on partial text is provisional while a retraction is permanent. A lift returns the
+ROW, not a new verdict: it comes back reading `class_decision=reject` until `544@roles`
+gives the column provenance, and `Central Bottling | BI Developer 17621` — this record's
+headline NO→YES — sits frozen the same way with no line to lift. A 22nd withdrawal was
+written and then **dropped before the push**: its url also matched `Percepto | Senior
+Product Analyst`, an open in-scope role, through a stray `seen_id` on that record
+(`545@roles`). The other four reinstatement candidates
+were **refuted** on their own JDs. A confirmed-OUT row needs a human retraction line even
+when the seam already re-judged it NO, because `rec["class"]` is fed from `merged` and a
+reject is not in `merged`: `Percepto` and `Chainalysis` were both flipped by earlier runs and
+both still read `accept` in the dataset today. That gap is `543@roles`, filed with the diff.
+
 **The scope those gates enforce is now a decision, not a phrase**:
 `docs/decisions/2026-08-28-analyst-scope.md`. Two of its five boundaries changed that day and
 both are one named flag rather than scattered conditionals. (1) **The experience bar is

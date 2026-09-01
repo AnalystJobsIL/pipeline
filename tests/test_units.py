@@ -5217,7 +5217,13 @@ def test_run_py_holds_one_classifier_and_the_mail_gets_its_alarms():
     import inspect
     from pipeline import run as run_mod
     src = inspect.getsource(run_mod.run)
-    assert "clf = seniority.Classifier(use_llm=use_llm, llm_cache=llm_cache)" in src
+    # 2026-09-01 (`classifier` lane, disclosed): the constructor gained `cache_dates`, so the
+    # call wraps. Collapsed to one line first, so a future re-wrap is not a failure -- the
+    # claim is the WIRING, and the dates are half of it (docs/BACKLOG.md 541: without them
+    # the seam picks a superseded verdict by sorting contract hashes).
+    _flat = " ".join(src.split())
+    assert ("clf = seniority.Classifier(use_llm=use_llm, llm_cache=llm_cache, "
+            "cache_dates=llm_cache_dates)") in _flat
     # 2026-08-25 (`roles` lane, disclosed): both loops now judge through ONE seam,
     # roles.classify_grouped(candidates, clf, ...) — one call per ROLE, not per posting
     assert src.count("roles.classify_grouped(") == 2            # the ATS loop AND the aggregator loop
@@ -26728,3 +26734,48 @@ def test_an_empty_jd_why_carry_does_not_touch_every_record(tmp_path):
     rec2 = next(iter(L2.records.values()))
     assert rec2.get("jd_why") == "structural:gone(donors:0)", rec2
     st2.close()
+
+
+def test_the_stalest_of_several_superseded_verdicts_never_outranks_the_newest():
+    """The contract prefix is a HASH, so sorting it alphabetically is not sorting it by date.
+
+    The live lineage is v2 (08-25) < v3.a517bb77 (08-28) < v3.da2cb878 (08-30) <
+    v3.7cb6831f (09-01), and `v3.7cb6831f` sorts THIRD of those four. While it is the
+    current contract that is invisible -- `_lookup` answers an exact current-contract key
+    above this branch. The morning it is retired by the next bump, every job holding both
+    it and `v3.da2cb878` would have served the OLDER verdict: measured on the 2026-09-01
+    cache, 336 jobs, 12 of them a verdict that disagrees. Ordering is by judgment date now,
+    with the prefix left as the tie-break so a cache with no dates behaves as it did.
+    """
+    suffix = "acme|data analyst|jd"
+    cache = {"v3.da2cb878|" + suffix: False,     # 2026-08-30, the alphabetically largest
+             "v3.7cb6831f|" + suffix: True}      # 2026-09-01, the one actually judged last
+    dates = {"v3.da2cb878|" + suffix: "2026-08-30",
+             "v3.7cb6831f|" + suffix: "2026-09-01"}
+
+    clf = seniority.Classifier(use_llm=False, llm_cache=cache, cache_dates=dates)
+    clf.contract = "v3.NEWBUMP"          # both rows are superseded, as after the next bump
+    prior = clf._lookup("v3.NEWBUMP|" + suffix, "v3.NEWBUMP|acme|data analyst|bare",
+                        "acme|data analyst")
+    assert prior is not None, "a superseded verdict must still be found"
+    assert prior[0] is True, ("served the 08-30 verdict over the 09-01 one: the branch is "
+                              "sorting contract hashes, not judgment dates")
+    assert prior[3] is False, "and it is still marked as made under a retired contract"
+
+    # with no dates the prefix still decides, so nothing that never supplied them moves
+    bare = seniority.Classifier(use_llm=False, llm_cache=cache)
+    bare.contract = "v3.NEWBUMP"
+    assert bare._lookup("v3.NEWBUMP|" + suffix, "v3.NEWBUMP|acme|data analyst|bare",
+                        "acme|data analyst")[0] is False
+
+
+def test_the_classifier_is_given_the_judgment_dates_the_store_keeps():
+    """The fix above is inert unless the dates actually reach the seam, and they come from
+    a column that already exists. A test that only exercised `_lookup` would pass on a tree
+    where `run.py` never passes them -- which is the shape of a guard that cannot fail."""
+    import inspect
+    from pipeline import run, store
+    src = inspect.getsource(run)
+    assert "load_llm_cache_dates()" in src, "run.py must read the dates"
+    assert "cache_dates=" in src, "run.py must hand them to the Classifier"
+    assert "updated" in inspect.getsource(store.SeenStore.load_llm_cache_dates)

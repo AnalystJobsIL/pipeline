@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**591 filed · 426 open · 165 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**596 filed · 429 open · 167 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 541.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 546.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -441,6 +441,32 @@ closure convention in the header.
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 
+### roles — 23 open
+
+- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
+- **3** `3@roles` **`pipeline/dates.py`**
+- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
+- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
+- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
+- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
+- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
+- **534** `534@roles` **One posting, two `merge_key`s
+- **543** `543@roles` **A drain flip never reaches the published dataset, so a role the seam has re-judged NO
+- **544** `544@roles` **A published `class_decision` cannot say which contract judged it, so a bump leaves the
+- **545** `545@roles` **A stray `seen_id` on one record makes another record's url withdraw it too
+
 ### ats-fetch — 20 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
@@ -487,29 +513,6 @@ closure convention in the header.
 - **506** `506@company-intel` **OPERATOR DECISION
 - **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
 
-### roles — 20 open
-
-- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
-- **3** `3@roles` **`pipeline/dates.py`**
-- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
-- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
-- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
-- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
-- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
-- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
-- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
-- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
-- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
-- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
-- **534** `534@roles` **One posting, two `merge_key`s
-
 ### classifier — 13 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
@@ -523,8 +526,8 @@ closure convention in the header.
 - **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
 - **503** `503@classifier` **The contract drain still competes with fresh roles for the same call budget; the deferred
 - **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
-- **531** `531@classifier` **The seam volunteers "temporary" as a ground for NO, and the rules never say it is not
-- **532** `532@classifier` **Where the analytics-engineer line falls is a product boundary no decision record
+- **541** `541@classifier` **A superseded verdict was chosen by sorting contract HASHES, which is alphabetical and
+- **542** `542@classifier` **The title gate rejects `analytics engineer` outright, and the 2026-09-01 boundary is
 
 ### jd-text — 13 open
 
@@ -9905,7 +9908,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      through the production seam when descriptions exist for more than two of them, and if
      any is a genuine analytics role, move that alternative from `_HARD_EXCLUDE` to a
      `_QUALITATIVE_HINT`-style demotion (never a reject) and re-run the 252-row golden
-     fixture. The 28 are re-derived by the one-liner in the decision record.
+     fixture. The 28 are re-derived by the one-liner in the decision record. **2026-09-01: the measurement this item asks for now exists and it found one.** `Calculum | Junior Data/Financial Analyst` is `excluded` on the finance hard-exclude and the production seam judges it **YES** — a genuine analyst role the gate rejects with no appeal, so the "0 of 116" above is no longer the whole picture. Artifact and the other three postings: `542@classifier`.
 
 530. **`withdrawn` now means two different things, and the note a downloader reads says only
      one of them** — lane: `roles`. Filed by `classifier` 2026-08-31. The meta explains
@@ -9921,8 +9924,20 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      "rows that left the file" wants one list, not three. Re-derive after the next run:
      `python -c "import json;m=json.load(open('cloud_state/roles.csv.meta.json',encoding='utf-8'));print(m['excluded']['withdrawn'], sum(1 for r in m['removed'] if 'backfill' in (r.get('reason') or '')))"`
 
-531. **The seam volunteers "temporary" as a ground for NO, and the rules never say it is not
-     one** — lane: `classifier`. Filed 2026-08-31. Asked twice about
+531. ~~**The seam volunteers "temporary" as a ground for NO, and the rules never say it is not
+     one**~~ — **CLOSED 2026-09-01 (`classifier`)**: condition (3) now ends "Nor because
+     the job is not permanent: a fixed-term, contract, temporary or maternity-cover position
+     IS a job", shipped on the same contract bump as the 2026-09-01 boundaries, as this item
+     asked. Measured on the cohort it names — 4 postings, one call each
+     (`tests/fixtures/classifier/2026-09-01-boundaries-b.json`): **Check Point (temporary),
+     Taboola News (maternity cover) and WalkMe (temporary) all YES; AppsFlyer NO on the FP&A
+     ground alone** — 0 of 4 lost for being temporary, which is the failure this names.
+     Reported honestly and NOT fixed: the model **still volunteers** temporariness as a
+     secondary remark in the AppsFlyer reason, after the FP&A ground. The clause stops the
+     verdict, not the remark; re-read it if a fixed-term role is ever lost.
+     `docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md`.
+
+     Filed 2026-08-31. Asked twice about
      `AppsFlyer | Financial Data Analyst - Temporary position (9 months)`, the model answered
      NO partly because the role "is also not a permanent job" — under two different contracts.
      Boundary 3 excludes student placements only, and the **same pass accepted three Taboola
@@ -9933,8 +9948,21 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      bump plus a measurement round, so it belongs with the next scope change rather than on
      its own.
 
-532. **Where the analytics-engineer line falls is a product boundary no decision record
-     draws** — lane: `classifier`. Filed 2026-08-31. Condition (1) says BI counts; condition
+532. ~~**Where the analytics-engineer line falls is a product boundary no decision record
+     draws**~~ — **CLOSED 2026-09-01 (`classifier`)**: `docs/decisions/2026-09-01-analytics-engineer-boundary.md`
+     draws it on WHO CONSUMES the deliverable — a reporting layer business, commercial or
+     product decision-makers consume makes the role IN even when the same person builds the
+     ETL beneath it; it is OUT when the delivered thing ends at datasets, pipelines or
+     model-training data consumed by engineers, researchers or product features. Shipped as a
+     sentence in condition (2), so it enters the CONTRACT hash. Measured on 24 published rows
+     through the production seam (`tests/fixtures/classifier/2026-09-01-boundaries.json`): **3
+     NO→YES, 7 YES→NO, 12 held**. Central Bottling and Ecoppia land TOGETHER (both IN — an
+     adversarial read showed the draft could not separate them, and they are the same role);
+     both Guardio rows stand OUT (zero dashboards in 3,300 characters). The limit is stated
+     in the record and filed as `542`: the title gate rejects `analytics engineer` outright,
+     so this boundary is true of the LLM tier and not of the gate above it.
+
+     Filed 2026-08-31. Condition (1) says BI counts; condition
      (2) excludes data engineering. A "BI Developer" building Power BI dashboards, reports and
      semantic models *alongside* SSIS/ADF pipelines is neither, and three of the 2026-08-31
      backfill's 18 published rejects sat on that line — `Central Bottling Company Israel |
@@ -10087,3 +10115,134 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      its own** and this lane must not quote its shard count as evidence — `guard_kill` and a
      named behavioural test are what count. The same shape exists wherever a lane keeps its
      own catalogue: `tests/fixtures/classifier/` has an anchor test too.
+
+541. **A superseded verdict was chosen by sorting contract HASHES, which is alphabetical and
+     not chronological** — lane: `classifier`. Found and FIXED 2026-09-01, filed for the
+     record because the same bug had a second home. When several retired contracts have
+     judged one job and none is current, `Classifier._lookup` served
+     `older[max(older)]` — a string comparison over hex digests, under a comment reading
+     "the newest scheme wins". The live lineage by judgment date is `v2` (08-25) <
+     `v3.a517bb77` (08-28) < `v3.da2cb878` (08-30) < `v3.7cb6831f` (09-01), and
+     `v3.7cb6831f` sorts THIRD. It was dormant only because the current contract is answered
+     by an exact key above that branch and never enters `older` — so **the 2026-09-01 bump
+     would have detonated it**: measured on that morning's committed cache, **336 jobs would
+     have served the older verdict and 12 of those disagree**, silently reverting the 08-31
+     domain ruling for a dozen roles until the drain re-reached them. Ordering is now by the
+     `updated` column (`store.load_llm_cache_dates`, handed to the Classifier as
+     `cache_dates`), with the prefix left as a deterministic tie-break so a cache with no
+     dates behaves exactly as before. Guarded by
+     `test_the_stalest_of_several_superseded_verdicts_never_outranks_the_newest` and
+     `test_the_classifier_is_given_the_judgment_dates_the_store_keeps` (both written red
+     first, both verified failing on the un-fixed tree). `tools/measure_scope_rule.py`
+     carried the identical bug in `prior_for`, under a docstring claiming it mirrored
+     production; fixed in the same commit. **What is left**: the `updated` column is only as
+     good as `save_llm_cache`'s "write only new or changed" rule — if a future writer
+     upserts unchanged rows, every date becomes today and the ordering silently degrades to
+     the tie-break. Nothing asserts that rule.
+
+542. **The title gate rejects `analytics engineer` outright, and the 2026-09-01 boundary is
+     the first rule that makes the title in-scope** — lane: `classifier`. Filed 2026-09-01,
+     deliberately unfixed. `docs/decisions/2026-09-01-analytics-engineer-boundary.md` admits
+     the hybrid that builds ETL *and* the reporting layer above it; the industry's name for
+     that hybrid is "analytics engineer", and `_relevance("senior analytics engineer")` is
+     `excluded` on the `keyword` path with no description read and no appeal. The existing
+     demote-on-a-strong-signal escape cannot fire: `_STRONG` does not match the phrase
+     either. Same shape as `529` for the domain rule — true of the LLM tier, not of the gate
+     above it. **Measured, and the reason it is not fixed today**: only **3 live Israeli
+     titles** match (`Connecteam | Senior Analytics Engineer`, `Extreme | BI System Analyst`,
+     `INGIMA | BI Systems Analyst … (5471)`), of which one is a case this boundary would
+     newly admit and one is out on the consultancy boundary anyway; and two independent gate
+     audits run by the orchestrator on 2026-09-01 — **its** counts, not re-derived by this
+     lane: 3,265 cached rejected titles, then 1,142 rejects carrying 300+ characters of text,
+     a ~0.35 % flag rate — surfaced 4 candidate misses, of which this seam confirms **3**
+     (~0.26 % of that second population). **2 of the 3 no demotion can reach**, their titles
+     carrying no analytics signal at all, so only reading the description would. What it needs: judge the 3 titles through the
+     production seam when they carry descriptions, and if any is a genuine analytics role,
+     add the phrase as a `_QUALITATIVE_HINT`-style **demotion** (never a reject, and never to
+     `_STRONG`, which would enable the strong+senior fast-accept and admit it UNREAD), then
+     re-run the 252-row golden fixture and quote the extra LLM volume.
+
+     **MEASURED THE SAME DAY, and the reopening condition is now MET — 4 calls, artifact
+     `tests/fixtures/classifier/2026-09-01-gate-false-negatives.json`.** The orchestrator's
+     two gate audits handed over 4 confirmed misses that are alive AND already carry 300+
+     characters of cached text, so the "once they carry descriptions" condition above did not
+     have to wait. Judged through the production seam under `v3.0f84ab84`: **3 of 4 are YES.**
+     `Calculum | Junior Data/Financial Analyst` (gate `excluded`, HARD=True SIGNAL=True
+     STRONG=False) — *"a genuine analyst job at Calculum itself"*; `IAI | תהליכי בקרה ו-AI`
+     (gate `none`) — *"internal management-control/BI analyst role ... KPI dashboards and
+     reports for factory management"*; `Zoll Medical | Business Operations, CMS` (gate `none`)
+     — *"building reporting, dashboards (Power BI/SQL) ... to support supply chain operational
+     decisions"*. The fourth, `Elbit Systems | Senior Data Product Owner`, is a correct
+     rejection (product/architect). **Two consequences, and they are different items.**
+     (i) Calculum is a measured false negative in the `excluded` tier, which is the exact
+     evidence `529@classifier` names as its own reopening condition — its "0 of 116" no longer
+     stands alone, and a demotion (never a reject) is the shape both items agree on.
+     (ii) IAI and Zoll are `none`: **no demotion of any vocabulary reaches them**, because
+     their titles carry no analytics signal at all — only reading the description would, which
+     is a different and much more expensive mechanism than this item proposes. Do not let a
+     future session cite this measurement as justification for the demote fix alone; it
+     covers 1 of the 3. Elbit's posting leaves the 21-day cache ~2026-09-06, so a session
+     wanting to re-derive it should not wait.
+
+     Filed 2026-09-01.
+
+543. **A drain flip never reaches the published dataset, so a role the seam has re-judged NO
+     stays in the file as `accept` until a human writes a retraction line** — lane: `roles`.
+     Filed by `classifier` 2026-09-01. `rec["class"]` has one writer fed from `merged`
+     (`pipeline/roles.py`), and `merged` is the ACCEPTED output of `classify_grouped`, so a
+     role the contract drain flips to reject is not in it: the cell keeps `accept`, the row
+     drops off the board, and it closes as a false accept that the dataset publishes for the
+     whole 90-day window. **This is not theoretical, and it is wider than the three rows that name it**: this commit's own measurement shows **12** published rows whose cached verdict is already NO while the file publishes `accept` (every YES→NO and every held-NO in the two boundary fixtures). Three of them are named because their history proves the mechanism:
+     `Percepto | Data Insights Operations` (measured YES→NO on 2026-08-30),
+     `Chainalysis | Intelligence Analyst - Fraud Researcher` (moved to NO by the 08-31 domain
+     ruling, which said explicitly that "the drain re-judges it on the next run — the
+     mechanism working as designed"; the cache moved and the cell did not), and
+     `EPAM | Managing Principal` (a stale keyword-tier accept that no description ever touched). All twelve carry a 2026-09-01 retraction line instead, which is the workaround, not the fix: it takes a human per row, and the next scope change makes another dozen.
+     The fix is a `{role_id: class}` map of the run's OWN rejects — `classify_grouped`
+     already sets `m["_class"]` on a reject at `roles.py` and merely drops it — handed to
+     `record_run` beside the existing `class_backfill=` map, which is ~6 lines across
+     `run.py` and `roles.py`. Both are other lanes' files, which is why this is filed with
+     the diff rather than taken. Note the ordering constraint the backfill hook already
+     respects: it must not run before the quarantine check, or a run the seam has just
+     declared broken can stamp `reject` onto published rows.
+
+544. **A published `class_decision` cannot say which contract judged it, so a bump leaves the
+     closed half of the dataset carrying verdicts under a dead contract with no way to tell**
+     — lane: `roles`. Filed by `classifier` 2026-09-01. The ledger's `class` dict is
+     `{decision, path, reason}` and both whitelists (`roles.py`, the live-stamp and the
+     `class_backfill` map) drop any other key, so there is no contract, no date and no
+     provenance on the cell. And the cell freezes for a reason worth stating precisely, because it is easy to get wrong: the LIVE path overwrites `rec["class"]` unconditionally on every run the role is in `merged` (`pipeline/roles.py`), and only the `class_backfill` map is fill-only-empty — so a verdict freezes not because the cell refuses writes but because a CLOSED role never re-enters `merged` (which is `543`'s mechanism). After the 2026-09-01 bump and this commit's withdrawals, **26 of the ~136 published rows** are closed and carry a verdict made under a retired contract, permanently, and nothing in the file says so. The lane's acceptance test ("0 records without a
+     verdict") still passes, which is exactly the problem — what fails is the sentence in
+     `pipeline/seniority.py` that says the column "must carry a verdict made under the
+     contract that is live today". The fix is one key (`contract`) added to both whitelists
+     plus a column in the export; then a stale cell is VISIBLE and `543`'s reconcile pass, or
+     a widened `class_backfill.candidates()`, can drain it. Until then a reader cannot
+     distinguish a current verdict from a two-contracts-old one, and `530@roles`'s "withdrawn
+     means two things" has the same root: the dataset records verdicts without recording when
+     the rules that produced them were true.
+
+545. **A stray `seen_id` on one record makes another record's url withdraw it too — a
+     retraction cannot be aimed at a single role** — lane: `roles`. Filed by `classifier`
+     2026-09-01, after an adversarial wave caught it in that session's own staged diff, one
+     step before the push. `Retractions.match_all` matches a record by its own url **and by
+     any `seen_id` whose id half is a url** (`pipeline/roles.py`), and
+     `percepto|senior product analyst` carries the contaminated id
+     `scrape:https://percepto.co/careers/data-insights-operations-ff-c6f/` in both
+     `cloud_state/roles.jsonl` and sqlite `matched.seen_ids`, while its OWN url is
+     `https://percepto.co/careers/`. So the retraction line written for
+     `percepto|data insights operations` matched **two** records, and the second is `open`,
+     `accept`, on the board today, and genuinely in scope — its own verdict reads *"Senior
+     product analyst role focused on dashboards, reporting, and customer usage analysis at
+     the hiring company itself"*. Left unpushed, it would have withdrawn a real analyst role
+     from the board, the mail and the dataset, publishing it in `meta.removed[]` under a
+     reason describing a different posting. **Keying the line by `role_id` does not help**:
+     `bind()` adds the named record's own url back into `_urls`, so it re-acquires the same
+     collision. Measured: **1 of 39 lines over-matched**; the line was dropped from the
+     commit and `percepto|data insights operations` is therefore NOT withdrawn, though it is
+     adjudicated OUT (`docs/sessions/2026-09-01-classifier.md`). Two fixes, both `roles`':
+     strip the contaminated `seen_id` from that record in the ledger AND in sqlite, then
+     re-add the line; and durably, have `match_all` prefer a record whose OWN url is the key
+     and fall back to `seen_ids` only when none does — otherwise every future retraction is
+     one bad `seen_id` away from deleting a live role, and nothing alarms, because from
+     `record_run`'s side two matches look exactly like one.
+

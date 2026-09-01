@@ -12,10 +12,13 @@ It is a measurement tool: nothing imports it and no workflow runs it.
     python tools/measure_scope_rule.py --dry-run          # build the sample, spend nothing
     python tools/measure_scope_rule.py --workers 4        # ~1 sonnet call per sampled posting
 
-THE SAMPLE is every posting in the committed caches that (a) is in Israel, (b) the title gate
-sends onward or fast-accepts, and (c) carries a real description — because a rule about a
-role's OUTPUT can only be measured where the output is described. `--tier` picks which of the
-gate's own tiers to sample:
+THE SAMPLE has two sources. `--source cache` (the default) is every posting in the committed
+caches that (a) is in Israel, (b) the title gate sends onward or fast-accepts, and (c) carries
+a real description — because a rule about a role's OUTPUT can only be measured where the
+output is described. `--source ledger` judges rows of the PUBLISHED dataset named by `--only`
+(role_ids), which is the only way to reach a CLOSED role: its text lives in
+`roles_text.jsonl`, not in either cache. That source applies no filters at all, so it demands
+`--only` or `--limit`. `--tier` picks which of the cache source's own tiers to sample:
 
     llm       the residue the seam reads today (relevance `signal`, or `strong` non-senior)
     keyword   the strong+senior fast-accepts, which no description has ever touched
@@ -110,17 +113,76 @@ def prior_verdicts(db_path):
     return by_job, legacy
 
 
-def prior_for(job_key, by_job, legacy, contract):
-    """(verdict, which) under production's own precedence, or (None, '')."""
+def prior_dates(db_path):
+    """`{job: {prefix: updated}}` -- when each cached verdict was judged."""
+    con = sqlite3.connect("file:%s?mode=ro" % db_path.replace("\\", "/"), uri=True)
+    out = {}
+    for key, updated in con.execute("select title_key, updated from llm_cache"):
+        split = seniority._versioned(key)
+        if split:
+            suffix, prefix = split
+            out.setdefault(suffix.rsplit("|", 1)[0], {})[prefix] = updated or ""
+    con.close()
+    return out
+
+
+def prior_for(job_key, by_job, legacy, contract, dates=None):
+    """(verdict, which) under production's own precedence, or (None, '').
+
+    `dates` is `{job: {prefix: updated}}`; with it the newest SUPERSEDED verdict wins, which
+    is what `Classifier._lookup` does. Without it the prefix breaks the tie, and the prefix is
+    a hash: sorting it is alphabetical, not chronological (docs/BACKLOG.md 541)."""
     seen = by_job.get(job_key) or {}
     if contract in seen:
         return seen[contract], "current"
     older = {p: v for p, v in seen.items() if p != contract}
     if older:
-        return older[max(older)], "superseded"
+        when = (dates or {}).get(job_key) or {}
+        return older[max(older, key=lambda p: (when.get(p, ""), p))], "superseded"
     if job_key in legacy:
         return legacy[job_key], "legacy"
     return None, ""
+
+
+def sample_ledger(root, only):
+    """The same shape as `sample()`, sourced from the ROLE LEDGER instead of the caches.
+
+    A closed role is not in either cache -- its text lives in `roles_text.jsonl` -- so the
+    cache sample cannot reach the published dataset at all: of the rows the 2026-09-01 audit
+    named, 0 of Guardio's, Mobileye's, NVIDIA's or Global-e's postings carry >= MIN_TEXT
+    there. `--only` takes role_ids (comma-separated), which is how a boundary is measured on
+    the rows it was drawn for rather than on 96 postings it does not bear on."""
+    recs = {}
+    with io.open(os.path.join(root, "cloud_state", "roles.jsonl"), encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                r = json.loads(line)
+                recs[r.get("role_id")] = r
+    text = {}
+    with io.open(os.path.join(root, "cloud_state", "roles_text.jsonl"), encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                d = json.loads(line)
+                text[d.get("role_id")] = str(d.get("description") or "")
+    wanted = [x.strip() for x in only.split(",") if x.strip()] if only else sorted(recs)
+    rows, missing = [], []
+    for rid in wanted:
+        rec = recs.get(rid)
+        if rec is None:
+            missing.append(rid)
+            continue
+        desc = text.get(rid) or ""
+        job = {"company": rec.get("company"), "title": rec.get("title"),
+               "location": rec.get("location"), "url": rec.get("url"), "description": desc}
+        title_l = (job["title"] or "").lower()
+        rel = seniority._relevance(title_l, (job["company"] or "").lower())
+        sen = seniority._seniority(title_l)
+        tier = "keyword" if (rel == "strong" and sen == "senior") else "llm"
+        key = (seniority._norm_company(job["company"]), seniority._norm(job["title"]))
+        rows.append((key, job, rel, sen, tier))
+    if missing:
+        print("NOT IN THE LEDGER (%d): %s" % (len(missing), ", ".join(missing)))
+    return rows
 
 
 def judge(job, model, timeout, cwd):
@@ -141,14 +203,45 @@ def main():
     ap.add_argument("--timeout", type=float, default=90.0)
     ap.add_argument("--out", default="")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--source", choices=("cache", "ledger"), default="cache",
+                    help="cache = the two committed caches (open postings); "
+                         "ledger = cloud_state/roles.jsonl + roles_text.jsonl (the PUBLISHED "
+                         "dataset, closed rows included)")
+    ap.add_argument("--only", default="", help="comma-separated role_ids (--source ledger)")
     a = ap.parse_args()
 
-    rows = sample(a.root, a.tier)
+    if a.source == "ledger":
+        # The cache sample filters to >= MIN_TEXT before it ever reaches the seam; this one
+        # does not filter at all, so an unscoped `--source ledger` would buy one call for
+        # every record in the ledger (203 today), silently, against a subscription four
+        # consumers share. The caller must say which rows.
+        if not (a.only or a.limit):
+            ap.error("--source ledger needs --only or --limit: it applies no text filter, "
+                     "so unscoped it would judge every ledger record")
+        if a.tier != "both":
+            ap.error("--tier applies to --source cache (the ledger source judges the rows "
+                     "you name, whatever tier they are)")
+        rows = sample_ledger(a.root, a.only)
+    else:
+        if a.only:
+            ap.error("--only applies to --source ledger")
+        rows = sample(a.root, a.tier)
     if a.limit:
         rows = rows[:a.limit]
     by_job, legacy = prior_verdicts(os.path.join(a.root, "cloud_state", "seen.db"))
+    dates = prior_dates(os.path.join(a.root, "cloud_state", "seen.db"))
     print("contract now: %s   model: %s" % (seniority.CONTRACT, a.model))
-    print("sample: %d postings with >= %d chars of text (tier %s)" % (len(rows), MIN_TEXT, a.tier))
+    if a.source == "ledger":
+        # no MIN_TEXT filter here on purpose: the caller names the rows, and a published row
+        # with thin text is exactly the kind a boundary has to be measured on. Saying ">= 300
+        # chars" for this source would be a false header.
+        thin = sum(1 for _k, j, _r, _s, _t in rows
+                   if len(str(j.get("description") or "")) < MIN_TEXT)
+        print("sample: %d ledger rows named by --only%s"
+              % (len(rows), (", %d under %d chars" % (thin, MIN_TEXT)) if thin else ""))
+    else:
+        print("sample: %d postings with >= %d chars of text (tier %s)"
+              % (len(rows), MIN_TEXT, a.tier))
     tiers = {}
     for _k, _j, _rel, _sen, t in rows:
         tiers[t] = tiers.get(t, 0) + 1
@@ -178,7 +271,7 @@ def main():
     out_rows, moved, tally = [], [], {}
     for (k, j, rel, sen, t), (verdict, reason) in zip(rows, results):
         job_key = "%s|%s" % k
-        was, which = prior_for(job_key, by_job, legacy, seniority.CONTRACT)
+        was, which = prior_for(job_key, by_job, legacy, seniority.CONTRACT, dates)
         move = ("unjudged" if was is None else
                 "kept" if was == verdict else
                 "YES->NO" if was else "NO->YES") if verdict is not None else "no-answer"
