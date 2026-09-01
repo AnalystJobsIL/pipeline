@@ -2600,5 +2600,115 @@
   "replace": "        if False:\n            return None",
   "why": "two equally-sourced live titles is not a retitle we can call - a guessed winner renames a role on the public dataset (the Fetcherr pair: two comeet slugs, both rank 0). Killed by test_twin_fold_tie_on_source_refuses.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "indeed-pane-key-unbound",
+  "file": "pipeline/jdfill.py",
+  "symbol": "_indeed_pane",
+  "class": "M2-gate-inversion",
+  "find": "    if not isinstance(pane, dict) or (pane.get(\"jobKey\") or \"\").lower() != str(jk or \"\").lower():\n        return None",
+  "replace": "    if not isinstance(pane, dict):\n        return None",
+  "why": "The SERP body we buy carries OUR jk's pane beside other jobs' cards. Drop the key equality and the parser takes whatever pane the page happens to open with -- the measured failure is 3,028 identical characters of page furniture returned for three different jks (2026-08-31 E1). Shipped 08-31 with no mutation record; added 09-01. Killed by test_a_bought_serp_whose_pane_is_not_our_job_fills_nothing.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "donor-echo-employer-half-free",
+  "file": "pipeline/jdfill.py",
+  "symbol": "doc_names_role",
+  "class": "M1-gate-removal",
+  "find": "    c_only = c_words - t_words\n    return (bool(c_only) and len(t_words & decl) >= min(2, len(t_words))\n            and bool(c_only & decl))",
+  "replace": "    c_only = c_words - t_words\n    return len(t_words & decl) >= min(2, len(t_words))",
+  "why": "The employer half of the cross-source admission gate, paid for by the TITLE: a declaration always contains the title's words, so `Bright Data` was confirmed by the `data` in `Data Analyst` and Fetcherr's posting published under Bright Data's name (the pair store._same_origin cites). Shipped 08-31 with no mutation record; added 09-01. Killed by test_the_employer_half_of_the_gate_cannot_be_paid_for_by_the_title.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "indeed-identity-gate-removal",
+  "file": "pipeline/jdfill.py",
+  "symbol": "fetch_jd",
+  "class": "M1-gate-removal",
+  "find": "            if jk and _pane_denies_role(decl, title, company):",
+  "replace": "            if False:",
+  "why": "The jk is the discovery card's CLAIM about which posting this is, and until 09-01 nothing checked it: the 08-31 rung verified jobKey == jk and stored whatever that pane served. Remove the gate and a card whose jk names another role buys that role's text under this row's name. Killed by test_a_bought_pane_that_declares_another_role_fills_nothing_and_spends_no_second_credit.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "pane-denial-swallows-absence",
+  "file": "pipeline/jdfill.py",
+  "symbol": "_pane_denies_role",
+  "class": "M2-gate-inversion",
+  "find": "    decl = _named_words(declaration)\n    t_words = _named_words(title)\n    if not decl or not t_words:\n        return False",
+  "replace": "    decl = _named_words(declaration)\n    t_words = _named_words(title)\n    if not t_words:\n        return False",
+  "why": "Refusing what we merely failed to CONFIRM is the inversion this function exists to avoid: an absent declaration and a cross-alphabet one both share zero words with our title without contradicting it. Drop the two guards and every pane that declares nothing, plus every Hebrew posting under a Latin title, is refused as a wrong role -- on a board that is half Hebrew. Killed by test_the_pane_gate_never_denies_across_two_alphabets_or_on_an_unanswerable_title.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "jd-soup-window-widened",
+  "file": "pipeline/jdfill.py",
+  "symbol": "_is_markup_soup",
+  "class": "M3-branch-narrowing",
+  "find": "    return len(_MARKUP_SOUP.findall(str(text or \"\")[:_SOUP_HEAD])) >= _SOUP_HITS",
+  "replace": "    return len(_MARKUP_SOUP.findall(str(text or \"\")[:3000])) >= _SOUP_HITS",
+  "why": "The HEAD window is the rule, not the count. A real posting may END in serialization -- Fayrix's four cards carry a JSON form-field blob from offset ~2,500 and nine Crossriver cards a literal escape in ordinary prose -- so widening the window past the head vetoes real job descriptions to catch the same one soup document. Measured over all 4,684 stored texts on 2026-09-01. Killed by test_serialized_markup_is_not_a_job_description_and_a_real_jd_with_a_json_tail_is.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "refuted-opens-ratchet-to-anything",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_store_text",
+  "class": "M4-guard-removal",
+  "find": "    if refuted and looks_like_jd(text):",
+  "replace": "    if refuted:",
+  "why": "A refuted row's stored text defends nothing, but only a real job description may take its place: blanking `have` unconditionally makes every LONGER string win, including page furniture, so a row the tier disowned could be overwritten with a nav bar. Found by this function's own refusal test while it was being written (09-01). Killed by test_a_refuted_row_lets_a_shorter_true_posting_through_and_nothing_else_does.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "refuted-widens-to-every-suspicion",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_quality_pass",
+  "class": "M3-branch-narrowing",
+  "find": "        if why == \"no-company-echo\" and klass == \"not-a-jd\":",
+  "replace": "        if True:",
+  "why": "Only the suspicion that asks WHOSE posting this is, and only a FRESH `not-a-jd`, may open the length ratchet. Widen it and two defects come back at once: a row the tier called merely INCOMPLETE loses its own posting to the next longer thing any rung returns (wave A's 08-31 donor-overwrite, from the other side), and a `partial` -- which `_QUALITY_SYSTEM` defines as this role's own posting, truncated -- is treated as a disownment. Killed by test_a_partial_verdict_never_refutes_because_partial_is_this_roles_own_posting and test_only_the_echo_suspicion_refutes_and_the_cheaper_ones_never_do.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "refuted-reads-a-cached-bool-as-a-class",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_quality_pass",
+  "class": "M4-guard-removal",
+  "find": "        klass = \"\"                         # \"\" = this row's verdict came from the cache",
+  "replace": "        klass = \"not-a-jd\"",
+  "why": "`llm_cache.verdict` is a BOOL, so a cache hit cannot say whether the model answered `partial` or `not-a-jd`. Pretending it can lets a cached rejection -- possibly of this role's own truncated posting -- unlock the length ratchet for ever, with no call and no way to revisit it. It also hides that `verdict` is a loop-carried local, so reading it on the cached branch serves the PREVIOUS row's class. Killed by test_a_cached_rejection_never_refutes_because_the_column_cannot_say_which_no_it_was.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "refutation-outlives-the-fill",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_donor_pass",
+  "class": "M4-guard-removal",
+  "find": "            refuted.discard(mkey)\n",
+  "replace": "",
+  "why": "A refutation must close the moment a rung fills the row. `cache` and `own-address` donors are gated on the URL (`_own_posting`), not on the document naming the role -- only a `copy` runs `doc_names_role` -- so a refutation left standing after a fill is a hole a LATER donor walks into: an adversarial wave reproduced a 333-character cache donor overwriting a row's own 705-character posting. Killed by test_a_refuted_row_stops_being_refuted_the_moment_a_rung_fills_it.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "pane-gate-compares-across-alphabets",
+  "file": "pipeline/jdfill.py",
+  "symbol": "_pane_denies_role",
+  "class": "M3-branch-narrowing",
+  "find": "    decl = {w for w in decl if _scripts({w}) & _scripts(t_words)}",
+  "replace": "    decl = set(decl)",
+  "why": "`declared_identity` CONCATENATES the pane's jobTitle and companyName, so a Hebrew posting at a Latin-named employer declares in BOTH scripts. Comparing the whole declaration then passes the script guard on the company's Latin words while the title is measured against Hebrew it can never match, and the row is denied for being bilingual -- on a board where 25 of 106 Indeed cards carry a Hebrew title. Killed by test_the_pane_gate_reads_only_the_alphabet_the_title_is_written_in.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "refuted-row-reaches-the-paid-rung",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_donor_pass",
+  "class": "M1-gate-removal",
+  "find": "        row_bd = bd if (mkey in paid_keys and mkey not in refuted",
+  "replace": "        row_bd = bd if (mkey in paid_keys",
+  "why": "Before the refuted flag existed, a row whose text passed `looks_like_jd` was skipped BEFORE `_donor_candidates` and could not spend. A refuted row now walks the candidates, so without this clause it reaches the Unlocker: an adversarial wave measured 0 paid calls before and 1 (2 with the render retry) after, per refuted row per cooldown window, against the shared 25 cap. A row that already HAS text may work the free rungs; it may not preempt a row that has none.",
+  "must_be_killed_by_behavioural": false
  }
 ]

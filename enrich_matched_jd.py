@@ -210,15 +210,41 @@ def cache_by_merge_key(path):
     return out
 
 
-def _store_text(conn, mkey, text, have):
+def _store_text(conn, mkey, text, have, refuted=False):
     """Write `text` unless what is already stored is a better JD.
 
     "Never shorten" was the whole rule, and it is right between two job descriptions — but it
     is exactly wrong between page furniture and a job description. Ecoppia's row held 3,999
     characters of Google Tag Manager and a nav bar; the clean 2,100-character JD the fetch
     returned is shorter, and the old UPDATE refused it. So: a real JD always beats text that is
-    not one, and only after both sides are JDs does length decide."""
+    not one, and only after both sides are JDs does length decide.
+
+    `refuted` is the one thing that opens the length ratchet, and it means: the LLM tier has
+    READ what is stored and answered that it is not this role's posting. Between two texts
+    that both look like job descriptions the ratchet has no way to prefer the right one — it
+    compares lengths — so a COMPLETE posting belonging to somebody else is unreplaceable by
+    the shorter true one. `prisma photonics|senior product analyst` held 3,276 characters of
+    the Data-Engineer posting while its own 2,617-character posting sat in `scraped_cache`,
+    and no rung in this repo could install it (2026-09-01).
+
+    It stays a ratchet for every row nobody refuted, which is what keeps wave A's finding
+    shut: a donor may not overwrite a role's own posting on the strength of being longer.
+    A refuted row is not open house either — the donor identity gate is untouched, so only
+    text that names THIS role at THIS employer can land in the hole this opens."""
     text, have = (text or "")[:DESC_MAX], have or ""
+    if jdfill._is_markup_soup(text):
+        # Serialization is never a description, so it may not be stored even onto a row that
+        # has nothing: `looks_like_jd` is False on BOTH sides there, and the length ratchet
+        # would write it (wave B, reproduced on the 6,000 characters of Recruitee offer JSON
+        # that started this session). The bar answers "is this a JD"; this answers "may this
+        # be stored at all", and the one write choke point is where that belongs.
+        return False
+    if refuted and looks_like_jd(text):
+        # what is stored was read and disowned, so it defends nothing -- but ONLY a real job
+        # description may take its place. Blanking `have` unconditionally makes every longer
+        # string win, including page furniture: this function's own refusal test stored
+        # "nav bar home about contact" over a complete posting (found by that test, 09-01).
+        have = ""
     if looks_like_jd(have) and not looks_like_jd(text):
         return False
     if looks_like_jd(have) == looks_like_jd(text) and len(text) <= len(have):
@@ -303,7 +329,9 @@ def _reclean(conn, every, dry_run):
 
 def _quality_pass(conn, every, dry_run):
     """Ask the LLM tier about the rows the keyword rules cannot settle, and return the set of
-    `mkey`s whose stored text is NOT the employer complete posting.
+    `mkey`s whose stored text is NOT the employer complete posting, plus the subset the tier
+    read and DISOWNED (`refuted`) — text that is a fine job description for some other role.
+    Only that subset opens `_store_text`'s length ratchet; see its docstring.
 
     A tier, not a pass: `jdfill.quality_suspect` picks the candidates for nothing, and only
     those are paid for. Verdicts are cached on the sha1 of the TEXT in the existing
@@ -314,7 +342,7 @@ def _quality_pass(conn, every, dry_run):
     An unavailable model returns nothing: the cheap rule verdict stands. A tier that could
     demote a role on an outage would empty the board every time the token expired."""
     if os.environ.get("JD_QUALITY", "1") == "0":
-        return set(), Counter()
+        return set(), set(), Counter()
     # Keyed by the TEXT alone, never by (company, text). One careers page fanned across
     # SEVERAL EMPLOYERS is docs/BACKLOG.md 370 in its worst form, and a company-keyed
     # counter can never reach 2 for it: `otorio|senior data analyst` carries 3,556
@@ -326,7 +354,7 @@ def _quality_pass(conn, every, dry_run):
         if not looks_like_jd(r[6]):
             continue                       # already in the todo; nothing to adjudicate
         shared = by_text[r[6]] > 1
-        why = quality_suspect(r[6], shared=shared)
+        why = quality_suspect(r[6], shared=shared, company=r[1])
         if why:
             cand.append((r, why))
     cache = dict(conn.execute(
@@ -334,7 +362,7 @@ def _quality_pass(conn, every, dry_run):
     cap = int(os.environ.get("JD_QUALITY_LLM_CAP", str(QUALITY_CAP)))
     budget = float(os.environ.get("JD_QUALITY_TIME_BUDGET_MIN", str(QUALITY_BUDGET_MIN)))
     t0 = time.time()
-    c, incomplete = Counter(), set()
+    c, incomplete, refuted = Counter(), set(), set()
     c["candidates"] = len(cand)
     for r, why in cand:
         body = jd_body(r[6])
@@ -345,6 +373,7 @@ def _quality_pass(conn, every, dry_run):
         # two employers can hold byte-identical text (see `by_text` above).
         key = "jdq1|" + hashlib.sha1(("%s|%s|%s|%s" % (_QUALITY_CONTRACT, r[1], r[2], body))
                                      .encode("utf-8", "replace")).hexdigest()
+        klass = ""                         # "" = this row's verdict came from the cache
         if key in cache:
             c["cached"] += 1
             ok = bool(cache[key])
@@ -354,6 +383,7 @@ def _quality_pass(conn, every, dry_run):
         else:
             c["calls"] += 1
             ok, verdict = jd_quality(body, r[2], r[1])
+            klass = str(verdict or "")
             if ok is None:
                 c["unavailable"] += 1
                 c["why:" + str(verdict)] += 1
@@ -368,6 +398,28 @@ def _quality_pass(conn, every, dry_run):
         c["complete" if ok else "rejected"] += 1
         if ok:
             continue
+        if why == "no-company-echo" and klass == "not-a-jd":
+            # The tier read this text and said it is not a job description for this role at
+            # all. That is the ONE verdict that may open the length ratchet: what is stored
+            # is a complete posting, so nothing shorter and true could ever replace it
+            # (`_store_text`). The suspicion alone never opens it -- most rows that carry no
+            # strict echo of their own employer are honest.
+            #
+            # `partial` MUST NOT refute, and this is the whole reason the class is read
+            # rather than the boolean. `jd_quality` returns `verdict == "complete"`, so
+            # `ok is False` covers BOTH "not this role's posting" and "this role's own
+            # posting, truncated" -- and `_QUALITY_SYSTEM` defines `partial` as genuine
+            # posting text that stops early. Refuting on it would open the ratchet on a
+            # role's OWN description and let a longer different opening replace it, which
+            # is the donor-overwrite defect wave A found on 2026-08-31, reopened from the
+            # other side.
+            #
+            # And only a FRESH verdict carries a class: `llm_cache.verdict` is a bool, so a
+            # cache hit cannot tell `partial` from `not-a-jd` (`klass` stays ""). A cached
+            # rejection therefore keeps the row in `incomplete` -- it is re-fetched like any
+            # other -- but never unlocks the ratchet. That costs one call per text, once.
+            refuted.add(r[0])
+            c["refuted"] += 1
         # An incomplete text is a TODO only when some rung of ours could improve it. A row
         # sitting exactly on `DESC_MAX` is incomplete because WE truncated it: re-fetching
         # returns the same 6,000 characters, `_store_text` correctly declines to rewrite them,
@@ -385,7 +437,7 @@ def _quality_pass(conn, every, dry_run):
         incomplete.add(r[0])
         print(f"  [LLM] {(r[1] + ' | ' + r[2])[:60]:<60} not a complete posting "
               f"({why}, {len(body)} chars) -> back in the todo", flush=True)
-    return incomplete, c
+    return incomplete, refuted, c
 
 
 def _ensure_columns(conn):
@@ -531,13 +583,17 @@ def _donor_candidates(row, cache_by_key, log):
 
 
 def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
-                retry_days=RETRY_DAYS, count_cap=0, attempted_before=None):
+                retry_days=RETRY_DAYS, count_cap=0, attempted_before=None, refuted=frozenset()):
     """Fill what the ladder could not, from another copy of the same role. Returns
     (filled, refused, Counter of `jd_why` values written).
 
     `paid_keys` is the set of `mkey`s allowed to reach the Unlocker; every other row is
     worked on the free rungs alone, and inside `paid_keys` the 7/14/28 cooldown still
     decides whether tonight is this row's turn to spend."""
+    # a local MUTABLE copy: the parameter's default is a frozenset, and this pass
+    # discards from it as rows fill. It runs last, so nothing downstream needs
+    # the mutation to propagate.
+    refuted = set(refuted or ())
     filled, refused, why_written = 0, 0, Counter()
     budget = float(os.environ.get("MATCHED_DONOR_BUDGET_MIN", str(DONOR_BUDGET_MIN)))
     today, t0, worked = today or dt.date.today(), time.time(), 0
@@ -560,7 +616,7 @@ def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
         # because the fetch passes stamp it and the 7/14/28 ladder widens. The FREE donors run
         # for every row regardless — that is the whole point of the rung, and it costs nothing
         # (`run_backfill.free_rungs_ignore_cooldown`, the same split).
-        row_bd = bd if (mkey in paid_keys
+        row_bd = bd if (mkey in paid_keys and mkey not in refuted
                         and due(att, today, definitive=retry_days_for(tries, retry_days))
                         ) else None
         label = (comp + " | " + title)[:56]
@@ -570,7 +626,10 @@ def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
         # incomplete — which still pass `looks_like_jd` — so a longer DIFFERENT opening
         # replaced a role's own posting (wave A, reproduced). Nothing in this pass may
         # overwrite text that already reads as this role's description.
-        if looks_like_jd(have):
+        # ...unless the tier READ this text and disowned it (`refuted`): then the row has
+        # no description of its own to protect, and the donor's identity gate is what
+        # decides whether the replacement may land.
+        if looks_like_jd(have) and mkey not in refuted:
             continue
         cands, complete = _donor_candidates(row, cache_by_key, log)
         worked += 1
@@ -617,7 +676,12 @@ def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
         # feeds is "copies were found and none was admitted", and booking refusals only on
         # the not-filled path suppressed exactly the case worth seeing (wave A)
         refused += seen_identity
-        if text and (args.dry_run or _store_text(conn, mkey, text, have)):
+        if text and (args.dry_run or _store_text(conn, mkey, text, have,
+                                                   refuted=mkey in refuted)):
+            # the hole this row's refutation opened is now filled: close it, or a LATER
+            # donor -- `cache` and `own-address` are gated on the URL, not on the document
+            # naming the role -- walks straight into it and overwrites what just landed
+            refuted.discard(mkey)
             filled += 1
             why_written[why.split(":")[1]] += 1
             log(f"  [OK ] {label:<56} {why} {len(text)}")
@@ -731,7 +795,7 @@ def _run(args, stamp):
     # The keyword rules first, then the model on what is left ambiguous. A row the tier
     # calls incomplete joins the todo exactly as a row that failed `looks_like_jd` does --
     # the two verdicts differ in how they were reached, never in what happens next.
-    incomplete, q = _quality_pass(conn, every, args.dry_run)
+    incomplete, refuted, q = _quality_pass(conn, every, args.dry_run)
     verdicts = q["cached"] + q["complete"] + q["rejected"] + q["truncated"]
     if q["candidates"] and not verdicts and (q["unavailable"] or q["capped"] or not q["calls"]):
         # The tier produced NO verdict for anyone. On 2026-08-29 that was 7 candidates, 7
@@ -806,8 +870,10 @@ def _run(args, stamp):
         # write is refused (both sides JDs, the new one shorter) is exactly the case the LLM
         # tier had just called incomplete: the row left the todo, nothing was written, and
         # the run announced two fills (wave 3).
-        wrote = looks_like_jd(best) and (args.dry_run or _store_text(conn, mkey, best, have))
+        wrote = looks_like_jd(best) and (args.dry_run or _store_text(
+            conn, mkey, best, have, refuted=mkey in refuted))
         if wrote:
+            refuted.discard(mkey)          # filled: the ratchet closes again (see _donor_pass)
             from_cache += 1
             print(f"  [OK ] {(comp + ' | ' + title)[:64]:<64} cache/own-address {len(best)}",
                   flush=True)
@@ -889,7 +955,9 @@ def _run(args, stamp):
 
     def save(item, text, stamp_v):
         if text:
-            _store_text(conn, item.key, text, have_by_key.get(item.key, ""))
+            _store_text(conn, item.key, text, have_by_key.get(item.key, ""),
+                        refuted=item.key in refuted)
+            refuted.discard(item.key)      # filled: the ratchet closes again
             # the canonical address answered: record THAT, so `jd_why` never leaves a stale
             # `structural:` verdict standing on a row that has since been filled
             conn.execute("UPDATE matched SET jd_why=? WHERE mkey=?",
@@ -956,7 +1024,8 @@ def _run(args, stamp):
         from_donor, donor_refused, donor_why = _donor_pass(
             conn, donor_rows, cache_by_key, bd, paid_keys, args,
             log=lambda s: print(s, flush=True), retry_days=args.cooldown_days,
-            count_cap=max(0, args.limit - (c["tried"] - c["probe"])) if args.limit else 0)
+            count_cap=max(0, args.limit - (c["tried"] - c["probe"])) if args.limit else 0,
+            refuted=refuted)
         # The one way this rung dies quietly: `doc_names_role` tightens (a source changes how
         # it writes its own title, a normalisation drifts) and every copy is refused, which
         # looks exactly like a night with no donors at all. Refusals ARE the rung working
@@ -1015,6 +1084,9 @@ def _run(args, stamp):
                       matched_llm_candidates=q["candidates"],
                       matched_llm_unavailable=q["unavailable"],
                       matched_llm_capped=q["capped"],
+                      # rows the tier READ and disowned: the only verdict that opens
+                      # `_store_text`'s length ratchet, so it is worth a number of its own
+                      matched_llm_refuted=q["refuted"],
                       matched_via_sibling=from_donor,
                       matched_sibling_refused=donor_refused,
                       # a GAUGE, like `matched_terminal` and for the same reason: it counts

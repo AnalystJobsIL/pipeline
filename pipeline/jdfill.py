@@ -116,6 +116,31 @@ _JD_MARKERS = re.compile(
 _REQ_IDIOM = ("advantage", "major plu", "bachelor", "יתרון", "דרוש/ה",
               "תואר ראשון", "תואר שני")   # "major plu": the fold sees POST-rstrip("s") keys
 
+# Serialization residue: an escaped quote, a raw `\uXXXX`, or a JSON key opening a value.
+# A feed whose `description` field carries a serialized object (Recruitee's does — the
+# TechBiz Global board returned 6,000 characters of `requirements":"&lt;p style=…` and the
+# double-unescape in `fetchers._strip_html` leaves the markup escaped rather than parsed)
+# is not a job description, however many marker words the prose inside it happens to carry.
+_MARKUP_SOUP = re.compile(r'(?:\\"|\\u[0-9a-f]{4}|"[a-z_][a-z0-9_]{1,30}"\s*:\s*["\{\[])')
+# Measured over every text this repo holds on 2026-09-01 — 4,684 of them (203 `matched`
+# rows, 2,219 `scraped_cache` cards, 2,262 `discovered_cache` cards): >= 3 hits in the
+# first 800 characters fires on EXACTLY ONE, `techbiz global|data analyst` (20 hits), and
+# on nothing else at any window from 400 to 1,500 characters.
+#
+# The window is the whole rule, and a tail-inclusive count is what it was rejected for: a
+# real posting may END in serialization — Fayrix's four cards carry a JSON form-field blob
+# from offset ~2,500, Crossriver's nine and Deepdub's carry a literal `’` in ordinary
+# prose — and counting those (>= 8 hits over `text[:3000]`, the first draft) vetoed 4 real
+# JDs to catch the same 1. A document that IS soup is soup from its first characters.
+#
+# The boundary, stated rather than hidden: a SHORT posting whose serialization begins inside
+# the window is refused. Nothing this repo holds has that shape — a page that starts
+# serializing within 800 characters has not said much yet — and the cost of being wrong is a
+# re-fetch, not a deletion: `_store_text` never shortens on this verdict, the row simply
+# re-enters the todo. Pinned by the last assertion of the test that names this constant.
+_SOUP_HEAD = 800
+_SOUP_HITS = 3
+
 
 def load_secrets():
     """The one secrets loader (`pipeline/secretsenv`), kept under this module's public name.
@@ -303,6 +328,15 @@ def extract_jd(html):
     from .seniority import _ROLE_START
     full = html_to_text(html)
     text = jd_body(full)
+    if _is_markup_soup(full) or _is_markup_soup(text):
+        # A serialized object is not a posting however many marker words the prose INSIDE it
+        # carries, and the ladder must say so rather than book it as a successful parse. This
+        # lives here as well as in `looks_like_jd` because the two answer different questions
+        # for different callers: without it `fetch_jd` returned 6,000 characters of Recruitee
+        # offer JSON with `reason="ok"`, `run_backfill` counted a fill, and `_store_text` --
+        # comparing two texts that BOTH fail the bar -- wrote it onto any row that had no
+        # description at all. The veto only defended rows that already held a JD (wave B).
+        return ""
     if len(text) < MIN_DESC or len(_marker_families(text)) < 2:
         text = _after_the_wall(full)
         if not text:
@@ -322,6 +356,13 @@ def _marker_families(text):
         fam = m[0].rstrip("s")
         out.add("req-idiom" if any(fam.startswith(i) for i in _REQ_IDIOM) else fam)
     return out
+
+
+def _is_markup_soup(text):
+    """Is this text a serialized object rather than a posting? `_SOUP_HITS` residue markers in
+    the first `_SOUP_HEAD` characters. One function so `extract_jd` (a fetched body) and
+    `looks_like_jd` (stored text) can never drift apart on the question."""
+    return len(_MARKUP_SOUP.findall(str(text or "")[:_SOUP_HEAD])) >= _SOUP_HITS
 
 
 def looks_like_jd(text):
@@ -345,8 +386,15 @@ def looks_like_jd(text):
     It asks about `jd_body(text)`, not `text`: the question is whether the EMPLOYER'S words
     clear the bar, and a login wall clears it on its own (it says "experience" and "skills").
     Fourteen rows passed this function on 2026-08-28 while carrying 53,145 characters of
-    LinkedIn's sign-in form, and three of them held under 750 characters of actual posting."""
+    LinkedIn's sign-in form, and three of them held under 750 characters of actual posting.
+
+    Serialization soup is refused ahead of both tests (`_MARKUP_SOUP`, 2026-09-01): a feed
+    that hands us a serialized object instead of a description carries the posting's own
+    words INSIDE the markup, so it clears the marker bar on prose it is not presenting —
+    `techbiz global|data analyst` published 6,000 characters of Recruitee offer JSON."""
     body = jd_body(text)
+    if _is_markup_soup(text):
+        return False
     return len(body) >= MIN_DESC and len(_marker_families(body)) >= 2
 
 
@@ -399,13 +447,32 @@ _QUALITY_SYSTEM = (
     " that itself is evidence it is not an ordinary job posting. Judge only what is shown.")
 
 
-def quality_suspect(text, shared=False):
+def quality_suspect(text, shared=False, *, company=""):
     """Why this stored text is worth one LLM call, or "" when the cheap rules already settle it.
 
     Three suspicions, each measured on 2026-08-28: a furniture marker survives the cut (the
     wall started before the text we kept), the text sits exactly on `DESC_MAX` (it was
     truncated, so its end is missing), or it is byte-identical to another posting at the same
-    employer (docs/BACKLOG.md 370 -- one careers page stored as every role's description)."""
+    employer (docs/BACKLOG.md 370 -- one careers page stored as every role's description).
+
+    A fourth since 2026-09-01, and the only one that asks WHOSE posting this is: the text
+    never names the employer it is filed under (`no-company-echo`). Every suspicion above is
+    about a text being incomplete; none of them fires on a COMPLETE posting belonging to
+    somebody else, which is how `prisma photonics|senior product analyst` published a
+    Data-Engineer JD end to end and `holisto|data analyst` published trivago's.
+
+    This is a CANDIDATE rule, not a verdict: it buys one model call, and the model decides.
+    That distinction is the whole reason it can be generous. Measured over the 197 stored
+    rows that pass `looks_like_jd` on 2026-09-01: 43 carry no strict mention of their own
+    employer, and most are honest — a posting is not obliged to repeat the company name
+    (Zipher, Tavily, OTORIO), an acquisition renames it (Questar), an agency never had it.
+    So a REFUSAL here would be wrong and a flag is right; the cost is one call per text,
+    once, cached on its sha1.
+
+    The `strict` mention wants the company's tokens CONSECUTIVELY (`company_identity`), the
+    prose-calibrated primitive — `doc_names_role` is calibrated on ten-word declarations and
+    over 6,000 characters its employer half degrades to "one company word appears anywhere",
+    which "TechBiz Global" would have passed on the word `global`."""
     t = text or ""
     if shared:
         return "shared-with-sibling"
@@ -413,7 +480,30 @@ def quality_suspect(text, shared=False):
         return "furniture"
     if len(t) >= DESC_MAX:
         return "at-desc-max"
+    if company and _echo_checkable(company) and not _company_echoed(company, t):
+        return "no-company-echo"
     return ""
+
+
+def _echo_checkable(company):
+    """Can a missing company name mean anything for THIS employer's name?
+
+    Only when the name survives `page_mentions_company`'s OWN derivation with a token left
+    to look for — the same regex and the same legal-form strike list, so the question this
+    asks and the question that answers it cannot drift apart. That primitive is ASCII, so a
+    Hebrew-named employer can never echo in its own Hebrew posting: without this guard every
+    one of those rows is flagged for ever, which is a flood and not a signal."""
+    from .company_identity import _LEGAL_TOKEN
+    return bool([w for w in re.findall(r"[a-z0-9]+", str(company or "").lower())
+                 if w not in _LEGAL_TOKEN])
+
+
+def _company_echoed(company, text):
+    from .company_identity import page_mentions_company
+    try:
+        return bool(page_mentions_company(company, text, strict=True))
+    except TypeError:                      # a primitive without the keyword: take its answer
+        return bool(page_mentions_company(company, text))
 
 
 def jd_quality(text, title, company, *, model=None, timeout=None):
@@ -1749,6 +1839,59 @@ def _named_words(s):
             if len(w) > 1 and w not in _EMPTY_WORDS}
 
 
+def _scripts(words):
+    """Which alphabets a word set is written in. Two declarations in different scripts share
+    no words BY CONSTRUCTION, so a comparison across them is not evidence of anything."""
+    out = set()
+    for w in words:
+        out.add("he" if any("֐" <= ch <= "׿" for ch in w) else "lat")
+    return out
+
+
+def _pane_denies_role(declaration, title, company=""):
+    """Does this pane's own declaration say it is a DIFFERENT role from the one we asked for?
+
+    The complement of `doc_names_role`, and deliberately not its negation: that function
+    answers "did the document confirm us", where everything unconfirmable — an absent
+    declaration, a company whose every word is in its own title — is False. A REFUSAL may
+    not be built on that, because refusing what we merely failed to confirm throws away
+    every fill whose page declares nothing (38 of the 190 rows the driver walks carry no strict mention of
+    their own employer). So this asks the narrow question instead, and answers True only on
+    a positive contradiction:
+
+      * something was declared (an empty declaration denies nothing);
+      * our title has words to check (a title of pure stop-words is unanswerable);
+      * the declaration and our title are written in the same alphabet — a Hebrew pane and a
+        Latin title share no words BY CONSTRUCTION, and that is not a contradiction;
+      * and the title half fails the SAME bar `doc_names_role` sets for it, two of the
+        title's significant words (one, when that is all the title has).
+
+    The employer is deliberately NOT part of the test. A pane declaring the right employer
+    and a different role is the defect this gate exists for — `discovered_cache` holds a
+    second Diageo jk (`8eec28efd124a6d2`) whose pane is "VP, Brands in Culture, NAM", and
+    the 2026-08-31 decision record names it as the posting company-level jk membership
+    would have laundered onto the analyst row. Requiring both halves to contradict would
+    have admitted it."""
+    decl = _named_words(declaration)
+    t_words = _named_words(title)
+    if not decl or not t_words:
+        return False
+    # Compare only WITHIN the title's own alphabet. A pane declaration is a concatenation —
+    # `jobTitle` + the header's `jobTitle`/`companyName`/`subtitle` — so a Hebrew posting at
+    # a Latin-named employer declares in BOTH scripts. An intersection test on the whole
+    # declaration then passes the script guard on the company's Latin words while the title
+    # half is compared against Hebrew it can never match, and the row is denied for being
+    # bilingual: `"אנליסט/ית נתונים … Bank Leumi"` vs `Data Analyst` denied True, on a board
+    # where 25 of 106 Indeed cards carry a Hebrew title (wave A, reproduced).
+    decl = {w for w in decl if _scripts({w}) & _scripts(t_words)}
+    # ...and there must be something in it that could BE a title. Once the employer's own
+    # name is set aside, a bilingual pane whose Latin half is only "Bank Leumi" has declared
+    # no title we can read, and denying on that is denying a row for being written in Hebrew.
+    if not (decl - _named_words(company)):
+        return False
+    return len(t_words & decl) < min(2, len(t_words))
+
+
 def doc_names_role(declaration, title, company):
     """Does this document's own self-declaration name THIS role at THIS employer?
 
@@ -2010,8 +2153,17 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
     if body:
         jd, why = _from_paid_body(body, jk)  # the credit is spent either way: read it twice
         if jd:
+            decl = declared_identity(body, jk) if (jk or want_identity) else ""
+            if jk and _pane_denies_role(decl, title, company):
+                # The pane is keyed to OUR jk and DECLARES another employer's role. The jk
+                # itself is the discovery card's claim, never verified until now (the
+                # 2026-08-31 rung checked `jobKey == jk` and nothing else): a card whose jk
+                # names a different posting bought that posting's text under this row's
+                # name. Definitive — the address was read and answered about someone else,
+                # which is a statement about the address and not about our budget.
+                return JD("", "bd", "bd-identity", False, native_why, decl=decl)
             return JD(jd, "bd", why, False, native_why,
-                      decl=declared_identity(body, jk) if want_identity else "")
+                      decl=decl if want_identity else "")
         empty = "shell" if len(html_to_text(body)) < MIN_DESC else "no-markers"
         if _host_of(url) in getattr(bd, "parked", ()):
             empty += "-parked"              # this host is closed to the paid rung for the run

@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pipeline import aggregators, israel, seniority, verdicts  # noqa: E402
 
 
-def _jd_of(n):
+def _jd_of(n, company="ACME"):
     """`n` characters that `jdfill.looks_like_jd` accepts: two marker families, then filler.
 
     The fixtures below used to say "this row already has a description" with `_jd_of(400)` —
@@ -27,8 +27,14 @@ def _jd_of(n):
     was indistinguishable from a job description. Since 2026-08-28 the gate asks whether the
     text IS one (the same test `extract_jd` applies to a fetched body), because 4,000
     characters of a careers site's navigation menu passed the character count on four live
-    board rows. Filler is, rightly, no longer a description."""
-    head = "Responsibilities Requirements "
+    board rows. Filler is, rightly, no longer a description.
+
+    It NAMES the employer (2026-09-01, default `ACME` — every fixture's company). A complete
+    posting normally does, and `quality_suspect`'s `no-company-echo` asks exactly that: with
+    anonymous filler, a fixture row standing for "this role already has its description" was
+    a row whose text names nobody, so the tier disowned it and the driver re-fetched what it
+    already had. The length contract is unchanged — the name is spent out of the filler."""
+    head = "Responsibilities Requirements at %s " % (company or "ACME")
     return (head + "a" * max(0, n - len(head)))[:n]
 
 
@@ -18458,7 +18464,7 @@ def test_one_page_fanned_across_two_EMPLOYERS_is_seen(tmp_path, monkeypatch):
         def fetchall(self):
             return []
 
-    incomplete, counts = emj._quality_pass(_C(), rows, dry_run=True)
+    incomplete, refuted, counts = emj._quality_pass(_C(), rows, dry_run=True)
     assert sorted(seen) == ["Armis", "OTORIO"], seen
     assert counts["candidates"] == 2
 
@@ -26779,3 +26785,435 @@ def test_the_classifier_is_given_the_judgment_dates_the_store_keeps():
     assert "load_llm_cache_dates()" in src, "run.py must read the dates"
     assert "cache_dates=" in src, "run.py must hand them to the Classifier"
     assert "updated" in inspect.getsource(store.SeenStore.load_llm_cache_dates)
+# --------------------------------------------------------------------------- 2026-09-01
+# jd-text: the pane identity gate, the serialization-soup veto, the company echo, and the
+# one verdict that opens `_store_text`'s length ratchet. Each of the four closes a class the
+# operator's row-by-row audit of the published dataset found on 2026-09-01.
+
+def test_a_bought_pane_that_declares_another_role_fills_nothing_and_is_definitive():
+    """The 2026-08-31 rung verified `jobKey == jk` and NOTHING else, and the jk itself is the
+    discovery card's claim (that session listed the binding as an accepted limit). A card
+    whose jk names a different posting bought that posting's text and stored it under this
+    row's name.
+
+    The refusal costs the credit that READ the page — it cannot save one, because the second
+    (rendered) credit is only ever spent on a body too short to be a posting, and a pane that
+    declares another role is a full one. An earlier version of this test asserted "no second
+    credit" as if that were the guard's doing; it is true with or without it (wave A, F11).
+
+    Kills: dropping the gate, and moving it after the text is returned."""
+    from pipeline import jdfill
+    jk = _I31_JK
+    body = _i31_body(jk=jk)
+    # the pane declares a wholly different role at a different employer
+    blob = _j6_json.loads(body.split("window._initialData=", 1)[1].split(";</script>", 1)[0])
+    pane = blob["autoOpenTwoPaneViewjobResponse"]["body"]
+    pane["jobTitle"] = "Pre Sales Consultant"
+    pane["jobInfoWrapperModel"]["jobInfoModel"]["jobInfoHeaderModel"] = {
+        "jobTitle": "Pre Sales Consultant", "companyName": "TransUnion CIBIL"}
+    body = "<html><body><script>window._initialData=" + _j6_json.dumps(blob) + ";</script></body></html>"
+    calls = []
+
+    def _bd(url, render=False):
+        calls.append(url)
+        return 200, body, ""
+
+    old = jdfill.plain_fetch
+    jdfill.plain_fetch = lambda *a, **k: (403, "")
+    try:
+        jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=" + jk, bd=_bd,
+                             company="Prisma Photonics", title="Senior Product Analyst")
+    finally:
+        jdfill.plain_fetch = old
+    assert jd.text == "", "a pane declaring another role was stored as this role's description"
+    assert jd.reason == "bd-identity", jd.reason
+    assert jd.transient is False, "the page was READ and answered about someone else"
+    assert jd.decl and "Pre Sales Consultant" in jd.decl, jd.decl
+    assert len(calls) == 1, "one credit read the page; nothing bought a second"
+    # and the same body, asked for the role it DOES declare, still fills
+    ok = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=" + jk, bd=_bd,
+                         company="TransUnion CIBIL", title="Pre Sales Consultant")
+    assert ok.text and ok.reason == "ok-indeed", (ok.reason, len(ok.text))
+
+
+def test_a_pane_that_declares_nothing_still_fills_and_a_matching_one_is_untouched(monkeypatch):
+    """Absence is not contradiction. `doc_names_role` answers False for everything it merely
+    cannot confirm, and a refusal built on that would throw away every fill whose page
+    declares nothing — 38 of the 190 rows the driver walks and pass the bar carry no strict mention of
+    their own employer (measured 2026-09-01).
+
+    It asserts the GATE IS WIRED and then that it stays quiet, rather than only that nothing
+    was refused: "no refusal happened" is equally true of a tree with no gate at all, which is
+    a test that cannot fail (`tools/guard_kill.py` said so about this test's first version).
+
+    Kills: `if not doc_names_role(...)` in place of the narrow `_pane_denies_role`, and
+    removing the gate from the paid rung altogether."""
+    from pipeline import jdfill
+    seen = []
+    _real_gate = jdfill._pane_denies_role       # absent at base: this line is the kill
+
+    def _spy(decl, title, company=""):
+        seen.append((decl, title, company))
+        return _real_gate(decl, title, company)
+
+    monkeypatch.setattr(jdfill, "_pane_denies_role", _spy)
+    jk = _I31_JK
+    old = jdfill.plain_fetch
+    jdfill.plain_fetch = lambda *a, **k: (403, "")
+    try:
+        # (a) no declaration at all in the pane
+        bare = _i31_body(jk=jk)
+
+        def _bd1(url, render=False):
+            return 200, bare, ""
+
+        jd = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=" + jk, bd=_bd1,
+                             company="Prisma Photonics", title="Senior Product Analyst")
+        assert jd.text and jd.reason == "ok-indeed", (jd.reason, len(jd.text))
+
+        # (b) a declaration that DOES name the role: the faithful TransUnion shape
+        blob = _j6_json.loads(bare.split("window._initialData=", 1)[1].split(";</script>", 1)[0])
+        pane = blob["autoOpenTwoPaneViewjobResponse"]["body"]
+        pane["jobTitle"] = "Manager - Data Science & Analytics"
+        named = ("<html><body><script>window._initialData="
+                 + _j6_json.dumps(blob) + ";</script></body></html>")
+
+        def _bd2(url, render=False):
+            return 200, named, ""
+
+        jd2 = jdfill.fetch_jd("https://il.indeed.com/viewjob?jk=" + jk, bd=_bd2,
+                              company="TransUnion", title="Manager Data Science Analytics")
+        assert jd2.text and jd2.reason == "ok-indeed", (jd2.reason, len(jd2.text))
+    finally:
+        jdfill.plain_fetch = old
+    # the gate ran on BOTH bought panes and refused neither
+    assert len(seen) == 2, seen
+    assert seen[1][0] and "Manager" in seen[1][0], seen[1]
+
+
+def test_the_pane_gate_never_denies_across_two_alphabets_or_on_an_unanswerable_title():
+    """A Hebrew pane and a Latin title share no words BY CONSTRUCTION, and half this board is
+    Hebrew. Comparing across scripts is not evidence, and a title of pure stop-words has
+    nothing to check. Kills: dropping the script guard, and dropping the empty-words guard."""
+    from pipeline.jdfill import _pane_denies_role
+    # a real contradiction, one alphabet
+    assert _pane_denies_role("VP, Brands in Culture, NAM Diageo", "Performance Analytics Analyst")
+    # the same shape across alphabets is NOT a contradiction
+    assert not _pane_denies_role("אנליסט/ית אשראי בנק דיסקונט", "Credit Analysis Team Lead")
+    assert not _pane_denies_role("Credit Analysis Team Lead", "אנליסט ית אשראי")
+    # nothing declared, or nothing to check against
+    assert not _pane_denies_role("", "Senior Product Analyst")
+    assert not _pane_denies_role("Anything At All", "the and for")
+    # the faithful case, and a one-significant-word title needs only that word
+    assert not _pane_denies_role("Manager - Data Science & Analytics TransUnion",
+                                 "Manager Data Science Analytics")
+    assert not _pane_denies_role("Analyst - Growth Team", "Analyst")
+    assert _pane_denies_role("Warehouse Forklift Operator", "Analyst")
+
+
+def test_serialized_markup_is_not_a_job_description_and_a_real_jd_with_a_json_tail_is():
+    """`fetch_recruitee` stores `_snippet(offer["description"])`, and TechBiz Global's board
+    returns a serialized offer OBJECT in that field: 6,000 characters of `requirements":"&lt;p
+    style=…` were published as a data-analyst JD, clearing the marker bar on the prose INSIDE
+    the markup.
+
+    The window is the whole rule. Measured over every text this repo held on 2026-09-01 —
+    4,684 of them — `>= 3 hits in text[:800]` fires on exactly ONE (this class) and on nothing
+    else; a tail-inclusive count (>= 8 over `text[:3000]`, the first draft) also vetoed four
+    REAL postings whose pages end in a serialized form-field blob (Fayrix), which is why the
+    head window and not the count is what this test pins.
+
+    Kills: widening the window past the head, dropping the threshold to catch a stray
+    `\\u2019` in ordinary prose, and removing the veto."""
+    from pipeline.jdfill import looks_like_jd
+    real = ("About the role: you will own the analytics stack and build dashboards. "
+            * 6 + " Requirements: 5+ years of experience with SQL and Python. ")
+    assert looks_like_jd(real)
+
+    soup = ('requirements":"&lt;p style=\\"text-align: start;\\"&gt;&lt;span style=\\"color: '
+            '#121317\\"&gt;' + real + '&lt;/span&gt;&lt;/p&gt;","requirementsHtml":"&lt;p&gt;'
+            '","sharingDescription":"At TechBiz Global, we provide recruitment services",'
+            '"guid":"or9ur","street":null,"externalId":187787')
+    assert not looks_like_jd(soup), "serialized markup was accepted as a job description"
+
+    # a REAL posting that merely ENDS in serialization keeps its verdict: the soup is in the
+    # tail, where a posting's own words are already spent. This is Fayrix's measured shape --
+    # four live cards whose JSON form-field blob starts at offset ~2,500.
+    tail = ('[{"lid":"1570620467275","ls":"10","li_type":"nm"},'
+            '{"lid":"1570620483835","ls":"20","li_type":"nm"}]')
+    assert looks_like_jd(real * 3 + " " + tail)
+    # ...and the BOUNDARY, stated rather than hidden: a posting whose serialization begins
+    # inside the head window IS refused. No text this repo holds has that shape (0 of 4,684
+    # on 2026-09-01) -- a page that starts serializing within 800 characters has not said
+    # much yet -- but a short posting with an early blob would be re-fetched, not published.
+    assert not looks_like_jd(real + " " + tail)
+    # ...and one stray escape in ordinary prose is not soup (nine live Crossriver cards)
+    assert looks_like_jd("What You\\u2019ll Actually Be Doing " + real)
+
+
+def test_the_company_echo_is_a_candidate_rule_and_never_fires_on_an_unanswerable_name():
+    """The fourth suspicion is the only one that asks WHOSE posting this is. Every other
+    suspicion is about a text being incomplete, and none of them fires on a COMPLETE posting
+    that belongs to somebody else — which is how a Data-Engineer JD was published end to end
+    on `prisma photonics|senior product analyst`.
+
+    It is a CANDIDATE rule: it buys one model call and the model decides. Kills: making it a
+    verdict, dropping the Hebrew-name guard (every Hebrew row would be flagged for ever),
+    and reordering it above the three cheaper suspicions."""
+    from pipeline.jdfill import quality_suspect
+    other = ("About the role: Trivago Innovation Center is looking for an analyst. " * 6
+             + " Requirements: 5+ years of experience with SQL. ")
+    assert quality_suspect(other, company="Holisto") == "no-company-echo"
+    assert quality_suspect(other, company="Trivago") == ""
+    # a Hebrew-named employer can never echo in an ASCII tokenizer: not a signal, a flood
+    assert quality_suspect(other, company="בנק דיסקונט") == ""
+    assert quality_suspect(other, company="") == ""
+    # the cheaper suspicions still win, and the echo never displaces them. This is not
+    # tidiness: `_quality_pass` refutes on a CACHED verdict, and the jdq1 key hashes
+    # (contract, company, title, body) and NOT the suspicion -- so a 0 reached under one
+    # suspicion is re-read under another, and the column is a bool that cannot say which
+    # kind of "no" it was. Because the echo is LAST, a text that is shared, furniture-bearing
+    # or at DESC_MAX never reaches it, and the only suspicion change possible without the
+    # TEXT changing (which changes the key) is shared -> echo, whose rejection answers the
+    # same question. Reorder these and a "truncated" rejection becomes a refutation.
+    assert quality_suspect(other, shared=True, company="Holisto") == "shared-with-sibling"
+    assert quality_suspect("x" * 6000, company="Holisto") == "at-desc-max"
+    from pipeline.jdfill import furniture_at
+    # furniture is a TAIL cut (a marker at offset 0 is not one -- 2026-08-28), so put it
+    # where a wall actually lands
+    furn = other + " Sign in to see who you already know. Forgot password?"
+    assert furniture_at(furn) is not None
+    assert quality_suspect(furn, company="Holisto") == "furniture"
+
+
+def test_a_refuted_row_lets_a_shorter_true_posting_through_and_nothing_else_does():
+    """`_store_text`'s ratchet compares LENGTHS once both sides look like job descriptions, so
+    a complete posting belonging to somebody else is unreplaceable by the shorter true one:
+    `prisma photonics|senior product analyst` held 3,276 characters of the Data-Engineer
+    posting while its own 2,617-character posting sat in `scraped_cache.json`, and no rung in
+    this repo could install it.
+
+    Only a row the TIER READ AND DISOWNED opens it. Kills: opening the ratchet for every row,
+    and opening it on the suspicion rather than on the verdict."""
+    import enrich_matched_jd as emj
+    import sqlite3 as _sq
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES ('r','',NULL)")
+    wrong = ("About the role: you will build data pipelines in Kafka and Kinesis. " * 8
+             + " Requirements: 5+ years in Data Engineering. ")
+    right = ("About the role: you will analyse product usage and power decisions. " * 4
+             + " Requirements: 3+ years of experience in analytics. ")
+    assert len(right) < len(wrong)
+    from pipeline.jdfill import looks_like_jd
+    assert looks_like_jd(wrong) and looks_like_jd(right)
+
+    assert emj._store_text(conn, 'r', wrong, "") is True
+    # the ordinary ratchet refuses the shorter true posting -- the defect, pinned
+    assert emj._store_text(conn, 'r', right, wrong) is False
+    # ...and the refuted row admits it
+    assert emj._store_text(conn, 'r', right, wrong, refuted=True) is True
+    assert conn.execute("SELECT description FROM matched WHERE mkey='r'").fetchone()[0] == right
+    # a refuted row is still not open house: non-JD text loses to nothing at all
+    assert emj._store_text(conn, 'r', "nav bar home about contact", right, refuted=True) is False
+    conn.close()
+
+
+def test_a_refuted_row_still_only_admits_text_that_names_it_and_the_gate_is_unchanged():
+    """The hole `refuted` opens is filled by the ORDINARY rungs, and the `copy` donor is still
+    admitted only on the fetched document's own declaration.
+
+    This asserted three SOURCE substrings until an adversarial wave pointed out that a guard
+    which asserts HOW a thing is written "breaks when the thing improves and passes when the
+    thing breaks" (`tools/mutate.py`'s own words) — and that it could not kill the mutation it
+    was named for. It runs the gate now.
+
+    Kills: letting `refuted` bypass `doc_names_role` for a `copy` donor."""
+    from pipeline import jdfill
+    # the gate itself, at the two answers that matter for a foreign copy
+    decl = "Fetcherr hiring Data Analyst - Tableau, SQL | LinkedIn"
+    assert not jdfill.doc_names_role(decl, "Data Analyst", "Bright Data"), (
+        "the employer half may not be paid for by a word the title supplies")
+    assert jdfill.doc_names_role("Mobileye hiring Experienced Data Analyst | LinkedIn",
+                                 "Experienced Data Analyst", "Mobileye")
+    # and the pass still consults it — with `refuted` in hand, for a `copy`
+    import enrich_matched_jd as emj
+    import inspect
+    src = inspect.getsource(emj._donor_pass)
+    assert 'kind == "copy"' in src and "doc_names_role" in src, (
+        "the donor identity gate left the pass")
+    assert emj._store_text.__defaults__ == (False,), emj._store_text.__defaults__
+
+
+def test_the_quality_tier_still_writes_no_text_now_that_it_returns_a_refuted_set(monkeypatch):
+    """The 2026-08-28 property survives the 09-01 change: the tier decides whether a role is
+    done and whether its text is DISOWNED, and never what text the role carries. The write
+    stays in the fetch/cache/donor rungs. Kills: writing the replacement inside the tier."""
+    import enrich_matched_jd as emj
+    import ast, inspect, textwrap
+    tree = ast.parse(textwrap.dedent(inspect.getsource(emj._quality_pass)))
+    for node in ast.walk(tree):
+        body = getattr(node, "body", None)
+        if not (isinstance(body, list) and body):
+            continue
+        head = body[0]
+        if (isinstance(head, ast.Expr) and isinstance(getattr(head, "value", None), ast.Constant)
+                and isinstance(head.value.value, str)):
+            del body[0]
+    code = ast.unparse(tree)
+    assert "_store_text" not in code and "description" not in code, code[:400]
+    # ...and the shape that carries the new verdict, so this test can actually fail: at the
+    # base commit the tier returns (incomplete, counts) and there is no refuted set to carry.
+    import sqlite3 as _sq
+    monkeypatch.setenv("JD_QUALITY", "0")
+    incomplete, refuted, counts = emj._quality_pass(_sq.connect(":memory:"), [], dry_run=True)
+    assert (incomplete, refuted) == (set(), set()), (incomplete, refuted)
+
+
+# --- wave A, 2026-09-01: five defects it reproduced in the guards above ------------------
+
+def _qp_row(mkey, company, title, desc):
+    """A `_quality_pass` row tuple: (mkey, company, title, url, attempted, seen_ids, desc, ...)"""
+    return (mkey, company, title, "https://x/1", "", "", desc, 0, "2026-09-01")
+
+
+class _QPConn:
+    """The two things `_quality_pass` asks of a connection."""
+
+    def __init__(self, cache=None):
+        self._cache = dict(cache or {})
+        self.written = []
+
+    class _Rows(list):
+        def fetchall(self):
+            return list(self)
+
+    def execute(self, sql, args=()):
+        if "SELECT title_key" in sql:
+            return self._Rows((k, v) for k, v in self._cache.items())
+        self.written.append((sql, args))
+        return self._Rows()
+
+    def commit(self):
+        pass
+
+
+def test_a_partial_verdict_never_refutes_because_partial_is_this_roles_own_posting(monkeypatch):
+    """`jd_quality` returns `verdict == "complete"`, so `ok is False` covers BOTH "not this
+    role's posting" and "this role's own posting, truncated" — and `_QUALITY_SYSTEM` defines
+    `partial` as genuine posting text that stops early.
+
+    Refuting on `partial` opens the length ratchet on a role's OWN description and lets a
+    longer different opening replace it: the donor-overwrite defect of 2026-08-31, reopened
+    from the other side. Found by an adversarial wave, reproduced, fixed.
+
+    Kills: `if why == "no-company-echo":` without the class test."""
+    import enrich_matched_jd as emj
+    from pipeline import jdfill
+    body = ("About the role: you will own reporting and dashboards. " * 6
+            + " Requirements: 4+ years of experience with SQL. ")
+    rows = [_qp_row("acme|data analyst", "Acme Analytics", "Data Analyst", body)]
+    assert jdfill.quality_suspect(body, company="Acme Analytics") == "no-company-echo"
+
+    for verdict, should_refute in (("partial", False), ("not-a-jd", True)):
+        monkeypatch.setattr(jdfill, "jd_quality", lambda *a, **k: (False, verdict))
+        monkeypatch.setattr(emj, "jd_quality", jdfill.jd_quality, raising=False)
+        incomplete, refuted, counts = emj._quality_pass(_QPConn(), rows, dry_run=True)
+        assert counts["rejected"] == 1, (verdict, counts)
+        assert "acme|data analyst" in incomplete, verdict      # re-fetched either way
+        assert (("acme|data analyst" in refuted) is should_refute), (verdict, refuted)
+
+
+def test_a_cached_rejection_never_refutes_because_the_column_cannot_say_which_no_it_was(monkeypatch):
+    """`llm_cache.verdict` is a bool, so a cache hit cannot tell `partial` from `not-a-jd`.
+    A cached rejection therefore keeps the row in the todo — it is re-fetched like any other —
+    and never unlocks the ratchet.
+
+    It also closes a second hole the wave found: `verdict` is a loop-carried local, so reading
+    it on the cached branch would serve the PREVIOUS row's class.
+
+    Kills: refuting on `bool(cache[key])`, and using `verdict` outside the fresh branch."""
+    import enrich_matched_jd as emj
+    import hashlib
+    from pipeline import jdfill
+    body = ("About the role: you will own reporting and dashboards. " * 6
+            + " Requirements: 4+ years of experience with SQL. ")
+    rows = [_qp_row("acme|data analyst", "Acme Analytics", "Data Analyst", body)]
+    key = "jdq1|" + hashlib.sha1(
+        ("%s|%s|%s|%s" % (emj._QUALITY_CONTRACT, "Acme Analytics", "Data Analyst",
+                          jdfill.jd_body(body))).encode("utf-8", "replace")).hexdigest()
+
+    def _boom(*a, **k):                                   # a cache hit must not call out
+        raise AssertionError("the model was called for a text already in the cache")
+
+    monkeypatch.setattr(jdfill, "jd_quality", _boom)
+    incomplete, refuted, counts = emj._quality_pass(_QPConn({key: 0}), rows, dry_run=True)
+    assert counts["cached"] == 1 and counts["rejected"] == 1, counts
+    assert incomplete == {"acme|data analyst"}
+    assert refuted == set(), refuted
+
+
+def test_only_the_echo_suspicion_refutes_and_the_cheaper_ones_never_do(monkeypatch):
+    """The mutation `refuted-widens-to-every-suspicion` turns the class test into `if True`.
+    Nothing in the suite asserted the CONTENT of `refuted` for a non-echo candidate, so the
+    catalogue was vouching for a guard no test held (wave A, F9).
+
+    Kills `refuted-widens-to-every-suspicion`."""
+    import enrich_matched_jd as emj
+    from pipeline import jdfill
+    body = ("About the role: you will own reporting at Acme Analytics. " * 6
+            + " Requirements: 4+ years of experience with SQL. ")
+    furn = body + " Sign in to see who you already know. Forgot password?"
+    assert jdfill.quality_suspect(furn, company="Acme Analytics") == "furniture"
+    monkeypatch.setattr(jdfill, "jd_quality", lambda *a, **k: (False, "not-a-jd"))
+    rows = [_qp_row("acme|data analyst", "Acme Analytics", "Data Analyst", furn)]
+    incomplete, refuted, counts = emj._quality_pass(_QPConn(), rows, dry_run=True)
+    assert counts["rejected"] == 1 and incomplete == {"acme|data analyst"}
+    assert refuted == set(), "a furniture rejection must never open the length ratchet"
+
+
+def test_the_pane_gate_reads_only_the_alphabet_the_title_is_written_in():
+    """`declared_identity` CONCATENATES `jobTitle` and `companyName`, so a Hebrew posting at a
+    Latin-named employer declares in both scripts: the old whole-declaration script test then
+    passed the guard on the company's Latin words and compared the title against Hebrew it
+    could never match, denying the row for being bilingual. 25 of 106 Indeed cards in
+    `discovered_cache.json` carry a Hebrew title (wave A, reproduced).
+
+    Kills: dropping the per-word script filter, and dropping the company subtraction that
+    decides whether any comparable TITLE was declared at all."""
+    from pipeline.jdfill import _pane_denies_role as deny
+    mixed = "אנליסט/ית נתונים אנליסט/ית נתונים Bank Leumi"
+    assert not deny(mixed, "Data Analyst", "Bank Leumi")
+    assert not deny(mixed, "אנליסט ית נתונים", "Bank Leumi")
+    # and it still denies a real contradiction inside one alphabet
+    assert deny("VP, Brands in Culture, NAM Diageo", "Performance Analytics Analyst", "Diageo")
+    assert deny("Pre Sales Consultant TransUnion CIBIL", "Manager Data Science Analytics",
+                "TransUnion")
+
+
+def test_a_refuted_row_stops_being_refuted_the_moment_a_rung_fills_it(monkeypatch, tmp_path):
+    """`cache` and `own-address` donors are gated on the URL (`_own_posting`), not on the
+    document naming the role — so a refutation left standing after a fill is a hole a LATER
+    donor walks into. The wave reproduced a 333-character cache donor overwriting a row's own
+    705-character posting.
+
+    Kills: dropping `refuted.discard` from the three write paths."""
+    import enrich_matched_jd as emj
+    import inspect
+    src = inspect.getsource(emj)
+    assert src.count("refuted.discard") == 3, (
+        "every path that stores text must close the refutation it opened")
+    # and the behaviour, at the choke point: once filled, the shorter donor is refused again
+    import sqlite3 as _sq
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES ('r','',NULL)")
+    own = ("About the role: you will analyse usage at Acme. " * 5
+           + " Requirements: 3+ years of experience. ")
+    short = ("About the role: a different opening entirely. " * 2
+             + " Requirements: 2 years of experience. ")
+    refuted = {"r"}
+    assert emj._store_text(conn, "r", own, "", refuted="r" in refuted)
+    refuted.discard("r")                                   # what the driver now does
+    assert emj._store_text(conn, "r", short, own, refuted="r" in refuted) is False
+    conn.close()
