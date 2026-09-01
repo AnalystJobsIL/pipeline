@@ -4,15 +4,14 @@
 what is known-broken, what nobody has claimed. Nothing else.
 
 **Three caps, and why there are three.** `docs/check_docs.py` holds this file to 250
-lines, 3,200 words and 60 words per line. The line cap alone was defeated: immediately
-before the trim this file was 247 lines and **65,338 bytes**, because eighteen sessions
-had each written their whole narrative as one line — the longest was 9,011 characters,
-thirty-six times the cap. (The first version of this paragraph said 56,515 bytes and
-4,960 characters: correct numbers, measured at `ae6eeae` the evening before, six commits
-stale by the time the trim ran.) The word caps make
-the three mutually reinforcing: a narrative that will not fit on one line has to wrap,
-and wrapping blows the line count, which is what pushes it to `docs/sessions/`, which is
-where it already was. Thirteen of the eighteen already ended with `Record:`.
+lines, 3,200 words and 60 words per line. The line cap alone was defeated: this file was
+247 lines and **65,338 bytes**, because eighteen sessions had each written their whole
+narrative as one line — the longest 9,011 characters, thirty-six times the cap. The three
+are mutually reinforcing: a narrative that will not fit on one line has to wrap, wrapping
+blows the line count, and that pushes it to `docs/sessions/`, where it already was.
+**The caps are PRE-PUSH only since 2026-09-01** (`infra`): in CI they caught races, not
+narratives — three doc-only reds at +1/+3/+6 words on 08-31. The shape check still runs
+there.
 
 **The shape of a session entry** (enforced, so "add exactly ONE line" has an upper bound):
 
@@ -34,10 +33,9 @@ Where the other things went:
 A session that predicts what tomorrow's mail will say writes the prediction **here**, with
 the date it comes due, and whoever is next **answers it**. `docs/check_docs.py` warns on a
 row past its date with an empty verdict, and refuses the old free-text form — fourteen
-`Morning check <date>:` sentences were buried in prose across this file and **not one had
-ever been answered**. Two had already failed in public twice: `### Tel Aviv` and
-`### Jobgether` both shipped as employer headings in the 2026-08-26 email against checks
-that said neither would.
+`Morning check <date>:` sentences were buried in prose here and **not one had ever been
+answered**, while `### Tel Aviv` and `### Jobgether` shipped as employer headings in the
+2026-08-26 email against checks saying neither would.
 
 A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, and it carries a
 **grep-able string**, never an adjective. Answered rows older than 7 days move to
@@ -48,10 +46,12 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-01 | classifier | published `roles.csv`: empty `class_decision` = **0** (33 today), ~**153** rows; the log carries `backfill: 0 verdict-less` and `classify: … v3.7cb6831f`; a one-way `drain moved` alarm is EXPECTED | run `33494404810` | PASS — empty `class_decision` 0 of **157** rows; the log carries `backfill: 0 verdict-less record(s)` and `contract v3.7cb6831f re-judged 242/cap 250 + 97 stale-yes/cap 150`. The one-way alarm did NOT fire and that absence is the healthy answer: `rejudged 352 (flipped +5/-8)` is two-way, the drain's second morning once the easy cohort is gone |
 | 2026-09-02 | classifier | first scheduled digest on a headSha containing this commit: the `classify:` line names **`v3.0f84ab84`**; a `roles withdrawn` alarm names **34** roles (21 newly withdrawn + 13 whose reason string this commit rewrites — `_record_run` appends on a reason change too) and `roles retraction lifted` names **Parametrix**, which returns reading `class_decision=reject` until `544` lands; rows **137** (157 − 21 + 1), or **134** if `roles`' pending-exclusion and Nestlé/אסם fold land too — both BEFORE that morning's intake, which added 4 on 09-01, so a higher count is not a failure; no `roles retraction unmatched`; empty `class_decision` still 0 | | not yet due |
 | 2026-09-10 | infra | `python tests/schedule_census.py --days 14` — **≥ 3 isolated single-slot drops ⇒ build the recovery digest cron; otherwise it stays rejected.** It was 0 on 2026-08-27 | — | not yet due |
-| 2026-08-31 | infra | first `listing-hunt` run (`event: schedule`, headSha ⊇ the 08-30 infra (b) commit) prints `retire-settled: queue N -> M` BEFORE its `queue-resolve-search:` lines, and `ingested N new attempts` from the step `Ingest the drain's attempt log`; quote its `S s/name over K scored` line into `491` item 3 (6 shards vs a 45-min step) | | |
-| 2026-09-01 | infra | `tests.yml` on ANOTHER lane's push: `mutation-gate (0)`..`(4)` all `success`, every shard's `timing    wall` under **1,800 s**; over that ⇒ add a matrix entry, never the budget | 2026-08-31 | FAIL, early. Run `33409190938`: shard 3 killed at its 40-min budget (`rc 137`; every record `killed`, none surviving), others **2096/2115/2154/2096 s**, shard 3 **2218 s** on green `af7b104` — all five over |
-| 2026-08-31 | infra | the first `event: schedule` digest on a headSha ⊇ the 08-30 infra (b) commit logs `persist_state: pushed` and `relay notified:`, and no `dry run:` line | | not yet due |
-| 2026-09-01 | infra | first scheduled digest after 08-30: log `cron watch: window_days=3`, subject `(schedule run <id>)`, `Stages:` `ci …`/`cron …` or silent; inline filler `bd_tried` > 0 (448); a `tests.yml` run on another lane's commit: 10 jobs, verdicts on all | | not yet due |
+| 2026-09-01 | infra | `tests.yml` on ANOTHER lane's push: `mutation-gate (0)`..`(4)` all `success`, every shard's `timing    wall` under **1,800 s**; over that ⇒ add a matrix entry, never the budget | 2026-08-31 | FAIL, early. Run `33409190938`: walls **2096/2115/2154/2096/2218 s**, all five over; shard 3 killed at its 40-min budget (`rc 137`). Fixed 09-01: 8 shards, see the 09-02 row |
+| 2026-08-31 | infra | the first `event: schedule` digest on a headSha ⊇ the 08-30 infra (b) commit logs `persist_state: pushed` and `relay notified:`, and no `dry run:` line | 2026-09-01 | PASS - run `33494404810`: `persist_state: pushed 42 paths`, `relay notified: 9d00afaf7238`, `deliver: ... delivered -- 10 role(s)`; every `dry run:` hit is an echoed `if` body |
+| 2026-09-01 | infra | first scheduled digest after 08-30: log `cron watch: window_days=3`, subject `(schedule run <id>)`, `Stages:` `ci …`/`cron …` or silent; inline filler `bd_tried` > 0 (448); a `tests.yml` run on another lane's commit: 10 jobs, verdicts on all | 2026-09-01 | PASS on the stamps - run `33494404810`: `cron watch: window_days=3 ... dropped=0 late=0`, subject `(schedule run 33494404810)`, `ci: red_streak=0`. Two corrections to the claim: `bd_tried` is not a printed key (the filler says `Bright Data cap bound at 30`), and CI is **13** jobs not 10 - `33448520621` 13/13 |
+| 2026-09-02 | infra | **the quality judge has a token.** First `event: schedule` digest on a headSha ⊇ this commit: `enrich` stamp `matched_llm_unavailable=0`, `matched_llm_calls` > 0, no `jd-quality-unavailable` clause. `llm-no-token` = the secret is missing from some other step; `llm-auth` now means one was sent and refused | | |
+| 2026-09-02 | infra | **eight shards, all under the wall.** First `tests.yml` at or after this commit: `mutation-gate (0)`..`(7)` all `success`, **16 jobs** (was 13), every `timing    wall` under **1,800 s**, no `::warning::mutation shard walled`. That warning without a red shard = add a matrix entry, never the budget | | |
+| 2026-09-02 | infra | **the text is on Pages and the meta says so.** After the first digest on this commit: `curl -sI .../board/roles_text.jsonl` is `200` (same for `roles_archive.csv`), and the meta reads `description_text.published_on_pages: true` + `archive.published_on_pages: true`. Still `false` ⇒ the env names never reached `build_meta` (498) | | |
 | 2026-09-07 | infra | 7 mornings from 09-01: `Company intel:` backlog **median <= 10**, delta **<= 0 on >= 5 of 7**, `firmo` **left = 0, age <= 1** (`450`); `10:17` lag **< 180 min** (305) | | not yet due |
 | 2026-09-27 | registry | of rows stamped `zero-confirm 2026-08-28: confirmed`, **<=5%** have `health_baseline > 0`; above that, strip that run's verdicts | | |
 | 2026-09-01 | registry | **the `out/` fix works UNATTENDED and a disarmed key would say so** — shards >= 60, non-zero `s1/` urls, `ingested >= 60`, 4 `[bd-spend]` lines, `empty_search_share < 0.1`, no `drain_alarm` | 2026-09-01 | PARTIAL — mechanism PASSED, the two counts SHORT. Run `33449138828`: shards **15+14+14+15 = 58** and `ingested 58`, both short of 60, after `retire-settled: queue 414 -> 374` cut 40 names; **4 `[bd-spend]`** (18/18/16/17) and real `s1/` urls, so the key was ARMED and no FAIL shape fired. Stamp `searched_recently=229 empty_search_share=0.052 owed=0` |
@@ -61,11 +61,9 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-05 | registry | `registry_health.py --stale-boards` **<=17** (was 18; only HiBob repaired) (`391`); and on 09-28, `zero-confirm 2026-08-29: confirmed` rows **<=5%** with `health_baseline > 0` | | |
 | 2026-08-31 | registry | `deep rung: N of M dark rows` in the audit log; `audit_seen.json` in that day's state commit | — | not yet due until 2026-09-07 (`audit-coverage.yml` is `0 4 * * 0`; the first Sunday after the deep rung shipped is 09-06) |
 | 2026-09-11 | infra | re-measure the cache-shrink threshold from a fortnight of `cloud_state/persist_log.jsonl` (n=3 today; ARCHITECTURE §5d) | | not yet due |
-| 2026-08-30 | jd-text | the `enrich` stamp after both runs carries **`archive_ran` = 1** (the night survived the morning), **`scrape_thin_remaining` <= 760** and **`matched_llm_unavailable` = 0** | 2026-08-31 | FAIL — `matched_llm_unavailable=16` (`llm-auth9`, 08-30 16:55Z stamp): the LLM seam auth-refused on the runner (Open item 3), not a fetch failure; `archive_ran=1` and `scrape_thin_remaining=300` PASS |
 | 2026-09-02 | jd-text | first schedule digest ⊇ this commit: **`matched_llm_calls` > 0 and `matched_llm_unavailable` < `matched_llm_candidates`** (a Counter always PRINTS `matched_llm_refuted`, so its presence proves nothing — wave B); `techbiz global` not back at 6,000 soup chars; **Ballerine still 1,662, not 4,000** (both stores were repaired; the cache card is the thing that would hand it back); Prisma keeps Product-Analyst text | | |
 | 2026-09-02 | docs | **the escalation caught something rather than merely being green.** `git log --since=2026-08-30 -p -- HANDOFF.md` shows at least one row ANSWERED or re-dated with `until` by a lane other than `docs`. Zero in three days means the rule is being satisfied by not writing rows at all, which is the failure it replaced wearing a different coat | | not yet due |
 | 2026-08-31 | docs | **the session-start hook actually runs.** A session opened in this repo shows a `tree: N behind origin/master ...` line in its context before it reads `CLAUDE.md`. It is a hook in a committed `.claude/settings.json` and it CANNOT be tested from inside the session that writes it, so it ships under the same rule as any scheduled step: unverified until something nobody started produces the line. If it is absent, the schema or the Windows shell is wrong - `claude --debug` names it - and the fallback is `python docs/check_docs.py --tree`, which needs no hook | | not yet due |
-| 2026-08-31 | docs | **the three tree/row/unattended guards pass ON A RUNNER.** `gh run list -R AnalystJobsIL/pipeline --workflow tests.yml --limit 1 --json headSha,conclusion` shows this session's sha and `success`, and the run log carries the `CI checkout: shallow=... origin/master=... commits=...` line from `test_ci_itself_confirms_why_the_tree_check_cannot_run_there`. They passed on every laptop and failed on every push until now, which is the only reason `tests.yml` had this session's name on it | 2026-08-30 | PASS, early - `Unit guards` = **success** on runs 33293548117, 33294213125, 33294986316 and 33295877346 (all four cancelled LATER, at step 9). The runner reported `CI checkout: shallow='true' origin/master='61bbc99a' commits='1'`, which corrected the reason: origin/master IS the built commit, so `behind` is 0 by construction |
 | 2026-09-01 | company-intel | first unattended digest on a headSha ⊇ the `display_name` commit logs `display_names=71 (+0/-0) divergent=56 sectors_folded=0` (±drift) in step `firmo_drain` | | not yet due |
 | 2026-09-01 | company-intel | **a live role is never "cannot identify".** First unattended digest, headSha ⊇ this commit: `registry backlog 0` (a FLOOR — rows added overnight lift it); no BOARD company refused `model could not identify the name`, whose honest replacement is `unidentified despite role evidence`; `display_names=84` (was 71 before this commit's `Landa` + `Kidum`) | | not yet due |
 | 2026-09-02 | company-intel | **a transient no longer costs the research; the anchor makes the retry answerable.** `N transient, retried next run` never beside `claude unavailable after N blurbs calls (transient:`; `registry backlog` **<= 12**, delta **<= 0** | | not yet due |
@@ -74,18 +72,17 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-02 | roles | **the publish gate holds unattended.** First `event: schedule` digest on a headSha ⊇ this commit: **no published row has `description_quality` `snippet` or `none`**; `grep -c 'Manager Bi' docs/index.html` = **0**; `Roles:` carries `weak N (S structural, P pending)`; `reconciliation` holds with `pending_excluded`; the אסם fold logged ONCE (`superseded` 10⇒11) and never on 09-03 | | not yet due |
 | 2026-09-06 | docs | **the three checks are still meaningful SOMEWHERE.** They skip in CI by design (a depth-1 checkout has nothing to be behind), so the only place they fire is a lane's own pre-push run. Evidence they still do: `git log --since=2026-08-30 --grep='tree\|morning check\|unattended'` finds a session that hit one, or ask the orchestrator whether any lane was stopped by one. If nothing in a week, they are decoration and belong in `docs/BACKLOG.md` as such | | not yet due |
 
-## State at handoff — 2026-08-30 ~09:30 UTC, every number re-derived
+## State at handoff — 2026-09-01 ~17:00 UTC, every number re-derived
 
-Every cell below carries the command that re-derives it — the 08-27 table here was wrong
-in two cells; the command is what keeps this honest.
+Every cell carries the command that re-derives it; the 08-30 table was stale in all five.
 
 | | | how |
 |---|---|---|
-| registry | **2,045 rows · 1,099 active · 946 parked · 0 orphans** | `python check_invariants.py` (it prints 2,046: it counts the header) |
-| by tier | **525 native-ATS · 573 scrape · 1 discovery** | `python registry_health.py` |
-| intake queue | **557 owed of 572** (210 at 09:xx) | `python queue_state.py` |
-| last digest | **2026-08-29**, `scanned=1000`, **4 emailed** (no 05:00 slot has fired at 05:00 since 08-26) | `digests/latest.md` |
-| guards | **1,469 passed · 12 skipped · 0 failed** locally at `06f07cd` | `python -m pytest` (not `-q`) |
+| registry | **2,127+ rows · 1,132+ active · 0 orphans** | `python check_invariants.py` |
+| by tier | **556 native-ATS · 575 scrape · 1 discovery** | `python registry_health.py` |
+| intake queue | **37 OWED** (546 on 08-31; the drain runs now) | `python queue_state.py` |
+| last digest | **2026-09-01**, `scanned=1130`, **10 emailed** | `digests/latest.md` |
+| guards | **1,766 passed · 13 skipped · 0 failed** locally | `python -m pytest` (not `-q`) |
 
 **Green here is not green in CI**, and on a commit master has moved past. Each lane's line names its run.
 
@@ -93,10 +90,9 @@ in two cells; the command is what keeps this honest.
 
 0. **`python digest_watchdog.py` is still not installed** (`292@infra`, operator action) — the only tripwire off GitHub's scheduler; a dropped slot is otherwise just a `cron …` mail line.
 
-0b. **A patch script wrote a literal backslash-n into `daily-digest.yml` where a
-   continuation was meant** — syntactically valid (`bash -n` misses it), and it would have
-   broken every run, daily. Guard: `test_no_workflow_run_block_fakes_a_line_continuation`;
-   **read it before writing a patch script that emits YAML.**
+0b. **Before writing a patch script that emits YAML**, read
+   `test_no_workflow_run_block_fakes_a_line_continuation`: a literal backslash-n where a
+   continuation was meant is valid YAML, `bash -n` misses it, and it breaks every run.
 
 0. **Active rows with an all-time-high of ZERO — a COMMAND, not a number** (it has been wrong
    five times): `python confirm_zero.py --scrape-only` audits the pool and
@@ -157,3 +153,8 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-09-01 `jd-text`** — 8 published rows carried another role's text; 4 repaired through the rungs, in BOTH stores. Four guards over WHOSE posting a text is. Two waves found 10 defects in my own diff. CI `33521239034`: `guard`+`guard-kill` **success**, 1,796 passed; `rehearse (worst, seed 1)` red is INHERITED (`558@registry`). **NOT finished:** `535`, `550`-`554`. Record: `docs/sessions/2026-09-01-jd-text.md`.
 - **2026-09-01 `roles`** — the ruling reached the dataset only, and only structural blockers, so the board and mail published two pending weak rows and burned both in `sent`. One judge now gates csv+board+mail, with a `held_since` re-offer. Nestlé/אסם sat in NO evidence bucket. **157→154, every row `jd`.** **NOT finished:** `555`–`557`. Record: `docs/sessions/2026-09-01-roles.md`.
 - **2026-09-01 `registry`** — a parked NON-EMPLOYER on a declared alias string cancelled the roles fold (`522`): the veto is `name in registry_names`, any state. `Oak` renamed and retired; Landa's two rows are one (`538`); `526` five→TWO (a wave caught me reading the Israel-FILTERED cache as a board); Sisense repaired, Decart+Akamai parked. **NOT finished:** `546`-`548`, `558`, `559`. Record: `docs/sessions/2026-09-01-registry.md`.
+- **2026-09-01 `infra`** — the jd-quality judge 401'd three mornings: its step carried
+  no token while classify made 372 calls in the same job. An anchor test reddened under
+  every mutant, so its shard scored everything `killed` (`540` — really 79 of 86); all five
+  were past the wall. Fixed, plus `498`, `458`, `515`, caps pre-push. **NOT
+  finished:** the 09-02 row proves it; `546`-`548`. Record: `docs/sessions/2026-09-01-infra.md`.
