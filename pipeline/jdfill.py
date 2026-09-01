@@ -508,6 +508,9 @@ def _company_echoed(company, text):
         return bool(page_mentions_company(company, text))
 
 
+_CLI_CREDENTIALS = os.path.expanduser("~/.claude/.credentials.json")
+
+
 def _refusal_kind(kind):
     """`auth` split in two: was there a credential at all?
 
