@@ -508,6 +508,22 @@ def _company_echoed(company, text):
         return bool(page_mentions_company(company, text))
 
 
+def _refusal_kind(kind):
+    """`auth` split in two: was there a credential at all?
+
+    The seam reports 401 and 403 alike as `auth`, so for three mornings `llm-auth13` said
+    "the token was rejected" when the truth was that the step's env carried no token to
+    reject -- and the standing advice for `llm-auth` (re-mint it, HANDOFF Open item 3) could
+    never have fixed it. A rung that is configured-and-unusable already names itself that way
+    here (`JDFiller.unavailable` = `no-key`); this is the same distinction for the LLM rung.
+    `llm-auth` now means credentials WERE present and refused."""
+    if kind != "auth":
+        return kind
+    if os.environ.get("CLAUDE_CODE_OAUTH_TOKEN") or os.environ.get("ANTHROPIC_API_KEY"):
+        return "auth"
+    return "auth" if os.path.isdir(os.path.expanduser("~/.claude")) else "no-token"
+
+
 def jd_quality(text, title, company, *, model=None, timeout=None):
     """(is_complete, why) for one stored text, or (None, reason) when the model is unavailable.
 
@@ -523,7 +539,7 @@ def jd_quality(text, title, company, *, model=None, timeout=None):
                             model=model or JD_QUALITY_MODEL,
                             timeout=timeout or JD_QUALITY_TIMEOUT)
     except llm.LLMUnavailable as e:
-        return None, "llm-%s" % getattr(e, "kind", "transient")
+        return None, "llm-%s" % _refusal_kind(getattr(e, "kind", "transient"))
     except Exception:  # noqa: BLE001 - this tier may never take a driver down
         return None, "llm-error"
     # `.get` on whatever came back, INSIDE the guard: `call_meta` coerces a non-dict to None

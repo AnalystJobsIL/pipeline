@@ -158,6 +158,12 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           MATCHED_JD_TIME_BUDGET_MIN: "20"
+          # the jd-quality tier calls the Claude seam from THIS step. Without the token the
+          # CLI 401s on every candidate and the mail reads `no verdict: llm-auth13` while the
+          # classify step -- same secret, same job -- makes 372 successful calls (2026-08-30
+          # to 09-01, three mornings). The mirror of 448, which was this step's Bright Data
+          # keys. `test_every_llm_step_of_the_digest_carries_the_subscription_token` pins it.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: python enrich_matched_jd.py --db cloud_state/seen.db
         continue-on-error: true
 

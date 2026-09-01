@@ -19173,6 +19173,59 @@ def test_a_dead_jd_quality_tier_reaches_the_bold_stages_line(tmp_path, monkeypat
     assert "matched:jd-quality-unavailable(2 candidates, no verdict: llm-auth2)" in e["alarm"]
 
 
+def test_every_llm_step_of_the_digest_carries_the_subscription_token():
+    """A step that reaches the Claude seam without `CLAUDE_CODE_OAUTH_TOKEN` is a capability
+    that is installed, reached, and silently refused -- and the run stays green.
+
+    Measured 2026-08-30 to 09-01: the `enrich_matched` step's env carried the Bright Data keys
+    and no token, so the jd-quality tier 401'd on every candidate three mornings running
+    (`no verdict: llm-auth13`) while the classify step made 372 successful calls in the SAME
+    job with the SAME secret. `pipeline/secretsenv.py` returns "" on a runner by design, so
+    nothing else can arm it. This is 448 in the other direction -- that was this same step
+    missing BRIGHTDATA_*, and nobody checked the inverse.
+
+    The three ids are listed rather than derived: `enrich_scrape` and `stamp_enrich` IMPORT
+    `pipeline.jdfill` without ever calling the seam, so an import-transitivity test would
+    demand the token on steps that do not spend it."""
+    dd = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"), encoding="utf-8").read()
+    for sid in ("id: enrich_matched", "id: firmo_drain", "id: pipeline"):
+        step = dd.split(sid, 1)[1].split("      - name:", 1)[0]
+        assert "CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}" in step, (
+            "%s reaches pipeline.llm; without the token every call is an instant 401 and the "
+            "step is continue-on-error, so the morning reads as a success" % sid)
+
+
+def test_a_dead_seam_is_asked_once_and_the_rest_are_counted_under_the_same_reason():
+    """13 candidates bought 13 doomed CLI subprocesses on 2026-09-01, because nothing told the
+    loop that an outage answers every candidate the same way.
+
+    The breaker stops the CALLS, not the TALLY: the alarm counts candidates that got no
+    verdict, so the remaining ones are still counted, and under the SAME reason string -- a
+    distinct `llm-breaker` reason would render one outage as `llm-auth1+llm-breaker12`."""
+    import enrich_matched_jd as emj
+    import inspect
+    src = inspect.getsource(emj._quality_pass)
+    assert 'elif dead:' in src and 'c["why:" + dead] += 1' in src, \
+        "the breaker must tally the skipped candidates under the reason that killed the seam"
+    assert "llm-no-token" in emj._SEAM_IS_DOWN and "llm-auth" in emj._SEAM_IS_DOWN
+    assert not [k for k in emj._SEAM_IS_DOWN if "transient" in k], \
+        "one timed-out call says nothing about the next; a transient must not stop the run"
+
+
+def test_an_absent_token_is_not_a_rejected_one(monkeypatch):
+    """`llm-auth` told three mornings to re-mint a token that was never sent. The seam reports
+    401 and 403 alike as `auth`; only the caller can see whether there was a credential to
+    reject, and `JDFiller.unavailable = "no-key"` is the same distinction for the paid rung."""
+    from pipeline import jdfill
+    monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr(jdfill.os.path, "isdir", lambda p: False)
+    assert jdfill._refusal_kind("auth") == "no-token"
+    assert jdfill._refusal_kind("transient") == "transient", "only `auth` splits"
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "sk-x")
+    assert jdfill._refusal_kind("auth") == "auth", "a token that WAS sent and refused"
+
+
 def test_a_refused_reclean_reaches_the_mail_and_does_not_crash_the_driver(tmp_path, monkeypatch):
     """The loudest thing the layer can say raised `UnboundLocalError` instead of saying it:
     `alarms.append(...)` on the refused-re-clean path ran before `alarms` was bound twenty

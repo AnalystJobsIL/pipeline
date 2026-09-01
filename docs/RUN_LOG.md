@@ -83,10 +83,19 @@ Re-derive with `grep -rn "llm.call_json\|llm.call_meta\|llm.call(" --include=*.p
 | seam | model | effort | tools | override |
 |---|---|---|---|---|
 | `pipeline/seniority.py` — the classifier tier | sonnet | default `low` | none | `CLASSIFY_MODEL` |
+| `pipeline/jdfill.py` — the jd-quality judge (`enrich_matched_jd.py`) | `claude-sonnet-5`, **hardcoded** | default `low` | none | none for the model; `JD_QUALITY=0`, `JD_QUALITY_LLM_CAP`, `JD_QUALITY_TIME_BUDGET_MIN` |
 | `pipeline/firmographics.py` — research / blurb / employees | sonnet ×3 | `RESEARCH_EFFORT` | **web search, mandated** | `FIRMO_*_MODEL` |
 | `resolve_llm.py` — the registry's LLM rung | sonnet | default `low` | none | `LLM_RESOLVE_MODEL` |
 | `triage_dark.py` — the page judge | sonnet | default `low` | none | `TRIAGE_LLM_MODEL` |
 | `scrape_universal.py` — strategy 5 | sonnet | `low` | none | `SCRAPE_LLM_MODEL` |
+
+**A seam is only armed where its STEP is armed.** The jd-quality row above was missing from
+this table until 2026-09-01, and its step in `daily-digest.yml` was missing
+`CLAUDE_CODE_OAUTH_TOKEN` for three mornings — every call an instant 401 under
+`continue-on-error`, reported as `no verdict: llm-auth13` while classify made 372 calls in
+the same job. `test_every_llm_step_of_the_digest_carries_the_subscription_token` now pins the
+three steps that reach the seam (`enrich_matched`, `firmo_drain`, `pipeline`). A refusal with
+no credential present is `llm-no-token`; `llm-auth` means one was sent and rejected.
 
 **Two measurements other lanes paid for, worth not repeating:**
 

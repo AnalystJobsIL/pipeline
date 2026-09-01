@@ -270,6 +270,11 @@ _QUALITY_CONTRACT = hashlib.sha1(
     (jdfill._QUALITY_SYSTEM + jdfill._QUALITY_SCHEMA + jdfill.JD_QUALITY_MODEL)
     .encode("utf-8")).hexdigest()[:12]
 QUALITY_CAP = 60
+# Refusals that answer every candidate identically, so the first one settles the run. The
+# transient kinds are deliberately absent: one timed-out call says nothing about the next.
+# `pipeline/llm.py` treats the same three as first-strike for the classifier's breaker, and
+# `no-token` joins them because an env with no credential does not grow one mid-run.
+_SEAM_IS_DOWN = ("llm-auth", "llm-no-token", "llm-missing", "llm-drift")
 # The tier runs BEFORE the fetch loop and is not inside its budget, so it needs its own or it
 # spends the step timeout. Measured 2026-08-28: 7.8 s per uncached call, so the 60-call cap
 # alone is 7.8 minutes on top of the 20-minute fetch budget -- 27.8 against a 25-minute step.
@@ -364,6 +369,12 @@ def _quality_pass(conn, every, dry_run):
     t0 = time.time()
     c, incomplete, refuted = Counter(), set(), set()
     c["candidates"] = len(cand)
+    # The seam is dead for the whole run or it is not: an outage answers every candidate the
+    # same way. Before this, 13 candidates bought 13 doomed CLI subprocesses on a step whose
+    # env had no token (2026-09-01). The remaining candidates are still TALLIED under the same
+    # reason -- the alarm counts candidates that got no verdict, not calls attempted, and a
+    # second reason string here would render `llm-auth1+llm-breaker12` for one outage.
+    dead = ""
     for r, why in cand:
         body = jd_body(r[6])
         # The key carries the PROMPT it was judged under, not just the text. Editing the
@@ -377,6 +388,10 @@ def _quality_pass(conn, every, dry_run):
         if key in cache:
             c["cached"] += 1
             ok = bool(cache[key])
+        elif dead:
+            c["unavailable"] += 1
+            c["why:" + dead] += 1
+            continue                       # the seam is down; the cheap rule stands
         elif c["calls"] >= cap or (time.time() - t0) / 60 > budget:
             c["capped"] += 1
             continue                       # no verdict is not a demotion
@@ -387,6 +402,12 @@ def _quality_pass(conn, every, dry_run):
             if ok is None:
                 c["unavailable"] += 1
                 c["why:" + str(verdict)] += 1
+                if str(verdict) in _SEAM_IS_DOWN:
+                    dead = str(verdict)
+                    print("  jd-quality: %s -- the tier is unavailable for the rest of this "
+                          "run; the cheap rules stand" % dead, flush=True)
+                else:
+                    print("  jd-quality: no verdict (%s)" % verdict, flush=True)
                 continue                   # the cheap rule stands
             if not dry_run:
                 conn.execute("INSERT INTO llm_cache (title_key, verdict, updated) "
