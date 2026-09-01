@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**612 filed · 442 open · 170 closed · 8 half · 40 numbers name more than one item · 0 items name no lane.**
+**613 filed · 443 open · 170 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 560.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 563.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -91,8 +91,6 @@ closure convention in the header.
 | 446 | `446@classifier` **open** · `446@docs` closed |
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
-| 546 | `546@scraper` **open** · `546@infra` **open** |
-| 547 | `547@infra` **open** · `547@infra` **open** |
 
 ### registry — 150 open
 
@@ -355,9 +353,9 @@ closure convention in the header.
 - **491** `491@infra` **The drain's capacity lives in `listing-hunt.yml` and is below intake; four workflow diffs**
 - **494** `494@infra` **`daily-digest.yml:101` still pins `SECRETHUNTER_QUEUE_CAP: "150"`, a per-RUN number that
 - **515** `515@infra` **A cron commit carries `[skip ci]`, so a row a cron corrupts is only ever caught on
-- **546** `546@infra` **`s_company_dict` rescues a key the origin deleted, exactly as `merge_json_cache` did
 - **547** `547@infra` **The 06:00 self-heal reads a `stale.json` the digest has not written yet, so a board
-- **547** `547@infra` **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
+- **560** `560@infra` **`458`'s one line changed the deletion semantics of thirteen state files, not two —
+- **561** `561@infra` **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
 
 ### discovery — 29 open
 
@@ -476,7 +474,7 @@ closure convention in the header.
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 
-### company-intel — 21 open
+### company-intel — 22 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -498,8 +496,8 @@ closure convention in the header.
 - **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 - **506** `506@company-intel` **OPERATOR DECISION
 - **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
-- **548** `548@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 - **550** `550@company-intel` **The board shows `Holisto` for a company that now calls itself trivago Innovation
+- **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 
 ### ats-fetch — 20 open
 
@@ -8675,7 +8673,7 @@ Record: `docs/sessions/2026-08-29-registry-queue.md`.
     touch stands. `test_the_merge_does_not_resurrect_a_key_the_origin_retired` pins all
     three arms (origin retired it · we wrote it · origin is empty). The closing observation
     — `s_company_dict` carries the same asymmetry for the `cloud_state/*.json` files — is
-    still true and is now `546`. The original report follows.
+    still true and is now `560`. The original report follows.
     Lane: `infra`, measured 2026-08-30 by `registry`.
 
     `persist_state.py:344` routes `research_companies.json` through `_keyed_list(_name_key)`,
@@ -9314,7 +9312,7 @@ Measured with two tracing plugins over all 1,496 tests in three orders;
      so `build_meta` says `published_on_pages` instead of pointing at raw.githubusercontent.
      The unattended proof is the 09-02 morning-check row — until it answers, nothing here is
      proven. The wave-B half (`run_gates` has no `.csv` shape gate; `PAIRED` could name the
-     trio) is NOT done and is `547`. The original report follows.
+     trio) is NOT done and is `561`. The original report follows.
      Lane: `infra`. Filed by
      `roles` 2026-08-30. The meta names both by `raw_url` so nothing overstates; to put them
      beside the board add the two names to the publish step's optional-file loop in
@@ -10406,7 +10404,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      names any future catalogue anchor that lacks the skip (it resolves same-file helpers,
      because `test_registry.py` does its counting in one). **Re-verified by running the whole
      catalogue against the fixed tree: 86 records, 79 killed, 7 SURVIVING** — the seven the
-     anchor had been reporting as `killed` are now named and filed as `548@company-intel`,
+     anchor had been reporting as `killed` are now named and filed as `562@company-intel`,
      which is the point of the fix and the reason a shard count was not evidence. **Rejected the `_STATIC_MARKERS` route on
      measurement**: 45 currently-`direct` tests would reclassify as `static` (most read YAML
      or Markdown, not the mutated module), every record killed solely by one of them would
@@ -10753,7 +10751,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      four names above under `registry_health.py --explain`.
 ## From the `infra` lane, 2026-09-01
 
-546. **`458`'s one line changed the deletion semantics of thirteen state files, not two —
+560. **`458`'s one line changed the deletion semantics of thirteen state files, not two —
      measure what it did** — lane: `infra`, filed 2026-09-01 by the session that applied
      `458`, after an adversarial pass corrected this entry's first draft. **The first draft
      said the fix "is NOT the same function" and that a deletion in those files "is only as
@@ -10775,7 +10773,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      cache of 2,000 scrape rows as well as for a 400-name queue. Until someone does that,
      the threshold is one number borrowed from another file's guard.
 
-547. **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
+561. **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
      lane: `infra`, filed by `roles` (wave B) and deferred while `498` landed.
      `persist_state.py:434-449` has arms for `.json`/`.jsonl`, `.db`, `.md` and `.html`, and
      `companies.csv` delegates to `check_invariants.py` — every other `.csv` falls through
@@ -10801,7 +10799,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      receipt, the way `last_delivered.json` is one for the digest), not for the pipeline step
      to predict it.
 
-548. **Seven company-intel mutations survive the whole suite, and the anchor test was
+562. **Seven company-intel mutations survive the whole suite, and the anchor test was
      reporting all seven as `killed`** — lane: `company-intel`, measured by `infra` on
      2026-09-01 immediately after closing `540`. With the anchor standing down, the full
      catalogue re-ran against the fixed tree: **86 records, 79 killed, 7 SURVIVING, 18
