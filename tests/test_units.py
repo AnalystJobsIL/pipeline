@@ -7468,6 +7468,68 @@ def _mutate_module_for_tests():
     return mod
 
 
+def test_every_catalogue_anchor_test_stands_down_inside_a_mutant():
+    """An anchor test asserts that each mutation record's `find` still occurs in its file.
+    Apply any mutant and that string is gone by construction, so the anchor goes red under
+    EVERY mutant of that catalogue -- and `tools/mutate.py` scores each one `killed`, by the
+    one test whose job is to notice the catalogue drifting rather than by anything that
+    exercises the code. The shard's number then means nothing.
+
+    Measured 2026-08-31 (BACKLOG 540): `ci-cached-board-titles-never-read` reported
+    `killed / test_every_company_intel_mutat (direct)` -- `direct`, not `static`, because
+    `mutate._classify_killer`'s `_STATIC_MARKERS` looks for `inspect.getsource` / `ast.parse`
+    / `ast.walk` and this anchor reads its file with `open(...).read()`. With the anchor
+    deselected the same mutant SURVIVED the whole suite (`176 passed, 1 deselected`). What it
+    hid: `_cached_board_titles`'s call site had no behavioural guard at all.
+
+    The escape already existed for one catalogue and not the other, which is why this is a
+    rule and not a second fix. Every anchor stands down under `AJIL_MUTANT` (set by
+    `tools/mutate.py` and `tools/guard_kill.py`) so the mutant is judged by behaviour or
+    honestly survives.
+
+    Rejected, with the number: teaching `_STATIC_MARKERS` about `open().read()` instead --
+    45 currently-`direct` tests would reclassify as `static` (most read YAML or Markdown, not
+    the mutated module), every record killed solely by one of them would flip from `killed`
+    to FAIL, and a static-only kill stops short-circuiting the subset, adding a full-suite run
+    per record to a gate already over its wall budget."""
+    import ast
+    if os.environ.get("AJIL_MUTANT"):
+        # this test reads test files, which guard-kill does not revert and mutate does not
+        # mutate: inside a mutant it can only ever pass, so it stands down with the rest
+        pytest.skip("the mutant's source is intentionally not HEAD's")
+    def _anchors(src):
+        """(name -> body) for every function that reads a catalogue and counts a `find`."""
+        out = {}
+        for fn in [n for n in ast.walk(ast.parse(src)) if isinstance(n, ast.FunctionDef)]:
+            body = ast.unparse(fn)
+            if "mutations.json" in body and ".count(" in body \
+                    and "'find'" in body.replace('"find"', "'find'"):
+                out[fn.name] = body
+        return out
+
+    unguarded = []
+    for path in sorted(glob.glob(os.path.join(_REPO, "tests", "test_*.py"))):
+        src = open(path, encoding="utf-8").read()
+        anchors = _anchors(src)
+        for fn in [n for n in ast.walk(ast.parse(src)) if isinstance(n, ast.FunctionDef)]:
+            if not fn.name.startswith("test_"):
+                continue                   # a helper is covered by the test that calls it
+            body = ast.unparse(fn)
+            # the counting may sit in a same-file helper (test_registry.py does exactly that),
+            # so a test anchors the catalogue if its own body counts or it calls one that does
+            reached = dict(anchors)
+            reached.pop(fn.name, None)
+            if not (fn.name in anchors or any(h + "(" in body for h in reached)):
+                continue
+            if "AJIL_MUTANT" not in body:
+                unguarded.append("%s::%s" % (os.path.basename(path), fn.name))
+    assert not unguarded, (
+        "catalogue anchor test(s) with no AJIL_MUTANT stand-down: %s. Each one reddens under "
+        "every mutant of its catalogue and scores it `killed` without exercising a line of "
+        "the code (BACKLOG 540). Copy the three-line skip from "
+        "tests/test_registry.py::test_no_mutation_record_goes_stale_unnoticed." % unguarded)
+
+
 def test_the_mutation_shards_partition_the_whole_catalogue():
     """The mutation gate is sharded across a matrix, and a shard split that quietly stops
     covering a record is the exact silent-exclusion shape this repo keeps paying for: every

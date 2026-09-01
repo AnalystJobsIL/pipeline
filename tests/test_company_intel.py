@@ -943,6 +943,16 @@ def test_every_company_intel_mutation_still_aims_at_real_code():
     more died when the seam migrated — and nobody noticed, because tests.yml runs
     `python tools/mutate.py --all` whose DEFAULT catalogue is tests/mutations.json, so this
     catalogue is in no CI path at all. This test is that CI path, at zero cost."""
+    if os.environ.get("AJIL_MUTANT"):
+        # Inside `tools/mutate.py`'s mutant copy the source is deliberately NOT HEAD's, so
+        # the record whose `find` was just replaced always reads as stale and this test goes
+        # red under EVERY mutant -- scoring each one `killed` by the test whose only job is
+        # to notice that the catalogue drifted (BACKLOG 540). Measured 2026-08-31:
+        # `ci-cached-board-titles-never-read` reported `killed / test_every_company_intel_
+        # mutat (direct)`, and with this test deselected the same mutant SURVIVED the whole
+        # suite. `tests/test_registry.py::test_no_mutation_record_goes_stale_unnoticed`
+        # carries the same guard for the other catalogue.
+        pytest.skip("the mutant's source is intentionally not HEAD's")
     cat = json.load(open("tests/fixtures/company_intel/mutations.json", encoding="utf-8"))
     assert len(cat) >= 30, "the catalogue lost records"
     assert len({m["id"] for m in cat}) == len(cat), "duplicate mutation id"
