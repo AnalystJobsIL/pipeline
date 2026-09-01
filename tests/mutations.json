@@ -2632,13 +2632,13 @@
   "must_be_killed_by_behavioural": true
  },
  {
-  "id": "pane-denial-swallows-absence",
+  "id": "pane-denial-needs-a-comparable-title",
   "file": "pipeline/jdfill.py",
   "symbol": "_pane_denies_role",
-  "class": "M2-gate-inversion",
-  "find": "    decl = _named_words(declaration)\n    t_words = _named_words(title)\n    if not decl or not t_words:\n        return False",
-  "replace": "    decl = _named_words(declaration)\n    t_words = _named_words(title)\n    if not t_words:\n        return False",
-  "why": "Refusing what we merely failed to CONFIRM is the inversion this function exists to avoid: an absent declaration and a cross-alphabet one both share zero words with our title without contradicting it. Drop the two guards and every pane that declares nothing, plus every Hebrew posting under a Latin title, is refused as a wrong role -- on a board that is half Hebrew. Killed by test_the_pane_gate_never_denies_across_two_alphabets_or_on_an_unanswerable_title.",
+  "class": "M4-guard-removal",
+  "find": "    if not (decl - _named_words(company)):\n        return False",
+  "replace": "    if False:\n        return False",
+  "why": "Re-aimed 2026-09-01 after an adversarial wave proved the original record EQUIVALENT: it deleted `if not decl` and the whole-declaration `_scripts` test, both of which the bilingual fix made redundant (an empty or cross-alphabet declaration is emptied by the per-word script filter and caught by the clause below) -- 0 behavioural differences over the gate's own 9 cases, so no test could ever kill it. THIS is the load-bearing guard: after the declaration is filtered to the title's alphabet, something in it must still be capable of BEING a title. Drop it and a bilingual pane whose Latin half is only the employer's name -- `'אנליסט/ית נתונים … Bank Leumi'` vs `Data Analyst` -- is denied for being written in Hebrew. Killed by test_the_pane_gate_reads_only_the_alphabet_the_title_is_written_in.",
   "must_be_killed_by_behavioural": true
  },
  {
