@@ -19237,6 +19237,32 @@
    "url": "https://www.neteera.com/careers/"
   }
  ],
+ "Netoplay": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Netoplay",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.netoplay.ltd/jobs/senior-php-developer",
+   "location": "Haifa, Israel",
+   "posted_date": "",
+   "title": "Senior PHP Developer",
+   "url": "https://www.netoplay.ltd/jobs/senior-php-developer"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Netoplay",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.netoplay.ltd/jobs/php-developer",
+   "location": "Haifa, Israel",
+   "posted_date": "",
+   "title": "PHP Developer",
+   "url": "https://www.netoplay.ltd/jobs/php-developer"
+  }
+ ],
  "Nexar Inc.": [
   {
    "_jd_attempted": "2026-08-30",
