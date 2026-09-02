@@ -2900,5 +2900,15 @@
   "replace": "                if len(live) == 1 and all((rows.get(gkeys[i]) or {}).get(\"superseded_by\")\n                                          == gkeys[live[0]] for i in done):",
   "why": "two folds on different days make a chain - A folded into B in August, B into C in September, and today only A and C are fetched. A direct `superseded_by == the survivor` test leaves A in `merged`, so both keys are upserted and the seen-id collision alarm fires for ever: the defect this branch exists to remove, one fold later. Killed by test_a_supersede_chain_reaches_the_survivor_of_a_twin_group.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "retraction-seen-id-fallback-deleted",
+  "file": "pipeline/roles.py",
+  "symbol": "match_all",
+  "class": "M6-fallback-removal",
+  "find": "                or (sid_keys & e[\"_urls\"]\n                    and not e.get(\"_owned\") and not e.get(\"role_id\"))]",
+  "replace": "                or False]",
+  "why": "the id arm is NARROWED by 545, never deleted: a posting whose record has since been re-keyed - a re-scrape that moved the card to a new address - is named by nothing except the `seen_id` that remembers where we fetched it, and the retraction would silently stop catching it. `tools/guard_kill.py` named the preservation test CANNOT-FAIL without this record, which is the honest reading: a test that asserts UNCHANGED behaviour is verified by a mutation, not by a revert. Killed by test_a_retraction_no_record_owns_still_matches_by_its_seen_id.",
+  "must_be_killed_by_behavioural": true
  }
 ]

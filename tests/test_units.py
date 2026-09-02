@@ -28092,7 +28092,10 @@ def test_a_retraction_no_record_owns_still_matches_by_its_seen_id():
     """The fallback is kept, not deleted: a posting whose record has since been re-keyed —
     a re-scrape that moved the card to a new address — is named by nothing except the
     `seen_id` that remembers where we fetched it. Narrowing the arm to "only when no record
-    owns the address" leaves exactly that case working."""
+    owns the address" leaves exactly that case working. It asserts behaviour this session
+    did NOT change, so a revert cannot make it fail and `tools/guard_kill.py` correctly
+    called it CANNOT-FAIL; a mutation is what verifies a preservation test.
+    Kills `retraction-seen-id-fallback-deleted`."""
     from pipeline import roles
     old_addr = "https://acme.example/jobs/9"
     rec = {"role_id": "acme|data analyst", "company": "Acme", "title": "Data Analyst",
