@@ -1650,12 +1650,6 @@
   "slug": "highland-europe"
  },
  {
-  "name": "Hilan",
-  "careers_url": "https://secrethunter.io/companies/hilan",
-  "ats": "unknown",
-  "slug": "hilan"
- },
- {
   "name": "Hillcrest Labs",
   "careers_url": "https://secrethunter.io/companies/hillcrest-labs",
   "ats": "unknown",
@@ -2112,12 +2106,6 @@
   "slug": "mprest"
  },
  {
-  "name": "Consist Group",
-  "careers_url": "https://il.indeed.com/viewjob?jk=30335138aab66d90",
-  "ats": "unknown",
-  "slug": ""
- },
- {
   "name": "KPMG",
   "careers_url": "https://il.indeed.com/viewjob?jk=3c61fe07431ca9a8",
   "ats": "unknown",
@@ -2172,18 +2160,6 @@
   "slug": "headline-asia"
  },
  {
-  "name": "Nextage Ltd",
-  "careers_url": "https://secrethunter.io/companies/nextage-ltd-",
-  "ats": "unknown",
-  "slug": "nextage-ltd"
- },
- {
-  "name": "Ngsoft Ltd",
-  "careers_url": "https://secrethunter.io/companies/ngsoft-ltd.",
-  "ats": "unknown",
-  "slug": "ngsoft-ltd"
- },
- {
   "name": "Nice Systems",
   "careers_url": "https://secrethunter.io/companies/nice-systems",
   "ats": "unknown",
@@ -2232,12 +2208,6 @@
   "slug": "no-any-company"
  },
  {
-  "name": "Nofarenergy",
-  "careers_url": "https://secrethunter.io/companies/nofarenergy",
-  "ats": "unknown",
-  "slug": "nofarenergy"
- },
- {
   "name": "Noff Oren Ben Ami Co",
   "careers_url": "https://secrethunter.io/companies/noff-oren-ben-ami-co",
   "ats": "unknown",
@@ -2266,12 +2236,6 @@
   "careers_url": "https://secrethunter.io/companies/novartis-pharma-schweiz",
   "ats": "unknown",
   "slug": "novartis-pharma-schweiz"
- },
- {
-  "name": "Novee Security",
-  "careers_url": "https://secrethunter.io/companies/novee-security",
-  "ats": "unknown",
-  "slug": "novee-security"
  },
  {
   "name": "Novelsat Ayecka",
@@ -2328,9 +2292,495 @@
   "slug": ""
  },
  {
-  "name": "Scytale",
-  "careers_url": "https://secrethunter.io/jobz/e2caf7a5cf",
+  "name": "Nespresso",
+  "careers_url": "https://il.indeed.com/viewjob?jk=32333a51992948e7",
   "ats": "unknown",
   "slug": ""
+ },
+ {
+  "name": "Partnerize",
+  "careers_url": "https://il.indeed.com/viewjob?jk=3c1cdf6fb58d73cb",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Majestic Labs",
+  "careers_url": "https://il.indeed.com/viewjob?jk=c0b7d870a234c674",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Viber",
+  "careers_url": "https://il.indeed.com/viewjob?jk=57136012488a2ccf",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "NVIDIA AI",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-business-intelligence-analyst-at-nvidia-ai-4459541987",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Nativ Ishi",
+  "careers_url": "https://il.linkedin.com/jobs/view/financial-planning-analyst-at-nativ-ishi-4459503887",
+  "ats": "unknown",
+  "slug": "nativ-ishi"
+ },
+ {
+  "name": "Nestlé Nespresso SA",
+  "careers_url": "https://il.linkedin.com/jobs/view/data-analyst-%D7%9C%D7%9E%D7%97%D7%9C%D7%A7%D7%AA-%D7%94%D7%A9%D7%99%D7%95%D7%95%D7%A7-%D7%97%D7%91%D7%A8%D7%AA-%D7%A0%D7%A1%D7%A4%D7%A8%D7%A1%D7%95-at-nestl%C3%A9-nespresso-sa-4461795616",
+  "ats": "unknown",
+  "slug": "nestl-nespresso"
+ },
+ {
+  "name": "Meidata",
+  "careers_url": "https://il.linkedin.com/jobs/view/research-analyst-at-meidata-4459517474",
+  "ats": "unknown",
+  "slug": "meidata"
+ },
+ {
+  "name": "SkyGini",
+  "careers_url": "https://il.linkedin.com/jobs/view/performance-growth-manager-at-skygini-4459297452",
+  "ats": "unknown",
+  "slug": "skygini"
+ },
+ {
+  "name": "Action Item Solutions",
+  "careers_url": "https://il.linkedin.com/jobs/view/data-engineer-at-action-item-solutions-4460959612",
+  "ats": "unknown",
+  "slug": "action-item-software-ltd-"
+ },
+ {
+  "name": "Roojoom",
+  "careers_url": "https://il.linkedin.com/jobs/view/d2c-growth-manager-at-roojoom-4459539448",
+  "ats": "unknown",
+  "slug": "roojoom"
+ },
+ {
+  "name": "CONTROP Precision Technologies Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/pmo-at-controp-precision-technologies-ltd-4459728947",
+  "ats": "unknown",
+  "slug": "controp-precision-technology-ltd."
+ },
+ {
+  "name": "Clal Insurance & Finance- כלל ביטוח ופיננסים",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%90%D7%A0%D7%9C%D7%99%D7%A1%D7%98-%D7%99%D7%AA-%D7%90%D7%A9%D7%A8%D7%90%D7%99-at-clal-insurance-finance-%D7%9B%D7%9C%D7%9C-%D7%91%D7%99%D7%98%D7%95%D7%97-%D7%95%D7%A4%D7%99%D7%A0%D7%A0%D7%A1%D7%99%D7%9D-4461087109",
+  "ats": "unknown",
+  "slug": "clal-insurance-"
+ },
+ {
+  "name": "Speedata.io",
+  "careers_url": "https://il.linkedin.com/jobs/view/software-engineer-at-speedata-io-4461556660",
+  "ats": "unknown",
+  "slug": "speedataio"
+ },
+ {
+  "name": "Mindspace Poland",
+  "careers_url": "https://il.linkedin.com/jobs/view/director-of-fp-a-at-mindspace-poland-4461723822",
+  "ats": "unknown",
+  "slug": "mindspace-poland"
+ },
+ {
+  "name": "R2Net Inc",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-r2net-inc-4448100080",
+  "ats": "unknown",
+  "slug": "r2net-inc"
+ },
+ {
+  "name": "Lama AI",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-operations-manager-at-lama-ai-4460025507",
+  "ats": "unknown",
+  "slug": "lamaai"
+ },
+ {
+  "name": "Solid (AI Powered by Data)",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-solid-ai-powered-by-data-4461579966",
+  "ats": "unknown",
+  "slug": "getsolid"
+ },
+ {
+  "name": "Warner Music Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/forward-deployed-engineer-data-ai-at-warner-music-group-4452088742",
+  "ats": "unknown",
+  "slug": "warner-music-group"
+ },
+ {
+  "name": "Apester",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-apester-4457738960",
+  "ats": "unknown",
+  "slug": "apester"
+ },
+ {
+  "name": "NATASHA DENONA IL",
+  "careers_url": "https://il.linkedin.com/jobs/view/planning-specialist-at-natasha-denona-il-4461066954",
+  "ats": "unknown",
+  "slug": "natasha-denona-il"
+ },
+ {
+  "name": "YIT - Yedioth Tech",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-yit-yedioth-tech-4459676157",
+  "ats": "unknown",
+  "slug": "yit---yedioth-information-technology"
+ },
+ {
+  "name": "Applied Spectral Imaging (ASI) | a ZYTOMICS company",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-applied-spectral-imaging-asi-a-zytomics-company-4458894863",
+  "ats": "unknown",
+  "slug": "appliedspectralimaging"
+ },
+ {
+  "name": "Strauss Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/risk-analyst-at-strauss-group-4457255393",
+  "ats": "unknown",
+  "slug": "strauss-group"
+ },
+ {
+  "name": "Metriko",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-marketing-associate-ai-native-retail-at-metriko-4457298393",
+  "ats": "unknown",
+  "slug": "https-www.linkedin.com-company-34970857"
+ },
+ {
+  "name": "galitechOnline",
+  "careers_url": "https://il.linkedin.com/jobs/view/project-manager-salesforce-at-galitechonline-4459923619",
+  "ats": "unknown",
+  "slug": "galitechonline"
+ },
+ {
+  "name": "OnTarget Communications",
+  "careers_url": "https://il.linkedin.com/jobs/view/semiconductor-product-engineer-at-ontarget-communications-4461070871",
+  "ats": "unknown",
+  "slug": "ontarget-communications_2"
+ },
+ {
+  "name": "OurCrowd",
+  "careers_url": "https://il.linkedin.com/jobs/view/full-stack-developer-at-ourcrowd-4462088639",
+  "ats": "unknown",
+  "slug": "ourcrowd-llc"
+ },
+ {
+  "name": "Experda.com",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-sql-database-administrator-at-experda-com-4434280474",
+  "ats": "unknown",
+  "slug": "experda-com"
+ },
+ {
+  "name": "NGsoft",
+  "careers_url": "https://il.linkedin.com/jobs/view/data-ops-team-lead-at-ngsoft-4459914410",
+  "ats": "unknown",
+  "slug": "ngsoft-ltd."
+ },
+ {
+  "name": "ManpowerGroup",
+  "careers_url": "https://il.linkedin.com/jobs/view/economist-243329-at-manpowergroup-4462105948",
+  "ats": "unknown",
+  "slug": "manpowergroup"
+ },
+ {
+  "name": "Econergy Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/financial-modeller-at-econergy-ltd-4460608948",
+  "ats": "unknown",
+  "slug": "econergy-ltd"
+ },
+ {
+  "name": "Samsung Semiconductor",
+  "careers_url": "https://il.linkedin.com/jobs/view/machine-learning-engineer-at-samsung-semiconductor-4434983896",
+  "ats": "unknown",
+  "slug": "samsungsemiconductor"
+ },
+ {
+  "name": "JNS (Jerusalem News Syndicate)",
+  "careers_url": "https://il.linkedin.com/jobs/view/director-of-growth-marketing-at-jns-jerusalem-news-syndicate-4459666188",
+  "ats": "unknown",
+  "slug": "jns-org"
+ },
+ {
+  "name": "NTU International A/S",
+  "careers_url": "https://il.linkedin.com/jobs/view/transport-experts-at-ntu-international-a-s-4461065114",
+  "ats": "unknown",
+  "slug": "ntu-international"
+ },
+ {
+  "name": "HUNTHEAD",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%97%D7%A9%D7%91-%D7%AA-%D7%9E%D7%A9%D7%A8%D7%94-%D7%94%D7%AA%D7%97%D7%9C%D7%AA%D7%99%D7%AA-at-hunthead-4459776596",
+  "ats": "unknown",
+  "slug": "hunthead"
+ },
+ {
+  "name": "Taplix",
+  "careers_url": "https://il.linkedin.com/jobs/view/media-buyer-high-scale-performance-at-taplix-4461740307",
+  "ats": "unknown",
+  "slug": "taplix"
+ },
+ {
+  "name": "Tamir Fishman",
+  "careers_url": "https://il.linkedin.com/jobs/view/portfolio-manager-%E2%80%93-mutual-funds-at-tamir-fishman-4459518866",
+  "ats": "unknown",
+  "slug": "tamir-fishman"
+ },
+ {
+  "name": "Mobile Group Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/algorithm-developer-at-mobile-group-ltd-4460929966",
+  "ats": "unknown",
+  "slug": "mobile-group-ltd"
+ },
+ {
+  "name": "NBN Connect",
+  "careers_url": "https://il.linkedin.com/jobs/view/computer-vision-engineer-at-nbn-connect-4459848203",
+  "ats": "unknown",
+  "slug": "nbn-connect"
+ },
+ {
+  "name": "Clalit Innovation",
+  "careers_url": "https://il.linkedin.com/jobs/view/software-engineer-at-clalit-innovation-4458832568",
+  "ats": "unknown",
+  "slug": "clalit-innovation"
+ },
+ {
+  "name": "ClaroAI - Fluent English, Instantly",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-ai-engineer-at-claroai-fluent-english-instantly-4458841868",
+  "ats": "unknown",
+  "slug": "claroai"
+ },
+ {
+  "name": "Protalix Biotherapeutics",
+  "careers_url": "https://il.linkedin.com/jobs/view/qc-biochemistry-analyst-jb-69-at-protalix-biotherapeutics-4459926076",
+  "ats": "unknown",
+  "slug": "protalix-biotherapeutics"
+ },
+ {
+  "name": "Level App",
+  "careers_url": "https://il.linkedin.com/jobs/view/digital-marketing-specialist-at-level-app-4458829422",
+  "ats": "unknown",
+  "slug": "levelapptech"
+ },
+ {
+  "name": "morning by Green Invoice",
+  "careers_url": "https://il.linkedin.com/jobs/view/head-of-revenue-growth-marketing-at-morning-by-green-invoice-4461788836",
+  "ats": "unknown",
+  "slug": "greeninvoice"
+ },
+ {
+  "name": "Oriient",
+  "careers_url": "https://il.linkedin.com/jobs/view/marketing-manager-at-oriient-4459937241",
+  "ats": "unknown",
+  "slug": "oriient"
+ },
+ {
+  "name": "ELAD HR",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%A0%D7%94%D7%9C-%D7%AA-%D7%A9%D7%99%D7%95%D7%95%D7%A7-%D7%95%D7%9E%D7%9B%D7%99%D7%A8%D7%95%D7%AA-%D7%A0%D7%93%D7%9C-%D7%9F-real-estate-sales-marketing-manager-at-elad-hr-4457928167",
+  "ats": "unknown",
+  "slug": "elad-hr"
+ },
+ {
+  "name": "McCann TLV",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-advertising-manager-at-mccann-tlv-4459921821",
+  "ats": "unknown",
+  "slug": "mccann-erickson-israel"
+ },
+ {
+  "name": "WellyBox",
+  "careers_url": "https://il.linkedin.com/jobs/view/marketing-manager-at-wellybox-4457247324",
+  "ats": "unknown",
+  "slug": "wellybox"
+ },
+ {
+  "name": "Zoomd Technologies (TSXV:ZOMD) (OTC: ZMDTF)",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-account-manager-at-zoomd-technologies-tsxv-zomd-otc-zmdtf-4460945610",
+  "ats": "unknown",
+  "slug": "zoomd-com"
+ },
+ {
+  "name": "Bishvil Hazahav",
+  "careers_url": "https://il.linkedin.com/jobs/view/digital-marketing-manager-at-bishvil-hazahav-4363189740",
+  "ats": "unknown",
+  "slug": "bishvil-hazahav"
+ },
+ {
+  "name": "Keren Hayesod - UIA",
+  "careers_url": "https://il.linkedin.com/jobs/view/latin-america-spain-portugal-marketing-coordinator-at-keren-hayesod-uia-4459926422",
+  "ats": "unknown",
+  "slug": "keren-hayesod-uia"
+ },
+ {
+  "name": "C.R.G Electronics",
+  "careers_url": "https://il.linkedin.com/jobs/view/sales-business-operations-at-c-r-g-electronics-4459922824",
+  "ats": "unknown",
+  "slug": "c-r-g-electronics"
+ },
+ {
+  "name": "pigment creative house",
+  "careers_url": "https://il.linkedin.com/jobs/view/social-media-creative-manager-at-pigment-creative-house-4458850919",
+  "ats": "unknown",
+  "slug": "pigment-creative-house"
+ },
+ {
+  "name": "Ocean Email Security",
+  "careers_url": "https://secrethunter.io/companies/ocean-email-security",
+  "ats": "unknown",
+  "slug": "ocean-email-security"
+ },
+ {
+  "name": "Ocean Relocation",
+  "careers_url": "https://secrethunter.io/companies/ocean-relocation",
+  "ats": "unknown",
+  "slug": "ocean-relocation"
+ },
+ {
+  "name": "Oferavnir",
+  "careers_url": "https://secrethunter.io/companies/oferavnir",
+  "ats": "unknown",
+  "slug": "oferavnir"
+ },
+ {
+  "name": "Ofir Oni Co",
+  "careers_url": "https://secrethunter.io/companies/ofir-oni-co",
+  "ats": "unknown",
+  "slug": "ofir-oni-co"
+ },
+ {
+  "name": "Ogen Dpo",
+  "careers_url": "https://secrethunter.io/companies/ogen-dpo",
+  "ats": "unknown",
+  "slug": "ogen-dpo"
+ },
+ {
+  "name": "Oikonomakis Christos Law Firm",
+  "careers_url": "https://secrethunter.io/companies/oikonomakis-christos-law-firm",
+  "ats": "unknown",
+  "slug": "oikonomakis-christos-law-firm"
+ },
+ {
+  "name": "Oktadev",
+  "careers_url": "https://secrethunter.io/companies/oktadev",
+  "ats": "unknown",
+  "slug": "oktadev"
+ },
+ {
+  "name": "Olympus Corp",
+  "careers_url": "https://secrethunter.io/companies/olympus-corp",
+  "ats": "unknown",
+  "slug": "olympus-corp"
+ },
+ {
+  "name": "Omc",
+  "careers_url": "https://secrethunter.io/companies/omc",
+  "ats": "unknown",
+  "slug": "omc"
+ },
+ {
+  "name": "Omc 496212",
+  "careers_url": "https://secrethunter.io/companies/omc-496212",
+  "ats": "unknown",
+  "slug": "omc-496212"
+ },
+ {
+  "name": "Omc Computing",
+  "careers_url": "https://secrethunter.io/companies/omc-computing",
+  "ats": "unknown",
+  "slug": "omc-computing"
+ },
+ {
+  "name": "Omjhighlandco",
+  "careers_url": "https://secrethunter.io/companies/omjhighlandco",
+  "ats": "unknown",
+  "slug": "omjhighlandco"
+ },
+ {
+  "name": "Omnitelecom",
+  "careers_url": "https://secrethunter.io/companies/omnitelecom",
+  "ats": "unknown",
+  "slug": "omnitelecom"
+ },
+ {
+  "name": "One1 Systems",
+  "careers_url": "https://secrethunter.io/companies/one1-systems",
+  "ats": "unknown",
+  "slug": "one1-systems"
+ },
+ {
+  "name": "Oneformaglobal",
+  "careers_url": "https://secrethunter.io/companies/oneformaglobal",
+  "ats": "unknown",
+  "slug": "oneformaglobal"
+ },
+ {
+  "name": "Ongage",
+  "careers_url": "https://secrethunter.io/companies/ongage",
+  "ats": "unknown",
+  "slug": "ongage"
+ },
+ {
+  "name": "Onit Security",
+  "careers_url": "https://secrethunter.io/companies/onit-security",
+  "ats": "unknown",
+  "slug": "onit-security"
+ },
+ {
+  "name": "Onlinejobph",
+  "careers_url": "https://secrethunter.io/companies/onlinejobph",
+  "ats": "unknown",
+  "slug": "onlinejobph"
+ },
+ {
+  "name": "Onyx Security",
+  "careers_url": "https://secrethunter.io/companies/onyx-security",
+  "ats": "unknown",
+  "slug": "onyx-security"
+ },
+ {
+  "name": "Op Innovate",
+  "careers_url": "https://secrethunter.io/companies/op-innovate",
+  "ats": "unknown",
+  "slug": "op-innovate"
+ },
+ {
+  "name": "Opswat",
+  "careers_url": "https://secrethunter.io/companies/opswat",
+  "ats": "unknown",
+  "slug": "opswat"
+ },
+ {
+  "name": "Opti AI",
+  "careers_url": "https://secrethunter.io/companies/opti-ai",
+  "ats": "unknown",
+  "slug": "opti-ai"
+ },
+ {
+  "name": "Optivailfinance",
+  "careers_url": "https://secrethunter.io/companies/optivailfinance",
+  "ats": "unknown",
+  "slug": "optivailfinance"
+ },
+ {
+  "name": "Optunity",
+  "careers_url": "https://secrethunter.io/companies/optunity",
+  "ats": "unknown",
+  "slug": "optunity"
+ },
+ {
+  "name": "Orcarouter",
+  "careers_url": "https://secrethunter.io/companies/orcarouter",
+  "ats": "unknown",
+  "slug": "orcarouter"
+ },
+ {
+  "name": "Ord",
+  "careers_url": "https://secrethunter.io/companies/ord",
+  "ats": "unknown",
+  "slug": "ord"
+ },
+ {
+  "name": "Origami Ms",
+  "careers_url": "https://secrethunter.io/companies/origami-ms",
+  "ats": "unknown",
+  "slug": "origami-ms"
+ },
+ {
+  "name": "Origene Seeds",
+  "careers_url": "https://secrethunter.io/companies/origene-seeds",
+  "ats": "unknown",
+  "slug": "origene-seeds"
  }
 ]

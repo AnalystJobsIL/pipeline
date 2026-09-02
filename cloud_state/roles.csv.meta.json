@@ -3,36 +3,36 @@
  "download_url": "https://analystjobsil.github.io/board/roles.csv",
  "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
  "published_on_pages": true,
- "generated_at": "2026-09-01T10:54:38Z",
- "run_date": "2026-09-01",
- "rows": 157,
+ "generated_at": "2026-09-02T10:27:27Z",
+ "run_date": "2026-09-02",
+ "rows": 151,
  "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
  "window": {
   "days": 90,
   "basis": "last_seen",
-  "start": "2026-06-04",
-  "end": "2026-09-01",
-  "rule": "2026-06-04 <= last_seen <= 2026-09-01, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
+  "start": "2026-06-05",
+  "end": "2026-09-02",
+  "rule": "2026-06-05 <= last_seen <= 2026-09-02, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
   "fully_covered": false,
-  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-04. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
+  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-05. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
  },
  "store": {
-  "records": 203,
+  "records": 221,
   "by_status": {
-   "closed": 35,
-   "open": 123,
+   "closed": 25,
+   "open": 129,
    "purged": 17,
-   "superseded": 10,
-   "withdrawn": 18
+   "superseded": 12,
+   "withdrawn": 38
   },
   "earliest_first_seen": "2026-08-16",
   "earliest_recorded_run": "2026-08-27",
   "retention": "nothing is ever deleted; a wrong row becomes superseded or purged and keeps its line"
  },
  "excluded": {
-  "superseded": 10,
+  "superseded": 12,
   "purged": 17,
-  "withdrawn": 18,
+  "withdrawn": 38,
   "outside_window": 0,
   "undatable": 0,
   "note": "superseded = the same posting also fetched under a second company name, kept once. purged = the COMPANY was never an employer (a registry row that points at an aggregator; a name intake rejected as an agency). withdrawn = the employer is real but THIS posting was never in scope (not in Israel, or not this employer's) — it was published in error and is listed under `withdrawn` with its reason and the days it was public. Rows that aged out of the window are not excluded: they are in roles_archive.csv."
@@ -48,6 +48,30 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "aidoc|ai data analyst",
+   "company": "Aidoc",
+   "title": "AI Data Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on the analytics-engineer boundary (docs/decisions/2026-09-01-analytics-engineer-boundary.md): the person's own deliverable is curated ML training and evaluation datasets plus algorithm-performance measurement for the AI R&D group, not a reporting or analysis output business or product decision-makers consume.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "alma lasers|total rewards people analytics lead",
+   "company": "Alma Lasers",
+   "title": "Total Rewards & People Analytics Lead",
+   "status": "withdrawn",
+   "reason": "out of scope: the core is running the global compensation cycle and owning HRIS policy and configuration; people analytics is one duty of five. The HR domain is IN scope and is not the ground - the ground is that the person's own output is compensation policy and systems, not analysis (docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md).",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
    }
   },
   {
@@ -67,7 +91,7 @@
    "company": "Amazon",
    "title": "Sr GTM SSA Analytics, EMEA GTM Data and AI Specialists Solutions Architecture",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a Solutions Architect / GTM sales-engineering role helping customers with data initiatives, not a data analyst role producing analysis of measured data.",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is a Solutions Architect / GTM sales-engineering role helping customers with data initiatives, not a data analyst role producing analysis of measured data.",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -79,7 +103,7 @@
    "company": "AppsFlyer",
    "title": "Financial Data Analyst - Temporary position (9 months)",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): an FP&A / budgeting and forecasting role, which is an excluded category whatever its length (the model also called it temporary; that is NOT a ground here — three maternity-cover roles were accepted in the same pass)",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): an FP&A / budgeting and forecasting role, which is an excluded category whatever its length (the model also called it temporary; that is NOT a ground here — three maternity-cover roles were accepted in the same pass)",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -91,7 +115,7 @@
    "company": "AppsFlyer",
    "title": "Senior FinOps Analyst",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a FinOps/cost financial planning role (cloud cost reporting, budgeting, forecasting, savings strategy), which falls under the excluded FP&A category…",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is a FinOps/cost financial planning role (cloud cost reporting, budgeting, forecasting, savings strategy), which falls under the excluded FP&A category…",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -103,7 +127,7 @@
    "company": "AppsFlyer",
    "title": "Senior Product Manager - Analytics",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): engineering/ML/non-data-analyst…",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): engineering/ML/non-data-analyst…",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -115,7 +139,7 @@
    "company": "Arpeely",
    "title": "Data Scientist Team Lead",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This role centers on developing algorithmic solutions and machine learning models and leading a data science team, which is ML/engineering-focused rather than…",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This role centers on developing algorithmic solutions and machine learning models and leading a data science team, which is ML/engineering-focused rather than…",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -132,6 +156,30 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "bylith|product analyst",
+   "company": "Bylith",
+   "title": "Product Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope: the person's output is requirement gathering, specification documents and IT-solution implementation - a systems analyst - rather than analysis of measured data (docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md).",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "chainalysis|intelligence analyst fraud researcher",
+   "company": "Chainalysis",
+   "title": "Intelligence Analyst - Fraud Researcher",
+   "status": "withdrawn",
+   "reason": "out of scope: scam and fraud investigation with web research and LLM prompt engineering - the security monitoring and investigations exclusion. The fraud DOMAIN is in scope and is not the ground (docs/decisions/2026-08-31-domain-scope.md).",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-31",
+    "to": "2026-09-01"
    }
   },
   {
@@ -183,15 +231,63 @@
    }
   },
   {
+   "role_id": "compie|data analyst",
+   "company": "Compie Technologies",
+   "title": "Data Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on condition (4) as drawn in docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md: the posting never describes Compie's own product, team or systems and requires experience from the banking, financial or credit card industry - the fingerprint of a client placement by an IT-services firm.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
    "role_id": "compugen|senior scientist antibody engineering discovery",
    "company": "Compugen",
    "title": "Senior Scientist, Antibody Engineering & Discovery",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a lab-based antibody engineering scientist role, not a data analyst position.",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is a lab-based antibody engineering scientist role, not a data analyst position.",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "d fend solutions|market intelligence analyst drone counter drone systems",
+   "company": "D-Fend Solutions",
+   "title": "Market Intelligence Analyst (Drone & Counter-Drone Systems)",
+   "status": "withdrawn",
+   "reason": "out of scope: market intelligence is a named exclusion, and the output here is the qualitative kind condition (5) describes - competitive reports, SWOTs and executive briefings built from external news rather than measured data (docs/decisions/2026-08-31-domain-scope.md).",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "entrypoint|data analyst 5664",
+   "company": "entrypoint",
+   "title": "Data Analyst -5664",
+   "status": "withdrawn",
+   "reason": "out of scope on condition (4) as drawn in docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md: requisition number in the title, the workplace given only as 'large, complex, multi-system organizations', and no description of entrypoint's own product or team.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "epam systems|managing principal senior director data analytics consulting",
+   "company": "EPAM Systems, Inc.",
+   "title": "Managing Principal / Senior Director, Data Analytics Consulting",
+   "status": "withdrawn",
+   "reason": "out of scope: a practice-leadership and sales role - engagement portfolio, margin, utilization and bill rate - with no hands-on analysis; the 2026-08-28 record's own worked example of a consultancy hiring for ITSELF that is still out on the WORK (docs/decisions/2026-09-01-analytics-engineer-boundary.md).",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
    }
   },
   {
@@ -199,11 +295,23 @@
    "company": "Freightos",
    "title": "Director of Global Accounting & Reporting",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is an accounting/financial reporting and compliance leadership role, not a data analyst position.",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is an accounting/financial reporting and compliance leadership role, not a data analyst position.",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "g stat|אנליסט ית דיגיטל",
+   "company": "G Stat",
+   "title": "אנליסט/ית דיגיטל",
+   "status": "withdrawn",
+   "reason": "out of scope on condition (4) as drawn in docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md: an analytics-services house advertising a generic digital-analyst brief with no description of its own product, team or systems, and a client-industry advantage line.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-31",
+    "to": "2026-09-01"
    }
   },
   {
@@ -211,7 +319,7 @@
    "company": "Global-e",
    "title": "Data Analyst (Chargeback)",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is an operational chargeback dispute investigation/resolution role, not a core analytics/reporting/dashboard role.",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is an operational chargeback dispute investigation/resolution role, not a core analytics/reporting/dashboard role.",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -219,11 +327,23 @@
    }
   },
   {
+   "role_id": "global e|payment operations analyst",
+   "company": "Global-e",
+   "title": "Payment Operations Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on the execution boundary (docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md): the role leads with investigating and resolving payment incidents and monitoring gateway integrations; BI tooling is listed as an 'advantage', which the boundary treats as corroboration that analysis is the secondary half.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-09-01",
+    "to": "2026-09-01"
+   }
+  },
+  {
    "role_id": "guardio|senior bi developer",
    "company": "Guardio",
    "title": "Senior BI Developer",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a data engineering role focused on building ETL/ELT pipelines, dbt models, and Airflow orchestration rather than performing analysis itself.",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is a data engineering role focused on building ETL/ELT pipelines, dbt models, and Airflow orchestration rather than performing analysis itself.",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -235,11 +355,35 @@
    "company": "Guardio",
    "title": "Senior BI Engineer",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a data engineering role focused on building ETL/ELT pipelines, dbt models, and Airflow orchestration, not analysis producing insights.",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is a data engineering role focused on building ETL/ELT pipelines, dbt models, and Airflow orchestration, not analysis producing insights.",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "hila|consumer market insights cmi manager",
+   "company": "Hila & Co.",
+   "title": "Consumer & Market Insights (CMI) Manager",
+   "status": "withdrawn",
+   "reason": "out of scope twice over, as docs/decisions/2026-08-30-quantitative-scope.md already recorded: qualitative consumer and market-research output, posted by a headhunter for an unnamed FMCG client.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "ingima|data analytics team lead 5485",
+   "company": "INGIMA",
+   "title": "Data Analytics Team Lead (5485)",
+   "status": "withdrawn",
+   "reason": "out of scope on condition (4) as drawn in docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md: a requisition number in the title, an unnamed 'the organization' as the workplace, an insurance/financial-services experience requirement, and not one sentence describing INGIMA's own product or team.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
    }
   },
   {
@@ -252,6 +396,66 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "kibeeri|marketing analyst",
+   "company": "Kibeeri",
+   "title": "Marketing Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on the execution boundary (docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md): the responsibilities lead with running PPC search campaigns and the analysis steers the person's own campaigns, with data analysis offered only as 'a plus' in the requirements.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "ltx|commercial operations analyst",
+   "company": "LTX",
+   "title": "Commercial Operations Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on the execution boundary (docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md): the output is correctly configured deals in CRM and billing plus reconciled revenue figures - revenue operations - not analysis delivered for others to act on; SQL/BI is explicitly 'an advantage'.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "mobileye|business analyst",
+   "company": "Mobileye",
+   "title": "Business Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on the same two named exclusions as the Forecast Analyst row: this posting carries a byte-identical description and differs only in its title, which never decides (docs/decisions/2026-08-31-domain-scope.md).",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "mobileye|forecast analyst",
+   "company": "Mobileye",
+   "title": "Forecast Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on two named exclusions - forecasting and market intelligence - which hold however quantitative the posting looks (docs/decisions/2026-08-31-domain-scope.md).",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "natural intelligence|marketing analyst",
+   "company": "Natural Intelligence",
+   "title": "Marketing Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on the execution boundary (docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md): the core is hands-on paid-search campaign management and budget ownership; campaign analysis serves that execution rather than being the output others act on.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
    }
   },
   {
@@ -283,7 +487,7 @@
    "company": "NoTraffic",
    "title": "Global Compensation & People Analytics Manager",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is primarily a Compensation/HR Operations management role (comp bands, sales commission plans, HRIS ownership) rather than a core analytics role, so it…",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is primarily a Compensation/HR Operations management role (comp bands, sales commission plans, HRIS ownership) rather than a core analytics role, so it…",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -295,7 +499,7 @@
    "company": "Paragon",
    "title": "Operational Intelligence Analyst Team Lead",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is an OSINT/WebInt intelligence analyst role focused on cyber/network intelligence gathering, not quantitative analysis of measured business data.",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is an OSINT/WebInt intelligence analyst role focused on cyber/network intelligence gathering, not quantitative analysis of measured business data.",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
@@ -303,15 +507,15 @@
    }
   },
   {
-   "role_id": "parametrix|technical data analyst tel aviv",
-   "company": "Parametrix GmbH",
-   "title": "Technical Data Analyst (Tel Aviv)",
+   "role_id": "peak innovation|credit risk analytics team lead",
+   "company": "Peak Innovation",
+   "title": "Credit Risk Analytics Team Lead",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): The role centers on building/owning ETL/ELT pipelines and data engineering tasks (SQL/Python scripting, dbt/Airflow) rather than primarily producing…",
-   "on": "2026-08-31",
+   "reason": "out of scope on condition (4): a recruiting firm advertising a client's role - the application contact is the agency's own mailbox (docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md).",
+   "on": "2026-09-01",
    "published_in_roles_csv": {
     "from": "2026-08-30",
-    "to": "2026-08-31"
+    "to": "2026-09-01"
    }
   },
   {
@@ -343,11 +547,23 @@
    "company": "SHILA Medical Services LTD",
    "title": "Senior Compensation and Benefits & Financial Analytics Manager",
    "status": "withdrawn",
-   "reason": "re-judged OUT OF SCOPE under contract v3.7cb6831f (classifier dataset backfill, 2026-08-31): This is a compensation/payroll and cost accounting (FP&A-like) management role, not a core analyst position analyzing data for insights/dashboards.",
+   "reason": "out of scope (classifier dataset backfill, 2026-08-31; re-affirmed under the 2026-09-01 boundaries): This is a compensation/payroll and cost accounting (FP&A-like) management role, not a core analyst position analyzing data for insights/dashboards.",
    "on": "2026-08-31",
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "similarweb|ml big data analyst",
+   "company": "Similarweb",
+   "title": "ML & Big Data Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on the analytics-engineer boundary (docs/decisions/2026-09-01-analytics-engineer-boundary.md): the deliverable is data-quality and algorithm evaluation consumed inside the Core Data group by data scientists and big-data engineers; no reports, dashboards or business metrics appear in the posting.",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
    }
   },
   {
@@ -426,6 +642,18 @@
    "published_in_roles_csv": null
   },
   {
+   "role_id": "tlvtech|data analyst",
+   "company": "TLVTech",
+   "title": "Data Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope: the posting describes no workplace of its own beyond building 'for the world's most admired companies', and the role itself requires full-stack Node.js/React development alongside the analysis, which condition (2) excludes (docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md).",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
+  },
+  {
    "role_id": "yael korentec|bi developer defense company northern israel",
    "company": "Yael Korentec Technologies",
    "title": "BI Developer – Defense Company, Northern Israel",
@@ -436,28 +664,41 @@
     "from": "2026-08-30",
     "to": "2026-08-31"
    }
+  },
+  {
+   "role_id": "מטריקס|מנתח ת ומאייפנ ת מערכות bi למשרד מממשלתי מוביל בירושלים matrix dna",
+   "company": "מטריקס",
+   "title": "מנתח/ת ומאייפנ/ת מערכות BI למשרד מממשלתי מוביל בירושלים  - Matrix - DNA",
+   "status": "withdrawn",
+   "reason": "out of scope on condition (4): Matrix is advertising a BI systems-specification role at a government ministry, so the reader would be told the wrong employer (docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md).",
+   "on": "2026-09-01",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-01"
+   }
   }
  ],
  "archive": {
   "file": "roles_archive.csv",
   "rows": 0,
-  "rule": "status open or closed AND last_seen < 2026-06-04 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
+  "rule": "status open or closed AND last_seen < 2026-06-05 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
-  "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
-  "published_on_pages": false
+  "download_url": "https://analystjobsil.github.io/board/roles_archive.csv",
+  "published_on_pages": true
  },
  "reconciliation": {
-  "rows": 157,
+  "rows": 151,
   "archived": 0,
-  "superseded": 10,
+  "superseded": 12,
   "purged": 17,
-  "withdrawn": 18,
+  "withdrawn": 38,
   "outside_window": 0,
   "undatable": 0,
   "unreadable": 0,
   "blocked_excluded": 1,
-  "store_records": 203,
-  "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable + blocked_excluded == store_records",
+  "pending_excluded": 2,
+  "store_records": 221,
+  "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable + blocked_excluded + pending_excluded == store_records",
   "holds": true
  },
  "conventions": {
@@ -488,8 +729,8 @@
   "why": "the full text is up to 6,000 characters per role with embedded newlines: it breaks naive parsers, and this file is committed to git every day",
   "file": "roles_text.jsonl",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_text.jsonl",
-  "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_text.jsonl",
-  "published_on_pages": false,
+  "download_url": "https://analystjobsil.github.io/board/roles_text.jsonl",
+  "published_on_pages": true,
   "join": "role_id",
   "columns_here": [
    "description_len",
@@ -499,15 +740,17 @@
    "description_blocker"
   ],
   "quality": {
-   "jd": 155,
-   "snippet": 1,
-   "none": 1,
+   "jd": 151,
+   "snippet": 0,
+   "none": 0,
    "unmeasured": 0,
    "holds": true
   },
   "blocked": {
    "policy": "exclude",
-   "listing-page": 1
+   "structural": 1,
+   "pending": 2,
+   "structural:not-a-job-url(donors:0)": 1
   }
  },
  "funnel": {
@@ -549,7 +792,7 @@
   },
   "posted_date": {
    "doc": "The date the EMPLOYER states the role was posted. Empty when the board publishes none.",
-   "nulls": 19
+   "nulls": 14
   },
   "first_seen": {
    "doc": "The first day this pipeline ever saw the role, across all of its spells. Not a posting date.",
@@ -578,7 +821,7 @@
   },
   "closed_on": {
    "doc": "The day we recorded it closed. Empty while open.",
-   "nulls": 122
+   "nulls": 126
   },
   "emailed": {
    "doc": "true if this role went out in a daily digest email.",
@@ -586,7 +829,7 @@
   },
   "emailed_on": {
    "doc": "The date it was first emailed. Empty if never emailed.",
-   "nulls": 72
+   "nulls": 73
   },
   "episodes": {
    "doc": "How many separate spells we have seen this role open (a reappearance after an absence starts a new one).",
@@ -598,7 +841,7 @@
   },
   "repost_dates": {
    "doc": "The posted_date values those bumps landed on, separated by ';'.",
-   "nulls": 137
+   "nulls": 129
   },
   "sources": {
    "doc": "Which fetchers saw it (greenhouse, comeet, scrape, ...), separated by ';'.",
@@ -619,7 +862,7 @@
   },
   "years_experience": {
    "doc": "Years of experience asked for, read from the DESCRIPTION text. Empty when the text does not say.",
-   "nulls": 22
+   "nulls": 18
   },
   "family": {
    "doc": "Role family, from title first and the opening of the description second.",
@@ -663,7 +906,7 @@
   },
   "degree_fields": {
    "doc": "Fields of study named alongside it, separated by ';'.",
-   "nulls": 104,
+   "nulls": 105,
    "enum": {
     "CS": "field of study named alongside the degree",
     "Industrial Eng.": "field of study named alongside the degree",
@@ -679,7 +922,7 @@
   },
   "ai": {
    "doc": "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned.",
-   "nulls": 115,
+   "nulls": 112,
    "enum": {
     "AI for efficiency": "Expected to use AI tools (Copilot, ChatGPT, Cursor…) to work faster",
     "AI for automation": "Using AI to automate processes and workflows",
@@ -713,7 +956,7 @@
   },
   "description_sha1": {
    "doc": "sha1 of the description text; join to roles_text.jsonl to read it.",
-   "nulls": 1
+   "nulls": 0
   },
   "description_quality": {
    "doc": "Whether the text we hold reads as a job description (jdfill.looks_like_jd). Empty = text exists but could not be judged this run.",
@@ -726,19 +969,19 @@
   },
   "description_blocker": {
    "doc": "Why a weak text (description_quality snippet/none) is structurally hard to complete, or empty. Recorded verdicts (jd-text's matched.jd_why, 'structural:*') verbatim; else derived: 'gone' (the posting 404s on the employer's own board), 'unfillable:<why>' (a host no rung we own can read), 'listing-page' (the only address we hold is a shared listing, not the posting's own). Under the live policy (meta description_text.blocked.policy — 'exclude' since the operator's 2026-09-01 ruling) a blocked row is excluded from this file with its reason counted in the meta; a weak row with NO blocker is pending a fill and stays; the archive keeps history either way.",
-   "nulls": 157
+   "nulls": 151
   },
   "sector": {
    "doc": "Company sector (firmographics).",
-   "nulls": 6
+   "nulls": 7
   },
   "sub_sector": {
    "doc": "Narrower niche (firmographics, free text).",
-   "nulls": 6
+   "nulls": 7
   },
   "stage": {
    "doc": "Company stage (firmographics).",
-   "nulls": 6,
+   "nulls": 7,
    "enum": {
     "acquired-by-bigtech": "company stage, as researched (firmographics)",
     "early-private": "company stage, as researched (firmographics)",
@@ -749,11 +992,11 @@
   },
   "stage_note": {
    "doc": "Ticker or acquisition note behind that stage.",
-   "nulls": 6
+   "nulls": 7
   },
   "size_band": {
    "doc": "Headcount band (firmographics).",
-   "nulls": 6,
+   "nulls": 7,
    "enum": {
     "S": "under 200 employees globally",
     "M": "200-1,000",
@@ -767,15 +1010,15 @@
   },
   "founded": {
    "doc": "Year founded (firmographics).",
-   "nulls": 18
+   "nulls": 15
   },
   "business_model": {
    "doc": "How the company earns money (firmographics, free text).",
-   "nulls": 6
+   "nulls": 7
   },
   "customer_type": {
    "doc": "Who buys from it (firmographics, free text).",
-   "nulls": 6
+   "nulls": 7
   },
   "il_center": {
    "doc": "Its main Israeli site(s) (firmographics).",
@@ -783,7 +1026,7 @@
   },
   "firmo_as_of": {
    "doc": "The date those company facts were researched.",
-   "nulls": 6
+   "nulls": 7
   },
   "firmo_match": {
    "doc": "How the company facts were matched to this row's company_registry (the brand in `company` renders only on an exact match).",
@@ -796,35 +1039,35 @@
   },
   "skills_bi": {
    "doc": "Skills of category 'bi' only, separated by ';' — group by this without parsing.",
-   "nulls": 65
+   "nulls": 54
   },
   "skills_query": {
    "doc": "Skills of category 'query' only, separated by ';' — group by this without parsing.",
-   "nulls": 29
+   "nulls": 21
   },
   "skills_de": {
    "doc": "Skills of category 'de' only, separated by ';' — group by this without parsing.",
-   "nulls": 95
+   "nulls": 84
   },
   "skills_pa": {
    "doc": "Skills of category 'pa' only, separated by ';' — group by this without parsing.",
-   "nulls": 124
+   "nulls": 120
   },
   "skills_prog": {
    "doc": "Skills of category 'prog' only, separated by ';' — group by this without parsing.",
-   "nulls": 89
+   "nulls": 82
   },
   "skills_method": {
    "doc": "Skills of category 'method' only, separated by ';' — group by this without parsing.",
-   "nulls": 44
+   "nulls": 38
   },
   "skills_cloud": {
    "doc": "Skills of category 'cloud' only, separated by ';' — group by this without parsing.",
-   "nulls": 139
+   "nulls": 131
   },
   "skills_lang": {
    "doc": "Skills of category 'lang' only, separated by ';' — group by this without parsing.",
-   "nulls": 105
+   "nulls": 108
   }
  }
 }

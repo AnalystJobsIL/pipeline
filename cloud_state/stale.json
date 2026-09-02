@@ -9,11 +9,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "ASML": {
-  "careers_url": "https://www.asml.com/en/careers/find-your-job",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "ASTERRA": {
   "careers_url": "https://asterra.io/careers/",
   "platform": "scrape",
@@ -29,26 +24,15 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Adi Il": {
-  "careers_url": "https://adi-il.org.il/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Airspan Networks": {
-  "careers_url": "https://airspan.com/careers/airspan-careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Aitechsystems": {
   "careers_url": "https://www.comeet.com/jobs/aitechsystems/88.004",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Akamai": {
-  "careers_url": "https://akamaicareers.inflightcloud.com/search",
-  "error": "scrape: http:403 (8 nights)",
+ "AlgoSec": {
+  "careers_url": "https://www.algosec.com/company/careers/find-a-job",
   "platform": "scrape",
-  "reason": "fetch-error"
+  "reason": "regressed-to-zero"
  },
  "Amazon Israel": {
   "careers_url": "https://www.amazon.jobs/en/search",
@@ -62,6 +46,16 @@
  },
  "Arm": {
   "careers_url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Arrow Components": {
+  "careers_url": "https://careers.arrow.com/us/search-results",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "AstraZeneca": {
+  "careers_url": "https://careers.astrazeneca.com/search-jobs/Israel",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -97,8 +91,9 @@
  },
  "Bright Security": {
   "careers_url": "https://www.brightsec.com/careers/",
+  "error": "scrape: goto:TimeoutError (1 night)",
   "platform": "scrape",
-  "reason": "regressed-to-zero"
+  "reason": "fetch-error"
  },
  "Challenge Group": {
   "careers_url": "https://career.challenge-group.com/go/Israel-Airlines-Jobs/9594055/",
@@ -120,16 +115,15 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Datos Health": {
+  "careers_url": "https://www.datos-health.com/join-us/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "DealHub.ai": {
   "careers_url": "https://www.comeet.com/jobs/dealhub/86.005",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Decart": {
-  "careers_url": "https://api.ashbyhq.com/posting-api/job-board/decart-ai",
-  "error": "HttpError: HTTP 404 for https://api.ashbyhq.com/posting-api/job-board/decart-ai: ",
-  "platform": "ashby",
-  "reason": "fetch-error"
  },
  "Dentsply Sirona": {
   "careers_url": "https://careers.dentsplysirona.com/search/",
@@ -216,17 +210,6 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Harmonya Technologies": {
-  "careers_url": "https://www.harmonya.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Hello Heart": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/helloheart/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/hellohear",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
- },
  "IAI - Israel Aerospace Industries": {
   "careers_url": "https://jobs.iai.co.il/jobs/",
   "platform": "scrape",
@@ -257,6 +240,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Kimberly-Clark": {
+  "careers_url": "https://careers.kimberly-clark.com/en/job-search",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Lam Research": {
   "careers_url": "https://careers.lamresearch.com/careers",
   "platform": "scrape",
@@ -282,12 +270,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Mobileye": {
-  "careers_url": "https://api.eu.lever.co/v0/postings/mobileye",
-  "error": "HttpError: network error for https://api.eu.lever.co/v0/postings/mobileye The rea",
-  "platform": "lever",
-  "reason": "fetch-error"
- },
  "Navan": {
   "careers_url": "https://navan.com/careers",
   "platform": "scrape",
@@ -298,27 +280,20 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "NeuReality": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/89.002/positions",
+  "platform": "comeet",
+  "reason": "regressed-to-zero"
+ },
  "Nova": {
   "careers_url": "https://www.novami.com/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Oasis Security": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/oasissecurity/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/oasissecu",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
- },
  "OpenText": {
   "careers_url": "https://careers.opentext.com/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "Placer.ai": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/placerlabs/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/placerlab",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
  },
  "Portnox": {
   "careers_url": "https://www.portnox.com/careers/",
@@ -327,8 +302,9 @@
  },
  "Predicta Med": {
   "careers_url": "https://predicta-med.com/careers/",
+  "error": "scrape: goto:TimeoutError (1 night)",
   "platform": "scrape",
-  "reason": "regressed-to-zero"
+  "reason": "fetch-error"
  },
  "Quantum Art": {
   "careers_url": "https://www.quantum-art.tech/careers",
@@ -345,21 +321,20 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Revolut": {
-  "careers_url": "https://www.revolut.com/en-US/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Shortical": {
   "careers_url": "https://www.comeet.com/jobs/shortical/3B.00A",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Sisense": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/sisense/jobs",
-  "error": "HttpError: HTTP 404 for https://boards-api.greenhouse.io/v1/boards/sisense/jobs N",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
+ "Siemens Israel": {
+  "careers_url": "https://jobs.sw.siemens.com/locations/isr/jobs/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Sola Security": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/A9.003/positions",
+  "platform": "comeet",
+  "reason": "regressed-to-zero"
  },
  "SolarEdge": {
   "careers_url": "https://www.solaredge.com/en/search",
@@ -391,6 +366,11 @@
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
+ "Talenya": {
+  "careers_url": "https://www.talenya.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Teads": {
   "careers_url": "https://job-boards.eu.greenhouse.io/teads1",
   "platform": "scrape",
@@ -403,6 +383,11 @@
  },
  "Whalo": {
   "careers_url": "https://www.whalo.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Workiz": {
+  "careers_url": "https://www.workiz.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
