@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**616 filed · 443 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**618 filed · 445 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 566.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 568.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -522,7 +522,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### classifier — 16 open
+### classifier — 17 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -540,8 +540,9 @@ closure convention in the header.
 - **548** `548@classifier` **A remote posting is counted as Israeli on the board's `country_code` alone, with no
 - **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
 - **557** `557@classifier` **LTX has not flipped to its own board
+- **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
 
-### jd-text — 15 open
+### jd-text — 16 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -558,6 +559,7 @@ closure convention in the header.
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 - **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
 - **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
+- **567** `567@jd-text` **A closed row's stored JD carries a second posting's bullets, and it moved a verdict** —
 
 ### render — 6 open
 
@@ -10088,6 +10090,29 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `_QUALITATIVE_HINT`-style demotion (never a reject) and re-run the 252-row golden
      fixture. The 28 are re-derived by the one-liner in the decision record. **2026-09-01: the measurement this item asks for now exists and it found one.** `Calculum | Junior Data/Financial Analyst` is `excluded` on the finance hard-exclude and the production seam judges it **YES** — a genuine analyst role the gate rejects with no appeal, so the "0 of 116" above is no longer the whole picture. Artifact and the other three postings: `542@classifier`.
 
+     **2026-09-02: the demotion this item specifies is SHIPPED for the row that
+     reopened it, and the tier now has a false-negative number of its own.**
+     `Calculum | Junior Data/Financial Analyst` reaches the LLM through
+     `_GATE_APPEAL` — a route to `signal`, never a reject, exactly the shape this
+     item names — and `_HARD_EXCLUDE` is otherwise untouched: `Financial Analyst`,
+     `Senior Credit Analyst`, `FP&A Analyst` and `Security Analyst` are all still
+     `excluded`, pinned by
+     `test_the_gate_appeal_routes_a_measured_false_negative_to_the_llm_and_never_past_it`.
+     **And the measurement this item has never had: the refused-WITH-TEXT tier.**
+     The 2026-08-28 pass covered `excluded` titles; nobody had measured the
+     population that is refused AND already carries a description, which is where a
+     miss is both real and cheap to find. Of the 1,427 such cards, the 8 flagged by
+     ≥ 2 of 3 independent description predicates (Israel, not ML, not a class the
+     rules already name) were judged through the seam:
+     **1 of 6 non-target rows is YES** — `Wiliot | Data Solutions Analyst` — **and
+     that one is a San Mateo posting**, so **0 of 6 is a lost ISRAELI analyst
+     role**. Artifact `tests/fixtures/classifier/2026-09-02-gate-residue.json`. The
+     other five (Surecomp Sales/BusOps, Velotix RevOps, HiBob Deal Desk, Wiliot
+     Team Lead, Challenge Group Safety Officer) are correct rejections on the
+     execution boundary. This does not close the item — one measurement of six rows
+     is not a rate — but it is the first evidence that the tier is not hiding a
+     pool, and it should be re-run whenever the refused-with-text population grows.
+
 530. **`withdrawn` now means two different things, and the note a downloader reads says only
      one of them** — lane: `roles`. Filed by `classifier` 2026-08-31. The meta explains
      `withdrawn` as "the employer is real but THIS posting was never in scope … it was
@@ -10505,6 +10530,85 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      future session cite this measurement as justification for the demote fix alone; it
      covers 1 of the 3. Elbit's posting leaves the 21-day cache ~2026-09-06, so a session
      wanting to re-derive it should not wait.
+
+     **PARTLY SHIPPED 2026-09-02 — 2 of the 3, and the third is refused on a measurement.**
+     `_GATE_APPEAL` (`pipeline/seniority.py`) routes a refused title to `signal` and to
+     nothing else: never `_STRONG` (the fast-accept would admit it unread, which the boundary
+     record rejects by name), never a reject, and — the load-bearing half — never an accept
+     without the LLM, because `_sig_accept_nollm` refuses a title `_gate_appealed` says is
+     only `signal` because of the appeal. Two phrases, one live posting each, each judged YES
+     through the production seam under `v3.0f84ab84`: `data/financial analyst`
+     (`Calculum | Junior Data/Financial Analyst`, gate `excluded`) and `תהליכי בקרה`
+     (`IAI | תהליכי בקרה ו-AI`, gate `none`). **Cost, measured: 2 of the 4,599 distinct
+     (company, title) pairs in both caches move, 0 of the 252 title-only rows of the golden
+     fixture move, and `CONTRACT` is unchanged at `v3.0f84ab84` — the gate is not in the
+     rules hash, so nothing is re-superseded.**
+
+     **A correction this item has to carry, because its own text was wrong about the
+     vehicle.** "Add the phrase as a `_QUALITATIVE_HINT`-style demotion" cannot be done to
+     `_QUALITATIVE_HINT`: that regex is read only at `_relevance`'s `if strong:` branch,
+     AFTER the hard-exclude branch has returned, so it cannot rescue an `excluded` title and
+     is never consulted on the `none` path at all. The intent (a route to `signal`, never a
+     promotion, never a reject) was right; a separate vocabulary consulted in BOTH branches
+     is what implements it.
+
+     **`Zoll Medical | Business Operations, CMS` is NOT shipped, and here is the whole
+     measurement so nobody re-runs it.** Its title carries no analytics word, so the only
+     title phrase that reaches it is the bare `business operations` — which admits **11**
+     cards where the two shipped phrases admit 2, i.e. **9 more**: 8 non-analyst titles
+     (Sales & Business Operations, Order Management Coordinator, French Business Operations
+     Specialist, Business Operations Consultant (HubSpot), …) that answer NO every run, and
+     **6 of the 11 carry no description**, so each also becomes a new Bright Data JD-fetch
+     candidate against a 5,000/month ceiling. The generic alternative — a DESCRIPTION appeal,
+     re-reading text the posting already carries and never fetching — was measured over the
+     whole refused tier (**4,377 refused CARDS of 4,781**, of which **1,427** already carry
+     ≥300 characters; those are cards, not distinct titles — the distinct-title figures are
+     4,210 and 1,416, and conflating the two is the mislabel this session hit twice):
+
+     | predicate | admits | Calculum | IAI | Zoll |
+     |---|---|---|---|---|
+     | distinct analytics terms (`_DESC_ANALYTICS` + a Hebrew arm), not ML, ≥ 9 | ~10 | ✗ | ✗ | ✓ |
+     | ...≥ 7 | 27 | ✗ | ✓ | ✓ |
+     | ...≥ 4 | 164 | ✗ | ✓ | ✓ |
+     | ...≥ 3 | **348** | ✓ | ✓ | ✓ |
+     | ≥ 2 SQL/BI mentions AND ≥ 3 analytics terms | 27 | ✗ | ✗ | ✓ |
+     | an OUTPUT word (`insights`/`recommendations`/`תובנות`/`המלצות`) within 150 chars of a delivery word, in the role section, not ML | 54 | ✗ | ✓ | ✗ |
+
+     Each of those six predicates misses at least one of the three: Calculum's JD names no SQL
+     and 3 analytics terms; IAI's is Hebrew and scores only through an arm `_DESC_ANALYTICS`
+     does not have; Zoll's has SQL but puts no output word near a delivery word.
+
+     **CORRECTION, same day, from an adversarial pass: a cheap shared predicate DOES exist,
+     and this item said it did not.** The claim shipped in a first draft — *"the three known
+     misses are found by three different predicates and no shared one … no cheap generic
+     description predicate exists here"* — is **false**, and it was the stated ground for
+     refusing Zoll. All six predicates above score DENSITY or PROXIMITY; none asks the
+     obvious question, which is whether the posting says the words **data analysis** at all:
+
+     | predicate over the same 1,427 | admits | Calculum | IAI | Zoll |
+     |---|---|---|---|---|
+     | `data analytics｜data analysis｜ניתוח נתונים` | 87 | ✓ | ✓ | ✓ |
+     | ...plus `not _desc_is_ml` and `is_israel_job` | 84 | ✓ | ✓ | ✓ |
+     | ...plus an output word (`insight／dashboard／report／תובנות／דוח`) AND a tool word (`SQL／Power BI／Tableau／Excel／Looker／Qlik`) | **22** | ✓ | ✓ | ✓ |
+
+     **22 cards is BELOW the ~27 this item had already called affordable**, and it reaches all
+     three misses with one regex over text the posting already carries — no fetch, so no
+     Bright Data cost at all. So the honest position is the opposite of the one first
+     recorded: **a description appeal is the right successor to `_GATE_APPEAL`'s phrase list,
+     it is designed and measured, and what gates it is the LLM budget, not the absence of a
+     rule.** The 2026-09-02 digest logged `re-judged 250/cap 250` with 376 attempts against a
+     450 cap, so 22 recurring calls come out of the contract drain, which is this lane's own
+     number. **Reopening condition, a number and not a mood: a `classify:` line whose
+     `re-judged N/cap 250` is under its cap.** Then ship the 22-card predicate — never the
+     bare `business operations` phrase, which costs more and buys less.
+
+     Not shipped the same evening on purpose: it is a NEW mechanism (a gate that reads a
+     description), it arrived from an adversarial pass after the golden fixture and the corpus
+     had already been measured for the phrase list, and this commit was carrying a gate change
+     and seven withdrawals. Shipping an unmeasured second mechanism on top of that is the
+     hurry this repo's own gate rule warns against. The operator chose "two phrases, file the
+     rest" on the 348 figure; that figure was the wrong one and is corrected here so the
+     decision can be re-taken on 22.
 
      Filed 2026-09-01.
 
@@ -11025,3 +11129,89 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      on its own first run — five shards, two killed at 40 minutes — and a shard killed at its
      budget reports nothing about the records it never reached. Eight shards turned four
      latent survivors into a red that its author acted on the same evening.
+
+## From the classifier lane, 2026-09-02
+
+566. **The Israel filter believes the aggregator's location field over the posting's own
+     text, and four published or publishable rows are foreign jobs because of it** — lane:
+     `classifier` (`pipeline/israel.py`), measured 2026-09-02 while adjudicating the deferred
+     `desc_mismatch` rows. `Diageo | Performance Analytics Analyst` carries location
+     `מחוז המרכז` from `il.indeed.com` while its own first three lines read
+     `Role: Performance Analytics Analyst | Level: 6 | Location: 3 WTC (New York)` and the
+     work is the U.S. Spirits and Beer/FMB marketplace. `TransUnion | Manager - Data Science
+     & Analytics` carries the same Indeed stamp over a JD that opens *"We are India's leading
+     credit information company"*. Both were `open` and PUBLISHED on 2026-09-02, and the
+     Diageo row is the sharpest case in the tree because **the seam judges it YES on scope
+     and is right to** — nothing in `LLM_RULES` asks about geography, so the classifier's own
+     LLM tier can never catch this class. Two more surfaced independently in the gate residue:
+     `Wiliot | Data Solutions Analyst…San Mateo` and `…Team Lead…Dallas` both pass
+     `is_israel_job` with the office name inside their own TITLE.
+
+     Same family as `548@classifier` — a metadata field that can disagree with every other
+     field on the card — but a different field and a different fix: 548 is about
+     `country_code` where the location text names other countries, this is about a location
+     text that the DESCRIPTION contradicts. Wanted: when the description states a location
+     (`Location: <x>`, or a title suffixing a city) that names a non-Israeli place and no
+     Israeli place appears in the description at all, the card is not Israeli — or is demoted
+     to needing a second signal, the way 548 asks. It must stay one-sided: a JD that mentions
+     a New York HQ while hiring in Tel Aviv is the common case and must not move. Not taken
+     here because a change to `is_israel_job` moves every card in both caches and needs its
+     own before/after measurement, and this commit already carries a gate change and eight
+     withdrawals. Check: re-run the four rows above; `Diageo` and `TransUnion` are withdrawn
+     from the dataset by hand today, so the check is that no NEW row of this shape appears —
+     grep the published `roles.csv` for rows whose stored description contains
+     `Location: ` followed by a non-Israeli city.
+
+567. **A closed row's stored JD carries a second posting's bullets, and it moved a verdict** —
+     lane: `jd-text`. `gamida cell|senior business analyst commercial data analytics` is
+     `closed`, its text frozen at exactly 6,000 characters (the capture cap), beginning
+     mid-sentence at *"responsibilities will be managing internal KPI reporting…"*. Inside it,
+     between the intro and the role's own `Roles and Responsibilities | Commercial Analytics &
+     Business Intelligence` block, sit six field-sales bullets that belong to a different
+     posting: *"Lead engagement across key transplant centers to drive adoption of Omisirge®
+     and APHEXDA®"*, *"Promote products through clinically credible and value-driven
+     messaging"*, *"Build trusted relationships with transplant physicians"*. **It changed an
+     answer**: judged through the seam under `v3.0f84ab84` on 2026-09-02 the row came back
+     **NO**, and the reason names *"account/territory engagement duties"* — the contaminating
+     bullets. The `classifier` lane adjudicated it **IN** against that verdict on the ground
+     that the analytics block matches the row's own title exactly, and did NOT withdraw it
+     (`docs/sessions/2026-09-02-classifier.md`). The company's board now carries one card
+     (`Junior Maintenance Technician`), so the posting is gone and the text cannot be
+     re-fetched; what is wanted is the guard, not the repair — a capture that ends exactly at
+     the cap AND begins mid-sentence is a page-slice, not a JD, and `looks_like_jd` passes it.
+
+     **Two siblings from the same session, and both FLIP A VERDICT, which is what makes this
+     an alarm and not tidiness.**
+
+     *`ballerine|ai fraud data analyst senior`* carries 3,998 characters of which the first
+     **2,671** are site chrome and product marketing (*"Platform Products Underwriting Make
+     faster risk decisions…"*) and the last **1,327** are the posting's own JD — *"located in
+     the Tel Aviv District, Israel … responsible for analyzing data, developing data models,
+     conducting statistical analysis, and communicating findings to relevant stakeholders …
+     Strong background in SQL and writing scripts in Python / JS"*. `jd-text`'s own 09-01
+     record called it *"the right JD, buried"*. **Measured through the production seam under
+     `v3.0f84ab84`: the full 3,998 chars answer NO twice, and the 1,327-char JD alone answers
+     YES** — *"a full-time on-site analyst role at Ballerine itself, focused on analyzing
+     fraud/payments data, statistical analysis, and generating actionable insights"*. A
+     leading-chrome prefix is not merely noise: it is capable of inverting the verdict,
+     because `prompt_slice` sends a 1,400-character window and the chrome fills it. The row
+     is correctly published `accept` and was NOT withdrawn.
+
+     *`prisma photonics|senior product analyst`* is the sharper one, and it nearly cost a live
+     role. `matched.description` for that row is **3,276 chars of the Senior DATA ENGINEER
+     posting** (*"Design, develop, and maintain scalable data pipelines…"*, *"5+ years of
+     professional experience in Data Engineering"*), while the row's OWN card sits in
+     `scraped_cache.json` under `/job/senior-product-analyst/` with the correct **2,617**
+     chars (*"Conduct statistical analysis and use data visualization tools to present
+     findings"*, *"Provide data-driven insights and recommendations to support
+     decision-making"*, *"At least 5 years of experience in data analysis, business
+     intelligence"*). `seen_ids` names both urls — the 08-24 scraper title↔url off-by-one that
+     `docs/sessions/2026-09-01-jd-text.md` recorded as *"it does not say that"*, still
+     unrepaired in sqlite. **Seam verdicts: the stored text NO, the correct text YES.** The
+     2026-09-02 `classifier` session had a withdrawal line written for this row on the
+     engineering text and **dropped it before the push** after an adversarial pass; the row is
+     `open`, `accept`, on the published board, and in scope. Wanted: `matched.description`
+     re-hydrated from the card whose url IS the row's url.
+
+     Judging a posting on soup is what a permanent retraction must never rest on — and these
+     two are why that rule needs a guard rather than a session's attention.

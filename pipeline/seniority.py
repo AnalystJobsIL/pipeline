@@ -186,6 +186,38 @@ _QUALITATIVE_HINT = re.compile(
     r"industr|ethnograph|focus group|voice of the customer|polic(?:y|ies)|"
     r"user research|ux research)|\bmarkets?\b|מחקר|תובנות", re.I)
 
+# A title the gate would refuse OUTRIGHT -- `excluded` on a hard-exclude, or `none` for no
+# analytics signal at all -- where a MEASURED false negative says the description has to be
+# read. It only ever routes to `signal`; never to `_STRONG`, which would enable the
+# strong+senior fast-accept and admit the title UNREAD (the alternative
+# `docs/decisions/2026-09-01-analytics-engineer-boundary.md` rejects by name), and never to a
+# reject. `_QUALITATIVE_HINT` cannot do this job and the first draft of `542` assumed it
+# could: that regex is read only inside the `if strong:` branch, AFTER the hard-exclude
+# branch has already returned, so it cannot rescue `excluded` and is never consulted on the
+# `none` path at all.
+#
+# Two phrases, and each is here because one live posting was measured YES through the
+# production seam under this contract while the gate refused it with no appeal:
+#   `data/financial analyst` -- `Calculum | Junior Data/Financial Analyst`, `excluded` on
+#       `financial analyst` with no `_STRONG` match to rescue it. The measured false negative
+#       `529` names as its own reopening condition.
+#   `תהליכי בקרה`            -- `IAI | תהליכי בקרה ו-AI`, `none`: a Hebrew management-control
+#       title carrying no word `_HEBREW_SIGNAL` knows.
+# Measured on 2026-09-02 over the **4,599 distinct (company, title) pairs** in both caches:
+# **2 titles move**, both intended, and **0 of the 252 title-only rows** of the golden fixture.
+# Neither phrase may go into `_STRONG`, and the guard for that asserts their ABSENCE from
+# `_STRONG` rather than the tier they produce: for a phrase that also matches `_HARD_EXCLUDE`,
+# a `_relevance(...) != "strong"` assertion is VACUOUS, because the hard-exclude branch
+# returns before the `strong` return is reachable. An adversarial pass found that half of the
+# first guard could not fail.
+#
+# The third confirmed miss, `Zoll | Business Operations, CMS`, is deliberately NOT here, and a
+# title phrase is the wrong shape for it: `business operations` alone admits 9 further
+# non-analyst titles and 6 new JD-fetch candidates. A DESCRIPTION appeal reaches all three at
+# **22 cards** and is the designed successor to this list -- `542@classifier` carries it with
+# the measurement, and the number gating it is a `classify:` line no longer at its rejudge cap.
+_GATE_APPEAL = re.compile(r"\bdata\s*/\s*financial analysts?\b|תהליכי בקרה", re.I)
+
 # Hebrew analytics signal + seniority markers (Israeli careers sites post in Hebrew too)
 _HEBREW_SIGNAL = re.compile("אנליסט|אנליטיקה|"
                            "נתונים|בינה עסקית|דאטה")
@@ -286,6 +318,14 @@ def _sig_accept_nollm(rel, sen, title_l, desc):
     when nobody is watching, so less seniority evidence has to mean more description evidence.
     """
     if rel != "signal" or (EXPERIENCE_BAR and sen != "senior"):
+        return False
+    # A title that is `signal` ONLY because `_GATE_APPEAL` rescued it is never accepted
+    # without the LLM. The rescue means ASK, never assume -- the same rule the `_STRONG`
+    # rescue already carries in `_classify`'s `strong_enough`, where lifting a hard-excluded
+    # title back to an accept moved a data-engineering role onto the board in fallback mode.
+    # A breaker-open morning is exactly when nobody is watching, and the whole evidence for
+    # these two phrases is a verdict the LLM gave: without the LLM there is no evidence.
+    if _gate_appealed(title_l):
         return False
     desc = str(desc or "")
     if _desc_is_ml(desc):
@@ -389,7 +429,7 @@ def _relevance(title_l, company_l=""):
         # Software Solutions" / "Data Scientist, Infrastructure" are analytics roles, not
         # excludes. Send them to the LLM rather than deterministically rejecting. Real
         # "<x> engineer" / non-data "<x> analyst" titles (no STRONG match) still exclude.
-        return "signal" if strong else "excluded"
+        return "signal" if (strong or _GATE_APPEAL.search(title_l)) else "excluded"
     if strong:
         # a systems/finance domain word, a staffing employer, or a qualitative-output word
         # means the keyword shortcut is not entitled to the verdict on its own -- the LLM
@@ -397,9 +437,24 @@ def _relevance(title_l, company_l=""):
         return ("signal" if (_BA_DOMAIN.search(title_l) or _AGENCY_EMPLOYER.search(company_l)
                              or _QUALITATIVE_HINT.search(title_l))
                 else "strong")
-    if _SIGNAL.search(title_l) or _HEBREW_SIGNAL.search(title_l):
+    if _SIGNAL.search(title_l) or _HEBREW_SIGNAL.search(title_l) or _GATE_APPEAL.search(title_l):
         return "signal"
     return "none"
+
+
+def _gate_appealed(title_l):
+    """True when the ONLY thing bringing this title into the LLM's reach is `_GATE_APPEAL`:
+    without it the gate answers `excluded` or `none`, and nothing else about the title says
+    analytics. It exists so the no-LLM guard below cannot regress a title that was already
+    `signal` on the gate's own vocabulary -- `Junior Data/Financial Analyst` matches `_SIGNAL`
+    (on the bare word `analyst`) and is still `excluded`, so "does `_SIGNAL` match?" is not
+    the question. The question is what `_relevance` would have answered."""
+    if not _GATE_APPEAL.search(title_l):
+        return False
+    if _HARD_EXCLUDE.search(title_l) or _HARD_EXCLUDE_MISC.search(title_l):
+        return not _STRONG.search(title_l)
+    return not (_STRONG.search(title_l) or _SIGNAL.search(title_l)
+                or _HEBREW_SIGNAL.search(title_l))
 
 
 # --------------------------------------------------------------------------- #

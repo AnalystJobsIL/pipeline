@@ -21172,6 +21172,74 @@ def test_a_qualitative_title_never_takes_the_keyword_shortcut():
         assert seniority._relevance(title.lower(), "") == "strong", title
 
 
+def test_the_gate_appeal_routes_a_measured_false_negative_to_the_llm_and_never_past_it():
+    """`542@classifier`, and `529`'s reopening condition. Two live Israeli postings were
+    judged YES through the production seam under `v3.0f84ab84` while `_relevance` refused them
+    with no appeal -- `Calculum | Junior Data/Financial Analyst` (`excluded` on the
+    `financial analyst` hard-exclude) and `IAI | תהליכי בקרה ו-AI` (`none`). `_GATE_APPEAL`
+    routes them to `signal` so the LLM reads the description.
+
+    It must never do more than that. `_QUALITATIVE_HINT` could not do this job at all -- it is
+    read only inside the `if strong:` branch, after the hard-exclude branch has returned -- and
+    the promotion the boundary record rejects by name (adding the phrase to `_STRONG`) would
+    enable the strong+senior fast-accept and admit the title UNREAD."""
+    for title in ("Junior Data/Financial Analyst", "Data / Financial Analyst",
+                  "Data/Financial Analysts", "תהליכי בקרה ו-AI", "מוביל.ה תהליכי בקרה"):
+        assert seniority._relevance(title.lower(), "") == "signal", title
+    # Never `strong`, asserted as ABSENCE FROM `_STRONG` and not as the tier the gate returns.
+    # An adversarial pass caught the obvious form being half vacuous: for a phrase that also
+    # matches `_HARD_EXCLUDE` (`data/financial analyst`), the hard-exclude branch returns
+    # before the `strong` return is reachable, so `_relevance(...) != "strong"` holds under
+    # EVERY mutation, including the promotion this is supposed to pin. Proven by applying that
+    # mutation: `Senior Data/Financial Analyst` stayed `signal` while
+    # `תהליכי בקרה ו-AI` went `strong` — one of the two assertions was live.
+    for phrase in ("junior data/financial analyst", "senior data/financial analysts",
+                   "תהליכי בקרה ו-ai"):
+        assert seniority._GATE_APPEAL.search(phrase), phrase
+        assert not seniority._STRONG.search(phrase), phrase
+    # ...and the tier check, which is live for the `none`-path phrase
+    assert seniority._relevance("תהליכי בקרה ו-ai", "") != "strong"
+    # and the hard-exclude family it sits inside is untouched for everyone else
+    for title in ("Financial Analyst", "Senior Credit Analyst", "FP&A Analyst",
+                  "Senior Analytics Engineer", "Security Analyst"):
+        assert seniority._relevance(title.lower(), "") == "excluded", title
+
+
+def test_a_title_the_gate_appeal_rescued_is_never_accepted_without_the_llm():
+    """The rescue means ASK, never assume. The whole evidence for `_GATE_APPEAL`'s two phrases
+    is a verdict the LLM gave, so on a breaker-open morning -- exactly when nobody is watching
+    -- an appeal-only title must fall back to `reject`, not ride `_sig_accept_nollm` in on a
+    description full of analytics words. This is the rule `_classify`'s `strong_enough` already
+    carries for the `_STRONG` rescue, where lifting a hard-excluded title back to an accept
+    moved a data-engineering role onto the board in fallback mode.
+
+    `_gate_appealed` is the predicate and not `_GATE_APPEAL` itself, because
+    `Junior Data/Financial Analyst` DOES match `_SIGNAL` (on the bare word `analyst`) and is
+    still `excluded` -- so a title that was already `signal` on the gate's own vocabulary must
+    keep its no-LLM accept."""
+    desc = ("Build dashboards and reports, analyze business metrics with SQL, "
+            "deliver insights to stakeholders.")
+    for title in ("Senior Data/Financial Analyst", "תהליכי בקרה ו-AI"):
+        assert seniority._gate_appealed(title.lower()) is True, title
+        assert seniority._sig_accept_nollm("signal", "senior", title.lower(), desc) is False, title
+        r = seniority.classify({"company": "Acme", "title": title, "description": desc},
+                               use_llm=False)
+        assert r["relevance"] == "signal" and r["decision"] == "reject", (title, r)
+    # A title that carries the phrase AND an analytics word of its own is NOT appeal-only: the
+    # gate would have said `signal` without `_GATE_APPEAL`, so nothing may change for it. Both
+    # of the first two DO carry an appeal phrase, which is the point — an earlier version of
+    # this loop listed titles matching no phrase at all, so `_gate_appealed` returned False on
+    # its first line and the branch under test was never reached.
+    for title in ("Senior תהליכי בקרה analyst", "Data/Financial Analyst, Business Intelligence"):
+        assert seniority._GATE_APPEAL.search(title.lower()), title
+        assert seniority._gate_appealed(title.lower()) is False, title
+    # ...and a title carrying no phrase at all is never appeal-only either
+    for title in ("Senior Reporting Specialist", "Senior Data Scientist"):
+        assert seniority._gate_appealed(title.lower()) is False, title
+    assert seniority._sig_accept_nollm("signal", "senior", "senior תהליכי בקרה analyst",
+                                       desc) is True
+
+
 def test_a_strong_senior_title_with_a_description_is_read_not_assumed(monkeypatch):
     """`373@classifier`, closed with a number. The strong+senior shortcut was justified by the
     experience bar ("a senior analyst title reliably means 3+ years"); the bar came off on

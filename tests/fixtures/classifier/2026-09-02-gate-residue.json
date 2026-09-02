@@ -1,0 +1,113 @@
+{
+ "contract": "v3.0f84ab84",
+ "model": "sonnet",
+ "on": "2026-09-02",
+ "note": "542@classifier: the two gate false negatives the appeal admits, and the 6-row residue of the refused-WITH-TEXT tier (flagged by >=2 of 3 independent description predicates, is_israel_job, not a class the rules already name). The residue is the false-negative measurement 529 and 542 each ask for.",
+ "calls": 8,
+ "rows": [
+  {
+   "group": "gate-542",
+   "role_id": null,
+   "company": "Calculum",
+   "title": "Junior Data/Financial Analyst",
+   "location": "Israel",
+   "url": "https://www.calculum.ai/vacancies/junior-data-financial-analyst-position-type",
+   "status": "live-card",
+   "published_class": null,
+   "note": "542: gate `excluded`",
+   "verdict": "YES",
+   "reason": "This is a genuine analyst job at Calculum itself, involving cleaning, enriching, and analyzing large financial/supply-chain datasets to produce insights for cli"
+  },
+  {
+   "group": "gate-542",
+   "role_id": null,
+   "company": "IAI - Israel Aerospace Industries",
+   "title": "תהליכי בקרה ו-AI",
+   "location": "Ashdod, South District, Israel",
+   "url": "https://www.linkedin.com/jobs/view/%D7%AA%D7%94%D7%9C%D7%99%D7%9B%D7%99-%D7%91%D7%A7%D7%A8%D7%94-%D7%95-ai-at-iai-israel-aerospace-industries-4456820460?_l=en",
+   "status": "live-card",
+   "published_class": null,
+   "note": "542: gate `none`",
+   "verdict": "YES",
+   "reason": "This is an in-house analytics/BI role at IAI's Elta division, centered on data analysis, KPI monitoring, dashboards, and management reporting (with AI tools as "
+  },
+  {
+   "group": "gate-residue",
+   "role_id": null,
+   "company": "Wiliot",
+   "title": "Data Solutions Team LeadDallas",
+   "location": "Israel",
+   "url": "https://www.wiliot.com/positions/position-67_e6f",
+   "status": "live-card",
+   "published_class": null,
+   "note": "flagged by >=2 of 3 description predicates",
+   "verdict": "NO",
+   "reason": "This role centers on big-data architecture, team/people management, and engineering optimization of data systems rather than the person's own analytic output of"
+  },
+  {
+   "group": "gate-residue",
+   "role_id": null,
+   "company": "Wiliot",
+   "title": "Data Solutions AnalystSan Mateo",
+   "location": "Israel",
+   "url": "https://www.wiliot.com/positions/position-65_a6c",
+   "status": "live-card",
+   "published_class": null,
+   "note": "flagged by >=2 of 3 description predicates",
+   "verdict": "YES",
+   "reason": "This is a company hiring for itself as a data analyst role focused on analytics, big data architecture, visualization, and reporting output, not internship, age"
+  },
+  {
+   "group": "gate-residue",
+   "role_id": null,
+   "company": "Surecomp",
+   "title": "Sales / Business Operations Manager",
+   "location": "Kfar Saba, Israel",
+   "url": "https://surecomp.com/careers/co/kfar-saba-israel/A9.968/sales-business-operations-manager/all",
+   "status": "live-card",
+   "published_class": null,
+   "note": "flagged by >=2 of 3 description predicates",
+   "verdict": "NO",
+   "reason": "This is a Sales/Revenue Operations Manager role that owns Salesforce governance, forecasting, and the operational engine of the sales org-execution/ops manageme"
+  },
+  {
+   "group": "gate-residue",
+   "role_id": null,
+   "company": "Velotix",
+   "title": "Revenue Operations and Growth Specialist",
+   "location": "Israel",
+   "url": "https://www.velotix.ai/careers/revenue-operations-and-growth-specialist/",
+   "status": "live-card",
+   "published_class": null,
+   "note": "flagged by >=2 of 3 description predicates",
+   "verdict": "NO",
+   "reason": "The role centers on owning/administering HubSpot CRM operations, workflows, and lead routing (execution work), with reporting/dashboards as a secondary function"
+  },
+  {
+   "group": "gate-residue",
+   "role_id": null,
+   "company": "HiBob",
+   "title": "Deal Desk Specialist (Maternity leave)",
+   "location": "Israel",
+   "url": "https://hibob-fa0ad69d0cb34a.careers.hibob.com/jobs/403dae40-aca0-4201-943a-2c0f2840c07f",
+   "status": "live-card",
+   "published_class": null,
+   "note": "flagged by >=2 of 3 description predicates",
+   "verdict": "NO",
+   "reason": "This is a Deal Desk/Sales Operations role focused on deal structuring, pricing, quoting, and Salesforce process ownership rather than producing analysis/reporti"
+  },
+  {
+   "group": "gate-residue",
+   "role_id": null,
+   "company": "Challenge Group",
+   "title": "Safety Officer",
+   "location": "Shoham, Center District, Israel",
+   "url": "https://www.linkedin.com/jobs/view/safety-officer-at-challenge-group-4423206343?_l=en",
+   "status": "live-card",
+   "published_class": null,
+   "note": "flagged by >=2 of 3 description predicates",
+   "verdict": "NO",
+   "reason": "This is an aviation Safety Officer role focused on SMS compliance, regulatory documentation, and safety management-not a data analyst position."
+  }
+ ]
+}

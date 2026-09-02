@@ -5410,6 +5410,41 @@ under the new rules. **28 live titles** are affected, 20 of them SOC or security
 operator names as out. What would reopen it: a measured false negative in that tier
 (`529@classifier`).
 
+**2026-09-02 — it was reopened by a measurement, and the escape hatch is `_GATE_APPEAL`.**
+A gate audit found `Calculum | Junior Data/Financial Analyst` (`excluded` on `financial
+analyst`) and `IAI | תהליכי בקרה ו-AI` (`none`, a Hebrew management-control title) alive,
+carrying text, and **YES** through the production seam. `_GATE_APPEAL` is a third
+vocabulary, read in BOTH refusing branches of `_relevance`, whose only effect is
+`excluded`/`none` → `signal`. Three properties make it safe to add a phrase to, and each is
+a test:
+
+* **never `strong`** — a promotion would enable the strong+senior fast-accept and put the
+  title on the board with no description read. That alternative is rejected by name in
+  `docs/decisions/2026-09-01-analytics-engineer-boundary.md`.
+* **never a reject** — like `_QUALITATIVE_HINT`, a wrong phrase costs one LLM call, never a
+  role.
+* **never an accept without the LLM** — `_sig_accept_nollm` refuses a title `_gate_appealed`
+  says is `signal` only because of the appeal. The whole evidence for a phrase here is a
+  verdict the model gave, so on a breaker-open morning there is no evidence. This is the
+  rule `_classify`'s `strong_enough` already carries for the `_STRONG` rescue: **the rescue
+  means ASK, never assume.**
+
+`_QUALITATIVE_HINT` cannot do this job and `542`'s first draft assumed it could: it is read
+only inside `_relevance`'s `if strong:` branch, after the hard-exclude branch has already
+returned. Cost of the two shipped phrases, measured 2026-09-02: **2 of 4,599** distinct
+(company, title) pairs across both caches newly reach the LLM, **0 of the 252** title-only
+golden-fixture rows move, and `CONTRACT` is unchanged — the gate is not in the rules hash, so
+no verdict is re-superseded by a gate change. A third confirmed miss
+(`Zoll | Business Operations, CMS`) is deliberately NOT shipped: its title carries no
+analytics word at all, and the only title phrase that reaches it costs 9 further cards, 8 of
+them recurring NO calls, and 6 new JD-fetch candidates. The successor is a DESCRIPTION appeal
+— `data analytics｜data analysis｜ניתוח נתונים` plus an output word and a tool word, over text
+the posting already carries, never fetching — which reaches **all three** misses at **22
+cards**. It is designed and measured, not shipped: what gates it is the LLM budget, since the
+09-02 run was cap-bound at `re-judged 250/cap 250`. `542@classifier` carries both tables, and
+records that this session's first draft claimed no such shared predicate existed and was
+wrong.
+
 The contract moves once for both changes (`v3.da2cb878` → `v3.7cb6831f`) and the drain
 follows it. `docs/decisions/2026-08-31-domain-scope.md`; the paragraph it supersedes is
 marked in the 08-28 record.
@@ -5455,6 +5490,48 @@ were **refuted** on their own JDs. A confirmed-OUT row needs a human retraction 
 when the seam already re-judged it NO, because `rec["class"]` is fed from `merged` and a
 reject is not in `merged`: `Percepto` and `Chainalysis` were both flipped by earlier runs and
 both still read `accept` in the dataset today. That gap is `543@roles`, filed with the diff.
+
+**2026-09-02 — the ruling that finished the audit: a closed row is held to the LIVE
+contract.** The operator's acceptance bar is that every published row is relevant *including
+the no-longer-active ones*, and a `reject` cell does not satisfy it — a `reject` cell removes
+nothing, so the row sits in `roles.csv` for the whole 90-day window with the file asserting
+in public that it publishes a role it has judged out of scope. All 151 published rows were
+swept: **4 carry `reject` and all four are closed.** Three are NO under `v3.0f84ab84` **on
+their own readable text** — the qualifier is load-bearing and two rows in the same commit
+prove it — and are withdrawn (`Mobileye | Experienced Data Analyst`, `Questar Auto | Senior Data Scientist`,
+`Minute Media | Data Scientist` — the last reversing one sentence of the 09-01 record, on the
+bar and not on the verdict). The fourth, `Parametrix`, is **YES** and is not: its cell is a
+frozen verdict under a retired contract, which is exactly why the rule reads *"judged NO
+under the live contract"* and never *"carrying a reject cell"* — the two wordings differ on
+one of the four rows, and the second would have deleted a role the seam accepts.
+`docs/decisions/2026-09-02-a-closed-row-is-judged-by-the-live-contract.md`.
+
+**And the deferred half of the audit, adjudicated once its text settled.** Nine role records
+were judged on the text they carry today, one call each
+(`tests/fixtures/classifier/2026-09-02-deferred.json`) — the seven rows held back on
+2026-09-01 as `desc_mismatch` (`Holisto` is two records) plus `בנק דיסקונט`, which the 09-01
+record had placed in a different bucket as having no role record at all, and which does have
+one. **4 withdrawn, 5 kept.** Two of the four leave on a ground this seam cannot reach:
+`Diageo` states `Location: 3 WTC (New York)` in its own opening lines and `TransUnion` is
+TransUnion India's overview around a Pre Sales Consultant role, and the classifier's LLM tier
+is never asked about geography — so it judges Diageo **YES on scope and is right to**
+(`566@classifier` carries the filter defect, with four instances).
+
+**Two of the nine turned on WHOSE text the store was holding, and an adversarial pass caught
+both after the lines were written.** `Prisma Photonics | Senior Product Analyst` had a
+withdrawal line drafted on 3,276 characters of the company's Senior *Data Engineer* posting,
+while its own card — 2,617 characters of statistical analysis, visualisation and
+recommendations — sat in `scraped_cache.json` under the row's own url; the seam says NO to
+the first and **YES** to the second, and the line was **dropped before the push**. `Ballerine`
+answers NO on its full 3,998 stored characters, of which the first 2,671 are site chrome, and
+**YES** on the 1,327-character JD buried at the end. Both rows stay published, and `567`
+carries the guard this asks for: a leading-chrome prefix or a mid-sentence page-slice does not
+merely make a posting unreadable, it can **invert the verdict**, because `prompt_slice` sends
+a 1,400-character window and the chrome fills it. `Gamida Cell` is the session's one
+adjudication against a seam verdict on readable text: its capture ends exactly at the
+6,000-character cap, begins mid-sentence, and carries six field-sales bullets from a different
+posting — though the seam's reason names a second ground that IS in the role's own block, so
+the contamination is demonstrated and its effect on the verdict is not.
 
 **The scope those gates enforce is now a decision, not a phrase**:
 `docs/decisions/2026-08-28-analyst-scope.md`. Two of its five boundaries changed that day and
