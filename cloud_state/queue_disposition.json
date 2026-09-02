@@ -3876,40 +3876,22 @@
   "why": "BCG is a real, active employer and the probe found working careers pages (careers.bcg.com/careers, /jobs) plus a talent portal, so none of the negative categories (no-board, acquired, duplicate, not-an-employer, defunct) apply."
  },
  "Bottom Line Designs": {
-  "date": "2026-08-30",
+  "date": "2026-09-02",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Bottomline Payments",
+  "why": "a rung found this name's board and the registry row 'Bottomline Payments' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.bottomline.com/about/careers"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "Bottomline Payments",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.bottomline.com/about/careers/jobs"
     ]
-   },
-   "read_page": "https://www.bottomline.com/about/careers/jobs",
-   "search_pages": [
-    "https://www.bottomline.com/about/careers/jobs",
-    "https://www.bottomline.org/about-us/careers/",
-    "https://www.efinancialcareers.com/jobs/design/at-bottomline",
-    "https://bottomline.eu/careers"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Every page and the careers probe belong to Bottomline Technologies, a global business-payments company, which is not plausibly the same as \"Bottom Line Designs\". No evidence about the actual intake company was gathered, so the probe result cannot support any finding about it."
+   ]
+  }
  },
  "Bottomline Payments": {
   "board_url_if_any": "",
@@ -6229,40 +6211,44 @@
   "why": "\"Clickhouseinc\" is the legal-entity spelling of ClickHouse, Inc., whose careers page (clickhouse.com/company/careers) and Greenhouse board (job-boards.greenhouse.io/clickhouse) exist."
  },
  "CloudZone": {
-  "date": "2026-08-30",
-  "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.cloudzone.io/careers",
-     "https://www.cloudzone.io/careers/"
-    ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
-    ]
-   },
-   "read_page": "https://www.cloudzone.io/about-us",
-   "search_pages": [
-    "https://www.cloudzone.io/about-us",
-    "https://cloudzon.com/career",
-    "https://www.instagram.com/lifeatcloudzone/"
-   ],
-   "verify": []
-  },
+  "date": "2026-09-02",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
   "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "CloudZone is a real cloud services employer (~130 staff), and the careers probe found live pages at cloudzone.io/careers, so \"no board\" does not apply; evidence doesn't show acquisition, duplication, or shutdown either."
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "own-site",
+     "resolved-domain"
+    ],
+    [
+     "search",
+     "search-page-no-ats"
+    ],
+    [
+     "slug-probe",
+     "implied-by-ladder"
+    ],
+    [
+     "comeet-token",
+     "implied-by-ladder"
+    ],
+    [
+     "resolve-llm",
+     "no-proposal"
+    ],
+    [
+     "hunt",
+     "no-listing"
+    ],
+    [
+     "search-llm",
+     "documented"
+    ]
+   ]
+  }
  },
  "Codeocean": {
   "date": "2026-08-30",
@@ -6950,7 +6936,7 @@
   "why": "Evidence shows Fast Corporation, LTD is a real IT company (fastcorporate.com, PC app store, AI/ML), but the only listing is a work.ua aggregator profile with 0 vacancies, and the other search hits are unrelated firms (Fast Technologies, Fast Track, Fast Enterprises). The careers probe was run agains"
  },
  "Faye": {
-  "date": "2026-09-01",
+  "date": "2026-09-02",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "withfaye",
@@ -23327,7 +23313,7 @@
   }
  },
  "Level App": {
-  "date": "2026-09-01",
+  "date": "2026-09-02",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -24124,6 +24110,194 @@
  },
  "GetsMine": {
   "date": "2026-09-01",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Majestic Labs": {
+  "date": "2026-09-02",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Majestic Labs ai",
+  "why": "a rung found this name's board and the registry row 'Majestic Labs ai' already reads it (matched on comeet-uid, never on the name)",
+  "evidence": {
+   "row": "Majestic Labs ai",
+   "matched_on": "comeet-uid",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.comeet.com/jobs/majesticlabs/AA.004"
+    ]
+   ]
+  }
+ },
+ "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
+  "date": "2026-09-02",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Clal Insurance And Finance",
+  "why": "a rung found this name's board and the registry row 'Clal Insurance And Finance' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Clal Insurance And Finance",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.clalbit.co.il/careers/"
+    ]
+   ]
+  }
+ },
+ "Horizon Technologies LTD.": {
+  "date": "2026-09-02",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Horizon Technologies",
+  "why": "a rung found this name's board and the registry row 'Horizon Technologies' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Horizon Technologies",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://horizontech.co.il/שירותים/קריירה/"
+    ]
+   ]
+  }
+ },
+ "Hillcrest Labs, acquired by CEVA": {
+  "date": "2026-09-02",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Ceva",
+  "why": "a rung found this name's board and the registry row 'Ceva' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "Ceva",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.ceva-ip.com/career"
+    ]
+   ]
+  }
+ },
+ "Navina AI": {
+  "date": "2026-09-02",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Data researcher - Navina",
+  "why": "a rung found this name's board and the registry row 'Data researcher - Navina' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Data researcher - Navina",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.navina.ai/careers"
+    ]
+   ]
+  }
+ },
+ "Ness Ses": {
+  "date": "2026-09-02",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Ness Technologies | נס טכנולוגיות",
+  "why": "a rung found this name's board and the registry row 'Ness Technologies | נס טכנולוגיות' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Ness Technologies | נס טכנולוגיות",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.ness-tech.co.il/careers/"
+    ]
+   ]
+  }
+ },
+ "Nestle S A": {
+  "date": "2026-09-02",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Nestle",
+  "why": "a rung found this name's board and the registry row 'Nestle' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "Nestle",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.nestlejobs.com/job-search"
+    ]
+   ]
+  }
+ },
+ "Cust2Mate - A2Z (Nasdaq:AZ / FRA - WKN: A3CSQ )": {
+  "date": "2026-09-02",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Cust2Mate - A2Z (NASDAQ: AZ)",
+  "why": "a rung found this name's board and the registry row 'Cust2Mate - A2Z (NASDAQ: AZ)' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Cust2Mate - A2Z (NASDAQ: AZ)",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://cust2mate.com/careers/"
+    ]
+   ]
+  }
+ },
+ "Palantir Technologies": {
+  "date": "2026-09-02",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "AspiringIT": {
+  "date": "2026-09-02",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Nirlat": {
+  "date": "2026-09-02",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Noga Iso": {
+  "date": "2026-09-02",
   "verdict": "already-a-row",
   "raw_verdict": "already-a-row",
   "other_name": "",

@@ -44405,5 +44405,449 @@
   ],
   "last": "2026-09-01",
   "verdict": "documented"
+ },
+ "Consist Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://www.consist.co.il/jobs/"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "DoiT": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-02",
+    "url": "https://careers.doit.com/jobs"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "found"
+ },
+ "Push digital il": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://pushdigitalgroup.com/careers/"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Nice Systems": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://www.nice.com/careers"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Ninjio Llc": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Nofarenergy": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://www.nofar-energy.com/careers"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Novacoun": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Nsure": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-02",
+    "url": "https://www.comeet.com/jobs/nsure/A7.007?coref\\u003dundefined"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "found"
+ },
+ "Nuevo Media Group Il": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no-search-results"
+ },
+ "Scytale": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://scytale.ai/scytale-careers/"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "KPMG": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-02",
+    "url": "https://kpmg.co.il/en/careers"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "found"
+ },
+ "Medical Talent משרות! לתעשיית הפארמה, מכשור, ביומד-טק , בריאות ורפואה": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Headline - Asia": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Nift Networks": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://www.gonift.com/business/careers/"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Nishatchunianlimited": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Noff Oren Ben Ami Co": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Novartis Pharma Schweiz": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-02",
+    "url": "https://www.novartis.com/careers"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "found"
+ },
+ "Nta Metropolitan Mass Transit System Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Nur Esh Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "M/A Com Technolgy Solutions": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Hooke Solutions": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-02",
+    "url": "https://hooke.com/pages/work-for-us?srsltid\\u003dAfmBOor6DODjuvZ4fZ6K6Ik8ppMoKtApExz7tsge4jj1Bzx6gcMDmUvn"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "found"
+ },
+ "Nextage Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://www.nextage.co.il/careers/raanana/vpfinance"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Nimble Search": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-02",
+    "url": "https://www.nimbleway.com/careers"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "found"
+ },
+ "Nitsan Lab For Sustainable Development Tau": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Northside Air Conditioning": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://northsidecomfort.com/about/employment/"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Novee Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://novee.security/careers/"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Nte Eng": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Nuri Casting": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Analytical Factor": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Skill Mind Tech Bridge": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://techbridge.org/careers/"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Ngsoft Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-02",
+    "url": "https://www.ngsoft.com/who-we-are/careers"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "found"
+ },
+ "Nimbledata": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "No Any Company": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Notchapp": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-02",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Novelsat Ayecka": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://novelsat.com/careers"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Ntu International": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://ntu.wd3.myworkdayjobs.com/Careers"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
+ },
+ "Morning": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-02",
+    "url": "https://morningconsult.com/careers"
+   }
+  ],
+  "last": "2026-09-02",
+  "verdict": "documented"
  }
 }

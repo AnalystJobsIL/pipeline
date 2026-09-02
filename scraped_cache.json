@@ -10028,6 +10028,21 @@
    "url": "https://www.google.com/about/careers/applications/jobs/results/"
   }
  ],
+ "H2Pro": [
+  {
+   "_loc_src": "assumed",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "H2Pro",
+   "country_code": "",
+   "description": "",
+   "job_id": "a01d8ab89328e126",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Plant Operator",
+   "url": "https://www.h2pro.co/careers"
+  }
+ ],
  "HSBC Global Services Limited": [
   {
    "_loc_src": "group",
@@ -20253,6 +20268,56 @@
    "posted_date": "",
    "title": "Global Planning Sr. Manager",
    "url": "https://www.pepsicojobs.com/main/jobs/470068?lang=he-il&previousLocale=en-US"
+  }
+ ],
+ "Perception Point": [
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Perception Point",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://perception-point.io/demo-center",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Free Product Demo",
+   "url": "https://perception-point.io/demo-center"
+  },
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Perception Point",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://perception-point.io/resources",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Resource Center",
+   "url": "https://perception-point.io/resources"
+  },
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Perception Point",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://perception-point.io/support/product-downloads?tab=trials",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Free Trials",
+   "url": "https://perception-point.io/support/product-downloads?tab=trials"
+  },
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Perception Point",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://perception-point.io/corporate/about-us/contact-us",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Contact Sales",
+   "url": "https://perception-point.io/corporate/about-us/contact-us"
   }
  ],
  "Percepto": [
