@@ -560,8 +560,8 @@
   "last": "2026-08-25"
  },
  "Mobileye": {
-  "fails": 1,
-  "last": "2026-08-26"
+  "fails": 2,
+  "last": "2026-09-02"
  },
  "lakeFS": {
   "fails": 1,
@@ -600,8 +600,8 @@
   "last": "2026-08-26"
  },
  "Predicta Med": {
-  "fails": 1,
-  "last": "2026-08-26"
+  "fails": 2,
+  "last": "2026-09-02"
  },
  "NetApp": {
   "fails": 1,
@@ -632,8 +632,8 @@
   "last": "2026-08-26"
  },
  "GenCell": {
-  "fails": 1,
-  "last": "2026-08-26"
+  "fails": 2,
+  "last": "2026-09-02"
  },
  "Refine Intelligence": {
   "fails": 1,
@@ -684,8 +684,8 @@
   "last": "2026-08-26"
  },
  "aspectiva": {
-  "fails": 1,
-  "last": "2026-08-26"
+  "fails": 2,
+  "last": "2026-09-02"
  },
  "Lightricks": {
   "fails": 1,
@@ -870,5 +870,33 @@
  "Sisense": {
   "fails": 1,
   "last": "2026-09-01"
+ },
+ "ASML": {
+  "fails": 1,
+  "last": "2026-09-02"
+ },
+ "Adi Il": {
+  "fails": 1,
+  "last": "2026-09-02"
+ },
+ "Cyabra": {
+  "fails": 1,
+  "last": "2026-09-02"
+ },
+ "Harmonya Technologies": {
+  "fails": 1,
+  "last": "2026-09-02"
+ },
+ "Just Eat Takeaway Com": {
+  "fails": 1,
+  "last": "2026-09-02"
+ },
+ "K2view": {
+  "fails": 1,
+  "last": "2026-09-02"
+ },
+ "Shortical": {
+  "fails": 1,
+  "last": "2026-09-02"
  }
 }
