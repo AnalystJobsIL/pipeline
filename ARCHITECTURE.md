@@ -6049,10 +6049,19 @@ records at the cost of a duplicate archive row). It runs in two arms:
 `_resolve_claims` folds a pair both fetched today, testing with the STORED ids folded in
 (today's cards alone share nothing) and keeping the best per-run `_source_rank` — the
 native board carries the title the employer shows today; a TIE refuses the group whole,
-and a group holding an already-superseded member is SKIPPED (the standing verdict wins —
-re-electing by today's ranks once closed a supersede CYCLE with the sweep, both halves
-off every product with `ledger N = store N` still green; `_supersede` also follows the
-winner's chain and refuses one that leads back, as the second lock) — and `sweep_store`
+and a group holding an already-superseded member is never RE-ELECTED (the standing
+verdict wins — re-electing by today's ranks once closed a supersede CYCLE with the
+sweep, both halves off every product with `ledger N = store N` still green; `_supersede`
+also follows the winner's chain and refuses one that leads back, as the second lock).
+**Standing by that verdict means applying it, and until 2026-09-02 the pass walked away
+instead**: the loser stayed in `merged`, both keys were upserted, and `id_collisions`
+alarmed every morning after for a pair the ledger had folded — HoneyBook again, `2 id(s)`
+in the 09-02 mail, both of them this one pair, with one `filter_new` kill-switch across
+two rows. So where the stored verdict names a single survivor INSIDE the group, that
+member takes the ids and the losers are dropped, with no election, no `_supersede` and no
+second `retitle folds` line (the fold is logged on its own day, once). A `superseded_by`
+that points OUTSIDE the group is not this group's verdict to apply and still refuses the
+whole group — and `sweep_store`
 folds the pair whose stale half never returns (winner: open beats closed, then later
 `last_seen`, full tie refuses). A twin-superseded record also never RECLAIMS itself (the
 reclaim path is for cross-company parking; the twin's winner record IS the role). Losers
@@ -6540,7 +6549,20 @@ file is needed to reach Pages.
 `"evidence"`. Keyed by **url** on purpose: Comcast's `role_id` contains the `&amp;` artefact
 (`…operations amp analytics`), so a title-cleaning fix upstream would mint a new id that a
 role_id-keyed line would miss, while the posting's address is stable. `roles.Retractions`
-matches on role_id, url, or any `seen_id` (a scrape id IS the url). It is read in
+matches on role_id, on the record's OWN url, or — **only for a line no record owns** — on
+any `seen_id` whose id half is a url (a scrape id IS the url). That last arm is a fallback
+and not a peer of the first two, since 2026-09-02: a `seen_id` is not an address a record
+claims, it is every address a fetch ever bound to it, so one stray id makes a retraction
+take a second, LIVE role. `percepto|senior product analyst` (open, `accept`, on the board,
+own url `percepto.co/careers/`) carries the own url of `percepto|data insights operations`
+as a `scrape:` id, and the one line written for the second matched both — 1 of 39 lines,
+caught one step before a push, and it would have published a real analyst role in
+`meta.removed[]` under a reason describing a different posting. `bind()` decides ownership
+once, over every record, because a per-record preference cannot see it (asked alone, the
+live record owns no matching url and falls through to its ids); a strip of the stray id is
+NOT the fix on its own, because `upsert_matched` unions ids run over run and the card that
+donates it is in `scraped_cache.json`. Nothing alarms on an over-match — `_hits` counts
+lines answered, never records taken — which is why the rule is in the matcher. It is read in
 `Ledger.__init__`, outside every `_guard`, and consulted in **two** places from that one
 object: `run.py`'s `_alive` (email + board) and its archive filter — the FILE, never the
 ledger's status, so a frozen-ledger day cannot put Houston back on the board — and

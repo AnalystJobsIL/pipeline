@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**615 filed · 445 open · 170 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**616 filed · 443 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 565.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 566.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 150 open
+### registry — 149 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -242,7 +242,6 @@ closure convention in the header.
 - **528** `528@registry` **Three registry rows name a company that is not the one their board belongs to, and
 - **538** `538@registry` **Three registry rows carry a name that is not their board's company, with the evidence
 - **549** `549@registry` **`deep_validate` recorded a NAME-ALIKE's empty board as this company having no
-- **558** `558@registry` **`rehearse (worst, seed 1)` is RED on master, and the row it names is not lost
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 
 ### infra — 109 open
@@ -389,7 +388,7 @@ closure convention in the header.
 - **535** `535@discovery` **A role whose own JD names a New York address is published as an Israel role**
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
 
-### scraper — 27 open
+### scraper — 28 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -418,6 +417,7 @@ closure convention in the header.
 - **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
 - **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
 - **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
+- **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
 
 ### docs — 25 open
 
@@ -447,7 +447,7 @@ closure convention in the header.
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 - **563** `563@docs` **Nothing checks that a `NNN@lane` reference resolves to an item that still exists** —
 
-### roles — 25 open
+### roles — 24 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
 - **3** `3@roles` **`pipeline/dates.py`**
@@ -471,7 +471,6 @@ closure convention in the header.
 - **534** `534@roles` **One posting, two `merge_key`s
 - **543** `543@roles` **A drain flip never reaches the published dataset, so a role the seam has re-judged NO
 - **544** `544@roles` **A published `class_decision` cannot say which contract judged it, so a bump leaves the
-- **545** `545@roles` **A stray `seen_id` on one record makes another record's url withdraw it too
 - **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
 - **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
 
@@ -542,7 +541,7 @@ closure convention in the header.
 - **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
 - **557** `557@classifier` **LTX has not flipped to its own board
 
-### jd-text — 16 open
+### jd-text — 15 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -559,7 +558,6 @@ closure convention in the header.
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 - **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
 - **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
-- **564** `564@jd-text` **Six catalogued mutations survived the suite; five are closed within the hour, one is
 
 ### render — 6 open
 
@@ -10545,8 +10543,31 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      means two things" has the same root: the dataset records verdicts without recording when
      the rules that produced them were true.
 
-545. **A stray `seen_id` on one record makes another record's url withdraw it too — a
-     retraction cannot be aimed at a single role** — lane: `roles`. Filed by `classifier`
+545. ~~**A stray `seen_id` on one record makes another record's url withdraw it too — a
+     retraction cannot be aimed at a single role**~~ — **CLOSED 2026-09-02 (`roles`): the
+     line binds to the record that OWNS its address.** `bind()` now stamps each entry
+     `_owned` when some record's own `url` is that address, and `match_all`'s `seen_ids` arm
+     fires only for a line nothing owns; the `role_id` and own-url arms are untouched. The
+     decision had to be made about the LINE, over every record at once — asked about
+     `percepto|senior product analyst` alone, that record owns no matching url and a
+     per-record preference falls straight through to its ids, which is the same reason the
+     item's own note says keying by `role_id` does not escape it. Measured on the committed
+     ledger and the 38 lines at `aacaf94`: **38 (line, record) pairs before, 38 after** — no
+     line changed which record it takes and none stopped matching — and the Percepto line
+     goes from **2 records to 1**. `percepto|data insights operations` is therefore
+     WITHDRAWN as of 2026-09-02 (line 39, reason from
+     `docs/decisions/2026-08-30-quantitative-scope.md` condition 5 and
+     `docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md`), and
+     `percepto|senior product analyst` stays open, on the board, untouched. Guards:
+     `test_a_retraction_binds_to_the_record_that_owns_its_address_never_a_stray_seen_id`
+     and `test_a_retraction_no_record_owns_still_matches_by_its_seen_id` (the fallback is
+     kept, not deleted — a posting whose record was re-keyed has no owner and its `seen_id`
+     is the only thing naming it), plus the mutation record
+     `retraction-seen-id-arm-outranks-the-owner`. **The other half of this item is NOT done
+     and was re-filed as `565@scraper`:** stripping the contaminated id from `roles.jsonl`
+     and sqlite is not durable on its own, because `upsert_matched` unions ids run over run
+     and the card that donates it lives in `scraped_cache.json`. The original report
+     follows. Lane: `roles`. Filed by `classifier`
      2026-09-01, after an adversarial wave caught it in that session's own staged diff, one
      step before the push. `Retractions.match_all` matches a record by its own url **and by
      any `seen_id` whose id half is a url** (`pipeline/roles.py`), and
@@ -10571,6 +10592,27 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `record_run`'s side two matches look exactly like one.
 
 
+
+565. **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
+     the union makes the contamination permanent** — lane: `scraper`, filed 2026-09-02 by
+     `roles` as the half of `545` that lane could not durably fix. `percepto|senior product
+     analyst`'s own url is the careers PAGE `https://percepto.co/careers/`, and it carries
+     `scrape:https://percepto.co/careers/data-insights-operations-ff-c6f/` — the OWN url of
+     `percepto|data insights operations`, a different posting on the same page. The href
+     ladder bound the wrong card's address to the row. `545` made the retraction matcher
+     immune to it (an address a record claims outranks one that merely stuck to it), so
+     nothing is currently mis-withdrawn, but the id itself is still there and still wrong,
+     and **a strip is not durable from this lane**: `store.upsert_matched` unions
+     `seen_ids` run over run (`pipeline/store.py:746`), so removing it from
+     `cloud_state/roles.jsonl` AND sqlite `matched.seen_ids` is undone by the next fetch of
+     the card that donates it. The fix is upstream, in the card: find the
+     `scraped_cache.json` entry for `percepto.co/careers/` whose `_card_href` is the
+     data-insights-operations permalink and stop it being stamped on the sibling row, then
+     the two stores can be cleaned in one pass. Count the class before building anything —
+     this is the `_jd_shared_page` / `_card_href` off-by-one family the lane already tracks,
+     and a `seen_id` that is another posting's url is a cheap query over the ledger: 16
+     seen_ids name two-plus records today, and this is the only one where the shared id is
+     one member's own address rather than a genuine shared posting.
 
 ## From the `roles` lane, 2026-09-01 (the publish gate, and one posting proven by its text)
 
@@ -10693,8 +10735,35 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      **Left open for whoever wants the deeper fix:** `validate_one` returns the endpoint but
      not WHICH candidate page produced it, so the note still cannot say "this came from a
      search rather than your own site". Threading that provenance through is the real repair.
-558. **`rehearse (worst, seed 1)` is RED on master, and the row it names is not lost — it is
-     HANDED OFF, which the rehearsal's per-pool check does not model** — lane: `registry`,
+558. ~~**`rehearse (worst, seed 1)` is RED on master, and the row it names is not lost — it is
+     HANDED OFF, which the rehearsal's per-pool check does not model**~~ — **CLOSED
+     2026-09-02 (`roles`, under dispensation; the file is `registry`'s): the harness was
+     handing a row its TWIN's triage mode.** The diagnosis in this item is right about the
+     mechanism and wrong about where the repair belongs. `worst` policy is DEFINED here as
+     "triage re-classifies the row the same way again" — a changed mode is a move between
+     pools, and the invariant assumes no row moves. But `_modes` was keyed by **`api_url`**,
+     and two rows legitimately share one address: exactly 2 api_urls in `companies.csv`
+     carry two different `dark-triage` modes (`linnovate.net/careers/` →
+     `Linnovate Technologies` `extract-gap` vs `Linnovate` `wrong-page`;
+     `gencellprojects.com/jobs` the same shape), and `Synopsys Israel` carried no mode at
+     all while its twin `Synopsys` carried `page-empty`. So the stub manufactured a mode
+     CHANGE under a policy whose whole definition forbids one, and the per-pool check then
+     correctly reported a row the harness had itself moved. Keyed by the row's own name
+     (`main()` already passes `company=r[0]` to the real `classify`) it is one line, and
+     **the invariant is untouched**, which is the point: the repair this item prescribed —
+     subtracting `owned_now` from `lost` — would have destroyed the alarm, because under
+     `REHEARSE_SELF_TEST=overwrite` the clobbered cell still matches `HUNT_POOL` and
+     `triage_dark.TARGET_NOTES`, so every clobbered row is still "owned by some pool" and
+     would have been forgiven; the 2026-08-25 regression (`e1b55d7`, `monitored candidate`
+     erased from inside listing-hunt's segment) is the same shape. Measured after the fix:
+     `--nights 14 --policy worst --seed 1` **OK**, `mixed` seeds 1-5 **OK**, and the control
+     still exits 1 — uncapped it reports `repair_extract_gap` 56, `validate_empty` 65,
+     `retry_unreachable + bd_rescue` 24 and `crack_walled` 11 rows lost plus three
+     `pool_floor` halvings. Note for the record that the failing row had already MOVED
+     before this session touched it: on `aacaf94` the failure was
+     `night 12: pool repair_extract_gap (19:00 daily) lost 1 rows it should keep:
+     ['Linnovate Technologies']`, not the `Synopsys Israel` this item quotes — the class,
+     not the row, was what reproduced. The original report follows. Lane: `registry`,
      diagnosed 2026-09-01 (the red was reported by the `classifier` session, whose push was the
      first CI run to judge it). `python tests/rehearse_registry.py --nights 2 --policy worst
      --seed 1` fails `night 1: pool listing_hunt (19:00 daily) lost 1 rows it should keep:
@@ -10860,8 +10929,26 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      splice in only the items you touched (safer when cross-references already exist), or take
      BOTH sides of every conflicted hunk and regenerate the index.
 
-564. **Six catalogued mutations survived the suite; five are closed within the hour, one is
-     open** — lane: `jd-text`, which owns the one still alive; the five that were `roles`'
+564. ~~**Six catalogued mutations survived the suite; five are closed within the hour, one is
+     open**~~ — **CLOSED 2026-09-02 (`roles`, under dispensation; the file is `jd-text`'s):
+     the sixth is killed, and no production line changed.** The gate the record names is
+     already correct and already shipped — `enrich_matched_jd.py:640`, `_donor_pass`,
+     `row_bd = bd if (mkey in paid_keys and mkey not in refuted and due(...)) else None`
+     (`5fb7f6d`). With it a refuted row cannot spend: on a `paid_only` address `row_bd is
+     None` short-circuits at line 666, and on any other address `fetch_jd(bd=None)` exits
+     free at `jdfill.py:2148`. **What was missing was a test.** `refuted=` appeared at four
+     call sites in `tests/test_units.py` and every one was `_store_text`; no test ever
+     passed a non-empty `refuted=` to `_donor_pass`, so the deleted conjunct was never
+     evaluated and the mutant lived. Closed by a third leg on
+     `test_an_archived_role_reaches_the_free_rungs_and_not_the_paid_one` — `paid_keys` and
+     `refuted` both holding the row, asserting the `bd` handed to `fetch_jd` is `None` and
+     that the row is still worked on the free rungs — plus `Kills
+     \`refuted-row-reaches-the-paid-rung\`` in its docstring so the selector always carries
+     it, and `must_be_killed_by_behavioural` flipped `false` → `true` so the catalogue now
+     DEMANDS the kill rather than merely noticing its absence. Verified by hand before the
+     record was touched: the leg passes at HEAD and fails with the mutation applied
+     (`assert <_J6BD object> is None`). 0 Bright Data credits spent — this item is about not
+     spending. The original report follows. Lane: `jd-text`, which owned the one still alive; the five that were `roles`'
      are closed below, and the eight-shard split is what made all six visible. Measured by
      `infra` on 2026-09-01 from run `33522769201`.
 

@@ -2708,8 +2708,8 @@
   "class": "M1-gate-removal",
   "find": "        row_bd = bd if (mkey in paid_keys and mkey not in refuted",
   "replace": "        row_bd = bd if (mkey in paid_keys",
-  "why": "Before the refuted flag existed, a row whose text passed `looks_like_jd` was skipped BEFORE `_donor_candidates` and could not spend. A refuted row now walks the candidates, so without this clause it reaches the Unlocker: an adversarial wave measured 0 paid calls before and 1 (2 with the render retry) after, per refuted row per cooldown window, against the shared 25 cap. A row that already HAS text may work the free rungs; it may not preempt a row that has none.",
-  "must_be_killed_by_behavioural": false
+  "why": "Before the refuted flag existed, a row whose text passed `looks_like_jd` was skipped BEFORE `_donor_candidates` and could not spend. A refuted row now walks the candidates, so without this clause it reaches the Unlocker: an adversarial wave measured 0 paid calls before and 1 (2 with the render retry) after, per refuted row per cooldown window, against the shared 25 cap. A row that already HAS text may work the free rungs; it may not preempt a row that has none. Killed by test_an_archived_role_reaches_the_free_rungs_and_not_the_paid_one, whose third leg passes a non-empty `refuted=` -- until 2026-09-02 no test in the suite did, which is why this record SURVIVED shard 6 of run 33534533355.",
+  "must_be_killed_by_behavioural": true
  },
  {
   "id": "pending-exclusion-back-to-blocker-only",
@@ -2839,6 +2839,36 @@
   "find": "                      or _gate.board_vouches(name, tok or \"\", _cand) is True",
   "replace": "                      or True",
   "why": "the 2026-09-01 defect restored: `empty` is reached before activation_verdict asks whose board it is, so a name-alike's board answering zero (Expedia for Experda, Prologis for Prologic) is recorded as THIS company having no roles -- the claim ARCHITECTURE section 2's first verdict rule forbids",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "retraction-seen-id-arm-outranks-the-owner",
+  "file": "pipeline/roles.py",
+  "symbol": "match_all",
+  "class": "M5-population-widening",
+  "find": "                or (sid_keys & e[\"_urls\"] and not e.get(\"_owned\"))]",
+  "replace": "                or (sid_keys & e[\"_urls\"])]",
+  "why": "a seen_id is not an address a record claims, it is every address a fetch ever bound to it. Without the owner check one stray id makes a retraction take a SECOND, live role: `percepto|senior product analyst` (open, accept, on the board) carries the own url of `percepto|data insights operations` as a `scrape:` id, and 1 of 39 lines took both records. Nothing alarms - `_hits` counts lines answered, never records taken. Killed by test_a_retraction_binds_to_the_record_that_owns_its_address_never_a_stray_seen_id.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "resolved-twin-left-in-the-merged-set",
+  "file": "pipeline/roles.py",
+  "symbol": "_resolve_claims",
+  "class": "M4-guard-removal",
+  "find": "                    for i in done:\n                        lo = merged[alive[i]]\n                        sids |= set(aug[i].get(\"seen_ids\") or [])\n                        srcs |= set(lo.get(\"sources\") or [lo.get(\"ats_platform\") or \"\"])\n                        drop.add(alive[i])",
+  "replace": "                    for i in done:\n                        lo = merged[alive[i]]\n                        sids |= set(aug[i].get(\"seen_ids\") or [])\n                        srcs |= set(lo.get(\"sources\") or [lo.get(\"ats_platform\") or \"\"])",
+  "why": "a fold recorded in the ledger that is not applied to this run's `merged` leaves two merge_keys behind one `filter_new` kill-switch: both are upserted, one can never be emailed, and `id_collisions` alarms every morning for a pair already resolved (HoneyBook, the 2026-09-02 mail). Killed by test_an_already_folded_twin_leaves_this_runs_merged_set_and_stops_colliding.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "resolved-twin-honours-a-verdict-from-outside-the-group",
+  "file": "pipeline/roles.py",
+  "symbol": "_resolve_claims",
+  "class": "M1-gate-narrowed",
+  "find": "                if len(live) == 1 and all((rows.get(gkeys[i]) or {}).get(\"superseded_by\")\n                                          == gkeys[live[0]] for i in done):",
+  "replace": "                if len(live) == 1:",
+  "why": "applying a stored verdict is only safe where that verdict names a survivor IN this group. A `superseded_by` pointing elsewhere, taken as an election of whoever happens to be the group's one live member, drops a record into a winner the ledger never chose - the supersede CYCLE wave B found, with both halves off every product and `ledger N = store N` still green. Killed by test_a_stored_supersede_pointing_outside_the_group_is_still_refused.",
   "must_be_killed_by_behavioural": true
  }
 ]

@@ -139,6 +139,20 @@ class Retractions:
     (an attacker's `x/998629` caught two employers), and a key that differs only by
     `http://` must not silently miss. A `role_id` line is BOUND to its record's own url
     at open (`bind`), so the posting stays caught when a title edit mints a new id.
+
+    AND A LINE BINDS TO THE RECORD THAT OWNS ITS ADDRESS. A record is matched by its own
+    `url` (or its `role_id`); the `seen_ids` arm is a FALLBACK that fires only for a line
+    no record owns — because a `seen_id` is not an address a record claims, it is every
+    address a fetch ever bound to it, and one stray id makes a retraction hit a second,
+    live role. Measured (`545@roles`): `percepto|senior product analyst` (open, in scope,
+    own url `percepto.co/careers/`) carries the id
+    `scrape:https://percepto.co/careers/data-insights-operations-ff-c6f/`, which IS the own
+    url of `percepto|data insights operations` — so 1 of 39 lines matched two records, and
+    the second would have left the board and the mail and been published in `meta.removed[]`
+    under a reason describing a different posting. Nothing alarms on that: `_hits` counts
+    lines answered, never records taken, so from `_record_run`'s side two matches look
+    exactly like one. The fallback is kept, not deleted: a posting whose record has since
+    been re-keyed has no owner, and its `seen_id` is then the only thing that names it.
     """
 
     def __init__(self, entries=(), bad=0, path=""):
@@ -191,22 +205,39 @@ class Retractions:
 
     def bind(self, records):
         """Give every `role_id` line the url of the record it names, so the retraction
-        follows the POSTING and not the spelling of its title. Called at open."""
+        follows the POSTING and not the spelling of its title. Called at open.
+
+        Then stamp each line `_owned` — does SOME record claim this address as its own
+        `url`? That is a decision about the LINE and it cannot be made from one record: ask
+        `percepto|senior product analyst` alone and it owns no matching url, so a
+        per-record preference would fall through to its `seen_ids` and match anyway. It is
+        also why keying the line by `role_id` does not help on its own — the loop above
+        hands such a line its record's url, which now makes it `_owned` and switches the
+        stray-id arm off, instead of re-acquiring the collision.
+
+        Absent `records` (a frozen or corrupt ledger, or a `Retractions` built directly in
+        a test) leaves every line unowned, which is exactly the pre-2026-09-02 behaviour —
+        the safe direction, since an unowned line still matches on its ids."""
         for e in self.entries:
             rid = e.get("role_id")
             rec = records.get(rid) if rid else None
             if isinstance(rec, dict) and rec.get("url"):
                 e["_urls"].add(_url_key(rec["url"]))
+        owned = {_url_key(r["url"]) for r in (records or {}).values()
+                 if isinstance(r, dict) and r.get("url")}
+        for e in self.entries:
+            e["_owned"] = bool(e["_urls"] & owned)
 
     def match_all(self, rec):
         """Every retraction that names this record (a ledger record or a `matched` row):
-        by role id, by url, or by any `seen_id` whose id half IS a url."""
+        by role id, by its OWN url, or — only for a line no record owns (`bind`) — by a
+        `seen_id` whose id half IS a url. The last arm is the fallback, never a peer of the
+        first two: see the class docstring for the live role it withdrew."""
         if not self.entries or not isinstance(rec, dict):
             return []
         rid = rec.get("role_id") or rec.get("mkey") or ""
-        keys = set()
-        if rec.get("url"):
-            keys.add(_url_key(rec["url"]))
+        own = {_url_key(rec["url"])} if rec.get("url") else set()
+        sid_keys = set()
         sids = rec.get("seen_ids") or []
         if isinstance(sids, str):
             sids = sids.split("+")
@@ -214,9 +245,11 @@ class Retractions:
             if isinstance(s, str) and ":" in s:
                 tail = s.split(":", 1)[1]
                 if tail.startswith(("http://", "https://")):
-                    keys.add(_url_key(tail))
+                    sid_keys.add(_url_key(tail))
         return [e for e in self.entries
-                if (e.get("role_id") and e["role_id"] == rid) or (keys & e["_urls"])]
+                if (e.get("role_id") and e["role_id"] == rid)
+                or (own & e["_urls"])
+                or (sid_keys & e["_urls"] and not e.get("_owned"))]
 
     def match(self, rec):
         hits = self.match_all(rec)
@@ -1394,8 +1427,38 @@ class Ledger:
             # and close a supersede CYCLE with the at-rest sweep (both halves off every
             # product, `ledger N = store N` still green — wave B, finding 1). The
             # existing verdict stands; `_supersede`'s chain guard is the second lock.
-            if any((rows.get(_store.merge_key(merged[alive[i]])) or {}).get("status")
-                   == "superseded" for i in g):
+            #
+            # But standing by the verdict means APPLYING it, not walking away from the
+            # group: skipping outright left the loser in `merged`, so both merge_keys were
+            # upserted and `id_collisions` (run.py, straight after this) alarmed every
+            # morning for a pair the ledger had already folded — HoneyBook's `product data
+            # analyst` (superseded into `senior product analyst` on 2026-09-01) still
+            # colliding on `ashby:9d5a89da…` AND `discovery-linkedin:linkedin:4456923326`
+            # in the 09-02 mail, with `filter_new`'s one kill-switch across two keys. So:
+            # when the stored verdict already names a single survivor IN THIS GROUP, take
+            # it as the winner without an election, union the ids in and drop the losers.
+            # No `_supersede` and no `retitle_folds` line — the fold happened once, on its
+            # own day, and re-logging it daily would falsify the "logged ONCE" check the
+            # lane wrote for it. Anything else (a `superseded_by` pointing outside the
+            # group, more than one survivor) still walks away, which is the cycle the guard
+            # exists for.
+            gkeys = {i: _store.merge_key(merged[alive[i]]) for i in g}
+            done = [i for i in g
+                    if (rows.get(gkeys[i]) or {}).get("status") == "superseded"]
+            if done:
+                live = [i for i in g if i not in done]
+                if len(live) == 1 and all((rows.get(gkeys[i]) or {}).get("superseded_by")
+                                          == gkeys[live[0]] for i in done):
+                    w = merged[alive[live[0]]]
+                    sids = set(w.get("seen_ids") or [_store.seen_id(w)])
+                    srcs = set(w.get("sources") or [w.get("ats_platform") or ""])
+                    for i in done:
+                        lo = merged[alive[i]]
+                        sids |= set(aug[i].get("seen_ids") or [])
+                        srcs |= set(lo.get("sources") or [lo.get("ats_platform") or ""])
+                        drop.add(alive[i])
+                    w["seen_ids"] = sorted(sids - {""})
+                    w["sources"] = sorted(srcs - {""})
                 continue
             win = self._twin_winner(aug, g)
             if win is None:

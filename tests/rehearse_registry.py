@@ -128,15 +128,26 @@ def _stub_all(policy, rng):
     # triage's eroding verdict is "the same mode again" (a changed mode is a MOVE between
     # pools -- e.g. extract-gap -> wrong-page hands the row to the hunt); under `mixed` it
     # may flip. The current mode is read off the registry copy at stub time.
+    #
+    # Keyed by the row's OWN name, never by `api_url`: two rows legitimately share one
+    # address (`Linnovate Technologies`/`Linnovate` and `GenCell Energy`/`GenCell` carry
+    # DIFFERENT dark-triage modes over one url; `Synopsys Israel` carries none while its
+    # twin `Synopsys` carries `page-empty`). A url-keyed dictionary hands such a row its
+    # TWIN's mode, so `worst` -- whose whole definition here is "the same mode again" --
+    # manufactured a mode CHANGE, which is a move between pools, and the per-pool retention
+    # invariant then reported a row it had itself moved. That is what `worst` seed 1 was
+    # failing on: `listing_hunt` lost `Synopsys Israel` (docs/BACKLOG.md 558) and, once the
+    # data moved, `repair_extract_gap` lost `Linnovate Technologies` on night 12. `main()`
+    # passes `company=r[0]` to the real `classify`, so the row's own identity is in hand.
     import re as _re
     _modes = {}
     for r in _rows():
         m = _re.search(r"dark-triage \d{4}-\d{2}-\d{2}: ([a-z-]+)", r[5] or "")
-        if m and r[3]:
-            _modes[r[3]] = m.group(1)
+        if m:
+            _modes[r[0]] = m.group(1)
 
     def _classify(url, render=False, company=""):
-        same = (_modes.get(url) or "wrong-page", "re-classified the same")
+        same = (_modes.get(company) or "wrong-page", "re-classified the same")
         return same if policy == "worst" else pick([
             same, ("wrong-page", "no listing on the page"), ("js-shell", "shell"),
             ("url-dead", "404"), ("page-empty", "live, no openings"), ("extract-gap", "3 role phrases")])

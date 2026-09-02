@@ -26145,7 +26145,18 @@ def test_an_archived_role_reaches_the_free_rungs_and_not_the_paid_one(monkeypatc
     """Liveness is a BUDGET rule in this driver, not a selection rule: an archived role is
     worked every cycle on the rungs that cost nothing and reaches the Unlocker only under
     `--archived-bd`. A closed Taboola row bought a credit on 2026-08-26 while the shared pool
-    stood at 118 %, and a new rung does not repeal that. Kills: passing `bd` for every row."""
+    stood at 118 %, and a new rung does not repeal that. Kills: passing `bd` for every row.
+
+    The third leg is the REFUTED half of the same gate (`564@jd-text`). `5fb7f6d` opened a
+    door and closed a money door in the same hunk: a row whose stored text the quality tier
+    disowned now WALKS the donor candidates (the `looks_like_jd(have) and mkey not in
+    refuted` continue), where before it was skipped and could not spend at all. The clause
+    that keeps it from spending is `mkey not in refuted` in `row_bd`. Nothing held it: no
+    test in this file ever passed a non-empty `refuted=` to `_donor_pass`, so the mutation
+    record `refuted-row-reaches-the-paid-rung` SURVIVED the whole suite on CI run
+    33534533355 (`mutation-gate (6)`, 34 of 35 killed). A refuted row that reaches the
+    Unlocker spends a Bright Data credit on a row the gate already refused.
+    Kills `refuted-row-reaches-the-paid-rung`."""
     import sqlite3
     from types import SimpleNamespace
     import enrich_matched_jd as E
@@ -26169,6 +26180,14 @@ def test_an_archived_role_reaches_the_free_rungs_and_not_the_paid_one(monkeypatc
     E._donor_pass(conn, [row], {}, bd, {row[0]},
                   SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
     assert seen[-1] is bd
+    # ...and in `paid_keys` AND refuted: it still walks the free rungs (the row has no text
+    # of its own to protect) and still must not be handed the Unlocker.
+    before = len(seen)
+    E._donor_pass(conn, [row], {}, bd, {row[0]},
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None,
+                  refuted={row[0]})
+    assert len(seen) > before, "a refuted row must still be worked on the free rungs"
+    assert seen[-1] is None, seen      # refuted: no paid rung, whatever `paid_keys` says
 
 
 def test_the_cache_donor_is_found_by_the_repos_own_role_identity(tmp_path):
@@ -28022,4 +28041,139 @@ def test_a_role_this_gate_never_held_is_not_re_offered_because_its_text_is_fresh
     lg.open_sync()
     rec = next(r for r in lg.records.values() if r.get("title") == "Marketing Analyst")
     assert not rec.get("held_since"), "publishable throughout: nothing to give back"
+    st.close()
+
+
+# lane: roles — 2026-09-02. Two defects the 2026-09-02 mail and the 09-01 adversarial wave
+# named: a retraction that binds to a record by another record's stray address (545), and a
+# fold that is recorded in the ledger yet re-collides in `merged` every morning after.
+
+
+def _percepto_pair():
+    """The 545 shape, from the live store: the OPEN role's own url is the careers PAGE, and
+    the scraper's href ladder left the OTHER posting's address on it as a `seen_id`."""
+    gone = "https://percepto.co/careers/data-insights-operations-ff-c6f/"
+    out = {"role_id": "percepto|data insights operations", "company": "Percepto",
+           "title": "Data Insights Operations", "url": gone, "status": "closed",
+           "seen_ids": ["scrape:" + gone]}
+    live = {"role_id": "percepto|senior product analyst", "company": "Percepto",
+            "title": "Senior Product Analyst", "url": "https://percepto.co/careers/",
+            "status": "open",
+            "seen_ids": ["scrape:" + gone, "scrape:https://percepto.co/careers/"]}
+    return gone, out, live
+
+
+def test_a_retraction_binds_to_the_record_that_owns_its_address_never_a_stray_seen_id():
+    """One line, two records, and the second is live and in scope. `Percepto | Data Insights
+    Operations` is adjudicated OUT; its url is also a `seen_id` on `Percepto | Senior Product
+    Analyst`, which is open, `accept`, on the board and genuinely an analyst role. Under the
+    old two-arm OR the line took both, and the live one would have left the board, the mail
+    and the dataset, published in `meta.removed[]` under a reason describing a different
+    posting — measured as 1 of 39 lines over-matching, which is why the line was dropped from
+    the 09-01 commit instead of shipped. The stray id cannot be the fix on its own:
+    `upsert_matched` unions ids run over run, so a strip is undone by the next fetch of the
+    card that donates it. The rule is that an address a record CLAIMS outranks an address
+    that merely stuck to one. Kills `retraction-seen-id-arm-outranks-the-owner`."""
+    from pipeline import roles
+    gone, out, live = _percepto_pair()
+    line = {"url": gone, "status": "withdrawn", "reason": "out of scope", "on": "2026-09-02"}
+    R = roles.Retractions([dict(line)])
+    # unbound — no ledger has been read, so no line has an owner and the fallback arm is the
+    # only arm there is. This is the state the 09-01 session measured the over-match in.
+    assert len(R.match_all(out)) == 1 and len(R.match_all(live)) == 1
+    R = roles.Retractions([dict(line)])
+    R.bind({out["role_id"]: out, live["role_id"]: live})
+    assert len(R.match_all(out)) == 1, "the record whose OWN url this is must still be taken"
+    assert R.match_all(live) == [], "a stray seen_id must never withdraw a second role"
+    assert R.match(live) is None, "`_alive` reads `match`, and it gates the board and the mail"
+
+
+def test_a_retraction_no_record_owns_still_matches_by_its_seen_id():
+    """The fallback is kept, not deleted: a posting whose record has since been re-keyed —
+    a re-scrape that moved the card to a new address — is named by nothing except the
+    `seen_id` that remembers where we fetched it. Narrowing the arm to "only when no record
+    owns the address" leaves exactly that case working."""
+    from pipeline import roles
+    old_addr = "https://acme.example/jobs/9"
+    rec = {"role_id": "acme|data analyst", "company": "Acme", "title": "Data Analyst",
+           "url": "https://acme.example/careers/data-analyst-9", "status": "open",
+           "seen_ids": ["scrape:" + old_addr]}
+    R = roles.Retractions([{"url": old_addr, "status": "withdrawn",
+                            "reason": "wrong employer", "on": "2026-09-02"}])
+    R.bind({rec["role_id"]: rec})
+    assert len(R.match_all(rec)) == 1, "no record owns this address: the id arm is all we have"
+
+
+def _twin_pair():
+    """HoneyBook as the store holds it on 2026-09-02: two merge_keys, two addresses, and
+    BOTH platform ids on each row — the union `upsert_matched` accumulated before the fold."""
+    ids = ["ashby:9d5a89da-0e05", "discovery-linkedin:linkedin:4456923326"]
+    win = _role("HoneyBook", "Senior Product Analyst",
+                "https://jobs.ashbyhq.com/honeybook/9d5a89da-0e05", "9d5a89da-0e05",
+                src="ashby", seen_ids=list(ids), sources=["ashby", "discovery-linkedin"])
+    lose = _role("HoneyBook", "Product Data Analyst",
+                 "https://il.linkedin.com/jobs/view/p-4456923326", "linkedin:4456923326",
+                 src="discovery-linkedin", seen_ids=list(ids),
+                 sources=["ashby", "discovery-linkedin"])
+    return ids, win, lose
+
+
+def test_an_already_folded_twin_leaves_this_runs_merged_set_and_stops_colliding(tmp_path):
+    """The fold happened on 2026-09-01 and the ledger recorded it; the 09-02 mail raised
+    `roles seen-id collision (2 id(s) name two or more roles; worst:
+    discovery-linkedin:linkedin:4456923326 x2)` anyway, and both ids were this one pair.
+
+    The cause was the cycle guard: a member already superseded in the store made the twins
+    pass skip the whole group, so the loser was never dropped from `merged`, both keys were
+    upserted, and `id_collisions` — which run.py asks straight after `resolve_claims` — saw
+    two merge_keys behind one `filter_new` kill-switch, every morning, for ever. Standing by a
+    verdict means applying it: no re-election, no second `retitle folds` line (the morning
+    check says that fold is logged ONCE), and the survivor keeps every id so a delivered
+    posting is not mailed again under the winner's name.
+    Kills `resolved-twin-left-in-the-merged-set`."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    ids, win, lose = _twin_pair()
+    for j in (win, lose):
+        st.upsert_matched(j, "2026-09-01")
+    st.supersede(store.merge_key(lose), store.merge_key(win))
+    L = roles.Ledger(st)
+    L.open_sync()
+    merged = [dict(win), dict(lose)]
+    assert set(L.id_collisions(merged)) == set(ids), "the alarm the 09-02 mail printed"
+    kept, lines = L.resolve_claims(merged, failed=(), scanned={"HoneyBook"})
+    assert [store.merge_key(j) for j in kept] == [store.merge_key(win)]
+    assert not L.id_collisions(kept), "one posting, one key: nothing left to collide"
+    assert set(kept[0]["seen_ids"]) == set(ids), "the survivor inherits the loser's ids"
+    assert not L.retitle_folds and not any("retitle" in x for x in lines), \
+        "the fold was logged on its own day; re-logging it every morning is the noise"
+    assert L.records[store.merge_key(lose)]["status"] == "superseded"
+    assert L.reclaimed == 0
+    st.close()
+
+
+def test_a_stored_supersede_pointing_outside_the_group_is_still_refused(tmp_path):
+    """The guard exists because re-electing a folded pair by today's source ranks can pick
+    the other member and close a supersede CYCLE with the at-rest sweep — both halves off
+    every product, `ledger N = store N` still green (wave B, finding 1). So the drop applies
+    ONLY where the stored verdict names a single survivor inside this group. A
+    `superseded_by` that points somewhere else is not this group's verdict to apply, and the
+    pass walks away exactly as it did before.
+    Kills `resolved-twin-honours-a-verdict-from-outside-the-group`."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    ids, win, lose = _twin_pair()
+    other = _role("HoneyBook", "Marketing Analytics Lead",
+                  "https://jobs.ashbyhq.com/honeybook/aa11", "aa11", src="ashby")
+    for j in (win, lose, other):
+        st.upsert_matched(j, "2026-09-01")
+    # the loser was folded into a THIRD record — same company, so the reclaim path leaves it
+    # superseded, and the twins pass must not read that verdict as an election of `win`
+    st.supersede(store.merge_key(lose), store.merge_key(other))
+    L = roles.Ledger(st)
+    L.open_sync()
+    kept, _lines = L.resolve_claims([dict(win), dict(lose)], failed=(), scanned={"HoneyBook"})
+    assert {store.merge_key(j) for j in kept} == {store.merge_key(win), store.merge_key(lose)}
+    assert L.records[store.merge_key(lose)]["superseded_by"] == store.merge_key(other)
+    assert L.reclaimed == 0, "a same-company twin never reclaims"
     st.close()
