@@ -2132,3 +2132,11 @@ Scytale,scrape,,https://scytale.ai/scytale-careers/,false,queue-hunt 2026-09-02:
 Nextage Ltd,scrape,,https://www.nextage.co.il/careers/raanana/vpfinance,false,queue-hunt 2026-09-02: careers page documented; monitored candidate
 Novee Security,scrape,,https://novee.security/careers/,false,queue-hunt 2026-09-02: careers page documented; monitored candidate
 Hilan,scrape,https://www.hilan.co.il/,https://www.hilan.co.il/,false,scanned; no open Israel roles now | own-site 2026-09-02: www.hilan.co.il linkback
+Partnerize,greenhouse,partnerize,https://boards-api.greenhouse.io/v1/boards/partnerize/jobs,true,auto-expand slug-probe; 9/4 IL
+Roojoom,scrape,https://www.roojoom.com/careers/,https://www.roojoom.com/careers/,true,auto-expand scrape; 2 IL
+OnTarget Communications,recruitee,ontargetcommunications,https://ontargetcommunications.recruitee.com/api/offers/,true,auto-expand slug-probe; 8/2 IL
+ManpowerGroup,scrape,https://www.manpowergroup.com/,https://www.manpowergroup.com/,false,scanned; no open Israel roles now | own-site 2026-09-02: www.manpowergroup.com linkback
+Clalit Innovation,scrape,https://www.clalit-innovation.org/,https://www.clalit-innovation.org/,false,scanned; no open Israel roles now | own-site 2026-09-02: www.clalit-innovation.org linkback
+Ocean Relocation,scrape,https://ocean-relocation.com,https://ocean-relocation.com,false,scanned; no open Israel roles now | own-site 2026-09-02: ocean-relocation.com linkback
+Omc,scrape,https://www.omc.co.il/careers/,https://www.omc.co.il/careers/,true,auto-expand scrape; 14 IL
+Omnitelecom,scrape,https://www.omnitelecom.com/,https://www.omnitelecom.com/,false,scanned; no open Israel roles now | own-site 2026-09-02: www.omnitelecom.com linkback
