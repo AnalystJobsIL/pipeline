@@ -2131,3 +2131,4 @@ Nofarenergy,scrape,,https://www.nofar-energy.com/careers,false,queue-hunt 2026-0
 Scytale,scrape,,https://scytale.ai/scytale-careers/,false,queue-hunt 2026-09-02: careers page documented; monitored candidate
 Nextage Ltd,scrape,,https://www.nextage.co.il/careers/raanana/vpfinance,false,queue-hunt 2026-09-02: careers page documented; monitored candidate
 Novee Security,scrape,,https://novee.security/careers/,false,queue-hunt 2026-09-02: careers page documented; monitored candidate
+Hilan,scrape,https://www.hilan.co.il/,https://www.hilan.co.il/,false,scanned; no open Israel roles now | own-site 2026-09-02: www.hilan.co.il linkback
