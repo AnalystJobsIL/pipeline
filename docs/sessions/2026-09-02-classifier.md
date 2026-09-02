@@ -328,8 +328,13 @@ The two published instances leave the dataset today by hand.
 **1,804 passed, 13 skipped, 0 failed**; `python check_invariants.py`
 **`companies.csv OK: 2142 rows, 1157 active, 0 orphans, pool=854`**; `python docs/check_docs.py`
 **0 error(s), 15 warning(s) over 111 documents** — every warning is another lane's not-yet-due
-morning check. CI run id and conclusion go in the `HANDOFF.md` line after the push; the
-baseline it is measured against is `roles`' **33670937402, 16 of 16**, on `8300b08`.
+morning check.
+
+**In CI, on the commit that was pushed: run `33678158696`, conclusion `success`, 16 of 16 jobs
+green** — `guard`, `guard-kill`, six `rehearse` shards and all eight `mutation-gate` shards.
+No red, inherited or otherwise: `rehearse (worst, seed 1)` and the `mutation-gate` record that
+were this tree's two standing reds were both closed by `roles` earlier the same day, and this
+is the second consecutive fully green run (`33674507501` on `8300b08` was the first).
 
 **Both new guards were verified RED before being trusted green** — against a neutered
 `_GATE_APPEAL`, and, after an adversarial pass showed half of one assertion could not fail,

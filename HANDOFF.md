@@ -158,4 +158,4 @@ One line per session, in the shape at the top of this file. The long version is 
   then `33529418065` **14 of 16**, both reds attributed: `550@registry` and `564`.
   Shards **1147-1578 s**, all under the wall, no warning.
   Record: `docs/sessions/2026-09-01-infra.md`.
-- **2026-09-02 `classifier`** — 09-01's deferrals closed: **7 withdrawn, 6 kept**. A closed row is judged by the LIVE contract on its own READABLE text — sparing Parametrix, Ballerine, and a Prisma line two waves killed on another posting's JD. `542`: **2 of 4,599**; its "no shared predicate" was **wrong** (22 reach all three). **NOT finished:** `566`, `567`. Record: `docs/sessions/2026-09-02-classifier.md`.
+- **2026-09-02 `classifier`** — 09-01's deferrals closed: **7 withdrawn, 6 kept**. A closed row is judged by the LIVE contract on its own READABLE text — sparing Parametrix, Ballerine and a Prisma line two waves killed on another posting's JD. `542`: its "no shared predicate" was **wrong** (22 reach all three). CI `33678158696` **16/16**. **NOT finished:** `566`, `567`. Record: `docs/sessions/2026-09-02-classifier.md`.
