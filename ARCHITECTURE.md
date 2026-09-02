@@ -6549,7 +6549,8 @@ file is needed to reach Pages.
 `"evidence"`. Keyed by **url** on purpose: Comcast's `role_id` contains the `&amp;` artefact
 (`…operations amp analytics`), so a title-cleaning fix upstream would mint a new id that a
 role_id-keyed line would miss, while the posting's address is stable. `roles.Retractions`
-matches on role_id, on the record's OWN url, or — **only for a line no record owns** — on
+matches on role_id, on the record's OWN url, or — **only for a line that names no `role_id`
+and whose address no record owns** — on
 any `seen_id` whose id half is a url (a scrape id IS the url). That last arm is a fallback
 and not a peer of the first two, since 2026-09-02: a `seen_id` is not an address a record
 claims, it is every address a fetch ever bound to it, so one stray id makes a retraction
@@ -6562,7 +6563,14 @@ once, over every record, because a per-record preference cannot see it (asked al
 live record owns no matching url and falls through to its ids); a strip of the stray id is
 NOT the fix on its own, because `upsert_matched` unions ids run over run and the card that
 donates it is in `scraped_cache.json`. Nothing alarms on an over-match — `_hits` counts
-lines answered, never records taken — which is why the rule is in the matcher. It is read in
+lines answered, never records taken — which is why the rule is in the matcher.
+**Ownership is read from BOTH stores**, and that is not belt-and-braces: `roles.load` DROPS a
+malformed ledger line and still returns `ok` below `CORRUPT_FRAC`, so a ledger-only ownership
+set fails OPEN — one bad line for the owning record re-arms the id arm and withdraws the live
+role with `status=ok`, `frozen=False` and no alarm (reproduced at 1 bad line of 22). And a
+line that names a `role_id` never uses the id arm at all: it has said which record it means,
+so the arm could only ADD one its author did not name — the lock that holds on a day
+ownership cannot be established at all. It is read in
 `Ledger.__init__`, outside every `_guard`, and consulted in **two** places from that one
 object: `run.py`'s `_alive` (email + board) and its archive filter — the FILE, never the
 ledger's status, so a frozen-ledger day cannot put Houston back on the board — and

@@ -129,16 +129,26 @@ def _stub_all(policy, rng):
     # pools -- e.g. extract-gap -> wrong-page hands the row to the hunt); under `mixed` it
     # may flip. The current mode is read off the registry copy at stub time.
     #
-    # Keyed by the row's OWN name, never by `api_url`: two rows legitimately share one
-    # address (`Linnovate Technologies`/`Linnovate` and `GenCell Energy`/`GenCell` carry
-    # DIFFERENT dark-triage modes over one url; `Synopsys Israel` carries none while its
-    # twin `Synopsys` carries `page-empty`). A url-keyed dictionary hands such a row its
-    # TWIN's mode, so `worst` -- whose whole definition here is "the same mode again" --
-    # manufactured a mode CHANGE, which is a move between pools, and the per-pool retention
-    # invariant then reported a row it had itself moved. That is what `worst` seed 1 was
-    # failing on: `listing_hunt` lost `Synopsys Israel` (docs/BACKLOG.md 558) and, once the
-    # data moved, `repair_extract_gap` lost `Linnovate Technologies` on night 12. `main()`
-    # passes `company=r[0]` to the real `classify`, so the row's own identity is in hand.
+    # Keyed by the row's OWN name, never by `api_url`. `worst` means "the same mode again",
+    # and a url key could not deliver that for two populations at once:
+    #
+    #   * a row with NO api_url -- the old guard was `if m and r[3]`, so 139 parked rows
+    #     were absent from the dictionary entirely and every night handed them the
+    #     `wrong-page` default instead of their own recorded mode (`no-url` 92, `url-dead`
+    #     24, `js-shell` 9, `page-empty` 6, `extract-gap` 5, `blocked` 3);
+    #   * a row that SHARES an address with another -- 5 more, of which `Linnovate
+    #     Technologies`/`Linnovate` and `GenCell Energy`/`GenCell` carry DIFFERENT modes
+    #     over one url, and `Synopsys Israel` carries none while its twin carries
+    #     `page-empty`. Those get their twin's verdict.
+    #
+    # Either way `worst` manufactured a mode CHANGE, which is a move between pools, and the
+    # per-pool retention invariant then reported a row the harness had itself moved: seed 1
+    # failed on `listing_hunt` losing `Synopsys Israel` (docs/BACKLOG.md 558) and, once the
+    # data moved, on `repair_extract_gap` losing `Linnovate Technologies` at night 12. 144
+    # rows change verdict under the new key and NONE changes pool: three nights of `worst`
+    # seed 1 give byte-identical per-pool censuses either way. Company names are unique
+    # across all 2,141 rows, so the new key cannot collide the way the old one did, and
+    # `triage_dark.main()` is the only caller of `classify` and always passes `company=r[0]`.
     import re as _re
     _modes = {}
     for r in _rows():

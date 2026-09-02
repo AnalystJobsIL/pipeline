@@ -2846,7 +2846,7 @@
   "file": "pipeline/roles.py",
   "symbol": "match_all",
   "class": "M5-population-widening",
-  "find": "                or (sid_keys & e[\"_urls\"] and not e.get(\"_owned\"))]",
+  "find": "                or (sid_keys & e[\"_urls\"]\n                    and not e.get(\"_owned\") and not e.get(\"role_id\"))]",
   "replace": "                or (sid_keys & e[\"_urls\"])]",
   "why": "a seen_id is not an address a record claims, it is every address a fetch ever bound to it. Without the owner check one stray id makes a retraction take a SECOND, live role: `percepto|senior product analyst` (open, accept, on the board) carries the own url of `percepto|data insights operations` as a `scrape:` id, and 1 of 39 lines took both records. Nothing alarms - `_hits` counts lines answered, never records taken. Killed by test_a_retraction_binds_to_the_record_that_owns_its_address_never_a_stray_seen_id.",
   "must_be_killed_by_behavioural": true
@@ -2866,9 +2866,39 @@
   "file": "pipeline/roles.py",
   "symbol": "_resolve_claims",
   "class": "M1-gate-narrowed",
-  "find": "                if len(live) == 1 and all((rows.get(gkeys[i]) or {}).get(\"superseded_by\")\n                                          == gkeys[live[0]] for i in done):",
+  "find": "                if len(live) == 1 and all(_terminus(gkeys[i]) == gkeys[live[0]]\n                                          for i in done):",
   "replace": "                if len(live) == 1:",
   "why": "applying a stored verdict is only safe where that verdict names a survivor IN this group. A `superseded_by` pointing elsewhere, taken as an election of whoever happens to be the group's one live member, drops a record into a winner the ledger never chose - the supersede CYCLE wave B found, with both halves off every product and `ledger N = store N` still green. Killed by test_a_stored_supersede_pointing_outside_the_group_is_still_refused.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "retraction-ownership-reads-only-the-ledger",
+  "file": "pipeline/roles.py",
+  "symbol": "bind",
+  "class": "M5-population-widening",
+  "find": "        owned = {_url_key(r[\"url\"]) for r in list(records.values()) + list(extra or ())",
+  "replace": "        owned = {_url_key(r[\"url\"]) for r in list(records.values())",
+  "why": "`load()` DROPS a malformed ledger line and still returns `ok` while bad <= CORRUPT_FRAC, so a ledger-only ownership set fails OPEN: one bad line for the record that owns a retraction's address re-arms the stray-id arm and withdraws the LIVE role, with status=ok, frozen=False and no alarm anywhere. Reproduced by an adversarial wave on this session's own diff before the push. Killed by test_a_dropped_ledger_line_cannot_re_arm_the_stray_id_arm.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "retraction-role-id-line-still-reaches-by-seen-id",
+  "file": "pipeline/roles.py",
+  "symbol": "match_all",
+  "class": "M1-gate-narrowed",
+  "find": "                    and not e.get(\"_owned\") and not e.get(\"role_id\"))]",
+  "replace": "                    and not e.get(\"_owned\"))]",
+  "why": "a line carrying a `role_id` has already said which record it means, so the seen_ids arm can only ever ADD one its author did not name. This is the lock that holds where ownership cannot be established at all - an unbound Retractions, or a day both stores lost the owning record. Killed by test_a_role_id_line_never_reaches_for_a_record_it_did_not_name.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "resolved-twin-ignores-the-supersede-chain",
+  "file": "pipeline/roles.py",
+  "symbol": "_resolve_claims",
+  "class": "M1-gate-narrowed",
+  "find": "                if len(live) == 1 and all(_terminus(gkeys[i]) == gkeys[live[0]]\n                                          for i in done):",
+  "replace": "                if len(live) == 1 and all((rows.get(gkeys[i]) or {}).get(\"superseded_by\")\n                                          == gkeys[live[0]] for i in done):",
+  "why": "two folds on different days make a chain - A folded into B in August, B into C in September, and today only A and C are fetched. A direct `superseded_by == the survivor` test leaves A in `merged`, so both keys are upserted and the seen-id collision alarm fires for ever: the defect this branch exists to remove, one fold later. Killed by test_a_supersede_chain_reaches_the_survivor_of_a_twin_group.",
   "must_be_killed_by_behavioural": true
  }
 ]

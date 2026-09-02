@@ -10738,17 +10738,31 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 558. ~~**`rehearse (worst, seed 1)` is RED on master, and the row it names is not lost — it is
      HANDED OFF, which the rehearsal's per-pool check does not model**~~ — **CLOSED
      2026-09-02 (`roles`, under dispensation; the file is `registry`'s): the harness was
-     handing a row its TWIN's triage mode.** The diagnosis in this item is right about the
-     mechanism and wrong about where the repair belongs. `worst` policy is DEFINED here as
-     "triage re-classifies the row the same way again" — a changed mode is a move between
-     pools, and the invariant assumes no row moves. But `_modes` was keyed by **`api_url`**,
-     and two rows legitimately share one address: exactly 2 api_urls in `companies.csv`
-     carry two different `dark-triage` modes (`linnovate.net/careers/` →
-     `Linnovate Technologies` `extract-gap` vs `Linnovate` `wrong-page`;
-     `gencellprojects.com/jobs` the same shape), and `Synopsys Israel` carried no mode at
-     all while its twin `Synopsys` carried `page-empty`. So the stub manufactured a mode
-     CHANGE under a policy whose whole definition forbids one, and the per-pool check then
-     correctly reported a row the harness had itself moved. Keyed by the row's own name
+     not giving a row its OWN triage mode back.** The diagnosis in this item is right about
+     the mechanism and wrong about where the repair belongs. `worst` policy is DEFINED here
+     as "triage re-classifies the row the same way again" — a changed mode is a move between
+     pools, and the invariant assumes no row moves. `_modes` was keyed by **`api_url`**, and
+     that key could not deliver the definition for two populations at once. **144 parked
+     rows change their simulated `worst` verdict under the fix**, and the twin story is the
+     smaller half of it — a correction to this closure's first draft, which named only the
+     twins and would have been a confident sentence that is not true:
+
+     * **139 have no `api_url` at all.** The old guard was `if m and r[3]`, so they were
+       absent from the dictionary and were handed the `wrong-page` default every night
+       instead of their own recorded mode (`no-url` 92, `url-dead` 24, `js-shell` 9,
+       `page-empty` 6, `extract-gap` 5, `blocked` 3).
+     * **5 share an address with another row.** Two of those pairs carry two DIFFERENT
+       modes over one url (`linnovate.net/careers/`: `Linnovate Technologies` `extract-gap`
+       vs `Linnovate` `wrong-page`; `gencellprojects.com/jobs` the same shape), and
+       `Synopsys Israel` carried no mode while its twin `Synopsys` carried `page-empty`.
+
+     Either way the stub manufactured a mode CHANGE under a policy whose whole definition
+     forbids one, and the per-pool check then correctly reported a row the harness had
+     itself moved. **None of the 144 changes POOL**: three nights of `worst` seed 1 give
+     byte-identical per-pool censuses under both keys (`708/720/106/55/629/84/35/844/844`,
+     orphans 0). Company names are unique across all 2,141 rows, so the new key cannot
+     collide the way the old one did; `triage_dark.main()` is the only caller of `classify`
+     and always passes `company=r[0]`. Keyed by the row's own name
      (`main()` already passes `company=r[0]` to the real `classify`) it is one line, and
      **the invariant is untouched**, which is the point: the repair this item prescribed —
      subtracting `owned_now` from `lost` — would have destroyed the alarm, because under
@@ -10763,7 +10777,14 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      before this session touched it: on `aacaf94` the failure was
      `night 12: pool repair_extract_gap (19:00 daily) lost 1 rows it should keep:
      ['Linnovate Technologies']`, not the `Synopsys Israel` this item quotes — the class,
-     not the row, was what reproduced. The original report follows. Lane: `registry`,
+     not the row, was what reproduced. **And the CLASS is not gone, only this cause of it**:
+     a row whose own mode is `page-empty` and which a `probe-woken` wake currently holds in
+     the hunt pool will leave that pool the night triage re-stamps it and `_consume_wake`
+     strips the wake — the same designed hand-off, now driven by the row's own mode rather
+     than a twin's. Exactly **1** row is in that state today (`Toyota Connected`) and both
+     keys hand it the same mode, so nothing fires; it is data-dependent and will recur, and
+     the honest claim is that the harness no longer invents the move, not that no designed
+     move can ever be reported. The original report follows. Lane: `registry`,
      diagnosed 2026-09-01 (the red was reported by the `classifier` session, whose push was the
      first CI run to judge it). `python tests/rehearse_registry.py --nights 2 --policy worst
      --seed 1` fails `night 1: pool listing_hunt (19:00 daily) lost 1 rows it should keep:

@@ -28177,3 +28177,94 @@ def test_a_stored_supersede_pointing_outside_the_group_is_still_refused(tmp_path
     assert L.records[store.merge_key(lose)]["superseded_by"] == store.merge_key(other)
     assert L.reclaimed == 0, "a same-company twin never reclaims"
     st.close()
+
+
+def test_a_dropped_ledger_line_cannot_re_arm_the_stray_id_arm(tmp_path):
+    """Found by an adversarial wave on this session's own diff, one step before the push.
+
+    Ownership was read from `self.records`, and `load()` DROPS a malformed line and still
+    returns `ok` while `bad <= CORRUPT_FRAC` — so one bad line for the record that owns a
+    retraction's address made `_owned` False, re-armed the `seen_ids` arm, and withdrew the
+    live role: `status=ok`, `frozen=False`, no alarm anywhere, and `run.py`'s `_alive` drops
+    it from board, mail and archive. The fix reads ownership from BOTH stores; `_open_sync`
+    already holds the sqlite rows one line above the call, and sqlite is not lossy this way.
+    Kills `retraction-ownership-reads-only-the-ledger`."""
+    import json as _json
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    gone, out, live = _percepto_pair()
+    st.upsert_matched(_role("Percepto", "Data Insights Operations", gone, "x",
+                            src="scrape", seen_ids=list(out["seen_ids"])), "2026-09-01")
+    st.upsert_matched(_role("Percepto", "Senior Product Analyst", live["url"], "y",
+                            src="scrape", seen_ids=list(live["seen_ids"])), "2026-09-01")
+    # 18 unrelated roles, so ONE bad line stays under CORRUPT_FRAC and the ledger reads `ok`
+    for i in range(18):
+        st.upsert_matched(_role("Co%d" % i, "Data Analyst",
+                                "https://c%d.example/jobs/1" % i, str(i)), "2026-09-01")
+    _retract_file(tmp_path, {"url": gone, "status": "withdrawn",
+                             "reason": "out of scope", "on": "2026-09-02"})
+    roles.Ledger(st, "2026-09-02").open_sync()          # writes the ledger beside the db
+    lp = str(tmp_path / "roles.jsonl")
+    with open(lp, encoding="utf-8") as f:
+        kept = [l for l in f if l.strip()]
+    with open(lp, "w", encoding="utf-8") as f:          # break ONLY the owner's line
+        f.writelines("{ broken\n" if "data insights operations" in l else l for l in kept)
+    L = roles.Ledger(st, "2026-09-02")
+    rep = L.open_sync()
+    assert rep["ledger"] == "ok" and not L.frozen, "the silent case is the dangerous one"
+    rows = {r["mkey"]: r for r in st.get_matched_since("0000-01-01", include_superseded=True)}
+    assert len(L.retractions.match_all(rows["percepto|data insights operations"])) == 1
+    assert L.retractions.match_all(rows["percepto|senior product analyst"]) == [], \
+        "a dropped ledger line must not put the live role back inside the retraction"
+    assert _json.loads(kept[0])                          # the fixture really was JSON
+    st.close()
+
+
+def test_a_role_id_line_never_reaches_for_a_record_it_did_not_name():
+    """The second lock, and it holds where ownership cannot be established at all: a line
+    carrying a `role_id` has SAID which record it means, so the `seen_ids` arm can only ever
+    add one its author did not name. Unbound — no records, no ownership, nothing to lean on.
+    Kills `retraction-role-id-line-still-reaches-by-seen-id`."""
+    from pipeline import roles
+    gone, out, live = _percepto_pair()
+    R = roles.Retractions([{"role_id": out["role_id"], "url": gone, "status": "withdrawn",
+                            "reason": "out of scope", "on": "2026-09-02"}])
+    assert len(R.match_all(out)) == 1, "named by role_id and owns the url"
+    assert R.match_all(live) == [], "a line that named a record must not take another"
+
+
+def test_a_supersede_chain_reaches_the_survivor_of_a_twin_group(tmp_path):
+    """Two folds on different days make a CHAIN, and the second fold is what creates it:
+    `product data analyst` was folded into `product analyst` in August, `product analyst`
+    into `senior product analyst` in September, and today only the first and the last are
+    fetched. Asking only for a direct `superseded_by == the survivor` leaves the loser in
+    `merged` and the collision alarm firing for ever — this session's own defect, one fold
+    later, found by an adversarial wave on its diff. The chain is followed the way
+    `_supersede` follows it, bounded, and a cycle names no survivor and still refuses.
+    Kills `resolved-twin-ignores-the-supersede-chain`."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    ids = ["ashby:u1", "discovery-linkedin:linkedin:99"]
+    win = _role("HoneyBook", "Senior Product Analyst",
+                "https://jobs.ashbyhq.com/honeybook/u1", "u1", src="ashby",
+                seen_ids=list(ids), sources=["ashby", "discovery-linkedin"])
+    lose = _role("HoneyBook", "Product Data Analyst",
+                 "https://il.linkedin.com/jobs/view/p-99", "linkedin:99",
+                 src="discovery-linkedin", seen_ids=list(ids),
+                 sources=["ashby", "discovery-linkedin"])
+    # the middle of the chain: folded in August, its card no longer served, so it is NOT in
+    # this run's merged list and cannot be the group's survivor
+    mid = _role("HoneyBook", "Product Analyst", "https://il.linkedin.com/jobs/view/q-7",
+                "linkedin:7", src="discovery-linkedin")
+    for j in (win, lose, mid):
+        st.upsert_matched(j, "2026-09-01")
+    st.supersede(store.merge_key(lose), store.merge_key(mid))
+    st.supersede(store.merge_key(mid), store.merge_key(win))
+    L = roles.Ledger(st)
+    L.open_sync()
+    kept, _lines = L.resolve_claims([dict(win), dict(lose)], failed=(),
+                                    scanned={"HoneyBook"})
+    assert [store.merge_key(j) for j in kept] == [store.merge_key(win)],         "the chain terminates at the survivor: the loser leaves this run's merged set"
+    assert not L.id_collisions(kept)
+    assert L.reclaimed == 0, "a same-company twin never reclaims, chain or not"
+    st.close()

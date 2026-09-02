@@ -162,6 +162,9 @@ class Retractions:
         for e in self.entries:
             e.setdefault("_hits", [])
             e["_urls"] = {_url_key(e["url"])} if e.get("url") else set()
+            e["_owned"] = False               # reset WITH `_urls`: leaving a stale True on
+                                              # a re-wrapped entry disarms the id arm of an
+                                              # object that was never bound
 
     @classmethod
     def load(cls, path):
@@ -203,7 +206,7 @@ class Retractions:
     def _key(e):
         return e.get("url") or e.get("role_id")
 
-    def bind(self, records):
+    def bind(self, records, extra=()):
         """Give every `role_id` line the url of the record it names, so the retraction
         follows the POSTING and not the spelling of its title. Called at open.
 
@@ -215,24 +218,37 @@ class Retractions:
         hands such a line its record's url, which now makes it `_owned` and switches the
         stray-id arm off, instead of re-acquiring the collision.
 
-        Absent `records` (a frozen or corrupt ledger, or a `Retractions` built directly in
-        a test) leaves every line unowned, which is exactly the pre-2026-09-02 behaviour —
-        the safe direction, since an unowned line still matches on its ids."""
+        Ownership is read from BOTH stores, and that is not belt-and-braces — `load()`
+        DROPS a malformed ledger line and still returns `ok` (up to `CORRUPT_FRAC`), so a
+        ledger-only ownership set fails OPEN, straight back into the bug: one bad line for
+        the owning record, no alarm anywhere, `frozen` False, and the id arm re-arms and
+        withdraws the live role. Reproduced by an adversarial wave before this shipped —
+        1 bad line of 22, `status=ok`, and `percepto|senior product analyst` left the board.
+        `_open_sync` has the sqlite rows in hand one line above the call, and sqlite is not
+        lossy in that way, so the union is the honest universe.
+
+        Absent `records` (a `Retractions` built directly in a test) leaves every line
+        unowned, which is the pre-2026-09-02 behaviour — under-withdrawing, which the
+        `unmatched` alarm shows, rather than over-withdrawing, which nothing shows."""
+        records = records or {}
         for e in self.entries:
             rid = e.get("role_id")
             rec = records.get(rid) if rid else None
             if isinstance(rec, dict) and rec.get("url"):
                 e["_urls"].add(_url_key(rec["url"]))
-        owned = {_url_key(r["url"]) for r in (records or {}).values()
+        owned = {_url_key(r["url"]) for r in list(records.values()) + list(extra or ())
                  if isinstance(r, dict) and r.get("url")}
         for e in self.entries:
             e["_owned"] = bool(e["_urls"] & owned)
 
     def match_all(self, rec):
         """Every retraction that names this record (a ledger record or a `matched` row):
-        by role id, by its OWN url, or — only for a line no record owns (`bind`) — by a
-        `seen_id` whose id half IS a url. The last arm is the fallback, never a peer of the
-        first two: see the class docstring for the live role it withdrew."""
+        by role id, by its OWN url, or — only for a line that names no `role_id` and whose
+        address no record owns (`bind`) — by a `seen_id` whose id half IS a url. The last
+        arm is the fallback, never a peer of the first two: see the class docstring for the
+        live role it withdrew. A line carrying a `role_id` has already said which record it
+        means, so the id arm can only ever ADD one its author did not name — that lock holds
+        even where ownership cannot be established at all."""
         if not self.entries or not isinstance(rec, dict):
             return []
         rid = rec.get("role_id") or rec.get("mkey") or ""
@@ -249,7 +265,8 @@ class Retractions:
         return [e for e in self.entries
                 if (e.get("role_id") and e["role_id"] == rid)
                 or (own & e["_urls"])
-                or (sid_keys & e["_urls"] and not e.get("_owned"))]
+                or (sid_keys & e["_urls"]
+                    and not e.get("_owned") and not e.get("role_id"))]
 
     def match(self, rec):
         hits = self.match_all(rec)
@@ -1052,7 +1069,9 @@ class Ledger:
         rows = {r["mkey"]: r for r in self.st.get_matched_since("0000-01-01", include_superseded=True)}
         self.records, self.status, skipped = load(self.path)
         self.text, tstatus, tskipped = load(self.text_path)
-        self.retractions.bind(self.records)      # a role_id line follows its posting's url
+        # sqlite too: `load` drops a bad line and still returns `ok`, and a ledger-only
+        # ownership set would then re-arm the stray-id arm on a live role (`545`)
+        self.retractions.bind(self.records, rows.values())
         rep = {"ledger": self.status, "skipped": skipped, "rehydrated": 0, "absorbed": 0,
                "merged": 0, "rehydrated_sent": 0, "unrehydratable": 0}
         if self.status == "corrupt":
@@ -1447,8 +1466,22 @@ class Ledger:
                     if (rows.get(gkeys[i]) or {}).get("status") == "superseded"]
             if done:
                 live = [i for i in g if i not in done]
-                if len(live) == 1 and all((rows.get(gkeys[i]) or {}).get("superseded_by")
-                                          == gkeys[live[0]] for i in done):
+                # ...and FOLLOW each chain, the way `_supersede` does: A->B->C inside one
+                # group is one posting under three keys, and asking only for a direct
+                # `superseded_by == the survivor` left A in `merged` and the alarm firing
+                # for ever — the defect this whole branch exists to remove, one fold later.
+                # Bounded by `seen`, because a cycle is exactly what `_supersede` refuses.
+                def _terminus(key):
+                    seen = set()
+                    while key not in seen:
+                        seen.add(key)
+                        row = rows.get(key) or {}
+                        if row.get("status") != "superseded":
+                            return key
+                        key = row.get("superseded_by") or ""
+                    return ""                 # a cycle names no survivor: refuse the group
+                if len(live) == 1 and all(_terminus(gkeys[i]) == gkeys[live[0]]
+                                          for i in done):
                     w = merged[alive[live[0]]]
                     sids = set(w.get("seen_ids") or [_store.seen_id(w)])
                     srcs = set(w.get("sources") or [w.get("ats_platform") or ""])
