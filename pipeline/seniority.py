@@ -218,6 +218,44 @@ _QUALITATIVE_HINT = re.compile(
 # the measurement, and the number gating it is a `classify:` line no longer at its rejudge cap.
 _GATE_APPEAL = re.compile(r"\bdata\s*/\s*financial analysts?\b|תהליכי בקרה", re.I)
 
+# ...and the same appeal read from the posting's own TEXT, for a refused title that carries
+# no analytics word at all. `Zoll Medical | Business Operations, CMS` is the third measured
+# false negative of 2026-09-01 and no title phrase can reach it: the only one that would is
+# the bare `business operations`, which admits 9 further non-analyst titles and 6 new Bright
+# Data JD-fetch candidates (`542@classifier` carries that measurement).
+#
+# It costs NO Bright Data, and that is a property of where the gate is read rather than a
+# promise: `enrich_scrape_jd.py` skips a card that already `looks_like_jd` (:143) BEFORE it
+# asks the title gate (:173), so a rule that only ever fires on a card already carrying text
+# cannot add one fetch candidate. The JD-fill callers pass a title alone and the `desc=""`
+# default leaves every one of them unchanged.
+#
+# Two arms, measured 2026-09-03 over 4,969 cached cards -- 4,544 refused by the gate, of
+# which 1,415 carry >= MIN_DESC characters:
+#   arm A  the posting says `data analytics` / `data analysis` / ניתוח נתונים and names an
+#          output AND a tool -- 23 cards (22 when `542` measured it on 2026-09-02). This is
+#          the arm that reaches Zoll, and all three of the known misses.
+#   arm B  >= 2 DISTINCT technical markers -- 27 cards; union with arm A 40.
+#
+# Arm B is recorded honestly because it shipped over this lane's own measurement. Its `+59`
+# figure did not reproduce in any form (marker-alone 145, marker+analytics 145, marker+output
+# 75, >= 2 markers 27), and 8 of the 8 most plausible arm-B-only cards judged NO through the
+# production seam under `v3.0f84ab84` -- among them `aQurate | BI system analyst`, the exact
+# analytics-engineer title `542` named as its own class. Those verdicts are
+# `tests/fixtures/classifier/2026-09-03-desc-appeal.json`. The operator reaffirmed the arm on
+# 2026-09-03 with the numbers in hand; they are here so nobody re-derives them believing the
+# arm was never measured, and so the next session knows which half to drop first if the
+# rejudge cap ever binds.
+#
+# A SOFT word alone is deliberately NOT an arm: `insight` / `recommendation` / `analyze` with
+# no technical marker admits 576 of the same 1,415 cards and bought 0 additional real roles.
+_DESC_APPEAL_PHRASE = re.compile(r"data\s+analytics|data\s+analysis|ניתוח נתונים", re.I)
+_DESC_APPEAL_OUTPUT = re.compile(r"insight|dashboard|report|תובנות|דוח", re.I)
+_DESC_APPEAL_TOOL = re.compile(r"\bsql\b|power\s*bi|tableau|\bexcel\b|looker|qlik", re.I)
+# Hebrew carries no `\b` semantics (see `_NOT_A_JOB`), so both Hebrew markers are substrings.
+_DESC_APPEAL_MARKER = re.compile(r"\bsql\b|tableau|power\s*bi|qlik|looker|\bdax\b|"
+                                 r"a/b\s*test|אנליזת נתונים|דשבורד", re.I)
+
 # Hebrew analytics signal + seniority markers (Israeli careers sites post in Hebrew too)
 _HEBREW_SIGNAL = re.compile("אנליסט|אנליטיקה|"
                            "נתונים|בינה עסקית|דאטה")
@@ -319,13 +357,16 @@ def _sig_accept_nollm(rel, sen, title_l, desc):
     """
     if rel != "signal" or (EXPERIENCE_BAR and sen != "senior"):
         return False
-    # A title that is `signal` ONLY because `_GATE_APPEAL` rescued it is never accepted
-    # without the LLM. The rescue means ASK, never assume -- the same rule the `_STRONG`
+    # A title that is `signal` ONLY because an appeal rescued it -- `_GATE_APPEAL` on the
+    # title, `_desc_appealed` on the text -- is never accepted without the LLM, and the
+    # description arm needs the rule harder than the title arm did: its whole evidence is that
+    # the posting mentions the right words, which is exactly what a fallback accept would then
+    # be treating as a verdict. The rescue means ASK, never assume -- the same rule the `_STRONG`
     # rescue already carries in `_classify`'s `strong_enough`, where lifting a hard-excluded
     # title back to an accept moved a data-engineering role onto the board in fallback mode.
     # A breaker-open morning is exactly when nobody is watching, and the whole evidence for
     # these two phrases is a verdict the LLM gave: without the LLM there is no evidence.
-    if _gate_appealed(title_l):
+    if _gate_appealed(title_l, desc):
         return False
     desc = str(desc or "")
     if _desc_is_ml(desc):
@@ -415,13 +456,19 @@ def _seniority(title_l):
     return "unknown"
 
 
-def _relevance(title_l, company_l=""):
+def _relevance(title_l, company_l="", desc=""):
     """strong-accept | signal (->LLM) | none, plus hard-exclude short-circuit.
 
     `company_l` is optional and defaults to "" so the two JD-fill drivers that import this
     (`enrich_scrape_jd.py:39`, `pipeline/jdfill.py:865`) keep working unchanged: they ask
     "could this title ever be accepted", and demoting a strong title to `signal` does not
     change that answer, so they neither need the employer nor are affected by it.
+
+    `desc` defaults to "" for the same reason, and buys the same thing twice over: those
+    drivers decide which cards to FETCH text for, so a rule reading text they do not yet have
+    would be meaningless there and expensive everywhere. Only the two classify heads pass it,
+    and both hold the posting already. A description can only ever move a REFUSAL to
+    `signal`; it is never consulted on the `strong` path and can never produce `strong`.
     """
     strong = bool(_STRONG.search(title_l))
     if _HARD_EXCLUDE.search(title_l) or _HARD_EXCLUDE_MISC.search(title_l):
@@ -429,7 +476,8 @@ def _relevance(title_l, company_l=""):
         # Software Solutions" / "Data Scientist, Infrastructure" are analytics roles, not
         # excludes. Send them to the LLM rather than deterministically rejecting. Real
         # "<x> engineer" / non-data "<x> analyst" titles (no STRONG match) still exclude.
-        return "signal" if (strong or _GATE_APPEAL.search(title_l)) else "excluded"
+        return ("signal" if (strong or _GATE_APPEAL.search(title_l) or _desc_appealed(desc))
+                else "excluded")
     if strong:
         # a systems/finance domain word, a staffing employer, or a qualitative-output word
         # means the keyword shortcut is not entitled to the verdict on its own -- the LLM
@@ -437,24 +485,51 @@ def _relevance(title_l, company_l=""):
         return ("signal" if (_BA_DOMAIN.search(title_l) or _AGENCY_EMPLOYER.search(company_l)
                              or _QUALITATIVE_HINT.search(title_l))
                 else "strong")
-    if _SIGNAL.search(title_l) or _HEBREW_SIGNAL.search(title_l) or _GATE_APPEAL.search(title_l):
+    if (_SIGNAL.search(title_l) or _HEBREW_SIGNAL.search(title_l)
+            or _GATE_APPEAL.search(title_l) or _desc_appealed(desc)):
         return "signal"
     return "none"
 
 
-def _gate_appealed(title_l):
+def _gate_appealed(title_l, desc=""):
     """True when the ONLY thing bringing this title into the LLM's reach is `_GATE_APPEAL`:
     without it the gate answers `excluded` or `none`, and nothing else about the title says
     analytics. It exists so the no-LLM guard below cannot regress a title that was already
     `signal` on the gate's own vocabulary -- `Junior Data/Financial Analyst` matches `_SIGNAL`
     (on the bare word `analyst`) and is still `excluded`, so "does `_SIGNAL` match?" is not
-    the question. The question is what `_relevance` would have answered."""
-    if not _GATE_APPEAL.search(title_l):
+    the question. The question is what `_relevance` would have answered.
+
+    It has to learn every arm `_relevance` grows, `_desc_appealed` included: this function is
+    a hand-mirrored counterfactual of that one rather than a call to it, so an arm added there
+    and forgotten here hands the no-LLM path an accept the gate never earned."""
+    if not (_GATE_APPEAL.search(title_l) or _desc_appealed(desc)):
         return False
     if _HARD_EXCLUDE.search(title_l) or _HARD_EXCLUDE_MISC.search(title_l):
         return not _STRONG.search(title_l)
     return not (_STRONG.search(title_l) or _SIGNAL.search(title_l)
                 or _HEBREW_SIGNAL.search(title_l))
+
+
+def _desc_appealed(desc):
+    """True when a posting's own TEXT earns a refused title a hearing. It routes to `signal`
+    and to nothing else -- never `_STRONG`, never a reject, and never an accept without the
+    LLM (`_gate_appealed` above is what holds that last one).
+
+    The `MIN_DESC` floor is the same one `cache_keys` splits `|jd` from `|bare` on, and it is
+    what makes the rule cheap: below it there is no text to read, and above it the text is
+    already paid for. `_desc_is_ml` is the one veto and is REUSED rather than re-written -- a
+    posting whose requirements are dominated by model building is out on condition (2)
+    whatever tools it happens to name.
+
+    Arm B counts DISTINCT markers, not mentions: one JD saying `SQL` four times is one
+    marker. The bare single-marker form was measured at 145 cards and is not shipped."""
+    d = str(desc or "")
+    if len(d.strip()) < MIN_DESC or _desc_is_ml(d):
+        return False
+    if (_DESC_APPEAL_PHRASE.search(d) and _DESC_APPEAL_OUTPUT.search(d)
+            and _DESC_APPEAL_TOOL.search(d)):
+        return True                                                          # arm A
+    return len({m.group(0).lower() for m in _DESC_APPEAL_MARKER.finditer(d)}) >= 2   # arm B
 
 
 # --------------------------------------------------------------------------- #
@@ -827,7 +902,11 @@ class Classifier:
     def _classify(self, job):
         title_l = (job.get("title") or "").lower()
         company_l = (job.get("company") or "").lower()
-        rel = _relevance(title_l, company_l)
+        # The description is on the job dict already -- this method does not read it until
+        # `desc` below, eighteen lines on, and the gate needs it for `_desc_appealed`. It can
+        # only ever move a refusal to `signal`; the shared-text guard takes that back again if
+        # the text turns out to be another posting's page.
+        rel = _relevance(title_l, company_l, job.get("description") or "")
         sen = _seniority(title_l)
         base = {"relevance": rel, "seniority": sen}
         if rel == "excluded":
@@ -866,6 +945,21 @@ class Classifier:
                 shared = True
                 desc = None
                 job = dict(job, description=None)     # the seam must not read it either
+        # An appeal whose evidence was another posting's page is not an appeal. The gate read
+        # this text at the top of the method; the guard immediately above has just established
+        # that it belongs to a different role, so a title that is `signal` ONLY because
+        # `_desc_appealed` said so loses the hearing and takes the refusal the gate would have
+        # given on the title alone. Judging a posting on soup is what the 2026-09-02 session
+        # paid for twice (Prisma, Ballerine), and this is the one place the gate can find out.
+        # Asked as "what would the gate have said with no text", never as "did the description
+        # arm fire" -- a title `_GATE_APPEAL` or `_SIGNAL` already carried keeps its hearing.
+        if shared and rel == "signal":
+            bare = _relevance(title_l, company_l)
+            if bare in ("excluded", "none"):
+                return {"relevance": bare, "seniority": sen, "decision": "reject",
+                        "path": "keyword",
+                        "reason": ("engineering/ML/non-data-analyst title" if bare == "excluded"
+                                   else "no analytics signal in title")}
         # Does this role have a description of its own that is worth keying a verdict to?
         # `shared` has already blanked another role's text above, so this asks only about
         # THIS role -- and it asks `jdfill.looks_like_jd`, which is the same question
@@ -1091,7 +1185,7 @@ class Classifier:
         exactly as much as a paid one."""
         title_l = (job.get("title") or "").lower()
         company_l = (job.get("company") or "").lower()
-        rel = _relevance(title_l, company_l)
+        rel = _relevance(title_l, company_l, job.get("description") or "")
         sen = _seniority(title_l)
         base = {"relevance": rel, "seniority": sen}
 
@@ -1130,6 +1224,19 @@ class Classifier:
                 shared = True
                 desc = None
                 job = dict(job, description=None)
+        # ...and with the text goes any hearing that rested on it (`_classify` has the
+        # reasoning). `base` was built from the appealed `rel`, so the refusal is assembled
+        # here rather than through `_reject`, and both counters the deterministic head would
+        # have moved are moved by hand.
+        if shared and rel == "signal":
+            bare = _relevance(title_l, company_l)
+            if bare in ("excluded", "none"):
+                self.backfill_keyword += 1
+                self.backfill_no += bool(published)
+                return {"relevance": bare, "seniority": sen, "decision": "reject",
+                        "path": "keyword",
+                        "reason": ("engineering/ML/non-data-analyst title" if bare == "excluded"
+                                   else "no analytics signal in title")}
         has_text = looks_like_jd(str(desc or "").strip())
         key, jd_key, bare_key, _legacy = cache_keys(job, has_text, self.contract)
         # A CURRENT-contract verdict, if one exists, is the answer and costs nothing. Read

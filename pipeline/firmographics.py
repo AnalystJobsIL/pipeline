@@ -243,6 +243,17 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     # Bounce/Bounce AI failure the morning feared -- that was two DIFFERENT companies; this
     # is one company whose facts we already hold.
     "oak": "oak identity security os",
+    # `DoiT` is `doitintl`. The registry row is the Greenhouse board's own tenant slug
+    # (`boards-api.greenhouse.io/v1/boards/doitintl`), which no suffix rule can derive from
+    # the brand: the company writes itself DoiT (DoiT International Ltd), and LinkedIn posts
+    # under that. Both published a `Product Analyst` on 2026-09-03 -- `doitintl|product
+    # analyst` from the Greenhouse board and `doit|product analyst` from
+    # il.linkedin.com/jobs/view/...-at-doit-4459541740 -- two rows for one opening.
+    # Checked before declaring, which is the whole of the Oak lesson (522): `DoiT` is NOT a
+    # `companies.csv` row in any state, so the fold's first refusal cannot fire on it, and
+    # across all 2,162 rows plus both role stores nothing else answers to `doit` or
+    # `doitintl`. A third employer on either string would make this declaration wrong.
+    "doit": "doitintl",
     "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
     "vmware broadcom": "vmware",
     "simply joytunes": "simply",

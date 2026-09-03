@@ -26750,6 +26750,44 @@ def test_the_live_registry_does_not_park_a_non_employer_on_a_declared_alias_stri
         "a registry row is holding the string `Oak` again and the declared fold is dead"
 
 
+def test_the_live_registry_lets_the_doit_declaration_fold():
+    """The same live-data check as the Oak one above, for the declaration added 2026-09-03.
+    `DoiT` and `doitintl` are one company publishing one `Product Analyst` under two strings
+    -- the Greenhouse tenant slug the registry row is named for, and the brand LinkedIn posts
+    under. The declaration only works while `DoiT` is not itself a row: the fold's first
+    refusal is an exact-string test over EVERY row whatever its `active`, and a row appearing
+    on that string would cancel this line silently, with no log line and no counter.
+
+    Its sibling `Investing` is the case where that already happened and is NOT declared:
+    `Investing.com` IS a row (parked, `active=false`, sharing the live `Investing` row's
+    `api_url`), so `ALIASES["investing com"] = "investing"` would be dead on arrival. That
+    duplicate leaves the dataset by a url-precise retraction instead, and the registry rename
+    that would make it foldable is filed for the lane that owns `companies.csv`."""
+    import csv as _c
+    import os as _o
+    from pipeline import roles
+    from pipeline.firmographics import ALIASES, identity_key
+    root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
+    rows = [r for r in list(_c.reader(open(_o.path.join(root, "companies.csv"),
+                                           encoding="utf-8")))[1:] if r]
+    names = {r[0] for r in rows}
+    origins = {r[0]: ((r[2] or "").strip() or r[3] or "") for r in rows}
+    abi = {}
+    for r in rows:
+        if (r[4] or "").strip().lower() == "true":
+            abi.setdefault(identity_key(r[0]), set()).add(r[0])
+    assert roles._alias_fold_target("DoiT", "", names, abi, origins) == \
+        ("doitintl", "declared"), \
+        "a registry row is holding the string `DoiT`, or `doitintl` stopped being active"
+    assert identity_key("DoiT") == identity_key("doitintl") == "doitintl"
+    # ...and the refusal that made `Investing` a retraction rather than a declaration. This
+    # is an assertion about the REGISTRY, so it goes green the moment that row is renamed --
+    # which is exactly when the declaration below it becomes safe to add.
+    assert "investing com" not in ALIASES
+    assert "Investing.com" in names, "the parked row went: `investing com` can now be declared"
+    assert roles._alias_fold_target("Investing.com", "", names, abi, origins) is None
+
+
 def test_alias_fold_never_rewrites_a_registry_name():
     """A registry name — active or parked — is never rewritten: Bounce and Bounce AI are
     both rows (and different identities besides); a parked `Meta Israel` keeps its
@@ -28374,3 +28412,187 @@ def test_a_supersede_chain_reaches_the_survivor_of_a_twin_group(tmp_path):
     assert not L.id_collisions(kept)
     assert L.reclaimed == 0, "a same-company twin never reclaims, chain or not"
     st.close()
+
+
+# --- classifier, 2026-09-03: the gate reads the posting's own text ------------------------
+#
+# `542@classifier`'s third measured false negative, and the arm the operator reaffirmed over
+# this lane's own measurement. The whole mechanism is `_desc_appealed` -> `signal`, never
+# `_STRONG`, never a reject, never an accept without the LLM -- and it un-fires when the
+# shared-text guard proves the evidence was another posting's page.
+
+_ZOLL_TEXT = (
+    "in this role puts the operational users at the center of decision making. "
+    "Ensure the right data is acquired to develop reporting and toolsets used to support "
+    "operational planning, strategic sourcing and day to day procurement activity. "
+    "High level of experience with Power BI and SQL required. 5 years of data analytics or "
+    "business intelligence, report and dashboard creation experience required. Partner with "
+    "the supply chain analyst to translate business requirements into technical development. ")
+
+# arm A alone: the analytics phrase, an output word and a TOOL that is not a marker (`Excel`)
+_ARM_A_ONLY = (
+    "The role owns commercial data analysis for the Israeli market. You will produce the "
+    "monthly management report, keep the pricing model current in Excel and present findings "
+    "to the commercial leadership every quarter, working with the category owners. ") * 2
+
+# arm B alone: two DISTINCT technical markers, and no `data analytics` / `data analysis`
+_ARM_B_ONLY = (
+    "You will own the reporting layer for the revenue organisation: writing SQL against the "
+    "warehouse, building and maintaining Tableau dashboards, and partnering with the sales "
+    "and finance teams on the numbers they take to the board every month. ") * 2
+
+
+def test_the_description_appeal_routes_the_third_measured_false_negative_to_the_llm():
+    """`Zoll Medical | Business Operations, CMS` carries no analytics word in its TITLE at
+    all, so no phrase list can reach it -- the only title phrase that would is the bare
+    `business operations`, which admits 9 further non-analyst titles and 6 new Bright Data
+    JD-fetch candidates (`542@classifier`). Its own text says `data analytics`, names
+    `Power BI and SQL`, and asks for `report and dashboard creation experience`.
+
+    Measured 2026-09-03 over both committed caches: **41 cards / 40 distinct (company, title)
+    pairs move, every one of them to `signal` and none to `strong`**, and 0 of the 252
+    title-only golden rows move (they carry no description, which is the point).
+
+    Kills `desc-appeal-removed`, `desc-appeal-promoted-to-strong`."""
+    t = "business operations, cms"
+    assert seniority._relevance(t, "") == "none"                     # the gate on the title
+    assert seniority._relevance(t, "", _ZOLL_TEXT) == "signal"       # ...and on the posting
+    assert seniority._desc_appealed(_ZOLL_TEXT) is True
+    # both arms are live on their own, and each is the only reason for real cards
+    assert seniority._desc_appealed(_ARM_A_ONLY) is True
+    assert seniority._desc_appealed(_ARM_B_ONLY) is True
+    # The appeal produces `signal` and NOTHING else, asserted as the outcome on titles from
+    # both refusing branches. `_relevance(...) != "strong"` would be vacuous for a
+    # hard-excluded title -- that branch returns before the `strong` return is reachable, and
+    # an adversarial pass caught exactly that shape in the 09-02 guard.
+    for title in ("business operations, cms", "safety officer",       # the `none` branch
+                  "senior backend engineer", "fp&a manager israel"):  # the hard-exclude one
+        assert seniority._relevance(title, "", _ZOLL_TEXT) == "signal", title
+    # ...and it can never DEMOTE either: a title the gate accepts is unaffected by any text.
+    for title in ("data analyst", "senior data analyst", "bi analyst", "marketing analyst"):
+        assert (seniority._relevance(title, "", _ZOLL_TEXT)
+                == seniority._relevance(title, "")), title
+    # the three callers that pass a title alone are untouched by the defaulted parameter
+    assert seniority._relevance("data analyst") == "strong"
+
+
+def test_the_description_appeal_reads_a_posting_and_not_a_vocabulary():
+    """Three refusals that keep the rule from becoming "mentions a word we like".
+
+    The `MIN_DESC` floor is the same one `cache_keys` splits `|jd` from `|bare` on: below it
+    there is nothing to read. `_desc_is_ml` is reused, not re-written -- a posting whose
+    requirements are dominated by model building is out on condition (2) whatever tools it
+    names. And SOFT words alone are deliberately not an arm: measured over the same 1,415
+    refused-with-text cards, `insight`/`recommendation`/`analyze` with no technical marker
+    admits **576** of them and bought **0** additional real roles.
+
+    Kills `desc-appeal-arm-b-widened-to-one-marker`."""
+    assert seniority._desc_appealed(_ZOLL_TEXT[:200]) is False        # under MIN_DESC
+    assert len(_ZOLL_TEXT) > seniority.MIN_DESC                       # ...and the control
+    ml = ("You will build and train deep learning models, design neural network "
+          "architectures and deploy machine learning pipelines. Requirements: pytorch, "
+          "tensorflow, machine learning, deep learning, model training. SQL and Tableau "
+          "a plus. ") * 3
+    assert seniority._desc_is_ml(ml) is True                          # the veto is alive
+    assert seniority._desc_appealed(ml) is False
+    soft = ("We are looking for someone to analyze the funnel, deliver insights and "
+            "recommendations to stakeholders and improve the product experience for our "
+            "customers every quarter. ") * 3
+    assert len(soft) > seniority.MIN_DESC and seniority._desc_appealed(soft) is False
+    # arm B counts DISTINCT markers, not mentions: one JD saying SQL four times is one marker,
+    # and the bare single-marker form was measured at 145 cards and is not shipped.
+    one = ("Requirements: strong SQL. You will write SQL every day, review SQL queries "
+           "written by others and own SQL performance tuning across the reporting layer "
+           "of the platform. ") * 3
+    assert len(one) > seniority.MIN_DESC and seniority._desc_appealed(one) is False
+
+
+def test_a_row_the_description_appeal_rescued_is_never_accepted_without_the_llm():
+    """The same rule the title appeal carries, and the description arm needs it harder: its
+    whole evidence is that the posting mentions the right words, which is exactly what a
+    fallback accept would then be treating as a verdict. A breaker-open morning is when
+    nobody is watching.
+
+    Kills `desc-appeal-escapes-the-no-llm-guard`."""
+    t = "business operations, cms"
+    assert seniority._gate_appealed(t, _ZOLL_TEXT) is True
+    assert seniority._sig_accept_nollm("signal", "senior", t, _ZOLL_TEXT) is False
+    r = seniority.classify({"company": "Zoll Medical", "title": "Business Operations, CMS",
+                            "description": _ZOLL_TEXT}, use_llm=False)
+    assert r["relevance"] == "signal" and r["decision"] == "reject", r
+    # A title that was ALREADY `signal` on the gate's own vocabulary keeps its no-LLM accept.
+    # `_gate_appealed` asks what `_relevance` would have answered, never "did an arm fire" --
+    # the distinction `Junior Data/Financial Analyst` forced on the title arm in 09-02.
+    assert seniority._gate_appealed("data analyst, market research", _ZOLL_TEXT) is False
+    assert seniority._sig_accept_nollm("signal", "senior", "data analyst, market research",
+                                       _ZOLL_TEXT) is True
+
+
+def test_a_shared_careers_page_takes_back_the_hearing_its_text_bought(monkeypatch):
+    """An appeal whose evidence was another posting's page is not an appeal.
+
+    The gate reads the description at the top of `_classify`; the shared-text guard runs
+    eighteen lines later and is the first moment anything knows the text belongs to a
+    different role. Without this the six companies that stored one careers PAGE as every
+    posting's description would have had every refused title on the board's own employer list
+    demoted to the LLM on one blob -- Get SAT had ten roles sharing 4,000 characters. Judging
+    a posting on soup is what the 2026-09-02 session paid for twice (Prisma, Ballerine).
+
+    Kills `desc-appeal-survives-a-shared-careers-page`."""
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    clf = seniority.Classifier(llm_cache={})
+    a = clf.classify({"company": "Get SAT", "title": "Business Operations, CMS",
+                      "url": "https://getsat/1", "description": _ZOLL_TEXT})
+    b = clf.classify({"company": "Get SAT", "title": "Safety Officer",
+                      "url": "https://getsat/2", "description": _ZOLL_TEXT})
+    assert clf.shared_text == 1
+    assert a["relevance"] == "signal"                    # the owner keeps its hearing
+    assert (b["relevance"], b["decision"], b["path"]) == ("none", "reject", "keyword"), b
+    assert len(calls) == 1, "the shared-text row must not reach the seam at all"
+    # ...and the same in the backfill head, which the comment above it requires to stay in
+    # step. `base` there is built from the appealed verdict, so this is the arm most likely
+    # to publish a `signal` cell for a row it then rejects.
+    clf2 = seniority.Classifier(llm_cache={})
+    clf2.judge_backfill({"company": "Get SAT", "title": "Business Operations, CMS",
+                         "url": "https://getsat/1", "description": _ZOLL_TEXT})
+    y = clf2.judge_backfill({"company": "Get SAT", "title": "Safety Officer",
+                             "url": "https://getsat/2", "description": _ZOLL_TEXT})
+    assert clf2.shared_text == 1
+    assert (y["relevance"], y["decision"], y["path"]) == ("none", "reject", "keyword"), y
+    # A title that carries its OWN analytics signal keeps its hearing under the same blob:
+    # the question asked is what the gate would have said with no text at all.
+    clf3 = seniority.Classifier(llm_cache={})
+    clf3.classify({"company": "Get SAT", "title": "Business Operations, CMS",
+                   "url": "https://getsat/1", "description": _ZOLL_TEXT})
+    c = clf3.classify({"company": "Get SAT", "title": "Senior Data Analyst",
+                       "url": "https://getsat/3", "description": _ZOLL_TEXT})
+    assert clf3.shared_text == 1 and c["relevance"] == "strong", c
+
+
+def test_a_gate_change_supersedes_no_cached_verdict(monkeypatch):
+    """The contract hashes the RULES text and the model; the gate is neither, which is what
+    makes a phrase or a predicate free to change. `v3.0f84ab84` was live before and after
+    this commit. Asserted by mutating the gate rather than by quoting the hash, so a
+    legitimate rules change does not have to edit this test."""
+    before = seniority._contract()
+    monkeypatch.setattr(seniority, "_DESC_APPEAL_MARKER", re.compile("zzzz"))
+    monkeypatch.setattr(seniority, "_DESC_APPEAL_PHRASE", re.compile("zzzz"))
+    monkeypatch.setattr(seniority, "_GATE_APPEAL", re.compile("zzzz"))
+    assert seniority._contract() == before
+    assert seniority._desc_appealed(_ZOLL_TEXT) is False, "the mutation must actually bite"
+
+
+def test_the_arm_b_measurement_is_kept_where_the_next_session_will_find_it():
+    """Arm B shipped over this lane's measurement, on the operator's reaffirmed decision, and
+    the evidence is pinned rather than left in a session note: the 8 most plausible cards that
+    ONLY arm B admits were judged through the production seam under `v3.0f84ab84` and every
+    one came back NO -- including `aQurate | BI system analyst`, the exact analytics-engineer
+    title `542` names as its own class. If a later session wants to drop an arm when the
+    rejudge cap binds, this is the one with no measured role behind it."""
+    with open(os.path.join(os.path.dirname(__file__), "fixtures", "classifier",
+                           "2026-09-03-desc-appeal.json"), encoding="utf-8") as fh:
+        art = _j6_json.load(fh)
+    assert art["contract"] == "v3.0f84ab84"
+    assert len(art["rows"]) == 8
+    assert {r["verdict"] for r in art["rows"]} == {"NO"}
+    assert any("BI system analyst" in r["title"] for r in art["rows"])

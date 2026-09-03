@@ -2930,5 +2930,70 @@
   "replace": "",
   "why": "removes the branch that carries the rule to every EXISTING caller -- the read-side gate in fetchers.fetch_discovery, auto_expand and the queue drain, not only the two intake sites. The same commit deleted `confidential` and `confidential careers` from `_CONFIRMED` because this branch subsumes them, so dropping it silently un-refuses two names that had been refused since 2026-08-17. Killed by test_an_anonymised_employer_name_is_refused_whole_name_not_by_substring.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "desc-appeal-removed",
+  "file": "pipeline/seniority.py",
+  "symbol": "_desc_appealed",
+  "class": "M1-gate-removal",
+  "find": "    if len(d.strip()) < MIN_DESC or _desc_is_ml(d):\n        return False",
+  "replace": "    if True:\n        return False",
+  "why": "the description appeal is the only route `Zoll Medical | Business Operations, CMS` has to the LLM: its title carries no analytics word at all, so no phrase list reaches it and the gate rejects it deterministically with no call to disagree - silent exclusion, the failure class ARCHITECTURE.md section 8 is about. Killed by test_the_description_appeal_routes_the_third_measured_false_negative_to_the_llm.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_description_appeal_routes_the_third_measured_false_negative_to_the_llm"
+  ]
+ },
+ {
+  "id": "desc-appeal-promoted-to-strong",
+  "file": "pipeline/seniority.py",
+  "symbol": "_relevance",
+  "class": "M2-gate-inversion",
+  "find": "            or _GATE_APPEAL.search(title_l) or _desc_appealed(desc)):\n        return \"signal\"",
+  "replace": "            or _GATE_APPEAL.search(title_l) or _desc_appealed(desc)):\n        return \"strong\" if _desc_appealed(desc) else \"signal\"",
+  "why": "an appeal may only ever ASK. `strong` enables the strong+senior fast-accept and would admit a title UNREAD on nothing but the words its description happens to contain - the promotion `docs/decisions/2026-09-01-analytics-engineer-boundary.md` rejects by name. Killed by test_the_description_appeal_routes_the_third_measured_false_negative_to_the_llm.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_description_appeal_routes_the_third_measured_false_negative_to_the_llm"
+  ]
+ },
+ {
+  "id": "desc-appeal-escapes-the-no-llm-guard",
+  "file": "pipeline/seniority.py",
+  "symbol": "_gate_appealed",
+  "class": "M4-guard-removal",
+  "find": "    if not (_GATE_APPEAL.search(title_l) or _desc_appealed(desc)):",
+  "replace": "    if not _GATE_APPEAL.search(title_l):",
+  "why": "`_gate_appealed` is a hand-mirrored counterfactual of `_relevance` rather than a call to it, so an arm added there and forgotten here hands `_sig_accept_nollm` an accept the gate never earned. The appeal's whole evidence is that the posting mentions the right words, which is exactly what a breaker-open fallback would then treat as a verdict. Killed by test_a_row_the_description_appeal_rescued_is_never_accepted_without_the_llm.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_row_the_description_appeal_rescued_is_never_accepted_without_the_llm"
+  ]
+ },
+ {
+  "id": "desc-appeal-survives-a-shared-careers-page",
+  "file": "pipeline/seniority.py",
+  "symbol": "_classify",
+  "class": "M4-guard-removal",
+  "find": "        if shared and rel == \"signal\":\n            bare = _relevance(title_l, company_l)\n            if bare in (\"excluded\", \"none\"):\n                return {\"relevance\": bare, \"seniority\": sen, \"decision\": \"reject\",\n                        \"path\": \"keyword\",\n                        \"reason\": (\"engineering/ML/non-data-analyst title\" if bare == \"excluded\"\n                                   else \"no analytics signal in title\")}\n        # Does this role have a description of its own",
+  "replace": "        # Does this role have a description of its own",
+  "why": "the gate reads the description eighteen lines before the shared-text guard can know it belongs to a different role. Without this, one careers PAGE stored as every posting's description demotes every refused title at that employer to the LLM on one blob - Get SAT had ten roles sharing 4,000 characters - and judging a posting on soup is what the 2026-09-02 session paid for twice (Prisma, Ballerine). Killed by test_a_shared_careers_page_takes_back_the_hearing_its_text_bought.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_shared_careers_page_takes_back_the_hearing_its_text_bought"
+  ]
+ },
+ {
+  "id": "desc-appeal-arm-b-widened-to-one-marker",
+  "file": "pipeline/seniority.py",
+  "symbol": "_desc_appealed",
+  "class": "M5-population-widening",
+  "find": "    return len({m.group(0).lower() for m in _DESC_APPEAL_MARKER.finditer(d)}) >= 2",
+  "replace": "    return bool(_DESC_APPEAL_MARKER.search(d))",
+  "why": "arm B counts DISTINCT markers on purpose: the single-marker form was measured at 145 cards against 27 on 2026-09-03, and every data-engineering JD in the refused tier says SQL. Widening it spends the contract drain's own cap on a population whose 8 judged members all came back NO. Killed by test_the_description_appeal_reads_a_posting_and_not_a_vocabulary.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_description_appeal_reads_a_posting_and_not_a_vocabulary"
+  ]
  }
 ]

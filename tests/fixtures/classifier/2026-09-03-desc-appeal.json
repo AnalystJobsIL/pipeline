@@ -1,0 +1,78 @@
+{
+ "contract": "v3.0f84ab84",
+ "group": "desc-appeal-arm-b",
+ "rows": [
+  {
+   "company": "Crossriver",
+   "title": "Dynamics 365 Senior Developer",
+   "gate": "none",
+   "desc_len": 4866,
+   "url": "https://www.comeet.com/jobs/crossriver/C7.00F/dynamics-365-senior-developer/4B.D6B",
+   "verdict": "NO",
+   "reason": "This is a software/CRM development and platform engineering role (Dynamics 365, Power Platform configuration and app development), not a data analyst role focus"
+  },
+  {
+   "company": "Playtika Ltd",
+   "title": "Monetization Manager",
+   "gate": "none",
+   "desc_len": 2903,
+   "url": "https://www.playtika.com/position/?gh_jid=4230024101",
+   "verdict": "NO",
+   "reason": "This is a monetization/CRM management role focused on planning and executing campaigns and promotions, with analysis serving to steer that own execution rather "
+  },
+  {
+   "company": "aQurate",
+   "title": "BI system analyst - Aqurate Data",
+   "gate": "excluded",
+   "desc_len": 2884,
+   "url": "https://aqurate-data.com/jobs/bi-system-analyst/",
+   "verdict": "NO",
+   "reason": "This is a BI systems/business analyst role focused on requirements gathering, functional specifications, and data flow design/architecture rather than producing"
+  },
+  {
+   "company": "aQurate",
+   "title": "Data Engineer - Aqurate Data",
+   "gate": "excluded",
+   "desc_len": 2855,
+   "url": "https://aqurate-data.com/jobs/data-engineer/",
+   "verdict": "NO",
+   "reason": "This is a Data Engineer role focused on data modeling, architecture, pipelines, and BI infrastructure for engineers/systems, not an analyst producing insights/r"
+  },
+  {
+   "company": "aQurate",
+   "title": "בודק AI - Aqurate Data",
+   "gate": "none",
+   "desc_len": 2405,
+   "url": "https://aqurate-data.com/jobs/%d7%91%d7%95%d7%93%d7%a7-ai/",
+   "verdict": "NO",
+   "reason": "This is a QA/testing role (BI tester validating DWH systems via SQL), not an analyst producing insights/reports, and it's posted by a solutions/staffing company"
+  },
+  {
+   "company": "aQurate",
+   "title": "מנהל/ת פרויקט רוחבי ב- DATA - Aqurate Data",
+   "gate": "none",
+   "desc_len": 2550,
+   "url": "https://aqurate-data.com/jobs/%d7%9e%d7%a0%d7%94%d7%9c-%d7%aa-%d7%a4%d7%a8%d7%95%d7%99%d7%a7%d7%98-%d7%a8%d7%95%d7%97%d7%91%d7%99-%d7%91-data/",
+   "verdict": "NO",
+   "reason": "This is a project/program management role (leading BI/data projects, requirements gathering, timelines, coordination) rather than a data analyst role focused on"
+  },
+  {
+   "company": "aQurate",
+   "title": "מנתח/ת מערכות DATA & פרויקטים - Aqurate Data",
+   "gate": "none",
+   "desc_len": 2512,
+   "url": "https://aqurate-data.com/jobs/%d7%9e%d7%a0%d7%aa%d7%97-%d7%aa-%d7%9e%d7%a2%d7%a8%d7%9b%d7%95%d7%aa-data-%d7%a4%d7%a8%d7%95%d7%99%d7%a7%d7%98%d7%99%d7%9d/",
+   "verdict": "NO",
+   "reason": "This is a BI/Data systems analyst and project management role focused on requirements gathering, specification writing, and project delivery coordination, not o"
+  },
+  {
+   "company": "aQurate",
+   "title": "מנתח/ת מערכות DATA - Aqurate Data",
+   "gate": "none",
+   "desc_len": 3930,
+   "url": "https://aqurate-data.com/jobs/%d7%9e%d7%a0%d7%aa%d7%97-%d7%aa-%d7%9e%d7%a2%d7%a8%d7%9b%d7%95%d7%aa-data/",
+   "verdict": "NO",
+   "reason": "The role focuses on designing and leading end-to-end data solutions/architecture (data engineering/systems analysis) rather than producing analytic reports, das"
+  }
+ ]
+}
