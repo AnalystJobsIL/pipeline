@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**621 filed · 448 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**624 filed · 451 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 571.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 574.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 150 open
+### registry — 151 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -244,6 +244,7 @@ closure convention in the header.
 - **549** `549@registry` **`deep_validate` recorded a NAME-ALIKE's empty board as this company having no
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 - **570** `570@registry` **A test fixture's hard-coded date crossed `TRIAGE_TTL_DAYS` today, so
+- **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
 
 ### infra — 109 open
 
@@ -390,7 +391,7 @@ closure convention in the header.
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
 - **569** `569@discovery` **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
 
-### scraper — 28 open
+### scraper — 29 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -420,6 +421,7 @@ closure convention in the header.
 - **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
 - **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
 - **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
+- **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
 
 ### docs — 25 open
 
@@ -545,7 +547,7 @@ closure convention in the header.
 - **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 
-### jd-text — 16 open
+### jd-text — 17 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -563,6 +565,7 @@ closure convention in the header.
 - **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
 - **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
 - **567** `567@jd-text` **A closed row's stored JD carries a second posting's bullets, and it moved a verdict** —
+- **572** `572@jd-text` **The role ledger has no refutation channel, so a repair to a wrong-but-longer JD is
 
 ### render — 6 open
 
@@ -10613,6 +10616,40 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      rest" on the 348 figure; that figure was the wrong one and is corrected here so the
      decision can be re-taken on 22.
 
+     **SHIPPED 2026-09-03 (`classifier`) — the reopening condition was met and is quoted.**
+     This item's own gate was "a `classify:` line whose `re-judged N/cap 250` is under its
+     cap"; digest run `33739498960` logged `re-judged 51/cap 250 + 18 stale-yes/cap 150`.
+     `_desc_appealed` (`pipeline/seniority.py`) is the fourth vocabulary, read in BOTH
+     refusing branches of `_relevance` through a third defaulted parameter, and it keeps every
+     property `_GATE_APPEAL` has: never `strong`, never a reject, never an accept without the
+     LLM. **Zoll enters.** Re-measured over 4,969 cached cards (4,544 refused, 1,415 carrying
+     >= 300 chars): **arm A = 23** (22 when this item measured it on 09-02 — the drift is one
+     day of intake), **arm B (two DISTINCT markers) = 27**, and the shipped union moves
+     **41 cards / 40 distinct (company, title) pairs, all to `signal`, none to `strong`**, 0
+     of the 252 title-only golden rows, `CONTRACT` unchanged at `v3.0f84ab84`. **0 Bright
+     Data, structurally**: `enrich_scrape_jd.py` skips a card that already `looks_like_jd`
+     (`:143`) before it asks the gate (`:173`), so a rule firing only on cards that already
+     carry text cannot create a fetch candidate.
+
+     **Arm B's own number did not reproduce, and it shipped anyway on the operator's
+     reaffirmed decision — recorded here so nobody re-derives it believing it was never
+     measured.** The `+59 LLM candidates` handed over on 2026-09-03 is not reachable by any
+     form of the predicate: marker-alone **145**, marker + `_DESC_ANALYTICS` **145**, marker +
+     an output word **75**, two distinct markers **27**. And the exclusive population has no
+     measured role in it: the **8** most plausible arm-B-only cards were judged through the
+     production seam under `v3.0f84ab84` and **8 of 8 came back NO** — `aQurate | BI system
+     analyst` (the analytics-engineer title this very item names), `aQurate | Data Engineer`,
+     `aQurate | מנתח/ת מערכות DATA`, `aQurate | מנתח/ת מערכות DATA & פרויקטים`,
+     `aQurate | מנהל/ת פרויקט רוחבי ב- DATA`, `aQurate | בודק AI`,
+     `Playtika | Monetization Manager`, `Crossriver | Dynamics 365 Senior Developer`. The
+     other 9 arm-B-only cards were not judged and are obviously out (SEO Specialist, Content
+     Marketing Manager, FP&A Manager, Data Engineer x2, Solution Engineer x2, Head of Data
+     Engineering, Product Manager). Artifact:
+     `tests/fixtures/classifier/2026-09-03-desc-appeal.json`, pinned by
+     `test_the_arm_b_measurement_is_kept_where_the_next_session_will_find_it`. **If the
+     rejudge cap ever binds again, arm B is the half to drop first** — arm A carries three
+     confirmed misses and arm B carries none.
+
      Filed 2026-09-01.
 
 543. **A drain flip never reaches the published dataset, so a role the seam has re-judged NO
@@ -11277,3 +11314,79 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      (`grep -c recruiter triage_dark.py` -> 0), and the fixture note contains no name the
      widened gate touches.
 
+
+## From the `finisher` session, 2026-09-03 (the last four defective published rows)
+
+571. **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
+     `Investing` fold cannot be declared — the Oak/522 shape, second occurrence** — lane:
+     `registry`. Filed 2026-09-03 by the finisher session, which held a `company-intel`
+     dispensation and not a `registry` one.
+     `Investing` (active, scrape) and `Investing.com` (**parked, `active=false`**) are two
+     `companies.csv` rows carrying the **same `api_url`** —
+     `https://www.investing-careers.com/open-positions` — i.e. one employer written twice.
+     Their two role records are one opening: `investing|head of analytics` from the employer's
+     own board (3,999 chars) and `investing com|head of analytics` from LinkedIn (6,000).
+     The curated declaration that would fold the class durably,
+     `ALIASES["investing com"] = "investing"`, is **dead on arrival**: `_alias_fold_target`
+     (`pipeline/roles.py`) refuses any candidate that is a registry name in **any** state, and
+     that refusal is the first line of the function — no log line, no counter, nothing in the
+     ledger. This is exactly `522`, which cost the `Oak` declaration a day.
+
+     **The exact fix, which is one `companies.csv` write this lane owns:** rename or retire
+     the parked `Investing.com` row the way `Oak` was handled on 2026-09-01 — the parked row
+     is a duplicate of the live one, not a different employer, so `duplicate-of Investing` is
+     the honest verdict. Then declare the alias beside `doit` in `pipeline/firmographics.py`.
+     `test_the_live_registry_lets_the_doit_declaration_fold` already asserts BOTH halves and
+     will tell you the moment the rename lands: it asserts `"Investing.com" in names` with the
+     message *"the parked row went: `investing com` can now be declared"*.
+
+     Until then the duplicate leaves the dataset by a url-precise retraction on the LinkedIn
+     copy (`cloud_state/roles_retractions.jsonl`, 2026-09-03) — **which is a hand-drain for
+     one posting and not a fix for the class.** The next `Investing` posting duplicates again.
+
+572. **The role ledger has no refutation channel, so a repair to a wrong-but-longer JD is
+     undone by the next digest** — lane: `jd-text` (the predicate) / `roles` (the file).
+     Filed 2026-09-03; extends `567@jd-text`, which asked for the guard.
+     `reconcile` -> `better_description` (`pipeline/roles.py`) keeps the LONGER of two texts
+     that both pass `looks_like_jd`, and `daily-digest.yml` runs `Ledger.open_sync` **after**
+     `enrich_matched_jd.py` in the same job. So on 2026-09-01 `jd-text` repaired
+     `prisma photonics|senior product analyst` in sqlite (`4bfc4ae`, 3,276 -> 2,617) and the
+     **2026-09-02 digest put 3,276 straight back**, because the ledger's copy was never
+     updated and is longer. The repair is only durable when BOTH stores are written in the
+     same commit, and nothing enforces that.
+
+     **A content rule cannot separate the two texts, and this was checked rather than
+     assumed**: `quality_suspect` returns `no-company-echo` for **all five** Prisma cards
+     including the correct one, so "prefer the text that echoes its employer" is dead. The
+     only thing that knows which text is the row's own is that its card sits at the row's own
+     url — which `_donor_candidates`' `cache` class already tests (`_own_posting` ->
+     `title_in_slug`) and `reconcile` cannot see.
+
+     Wanted: a way to say *this stored text is not this role's* that both stores honour —
+     `enrich_matched_jd`'s in-memory `refuted` set made durable, or a `jd_why`-aware arm in
+     `better_description` that lets a text installed by an own-address rung outrank a longer
+     one of unknown provenance. Repaired by hand for the one row on 2026-09-03 (the ledger's
+     stale text retracted so `_absorb` re-derived `desc_len`/`desc_sha1` from the repaired
+     store; verified stable across two further `open_sync` runs) — **one row, not the class.**
+
+     A second, cheaper half worth doing first: a *cached* quality rejection carries no class
+     (`llm_cache.verdict` is a bool), so it keeps a row in `incomplete` but never unlocks the
+     `_store_text` ratchet — the row is stuck for ever with no alarm. Clearing one cache key
+     is what re-armed the mechanism here, and no rung can do that on its own.
+
+573. **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
+     description** — lane: `scraper` (the capture) / `jd-text` (the guard). Filed 2026-09-03.
+     `nestl nespresso sa|data analyst למחלקת השיווק חברת נספרסו` stored **3,353** characters
+     for a posting whose actual JD is **693**: a cookie notice, the JD, `#Nespresso`,
+     `Show more / Show less`, the seniority/employment/function block, and then ~27
+     `עבודות דומות` ("similar jobs") entries naming Moon Active, Skyers, Yael Group, Helfy,
+     dentsu Israel, G-STAT, Migdal Group, Nift, Bounce, Plarium, Recruitx, HoneyBook,
+     Fetcherr, Modellama, Similarweb, Qodo and more. **It passes `looks_like_jd`**, and the
+     Indeed crop of the same posting is the clean 693 characters.
+     Same family as `567`'s Ballerine (a chrome PREFIX that inverted a verdict) but the tail
+     variant, and worse in one way: the furniture is other employers' role titles, so any
+     rule reading company names out of a description reads the wrong ones, and
+     `prompt_slice`'s 1,400-character window can be filled with a competitor's listing.
+     The row left the dataset on 2026-09-03 as a duplicate of the אסם copy, so the instance is
+     gone and the class is not. Cheapest check: the count of distinct `עבודות דומות` /
+     `More jobs` markers in a stored body, over `matched`.

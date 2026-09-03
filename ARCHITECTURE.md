@@ -5453,15 +5453,49 @@ returned. Cost of the two shipped phrases, measured 2026-09-02: **2 of 4,599** d
 (company, title) pairs across both caches newly reach the LLM, **0 of the 252** title-only
 golden-fixture rows move, and `CONTRACT` is unchanged — the gate is not in the rules hash, so
 no verdict is re-superseded by a gate change. A third confirmed miss
-(`Zoll | Business Operations, CMS`) is deliberately NOT shipped: its title carries no
+(`Zoll | Business Operations, CMS`) could not be reached by any phrase: its title carries no
 analytics word at all, and the only title phrase that reaches it costs 9 further cards, 8 of
-them recurring NO calls, and 6 new JD-fetch candidates. The successor is a DESCRIPTION appeal
-— `data analytics｜data analysis｜ניתוח נתונים` plus an output word and a tool word, over text
-the posting already carries, never fetching — which reaches **all three** misses at **22
-cards**. It is designed and measured, not shipped: what gates it is the LLM budget, since the
-09-02 run was cap-bound at `re-judged 250/cap 250`. `542@classifier` carries both tables, and
-records that this session's first draft claimed no such shared predicate existed and was
-wrong.
+them recurring NO calls, and 6 new JD-fetch candidates.
+
+**2026-09-03 — so the gate reads the posting, and `_desc_appealed` is the fourth
+vocabulary.** `542`'s reopening condition was a number and it was met: the 09-03 digest
+(run `33739498960`) logged `re-judged 51/cap 250`, no longer cap-bound. `_relevance` grew a
+third, defaulted parameter and the two classify heads pass the description they already hold;
+every other caller passes a title alone and is unchanged by the default. Two arms:
+
+* **arm A** — `data analytics｜data analysis｜ניתוח נתונים` with an output word AND a tool
+  word: **23 cards**, and the arm that reaches Zoll and all three known misses.
+* **arm B** — **two DISTINCT** technical markers (`sql｜tableau｜power bi｜qlik｜looker｜dax｜a/b
+  test`, plus Hebrew): **27 cards**. Distinct, because one JD saying `SQL` four times is one
+  marker and the single-marker form admits 145.
+
+Both are floored at `MIN_DESC` and vetoed by `_desc_is_ml`, both reuse the three safety
+properties above, and the whole change moves **41 cards / 40 distinct (company, title) pairs,
+every one to `signal` and none to `strong`**, with **0 of the 252** title-only golden rows
+moving and `CONTRACT` unchanged.
+
+**It costs no Bright Data, and that is structural rather than promised**: `enrich_scrape_jd.py`
+skips a card that already `looks_like_jd` (`:143`) *before* it asks the title gate (`:173`),
+so a rule that only ever fires on a card which already carries text cannot create one fetch
+candidate.
+
+**And an appeal can lose its evidence.** The gate reads the description at the top of
+`_classify`; the shared-text guard runs eighteen lines later and is the first thing that knows
+the text is another posting's careers PAGE. When it fires, a title that is `signal` ONLY
+because of `_desc_appealed` takes back the hearing and gets the refusal the gate would have
+given on the title alone — asked as *what would the gate have said with no text*, so a title
+that carried its own analytics signal keeps its hearing. Without it, one blob shared by ten
+postings demotes every refused title at that employer.
+
+**Arm B shipped over the lane's own measurement and the record says so.** Its `+59` figure did
+not reproduce in any form (marker-alone 145, marker+analytics 145, marker+output 75, two
+markers 27), and **8 of the 8 most plausible arm-B-only cards judged NO** through the
+production seam — among them `aQurate | BI system analyst`, the analytics-engineer title
+`542` names as its own class. The operator reaffirmed the arm with those numbers in hand; they
+are in the source, in `542`, and in
+`tests/fixtures/classifier/2026-09-03-desc-appeal.json`, so the next session knows which half
+has no measured role behind it. `542@classifier` carries both tables, and records that the
+09-02 draft claimed no shared predicate existed and was wrong.
 
 The contract moves once for both changes (`v3.da2cb878` → `v3.7cb6831f`) and the drain
 follows it. `docs/decisions/2026-08-31-domain-scope.md`; the paragraph it supersedes is
