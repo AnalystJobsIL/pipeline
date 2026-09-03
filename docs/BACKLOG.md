@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**625 filed · 452 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**625 filed · 451 open · 174 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 151 open
+### registry — 150 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -243,7 +243,6 @@ closure convention in the header.
 - **538** `538@registry` **Three registry rows carry a name that is not their board's company, with the evidence
 - **549** `549@registry` **`deep_validate` recorded a NAME-ALIKE's empty board as this company having no
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
-- **570** `570@registry` **A test fixture's hard-coded date crossed `TRIAGE_TTL_DAYS` today, so
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
 
 ### infra — 109 open
@@ -11324,7 +11323,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      as a recruiter for three words, and is a search-and-rescue organisation. Any pattern on
      `search`/`consulting`/`capital` refuses it. Add names with sources, or nothing.
 
-570. **A test fixture's hard-coded date crossed `TRIAGE_TTL_DAYS` today, so
+570. ~~**A test fixture's hard-coded date crossed `TRIAGE_TTL_DAYS` today, so
      `test_triage_does_not_consume_a_probe_wake_before_the_hunt_can_use_it` is red from
      2026-09-03 onward and will not recover** — lane: `registry` (found by `discovery`,
      2026-09-03, while establishing its own baseline).
@@ -11339,7 +11338,13 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      triage stamp keeps triage off the woken row", and a stamp frozen in the past cannot stay
      fresh. The fix is to build the note from `date.today() - timedelta(days=TRIAGE_TTL_DAYS-1)`
      rather than from a literal, so the test states the RULE instead of a date — the same
-     move the census facts made when they stopped pinning counts. Verified not to be
+     move the census facts made when they stopped pinning counts.~~ — **CLOSED 2026-09-03
+     (`finisher`, in `registry`'s file by necessity)**: the stamp is now derived,
+     `dark-triage <today - (TRIAGE_TTL_DAYS - 1)>`, exactly as this item prescribes, plus a
+     second assertion that one day older IS stale — without it the first one is vacuous in
+     the weakening direction. Crossed lanes because it redded the `guard` job on every push
+     from 2026-09-03 onward, for every lane, and gets worse daily: CI run `33792608008`
+     failed on it, as had the two runs on master before it. Verified not to be
      `discovery`'s 2026-09-03 diff: `triage_dark.py` does not import `pipeline/recruiters.py`
      (`grep -c recruiter triage_dark.py` -> 0), and the fixture note contains no name the
      widened gate touches.

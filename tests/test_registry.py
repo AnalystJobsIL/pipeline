@@ -460,13 +460,24 @@ def test_triage_does_not_consume_a_probe_wake_before_the_hunt_can_use_it():
     `listing_hunt._triaged_page_empty` drops it and `_actionable_mode` returns False. The
     wake is not recoverable - probe_candidates persists the new baseline before the wake
     test, so the signal is spent. Same class as the inert wake, opposite direction."""
+    import datetime as _dt
     import inspect
     import triage_dark
     from probe_candidates import _wake_note
-    note = "no ATS detected | listing-hunt 2026-08-20: no listing found | dark-triage 2026-08-24: extract-gap (2 role phrases)"
+    # The stamp is DERIVED from `TRIAGE_TTL_DAYS`, not written as a literal. It used to read
+    # `dark-triage 2026-08-24`, and `_needs_triage` is `(today - stamp).days >= TTL` with a TTL
+    # of 10 -- so on 2026-09-03 the fixture aged exactly past its own bar and this assertion
+    # inverted, red from that morning onward and worse every day, with nothing in the tree
+    # changed (`570@registry`). A test about freshness cannot be written with a frozen date.
+    fresh = (_dt.date.today() - _dt.timedelta(days=triage_dark.TRIAGE_TTL_DAYS - 1)).isoformat()
+    note = ("no ATS detected | listing-hunt 2026-08-20: no listing found | "
+            "dark-triage %s: extract-gap (2 role phrases)" % fresh)
     woken = _wake_note(note)
-    assert "dark-triage 2026-08-24: extract-gap" in woken, "the wake must keep triage's dated segment"
+    assert "dark-triage %s: extract-gap" % fresh in woken, "the wake must keep triage's dated segment"
     assert not triage_dark._needs_triage(woken), "a kept, fresh triage stamp is what keeps triage off the woken row"
+    # ...and the bar itself is alive: one day older is stale, or the assertion above is vacuous
+    stale = (_dt.date.today() - _dt.timedelta(days=triage_dark.TRIAGE_TTL_DAYS)).isoformat()
+    assert triage_dark._needs_triage(woken.replace(fresh, stale))
     src = inspect.getsource(triage_dark.main)
     assert '"probe-woken" not in' not in src, (
         "a `probe-woken` exclusion in main() is permanent (nothing cleared it): 6 rows left "
