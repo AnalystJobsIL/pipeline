@@ -190,3 +190,50 @@ document.
   columns gives 56; the union across both rounds is **53** (`Accenture España`,
   `Strauss Group`, `Superkit` are marginal in both, because each round's accumulator starts
   empty). The first draft of the decision record carried 56 as a distinct count.
+
+## 7. CI, quoted whatever it says
+
+Three runs, one per pushed commit, all identical in shape:
+
+| run | commit | conclusion | jobs |
+|---|---|---|---|
+| `33756239987` | `0a45de4` — the code, the guard test, both mutation records | **failure** | **15 of 16 success** |
+| `33756656570` | `80ba1ef` — docs only | **failure** | 15 of 16 success |
+| `33756838492` | `81e7ff5` — HEAD | **failure** | **15 of 16 success** |
+
+**The run-level word is `failure` and it is written here rather than softened.** In all three
+the single red job is `guard`, and its log names the same two tests, with `1828 passed`:
+
+```
+FAILED tests/test_registry.py::test_triage_does_not_consume_a_probe_wake_before_the_hunt_can_use_it
+FAILED tests/test_units.py::test_docs_are_consistent_with_the_code
+2 failed, 1828 passed, 1 skipped
+```
+
+Both are INHERITED, and each was proved so rather than assumed:
+
+- `test_triage_...probe_wake` crossed `TRIAGE_TTL_DAYS` **today** — its fixture's literal
+  `dark-triage 2026-08-24` is exactly 10 days from 2026-09-03. `triage_dark.py` does not
+  import `pipeline/recruiters.py` at all, so this session's diff cannot reach it. Filed `570`
+  (lane `registry`); it will be red every day until the fixture states the rule instead of a
+  date.
+- `test_docs_are_consistent_with_the_code` is the three overdue morning checks belonging to
+  `company-intel` (x2) and `render`. Verified by running `python docs/check_docs.py` from a
+  clean worktree at `origin/master` `5ad8a1d` **before** any change: **3 errors, the same
+  three.** This session took it to 6 and back to 3; it added none.
+
+Everything this session shipped is inside the green 15: **all eight `mutation-gate` shards
+success** (both new records among them, each killed by
+`test_an_anonymised_employer_name_is_refused_whole_name_not_by_substring`), `guard-kill`
+success, and all eight `rehearse` jobs success.
+
+Local, from the worktree after the push: `python check_invariants.py` -> `companies.csv OK:
+2163 rows, 1195 active, 0 orphans, pool=834`; `python docs/check_docs.py` -> `3 error(s), 15
+warning(s) over 113 documents` (the inherited three); `python -m pytest` -> `2 failed, 1816
+passed, 13 skipped` (the same two).
+
+**Spend, from the ledger rather than from memory** (`cloud_state/bd_spend.jsonl` in the shared
+checkout): `{"cap":3,"credits":3,"tool":"indeed.py"}` and
+`{"cap":1,"credits":1,"tool":"indeed_ctl.py"}` — **4 credits of a declared 40**, plus 30
+`claude -p` calls. The LinkedIn half spent nothing: `UNLOCKER_CALLS {}` across both rounds.
+
