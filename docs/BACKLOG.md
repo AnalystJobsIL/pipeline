@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**618 filed · 445 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**621 filed · 448 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 568.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 571.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 149 open
+### registry — 150 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -243,6 +243,7 @@ closure convention in the header.
 - **538** `538@registry` **Three registry rows carry a name that is not their board's company, with the evidence
 - **549** `549@registry` **`deep_validate` recorded a NAME-ALIKE's empty board as this company having no
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
+- **570** `570@registry` **A test fixture's hard-coded date crossed `TRIAGE_TTL_DAYS` today, so
 
 ### infra — 109 open
 
@@ -356,7 +357,7 @@ closure convention in the header.
 - **560** `560@infra` **`458`'s one line changed the deletion semantics of thirteen state files, not two —
 - **561** `561@infra` **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
 
-### discovery — 29 open
+### discovery — 30 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -387,6 +388,7 @@ closure convention in the header.
 - **519** `519@discovery` **`is_aggregator` does not know `ecommerceguide.com`, a site that says it is one** —
 - **535** `535@discovery` **A role whose own JD names a New York address is published as an Israel role**
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
+- **569** `569@discovery` **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
 
 ### scraper — 28 open
 
@@ -522,7 +524,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### classifier — 17 open
+### classifier — 18 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -541,6 +543,7 @@ closure convention in the header.
 - **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
 - **557** `557@classifier` **LTX has not flipped to its own board
 - **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
+- **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 
 ### jd-text — 16 open
 
@@ -11215,3 +11218,62 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
      Judging a posting on soup is what a permanent retraction must never rest on — and these
      two are why that rule needs a guard rather than a session's attention.
+
+568. **The title gate decides on the TITLE alone, so no description marker can ever reach the
+     LLM — and the first measurement of what that costs says the demotion is not worth
+     building** — lane: `classifier` (found by `discovery`, 2026-09-03).
+     `pipeline/seniority.py:400-402` falls through to `return "none"` and `:836` rejects on
+     the spot with `no analytics signal in title`: no LLM call, and no description is even
+     fetched, because the same predicate is the JD-fetch gate (`pipeline/jdfill.py:2597-2598`).
+     `_DESC_ANALYTICS` exists but only vetoes, or corroborates a title that already reached
+     `signal`; `_GATE_APPEAL` (`seniority.py:219`) is two literal phrases. So the operator's
+     premise on 2026-09-03 — *"the classifier now demotes gate-rejected titles to the LLM on
+     technical markers"* — describes something that does not exist.
+
+     **The measurement, and it points AWAY from building it.** `discovery` fetched 129
+     descriptions for gate-rejected postings and spent 30 `claude -p` calls on the 30 with the
+     highest `_DESC_ANALYTICS` density — deliberately the exact population a marker-based
+     demotion would select, making the result an upper bound. **0 of 30 came back in scope**,
+     with coherent reasons (`Subsidiaries Controller`, `MySQL DBA`, `Financial Controller`,
+     `Director of Global Procurement`, `FP&A Business Unit Manager`). A demotion built on
+     those markers would have spent 30 calls against a 450-call cap to accept nothing.
+
+     **The caveat that keeps this open rather than closing it:** that population is postings
+     found BY description queries — non-analyst titles that mention SQL by construction — and
+     not the population a real demotion would serve, which is postings arriving from a
+     company's own board. The measurement that settles it already exists and is this lane's to
+     spend: `python tools/measure_title_gate.py --cache scraped_cache.json --tier rejected`
+     (`--dry-run` buckets it for free first). Do not build the demotion before running it.
+     `docs/decisions/2026-09-03-discovery-description-queries.md` §7.
+
+569. **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
+     a regex is the wrong instrument** — lane: `discovery` (2026-09-03). Surfaced as NEW
+     employers by this session's own probes, each past `is_recruiter` AND `looks_like_junk`,
+     i.e. one `auto_expand` run from a `companies.csv` row: `HUNTHEAD`, `Snatch UP Jobs`,
+     `iTalent - Hire Smarter`, `TASC Consulting & Capital`, `יו-מאן בע"מ`. These are
+     CANDIDATES, not verdicts — one posting is not evidence, and each needs a researched
+     `_CONFIRMED` entry with a dated source, the way `484`'s twenty do.
+     **Why not a wider regex:** `MAGNUS International Search and Rescue` also surfaced, reads
+     as a recruiter for three words, and is a search-and-rescue organisation. Any pattern on
+     `search`/`consulting`/`capital` refuses it. Add names with sources, or nothing.
+
+570. **A test fixture's hard-coded date crossed `TRIAGE_TTL_DAYS` today, so
+     `test_triage_does_not_consume_a_probe_wake_before_the_hunt_can_use_it` is red from
+     2026-09-03 onward and will not recover** — lane: `registry` (found by `discovery`,
+     2026-09-03, while establishing its own baseline).
+     `tests/test_registry.py:469` asserts `not triage_dark._needs_triage(woken)` over a note
+     carrying the literal stamp `dark-triage 2026-08-24`. `_needs_triage`
+     (`triage_dark.py:296-304`) is `(date.today() - stamp).days >= TRIAGE_TTL_DAYS`, and
+     `TRIAGE_TTL_DAYS = 10` (`triage_dark.py:283`). 2026-08-24 to 2026-09-03 is **exactly 10
+     days**, so the assertion flipped today and every later day makes it worse. Nothing in the
+     tree changed; the calendar did.
+
+     **It is not a flake and re-running will not clear it.** The fixture asserts a "fresh
+     triage stamp keeps triage off the woken row", and a stamp frozen in the past cannot stay
+     fresh. The fix is to build the note from `date.today() - timedelta(days=TRIAGE_TTL_DAYS-1)`
+     rather than from a literal, so the test states the RULE instead of a date — the same
+     move the census facts made when they stopped pinning counts. Verified not to be
+     `discovery`'s 2026-09-03 diff: `triage_dark.py` does not import `pipeline/recruiters.py`
+     (`grep -c recruiter triage_dark.py` -> 0), and the fixture note contains no name the
+     widened gate touches.
+

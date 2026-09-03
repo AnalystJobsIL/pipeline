@@ -2910,5 +2910,25 @@
   "replace": "                or False]",
   "why": "the id arm is NARROWED by 545, never deleted: a posting whose record has since been re-keyed - a re-scrape that moved the card to a new address - is named by nothing except the `seen_id` that remembers where we fetched it, and the retraction would silently stop catching it. `tools/guard_kill.py` named the preservation test CANNOT-FAIL without this record, which is the honest reading: a test that asserts UNCHANGED behaviour is verified by a mutation, not by a revert. Killed by test_a_retraction_no_record_owns_still_matches_by_its_seen_id.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "anon-employer-substring",
+  "file": "pipeline/recruiters.py",
+  "symbol": "is_anonymous_employer",
+  "class": "M1-gate-narrowed",
+  "find": "    return bool(n) and bool(_ANON_ANY.search(n)) and bool(_ANON_ONLY.match(n))",
+  "replace": "    return bool(n) and bool(_ANON_ANY.search(n))",
+  "why": "drops the WHOLE-NAME half and leaves the substring half, which is the shape that makes this class dangerous: `Confidential Computing Inc`, `Stealth Security Ltd` and `Anonymous Analytics Ltd` are real-company names carrying an anonymiser word, and refusing them mutes a real employer at the cache write AND the names funnel in one step. Killed by test_an_anonymised_employer_name_is_refused_whole_name_not_by_substring.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "anon-employer-drop",
+  "file": "pipeline/recruiters.py",
+  "symbol": "_is_recruiter_name",
+  "class": "M6-fallback-removal",
+  "find": "    if is_anonymous_employer(n):\n        return True\n",
+  "replace": "",
+  "why": "removes the branch that carries the rule to every EXISTING caller -- the read-side gate in fetchers.fetch_discovery, auto_expand and the queue drain, not only the two intake sites. The same commit deleted `confidential` and `confidential careers` from `_CONFIRMED` because this branch subsumes them, so dropping it silently un-refuses two names that had been refused since 2026-08-17. Killed by test_an_anonymised_employer_name_is_refused_whole_name_not_by_substring.",
+  "must_be_killed_by_behavioural": true
  }
 ]

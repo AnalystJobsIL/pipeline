@@ -1379,6 +1379,41 @@ def test_the_recruiter_keyword_matches_the_plural_noun_and_a_trailing_digit(name
     assert is_recruiter(name) is expected
 
 
+@pytest.mark.parametrize("name, expected", [
+    # discovery 2026-09-03: an ANONYMISED employer is a placeholder where the company name
+    # should be, and an exact-match list cannot close an open class -- `confidential` was on
+    # `_CONFIRMED` while these four became companies.csv rows that scan empty forever.
+    ("Confidential Company", True),
+    ("Confidential Global Company", True),
+    ("Stealth Startup", True),
+    ("Discreet Company", True),          # the Latin form of `חברה דיסקרטית`, already listed
+    ("Undisclosed", True),               # arrived from LinkedIn the morning this was written
+    ("Stealth Mode Startup", True),
+    ("confidential", True),              # the two `_CONFIRMED` entries this rule REPLACED:
+    ("Confidential Careers", True),      # removing them must not un-refuse either name
+    # ...and the near misses that must NOT move. The rule is whole-name, not substring:
+    # one real word beside the anonymiser and it is a company again.
+    ("Confidential Computing Inc", False),
+    ("Stealth Security Ltd", False),
+    ("Discreet Logic", False),
+    ("Anonymous Analytics Ltd", False),
+    ("Wix", False),
+    ("", False),
+])
+def test_an_anonymised_employer_name_is_refused_whole_name_not_by_substring(name, expected):
+    """Kills `anon-employer-substring` and `anon-employer-drop`.
+
+    Blast radius measured 2026-09-03 over the 2,757 distinct names in registry u queue u
+    cache u firmographics: 8 newly refused, **0 of them an ACTIVE row** -- the four parked
+    rows above and the same four as cache cards.
+    """
+    from pipeline.recruiters import is_anonymous_employer, is_recruiter
+    assert is_anonymous_employer(name) is expected
+    # and it reaches every existing caller, not only the two intake sites
+    if expected:
+        assert is_recruiter(name) is True
+
+
 # --- discovery lane, round 2: the breadth sweep was discovering nothing -----------------
 def test_the_breadth_sweep_is_deep_and_recency_filtered():
     """It returned 0 new companies — 29 jobs, 27 employers, 25 already registry rows and 11

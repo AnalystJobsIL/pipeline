@@ -35,7 +35,6 @@ _CONFIRMED = {
     "g-stat",                             # data-consultancy placements (numbered client roles)
     "log-on software",                    # IT services/outsourcing
     "matchit",                            # placement ("MatchIT" = match-to-IT-roles)
-    "confidential careers", "confidential",  # anonymous agency postings
     # added 2026-08-23: its companies.csv row was deactivated for exactly this reason
     # ("outsourcing partner re-posting Similarweb roles - covered directly"), but the
     # discovery layer carries the employer NAME, not the row, so its re-posts kept coming
@@ -59,7 +58,7 @@ _CONFIRMED = {
     #                in the committed cache on 2026-08-26, one of them mailed.
     #   ethosia    - an Israeli HR / placement agency; `ethosia.` on aggregators.HOSTS beside
     #                drushim.co.il / alljobs.co.il / gotfriends. 2 cards.
-    #   staffin    - staffing, and the `_KEYWORD` rule misses it: `staffing` does not
+    #   staffin    - staffing, and the `_KEYWORD` rule misses it: `\bstaffing\b` does not
     #                match "Staffin". 1 card. ("Quik Hire Staffing" needs no entry - the
     #                keyword already catches it; verified 2026-08-26.)
     # The bare brand is listed beside the display form because LinkedIn display names drift
@@ -155,8 +154,47 @@ _KEYWORD = re.compile(
     r"placement agenc|talent acquisition|gotfriends|hr solutions|hr consulting)(?![a-z])", re.I)
 
 
+# An ANONYMISED employer -- "Undisclosed", "Stealth Startup", "Confidential Global Company".
+# Not a recruiter and not a company: it is a placeholder where the employer name should be,
+# and it defeats every downstream identity check for the same reason "Tel Aviv" does -- there
+# is no company to prove a board against. `confidential` / `confidential careers` lived in
+# `_CONFIRMED` for want of a home (removed in this commit: this rule subsumes both, and the
+# Hebrew `חברה דיסקרטית` in `_HEBREW_MARKERS` is the same class again).
+#
+# THE RULE IS WHOLE-NAME, not substring, and that is the whole of its safety: a name is
+# refused only when EVERY word is an anonymiser or generic corporate filler. `Confidential
+# Computing Inc`, `Stealth Security Ltd`, `Discreet Logic` and `Anonymous Analytics Ltd` are
+# real-company shapes and all four pass. Blast radius measured 2026-09-03 over the 2,757
+# distinct names in registry u queue u cache u firmographics: **8 newly refused, 0 of them an
+# ACTIVE row** -- `Confidential Careers`, `Confidential Company`, `Confidential Global
+# Company` and `Stealth Startup`, each already a PARKED row that scans empty forever, plus the
+# same four as cache cards. `Undisclosed` and `Discreet Company` arrived from LinkedIn the
+# same morning (docs/decisions/2026-09-03-discovery-description-queries.md).
+_ANON_WORD = (r"undisclosed|confidential|discreet|anonymous|unnamed|stealth")
+_ANON_FILLER = (r"company|companies|careers|career|global|startup|start-?up|mode|ltd|limited|"
+                r"inc|corp|group|jobs|employer|client|israel|il|the|a|an|of|and|co")
+_ANON_ANY = re.compile(r"\b(?:%s)\b" % _ANON_WORD, re.I)
+_ANON_ONLY = re.compile(r"^(?:\W*(?:%s|%s)\b\W*)+$" % (_ANON_WORD, _ANON_FILLER), re.I)
+
+
+def is_anonymous_employer(name):
+    """True when the whole NAME is an anonymiser plus corporate filler, and nothing else.
+
+    Named for what it tests rather than folded into `_CONFIRMED` as a list of spellings: the
+    class is open (`Undisclosed`, `Stealth Mode Startup`, `Confidential Global Company` are
+    all the same posting convention) and an exact-match list cannot close it -- which is how
+    four rows of it reached `companies.csv` while `confidential` sat on the list.
+    """
+    n = " ".join(str(name or "").strip().lower().split())
+    return bool(n) and bool(_ANON_ANY.search(n)) and bool(_ANON_ONLY.match(n))
+
+
 def is_recruiter(name, slug=""):
-    """True for a staffing / placement firm. `slug` is optional and FREE evidence: a
+    """True for a staffing / placement firm, OR an anonymised employer name (see
+    `is_anonymous_employer`: neither is a company we can resolve a board for, and both
+    reach this predicate so that every existing caller gets both).
+
+    `slug` is optional and FREE evidence: a
     LinkedIn company slug often says what the display name hides — "Dialog" (8 cached
     cards, 2026-08-25) is `dialog-recruiting`, and recruiters.py's own comment has named
     Dialog as an SQLink placement firm since 2026-08-17. The slug was captured on 827 of
@@ -174,5 +212,7 @@ def _is_recruiter_name(name):
     if variants & _CONFIRMED:
         return True
     if any(m in n for m in _HEBREW_MARKERS):
+        return True
+    if is_anonymous_employer(n):
         return True
     return bool(_KEYWORD.search(n))

@@ -998,6 +998,24 @@ the tier like any other role. A second filter here would cost coverage and buy n
   shape alarm, not a quality metric; the floor sits ~5x below today's value so ordinary drift
   cannot fire it. It lives outside `queue_entries` on purpose: that function parses, this one
   judges, and a parser that silently returns nothing on a small input is a trap.
+- **Searching DESCRIPTIONS instead of titles reaches new employers and no new roles, measured
+  2026-09-03** (`discovery`). LinkedIn's `keywords=` and Indeed's `q=` are full-text, so a
+  description term reaches postings the nine title keywords cannot. Ten probes in two rounds —
+  tools (`SQL Tableau`, `Power BI dashboards`), the operator's own words (`SQL insights`,
+  `actionable insights`, `הפקת תובנות`) and idioms (`ad hoc analysis`) — returned **1,163
+  postings, 397 of them new, 53 new employers, and 0 new in-scope roles**. The employers are
+  real and the roles are not: **0 of the 53 was surfaced by a posting the classifier reads as
+  analyst-shaped** (41 `none`, 12 `excluded` — a QA Engineer, a Bookkeeper, a Plumber Lead),
+  because `SQL`, `dashboards` and `תובנות` sit in every engineering, finance and sales ad in
+  Israel. The counterfactual is the decisive number: of the 133 frontier postings the title
+  gate rejects, the **30 with the highest `_DESC_ANALYTICS` density — the exact population a
+  description-marker demotion would select — were judged by production's own seam and 0 came
+  back in scope**. Two controls bound the measurement: the existing `data analyst` keyword and
+  the `insights analyst` term dropped as saturated in 2026-08-23 each returned **0** new
+  employers, reproducing that measurement three weeks on. **Nothing was wired**, and the reason
+  is not cost (the LinkedIn half is keyless and spent 0 credits) but the junk it would feed the
+  registry: 15 of 53 names are noise, the queue's existing 27 %, against a drain doing 112 a
+  night. `docs/decisions/2026-09-03-discovery-description-queries.md`.
 - **What the catalog's names have PRODUCED, measured 2026-08-30** (`discovery`): of the
   2,002 new employers, 1,075 have been offered to the queue since 08-21; **545 are
   registry rows (246 active) and 12 of those carry a matched role — 4.9 % of active
