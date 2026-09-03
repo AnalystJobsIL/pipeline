@@ -2936,7 +2936,7 @@
   "file": "pipeline/seniority.py",
   "symbol": "_desc_appealed",
   "class": "M1-gate-removal",
-  "find": "    if len(d.strip()) < MIN_DESC or _desc_is_ml(d):\n        return False",
+  "find": "    if not looks_like_jd(d) or _desc_is_ml(d):\n        return False",
   "replace": "    if True:\n        return False",
   "why": "the description appeal is the only route `Zoll Medical | Business Operations, CMS` has to the LLM: its title carries no analytics word at all, so no phrase list reaches it and the gate rejects it deterministically with no call to disagree - silent exclusion, the failure class ARCHITECTURE.md section 8 is about. Killed by test_the_description_appeal_routes_the_third_measured_false_negative_to_the_llm.",
   "must_be_killed_by_behavioural": true,
@@ -2984,16 +2984,68 @@
   ]
  },
  {
-  "id": "desc-appeal-arm-b-widened-to-one-marker",
+  "id": "desc-appeal-drops-the-tool-word",
   "file": "pipeline/seniority.py",
   "symbol": "_desc_appealed",
   "class": "M5-population-widening",
-  "find": "    return len({m.group(0).lower() for m in _DESC_APPEAL_MARKER.finditer(d)}) >= 2",
-  "replace": "    return bool(_DESC_APPEAL_MARKER.search(d))",
-  "why": "arm B counts DISTINCT markers on purpose: the single-marker form was measured at 145 cards against 27 on 2026-09-03, and every data-engineering JD in the refused tier says SQL. Widening it spends the contract drain's own cap on a population whose 8 judged members all came back NO. Killed by test_the_description_appeal_reads_a_posting_and_not_a_vocabulary.",
+  "find": "    return bool(_DESC_APPEAL_PHRASE.search(d) and _DESC_APPEAL_OUTPUT.search(d)\n                and _DESC_APPEAL_TOOL.search(d))",
+  "replace": "    return bool(_DESC_APPEAL_PHRASE.search(d) and _DESC_APPEAL_OUTPUT.search(d))",
+  "why": "the conjunction IS the rule: without the tool word the appeal admits 52 cards against 23, measured 2026-09-03, and a posting that says `data analysis` and `report` without naming one tool is the shape every consultancy and every operations posting has. An adversarial wave applied exactly this and the whole suite stayed green. Killed by test_every_conjunct_of_the_description_appeal_has_a_posting_that_fails_it.",
   "must_be_killed_by_behavioural": true,
   "killers": [
-   "tests/test_units.py::test_the_description_appeal_reads_a_posting_and_not_a_vocabulary"
+   "tests/test_units.py::test_every_conjunct_of_the_description_appeal_has_a_posting_that_fails_it"
+  ]
+ },
+ {
+  "id": "desc-appeal-drops-the-output-word",
+  "file": "pipeline/seniority.py",
+  "symbol": "_desc_appealed",
+  "class": "M5-population-widening",
+  "find": "    return bool(_DESC_APPEAL_PHRASE.search(d) and _DESC_APPEAL_OUTPUT.search(d)\n                and _DESC_APPEAL_TOOL.search(d))",
+  "replace": "    return bool(_DESC_APPEAL_PHRASE.search(d) and _DESC_APPEAL_TOOL.search(d))",
+  "why": "same conjunction, the other arm: 28 cards against 23, and dropping it admits any engineering posting whose stack line says SQL beside the words `data analysis`. Also survived the first draft of the guards. Killed by test_every_conjunct_of_the_description_appeal_has_a_posting_that_fails_it.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_every_conjunct_of_the_description_appeal_has_a_posting_that_fails_it"
+  ]
+ },
+ {
+  "id": "desc-appeal-floor-is-a-length",
+  "file": "pipeline/seniority.py",
+  "symbol": "_desc_appealed",
+  "class": "M3-branch-narrowing",
+  "find": "    if not looks_like_jd(d) or _desc_is_ml(d):",
+  "replace": "    if len(d.strip()) < MIN_DESC or _desc_is_ml(d):",
+  "why": "a nav bar and a cookie banner clear 300 characters -- `_classify` records that exact migration where `has_text` stopped being `len(raw) >= MIN_DESC` -- and under a length floor two of the cards this rule admitted were 4,000 characters of a careers site's own menu listing `Tableau, PowerBI, Qlik`. The floor is also what makes the rule cost no Bright Data: `enrich_scrape_jd.py` skips an already-filled card on `looks_like_jd` (:143) BEFORE the title gate (:173), so only a rule sharing that predicate can be free by construction. Killed by test_the_description_appeal_reads_a_posting_and_not_a_page.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_description_appeal_reads_a_posting_and_not_a_page"
+  ]
+ },
+ {
+  "id": "desc-appeal-un-fires-on-a-real-signal",
+  "file": "pipeline/seniority.py",
+  "symbol": "_classify",
+  "class": "M2-gate-inversion",
+  "find": "        if shared and rel == \"signal\":\n            bare = _relevance(title_l, company_l)\n            if bare in (\"excluded\", \"none\"):\n                return {\"relevance\": bare, \"seniority\": sen, \"decision\": \"reject\",",
+  "replace": "        if shared and rel == \"signal\":\n            bare = \"none\"\n            if bare in (\"excluded\", \"none\"):\n                return {\"relevance\": bare, \"seniority\": sen, \"decision\": \"reject\",",
+  "why": "the un-fire asks what the gate would have said with NO text, never `did the description arm fire`. Hard-coding the refusal takes the hearing away from a title that reached `signal` on the gate's own vocabulary, so a genuine analyst role at an employer whose scraper stored one careers page is rejected with no call to disagree -- silent exclusion. The first draft's guard could not catch this: it used a `strong` title, which never enters the branch. Killed by test_a_shared_careers_page_takes_back_the_hearing_its_text_bought.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_shared_careers_page_takes_back_the_hearing_its_text_bought"
+  ]
+ },
+ {
+  "id": "desc-appeal-backfill-loses-its-counters",
+  "file": "pipeline/seniority.py",
+  "symbol": "judge_backfill",
+  "class": "M4-guard-removal",
+  "find": "                self.backfill_keyword += 1\n                self.backfill_no += bool(published)\n",
+  "replace": "",
+  "why": "the backfill's un-fire is assembled by hand rather than through the `_reject` closure, so it has to move both counters itself. `backfill_no` is what the retraction alarm reads -- a published row judged NO needs a human to write a line -- and dropping it makes the alarm under-count silently, which is the class ARCHITECTURE.md section 8 is about. Killed by test_a_shared_careers_page_takes_back_the_hearing_its_text_bought.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_shared_careers_page_takes_back_the_hearing_its_text_bought"
   ]
  }
 ]

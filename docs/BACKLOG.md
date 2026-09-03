@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**624 filed · 451 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**625 filed · 452 open · 173 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 574.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 575.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -526,7 +526,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### classifier — 18 open
+### classifier — 19 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -546,6 +546,7 @@ closure convention in the header.
 - **557** `557@classifier` **LTX has not flipped to its own board
 - **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
+- **574** `574@classifier` **The classifier lane's own two measurement tools no longer walk the gate they claim to
 
 ### jd-text — 17 open
 
@@ -10622,34 +10623,47 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `_desc_appealed` (`pipeline/seniority.py`) is the fourth vocabulary, read in BOTH
      refusing branches of `_relevance` through a third defaulted parameter, and it keeps every
      property `_GATE_APPEAL` has: never `strong`, never a reject, never an accept without the
-     LLM. **Zoll enters.** Re-measured over 4,969 cached cards (4,544 refused, 1,415 carrying
-     >= 300 chars): **arm A = 23** (22 when this item measured it on 09-02 — the drift is one
-     day of intake), **arm B (two DISTINCT markers) = 27**, and the shipped union moves
-     **41 cards / 40 distinct (company, title) pairs, all to `signal`, none to `strong`**, 0
-     of the 252 title-only golden rows, `CONTRACT` unchanged at `v3.0f84ab84`. **0 Bright
-     Data, structurally**: `enrich_scrape_jd.py` skips a card that already `looks_like_jd`
-     (`:143`) before it asks the gate (`:173`), so a rule firing only on cards that already
-     carry text cannot create a fetch candidate.
+     LLM. **Zoll enters.** ONE arm — the analytics phrase AND an output word AND a tool word —
+     and each conjunct has a number: measured over 4,971 cached cards (4,546 refused, 1,416 of
+     them carrying text `looks_like_jd` accepts), the whole rule admits **23 cards / 23
+     distinct (company, title) pairs**, dropping the tool word 52, dropping the output word
+     28, the phrase alone 83. All 23 land on `signal`, none on `strong`, and 0 of the 252
+     title-only golden rows move. `CONTRACT` unchanged at `v3.0f84ab84`.
 
-     **Arm B's own number did not reproduce, and it shipped anyway on the operator's
-     reaffirmed decision — recorded here so nobody re-derives it believing it was never
-     measured.** The `+59 LLM candidates` handed over on 2026-09-03 is not reachable by any
-     form of the predicate: marker-alone **145**, marker + `_DESC_ANALYTICS` **145**, marker +
-     an output word **75**, two distinct markers **27**. And the exclusive population has no
-     measured role in it: the **8** most plausible arm-B-only cards were judged through the
-     production seam under `v3.0f84ab84` and **8 of 8 came back NO** — `aQurate | BI system
-     analyst` (the analytics-engineer title this very item names), `aQurate | Data Engineer`,
-     `aQurate | מנתח/ת מערכות DATA`, `aQurate | מנתח/ת מערכות DATA & פרויקטים`,
-     `aQurate | מנהל/ת פרויקט רוחבי ב- DATA`, `aQurate | בודק AI`,
-     `Playtika | Monetization Manager`, `Crossriver | Dynamics 365 Senior Developer`. The
-     other 9 arm-B-only cards were not judged and are obviously out (SEO Specialist, Content
-     Marketing Manager, FP&A Manager, Data Engineer x2, Solution Engineer x2, Head of Data
-     Engineering, Product Manager). Artifact:
+     **The floor is `looks_like_jd` and not a character count**, which is what makes the rule
+     free of Bright Data BY CONSTRUCTION rather than by assertion: `enrich_scrape_jd.py` skips
+     a card that already `looks_like_jd` (`:143`) before it asks the title gate (`:173`), so a
+     rule firing only on cards passing the SAME predicate cannot create a fetch candidate. A
+     length floor does not have that property — it admitted two cards that were 4,000
+     characters of a careers site's own menu listing `Tableau, PowerBI, Qlik` — and the first
+     draft of this entry claimed the `:143` skip covered it anyway. Found by an adversarial
+     wave before the push.
+
+     **The technical-marker arm was measured and REFUSED, and here is the whole measurement so
+     nobody rebuilds it.** It was briefed as `+59 LLM candidates`, and that figure is not
+     reachable by any form of the predicate: marker-alone **146 cards / 145 pairs**, marker +
+     `_DESC_ANALYTICS` the same, marker + an output word **75**, two distinct markers **28 /
+     27**. Three independent measurements then agreed it buys nothing:
+     * this lane judged the **8** most plausible cards that ONLY a marker arm admits through
+       the production seam under `v3.0f84ab84` and got **8 NO** — `aQurate | BI system
+       analyst` (the analytics-engineer title this item names as its own class),
+       `aQurate | Data Engineer`, three Hebrew `מנתח/ת מערכות DATA` variants,
+       `aQurate | בודק AI`, `Playtika | Monetization Manager`,
+       `Crossriver | Dynamics 365 Senior Developer`;
+     * **`568@classifier` judged the 30 marker-DENSEST gate-rejected postings and got 0 in
+       scope**, with coherent reasons (`Subsidiaries Controller`, `MySQL DBA`, `Financial
+       Controller`);
+     * the `+59` resolves to **2** confirmed real roles, one of which is Zoll — which the
+       shipped arm catches — and the other `Elbit Systems | Senior Data Product Owner`, which
+       **this item already records as a correct rejection**.
+     Marginal yield over the shipped arm: **~0 roles for ~18 recurring LLM reads.** Refused by
+     the operator on those three numbers on 2026-09-03, after an earlier reaffirmation made
+     before `568` and the provenance of `+59` were known. A SOFT word alone is not an arm
+     either: `insight｜recommendation｜analyze` with no tool word admits **377** of the same
+     1,416 cards and bought 0 roles. Artifact:
      `tests/fixtures/classifier/2026-09-03-desc-appeal.json`, pinned by
-     `test_the_description_appeal_reads_a_posting_and_not_a_vocabulary`, which also
-     re-asserts that all 8 are still refused ON THEIR TITLES. **If the
-     rejudge cap ever binds again, arm B is the half to drop first** — arm A carries three
-     confirmed misses and arm B carries none.
+     `test_the_refused_marker_arm_is_kept_where_the_next_session_will_find_it`, which asserts
+     against the CODE (all 8 still refused on their titles) and not only against the file.
 
      Filed 2026-09-01.
 
@@ -11282,6 +11296,20 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      company's own board. The measurement that settles it already exists and is this lane's to
      spend: `python tools/measure_title_gate.py --cache scraped_cache.json --tier rejected`
      (`--dry-run` buckets it for free first). Do not build the demotion before running it.
+
+     **ANSWERED 2026-09-03 (`classifier`), and the answer agrees with this item.** The
+     measurement this item names was run over the population it names — postings arriving from
+     companies' own boards, not from description queries: 4,971 cached cards, 4,546 refused by
+     the title gate, 1,416 of those carrying text `looks_like_jd` accepts. The **8** most
+     plausible cards that a marker-based demotion (and nothing else) would admit were judged
+     through the production seam under `v3.0f84ab84`: **8 of 8 NO**. Together with this item's
+     0-of-30 that is two independent samples of the population, from two different selection
+     rules, and neither found a role. **The marker demotion was therefore NOT built** — the
+     description appeal that shipped the same day (`542`) requires the analytics PHRASE plus
+     an output word plus a tool word, admits 23 cards, and exists for a confirmed false
+     negative rather than for a marker density. The caveat this item raised is answered rather
+     than inherited: the own-board population was measured and it is not hiding a pool either.
+     Artifact: `tests/fixtures/classifier/2026-09-03-desc-appeal.json`.
      `docs/decisions/2026-09-03-discovery-description-queries.md` §7.
 
 569. **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
@@ -11341,6 +11369,16 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      will tell you the moment the rename lands: it asserts `"Investing.com" in names` with the
      message *"the parked row went: `investing com` can now be declared"*.
 
+     **That assertion is a TRIPWIRE and it will red `tests.yml` the moment you do this**, which
+     is deliberate and is said here because this is where the registry lane will read it, not
+     in a `classifier` test file. Renaming or retiring the row makes
+     `assert "Investing.com" in names` false. The fix is one commit, not two: in the same push,
+     declare `ALIASES["investing com"] = "investing"` in `pipeline/firmographics.py` and flip
+     that assertion to the positive form the `Oak` test uses —
+     `assert roles._alias_fold_target("Investing.com", "", names, abi, origins) ==
+     ("Investing", "declared")`. Crossing lanes for those two lines is the sanctioned
+     "a unification may cross lanes" case in `docs/AGENT_BRIEF.md`.
+
      Until then the duplicate leaves the dataset by a url-precise retraction on the LinkedIn
      copy (`cloud_state/roles_retractions.jsonl`, 2026-09-03) — **which is a hand-drain for
      one posting and not a fix for the class.** The next `Investing` posting duplicates again.
@@ -11391,3 +11429,25 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      The row left the dataset on 2026-09-03 as a duplicate of the אסם copy, so the instance is
      gone and the class is not. Cheapest check: the count of distinct `עבודות דומות` /
      `More jobs` markers in a stored body, over `matched`.
+
+574. **The classifier lane's own two measurement tools no longer walk the gate they claim to
+     mirror** — lane: `classifier`. Filed 2026-09-03 by the finisher session, found by an
+     adversarial wave over its own diff.
+     `_relevance` gained a third, defaulted `desc` parameter, and three tools still call it
+     with two: `tools/drain_forecast.py:100`, `tools/measure_scope_rule.py:82` and `:178`. The
+     calls are correct — that is what the default is for — but two docstrings now promise more
+     than the call delivers:
+     * `tools/drain_forecast.py` says it *"walks the same code the run walks (`is_israel_job`,
+       `_relevance`, `_NOT_A_JOB`, `looks_like_jd`, `cache_keys`, `Classifier._lookup`) and
+       stops one line short of the call."* It now drops all **23** postings the description
+       appeal adds — every one of which passes `is_israel_job` — so its forecast is low by
+       exactly the population the appeal exists for.
+     * `tools/measure_scope_rule.py` defines its sample as postings that *"the title gate sends
+       onward … and carry a real description"*, which is precisely the appealed population, and
+       excludes it. `ARCHITECTURE.md` still points readers at
+       `python tools/measure_scope_rule.py --tier both --workers 4`.
+
+     One line each (`seniority._relevance(title_l, company_l, j.get("description") or "")`),
+     plus re-running each tool once so the change is a measured delta and not a hope. Not done
+     in the shipping commit because a forecast tool's output is a number other sessions quote,
+     and moving it silently in a commit about the gate is how a number stops being checkable.

@@ -224,37 +224,40 @@ _GATE_APPEAL = re.compile(r"\bdata\s*/\s*financial analysts?\b|תהליכי בק
 # the bare `business operations`, which admits 9 further non-analyst titles and 6 new Bright
 # Data JD-fetch candidates (`542@classifier` carries that measurement).
 #
-# It costs NO Bright Data, and that is a property of where the gate is read rather than a
-# promise: `enrich_scrape_jd.py` skips a card that already `looks_like_jd` (:143) BEFORE it
-# asks the title gate (:173), so a rule that only ever fires on a card already carrying text
-# cannot add one fetch candidate. The JD-fill callers pass a title alone and the `desc=""`
-# default leaves every one of them unchanged.
+# ONE arm, and the shape is deliberate: the posting says `data analytics` / `data analysis` /
+# ניתוח נתונים **and** names an output **and** names a tool. All three conjuncts earn their
+# place -- measured 2026-09-03 over 4,971 cached cards, of which 4,546 are refused by the gate
+# and 1,416 of those carry text  accepts:
+# the full predicate admits 23, dropping the tool word admits 52, dropping the output word 28,
+# and the phrase alone admits 83.
 #
-# Two arms, measured 2026-09-03 over 4,969 cached cards -- 4,544 refused by the gate, of
-# which 1,415 carry >= MIN_DESC characters:
-#   arm A  the posting says `data analytics` / `data analysis` / ניתוח נתונים and names an
-#          output AND a tool -- 23 cards (22 when `542` measured it on 2026-09-02). This is
-#          the arm that reaches Zoll, and all three of the known misses.
-#   arm B  >= 2 DISTINCT technical markers -- 27 cards; union with arm A 40.
+# **A technical-marker arm was measured and REFUSED**, and the number is here so nobody
+# rebuilds it. Three independent measurements agree: this lane judged the 8 most plausible
+# cards that only a marker arm admits through the production seam and got **8 NO** -- among
+# them `aQurate | BI system analyst`, the analytics-engineer title `542` names as its own
+# class; `568@classifier` judged the 30 marker-DENSEST gate-rejected postings and got **0 in
+# scope**; and the `+59 candidates` figure that motivated it resolves to **2** confirmed real
+# roles, one of which is Zoll (this arm already catches it) and the other
+# `Elbit | Senior Data Product Owner`, which `542` records as a CORRECT rejection. Marginal
+# yield over this arm: ~0 roles for ~18 recurring LLM reads.
+# `tests/fixtures/classifier/2026-09-03-desc-appeal.json` holds the eight verdicts.
 #
-# Arm B is recorded honestly because it shipped over this lane's own measurement. Its `+59`
-# figure did not reproduce in any form (marker-alone 145, marker+analytics 145, marker+output
-# 75, >= 2 markers 27), and 8 of the 8 most plausible arm-B-only cards judged NO through the
-# production seam under `v3.0f84ab84` -- among them `aQurate | BI system analyst`, the exact
-# analytics-engineer title `542` named as its own class. Those verdicts are
-# `tests/fixtures/classifier/2026-09-03-desc-appeal.json`. The operator reaffirmed the arm on
-# 2026-09-03 with the numbers in hand; they are here so nobody re-derives them believing the
-# arm was never measured, and so the next session knows which half to drop first if the
-# rejudge cap ever binds.
+# A SOFT word alone is not an arm either: `insight` / `recommendation` / `analyze` with no
+# tool word admits 377 of the 1,416 refused cards carrying real text, and bought 0 roles.
 #
-# A SOFT word alone is deliberately NOT an arm: `insight` / `recommendation` / `analyze` with
-# no technical marker admits 576 of the same 1,415 cards and bought 0 additional real roles.
+# **The floor is `looks_like_jd`, not a character count**, and that is load-bearing twice
+# over. A nav bar and a cookie banner clear 300 characters -- `_classify` records that exact
+# migration thirty lines below, where `has_text` stopped being `len(raw) >= MIN_DESC` for the
+# same reason -- and 2 of the cards a length floor admitted here were 4,000 characters of a
+# careers site's own menu listing `Tableau, PowerBI, Qlik`. It is also what makes the rule
+# cost NO Bright Data, structurally: `enrich_scrape_jd.py` skips a card that already
+# `looks_like_jd` (`:143`) BEFORE it asks the title gate (`:173`), so a rule that fires only
+# on cards passing the SAME predicate cannot add one fetch candidate. A length floor did not
+# have that property and the first draft of this comment claimed it anyway.
 _DESC_APPEAL_PHRASE = re.compile(r"data\s+analytics|data\s+analysis|ניתוח נתונים", re.I)
+# Hebrew carries no `\b` semantics (see `_NOT_A_JOB`), so the Hebrew arms are substrings.
 _DESC_APPEAL_OUTPUT = re.compile(r"insight|dashboard|report|תובנות|דוח", re.I)
 _DESC_APPEAL_TOOL = re.compile(r"\bsql\b|power\s*bi|tableau|\bexcel\b|looker|qlik", re.I)
-# Hebrew carries no `\b` semantics (see `_NOT_A_JOB`), so both Hebrew markers are substrings.
-_DESC_APPEAL_MARKER = re.compile(r"\bsql\b|tableau|power\s*bi|qlik|looker|\bdax\b|"
-                                 r"a/b\s*test|אנליזת נתונים|דשבורד", re.I)
 
 # Hebrew analytics signal + seniority markers (Israeli careers sites post in Hebrew too)
 _HEBREW_SIGNAL = re.compile("אנליסט|אנליטיקה|"
@@ -460,7 +463,7 @@ def _relevance(title_l, company_l="", desc=""):
     """strong-accept | signal (->LLM) | none, plus hard-exclude short-circuit.
 
     `company_l` is optional and defaults to "" so the two JD-fill drivers that import this
-    (`enrich_scrape_jd.py:39`, `pipeline/jdfill.py:865`) keep working unchanged: they ask
+    (`enrich_scrape_jd.py:173`, `pipeline/jdfill.py:2621`) keep working unchanged: they ask
     "could this title ever be accepted", and demoting a strong title to `signal` does not
     change that answer, so they neither need the employer nor are affected by it.
 
@@ -513,23 +516,23 @@ def _gate_appealed(title_l, desc=""):
 def _desc_appealed(desc):
     """True when a posting's own TEXT earns a refused title a hearing. It routes to `signal`
     and to nothing else -- never `_STRONG`, never a reject, and never an accept without the
-    LLM (`_gate_appealed` above is what holds that last one).
+    LLM (`_gate_appealed` below is what holds that last one).
 
-    The `MIN_DESC` floor is the same one `cache_keys` splits `|jd` from `|bare` on, and it is
-    what makes the rule cheap: below it there is no text to read, and above it the text is
-    already paid for. `_desc_is_ml` is the one veto and is REUSED rather than re-written -- a
-    posting whose requirements are dominated by model building is out on condition (2)
-    whatever tools it happens to name.
+    The floor is `looks_like_jd` and NOT a character count, which is the same predicate
+    `enrich_scrape_jd.py` skips an already-filled card on (`:143`) before it consults the
+    title gate (`:173`) -- so this rule can never create a Bright Data fetch candidate, and
+    that is a property of the floor rather than a promise in a comment. `_desc_is_ml` is the
+    one veto and is REUSED rather than re-written: a posting whose requirements are dominated
+    by model building is out on condition (2) whatever tools it happens to name.
 
-    Arm B counts DISTINCT markers, not mentions: one JD saying `SQL` four times is one
-    marker. The bare single-marker form was measured at 145 cards and is not shipped."""
+    All three conjuncts are load-bearing and each has a number: 23 cards with the whole rule,
+    52 without the tool word, 28 without the output word, 83 on the phrase alone."""
+    from .jdfill import looks_like_jd          # imported late: jdfill imports from here
     d = str(desc or "")
-    if len(d.strip()) < MIN_DESC or _desc_is_ml(d):
+    if not looks_like_jd(d) or _desc_is_ml(d):
         return False
-    if (_DESC_APPEAL_PHRASE.search(d) and _DESC_APPEAL_OUTPUT.search(d)
-            and _DESC_APPEAL_TOOL.search(d)):
-        return True                                                          # arm A
-    return len({m.group(0).lower() for m in _DESC_APPEAL_MARKER.finditer(d)}) >= 2   # arm B
+    return bool(_DESC_APPEAL_PHRASE.search(d) and _DESC_APPEAL_OUTPUT.search(d)
+                and _DESC_APPEAL_TOOL.search(d))
 
 
 # --------------------------------------------------------------------------- #

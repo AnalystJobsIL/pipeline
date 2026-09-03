@@ -5461,41 +5461,45 @@ them recurring NO calls, and 6 new JD-fetch candidates.
 vocabulary.** `542`'s reopening condition was a number and it was met: the 09-03 digest
 (run `33739498960`) logged `re-judged 51/cap 250`, no longer cap-bound. `_relevance` grew a
 third, defaulted parameter and the two classify heads pass the description they already hold;
-every other caller passes a title alone and is unchanged by the default. Two arms:
+every other caller passes a title alone and is unchanged by the default.
 
-* **arm A** — `data analytics｜data analysis｜ניתוח נתונים` with an output word AND a tool
-  word: **23 cards**, and the arm that reaches Zoll and all three known misses.
-* **arm B** — **two DISTINCT** technical markers (`sql｜tableau｜power bi｜qlik｜looker｜dax｜a/b
-  test`, plus Hebrew): **27 cards**. Distinct, because one JD saying `SQL` four times is one
-  marker and the single-marker form admits 145.
+**One arm, and every conjunct is load-bearing**: the posting says `data analytics｜data
+analysis｜ניתוח נתונים` **and** names an output (`insight｜dashboard｜report｜תובנות｜דוח`)
+**and** names a tool (`SQL｜Power BI｜Tableau｜Excel｜Looker｜Qlik`). Measured 2026-09-03 over
+4,971 cached cards — 4,546 refused by the gate, 1,416 of them carrying text `looks_like_jd`
+accepts — the whole rule admits **23 cards / 23 distinct (company, title) pairs**; dropping
+the tool word admits 52, dropping the output word 28, the phrase alone 83. Every one of the 23
+lands on `signal`, **none on `strong`**, `none→signal` 19 and `excluded→signal` 4, **0 of the
+252** title-only golden rows move, and `CONTRACT` is unchanged.
 
-Both are floored at `MIN_DESC` and vetoed by `_desc_is_ml`, both reuse the three safety
-properties above, and the whole change moves **41 cards / 40 distinct (company, title) pairs,
-every one to `signal` and none to `strong`**, with **0 of the 252** title-only golden rows
-moving and `CONTRACT` unchanged.
-
-**It costs no Bright Data, and that is structural rather than promised**: `enrich_scrape_jd.py`
+**The floor is `looks_like_jd`, not a character count, and it is load-bearing twice.** A nav
+bar and a cookie banner clear 300 characters — §7b records that exact migration where
+`has_text` stopped being `len(raw) >= MIN_DESC` — and under a length floor two of the cards
+this rule admitted were 4,000 characters of a careers site's own menu listing `Tableau,
+PowerBI, Qlik`. It is also **what makes the rule cost no Bright Data**: `enrich_scrape_jd.py`
 skips a card that already `looks_like_jd` (`:143`) *before* it asks the title gate (`:173`),
-so a rule that only ever fires on a card which already carries text cannot create one fetch
-candidate.
+so a rule firing only on cards that pass the SAME predicate cannot create one fetch candidate.
+A length floor did not have that property, and the first draft of this section claimed it did.
 
 **And an appeal can lose its evidence.** The gate reads the description at the top of
 `_classify`; the shared-text guard runs eighteen lines later and is the first thing that knows
 the text is another posting's careers PAGE. When it fires, a title that is `signal` ONLY
 because of `_desc_appealed` takes back the hearing and gets the refusal the gate would have
 given on the title alone — asked as *what would the gate have said with no text*, so a title
-that carried its own analytics signal keeps its hearing. Without it, one blob shared by ten
-postings demotes every refused title at that employer.
+that carried its own analytics signal keeps its hearing. Both classify heads, and the backfill
+moves both counters the deterministic head would have moved.
 
-**Arm B shipped over the lane's own measurement and the record says so.** Its `+59` figure did
-not reproduce in any form (marker-alone 145, marker+analytics 145, marker+output 75, two
-markers 27), and **8 of the 8 most plausible arm-B-only cards judged NO** through the
-production seam — among them `aQurate | BI system analyst`, the analytics-engineer title
-`542` names as its own class. The operator reaffirmed the arm with those numbers in hand; they
-are in the source, in `542`, and in
-`tests/fixtures/classifier/2026-09-03-desc-appeal.json`, so the next session knows which half
-has no measured role behind it. `542@classifier` carries both tables, and records that the
-09-02 draft claimed no shared predicate existed and was wrong.
+**A technical-marker arm was designed, measured and REFUSED**, and the number is recorded so
+nobody rebuilds it. Three independent measurements agree: this lane judged the 8 most
+plausible cards that only a marker arm admits through the production seam and got **8 NO** —
+among them `aQurate | BI system analyst`, the analytics-engineer title `542` names as its own
+class; **`568@classifier` judged the 30 marker-densest gate-rejected postings and got 0 in
+scope**; and the `+59 candidates` figure that motivated it resolves to **2** confirmed real
+roles, one of which is Zoll (this arm already catches it) and the other
+`Elbit | Senior Data Product Owner`, which `542` records as a CORRECT rejection. Marginal
+yield: ~0 roles for ~18 recurring LLM reads. A SOFT word alone is not an arm either —
+`insight｜recommendation｜analyze` with no tool word admits 377 of the same 1,416 cards.
+Artifact: `tests/fixtures/classifier/2026-09-03-desc-appeal.json`.
 
 The contract moves once for both changes (`v3.da2cb878` → `v3.7cb6831f`) and the drain
 follows it. `docs/decisions/2026-08-31-domain-scope.md`; the paragraph it supersedes is

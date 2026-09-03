@@ -11343,6 +11343,7 @@ def test_scrape_the_foreign_vocabulary_covers_the_cities_a_sales_bench_is_named_
 # =====================================================================================
 import datetime as _j6_dt
 import json as _j6_json
+import pipeline.jdfill as _j6_jdfill  # noqa: E402
 import os as _j6_os
 from collections import Counter as _j6_Counter
 
@@ -28416,30 +28417,33 @@ def test_a_supersede_chain_reaches_the_survivor_of_a_twin_group(tmp_path):
 
 # --- classifier, 2026-09-03: the gate reads the posting's own text ------------------------
 #
-# `542@classifier`'s third measured false negative, and the arm the operator reaffirmed over
-# this lane's own measurement. The whole mechanism is `_desc_appealed` -> `signal`, never
-# `_STRONG`, never a reject, never an accept without the LLM -- and it un-fires when the
-# shared-text guard proves the evidence was another posting's page.
+# `542@classifier`'s third measured false negative. One arm: the posting says the analytics
+# phrase AND names an output AND names a tool. `_desc_appealed` -> `signal`, never `_STRONG`,
+# never a reject, never an accept without the LLM -- and it un-fires when the shared-text
+# guard proves the evidence was another posting's page.
+#
+# Every conjunct below has a NEGATIVE case, because an adversarial wave found that the first
+# draft survived dropping the tool word (23 -> 52 cards) and dropping the output word
+# (23 -> 28) with the whole suite green.
 
 _ZOLL_TEXT = (
-    "in this role puts the operational users at the center of decision making. "
-    "Ensure the right data is acquired to develop reporting and toolsets used to support "
-    "operational planning, strategic sourcing and day to day procurement activity. "
-    "High level of experience with Power BI and SQL required. 5 years of data analytics or "
-    "business intelligence, report and dashboard creation experience required. Partner with "
-    "the supply chain analyst to translate business requirements into technical development. ")
+    "About the role. In this role you put the operational users at the center of decision "
+    "making. Responsibilities: ensure the right data is acquired to develop reporting and "
+    "toolsets used to support operational planning, strategic sourcing and day to day "
+    "procurement activity. Partner with the supply chain analyst to translate business "
+    "requirements into technical development. Requirements: high level of experience with "
+    "Power BI and SQL. 5 years of data analytics or business intelligence, report and "
+    "dashboard creation experience. Bachelor's degree required. ")
 
-# arm A alone: the analytics phrase, an output word and a TOOL that is not a marker (`Excel`)
-_ARM_A_ONLY = (
-    "The role owns commercial data analysis for the Israeli market. You will produce the "
-    "monthly management report, keep the pricing model current in Excel and present findings "
-    "to the commercial leadership every quarter, working with the category owners. ") * 2
-
-# arm B alone: two DISTINCT technical markers, and no `data analytics` / `data analysis`
-_ARM_B_ONLY = (
-    "You will own the reporting layer for the revenue organisation: writing SQL against the "
-    "warehouse, building and maintaining Tableau dashboards, and partnering with the sales "
-    "and finance teams on the numbers they take to the board every month. ") * 2
+# the same posting with exactly one conjunct removed, so each is pinned by a case that fails
+_NO_TOOL = _ZOLL_TEXT.replace("Power BI and SQL", "strong analytical judgement") \
+                     .replace("business intelligence, report and dashboard creation",
+                              "business intelligence and report creation")
+_NO_OUTPUT = (_ZOLL_TEXT.replace("reporting and ", "").replace("report and dashboard creation",
+                                                               "hands-on")
+              .replace("dashboard", "").replace("report", ""))
+_NO_PHRASE = _ZOLL_TEXT.replace("data analytics or business intelligence",
+                                "commercial judgement")
 
 
 def test_the_description_appeal_routes_the_third_measured_false_negative_to_the_llm():
@@ -28449,18 +28453,15 @@ def test_the_description_appeal_routes_the_third_measured_false_negative_to_the_
     JD-fetch candidates (`542@classifier`). Its own text says `data analytics`, names
     `Power BI and SQL`, and asks for `report and dashboard creation experience`.
 
-    Measured 2026-09-03 over both committed caches: **41 cards / 40 distinct (company, title)
-    pairs move, every one of them to `signal` and none to `strong`**, and 0 of the 252
-    title-only golden rows move (they carry no description, which is the point).
+    Measured 2026-09-03 over both committed caches: **23 cards / 23 distinct (company, title)
+    pairs move, every one to `signal` and none to `strong`**, and 0 of the 252 title-only
+    golden rows move (they carry no description, which is the point).
 
     Kills `desc-appeal-removed`, `desc-appeal-promoted-to-strong`."""
     t = "business operations, cms"
     assert seniority._relevance(t, "") == "none"                     # the gate on the title
     assert seniority._relevance(t, "", _ZOLL_TEXT) == "signal"       # ...and on the posting
     assert seniority._desc_appealed(_ZOLL_TEXT) is True
-    # both arms are live on their own, and each is the only reason for real cards
-    assert seniority._desc_appealed(_ARM_A_ONLY) is True
-    assert seniority._desc_appealed(_ARM_B_ONLY) is True
     # The appeal produces `signal` and NOTHING else, asserted as the outcome on titles from
     # both refusing branches. `_relevance(...) != "strong"` would be vacuous for a
     # hard-excluded title -- that branch returns before the `strong` return is reachable, and
@@ -28476,58 +28477,47 @@ def test_the_description_appeal_routes_the_third_measured_false_negative_to_the_
     assert seniority._relevance("data analyst") == "strong"
 
 
-def test_the_description_appeal_reads_a_posting_and_not_a_vocabulary():
-    """Three refusals that keep the rule from becoming "mentions a word we like".
+def test_every_conjunct_of_the_description_appeal_has_a_posting_that_fails_it():
+    """The rule is *the posting says the analytics phrase AND names an output AND names a
+    tool*, and an adversarial wave showed the first draft of these guards did not pin the
+    conjunction: dropping the tool word (23 -> 52 cards) or the output word (23 -> 28) left
+    the whole suite green. Each conjunct now has a posting that differs from Zoll's in that
+    one respect and must be refused.
 
-    The `MIN_DESC` floor is the same one `cache_keys` splits `|jd` from `|bare` on: below it
-    there is nothing to read. `_desc_is_ml` is reused, not re-written -- a posting whose
-    requirements are dominated by model building is out on condition (2) whatever tools it
-    names. And SOFT words alone are deliberately not an arm: measured over the same 1,415
-    refused-with-text cards, `insight`/`recommendation`/`analyze` with no technical marker
-    admits **576** of them and bought **0** additional real roles.
+    Kills `desc-appeal-drops-the-tool-word`, `desc-appeal-drops-the-output-word`."""
+    assert seniority._desc_appealed(_ZOLL_TEXT) is True               # the positive control
+    for name, text in (("no tool", _NO_TOOL), ("no output", _NO_OUTPUT),
+                       ("no phrase", _NO_PHRASE)):
+        assert _j6_jdfill.looks_like_jd(text), name       # still a JD, so the floor is not why
+        assert seniority._desc_appealed(text) is False, name
 
-    Kills `desc-appeal-arm-b-widened-to-one-marker`."""
-    assert seniority._desc_appealed(_ZOLL_TEXT[:200]) is False        # under MIN_DESC
-    assert len(_ZOLL_TEXT) > seniority.MIN_DESC                       # ...and the control
-    ml = ("You will build and train deep learning models, design neural network "
-          "architectures and deploy machine learning pipelines. Requirements: pytorch, "
-          "tensorflow, machine learning, deep learning, model training. SQL and Tableau "
-          "a plus. ") * 3
-    assert seniority._desc_is_ml(ml) is True                          # the veto is alive
-    assert seniority._desc_appealed(ml) is False
-    soft = ("We are looking for someone to analyze the funnel, deliver insights and "
-            "recommendations to stakeholders and improve the product experience for our "
-            "customers every quarter. ") * 3
-    assert len(soft) > seniority.MIN_DESC and seniority._desc_appealed(soft) is False
-    # arm B counts DISTINCT markers, not mentions: one JD saying SQL four times is one marker,
-    # and the bare single-marker form was measured at 145 cards and is not shipped.
-    one = ("Requirements: strong SQL. You will write SQL every day, review SQL queries "
-           "written by others and own SQL performance tuning across the reporting layer "
-           "of the platform. ") * 3
-    assert len(one) > seniority.MIN_DESC and seniority._desc_appealed(one) is False
-    # And the measurement that says arm B is the half with no measured role behind it, kept
-    # where the next session will find it rather than in a session note. The 8 most plausible
-    # cards ONLY arm B admits were judged through the production seam under `v3.0f84ab84` and
-    # every one came back NO -- `aQurate | BI system analyst` among them, the exact
-    # analytics-engineer title `542` names as its own class. If the rejudge cap ever binds
-    # again, arm B is the half to drop: arm A carries three confirmed misses and this carries
-    # none.
-    #
-    # The assertion is about the CODE and not only the file, because a test that reads a
-    # fixture and checks nothing else cannot fail -- `tools/guard_kill.py` named an earlier
-    # draft of this CANNOT-FAIL and was right. What the artifact claims is that these 8 rows
-    # are refused ON THEIR TITLES, so arm B is the only thing that brings them near the LLM;
-    # that claim dies the moment any of them becomes `signal` or `strong` from its title.
-    with open(os.path.join(os.path.dirname(__file__), "fixtures", "classifier",
-                           "2026-09-03-desc-appeal.json"), encoding="utf-8") as fh:
-        art = _j6_json.load(fh)
-    assert art["contract"] == "v3.0f84ab84"
-    assert len(art["rows"]) == 8 and {r["verdict"] for r in art["rows"]} == {"NO"}
-    assert any("BI system analyst" in r["title"] for r in art["rows"])
-    for r in art["rows"]:
-        assert r["gate"] in ("excluded", "none"), r["title"]
-        assert seniority._relevance(r["title"].lower(), r["company"].lower()) == r["gate"], \
-            r["title"]
+
+def test_the_description_appeal_reads_a_posting_and_not_a_page():
+    """The floor is `looks_like_jd`, not a character count, and that is load-bearing twice.
+
+    A nav bar and a cookie banner clear 300 characters -- `_classify` records that exact
+    migration where `has_text` stopped being `len(raw) >= MIN_DESC` -- and under a length
+    floor two of the cards this rule admitted were 4,000 characters of a careers site's own
+    menu listing `Tableau, PowerBI, Qlik`. It is also what makes the rule cost no Bright Data:
+    `enrich_scrape_jd.py` skips a card that already `looks_like_jd` (`:143`) BEFORE it asks
+    the title gate (`:173`), so a rule firing only on cards that pass the SAME predicate
+    cannot add a fetch candidate. A length floor did not have that property.
+
+    Kills `desc-appeal-floor-is-a-length`."""
+    chrome = ("Skip to content Home Product Integrations BI Tools Connect Tableau, PowerBI, "
+              "Qlik and more. Solutions Pricing Customers Resources Blog About Careers "
+              "Contact us. We use cookies to improve your experience on our website. Data "
+              "analytics reporting for every team. Request a demo. Follow us. ") * 3
+    assert len(chrome) > seniority.MIN_DESC                    # a length floor would admit it
+    assert seniority._DESC_APPEAL_PHRASE.search(chrome) and seniority._DESC_APPEAL_OUTPUT \
+        .search(chrome) and seniority._DESC_APPEAL_TOOL.search(chrome)   # ...on all 3 arms
+    assert _j6_jdfill.looks_like_jd(chrome) is False           # ...and this is why it is not
+    assert seniority._desc_appealed(chrome) is False
+    # `_desc_is_ml` is the one veto, reused rather than re-written: a posting whose
+    # requirements are dominated by model building is out on condition (2) whatever it names.
+    ml = _ZOLL_TEXT + ("Requirements: pytorch, tensorflow, machine learning, deep learning, "
+                       "model training, neural network architecture design. ") * 3
+    assert seniority._desc_is_ml(ml) is True and seniority._desc_appealed(ml) is False
 
 
 def test_a_row_the_description_appeal_rescued_is_never_accepted_without_the_llm():
@@ -28555,13 +28545,11 @@ def test_a_shared_careers_page_takes_back_the_hearing_its_text_bought(monkeypatc
     """An appeal whose evidence was another posting's page is not an appeal.
 
     The gate reads the description at the top of `_classify`; the shared-text guard runs
-    eighteen lines later and is the first moment anything knows the text belongs to a
-    different role. Without this the six companies that stored one careers PAGE as every
-    posting's description would have had every refused title on the board's own employer list
-    demoted to the LLM on one blob -- Get SAT had ten roles sharing 4,000 characters. Judging
-    a posting on soup is what the 2026-09-02 session paid for twice (Prisma, Ballerine).
+    eighteen lines later and is the first thing that knows the text belongs to a different
+    role. Without this, one blob shared by ten postings demotes every refused title at that
+    employer -- Get SAT had exactly that shape on 2026-08-28.
 
-    Kills `desc-appeal-survives-a-shared-careers-page`."""
+    Kills `desc-appeal-survives-a-shared-careers-page`, `desc-appeal-un-fires-on-a-real-signal`."""
     calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
     clf = seniority.Classifier(llm_cache={})
     a = clf.classify({"company": "Get SAT", "title": "Business Operations, CMS",
@@ -28572,24 +28560,32 @@ def test_a_shared_careers_page_takes_back_the_hearing_its_text_bought(monkeypatc
     assert a["relevance"] == "signal"                    # the owner keeps its hearing
     assert (b["relevance"], b["decision"], b["path"]) == ("none", "reject", "keyword"), b
     assert len(calls) == 1, "the shared-text row must not reach the seam at all"
-    # ...and the same in the backfill head, which the comment above it requires to stay in
-    # step. `base` there is built from the appealed verdict, so this is the arm most likely
-    # to publish a `signal` cell for a row it then rejects.
+    # ...and the backfill head, which the comment above it requires to stay in step. `base`
+    # there is built from the appealed verdict, so this is the arm most likely to publish a
+    # `signal` cell for a row it then rejects -- and both counters the deterministic head
+    # would have moved must move here too, or the retraction alarm under-counts.
     clf2 = seniority.Classifier(llm_cache={})
     clf2.judge_backfill({"company": "Get SAT", "title": "Business Operations, CMS",
                          "url": "https://getsat/1", "description": _ZOLL_TEXT})
+    kw, no = clf2.backfill_keyword, clf2.backfill_no
     y = clf2.judge_backfill({"company": "Get SAT", "title": "Safety Officer",
                              "url": "https://getsat/2", "description": _ZOLL_TEXT})
     assert clf2.shared_text == 1
     assert (y["relevance"], y["decision"], y["path"]) == ("none", "reject", "keyword"), y
-    # A title that carries its OWN analytics signal keeps its hearing under the same blob:
-    # the question asked is what the gate would have said with no text at all.
+    assert (clf2.backfill_keyword, clf2.backfill_no) == (kw + 1, no + 1)
+    # The question asked is *what would the gate have said with no text at all* -- never "did
+    # the description arm fire". A title that is `signal` on its OWN vocabulary keeps its
+    # hearing under the very same blob. It must be a SIGNAL title and not a strong one: a
+    # `strong` title never enters the branch, so asserting one there proves nothing, which is
+    # what the first draft of this test did.
+    assert seniority._relevance("data analyst, market research", "") == "signal"
     clf3 = seniority.Classifier(llm_cache={})
     clf3.classify({"company": "Get SAT", "title": "Business Operations, CMS",
                    "url": "https://getsat/1", "description": _ZOLL_TEXT})
-    c = clf3.classify({"company": "Get SAT", "title": "Senior Data Analyst",
+    c = clf3.classify({"company": "Get SAT", "title": "Data Analyst, Market Research",
                        "url": "https://getsat/3", "description": _ZOLL_TEXT})
-    assert clf3.shared_text == 1 and c["relevance"] == "strong", c
+    assert clf3.shared_text == 1 and c["relevance"] == "signal", c
+    assert c["decision"] != "reject" or c["path"] != "keyword", c
 
 
 def test_a_gate_change_supersedes_no_cached_verdict(monkeypatch):
@@ -28598,9 +28594,34 @@ def test_a_gate_change_supersedes_no_cached_verdict(monkeypatch):
     this commit. Asserted by mutating the gate rather than by quoting the hash, so a
     legitimate rules change does not have to edit this test."""
     before = seniority._contract()
-    monkeypatch.setattr(seniority, "_DESC_APPEAL_MARKER", re.compile("zzzz"))
     monkeypatch.setattr(seniority, "_DESC_APPEAL_PHRASE", re.compile("zzzz"))
     monkeypatch.setattr(seniority, "_GATE_APPEAL", re.compile("zzzz"))
     assert seniority._contract() == before
     assert seniority._desc_appealed(_ZOLL_TEXT) is False, "the mutation must actually bite"
 
+
+def test_the_refused_marker_arm_is_kept_where_the_next_session_will_find_it():
+    """A technical-marker arm was designed, measured and REFUSED on 2026-09-03, and the
+    evidence is pinned rather than left in a session note -- three independent measurements
+    agreed. This lane judged the 8 most plausible cards that ONLY a marker arm admits through
+    the production seam under `v3.0f84ab84` and got 8 NO, among them `aQurate | BI system
+    analyst`, the analytics-engineer title `542` names as its own class; `568@classifier`
+    judged the 30 marker-densest gate-rejected postings and got 0 in scope; and the `+59
+    candidates` figure that motivated the arm resolves to 2 confirmed roles, one of which is
+    Zoll (the shipped arm catches it) and the other a documented correct rejection.
+
+    The assertion is about the CODE and not only the file, because a test that reads a fixture
+    and checks nothing else cannot fail -- `tools/guard_kill.py` named an earlier draft of
+    this CANNOT-FAIL and was right. What the artifact claims is that these 8 rows are refused
+    ON THEIR TITLES and stay refused with their own text in hand; that claim dies the moment
+    one of them reaches the LLM."""
+    with open(os.path.join(os.path.dirname(__file__), "fixtures", "classifier",
+                           "2026-09-03-desc-appeal.json"), encoding="utf-8") as fh:
+        art = _j6_json.load(fh)
+    assert art["contract"] == "v3.0f84ab84"
+    assert len(art["rows"]) == 8 and {r["verdict"] for r in art["rows"]} == {"NO"}
+    assert any("BI system analyst" in r["title"] for r in art["rows"])
+    for r in art["rows"]:
+        assert r["gate"] in ("excluded", "none"), r["title"]
+        assert seniority._relevance(r["title"].lower(), r["company"].lower()) == r["gate"], \
+            r["title"]
