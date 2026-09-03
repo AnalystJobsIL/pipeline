@@ -2161,3 +2161,7 @@ Onit Security,scrape,,https://www.onit.com/careers/,false,queue-hunt 2026-09-03:
 Opswat,scrape,,https://www.opswat.com/careers,false,queue-hunt 2026-09-03: careers page documented; monitored candidate
 Adaptive6,scrape,https://www.adaptive6.com/careers,https://www.adaptive6.com/careers,true,auto-expand scrape; 1 IL
 Malcam,scrape,https://www.malcam.com/,https://www.malcam.com/,false,scanned; no open Israel roles now | own-site 2026-09-03: www.malcam.com linkback
+eSentire,scrape,https://www.esentire.com/,https://www.esentire.com/,false,scanned; no open Israel roles now | own-site 2026-09-03: www.esentire.com linkback
+Originhq,ashby,originhq,https://api.ashbyhq.com/posting-api/job-board/originhq,true,auto-expand slug-probe; 10/1 IL
+Ovalix,scrape,https://www.ovalix.ai/careers,https://www.ovalix.ai/careers,true,auto-expand scrape; 2 IL
+Pagayais,greenhouse,pagayais,https://boards-api.greenhouse.io/v1/boards/pagayais/jobs,true,auto-expand slug-probe; 11/11 IL

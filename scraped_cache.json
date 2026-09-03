@@ -22883,6 +22883,32 @@
    "url": "https://careers.ormat.com/HebrewIsrael/job/YAVNE-Technical-Account-Manager-81515/1370890457/"
   }
  ],
+ "Ovalix": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ovalix",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.ovalix.ai/careers/senior-backend-engineer",
+   "location": "Hybrid, Tel Aviv/Giv'atayim",
+   "posted_date": "",
+   "title": "Senior Backend Engineer",
+   "url": "https://www.ovalix.ai/careers/senior-backend-engineer"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ovalix",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.ovalix.ai/careers/senior-ds-ml-engineer",
+   "location": "Hybrid, Tel Aviv / Giv'atayim",
+   "posted_date": "",
+   "title": "Senior DS/ML Engineer",
+   "url": "https://www.ovalix.ai/careers/senior-ds-ml-engineer"
+  }
+ ],
  "Overwolf": [
   {
    "_jd_attempted": "2026-08-30",
