@@ -44849,5 +44849,617 @@
   ],
   "last": "2026-09-02",
   "verdict": "documented"
+ },
+ "Nespresso": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://nestle-nespresso.com/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Action Item Solutions": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://nl.action.jobs/en/technology-department"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Solid (AI Powered by Data)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "OurCrowd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.ourcrowd.com/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Tamir Fishman": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Oriient": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://www.comeet.com/jobs/oriient/EA.005"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "C.R.G Electronics": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://jobs.crgtec.com"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Ofir Oni Co": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Olympus Corp": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.olympus-global.com/apac/careers/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "One1 Systems": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://one1.global/careers/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Onlinejobph": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Opti AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.opti.ai/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Ord": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.flychicago.com/community/employment/Pages/default.aspx"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Nativ Ishi": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Mindspace Poland": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://www.mindspace.me/careers/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "Warner Music Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.wmg.com/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Econergy Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://www.comeet.com/jobs/econergytech/88.00D"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "ClaroAI - Fluent English, Instantly": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://instantly.ai/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "McCann TLV": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://mccann.co.il/careers/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "pigment creative house": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Ogen Dpo": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://www.ogen.org/jobs"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "Omc 496212": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Oneformaglobal": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Onyx Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://www.onyx.security/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "Optivailfinance": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Origami Ms": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://origami.sa/en/careers/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Nestlé Nespresso SA": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.nestlejobs.com/nespresso"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "R2Net Inc": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://apply.workable.com/r2net/?lng=en"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Applied Spectral Imaging (ASI) | a ZYTOMICS company": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://spectral-imaging.com/join-us/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "NTU International A/S": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Protalix Biotherapeutics": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://protalix.com/contact/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Zoomd Technologies (TSXV:ZOMD) (OTC: ZMDTF)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://zoomd.com/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Ocean Email Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://ocean.security/company/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "Oikonomakis Christos Law Firm": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://oikonomakislaw.com/careers-oikonomakis-law/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Omc Computing": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.nearbycomputing.com/careers/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Ongage": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://www.ongage.com/careers/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "Op Innovate": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://www.comeet.com/jobs/opinnovate/0B.009"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "Optunity": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Origene Seeds": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.origeneseeds.com/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Meidata": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://meidata.com/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Lama AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.lama.ai/jobs/software-engineer"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "galitechOnline": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Taplix": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-03",
+    "url": "https://taplix.io/careers/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "found"
+ },
+ "morning by Green Invoice": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Keren Hayesod - UIA": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.kh-uia.org.il/join-us"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Oferavnir": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.oferavnir.co.il/career/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Oktadev": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Omjhighlandco": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.omjhighlandcounty.com/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Onit Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.onit.com/careers/"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Opswat": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-03",
+    "url": "https://www.opswat.com/careers"
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "documented"
+ },
+ "Orcarouter": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-03",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-03",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  }
 }

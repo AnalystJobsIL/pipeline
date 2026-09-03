@@ -6816,10 +6816,14 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Experda.com": {
-  "date": "2026-08-30",
+  "date": "2026-09-03",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Experda",
+  "why": "a rung found this name's board and the registry row 'Experda' already reads it (matched on url, never on the name)",
   "evidence": {
-   "matched_on": "url",
    "row": "Experda",
+   "matched_on": "url",
    "tried": [
     [
      "hunt",
@@ -6832,11 +6836,7 @@
      "https://www.experda.com/jobs/"
     ]
    ]
-  },
-  "other_name": "Experda",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Experda' already reads it (matched on url, never on the name)"
+  }
  },
  "Extreme Technologies": {
   "date": "2026-08-31",
@@ -20634,10 +20634,14 @@
   "why": "\"Software AG Israel\" is a country/entity variant of Software AG (a Software GmbH brand), which hires via its global careers site at softwareag.com."
  },
  "Speedata.io": {
-  "date": "2026-08-30",
+  "date": "2026-09-03",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Speedata",
+  "why": "a rung found this name's board and the registry row 'Speedata' already reads it (matched on url, never on the name)",
   "evidence": {
-   "matched_on": "url",
    "row": "Speedata",
+   "matched_on": "url",
    "tried": [
     [
      "hunt",
@@ -20645,11 +20649,7 @@
      "https://www.speedata.io/careers-1"
     ]
    ]
-  },
-  "other_name": "Speedata",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Speedata' already reads it (matched on url, never on the name)"
+  }
  },
  "Squaretalk": {
   "board_url_if_any": "",
@@ -20726,7 +20726,7 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-09-01",
+  "date": "2026-09-03",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Strauss Water Ltd. שטראוס מים",
@@ -23313,7 +23313,7 @@
   }
  },
  "Level App": {
-  "date": "2026-09-02",
+  "date": "2026-09-03",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -24120,7 +24120,7 @@
   }
  },
  "Majestic Labs": {
-  "date": "2026-09-02",
+  "date": "2026-09-03",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Majestic Labs ai",
@@ -24138,7 +24138,7 @@
   }
  },
  "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
-  "date": "2026-09-02",
+  "date": "2026-09-03",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Clal Insurance And Finance",
@@ -24298,6 +24298,124 @@
  },
  "Noga Iso": {
   "date": "2026-09-02",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Novelsat Ayecka": {
+  "date": "2026-09-03",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "NOVELSAT",
+  "why": "a rung found this name's board and the registry row 'NOVELSAT' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "NOVELSAT",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://novelsat.com/careers"
+    ]
+   ]
+  }
+ },
+ "Partnerize": {
+  "date": "2026-09-03",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Roojoom": {
+  "date": "2026-09-03",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "OnTarget Communications": {
+  "date": "2026-09-03",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "NGsoft": {
+  "date": "2026-09-03",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Ngsoft Ltd",
+  "why": "the registry row 'Ngsoft Ltd' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Ngsoft Ltd",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "ManpowerGroup": {
+  "date": "2026-09-03",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Clalit Innovation": {
+  "date": "2026-09-03",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Ocean Relocation": {
+  "date": "2026-09-03",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Omc": {
+  "date": "2026-09-03",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Omnitelecom": {
+  "date": "2026-09-03",
   "verdict": "already-a-row",
   "raw_verdict": "already-a-row",
   "other_name": "",
