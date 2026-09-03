@@ -576,8 +576,8 @@
   "last": "2026-08-26"
  },
  "AstraZeneca": {
-  "fails": 1,
-  "last": "2026-08-26"
+  "fails": 2,
+  "last": "2026-09-03"
  },
  "Perception Point": {
   "fails": 1,
@@ -692,16 +692,16 @@
   "last": "2026-08-27"
  },
  "Netafim": {
-  "fails": 1,
-  "last": "2026-08-27"
+  "fails": 2,
+  "last": "2026-09-03"
  },
  "Airspan Networks": {
   "fails": 1,
   "last": "2026-08-27"
  },
  "Lam Research": {
-  "fails": 1,
-  "last": "2026-08-27"
+  "fails": 2,
+  "last": "2026-09-03"
  },
  "Intuit": {
   "fails": 1,
@@ -898,5 +898,37 @@
  "Shortical": {
   "fails": 1,
   "last": "2026-09-02"
+ },
+ "AlgoSec": {
+  "fails": 1,
+  "last": "2026-09-03"
+ },
+ "Arrow Components": {
+  "fails": 1,
+  "last": "2026-09-03"
+ },
+ "Datos Health": {
+  "fails": 1,
+  "last": "2026-09-03"
+ },
+ "Kimberly-Clark": {
+  "fails": 1,
+  "last": "2026-09-03"
+ },
+ "NeuReality": {
+  "fails": 1,
+  "last": "2026-09-03"
+ },
+ "Siemens Israel": {
+  "fails": 1,
+  "last": "2026-09-03"
+ },
+ "Sola Security": {
+  "fails": 1,
+  "last": "2026-09-03"
+ },
+ "Talenya": {
+  "fails": 1,
+  "last": "2026-09-03"
  }
 }
