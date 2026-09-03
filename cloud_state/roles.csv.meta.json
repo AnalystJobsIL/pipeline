@@ -3,27 +3,27 @@
  "download_url": "https://analystjobsil.github.io/board/roles.csv",
  "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
  "published_on_pages": true,
- "generated_at": "2026-09-02T10:27:27Z",
- "run_date": "2026-09-02",
- "rows": 151,
+ "generated_at": "2026-09-03T10:28:30Z",
+ "run_date": "2026-09-03",
+ "rows": 146,
  "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
  "window": {
   "days": 90,
   "basis": "last_seen",
-  "start": "2026-06-05",
-  "end": "2026-09-02",
-  "rule": "2026-06-05 <= last_seen <= 2026-09-02, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
+  "start": "2026-06-06",
+  "end": "2026-09-03",
+  "rule": "2026-06-06 <= last_seen <= 2026-09-03, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
   "fully_covered": false,
-  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-05. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
+  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-06. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
  },
  "store": {
-  "records": 221,
+  "records": 224,
   "by_status": {
-   "closed": 25,
-   "open": 129,
+   "closed": 28,
+   "open": 121,
    "purged": 17,
    "superseded": 12,
-   "withdrawn": 38
+   "withdrawn": 46
   },
   "earliest_first_seen": "2026-08-16",
   "earliest_recorded_run": "2026-08-27",
@@ -32,7 +32,7 @@
  "excluded": {
   "superseded": 12,
   "purged": 17,
-  "withdrawn": 38,
+  "withdrawn": 46,
   "outside_window": 0,
   "undatable": 0,
   "note": "superseded = the same posting also fetched under a second company name, kept once. purged = the COMPANY was never an employer (a registry row that points at an aggregator; a name intake rejected as an agency). withdrawn = the employer is real but THIS posting was never in scope (not in Israel, or not this employer's) — it was published in error and is listed under `withdrawn` with its reason and the days it was public. Rows that aged out of the window are not excluded: they are in roles_archive.csv."
@@ -267,6 +267,18 @@
    }
   },
   {
+   "role_id": "diageo|performance analytics analyst",
+   "company": "Diageo",
+   "title": "Performance Analytics Analyst",
+   "status": "withdrawn",
+   "reason": "the posting is a New York job. Its own text opens 'Location: 3 WTC (New York)' and the work is the U.S. Spirits and Beer/FMB marketplace; the Israeli location on this row is the aggregator's stamp, not the posting's. The analytics scope is NOT the ground and is not disputed - the seam judges this role YES on scope under the live contract - the ground is that it is not an Israeli role.",
+   "on": "2026-09-02",
+   "published_in_roles_csv": {
+    "from": "2026-08-31",
+    "to": "2026-09-02"
+   }
+  },
+  {
    "role_id": "entrypoint|data analyst 5664",
    "company": "entrypoint",
    "title": "Data Analyst -5664",
@@ -423,6 +435,18 @@
    }
   },
   {
+   "role_id": "minute media|data scientist",
+   "company": "Minute Media",
+   "title": "Data Scientist",
+   "status": "withdrawn",
+   "reason": "out of scope on condition (2): the role centres on building ML models - price-floor optimization, bandits, regression and classification - and an experimentation platform. Its recorded verdict was already `reject` and the 2026-09-01 session let the row stand on that; the closed-row ruling of 2026-09-02 is what removes it.",
+   "on": "2026-09-02",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-02"
+   }
+  },
+  {
    "role_id": "mobileye|business analyst",
    "company": "Mobileye",
    "title": "Business Analyst",
@@ -432,6 +456,18 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "mobileye|experienced data analyst",
+   "company": "Mobileye",
+   "title": "Experienced Data Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on condition (2): the role builds validation infrastructure and tooling for Mobileye's REM machine-learning mapping system, which is engineering, not an analysis output. Its recorded verdict was already `reject`; a reject alone never removes a row, so the dataset published it as a closed non-relevant row.",
+   "on": "2026-09-02",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-02"
    }
   },
   {
@@ -519,6 +555,30 @@
    }
   },
   {
+   "role_id": "percepto|data insights operations",
+   "company": "Percepto",
+   "title": "Data Insights Operations",
+   "status": "withdrawn",
+   "reason": "out of scope on the quantitative-scope rule (condition 5) and the execution boundary: a client-delivery / operations role on drone imagery -- \"translate visual data into insights\" on client timelines, with no metric, dashboard, SQL or BI anywhere. The seam's stored verdict still reads accept; this line is the adjudication over it.",
+   "on": "2026-09-02",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-02"
+   }
+  },
+  {
+   "role_id": "questar auto|senior data scientist individual contributor",
+   "company": "Questar Auto Technologies",
+   "title": "Senior Data Scientist — Individual Contributor",
+   "status": "withdrawn",
+   "reason": "out of scope on condition (2): the role builds, deploys and maintains predictive and prescriptive models and data-science pipelines at scale, which is ML and engineering work rather than analytics or reporting output. Its recorded verdict was already `reject`; this line is what removes the row from the dataset.",
+   "on": "2026-09-02",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-02"
+   }
+  },
+  {
    "role_id": "recruitx|data analyst jb 4122",
    "company": "Recruitx",
    "title": "Data Analyst JB-4122",
@@ -576,6 +636,18 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "techbiz global|data analyst",
+   "company": "TechBiz Global GmbH",
+   "title": "Data Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on condition (4) and the workplace rule (docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md): the posting never once describes TechBiz Global's own product, team or systems, and the work it does describe is generic data work at an unnamed client.",
+   "on": "2026-09-02",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-02"
    }
   },
   {
@@ -654,6 +726,18 @@
    }
   },
   {
+   "role_id": "transunion|manager data science analytics",
+   "company": "TransUnion",
+   "title": "Manager - Data Science & Analytics",
+   "status": "withdrawn",
+   "reason": "the row publishes a Data Science & Analytics manager at TransUnion in central Israel, and the posting is neither: its text is TransUnion India's corporate overview and the only role it describes is a client-facing Pre Sales Consultant. Whichever half is trusted, no Israeli analytics job is being advertised here.",
+   "on": "2026-09-02",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-02"
+   }
+  },
+  {
    "role_id": "yael korentec|bi developer defense company northern israel",
    "company": "Yael Korentec Technologies",
    "title": "BI Developer – Defense Company, Northern Israel",
@@ -663,6 +747,18 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "בנק דיסקונט|אנליסט ית אשראי ראש ת צוות ענף אנליזת אשראי וחיתום חטיבה עסקית",
+   "company": "בנק דיסקונט",
+   "title": "אנליסט.ית אשראי ראש.ת צוות- ענף אנליזת אשראי וחיתום- חטיבה עסקית",
+   "status": "withdrawn",
+   "reason": "out of scope: the role leads a credit-risk analysis and underwriting team - analysing the credit risk of deals and structuring them - which is credit decisioning, not analysis of measured business or product data. The finance DOMAIN is never the ground (docs/decisions/2026-08-31-domain-scope.md); the output is.",
+   "on": "2026-09-02",
+   "published_in_roles_csv": {
+    "from": "2026-09-01",
+    "to": "2026-09-02"
    }
   },
   {
@@ -681,23 +777,23 @@
  "archive": {
   "file": "roles_archive.csv",
   "rows": 0,
-  "rule": "status open or closed AND last_seen < 2026-06-05 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
+  "rule": "status open or closed AND last_seen < 2026-06-06 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
   "download_url": "https://analystjobsil.github.io/board/roles_archive.csv",
   "published_on_pages": true
  },
  "reconciliation": {
-  "rows": 151,
+  "rows": 146,
   "archived": 0,
   "superseded": 12,
   "purged": 17,
-  "withdrawn": 38,
+  "withdrawn": 46,
   "outside_window": 0,
   "undatable": 0,
   "unreadable": 0,
   "blocked_excluded": 1,
   "pending_excluded": 2,
-  "store_records": 221,
+  "store_records": 224,
   "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable + blocked_excluded + pending_excluded == store_records",
   "holds": true
  },
@@ -740,7 +836,7 @@
    "description_blocker"
   ],
   "quality": {
-   "jd": 151,
+   "jd": 146,
    "snippet": 0,
    "none": 0,
    "unmeasured": 0,
@@ -792,7 +888,7 @@
   },
   "posted_date": {
    "doc": "The date the EMPLOYER states the role was posted. Empty when the board publishes none.",
-   "nulls": 14
+   "nulls": 15
   },
   "first_seen": {
    "doc": "The first day this pipeline ever saw the role, across all of its spells. Not a posting date.",
@@ -821,7 +917,7 @@
   },
   "closed_on": {
    "doc": "The day we recorded it closed. Empty while open.",
-   "nulls": 126
+   "nulls": 119
   },
   "emailed": {
    "doc": "true if this role went out in a daily digest email.",
@@ -829,7 +925,7 @@
   },
   "emailed_on": {
    "doc": "The date it was first emailed. Empty if never emailed.",
-   "nulls": 73
+   "nulls": 56
   },
   "episodes": {
    "doc": "How many separate spells we have seen this role open (a reappearance after an absence starts a new one).",
@@ -841,7 +937,7 @@
   },
   "repost_dates": {
    "doc": "The posted_date values those bumps landed on, separated by ';'.",
-   "nulls": 129
+   "nulls": 123
   },
   "sources": {
    "doc": "Which fetchers saw it (greenhouse, comeet, scrape, ...), separated by ';'.",
@@ -862,7 +958,7 @@
   },
   "years_experience": {
    "doc": "Years of experience asked for, read from the DESCRIPTION text. Empty when the text does not say.",
-   "nulls": 18
+   "nulls": 16
   },
   "family": {
    "doc": "Role family, from title first and the opening of the description second.",
@@ -889,7 +985,7 @@
   },
   "degree_level": {
    "doc": "Highest degree the posting requires or prefers.",
-   "nulls": 86,
+   "nulls": 84,
    "enum": {
     "PhD": "highest degree the posting names",
     "MSc": "highest degree the posting names",
@@ -898,7 +994,7 @@
   },
   "degree_status": {
    "doc": "Whether that degree is required or merely preferred.",
-   "nulls": 86,
+   "nulls": 84,
    "enum": {
     "required": "stated as a requirement",
     "preferred": "stated as an advantage"
@@ -906,7 +1002,7 @@
   },
   "degree_fields": {
    "doc": "Fields of study named alongside it, separated by ';'.",
-   "nulls": 105,
+   "nulls": 104,
    "enum": {
     "CS": "field of study named alongside the degree",
     "Industrial Eng.": "field of study named alongside the degree",
@@ -922,7 +1018,7 @@
   },
   "ai": {
    "doc": "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned.",
-   "nulls": 112,
+   "nulls": 101,
    "enum": {
     "AI for efficiency": "Expected to use AI tools (Copilot, ChatGPT, Cursor…) to work faster",
     "AI for automation": "Using AI to automate processes and workflows",
@@ -932,7 +1028,7 @@
   },
   "skills": {
    "doc": "Every skill found in title+description, separated by ';', in extraction order.",
-   "nulls": 4
+   "nulls": 3
   },
   "class_decision": {
    "doc": "The classifier's verdict on the role when it was last judged.",
@@ -969,19 +1065,19 @@
   },
   "description_blocker": {
    "doc": "Why a weak text (description_quality snippet/none) is structurally hard to complete, or empty. Recorded verdicts (jd-text's matched.jd_why, 'structural:*') verbatim; else derived: 'gone' (the posting 404s on the employer's own board), 'unfillable:<why>' (a host no rung we own can read), 'listing-page' (the only address we hold is a shared listing, not the posting's own). Under the live policy (meta description_text.blocked.policy — 'exclude' since the operator's 2026-09-01 ruling) a blocked row is excluded from this file with its reason counted in the meta; a weak row with NO blocker is pending a fill and stays; the archive keeps history either way.",
-   "nulls": 151
+   "nulls": 146
   },
   "sector": {
    "doc": "Company sector (firmographics).",
-   "nulls": 7
+   "nulls": 0
   },
   "sub_sector": {
    "doc": "Narrower niche (firmographics, free text).",
-   "nulls": 7
+   "nulls": 0
   },
   "stage": {
    "doc": "Company stage (firmographics).",
-   "nulls": 7,
+   "nulls": 0,
    "enum": {
     "acquired-by-bigtech": "company stage, as researched (firmographics)",
     "early-private": "company stage, as researched (firmographics)",
@@ -992,11 +1088,11 @@
   },
   "stage_note": {
    "doc": "Ticker or acquisition note behind that stage.",
-   "nulls": 7
+   "nulls": 0
   },
   "size_band": {
    "doc": "Headcount band (firmographics).",
-   "nulls": 7,
+   "nulls": 0,
    "enum": {
     "S": "under 200 employees globally",
     "M": "200-1,000",
@@ -1006,27 +1102,27 @@
   },
   "employees_global": {
    "doc": "Global headcount, all sites (firmographics).",
-   "nulls": 18
+   "nulls": 13
   },
   "founded": {
    "doc": "Year founded (firmographics).",
-   "nulls": 15
+   "nulls": 8
   },
   "business_model": {
    "doc": "How the company earns money (firmographics, free text).",
-   "nulls": 7
+   "nulls": 0
   },
   "customer_type": {
    "doc": "Who buys from it (firmographics, free text).",
-   "nulls": 7
+   "nulls": 0
   },
   "il_center": {
    "doc": "Its main Israeli site(s) (firmographics).",
-   "nulls": 7
+   "nulls": 0
   },
   "firmo_as_of": {
    "doc": "The date those company facts were researched.",
-   "nulls": 7
+   "nulls": 0
   },
   "firmo_match": {
    "doc": "How the company facts were matched to this row's company_registry (the brand in `company` renders only on an exact match).",
@@ -1039,7 +1135,7 @@
   },
   "skills_bi": {
    "doc": "Skills of category 'bi' only, separated by ';' — group by this without parsing.",
-   "nulls": 54
+   "nulls": 49
   },
   "skills_query": {
    "doc": "Skills of category 'query' only, separated by ';' — group by this without parsing.",
@@ -1047,11 +1143,11 @@
   },
   "skills_de": {
    "doc": "Skills of category 'de' only, separated by ';' — group by this without parsing.",
-   "nulls": 84
+   "nulls": 79
   },
   "skills_pa": {
    "doc": "Skills of category 'pa' only, separated by ';' — group by this without parsing.",
-   "nulls": 120
+   "nulls": 114
   },
   "skills_prog": {
    "doc": "Skills of category 'prog' only, separated by ';' — group by this without parsing.",
@@ -1063,11 +1159,11 @@
   },
   "skills_cloud": {
    "doc": "Skills of category 'cloud' only, separated by ';' — group by this without parsing.",
-   "nulls": 131
+   "nulls": 126
   },
   "skills_lang": {
    "doc": "Skills of category 'lang' only, separated by ';' — group by this without parsing.",
-   "nulls": 108
+   "nulls": 107
   }
  }
 }

@@ -9,6 +9,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "ASML": {
+  "careers_url": "https://www.asml.com/en/careers/find-your-job",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "ASTERRA": {
   "careers_url": "https://asterra.io/careers/",
   "platform": "scrape",
@@ -23,6 +28,16 @@
   "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "Adi Il": {
+  "careers_url": "https://adi-il.org.il/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Airspan Networks": {
+  "careers_url": "https://airspan.com/careers/airspan-careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Aitechsystems": {
   "careers_url": "https://www.comeet.com/jobs/aitechsystems/88.004",
@@ -51,11 +66,6 @@
  },
  "Arrow Components": {
   "careers_url": "https://careers.arrow.com/us/search-results",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "AstraZeneca": {
-  "careers_url": "https://careers.astrazeneca.com/search-jobs/Israel",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -91,9 +101,8 @@
  },
  "Bright Security": {
   "careers_url": "https://www.brightsec.com/careers/",
-  "error": "scrape: goto:TimeoutError (1 night)",
   "platform": "scrape",
-  "reason": "fetch-error"
+  "reason": "regressed-to-zero"
  },
  "Challenge Group": {
   "careers_url": "https://career.challenge-group.com/go/Israel-Airlines-Jobs/9594055/",
@@ -152,8 +161,9 @@
  },
  "Dynamic Yield": {
   "careers_url": "https://www.dynamicyield.com/careers/",
+  "error": "scrape: render:Error (1 night)",
   "platform": "scrape",
-  "reason": "regressed-to-zero"
+  "reason": "fetch-error"
  },
  "ENI-ONE LTD": {
   "careers_url": "https://eni-one-ltd.breezy.hr",
@@ -200,11 +210,6 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Hailo": {
-  "careers_url": "https://hailo.ai/company-overview/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Harmonic": {
   "careers_url": "https://egmn.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs",
   "platform": "scrape",
@@ -214,11 +219,6 @@
   "careers_url": "https://jobs.iai.co.il/jobs/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "IQVIA": {
-  "careers_url": "https://iqvia.wd1.myworkdayjobs.com/en-US/IQVIA/job/Irving-TX-United-States-of-America/Research-Laboratory-Technician_R1550517",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
  },
  "Jafi": {
   "careers_url": "https://www.comeet.com/jobs/jafi/C8.008",
@@ -237,11 +237,6 @@
  },
  "K2view": {
   "careers_url": "https://www.k2view.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Kimberly-Clark": {
-  "careers_url": "https://careers.kimberly-clark.com/en/job-search",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -302,9 +297,8 @@
  },
  "Predicta Med": {
   "careers_url": "https://predicta-med.com/careers/",
-  "error": "scrape: goto:TimeoutError (1 night)",
   "platform": "scrape",
-  "reason": "fetch-error"
+  "reason": "regressed-to-zero"
  },
  "Quantum Art": {
   "careers_url": "https://www.quantum-art.tech/careers",
@@ -321,13 +315,18 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Revolut": {
+  "careers_url": "https://www.revolut.com/en-US/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Shortical": {
   "careers_url": "https://www.comeet.com/jobs/shortical/3B.00A",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Siemens Israel": {
-  "careers_url": "https://jobs.sw.siemens.com/locations/isr/jobs/",
+ "Sightec": {
+  "careers_url": "https://sightec.com/career/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -346,13 +345,13 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Sternum": {
+  "careers_url": "https://sternumiot.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Stigg": {
   "careers_url": "https://jobs.ashbyhq.com/stigg",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Strada": {
-  "careers_url": "https://strada.wd12.myworkdayjobs.com/en-US/Careers",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
@@ -378,6 +377,11 @@
  },
  "Volkswagen (CARIAD)": {
   "careers_url": "https://jobs.volkswagen-group.com/cariad/search/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Voyage81": {
+  "careers_url": "https://voyage81.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
