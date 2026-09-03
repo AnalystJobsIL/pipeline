@@ -28505,6 +28505,29 @@ def test_the_description_appeal_reads_a_posting_and_not_a_vocabulary():
            "written by others and own SQL performance tuning across the reporting layer "
            "of the platform. ") * 3
     assert len(one) > seniority.MIN_DESC and seniority._desc_appealed(one) is False
+    # And the measurement that says arm B is the half with no measured role behind it, kept
+    # where the next session will find it rather than in a session note. The 8 most plausible
+    # cards ONLY arm B admits were judged through the production seam under `v3.0f84ab84` and
+    # every one came back NO -- `aQurate | BI system analyst` among them, the exact
+    # analytics-engineer title `542` names as its own class. If the rejudge cap ever binds
+    # again, arm B is the half to drop: arm A carries three confirmed misses and this carries
+    # none.
+    #
+    # The assertion is about the CODE and not only the file, because a test that reads a
+    # fixture and checks nothing else cannot fail -- `tools/guard_kill.py` named an earlier
+    # draft of this CANNOT-FAIL and was right. What the artifact claims is that these 8 rows
+    # are refused ON THEIR TITLES, so arm B is the only thing that brings them near the LLM;
+    # that claim dies the moment any of them becomes `signal` or `strong` from its title.
+    with open(os.path.join(os.path.dirname(__file__), "fixtures", "classifier",
+                           "2026-09-03-desc-appeal.json"), encoding="utf-8") as fh:
+        art = _j6_json.load(fh)
+    assert art["contract"] == "v3.0f84ab84"
+    assert len(art["rows"]) == 8 and {r["verdict"] for r in art["rows"]} == {"NO"}
+    assert any("BI system analyst" in r["title"] for r in art["rows"])
+    for r in art["rows"]:
+        assert r["gate"] in ("excluded", "none"), r["title"]
+        assert seniority._relevance(r["title"].lower(), r["company"].lower()) == r["gate"], \
+            r["title"]
 
 
 def test_a_row_the_description_appeal_rescued_is_never_accepted_without_the_llm():
@@ -28581,18 +28604,3 @@ def test_a_gate_change_supersedes_no_cached_verdict(monkeypatch):
     assert seniority._contract() == before
     assert seniority._desc_appealed(_ZOLL_TEXT) is False, "the mutation must actually bite"
 
-
-def test_the_arm_b_measurement_is_kept_where_the_next_session_will_find_it():
-    """Arm B shipped over this lane's measurement, on the operator's reaffirmed decision, and
-    the evidence is pinned rather than left in a session note: the 8 most plausible cards that
-    ONLY arm B admits were judged through the production seam under `v3.0f84ab84` and every
-    one came back NO -- including `aQurate | BI system analyst`, the exact analytics-engineer
-    title `542` names as its own class. If a later session wants to drop an arm when the
-    rejudge cap binds, this is the one with no measured role behind it."""
-    with open(os.path.join(os.path.dirname(__file__), "fixtures", "classifier",
-                           "2026-09-03-desc-appeal.json"), encoding="utf-8") as fh:
-        art = _j6_json.load(fh)
-    assert art["contract"] == "v3.0f84ab84"
-    assert len(art["rows"]) == 8
-    assert {r["verdict"] for r in art["rows"]} == {"NO"}
-    assert any("BI system analyst" in r["title"] for r in art["rows"])
