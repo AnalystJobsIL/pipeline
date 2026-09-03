@@ -150,3 +150,4 @@
 {"at":"2026-09-03T00:34:53Z","cap":250,"capped":false,"ci":true,"credits":15,"pid":76433,"tool":"queue_resolve_search.py"}
 {"at":"2026-09-03T00:47:46Z","cap":250,"capped":false,"ci":true,"credits":6,"pid":85056,"tool":"queue_pipeline.py"}
 {"at":"2026-09-03T01:12:57Z","cap":250,"capped":false,"ci":true,"credits":95,"pid":87057,"tool":"crack_walled.py"}
+{"at":"2026-09-03T07:35:21Z","cap":250,"capped":false,"ci":true,"credits":125,"pid":2763,"tool":"bd_rescue.py"}
