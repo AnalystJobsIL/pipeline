@@ -594,6 +594,20 @@
    "url": "https://www.activefence.com/positions/position-24_076"
   }
  ],
+ "Adaptive6": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Adaptive6",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.adaptive6.com/positions/position-fd_d5b",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Senior Backend Developer",
+   "url": "https://www.adaptive6.com/positions/position-fd_d5b"
+  }
+ ],
  "Adcom Consulting Shmulik Keidar Ltd": [
   {
    "_jd_attempted": "2026-08-29",

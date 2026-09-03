@@ -2159,3 +2159,5 @@ Lama AI,scrape,,https://www.lama.ai/jobs/software-engineer,false,queue-hunt 2026
 Oferavnir,scrape,,https://www.oferavnir.co.il/career/,false,queue-hunt 2026-09-03: careers page documented; monitored candidate
 Onit Security,scrape,,https://www.onit.com/careers/,false,queue-hunt 2026-09-03: careers page documented; monitored candidate
 Opswat,scrape,,https://www.opswat.com/careers,false,queue-hunt 2026-09-03: careers page documented; monitored candidate
+Adaptive6,scrape,https://www.adaptive6.com/careers,https://www.adaptive6.com/careers,true,auto-expand scrape; 1 IL
+Malcam,scrape,https://www.malcam.com/,https://www.malcam.com/,false,scanned; no open Israel roles now | own-site 2026-09-03: www.malcam.com linkback
