@@ -10646,7 +10646,8 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      Marketing Manager, FP&A Manager, Data Engineer x2, Solution Engineer x2, Head of Data
      Engineering, Product Manager). Artifact:
      `tests/fixtures/classifier/2026-09-03-desc-appeal.json`, pinned by
-     `test_the_arm_b_measurement_is_kept_where_the_next_session_will_find_it`. **If the
+     `test_the_description_appeal_reads_a_posting_and_not_a_vocabulary`, which also
+     re-asserts that all 8 are still refused ON THEIR TITLES. **If the
      rejudge cap ever binds again, arm B is the half to drop first** — arm A carries three
      confirmed misses and arm B carries none.
 
