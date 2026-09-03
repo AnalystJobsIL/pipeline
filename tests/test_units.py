@@ -28490,6 +28490,30 @@ def test_every_conjunct_of_the_description_appeal_has_a_posting_that_fails_it():
                        ("no phrase", _NO_PHRASE)):
         assert _j6_jdfill.looks_like_jd(text), name       # still a JD, so the floor is not why
         assert seniority._desc_appealed(text) is False, name
+    # `no phrase` IS the refused marker arm in one line: a posting that names SQL and Tableau
+    # and a dashboard, and never says `data analysis`. It was designed, measured and refused
+    # on 2026-09-03 by three independent measurements -- this lane judged the 8 most plausible
+    # cards ONLY that arm admits through the production seam and got 8 NO (`aQurate | BI
+    # system analyst` among them, the analytics-engineer title `542` names as its own class);
+    # `568@classifier` judged the 30 marker-densest gate-rejected postings and got 0 in scope;
+    # and the `+59 candidates` that motivated it resolve to 2 confirmed roles, one of them
+    # Zoll (this arm catches it) and the other a documented correct rejection.
+    #
+    # The artifact lives here rather than in a test of its own because a test that reads a
+    # fixture and checks nothing else CANNOT FAIL -- `tools/guard_kill.py` named two earlier
+    # drafts of exactly that and was right both times. What it claims about the code is that
+    # all 8 stay refused ON THEIR TITLES, so nothing but the refused arm would have reached
+    # them.
+    assert seniority._DESC_APPEAL_TOOL.search(_NO_PHRASE), "the marker half must be present"
+    with open(os.path.join(os.path.dirname(__file__), "fixtures", "classifier",
+                           "2026-09-03-desc-appeal.json"), encoding="utf-8") as fh:
+        art = _j6_json.load(fh)
+    assert art["contract"] == "v3.0f84ab84"
+    assert len(art["rows"]) == 8 and {r["verdict"] for r in art["rows"]} == {"NO"}
+    assert any("BI system analyst" in r["title"] for r in art["rows"])
+    for r in art["rows"]:
+        assert r["gate"] in ("excluded", "none"), r["title"]
+        assert seniority._relevance(r["title"].lower(), r["company"].lower()) == r["gate"],             r["title"]
 
 
 def test_the_description_appeal_reads_a_posting_and_not_a_page():
@@ -28598,30 +28622,3 @@ def test_a_gate_change_supersedes_no_cached_verdict(monkeypatch):
     monkeypatch.setattr(seniority, "_GATE_APPEAL", re.compile("zzzz"))
     assert seniority._contract() == before
     assert seniority._desc_appealed(_ZOLL_TEXT) is False, "the mutation must actually bite"
-
-
-def test_the_refused_marker_arm_is_kept_where_the_next_session_will_find_it():
-    """A technical-marker arm was designed, measured and REFUSED on 2026-09-03, and the
-    evidence is pinned rather than left in a session note -- three independent measurements
-    agreed. This lane judged the 8 most plausible cards that ONLY a marker arm admits through
-    the production seam under `v3.0f84ab84` and got 8 NO, among them `aQurate | BI system
-    analyst`, the analytics-engineer title `542` names as its own class; `568@classifier`
-    judged the 30 marker-densest gate-rejected postings and got 0 in scope; and the `+59
-    candidates` figure that motivated the arm resolves to 2 confirmed roles, one of which is
-    Zoll (the shipped arm catches it) and the other a documented correct rejection.
-
-    The assertion is about the CODE and not only the file, because a test that reads a fixture
-    and checks nothing else cannot fail -- `tools/guard_kill.py` named an earlier draft of
-    this CANNOT-FAIL and was right. What the artifact claims is that these 8 rows are refused
-    ON THEIR TITLES and stay refused with their own text in hand; that claim dies the moment
-    one of them reaches the LLM."""
-    with open(os.path.join(os.path.dirname(__file__), "fixtures", "classifier",
-                           "2026-09-03-desc-appeal.json"), encoding="utf-8") as fh:
-        art = _j6_json.load(fh)
-    assert art["contract"] == "v3.0f84ab84"
-    assert len(art["rows"]) == 8 and {r["verdict"] for r in art["rows"]} == {"NO"}
-    assert any("BI system analyst" in r["title"] for r in art["rows"])
-    for r in art["rows"]:
-        assert r["gate"] in ("excluded", "none"), r["title"]
-        assert seniority._relevance(r["title"].lower(), r["company"].lower()) == r["gate"], \
-            r["title"]

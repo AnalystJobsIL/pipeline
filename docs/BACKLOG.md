@@ -10662,8 +10662,9 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      either: `insight｜recommendation｜analyze` with no tool word admits **377** of the same
      1,416 cards and bought 0 roles. Artifact:
      `tests/fixtures/classifier/2026-09-03-desc-appeal.json`, pinned by
-     `test_the_refused_marker_arm_is_kept_where_the_next_session_will_find_it`, which asserts
-     against the CODE (all 8 still refused on their titles) and not only against the file.
+     `test_every_conjunct_of_the_description_appeal_has_a_posting_that_fails_it`, whose
+     `no phrase` case IS this arm in one line, and which asserts against the CODE (all 8 still
+     refused on their titles) and not only against the file.
 
      Filed 2026-09-01.
 
