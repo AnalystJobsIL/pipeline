@@ -63,6 +63,18 @@ LINKEDIN_LIMIT_MAX = int(os.environ.get("LINKEDIN_LIMIT_MAX", "100"))
 # DO NOT COMBINE THEM INTO ONE BOOLEAN OR QUERY. The result cap is PER QUERY, not per
 # keyword, so one combined query buys ONE window: measured, 10 new companies against 76
 # from nine separate queries. That window mechanism is why this list is long and flat.
+#
+# AND DO NOT ADD A DESCRIPTION TERM HERE. LinkedIn's `keywords=` is full-text, so `SQL
+# Tableau` / `actionable insights` / `הפקת תובנות` do reach postings these nine titles
+# miss -- measured 2026-09-03 over ten such probes, 1,163 postings, and they are the wrong
+# postings: 53 new employers, **0 of them surfaced by an analyst-shaped role** (41 `none`,
+# 12 `excluded` -- a QA Engineer, a Bookkeeper, a Plumber Lead), and 0 new in-scope roles.
+# Of the 133 gate-rejected frontier postings, the 30 densest in analytics markers were
+# judged by production's own seam and 0 came back in scope. The two controls (`data
+# analyst`, and `insights analyst` dropped as saturated in 2026-08-23) returned 0 new
+# employers, which is what makes the probes' employers a real difference and a useless one.
+# Analyst vocabulary in a DESCRIPTION is not distinctive; in a TITLE it is.
+# docs/decisions/2026-09-03-discovery-description-queries.md.
 _LI_KEYWORDS = ["data analyst", "business intelligence", "product analyst", "BI developer",
                 "analytics", "data scientist", "אנליסט", "growth analyst",
                 "marketing analyst"]

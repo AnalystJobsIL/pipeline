@@ -175,6 +175,15 @@ document.
   Build regex source with `chr(92)` or the Edit tool, never a heredoc.
 - **A long heredoc failed to parse entirely** (`unexpected EOF while looking for matching`),
   losing a 140-line document. Write documents with the file tool.
+- **`open(path, "w")` truncated a tracked file before the read that was meant to feed it.**
+  `io.open(a, "w").write(io.open(a).read().rstrip() + row)` evaluates the OUTER open first,
+  so the inner read returned `""` and `docs/morning-checks.md` went from **137 lines to 2** —
+  58 archived predictions deleted, silently, exit 0. Nothing in the diff looked wrong; the
+  only reason it was caught is `check_morning_rows_survive`, which noticed a row that was "in
+  neither HANDOFF.md nor docs/morning-checks.md" and named it. **Read the whole file into a
+  variable on its own line, then open for write** — the same shape as intake rule 5
+  (`ARCHITECTURE.md` §1a), which exists because a truncating write replaced 1,606 queued
+  names. Recovered with `git checkout HEAD -- docs/morning-checks.md`.
 - **`tools/mutate.py` runs against `git archive HEAD`**, so the mutation catalogue must be
   committed before it can see a new record.
 - **The per-query counts are not a distinct set.** Summing the `marginal_new_employers`
