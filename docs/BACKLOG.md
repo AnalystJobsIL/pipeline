@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**626 filed · 451 open · 175 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**627 filed · 452 open · 175 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 576.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 577.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 150 open
+### registry — 151 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -244,6 +244,7 @@ closure convention in the header.
 - **549** `549@registry` **`deep_validate` recorded a NAME-ALIKE's empty board as this company having no
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
+- **576** `576@registry` **Two active rows share the Aristocrat Workday board, and the 12:53 auto-expand cron
 
 ### infra — 109 open
 
@@ -11473,8 +11474,10 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `wayback_rescue.py`) and had never written to it.
      What ships: the role store first (own urls and every `seen_ids` copy — the LinkedIn and
      Indeed pages are the ones that vanish), then the discovery net inside its 21-day cut,
-     then the scrape corpus, oldest-first within a tier; the careers page of every active
-     scrape row on a weekly rotation; 100 postings + 25 boards + 140 requests a day, three
+     then the scrape corpus, oldest-first within a tier, a fifth of the day reserved for
+     addresses refused before; the careers page of every active scrape row on rotation (due
+     after 7 days; at 25 a day over 532 pages the lap is ~3 weeks); 100 postings + 25 boards
+     + 140 requests a day, three
      threads behind one 6-s gate (the archive allows 15 a minute per IP and blocks for five
      minutes past it); one line per attempt in `cloud_state/wayback_ledger.jsonl` — url,
      date, HTTP result, capture timestamp, **never text** — merged uncapped
@@ -11489,8 +11492,24 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      is a 401. Unverified until the ledger says so: whether LinkedIn guest pages and Indeed
      (`ia_archiver: Disallow /`) capture at all — the per-host share (60 %) and the
      five-refusal park exist for that; the 09-05 morning check reads the first week.
-     **Backlog on day one: 4,603 addresses** behind 100 a day. If the operator wants the
-     corpus drained faster than ~six weeks, `WAYBACK_DAY_CAP`/`WAYBACK_WORKERS` on the
-     workflow are the levers, and the ledger's `throttled`/`daily-limit` lines say when the
-     archive disagrees. Not done: a reader of the ledger on the board (a "snapshot" link on
+     **Backlog on day one: 4,603 addresses** behind 100 a day — and the discovery net alone
+     adds **~124 a day** (2,597 addresses inside its 21-day window), so at the operator's cap
+     the backlog GROWS and the scrape corpus (1,809 addresses, tier 3) is never reached.
+     `WAYBACK_DAY_CAP`/`WAYBACK_WORKERS` on the workflow are the levers (250 a day at three
+     threads is ~35 minutes and still under the archive's 15 a minute), and the ledger's
+     `throttled`/`daily-limit` lines say when the archive disagrees. Two Opus waves over the
+     diff found the retry slice unreachable, the verify loop outside the pace gate, a
+     `pending` state nothing could leave, a concurrent-429 collapse at three workers, and a
+     percent-encoding corruption in the ledger key — all fixed before the push. Not done: a reader of the ledger on the board (a "snapshot" link on
      a card) — `render`'s, if wanted; retiring `jd-archive.yml` (`445`) would move the step.
+
+576. **Two active rows share the Aristocrat Workday board, and the 12:53 auto-expand cron
+     wrote the second** — lane: `registry`. Filed 2026-09-04 by `infra`, which found it as the
+     one red in a full local run (`test_no_two_active_rows_share_a_board`): `Aristocrat` and
+     `Aristocrat (Product Madness)` both ACTIVE on
+     `https://aristocrat.wd3.myworkdayjobs.com/wday/cxs/aristocrat/AristocratExternalCareersSite/jobs`,
+     written by `3f9c220` (schedule run `33873542190`). Until one is parked `alias-of <the
+     keeper>`, `tests.yml`'s `guard` job is red for every lane's push — the shape `550`/`558`
+     had. The fix is one `companies.csv` verdict through `pipeline/notes.py`, and the
+     question under it is why `auto_expand` activated a second row on a board the registry
+     already reads (the board is the identity, `registry` 08-30).

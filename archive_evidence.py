@@ -7,7 +7,7 @@ wrong-location questions of 2026-09-01 would each have been settled by a neutral
 repo already READS the Internet Archive (`pipeline/jdfill.py::wayback_snapshot`, the
 `archive` rung of `enrich_matched_jd.py`, `wayback_rescue.py` on Sundays); this is the
 writer. Every posting URL in the caches and the role store, plus the careers page of every
-active scrape row on a weekly rotation, goes to Save Page Now (`https://web.archive.org/save/`)
+active scrape row on rotation, goes to Save Page Now (`https://web.archive.org/save/`)
 -- anonymously, one request every few seconds, under a daily cap -- and one tiny line per
 attempt lands in `cloud_state/wayback_ledger.jsonl`: url, date, HTTP result, snapshot
 timestamp. Never any page text: the text stays in the archive, which is the point.
@@ -65,7 +65,7 @@ SAVE = "https://web.archive.org/save/"
 AVAILABLE = "https://archive.org/wayback/available"
 STAGE = "wayback"
 
-BOARD_DAYS = 7            # a careers page is re-submitted once a week
+BOARD_DAYS = 7            # a careers page is due again after a week; at 25 a day over ~530 pages the lap is ~3 weeks
 DISCOVERY_DAYS = 21       # the same cut `fetchers.fetch_discovery` reads the cache with
 PENDING_DAYS = 3          # a 200 with no capture is looked up on CDX for this long
 MAX_ATTEMPTS = 4          # past this a URL waits COOLDOWN_TIRED days, and is still retried
@@ -195,10 +195,10 @@ def canon(url) -> str:
     p = urllib.parse.urlsplit(u)
     if not p.hostname:
         return ""
-    q = [(k, v) for k, v in urllib.parse.parse_qsl(p.query, keep_blank_values=True)
-         if not TRACKING.match(k)]
-    query = urllib.parse.urlencode(q, safe="/:+,%") if q else ""
-    return urllib.parse.urlunsplit((p.scheme.lower(), p.netloc.lower(), p.path or "/", query, ""))
+    # the raw pairs, never decoded and re-encoded: `parse_qsl` + `urlencode` turned `%25`
+    # into a bare `%` and `%2B` into a space, so the ledger key was not the address seen
+    q = [part for part in p.query.split("&") if part and not TRACKING.match(part.split("=", 1)[0])]
+    return urllib.parse.urlunsplit((p.scheme.lower(), p.netloc.lower(), p.path or "/", "&".join(q), ""))
 
 
 def save_url(url: str) -> str:
@@ -224,7 +224,11 @@ def collect_targets(root: str = ROOT, today: dt.date | None = None) -> dict:
       aggregator copies are exactly the ones that vanish;
     3 the scrape corpus (`scraped_cache.json`, every card; a careers-page url is one target
       however many cards share it);
-    boards: the careers page of every active scrape row, companies with an open role first."""
+    boards: the careers page of every active scrape row, companies with an open role first.
+
+    Arithmetic the caps imply (measured 2026-09-04): the discovery net alone adds ~124 new
+    addresses a day against a 100-a-day cap, so tiers below it are reached only when the
+    cap is raised (`WAYBACK_DAY_CAP`); the stamp's `backlog` is that number."""
     today = today or dt.date.today()
     out: dict = {}
 
@@ -377,9 +381,16 @@ def _days(today: dt.date, iso: str) -> int:
         return 10 ** 6
 
 
+RETRY_SHARE = 0.2         # of the day's postings, reserved for addresses refused before
+
+
 def plan_batch(targets: dict, ledger: dict, today: dt.date, caps: Caps):
     """(postings, boards, backlog, boards_due). Fresh addresses first, oldest first within a
-    tier; retries after every fresh one; no host takes more than `host_share` of the day."""
+    tier, up to the day minus a reserved fifth; then every address refused before whose
+    cooldown has passed, fewest attempts first; then more fresh ones if room is left. The
+    reserve exists because fresh addresses outnumber the cap on every day measured, so
+    "retries after every fresh one" was a retry that never came (wave 1). No host takes
+    more than `host_share` of the day."""
     fresh, retry, boards = [], [], []
     for t in targets.values():
         s = ledger.get(t.url)
@@ -395,8 +406,9 @@ def plan_batch(targets: dict, ledger: dict, today: dt.date, caps: Caps):
     retry.sort()
     boards.sort()
     per_host_cap = max(1, int(caps.day * caps.host_share + 0.999999))
+    first = max(0, caps.day - max(1, int(caps.day * RETRY_SHARE)))
     chosen, per_host, deferred = [], {}, 0
-    for row in fresh + retry:
+    for row in fresh[:first] + retry + fresh[first:]:
         t = row[-1]
         if len(chosen) >= caps.day:
             deferred += 1
@@ -432,10 +444,13 @@ def _sleep(seconds: float) -> None:
 
 
 def _ts(*values) -> str:
+    """The capture timestamp a header names: the NEWEST in the first carrier that has one.
+    A `Link` header lists every memento it knows, oldest first (wave 1: the first match was
+    a 2020 capture recorded as today's)."""
     for v in values:
-        m = TS.search(str(v or ""))
-        if m:
-            return m.group(1)
+        found = TS.findall(str(v or ""))
+        if found:
+            return max(found)
     return ""
 
 
@@ -476,7 +491,14 @@ def submit(url: str, timeout: float = 60.0) -> Result:
             body = r.read(1_000_000).decode("utf-8", "replace") if status < 300 else ""
             return classify(int(status), r.headers, body, r.geturl())
     except urllib.error.HTTPError as e:          # every non-2xx, the un-followed 3xx included
-        return classify(int(e.code), e.headers, "", "")
+        try:
+            res = classify(int(e.code), e.headers, "", "")
+        finally:
+            try:
+                e.close()
+            except Exception:  # noqa: BLE001
+                pass
+        return res
     except Exception as e:  # noqa: BLE001 - a network error is a ledger line, not a crash
         if isinstance(e, TimeoutError) or "timed out" in str(e).lower():
             return Result(0, "", "pending")
@@ -541,7 +563,8 @@ class _Pool:
         self.lock = threading.Lock()
         self.next_send = 0.0
         self.stop = ""
-        self.throttled_once = False
+        self.throttle_at = None          # when the day's one throttle episode began
+        self.throttle_wait = 0.0
         self.parked, self.streak = set(), {}
 
     def _exhausted(self) -> bool:
@@ -561,22 +584,20 @@ class _Pool:
             return None
 
     def slot(self) -> bool:
-        """Wait for the pace gate; False when the day is over (stop, clock or budget)."""
-        while True:
-            with self.lock:
-                if self._exhausted():
-                    return False
-                now = time.monotonic()
-                wait = self.next_send - now
-                if wait <= 0:
-                    self.next_send = now + self.caps.pace_s
-                    self.rep.requests += 1
-                    return True
-            _sleep(min(wait, 1.0))
-
-    def pause(self, seconds: float) -> None:
-        with self.lock:                          # every thread waits: the block is per IP
-            self.next_send = max(self.next_send, time.monotonic() + seconds)
+        """Reserve the next send under the lock, then wait for it outside; False when the
+        day is over (stop, clock or budget). Reserving first is what makes `pace_s` hold
+        across threads, and sleeping once (not polling) is what makes a stubbed clock in
+        a test cost nothing (wave 1: a polled gate spun for 120 s under a no-op sleep)."""
+        with self.lock:
+            if self._exhausted():
+                return False
+            now = time.monotonic()
+            wait = max(0.0, self.next_send - now)
+            self.next_send = max(now, self.next_send) + self.caps.pace_s
+            self.rep.requests += 1
+        if wait > 0:
+            _sleep(wait)
+        return True
 
     def work(self) -> None:
         while True:
@@ -588,35 +609,53 @@ class _Pool:
                     self.rep.backlog += 1
                 return
             attempt = (self.ledger.get(t.url) or {}).get("attempts", 0) + 1
+            sent = time.monotonic()
             res = submit(t.url, self.caps.timeout_s)
             if res.err == "throttled" or res.err == "server" or res.err.startswith("net:"):
-                res = self._retry(t, res)
+                res = self._retry(t, res, sent)
             self.record(t, attempt, res)
 
-    def _retry(self, t: Target, res: Result) -> Result:
-        """Once. A 429 is the archive's five-minute block on this IP: every thread pauses
-        for it (or its Retry-After) and a second 429 ends the day. 5xx / a connection
-        error: 15 s."""
+    def _throttled(self, sent: float) -> float:
+        """Under the lock. 0.0 when a 429 to a request SENT at `sent` ends the day (it went
+        out after the day's one pause had elapsed, so the block is back), else the pause
+        every thread now waits. Three in-flight threads all see the same block at once --
+        one episode, not two (wave 1: the second thread through the lock ended the day
+        before anyone had paused; judged by arrival time, a paused thread's own resend
+        looked like a second episode)."""
+        self.rep.throttled += 1
+        if self.throttle_at is not None and sent >= self.throttle_at + self.throttle_wait:
+            self.stop = "throttled"
+            return 0.0
+        if self.throttle_at is None:
+            self.throttle_at = time.monotonic()
+            self.throttle_wait = self.caps.throttle_wait_s
+            self.next_send = max(self.next_send, self.throttle_at + self.throttle_wait)
+        return self.throttle_wait
+
+    def _retry(self, t: Target, res: Result, sent: float) -> Result:
+        """Once. A 429 is the archive's five-minute block on this IP (or its Retry-After):
+        every thread pauses for it, and a 429 to a request sent after the pause ends the
+        day. 5xx / a connection error: this thread waits 15 s."""
         with self.lock:
             if res.err == "throttled":
-                self.rep.throttled += 1
-                if self.throttled_once:
-                    self.stop = "throttled"
+                if res.retry_after and self.throttle_at is None:
+                    self.caps.throttle_wait_s = res.retry_after
+                wait = self._throttled(sent)
+                if not wait:
                     return res
-                self.throttled_once = True
-                wait = res.retry_after or self.caps.throttle_wait_s
             else:
                 wait = 15.0
             if time.monotonic() - self.started + wait > self.budget_s:
                 return res
-        self.pause(wait)
+        if res.err != "throttled":
+            _sleep(wait)
         if not self.slot():
             return res
+        sent = time.monotonic()
         res2 = submit(t.url, self.caps.timeout_s)
         if res2.err == "throttled":
             with self.lock:
-                self.rep.throttled += 1
-                self.stop = "throttled"
+                self._throttled(sent)
         return res2
 
     def record(self, t: Target, attempt: int, res: Result) -> None:
@@ -667,8 +706,9 @@ def run(root: str = ROOT, today: dt.date | None = None, caps: Caps | None = None
     postings, boards, rep.backlog, rep.boards_due = plan_batch(targets, ledger, today, caps)
     if limit:
         postings, boards = postings[:limit], boards[:max(0, limit - len(postings))]
-    pending = sorted((u, s) for u, s in ledger.items()
-                     if s["pending_at"] and _days(today, s["pending_at"]) >= 1)[:caps.verify]
+    pending = sorted(((u, s) for u, s in ledger.items()
+                      if s["pending_at"] and _days(today, s["pending_at"]) >= 1),
+                     key=lambda us: (us[1]["pending_at"], us[0]))[:caps.verify]   # oldest first
     print(f"[wayback] {len(targets)} addresses known, {len(postings)} postings + {len(boards)} boards "
           f"planned, {rep.backlog} deferred, {len(pending)} pending verification"
           + (" (DRY RUN: no request, no ledger line)" if dry_run else ""), flush=True)
@@ -680,18 +720,21 @@ def run(root: str = ROOT, today: dt.date | None = None, caps: Caps | None = None
     out = _Ledger(path, dry_run)
     try:
         # 1. yesterday's timeouts and bare 200s: does the archive hold the capture? Its own
-        #    endpoint and bucket.
+        #    endpoint, the same pace (the 15/min limit is per IP, not per endpoint), and a
+        #    bound: after PENDING_DAYS a line the archive has not confirmed -- or could not
+        #    be asked about -- goes back to the queue as `unverified` (wave 1: a failing
+        #    lookup left `pending` as the one state nothing could leave).
         for url, s in pending:
-            if time.monotonic() - started > budget_s:
+            if time.monotonic() - started > budget_s or rep.requests >= caps.requests:
                 break
             ts = capture_since(url, s["pending_at"])
             rep.requests += 1
             if ts:
                 rep.verified += 1
                 out.append(Line(_now(), url, s["kind"], 0, s["attempts"], 200, ts, "verified"), rep)
-            elif ts == "" and _days(today, s["pending_at"]) >= PENDING_DAYS:
+            elif _days(today, s["pending_at"]) >= PENDING_DAYS:
                 out.append(Line(_now(), url, s["kind"], 0, s["attempts"], 200, "", "unverified"), rep)
-            _sleep(2)
+            _sleep(caps.pace_s)
         # 2. the day's captures
         _Pool(postings + boards, ledger, out, rep, caps, started, budget_s).run()
     finally:

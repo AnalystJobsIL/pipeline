@@ -23,8 +23,10 @@ name: JD archive backfill (cloud)
 # filled card carries a description and is skipped) and resumable across days (cards are walked
 # oldest-attempt-first, so today starts where yesterday stopped and never re-walks the prefix).
 #
-# NOT `continue-on-error`. 36 of this repo's 80 named steps are, and that is why four days of
-# zero yield went unseen. If the pass fails, this workflow is red.
+# The enrich pass is NOT `continue-on-error` -- most of this repo's named steps are, and that
+# is why four days of zero yield went unseen. If the pass fails, this workflow is red. The
+# archive step above it IS (2026-09-04), by design: it must never take the pass down, and
+# its failure is not silent -- it is the `wayback` stamp's alarm in the morning mail.
 
 on:
   schedule:

@@ -2950,7 +2950,7 @@ the commits whose diff added or removed a string (a title, a url, a company); `-
 matters for a renamed file, and none of these ever was:
 
 ```bash
-git log --format='%h %ad %s' --date=short -S 'taboola' -i -- discovered_cache.json   # 5 commits on 2026-09-04
+git log --format='%h %ad %s' --date=short -S 'taboola' -i -- discovered_cache.json   # 7 commits on 2026-09-04
 git show 5ad8a1d:discovered_cache.json | python -c "import json,sys;[print(j['posted_date'],j['url'],j['title']) for j in json.load(sys.stdin) if 'taboola' in j['company'].lower()]"
 git log --format='%h %ad' --date=short -S 'taboola' -i -- cloud_state/roles_text.jsonl   # the description, when it had one
 git show 24619a1:cloud_state/roles_text.jsonl | grep -i taboola | python -c "import json,sys;[print(json.loads(l)['description'][:400]) for l in sys.stdin]"
@@ -2959,7 +2959,7 @@ git show 24619a1:cloud_state/roles_text.jsonl | grep -i taboola | python -c "imp
 Taboola's Product Analyst — the case this subsection exists for — was filed as "gone, zero
 snapshots, description unrecoverable forever". It is not: the second command above prints
 its description from `24619a1` (2026-08-28), the last commit of `roles_text.jsonl` that
-carried it, and the discovery cache holds eight other Taboola titles across five commits.
+carried it, and the discovery cache holds eight other Taboola titles across seven commits.
 What git cannot hold is a page we never fetched: `roles_text.jsonl` carries a description
 only for rows that got one, and a card the classifier judged title-only has no text anywhere.
 
@@ -2981,8 +2981,11 @@ answers for urls other people archived too — a Comeet posting had a capture fr
 before this ledger existed. A line whose `err` is `pending` is a submission the archive
 accepted without naming the capture; the next run asks the availability API and writes
 `verified`. Postings are submitted oldest-first within tiers (the role store, then the
-discovery net, then the scrape corpus) at 100 a day, so a posting first seen today may wait;
-`backlog` in the `wayback` stamp is how far behind the ledger runs.
+discovery net, then the scrape corpus) at 100 a day, a fifth of it reserved for addresses
+refused before — and the discovery net alone adds ~124 a day (measured 2026-09-04), so at
+that cap the scrape corpus is never reached and `backlog` in the `wayback` stamp grows;
+`WAYBACK_DAY_CAP` on the workflow is the lever, and the ledger's `throttled` and
+`daily-limit` lines say when the archive disagrees.
 
 **3. The 12:30 jd-archive pass keeps the text of the cards the title gate drops.** The same
 workflow's second step (`enrich_scrape_jd.py --archive-only`) fetches a description for every

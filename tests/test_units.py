@@ -28633,6 +28633,17 @@ import datetime as _wb_dt
 _WB_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+@pytest.fixture(autouse=True)
+def _wb_no_archive(monkeypatch):
+    """`archive_evidence` opens its own `OpenerDirector`, so `conftest`'s `urlopen` ban never
+    sees it. Every test starts with the seam closed; a test that wants the wire stubs it."""
+    import archive_evidence as A
+
+    def closed(req, timeout):
+        raise AssertionError("a test reached the archive: " + req.full_url)
+    monkeypatch.setattr(A, "_open", closed)
+
+
 def _wb_root(tmp_path, roles=(), matched=(), discovered=(), scraped=None, companies=()):
     """A repo root with the four stores the tool reads, in their real shapes."""
     import csv as _csv
@@ -28722,6 +28733,8 @@ def test_wayback_canon_drops_tracking_and_keeps_the_address():
         "https://job-boards.greenhouse.io/scopely/jobs/5384531008?gh_jid=5384531008"
     assert A.canon("HTTPS://WWW.Comeet.com/jobs/a/B.1/x/C.2") == "https://www.comeet.com/jobs/a/B.1/x/C.2"
     assert A.canon("comeet:BC.A60") == "" and A.canon("") == "" and A.canon(None) == ""
+    # the raw pairs, never decoded and re-encoded: wave 1 found `%25` -> `%` and `%2B` -> space
+    assert A.canon("https://ex.com/a?d=100%25&q=a%2Bb&utm_source=x&e=") == "https://ex.com/a?d=100%25&q=a%2Bb&e="
     assert A.save_url("https://x.com/a b/é?q=1&r=%20") == "https://web.archive.org/save/https://x.com/a%20b/%C3%A9?q=1&r=%20"
 
 
@@ -28797,11 +28810,14 @@ def test_wayback_plan_is_oldest_first_by_tier_with_a_host_share_and_retries_last
     postings, boards, backlog, due = A.plan_batch(targets, ledger, today, caps)
     urls = [t.url for t in postings]
     assert urls[:2] == ["https://x.com/open", "https://x.com/closed"]        # tier 1, open first
-    assert urls[2:5] == [f"https://boards.greenhouse.io/g/jobs/{i}" for i in range(3)] or \
-        urls[2:8].count("https://il.linkedin.com/jobs/view/0") == 1
-    assert sum(1 for u in urls if "linkedin" in u) == 6                        # 60 % of 10
-    assert urls[-1] == "https://x.com/retry" or "https://x.com/retry" not in urls
+    assert urls[2:8] == [f"https://il.linkedin.com/jobs/view/{i}" for i in range(6)]   # tier 2, oldest first, 60 % of 10
+    assert urls[8] == "https://x.com/retry"                                    # the reserved fifth: refused before, due again
+    assert urls[9] == "https://boards.greenhouse.io/g/jobs/0"                  # then the fresh tail
     assert len(urls) == 10 and backlog == 4                                    # 14 eligible postings
+    # the reserve is what makes a refusal retryable at all: fresh alone exceeds the cap
+    many = dict(targets, **{f"https://fresh{i}.io/p": A.Target(f"https://fresh{i}.io/p", "posting", 2, "2026-08-01") for i in range(50)})
+    p2, _b, _d, _due = A.plan_batch(many, ledger, today, caps)
+    assert "https://x.com/retry" in [t.url for t in p2]
     assert [b.url for b in boards] == ["https://board3.io/careers", "https://board1.io/careers"]
     assert due == 3                                                            # board0 captured yesterday
 
@@ -28862,6 +28878,8 @@ def test_wayback_classify_every_shape_the_archive_has_answered_with():
     assert (r.snap, r.err) == (ts, "")
     r = A.classify(200, {"Link": f'<https://x.com/p>; rel="original", <https://web.archive.org/web/{ts}/https://x.com/p>; rel="memento"'}, "", "")
     assert (r.snap, r.err) == (ts, "")
+    r = A.classify(200, {"Link": f'<https://x.com/p>; rel="original", <https://web.archive.org/web/20200101000000/https://x.com/p>; rel="first memento", <https://web.archive.org/web/{ts}/https://x.com/p>; rel="memento"'}, "", "")
+    assert r.snap == ts                                                        # the NEWEST, not the first
     r = A.classify(200, {"Link": '<https://x.com/p>; rel="original", <https://web.archive.org/web/timemap/link/https://x.com/p>; rel="timemap"'}, "<html>saving</html>", "")
     assert (r.snap, r.err) == ("", "pending")                                   # the Dec-2025 shape
     r = A.classify(200, {"X-Page-Cache": "HIT"}, "", "")
@@ -28968,6 +28986,31 @@ def test_wayback_run_writes_one_line_per_attempt_and_verifies_yesterdays_pending
     monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(AssertionError(req.full_url)))
     rep3 = A.run(root, today=_wb_dt.date(2026, 9, 6), caps=_wb_caps())
     assert (rep3.submitted, rep3.requests) == (0, 0)
+    # a pending line whose lookup keeps FAILING is not pending forever: after PENDING_DAYS it
+    # returns to the queue as `unverified`, and is submitted again the day after (wave 1)
+    root4 = _wb_root(tmp_path / "p", roles=[{"status": "open", "first_seen": "2026-08-01", "url": "https://p.io/x", "seen_ids": []}])
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(TimeoutError("timed out")))
+    A.run(root4, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps())
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(ConnectionResetError("cdx down")))
+    r5 = A.run(root4, today=_wb_dt.date(2026, 9, 5), caps=_wb_caps())
+    assert r5.requests == 1 and r5.submitted == 0                                # asked, no answer, still pending
+    r7 = A.run(root4, today=_wb_dt.date(2026, 9, 7), caps=_wb_caps())
+    lines = [_json.loads(x) for x in open(tmp_path / "p" / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
+    assert [l["err"] for l in lines] == ["pending", "unverified"] and r7.requests == 1
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(_wb_http_error(302, {"Location": "/web/20260908120000/https://p.io/x"})))
+    r8 = A.run(root4, today=_wb_dt.date(2026, 9, 8), caps=_wb_caps())
+    assert r8.submitted == 1                                                     # back in the queue, captured
+
+
+def _wb_clock(waits):
+    """A monotonic clock that has advanced by everything slept so far: the gate reserves
+    under the lock and sleeps once outside it, so under a stubbed sleep time must still
+    move or a pause would never end."""
+    base = 1000.0
+
+    def clock():
+        return base + sum(waits)
+    return clock
 
 
 def test_wayback_throttled_twice_ends_the_day_and_a_zero_day_alarms(tmp_path, monkeypatch):
@@ -28982,17 +29025,19 @@ def test_wayback_throttled_twice_ends_the_day_and_a_zero_day_alarms(tmp_path, mo
     waits, calls = [], []
     monkeypatch.setattr(A, "_sleep", lambda s: waits.append(s))
     monkeypatch.setattr(A, "_open", lambda req, timeout: calls.append(req.full_url) or (_ for _ in ()).throw(_wb_http_error(429, {"Retry-After": "120"})))
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock(waits))
     rep = A.run(root, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps(pace_s=0.0))
     assert rep.throttled == 2 and rep.failed == 1 and rep.submitted == 0 and len(calls) == 2
     assert rep.backlog == 4 and rep.alarm.startswith("zero-produce")
     assert rep.lines[0].err == "throttled" and rep.lines[0].http == 429
-    assert waits and max(waits) <= 1.0                                          # the pause is the gate, polled in 1 s steps
+    assert 120.0 in waits                                                       # Retry-After honoured, slept once, never polled
 
 
 def test_wayback_five_refusals_park_a_host_and_the_budget_counts_requests(tmp_path, monkeypatch):
-    """88 % of the corpus is LinkedIn: five consecutive refusals on distinct addresses of
-    one host park it for the run so the rest of the day goes elsewhere; the request budget
-    counts retries, and an exhausted budget leaves the remainder as backlog."""
+    """46.5 % of the target set is LinkedIn (2,434 of 5,235 on 2026-09-04; 88 % of the
+    discovery cache alone): five consecutive refusals on distinct addresses of one host
+    park it for the run so the rest of the day goes elsewhere; the request budget counts
+    retries, and an exhausted budget leaves the remainder as backlog."""
     import archive_evidence as A
     _wb_quiet(monkeypatch, tmp_path)
     roles = [{"status": "open", "first_seen": "2026-08-01", "url": f"https://il.linkedin.com/jobs/view/{i}", "seen_ids": []} for i in range(7)]
@@ -29035,6 +29080,25 @@ def test_wayback_workers_share_one_ledger_and_one_gate(tmp_path, monkeypatch):
     assert len(lines) == 12 and len({l["url"] for l in lines}) == 12
     assert (rep.submitted, rep.failed, rep.requests, rep.backlog) == (12, 0, 12, 0)
     assert len(seen_threads) >= 2
+    # one per-IP block hits every in-flight thread at once: ONE episode, every thread pauses,
+    # the retry after the pause is what decides the day (wave 1: the second thread through
+    # the lock ended the day before anyone had paused)
+    root3 = _wb_root(tmp_path / "t", roles=[{"status": "open", "first_seen": "2026-08-01", "url": f"https://t{i}.io/p", "seen_ids": []} for i in range(6)])
+    waits = []
+    clock = _wb_clock(waits)
+    block_until = clock() + 30.0                       # the archive's block: every request sent inside it is a 429
+
+    def opener3(req, timeout):
+        if clock() < block_until:
+            raise _wb_http_error(429, {"Retry-After": "30"})
+        raise _wb_http_error(302, {"Location": "/web/20260904120000/" + req.full_url.split("/save/", 1)[1]})
+    monkeypatch.setattr(A, "_sleep", lambda s: waits.append(s))
+    monkeypatch.setattr(A.time, "monotonic", clock)
+    monkeypatch.setattr(A, "_open", opener3)
+    rep3 = A.run(root3, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps(workers=3))
+    assert 1 <= rep3.throttled <= 3                                             # however many were in flight: ONE episode
+    assert rep3.submitted == 6 and rep3.failed == 0 and rep3.alarm == ""         # nobody ended the day
+    assert 30.0 in waits                                                        # Retry-After honoured, once
     # the daily-limit refusal stops every worker and alarms
     root2 = _wb_root(tmp_path / "d", roles=[{"status": "open", "first_seen": "2026-08-01", "url": f"https://d{i}.io/p", "seen_ids": []} for i in range(12)])
     monkeypatch.setattr(A, "_open", lambda req, timeout: _WbResp(200, {}, "You have reached your daily not-logged-in captures limit", req.full_url))
@@ -29070,6 +29134,44 @@ def test_wayback_dry_run_opens_no_socket_and_a_crash_is_a_stamped_alarm(tmp_path
     open(stages.PATH, "w", encoding="utf-8").write(_json.dumps(st))
     assert stages.alarms("wayback", 1) == ["wayback last ran 2d ago — the digest read stale input"]
     assert _re.search(r"wayback: \d{4}-\d\d-\d\d \(2d ago\) backlog=10 failed=0 submitted=3", stages.summary())
+
+
+def test_wayback_a_302_is_the_answer_and_is_not_followed():
+    """The one piece of the design that rests on stdlib behaviour, exercised for real: with
+    `_NoRedirect` installed, a 302 from `/save/` surfaces as an `HTTPError` carrying its
+    `Location`, and the playback it points at is never fetched. Built on the module's own
+    handler class through a real `OpenerDirector`, with the wire replaced one level down."""
+    import archive_evidence as A
+    import email.message
+    import io as _io
+    import urllib.request
+    import urllib.response
+    import urllib.error
+    fetched = []
+
+    class _Wire(urllib.request.BaseHandler):
+        handler_order = 100
+
+        def https_open(self, req):
+            fetched.append(req.full_url)
+            h = email.message.Message()
+            if "/save/" in req.full_url:
+                h["Location"] = "/web/20260904131416/https://x.com/p"
+                r = urllib.response.addinfourl(_io.BytesIO(b""), h, req.full_url, 302)
+            else:
+                r = urllib.response.addinfourl(_io.BytesIO(b"<html>playback</html>"), h, req.full_url, 200)
+            r.msg = "x"
+            return r
+    opener = urllib.request.build_opener(A._NoRedirect(), _Wire())
+    with pytest.raises(urllib.error.HTTPError) as ei:
+        opener.open(urllib.request.Request(A.save_url("https://x.com/p")), timeout=5)
+    assert ei.value.code == 302 and ei.value.headers["Location"].startswith("/web/20260904131416/")
+    assert fetched == [A.save_url("https://x.com/p")]                            # the playback was not fetched
+    # and the default opener WOULD have followed it: that is what the handler removes
+    plain = urllib.request.build_opener(_Wire())
+    plain.open(urllib.request.Request(A.save_url("https://x.com/p")), timeout=5)
+    assert len(fetched) == 3 and fetched[-1].startswith("https://web.archive.org/web/20260904131416/")
+    assert A.classify(302, ei.value.headers, "", "").snap == "20260904131416"
 
 
 def test_wayback_ledger_merge_is_uncapped_and_the_audit_logs_still_cap():
