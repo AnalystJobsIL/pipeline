@@ -4,6 +4,11 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "A.P. Moller - Maersk": {
+  "careers_url": "https://www.maersk.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "ABB": {
   "careers_url": "https://careers.abb/global/en/search-results",
   "platform": "scrape",
@@ -66,6 +71,11 @@
  },
  "Arrow Components": {
   "careers_url": "https://careers.arrow.com/us/search-results",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Axioma System Engineering and Integration": {
+  "careers_url": "https://www.axioma-in.com/jobopenings",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -161,9 +171,8 @@
  },
  "Dynamic Yield": {
   "careers_url": "https://www.dynamicyield.com/careers/",
-  "error": "scrape: render:Error (1 night)",
   "platform": "scrape",
-  "reason": "fetch-error"
+  "reason": "regressed-to-zero"
  },
  "ENI-ONE LTD": {
   "careers_url": "https://eni-one-ltd.breezy.hr",
@@ -210,6 +219,11 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Hailo": {
+  "careers_url": "https://hailo.ai/company-overview/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Harmonic": {
   "careers_url": "https://egmn.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs",
   "platform": "scrape",
@@ -237,6 +251,11 @@
  },
  "K2view": {
   "careers_url": "https://www.k2view.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Kimberly-Clark": {
+  "careers_url": "https://careers.kimberly-clark.com/en/job-search",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -290,6 +309,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "OurCrowd": {
+  "careers_url": "https://www.comeet.com/jobs/ourcrowd/D3.00A",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
  "Portnox": {
   "careers_url": "https://www.portnox.com/careers/",
   "platform": "scrape",
@@ -315,18 +339,24 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Regulus": {
+  "careers_url": "https://www.comeet.com/jobs/regulus/9A.00D",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
  "Revolut": {
   "careers_url": "https://www.revolut.com/en-US/careers/",
+  "error": "scrape: http:403 (1 night)",
   "platform": "scrape",
-  "reason": "regressed-to-zero"
+  "reason": "fetch-error"
  },
  "Shortical": {
   "careers_url": "https://www.comeet.com/jobs/shortical/3B.00A",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Sightec": {
-  "careers_url": "https://sightec.com/career/",
+ "Siemens Digital Industries Software": {
+  "careers_url": "https://jobs.sw.siemens.com/jobs/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -342,11 +372,6 @@
  },
  "StarkWare": {
   "careers_url": "https://starkware.co/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Sternum": {
-  "careers_url": "https://sternumiot.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -380,11 +405,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Voyage81": {
-  "careers_url": "https://voyage81.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Whalo": {
   "careers_url": "https://www.whalo.com/careers",
   "platform": "scrape",
@@ -395,10 +415,30 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Xtend": {
+  "careers_url": "https://www.xtend.me/working-at-xtend",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "aiOla": {
+  "careers_url": "https://aiola.ai/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "airHaifa": {
+  "careers_url": "https://www.airhaifa.com/careers-he/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "aspectiva": {
   "careers_url": "https://www.comeet.com/jobs/walmart/35.000",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "entrypoint": {
+  "careers_url": "https://entrypoint.co.il/he/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "rooms": {
   "careers_url": "https://www.working-rooms.co.il/careers",

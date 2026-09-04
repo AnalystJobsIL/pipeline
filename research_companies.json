@@ -1,11 +1,5 @@
 [
  {
-  "name": "Aristocrat",
-  "careers_url": "https://il.linkedin.com/jobs/view/games-product-manager-at-aristocrat-4454705563",
-  "ats": "unknown",
-  "slug": "aristocratcorporate"
- },
- {
   "name": "University of Haifa",
   "careers_url": "https://il.linkedin.com/jobs/view/tenure-track-faculty-position-at-the-department-of-statistics-at-university-of-haifa-4455857695",
   "ats": "unknown",
@@ -2457,13 +2451,7 @@
   "name": "SuperCom",
   "careers_url": "https://il.indeed.com/viewjob?jk=af15c85df3f9980b",
   "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "קבוצת כלמוביל",
-  "careers_url": "https://il.indeed.com/viewjob?jk=a95a61d0fa3fd689",
-  "ats": "unknown",
-  "slug": ""
+  "slug": "supercom"
  },
  {
   "name": "Algorio",
@@ -2490,22 +2478,10 @@
   "slug": "glassesusa-llc"
  },
  {
-  "name": "ArborKnot",
-  "careers_url": "https://il.linkedin.com/jobs/view/data-science-ai-lead-at-arborknot-4459962383",
-  "ats": "unknown",
-  "slug": "arborknotcom"
- },
- {
   "name": "Tnuva",
   "careers_url": "https://il.linkedin.com/jobs/view/demand-supply-planner-at-tnuva-4459952126",
   "ats": "unknown",
   "slug": "tnuva"
- },
- {
-  "name": "Leiman Schlussel",
-  "careers_url": "https://il.linkedin.com/jobs/view/global-supply-planner-at-leiman-schlussel-4459245833",
-  "ats": "unknown",
-  "slug": "leiman-schlussel"
  },
  {
   "name": "Harcatus Community Action Prgm",
@@ -2526,40 +2502,10 @@
   "slug": "rainfrst"
  },
  {
-  "name": "COBRA IO",
-  "careers_url": "https://il.linkedin.com/jobs/view/ppc-campaign-manager-%E2%80%93-performance-marketing-at-cobra-io-4459948868",
-  "ats": "unknown",
-  "slug": "cobra-io"
- },
- {
-  "name": "PPG Digital",
-  "careers_url": "https://il.linkedin.com/jobs/view/ppc-manager-at-ppg-digital-4460492545",
-  "ats": "unknown",
-  "slug": "ppg-digital"
- },
- {
-  "name": "Rashi Foundation",
-  "careers_url": "https://il.linkedin.com/jobs/view/social-media-marketing-specialist-at-rashi-foundation-4461590940",
-  "ats": "unknown",
-  "slug": "rashi-foundation"
- },
- {
   "name": "ISI - ImageSat International",
   "careers_url": "https://il.linkedin.com/jobs/view/marcom-specialist-at-isi-imagesat-international-4462438627",
   "ats": "unknown",
   "slug": "imagesat-international"
- },
- {
-  "name": "TransPerfect Connect",
-  "careers_url": "https://il.linkedin.com/jobs/view/marketing-lead-at-transperfect-connect-4460488161",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "Midea Group",
-  "careers_url": "https://il.linkedin.com/jobs/view/key-account-manager-at-midea-group-4460297118",
-  "ats": "unknown",
-  "slug": "mideagroup"
  },
  {
   "name": "Galil Software Ltd.",
@@ -2572,12 +2518,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/technical-lead-at-%D7%A2%D7%9E%D7%95%D7%AA%D7%94-%D7%91%D7%A7%D7%95%D7%A4%D7%A1%D7%94-np-in-a-box-4459944365",
   "ats": "unknown",
   "slug": "np-inabox"
- },
- {
-  "name": "Originai",
-  "careers_url": "https://secrethunter.io/companies/originai",
-  "ats": "unknown",
-  "slug": "originai"
  },
  {
   "name": "Oriontech Engineering Ltd",
@@ -2640,28 +2580,10 @@
   "slug": "oversee-biz"
  },
  {
-  "name": "P M I Ltd",
-  "careers_url": "https://secrethunter.io/companies/p-m-i-ltd",
-  "ats": "unknown",
-  "slug": "p-m-i-ltd"
- },
- {
-  "name": "Paamonim",
-  "careers_url": "https://secrethunter.io/companies/pa%27amonim",
-  "ats": "unknown",
-  "slug": "paamonim"
- },
- {
   "name": "Package AI",
   "careers_url": "https://secrethunter.io/companies/package.ai",
   "ats": "unknown",
   "slug": "package-ai"
- },
- {
-  "name": "Padagis Israel",
-  "careers_url": "https://secrethunter.io/companies/padagis-israel",
-  "ats": "unknown",
-  "slug": "padagis-israel"
  },
  {
   "name": "Palace America",
@@ -2674,18 +2596,6 @@
   "careers_url": "https://secrethunter.io/companies/palgey-mayim",
   "ats": "unknown",
   "slug": "palgey-mayim"
- },
- {
-  "name": "Palram Industries Ltd",
-  "careers_url": "https://secrethunter.io/companies/palram-industries-ltd-",
-  "ats": "unknown",
-  "slug": "palram-industries-ltd"
- },
- {
-  "name": "Palziv",
-  "careers_url": "https://secrethunter.io/companies/palziv",
-  "ats": "unknown",
-  "slug": "palziv"
  },
  {
   "name": "Panaya",
@@ -2714,6 +2624,294 @@
  {
   "name": "Winbond Israel",
   "careers_url": "https://secrethunter.io/jobz/b14a8575cc",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Mertens - Malam Team",
+  "careers_url": "https://il.indeed.com/viewjob?jk=5b36a355c433f38b",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Yuval HR - Talent agency and advisory",
+  "careers_url": "https://il.linkedin.com/jobs/view/business-analyst-b2c-at-yuval-hr-talent-agency-and-advisory-4463132134",
+  "ats": "unknown",
+  "slug": "yuvalhr"
+ },
+ {
+  "name": "NATASHA DENONA IL",
+  "careers_url": "https://il.linkedin.com/jobs/view/planning-specialist-at-natasha-denona-il-4461066954",
+  "ats": "unknown",
+  "slug": "natasha-denona-il"
+ },
+ {
+  "name": "EPAM Systems",
+  "careers_url": "https://il.linkedin.com/jobs/view/data-scientist-at-epam-systems-4461699762",
+  "ats": "unknown",
+  "slug": "epam-systems"
+ },
+ {
+  "name": "KUKI Strategies",
+  "careers_url": "https://il.linkedin.com/jobs/view/hubspot-clay-expert-revops-specialist-at-kuki-strategies-4460734965",
+  "ats": "unknown",
+  "slug": "kukis"
+ },
+ {
+  "name": "Clal Insurance & Finance- כלל ביטוח ופיננסים",
+  "careers_url": "https://il.linkedin.com/jobs/view/business-intelligence-team-lead-at-clal-insurance-finance-%D7%9B%D7%9C%D7%9C-%D7%91%D7%99%D7%98%D7%95%D7%97-%D7%95%D7%A4%D7%99%D7%A0%D7%A0%D7%A1%D7%99%D7%9D-4461051921",
+  "ats": "unknown",
+  "slug": "clal-insurance-"
+ },
+ {
+  "name": "Consist",
+  "careers_url": "https://il.linkedin.com/jobs/view/sap-business-warehouse-consultant-at-consist-4460714527",
+  "ats": "unknown",
+  "slug": "consist"
+ },
+ {
+  "name": "Mindspace Poland",
+  "careers_url": "https://il.linkedin.com/jobs/view/director-of-fp-a-at-mindspace-poland-4461723822",
+  "ats": "unknown",
+  "slug": "mindspace-poland"
+ },
+ {
+  "name": "DeePlan",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%99%D7%99%D7%A9%D7%9D-%D7%AA-salesforce-%D7%9C%D7%97%D7%91%D7%A8%D7%94-%D7%A7%D7%9E%D7%A2%D7%95%D7%A0%D7%90%D7%99%D7%AA-%D7%91%D7%A8%D7%90%D7%A9-%D7%94%D7%A2%D7%99%D7%9F-at-deeplan-4459967788",
+  "ats": "unknown",
+  "slug": "deeplanltd"
+ },
+ {
+  "name": "Baz",
+  "careers_url": "https://il.linkedin.com/jobs/view/artificial-intelligence-engineer-at-baz-4459941487",
+  "ats": "unknown",
+  "slug": "bazco"
+ },
+ {
+  "name": "Genesys",
+  "careers_url": "https://il.linkedin.com/jobs/view/associate-software-engineer-fixed-term-contract-at-genesys-4461138951",
+  "ats": "unknown",
+  "slug": "genesys"
+ },
+ {
+  "name": "Xpend",
+  "careers_url": "https://il.linkedin.com/jobs/view/full-stack-software-engineer-ai-automation-at-xpend-4459937272",
+  "ats": "unknown",
+  "slug": "xpend-global-marketing"
+ },
+ {
+  "name": "SkyGini",
+  "careers_url": "https://il.linkedin.com/jobs/view/performance-growth-manager-at-skygini-4459297452",
+  "ats": "unknown",
+  "slug": "skygini"
+ },
+ {
+  "name": "Mobile Group Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/algorithm-developer-at-mobile-group-ltd-4460929966",
+  "ats": "unknown",
+  "slug": "mobile-group-ltd"
+ },
+ {
+  "name": "ERGO NEXT Insurance",
+  "careers_url": "https://il.linkedin.com/jobs/view/user-acquisition-manager-at-ergo-next-insurance-4431923432",
+  "ats": "unknown",
+  "slug": "ergo-next-insurance"
+ },
+ {
+  "name": "Genpire",
+  "careers_url": "https://il.linkedin.com/jobs/view/marketing-manager-at-genpire-4461153137",
+  "ats": "unknown",
+  "slug": "genpire"
+ },
+ {
+  "name": "Level App",
+  "careers_url": "https://il.linkedin.com/jobs/view/digital-marketing-specialist-at-level-app-4458829422",
+  "ats": "unknown",
+  "slug": "levelapptech"
+ },
+ {
+  "name": "Gofmans' Smart Marketing",
+  "careers_url": "https://il.linkedin.com/jobs/view/marketing-project-manager-at-gofmans-smart-marketing-4461127610",
+  "ats": "unknown",
+  "slug": "gofmans-smart-marketing"
+ },
+ {
+  "name": "Playnance | The Blockchain of On-Chain Entertainment",
+  "careers_url": "https://il.linkedin.com/jobs/view/influencer-marketing-specialist-english-at-playnance-the-blockchain-of-on-chain-entertainment-4462804874",
+  "ats": "unknown",
+  "slug": "playnance"
+ },
+ {
+  "name": "Dr. Fischer",
+  "careers_url": "https://il.linkedin.com/jobs/view/brand-manager-%E2%80%93-international-marketing-at-dr-fischer-4462803270",
+  "ats": "unknown",
+  "slug": "dr-fischer"
+ },
+ {
+  "name": "Altshuler Shaham",
+  "careers_url": "https://il.linkedin.com/jobs/view/brand-manager-at-altshuler-shaham-4461647335",
+  "ats": "unknown",
+  "slug": "altshuler-shaham"
+ },
+ {
+  "name": "Particleformen",
+  "careers_url": "https://secrethunter.io/companies/particleformen",
+  "ats": "unknown",
+  "slug": "particleformen"
+ },
+ {
+  "name": "Particulatech",
+  "careers_url": "https://secrethunter.io/companies/particulatech",
+  "ats": "unknown",
+  "slug": "particulatech"
+ },
+ {
+  "name": "Partner Israel",
+  "careers_url": "https://secrethunter.io/companies/partner-israel",
+  "ats": "unknown",
+  "slug": "partner-israel"
+ },
+ {
+  "name": "Partnerverseasb",
+  "careers_url": "https://secrethunter.io/companies/partnerverseasb",
+  "ats": "unknown",
+  "slug": "partnerverseasb"
+ },
+ {
+  "name": "Pas Gon 1996 Ltd",
+  "careers_url": "https://secrethunter.io/companies/pas-gon-1996-ltd",
+  "ats": "unknown",
+  "slug": "pas-gon-1996-ltd"
+ },
+ {
+  "name": "Passportcardd",
+  "careers_url": "https://secrethunter.io/companies/passportcardd",
+  "ats": "unknown",
+  "slug": "passportcardd"
+ },
+ {
+  "name": "Pasternak Shoam Investment House",
+  "careers_url": "https://secrethunter.io/companies/pasternak-shoam-investment-house",
+  "ats": "unknown",
+  "slug": "pasternak-shoam-investment-house"
+ },
+ {
+  "name": "Pathlock",
+  "careers_url": "https://secrethunter.io/companies/pathlock",
+  "ats": "unknown",
+  "slug": "pathlock"
+ },
+ {
+  "name": "Patnet Pro",
+  "careers_url": "https://secrethunter.io/companies/patnet-pro",
+  "ats": "unknown",
+  "slug": "patnet-pro"
+ },
+ {
+  "name": "Paxis Ceramics",
+  "careers_url": "https://secrethunter.io/companies/paxis-ceramics",
+  "ats": "unknown",
+  "slug": "paxis-ceramics"
+ },
+ {
+  "name": "Paxos",
+  "careers_url": "https://secrethunter.io/companies/paxos",
+  "ats": "unknown",
+  "slug": "paxos"
+ },
+ {
+  "name": "Payme IO",
+  "careers_url": "https://secrethunter.io/companies/payme-io",
+  "ats": "unknown",
+  "slug": "payme-io"
+ },
+ {
+  "name": "Pazgas",
+  "careers_url": "https://secrethunter.io/companies/pazgas",
+  "ats": "unknown",
+  "slug": "pazgas"
+ },
+ {
+  "name": "Pcb",
+  "careers_url": "https://secrethunter.io/companies/pcb",
+  "ats": "unknown",
+  "slug": "pcb"
+ },
+ {
+  "name": "Peachcontent",
+  "careers_url": "https://secrethunter.io/companies/peachcontent",
+  "ats": "unknown",
+  "slug": "peachcontent"
+ },
+ {
+  "name": "Peak Tech Innovation",
+  "careers_url": "https://secrethunter.io/companies/peak-tech-innovation",
+  "ats": "unknown",
+  "slug": "peak-tech-innovation"
+ },
+ {
+  "name": "Pearson",
+  "careers_url": "https://secrethunter.io/companies/pearson",
+  "ats": "unknown",
+  "slug": "pearson"
+ },
+ {
+  "name": "Peax Dorcom",
+  "careers_url": "https://secrethunter.io/companies/peax-dorcom",
+  "ats": "unknown",
+  "slug": "peax-dorcom"
+ },
+ {
+  "name": "Peerspotdotcom",
+  "careers_url": "https://secrethunter.io/companies/peerspotdotcom",
+  "ats": "unknown",
+  "slug": "peerspotdotcom"
+ },
+ {
+  "name": "Pelephone",
+  "careers_url": "https://secrethunter.io/companies/pelephone",
+  "ats": "unknown",
+  "slug": "pelephone"
+ },
+ {
+  "name": "Pendo",
+  "careers_url": "https://secrethunter.io/companies/pendo",
+  "ats": "unknown",
+  "slug": "pendo"
+ },
+ {
+  "name": "Pendo IO Japan",
+  "careers_url": "https://secrethunter.io/companies/pendo-io-japan",
+  "ats": "unknown",
+  "slug": "pendo-io-japan"
+ },
+ {
+  "name": "Perah Special Education",
+  "careers_url": "https://secrethunter.io/companies/perah-special-education",
+  "ats": "unknown",
+  "slug": "perah-special-education"
+ },
+ {
+  "name": "Perfect Line",
+  "careers_url": "https://secrethunter.io/companies/perfect-line",
+  "ats": "unknown",
+  "slug": "perfect-line"
+ },
+ {
+  "name": "A Security",
+  "careers_url": "https://secrethunter.io/jobz/bf8aab8535",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Amitim Pension Funds",
+  "careers_url": "https://secrethunter.io/jobz/f07378495a",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "vetric",
+  "careers_url": "https://secrethunter.io/jobz/6cf0e9e8a6",
   "ats": "unknown",
   "slug": ""
  }
