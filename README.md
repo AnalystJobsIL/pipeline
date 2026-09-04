@@ -16,7 +16,7 @@ at **any experience level**, and a daily email of what is new.
 - **The email** — once a day, only roles posted in the last 48h, grouped by company.
 
 The point of the design: **an employer's own careers board is the source of truth, not an
-aggregator's copy of it.** The pipeline reads 800+ companies' *own* boards every morning —
+aggregator's copy of it.** The pipeline reads 1,000+ companies' *own* boards every morning —
 about half through a native ATS API (Comeet, Greenhouse, Lever, SmartRecruiters, Recruitee,
 Ashby, Workday, Oracle HCM and 9 more), the rest by rendering the page — out of a registry of
 1,500+ rows, filters to Israel-located analytics roles, and publishes what it can still
@@ -119,7 +119,7 @@ the code that implements it is described in `ARCHITECTURE.md` §0.
   `out/digest-<date>.{html,txt,md,json}` and `out/docs-preview/`, and never emails or
   publishes. An unscoped one still never emails, but it does overwrite the published board.
 
-The 80 scripts at the repo root are the coverage machinery: resolvers, hunts, audits and
+The 81 scripts at the repo root are the coverage machinery: resolvers, hunts, audits and
 one-shot probes. `docs/MODULES.md` says which are scheduled, which are libraries, which are
 operator tools and which are dead weight — 32 of them are reachable from no workflow, no
 test and no live import.

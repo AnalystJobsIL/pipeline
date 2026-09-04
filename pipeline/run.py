@@ -254,6 +254,11 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                      # late (infra, 2026-08-30). Both stamp every morning, so 1; `never ran`
                      # until the first digest carrying those steps is the correct reading.
                      + stages.alarms("ci", 1) + stages.alarms("cron", 1)
+                     # `wayback`: jd-archive.yml's 12:30 Save Page Now step (infra,
+                     # 2026-09-04). Its stamp is yesterday's at every 05:00 digest, so 1
+                     # is quiet on a healthy morning and reads `2d ago` after one dropped
+                     # slot; its own `alarm=` key carries a zero-produce or daily-limit day.
+                     + stages.alarms("wayback", 1)
                      # `publish` is this run's own stage: a stamp older than yesterday means
                      # yesterday's digest never reached its stamp (a crash or a timeout)
                      + [a.replace("— the digest read stale input", "— yesterday's digest never completed")

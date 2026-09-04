@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**625 filed · 451 open · 174 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**626 filed · 451 open · 175 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 575.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 576.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -11457,3 +11457,40 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      plus re-running each tool once so the change is a measured delta and not a hope. Not done
      in the shipping commit because a forecast tool's output is a number other sessions quote,
      and moving it silently in a commit about the gate is how a number stops being checkable.
+
+## From the `infra` session, 2026-09-04 (evidence decay)
+
+575. ~~**Evidence decays before a dispute is settled: a posting vanishes and no neutral copy
+     of it exists anywhere**~~ — **CLOSED 2026-09-04 (`infra`): `archive_evidence.py`, the
+     first step of `jd-archive.yml` at 12:30, submits every posting url we have seen to the
+     Internet Archive's Save Page Now.** Filed and closed in the same commit, at the
+     operator's instruction, so the class has a number.
+     Taboola's Product Analyst 404'd on its own board nine days after the last sighting and
+     cost a Bright Data credit to discover (`docs/sessions/2026-08-26-jd-text.md`); the
+     wrong-employer (`545`) and wrong-location (`535`) questions of 09-01 were each argued
+     from our own caches with no third party to ask. The repo READ the archive in three
+     places (`jdfill.wayback_snapshot`, `enrich_matched_jd`'s `archive` rung,
+     `wayback_rescue.py`) and had never written to it.
+     What ships: the role store first (own urls and every `seen_ids` copy — the LinkedIn and
+     Indeed pages are the ones that vanish), then the discovery net inside its 21-day cut,
+     then the scrape corpus, oldest-first within a tier; the careers page of every active
+     scrape row on a weekly rotation; 100 postings + 25 boards + 140 requests a day, three
+     threads behind one 6-s gate (the archive allows 15 a minute per IP and blocks for five
+     minutes past it); one line per attempt in `cloud_state/wayback_ledger.jsonl` — url,
+     date, HTTP result, capture timestamp, **never text** — merged uncapped
+     (`persist_state.s_jsonl_ledger`); a failure is a cooldown, never a verdict; the
+     `wayback` stamp and a `Stages:` clause when a day lands nothing, the archive's daily
+     limit bites, or the step crashes. Runbook: ARCHITECTURE §5 *Recovering expired
+     evidence* — and it found the premise wrong: the Taboola description is in
+     `24619a1:cloud_state/roles_text.jsonl`.
+     **Measured, not assumed** (seven submissions from this machine on 09-04): the capture is
+     taken within seconds; the 302 naming it arrives after 18 s, or 90 s+, or a 520 arrives
+     at 37 s; a client that hung up at 15 s still got its capture. The anonymous JSON flow
+     is a 401. Unverified until the ledger says so: whether LinkedIn guest pages and Indeed
+     (`ia_archiver: Disallow /`) capture at all — the per-host share (60 %) and the
+     five-refusal park exist for that; the 09-05 morning check reads the first week.
+     **Backlog on day one: 4,603 addresses** behind 100 a day. If the operator wants the
+     corpus drained faster than ~six weeks, `WAYBACK_DAY_CAP`/`WAYBACK_WORKERS` on the
+     workflow are the levers, and the ledger's `throttled`/`daily-limit` lines say when the
+     archive disagrees. Not done: a reader of the ledger on the board (a "snapshot" link on
+     a card) — `render`'s, if wanted; retiring `jd-archive.yml` (`445`) would move the step.

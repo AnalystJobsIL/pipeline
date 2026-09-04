@@ -79,6 +79,33 @@ jobs:
           echo "JD_ENRICH_BD_CAP=$CAP" >> "$GITHUB_ENV"
           echo "- Bright Data cap this run: **$CAP**" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Submit every posting we have seen to the Internet Archive
+        # `archive_evidence.py` (infra, 2026-09-04): a third-party snapshot behind every
+        # posting before a dispute needs one -- Taboola's vanished nine days after we last
+        # saw it and no cache held its text. FIRST, before the 90-minute enrich pass, so an
+        # overrun there cannot starve it. Anonymous, one request every 6 s (the archive
+        # allows 15 a minute per IP and blocks for five minutes past that), 100 postings +
+        # 25 careers pages a day, 140 requests all told. The 302 naming a capture arrives
+        # after 18 s or after minutes (measured 09-04), so three threads wait behind one 6 s
+        # pace gate, and a 60 s timeout is `pending` -- the capture very probably exists and
+        # the next run asks the archive. It never raises: a refusal is a
+        # ledger line with a cooldown, a throttle ends the day, and `continue-on-error`
+        # keeps a crash from taking the enrich pass with it -- the crash is still a
+        # `wayback crashed:` clause in the morning mail's `Stages:` line, so it is not
+        # silent. What it produced is the `[wayback] submitted N` line below and the same
+        # numbers in the `wayback` stamp.
+        env:
+          WAYBACK_DAY_CAP: "100"
+          WAYBACK_BOARD_CAP: "25"
+          WAYBACK_REQ_CAP: "140"
+          WAYBACK_TIME_BUDGET_MIN: "30"
+          WAYBACK_PACE_S: "6"
+          WAYBACK_TIMEOUT_S: "60"
+          WAYBACK_WORKERS: "3"
+        timeout-minutes: 40
+        run: python archive_evidence.py
+        continue-on-error: true
+
       - name: Fetch descriptions for the cards the title gate drops
         env:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
@@ -136,4 +163,4 @@ jobs:
         run: |
           python persist_state.py commit --as "jd-bot" \
             -m "jd archive: descriptions for the cards the title gate drops $(date -u +%F) [skip ci]" \
-            --own scraped_cache.json cloud_state/pipeline_stages.json
+            --own scraped_cache.json cloud_state/pipeline_stages.json cloud_state/wayback_ledger.jsonl

@@ -75,6 +75,10 @@ PERSIST_LOG = "cloud_state/persist_log.jsonl"
 # What each process bought, written by `bd_rescue._report_spend`. Same shape and same
 # reason: the run page dies with the run record, and this repo deletes run records.
 BD_SPEND_LOG = "cloud_state/bd_spend.jsonl"
+# One line per Save Page Now attempt, written by `archive_evidence.py` (infra, 2026-09-04):
+# url, date, HTTP result, capture timestamp. A LEDGER, not an audit log -- it is how the
+# repo knows which posting already has a snapshot, so it is never capped.
+WAYBACK_LEDGER = "cloud_state/wayback_ledger.jsonl"
 PERSIST_LOG_MAX = 400                       # ~a month at 10-15 commits/day
 # PROVISIONAL, n=3. Tuned on the only three regressions ever measured -- 16/279 (5.7%),
 # 16/221 (7.2%) and 24/243 (9.9%) -- to fire on all of them while staying quiet for the
@@ -214,12 +218,9 @@ def _safe_loads(b):
         return None
 
 
-def s_jsonl_union(base, ours, theirs):
-    """An append-only `.jsonl` audit log written by every workflow: the union of the lines,
-    oldest first, capped. There is no conflict to resolve -- two runs appending different
-    lines both said something true -- so a union is the whole merge, and it is the reason
-    this log can have many writers without a single-writer claim. Deduped on the exact line
-    so a rebase that replays the same append twice does not double it."""
+def _jsonl_union(base, ours, theirs, cap):
+    """The union of both sides' lines, oldest first, deduped on the exact line, the newest
+    `cap` kept (`None`: every one)."""
     seen, out = set(), []
     for side in (theirs, ours):                 # ours last: a same-key re-run wins the order
         for line in (side or b"").splitlines():
@@ -228,7 +229,25 @@ def s_jsonl_union(base, ours, theirs):
                 seen.add(line)
                 out.append(line)
     out.sort(key=_log_sort_key)
-    return b"\n".join(out[-PERSIST_LOG_MAX:]) + b"\n" if out else b""
+    if cap:
+        out = out[-cap:]
+    return b"\n".join(out) + b"\n" if out else b""
+
+
+def s_jsonl_union(base, ours, theirs):
+    """An append-only `.jsonl` audit log written by every workflow: the union of the lines,
+    oldest first, capped. There is no conflict to resolve -- two runs appending different
+    lines both said something true -- so a union is the whole merge, and it is the reason
+    this log can have many writers without a single-writer claim. Deduped on the exact line
+    so a rebase that replays the same append twice does not double it."""
+    return _jsonl_union(base, ours, theirs, PERSIST_LOG_MAX)
+
+
+def s_jsonl_ledger(base, ours, theirs):
+    """The same union, UNCAPPED: a ledger the tool reads back to decide what is already
+    done. Capped at 400 it would forget every posting submitted more than a few days ago
+    and re-submit them all (infra, 2026-09-04)."""
+    return _jsonl_union(base, ours, theirs, None)
 
 
 def _log_sort_key(line):
@@ -352,6 +371,7 @@ STRATEGY = {
     "cloud_state/queue_disposition.json": (s_company_dict, "per retired NAME, the verdict and the evidence it rests on"),
     PERSIST_LOG: (s_jsonl_union, "append-only audit log; the union of every workflow's lines"),
     BD_SPEND_LOG: (s_jsonl_union, "append-only Bright Data spend, one line per process"),
+    WAYBACK_LEDGER: (s_jsonl_ledger, "append-only Save Page Now ledger, one line per attempt, never capped"),
 }
 SINGLE_WRITER = {   # documented `ours` paths (one cloud writer each); anything else warns
     "cloud_state/seen.db": "daily-digest", "cloud_state/roles.jsonl": "daily-digest",

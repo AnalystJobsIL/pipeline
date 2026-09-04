@@ -28622,3 +28622,471 @@ def test_a_gate_change_supersedes_no_cached_verdict(monkeypatch):
     monkeypatch.setattr(seniority, "_GATE_APPEAL", re.compile("zzzz"))
     assert seniority._contract() == before
     assert seniority._desc_appealed(_ZOLL_TEXT) is False, "the mutation must actually bite"
+
+
+# ------------------------------------------------------------------ lane: infra, 2026-09-04
+# `archive_evidence.py`: a third-party snapshot behind every posting we have seen. Every test
+# below stubs the ONE socket seam (`archive_evidence._open`) -- `web.archive.org` is not in
+# `conftest.PAID_HOSTS`, so nothing else would stop a test from reaching the real archive.
+import datetime as _wb_dt
+
+_WB_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _wb_root(tmp_path, roles=(), matched=(), discovered=(), scraped=None, companies=()):
+    """A repo root with the four stores the tool reads, in their real shapes."""
+    import csv as _csv
+    import json as _json
+    import sqlite3 as _sq
+    (tmp_path / "cloud_state").mkdir(parents=True, exist_ok=True)
+    with open(tmp_path / "cloud_state" / "roles.jsonl", "w", encoding="utf-8") as f:
+        for r in roles:
+            f.write(_json.dumps(r) + "\n")
+    c = _sq.connect(str(tmp_path / "cloud_state" / "seen.db"))
+    c.execute("create table matched (mkey text primary key, url text, first_seen text)")
+    c.executemany("insert into matched values (?,?,?)", list(matched))
+    c.commit()
+    c.close()
+    (tmp_path / "discovered_cache.json").write_text(_json.dumps(list(discovered)), encoding="utf-8")
+    (tmp_path / "scraped_cache.json").write_text(_json.dumps(scraped or {}), encoding="utf-8")
+    with open(tmp_path / "companies.csv", "w", encoding="utf-8", newline="") as f:
+        w = _csv.writer(f)
+        w.writerow(["company_name", "ats_platform", "token", "api_url", "active", "notes"])
+        for row in companies:
+            w.writerow(row)
+    return str(tmp_path)
+
+
+class _WbResp:
+    """What `_open` yields: a response with headers, or raises HTTPError for a non-2xx."""
+
+    def __init__(self, status=200, headers=None, body="", url=""):
+        import email.message
+        self.status, self._body, self._url = status, body, url
+        self.headers = email.message.Message()
+        for k, v in (headers or {}).items():
+            self.headers[k] = v
+
+    def getcode(self):
+        return self.status
+
+    def geturl(self):
+        return self._url
+
+    def read(self, n=None):
+        b, self._body = self._body, ""
+        return b.encode("utf-8")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def _wb_http_error(code, headers=None, body=b""):
+    import email.message
+    import io as _io
+    import urllib.error
+    h = email.message.Message()
+    for k, v in (headers or {}).items():
+        h[k] = v
+    return urllib.error.HTTPError("https://web.archive.org/save/x", code, "x", h, _io.BytesIO(body))
+
+
+def _wb_caps(**kw):
+    import archive_evidence as A
+    base = dict(day=100, boards=25, requests=140, verify=40, time_min=30, pace_s=0.0,
+                host_share=0.6, host_park_after=5, throttle_wait_s=1.0, timeout_s=1.0, workers=1)
+    base.update(kw)
+    return A.Caps(**base)
+
+
+def _wb_quiet(monkeypatch, tmp_path):
+    import archive_evidence as A
+    from pipeline import stages
+    monkeypatch.setattr(A, "_sleep", lambda s: None)
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+
+
+def test_wayback_canon_drops_tracking_and_keeps_the_address():
+    """`utm_*`, `_l` and friends are not the address; `jk=`, `gh_jid=` and `token=` are. A
+    fragment is never part of what the archive keys on, and a non-http string is nothing."""
+    import archive_evidence as A
+    assert A.canon("https://il.linkedin.com/jobs/view/x-4408239691?_l=en&utm_source=a#top") == \
+        "https://il.linkedin.com/jobs/view/x-4408239691"
+    assert A.canon("https://il.indeed.com/viewjob?jk=567edc03c21e322f&from=serp") == \
+        "https://il.indeed.com/viewjob?jk=567edc03c21e322f&from=serp"
+    assert A.canon("https://job-boards.greenhouse.io/scopely/jobs/5384531008?gh_jid=5384531008") == \
+        "https://job-boards.greenhouse.io/scopely/jobs/5384531008?gh_jid=5384531008"
+    assert A.canon("HTTPS://WWW.Comeet.com/jobs/a/B.1/x/C.2") == "https://www.comeet.com/jobs/a/B.1/x/C.2"
+    assert A.canon("comeet:BC.A60") == "" and A.canon("") == "" and A.canon(None) == ""
+    assert A.save_url("https://x.com/a b/é?q=1&r=%20") == "https://web.archive.org/save/https://x.com/a%20b/%C3%A9?q=1&r=%20"
+
+
+def test_wayback_targets_come_from_every_store_and_aggregator_copies_are_included(tmp_path):
+    """Tier 1 is the role store: the role's own url AND every copy in `seen_ids` -- the
+    LinkedIn/Indeed pages are exactly the ones that vanish. Tier 2 is the discovery net
+    inside the reader's 21-day cut (an empty date is kept, as `fetch_discovery` keeps it).
+    Tier 3 is every scrape card. Boards are ACTIVE scrape rows only, and a careers page that
+    is already a card's url stays a posting."""
+    import archive_evidence as A
+    today = _wb_dt.date(2026, 9, 4)
+    root = _wb_root(
+        tmp_path,
+        roles=[{"company": "Fiverr", "status": "open", "first_seen": "2026-08-16",
+                "url": "https://www.comeet.com/jobs/fiverr/60.002/x/BB.066",
+                "seen_ids": ["comeet:BB.066", "discovery-linkedin:linkedin:4323673888",
+                             "discovery-linkedin:https://www.linkedin.com/jobs/view/big-data-4408239691?_l=en"]},
+               {"company": "Gone", "status": "closed", "first_seen": "2026-08-10",
+                "url": "https://boards.greenhouse.io/gone/jobs/1", "seen_ids": ["discovery-indeed:indeed:8018875cc3df2f8b"]}],
+        matched=[("fiverr|x", "https://www.comeet.com/jobs/fiverr/60.002/x/BB.066", "2026-08-16"),
+                 ("m|only", "https://jobs.lever.co/m/abc", "2026-08-20")],
+        discovered=[{"url": "https://il.linkedin.com/jobs/view/fresh-1", "posted_date": "2026-09-01"},
+                    {"url": "https://il.linkedin.com/jobs/view/old-2", "posted_date": "2026-08-01"},
+                    {"url": "https://il.indeed.com/viewjob?jk=abcdefabcdefabcd", "posted_date": ""}],
+        scraped={"Acme": [{"url": "https://acme.com/careers", "posted_date": ""},
+                          {"url": "https://acme.com/careers/analyst", "posted_date": "2026-08-30"}]},
+        companies=[["Acme", "scrape", "", "https://acme.com/careers", "true", ""],
+                   ["Beta", "scrape", "", "https://beta.io/jobs", "true", ""],
+                   ["Parked", "scrape", "", "https://parked.io/jobs", "false", ""],
+                   ["Native", "greenhouse", "native", "https://boards-api.greenhouse.io/v1/boards/native/jobs", "true", ""]])
+    t = A.collect_targets(root, today)
+    assert t["https://www.comeet.com/jobs/fiverr/60.002/x/BB.066"].tier == 1
+    assert t["https://www.comeet.com/jobs/fiverr/60.002/x/BB.066"].open_role is True
+    assert t["https://www.linkedin.com/jobs/view/4323673888"].tier == 1          # the id copy
+    assert t["https://www.linkedin.com/jobs/view/big-data-4408239691"].tier == 1  # the url copy, `_l` dropped
+    assert t["https://il.indeed.com/viewjob?jk=8018875cc3df2f8b"].tier == 1
+    assert t["https://boards.greenhouse.io/gone/jobs/1"].open_role is False
+    assert t["https://jobs.lever.co/m/abc"].tier == 1                            # matched-only
+    assert t["https://il.linkedin.com/jobs/view/fresh-1"].tier == 2
+    assert "https://il.linkedin.com/jobs/view/old-2" not in t                     # past the 21-day cut
+    assert t["https://il.indeed.com/viewjob?jk=abcdefabcdefabcd"].tier == 2       # empty date kept
+    assert t["https://acme.com/careers/analyst"].tier == 3
+    assert t["https://acme.com/careers"].kind == "posting"                        # a card's url, not a board
+    assert t["https://beta.io/jobs"].kind == "board" and t["https://beta.io/jobs"].tier == 9
+    assert "https://parked.io/jobs" not in t
+    assert not any(u.startswith("https://boards-api.greenhouse.io") for u in t)
+
+
+def test_wayback_plan_is_oldest_first_by_tier_with_a_host_share_and_retries_last():
+    """Fresh addresses first, tier then date; one host takes at most 60 % of the day; a
+    failed address queues after every fresh one; boards on their own cap."""
+    import archive_evidence as A
+    today = _wb_dt.date(2026, 9, 4)
+    T = A.Target
+    targets = {}
+    for i in range(8):
+        u = f"https://il.linkedin.com/jobs/view/{i}"
+        targets[u] = T(u, "posting", 2, "2026-08-2%d" % i)
+    for i in range(3):
+        u = f"https://boards.greenhouse.io/g/jobs/{i}"
+        targets[u] = T(u, "posting", 3, "2026-08-01")
+    targets["https://x.com/open"] = T("https://x.com/open", "posting", 1, "2026-09-01", True)
+    targets["https://x.com/closed"] = T("https://x.com/closed", "posting", 1, "2026-08-01", False)
+    targets["https://x.com/retry"] = T("https://x.com/retry", "posting", 1, "2026-08-01", True)
+    for i in range(4):
+        u = f"https://board{i}.io/careers"
+        targets[u] = T(u, "board", 9, "", i == 3)
+    ledger = {"https://x.com/retry": {"attempts": 1, "last_at": "2026-09-01", "last_err": "server",
+                                      "ok_at": "", "pending_at": "", "kind": "posting"},
+              "https://board0.io/careers": {"attempts": 1, "last_at": "2026-09-03", "last_err": "",
+                                            "ok_at": "2026-09-03", "pending_at": "", "kind": "board"}}
+    caps = _wb_caps(day=10, boards=2)
+    postings, boards, backlog, due = A.plan_batch(targets, ledger, today, caps)
+    urls = [t.url for t in postings]
+    assert urls[:2] == ["https://x.com/open", "https://x.com/closed"]        # tier 1, open first
+    assert urls[2:5] == [f"https://boards.greenhouse.io/g/jobs/{i}" for i in range(3)] or \
+        urls[2:8].count("https://il.linkedin.com/jobs/view/0") == 1
+    assert sum(1 for u in urls if "linkedin" in u) == 6                        # 60 % of 10
+    assert urls[-1] == "https://x.com/retry" or "https://x.com/retry" not in urls
+    assert len(urls) == 10 and backlog == 4                                    # 14 eligible postings
+    assert [b.url for b in boards] == ["https://board3.io/careers", "https://board1.io/careers"]
+    assert due == 3                                                            # board0 captured yesterday
+
+
+def test_wayback_a_failure_is_retried_tomorrow_and_never_excluded():
+    """A 429 / 5xx / connection error is eligible again after a day, another 4xx after
+    seven, an archive exclusion after thirty, and past four attempts after thirty -- there is
+    no state from which an address is never tried again. A captured posting is done; a
+    captured board is due again after seven days; a pending 200 waits for verification."""
+    import archive_evidence as A
+    T = A.Target("https://x.com/p", "posting", 1, "2026-08-01")
+    B = A.Target("https://x.com/b", "board", 9, "")
+    d = _wb_dt.date.fromisoformat
+
+    def st(**kw):
+        s = {"attempts": 1, "last_at": "2026-09-01", "last_err": "", "ok_at": "", "pending_at": "", "kind": "posting"}
+        s.update(kw)
+        return s
+    assert A.eligible(T, None, d("2026-09-04"))
+    assert not A.eligible(T, st(last_err="throttled"), d("2026-09-01"))
+    assert A.eligible(T, st(last_err="throttled"), d("2026-09-02"))
+    assert A.eligible(T, st(last_err="server"), d("2026-09-02"))
+    assert A.eligible(T, st(last_err="net:URLError"), d("2026-09-02"))
+    assert not A.eligible(T, st(last_err="http"), d("2026-09-07"))
+    assert A.eligible(T, st(last_err="http"), d("2026-09-08"))
+    assert not A.eligible(T, st(last_err="excluded"), d("2026-09-30"))
+    assert A.eligible(T, st(last_err="excluded"), d("2026-10-01"))
+    assert not A.eligible(T, st(attempts=4, last_err="throttled"), d("2026-09-20"))
+    assert A.eligible(T, st(attempts=4, last_err="throttled"), d("2026-10-01"))
+    assert not A.eligible(T, st(ok_at="2026-09-01"), d("2027-01-01"))               # a capture is final
+    assert not A.eligible(T, st(pending_at="2026-09-01"), d("2026-09-02"))           # awaiting CDX
+    assert not A.eligible(B, st(kind="board", ok_at="2026-09-01"), d("2026-09-07"))
+    assert A.eligible(B, st(kind="board", ok_at="2026-09-01"), d("2026-09-08"))
+    # the ledger reader derives exactly that state from the lines
+    import json as _json
+    lines = [{"at": "2026-09-01T12:00:00Z", "url": "https://x.com/p", "kind": "posting", "err": "server", "snap": ""},
+             {"at": "2026-09-02T12:00:00Z", "url": "https://x.com/p", "kind": "posting", "err": "pending", "snap": ""},
+             {"at": "2026-09-03T12:00:00Z", "url": "https://x.com/p", "kind": "posting", "err": "verified", "snap": "20260902120101"}]
+    import tempfile, os
+    fd, path = tempfile.mkstemp(suffix=".jsonl")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write("\n".join(_json.dumps(x) for x in lines) + "\n")
+    s = A.read_ledger(path)["https://x.com/p"]
+    os.unlink(path)
+    assert s["attempts"] == 2 and s["ok_at"] == "2026-09-03" and s["pending_at"] == "" and s["last_err"] == ""
+
+
+def test_wayback_classify_every_shape_the_archive_has_answered_with():
+    """The anonymous `/save/` response has changed four times since 2020 (savepagenow #23,
+    #65, #69, #71) and there is no document for it; the parser reads every carrier of the
+    capture timestamp and the ledger says what it saw. A 200 that names no capture is
+    `pending`, never a capture and never a failure. Refusals arrive as 200 HTML."""
+    import archive_evidence as A
+    ts = "20260904131416"
+    r = A.classify(302, {"Location": f"/web/{ts}/https://x.com/p"}, "", "")
+    assert (r.http, r.snap, r.err) == (302, ts, "")
+    r = A.classify(200, {"Content-Location": f"/web/{ts}/https://x.com/p"}, "<html>", "")
+    assert (r.snap, r.err) == (ts, "")
+    r = A.classify(200, {"Link": f'<https://x.com/p>; rel="original", <https://web.archive.org/web/{ts}/https://x.com/p>; rel="memento"'}, "", "")
+    assert (r.snap, r.err) == (ts, "")
+    r = A.classify(200, {"Link": '<https://x.com/p>; rel="original", <https://web.archive.org/web/timemap/link/https://x.com/p>; rel="timemap"'}, "<html>saving</html>", "")
+    assert (r.snap, r.err) == ("", "pending")                                   # the Dec-2025 shape
+    r = A.classify(200, {"X-Page-Cache": "HIT"}, "", "")
+    assert r.err == "cached"
+    r = A.classify(200, {}, "", f"https://web.archive.org/web/{ts}/https://x.com/p")
+    assert (r.snap, r.err) == (ts, "")                                          # the redirect was followed upstream
+    r = A.classify(429, {"Retry-After": "300"}, "", "")
+    assert (r.err, r.retry_after) == ("throttled", 300.0)
+    assert A.classify(520, {"X-RL": "1"}, "", "").err == "server"                # observed 2026-09-04
+    assert A.classify(503, {}, "", "").err == "server"
+    assert A.classify(403, {}, "", "").err == "http"
+    assert A.classify(404, {}, "", "").err == "http"
+    assert A.classify(403, {"X-Archive-Wayback-Runtime-Error": "RobotAccessControlException: Blocked By Robots"}, "", "").err == "excluded"
+    assert A.classify(200, {}, "You have reached your daily not-logged-in captures limit of 8000", "").err == "daily-limit"
+    assert A.classify(200, {}, "This URL has been already captured 10 times today.", "").err == "limit-url"
+    assert A.classify(200, {}, "Sorry. This URL is in the Save Page Now service block list and cannot be captured.", "").err == "excluded"
+    assert A.classify(200, {}, "Crawling this host is paused because they notified us that they are overloaded (HTTP status=429)", "").err == "blocked"
+    assert A.classify(200, {}, "The target site is blocking us (HTTP status=999)", "").err == "blocked"
+
+
+def test_wayback_request_is_anonymous_and_a_timeout_is_pending(monkeypatch):
+    """Exactly a browser User-Agent and an Accept -- no cookie, no token, no
+    self-identifying header (CLAUDE.local.md). A read timeout is `pending`: the archive takes
+    the page within seconds and answers after 90 s+ (measured 2026-09-04), so the capture
+    may exist and the next run asks; a connection error before the send is `net:`."""
+    import archive_evidence as A
+    seen = {}
+
+    def opener(req, timeout):
+        seen["headers"] = dict(req.header_items())
+        seen["url"] = req.full_url
+        raise TimeoutError("The read operation timed out")
+    monkeypatch.setattr(A, "_open", opener)
+    r = A.submit("https://il.indeed.com/viewjob?jk=abc", 1.0)
+    assert r.err == "pending" and r.http == 0
+    assert seen["url"] == "https://web.archive.org/save/https://il.indeed.com/viewjob?jk=abc"
+    assert {k.lower() for k in seen["headers"]} == {"user-agent", "accept"}     # urllib adds Host at send
+    assert seen["headers"]["User-agent"] == A.UA and "python" not in A.UA.lower()
+
+    def refused(req, timeout):
+        raise ConnectionRefusedError("no route")
+    monkeypatch.setattr(A, "_open", refused)
+    assert A.submit("https://x.com/p", 1.0).err == "net:ConnectionRefusedError"
+
+
+def test_wayback_run_writes_one_line_per_attempt_and_verifies_yesterdays_pending(tmp_path, monkeypatch):
+    """Day 1: a capture named by a 302, a pending 200, a 5xx retried once and captured, one
+    hard refusal -- one ledger line each, flushed. Day 2: the pending line is asked of the
+    availability API and becomes `verified`; nothing already captured is sent again."""
+    import archive_evidence as A
+    import json as _json
+    _wb_quiet(monkeypatch, tmp_path)
+    urls = ["https://a.io/1", "https://b.io/2", "https://c.io/3", "https://d.io/4"]
+    root = _wb_root(tmp_path, roles=[{"status": "open", "first_seen": "2026-08-0%d" % (i + 1), "url": u, "seen_ids": []}
+                                     for i, u in enumerate(urls)])
+    calls, ts = [], "20260904120000"
+
+    def opener(req, timeout):
+        u = req.full_url
+        calls.append(u)
+        if u.endswith("/1"):
+            raise _wb_http_error(302, {"Location": f"/web/{ts}/{urls[0]}"})
+        if u.endswith("/2"):
+            return _WbResp(200, {}, "<html>saving</html>", u)
+        if u.endswith("/3"):
+            if calls.count(u) == 1:
+                raise _wb_http_error(520, {"X-RL": "1"})
+            return _WbResp(200, {"Content-Location": f"/web/{ts}/{urls[2]}"}, "", u)
+        if u.endswith("/4"):
+            raise _wb_http_error(404)
+        raise AssertionError(u)
+    monkeypatch.setattr(A, "_open", opener)
+    rep = A.run(root, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps())
+    assert (rep.submitted, rep.failed, rep.requests, rep.backlog) == (3, 1, 5, 0)
+    lines = [_json.loads(x) for x in open(tmp_path / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
+    assert [(l["url"], l["http"], l["snap"], l["err"], l["attempt"]) for l in lines] == [
+        (urls[0], 302, ts, "", 1), (urls[1], 200, "", "pending", 1), (urls[2], 200, ts, "", 1), (urls[3], 404, "", "http", 1)]
+    assert all(set(l) == {"at", "url", "kind", "tier", "attempt", "http", "snap", "err"} for l in lines)
+    assert "description" not in open(tmp_path / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8").read()
+    # the stamp carries the same numbers, under the stage the mail renders
+    from pipeline import stages
+    A._report(rep, False)
+    st = stages._load()["wayback"]
+    assert (st["submitted"], st["failed"], st["backlog"]) == (3, 1, 0) and "alarm" not in st
+    assert "wayback" in stages.ORDER
+
+    # day 2
+    calls.clear()
+
+    def opener2(req, timeout):
+        u = req.full_url
+        calls.append(u)
+        if u.startswith(A.AVAILABLE):
+            assert "b.io%2F2" in u and "timestamp=20260904235959" in u
+            return _WbResp(200, {}, _json.dumps({"archived_snapshots": {"closest": {"timestamp": "20260904120500", "status": "200"}}}), u)
+        raise AssertionError("re-submitted: " + u)
+    monkeypatch.setattr(A, "_open", opener2)
+    rep2 = A.run(root, today=_wb_dt.date(2026, 9, 5), caps=_wb_caps())
+    assert rep2.verified == 1 and rep2.submitted == 0 and len(calls) == 1
+    lines = [_json.loads(x) for x in open(tmp_path / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
+    assert lines[-1]["err"] == "verified" and lines[-1]["snap"] == "20260904120500"
+    assert rep2.alarm == ""                                                     # nothing was planned: no zero-produce
+    # day 3: d.io/4 (a 404, seven-day cooldown) is still not due; nothing to do
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(AssertionError(req.full_url)))
+    rep3 = A.run(root, today=_wb_dt.date(2026, 9, 6), caps=_wb_caps())
+    assert (rep3.submitted, rep3.requests) == (0, 0)
+
+
+def test_wayback_throttled_twice_ends_the_day_and_a_zero_day_alarms(tmp_path, monkeypatch):
+    """A 429 pauses every thread for the archive's block (Retry-After, else five minutes)
+    and is retried once; a second ends the run. `throttled` is a counter; the ALARM is that
+    nothing landed -- a throttled IP on a shared runner is not this repo's fault, a day that
+    produced nothing is what the mail must say."""
+    import archive_evidence as A
+    _wb_quiet(monkeypatch, tmp_path)
+    root = _wb_root(tmp_path, roles=[{"status": "open", "first_seen": "2026-08-01", "url": f"https://h{i}.io/p", "seen_ids": []}
+                                     for i in range(5)])
+    waits, calls = [], []
+    monkeypatch.setattr(A, "_sleep", lambda s: waits.append(s))
+    monkeypatch.setattr(A, "_open", lambda req, timeout: calls.append(req.full_url) or (_ for _ in ()).throw(_wb_http_error(429, {"Retry-After": "120"})))
+    rep = A.run(root, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps(pace_s=0.0))
+    assert rep.throttled == 2 and rep.failed == 1 and rep.submitted == 0 and len(calls) == 2
+    assert rep.backlog == 4 and rep.alarm.startswith("zero-produce")
+    assert rep.lines[0].err == "throttled" and rep.lines[0].http == 429
+    assert waits and max(waits) <= 1.0                                          # the pause is the gate, polled in 1 s steps
+
+
+def test_wayback_five_refusals_park_a_host_and_the_budget_counts_requests(tmp_path, monkeypatch):
+    """88 % of the corpus is LinkedIn: five consecutive refusals on distinct addresses of
+    one host park it for the run so the rest of the day goes elsewhere; the request budget
+    counts retries, and an exhausted budget leaves the remainder as backlog."""
+    import archive_evidence as A
+    _wb_quiet(monkeypatch, tmp_path)
+    roles = [{"status": "open", "first_seen": "2026-08-01", "url": f"https://il.linkedin.com/jobs/view/{i}", "seen_ids": []} for i in range(7)]
+    roles += [{"status": "open", "first_seen": "2026-08-02", "url": f"https://g{i}.io/p", "seen_ids": []} for i in range(3)]
+    root = _wb_root(tmp_path, roles=roles)
+    calls = []
+
+    def opener(req, timeout):
+        calls.append(req.full_url)
+        if "linkedin" in req.full_url:
+            raise _wb_http_error(403)
+        raise _wb_http_error(302, {"Location": "/web/20260904120000/" + req.full_url.split("/save/", 1)[1]})
+    monkeypatch.setattr(A, "_open", opener)
+    rep = A.run(root, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps(day=100, host_share=1.0))
+    assert rep.host_parked == 1 and rep.failed == 5 and rep.submitted == 3
+    assert sum(1 for c in calls if "linkedin" in c) == 5 and rep.backlog == 2
+    # the budget: 3 requests for 5 planned addresses, all 302s
+    root2 = _wb_root(tmp_path / "b", roles=[{"status": "open", "first_seen": "2026-08-01", "url": f"https://g{i}.io/p", "seen_ids": []} for i in range(5)])
+    calls.clear()
+    rep2 = A.run(root2, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps(requests=3))
+    assert (rep2.submitted, rep2.requests, rep2.backlog, len(calls)) == (3, 3, 2, 3)
+
+
+def test_wayback_workers_share_one_ledger_and_one_gate(tmp_path, monkeypatch):
+    """Three threads, twelve addresses: twelve lines, twelve distinct urls, every counter
+    consistent, and the day-limit stop reaches every thread."""
+    import archive_evidence as A
+    import json as _json
+    import threading as _th
+    _wb_quiet(monkeypatch, tmp_path)
+    root = _wb_root(tmp_path, roles=[{"status": "open", "first_seen": "2026-08-01", "url": f"https://w{i}.io/p", "seen_ids": []} for i in range(12)])
+    seen_threads = set()
+
+    def opener(req, timeout):
+        seen_threads.add(_th.get_ident())
+        raise _wb_http_error(302, {"Location": "/web/20260904120000/" + req.full_url.split("/save/", 1)[1]})
+    monkeypatch.setattr(A, "_open", opener)
+    rep = A.run(root, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps(workers=3))
+    lines = [_json.loads(x) for x in open(tmp_path / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
+    assert len(lines) == 12 and len({l["url"] for l in lines}) == 12
+    assert (rep.submitted, rep.failed, rep.requests, rep.backlog) == (12, 0, 12, 0)
+    assert len(seen_threads) >= 2
+    # the daily-limit refusal stops every worker and alarms
+    root2 = _wb_root(tmp_path / "d", roles=[{"status": "open", "first_seen": "2026-08-01", "url": f"https://d{i}.io/p", "seen_ids": []} for i in range(12)])
+    monkeypatch.setattr(A, "_open", lambda req, timeout: _WbResp(200, {}, "You have reached your daily not-logged-in captures limit", req.full_url))
+    rep2 = A.run(root2, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps(workers=3))
+    assert rep2.alarm.startswith("daily-limit") and rep2.requests <= 4 and rep2.backlog >= 8
+
+
+def test_wayback_dry_run_opens_no_socket_and_a_crash_is_a_stamped_alarm(tmp_path, monkeypatch, capsys):
+    """`--dry-run` plans and prints; it never reaches the wire and writes no ledger line.
+    A crash inside `main()` is a `wayback crashed:` clause in tomorrow's `Stages:` line and
+    exit 1 -- never a silent step."""
+    import archive_evidence as A
+    from pipeline import stages
+    _wb_quiet(monkeypatch, tmp_path)
+    root = _wb_root(tmp_path, roles=[{"status": "open", "first_seen": "2026-08-01", "url": "https://x.io/p", "seen_ids": []}])
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(AssertionError("socket")))
+    assert A.main(["--dry-run", "--root", root]) == 0
+    assert not (tmp_path / "cloud_state" / "wayback_ledger.jsonl").exists()
+    assert "planned" in capsys.readouterr().out and not (tmp_path / "stages.json").exists()
+    monkeypatch.setattr(A, "collect_targets", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    assert A.main(["--root", root]) == 1
+    assert stages._load()["wayback"]["alarm"] == "crashed:RuntimeError"
+    assert stages.alarms("wayback", 1) == ["wayback crashed:RuntimeError"]
+    # and a healthy stamp goes quiet after a day, loud after two: the 12:30 stamp is always
+    # yesterday's at a 05:00 digest, so `run.py` reads it with 1
+    import re as _re
+    src = open(os.path.join(_WB_REPO, "pipeline", "run.py"), encoding="utf-8").read()
+    assert 'stages.alarms("wayback", 1)' in src
+    stages.stamp("wayback", submitted=3, failed=0, backlog=10)
+    st = stages._load()
+    st["wayback"]["date"] = (_wb_dt.date.today() - _wb_dt.timedelta(days=2)).isoformat()
+    import json as _json
+    open(stages.PATH, "w", encoding="utf-8").write(_json.dumps(st))
+    assert stages.alarms("wayback", 1) == ["wayback last ran 2d ago — the digest read stale input"]
+    assert _re.search(r"wayback: \d{4}-\d\d-\d\d \(2d ago\) backlog=10 failed=0 submitted=3", stages.summary())
+
+
+def test_wayback_ledger_merge_is_uncapped_and_the_audit_logs_still_cap():
+    """`persist_state.s_jsonl_ledger` keeps every line on a push conflict -- capped at 400
+    the ledger would forget every posting submitted more than a few days ago and re-submit
+    them all -- while `s_jsonl_union` (persist_log, bd_spend) still keeps the newest 400.
+    The workflow's `--own` path is in the strategy table."""
+    import persist_state as P
+    import json as _json
+    base = "".join(_json.dumps({"at": "2026-08-%02dT00:00:%02dZ" % (1 + i // 60, i % 60), "url": f"https://x.io/{i}"}) + "\n"
+                   for i in range(401)).encode()
+    ours = base + b'{"at":"2026-09-04T12:00:00Z","url":"https://x.io/new"}\n'
+    theirs = base + b'{"at":"2026-09-04T13:00:00Z","url":"https://x.io/theirs"}\n'
+    merged = P.s_jsonl_ledger(base, ours, theirs)
+    assert merged.count(b"\n") == 403 and b"https://x.io/0\"" in merged and merged.endswith(b'"https://x.io/theirs"}\n')
+    assert P.s_jsonl_union(base, ours, theirs).count(b"\n") == 400
+    assert P.STRATEGY[P.WAYBACK_LEDGER][0] is P.s_jsonl_ledger
+    wf = open(os.path.join(_WB_REPO, ".github", "workflows", "jd-archive.yml"), encoding="utf-8").read()
+    assert "cloud_state/wayback_ledger.jsonl" in wf and "python archive_evidence.py" in wf
+    assert wf.index("python archive_evidence.py") < wf.index("enrich_scrape_jd.py --archive-only")

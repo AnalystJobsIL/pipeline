@@ -57,6 +57,7 @@ refresh did not run before this digest — which on 2026-08-27 is exactly what h
 | `jd-fill:` | `pipeline/jdfill.py` → printed by `run.py` | `N/M descriptions fetched inline`, then the per-reason failure tally |
 | `[company-intel]` | `run.py` | the same text as the mail's `Company intel:` line |
 | `[bd-spend]` | `discovery_daily.py` | month-to-date Bright Data credits and the projection — **the only place the pool is totalled** |
+| `[wayback] submitted N, failed M, backlog K, boards B (of D due), verified V, throttled T, requests R` | `archive_evidence.py`, the first step of `jd-archive.yml` (12:30), not the digest | what reached the Internet Archive today and how far behind the ledger runs; the same numbers are the `wayback` stamp in `Stage order:`, and a `wayback …` clause on `Stages:` means the stamp is two days old, a day landed nothing, the archive's daily limit bit, or the step crashed (`wayback crashed:<Exc>`) |
 | `::group::` per phase | `run.py::_phase` | and the phase name is what lands in `out/crash.json` if the run dies |
 
 ## The failure this page exists to name

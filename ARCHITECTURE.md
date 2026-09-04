@@ -2434,7 +2434,7 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | cron (UTC) | workflow | effect |
 |---|---|---|
 | `0 0 * * *` | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
-| `30 12 * * *` | jd-archive | a job description for the cards the TITLE gate drops (the corpus, not the board): `enrich_scrape_jd.py --archive-only`, 90-min budget, `repo-state` group, no `continue-on-error` |
+| `30 12 * * *` | jd-archive | **first, `archive_evidence.py`** (2026-09-04): every posting url we have seen and the careers page of every active scrape row, submitted to the Internet Archive's Save Page Now — 100 postings + 25 boards a day, 140 requests, three threads behind one 6-s gate, 30-min budget, `continue-on-error` with the outcome in the `wayback` stamp (a crash is a `Stages:` clause, not silence); one line per attempt in `cloud_state/wayback_ledger.jsonl`, never any text. Then a job description for the cards the TITLE gate drops (the corpus, not the board): `enrich_scrape_jd.py --archive-only`, 90-min budget, `repo-state` group, no `continue-on-error`. *Recovering expired evidence* under §5 is the runbook |
 | `30 2 * * *` | retry-unreachable | Bright Data re-fetch of flaky endpoints |
 | `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → **company-intel drain (20 min, since 2026-08-30: the queue the `Company intel:` line measures is drained in the run that measures it)** → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** → report the run's outcome |
 | — `17 6,7,8,10 * * *` | inbox relay (private repo `AnalystJobsIL/inbox`, not this repo's crons) | **the BACKUP since 2026-08-28.** The relay's real trigger is now `on: push` to `receipts/**`, which `daily-digest`'s last step writes the moment a digest has landed — digest → email via issue+mention, content-hash dedup |
@@ -2908,7 +2908,8 @@ alarm lines (2026-08-25 against `dcca442`: exactly `+ - **Stages:** repair never
 | `cloud_state/scrape_rot.json` | consecutive empty/error days per scrape row, with the last error code / HTTP status (§5a) | refresh_scrape_cache.py |
 | `cloud_state/scan_seen.json` | the liveness re-scan's rotation | scan_dead_domains (digest; the Sunday audit commits it since 2026-08-25 — BACKLOG 17) |
 | `cloud_state/firmographics.json` | **the shared, git-mergeable export of the `firmographics` table.** sqlite cannot be merged, so this text file is what the local and cloud stores converge through; the digest reads sqlite ∪ this file (fresher `as_of` wins) and writes the union back | `research_firmographics.py --export`, `pipeline/run.py` — merged per company on a conflict |
-| `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest alarms in the mail when a prerequisite stage did not run today. A stamp over a file that exists and does not parse is REFUSED with a `::warning::` (BACKLOG 451): a writer never rebases on `{}` | listing-hunt (`repair`, `queue`), scrape-refresh (`collect`, with its counts), auto-expand (`expand`), firmographics (`firmo`, `alarm=step-failed` when the step died from outside), the digest (`enrich` via `jdfill.record_enrich`, `intel`, `publish`, and since 2026-08-30 `ci` and `cron` from its two alarm steps) — **merged per stage key on a conflict** (§4; until 2026-08-25 a conflict deleted other jobs' stamps) |
+| `cloud_state/pipeline_stages.json` | which nightly stage last finished and how much it did (`pipeline/stages.py`) — the digest alarms in the mail when a prerequisite stage did not run today. A stamp over a file that exists and does not parse is REFUSED with a `::warning::` (BACKLOG 451): a writer never rebases on `{}` | listing-hunt (`repair`, `queue`), scrape-refresh (`collect`, with its counts), auto-expand (`expand`), firmographics (`firmo`, `alarm=step-failed` when the step died from outside), jd-archive (`wayback`: `submitted`/`failed`/`backlog`/`boards`/`verified`/`throttled`, `alarm=` on a zero-produce day, the archive's daily limit, or a crash — since 2026-09-04), the digest (`enrich` via `jdfill.record_enrich`, `intel`, `publish`, and since 2026-08-30 `ci` and `cron` from its two alarm steps) — **merged per stage key on a conflict** (§4; until 2026-08-25 a conflict deleted other jobs' stamps) |
+| `cloud_state/wayback_ledger.jsonl` | **one line per Save Page Now attempt** (2026-09-04): `at`, `url`, `kind` (`posting`/`board`), `tier`, `attempt`, `http`, `snap` (the 14-digit capture timestamp when the archive named one), `err` (`""` captured · `pending` a 200 that named no capture, asked of the availability API from the next run · `verified` that answer · `cached` · `throttled` · `server` · `net:<class>` · `http` · `blocked` · `excluded` · `limit-url` · `daily-limit` · `unverified`). ~170 bytes a line, ~125 a day, and **never any page text** — the text stays in the archive, which is the point (the roles-text decision, `docs/decisions/2026-08-31-roles-text-artefact.md`). A failure is a cooldown (1 day for a throttle/5xx/connection error, 7 for another 4xx, 30 for an exclusion or past four attempts), never a verdict. `archive_evidence.py` reads it back to know what is done, so it is the one `.jsonl` here that is NOT capped on a merge | `archive_evidence.py`, from jd-archive (12:30) |
 | `cloud_state/last_run.json` | the digest job's outcome **when something failed**: date, status, failed steps, run URL (§4). Written ONLY on an unhealthy run, so a healthy day leaves yesterday's or last week's in place — that is correct, not stale, and `_last_run_alarms` returns early on a healthy record without reading the date. It is **not** a heartbeat; `last_delivered.json` is | `persist_state.py outcome`, from the digest's last step |
 | `cloud_state/last_delivered.json` | the receipt for what actually reached the mail: date, sha256 of the `digests/latest.md` bytes, role count, first line, and why it was allowed through (§4). Written only on a successful delivery, in the SAME commit as the file it describes; `run.py::_receipt_alarms` alarms in the next mail when it is two days or more behind | `persist_state.py deliver`, from the digest's pipeline step |
 | `cloud_state/bd_spend.jsonl` | **what each process bought from Bright Data**: one line per interpreter that touched the account (`bd_rescue._report_spend`, on the way out) with credits, whether the cap bit, and the cap. Added 2026-08-28 because the `[bd-spend]` line and the step summary both die with the run record -- and this repo deletes run records on purpose (`CLAUDE.local.md` §3). Note it is per PROCESS: a pooled run writes one line per worker. **Never written by a test process** — `_report_spend` refuses when `pytest` is in `sys.modules` and `ROOT` holds a `.git`, because the suite used to append credits nobody bought (BACKLOG 374). Carries `ci: true|false` for provenance and deliberately **not** the path, which under a home directory would put a personal username in a public repo. **Nothing reads this file yet**: the monthly throttle reads the LIVE account via `pipeline/bd_budget.py`, not this ledger | `bd_rescue`, from every workflow; committed by `persist_state.py commit`, which owns it without any workflow naming it |
@@ -2928,6 +2929,7 @@ alarm lines (2026-08-25 against `dcca442`: exactly `+ - **Stages:** repair never
 | `cloud_state/pipeline_stages.json` | per stage key; the side that did not touch a stage yields, both touched → the newer `finished_at`; a stamp is never deleted |
 | `cloud_state/persist_log.jsonl` | the **union of the lines**, oldest first, capped at 400. An append-only log has no conflict to resolve — two runs that appended different lines both said something true — which is why it can have many writers and needs no single-writer claim. Identical lines dedupe, so a replayed rebase does not double one |
 | `cloud_state/bd_spend.jsonl` | the same union: many processes append, no two of them disagree about anything |
+| `cloud_state/wayback_ledger.jsonl` | the same union **uncapped** (`s_jsonl_ledger`, the one `cap` parameter of `_jsonl_union`): the tool reads this file to know which posting already has a snapshot, and a cap of 400 would forget every posting submitted more than a few days ago and re-submit them all |
 | `discovered_cache.json`, `research_companies.json` | JSON lists merged by `(company, title)` / `name` (BACKLOG 10/30) |
 | everything else the job owns (`seen.db`, `roles*.jsonl`, the roles lane's CSV dataset and its two sidecars — copied beside the board by the publish step when non-empty — `digests/latest.md`, `docs/*.html`, the per-workflow state files) | the run's bytes — one cloud writer each; an unlisted path is taken the same way with a `::warning::`. **Since 2026-08-27, a run that did not TOUCH the file (`ours == base`) yields to origin instead**: it has no opinion, and `ours` winning unconditionally meant a run that deliberately declined to write a path still pushed its checkout-era copy over a newer one — silently, because the overwrite warning is suppressed for exactly these paths (BACKLOG `160@infra`) |
 
@@ -2935,6 +2937,60 @@ The writers column is the `--own` list of each workflow's persist step (`grep -n
 .github/workflows/*.yml`); `test_every_path_a_workflow_owns_has_a_persist_strategy` fails
 when a workflow names a path the table above does not know. (The single-writer and
 commit-together rules live with the csv schema in §2.)
+
+### Recovering expired evidence (2026-09-04)
+*lane: `infra`. Three places a posting that is gone from the web can still be read, in the
+order to try them. Every command below was run against the tree the day this was written.*
+
+**1. Any past state of a committed cache is in git.** `discovered_cache.json`,
+`scraped_cache.json`, `cloud_state/roles.jsonl` and `roles_text.jsonl` are committed by
+every run that touches them, so a posting's title, url, location, date and — for the roles
+store — its description are recoverable from the commit that last carried them. `-S` finds
+the commits whose diff added or removed a string (a title, a url, a company); `--follow` only
+matters for a renamed file, and none of these ever was:
+
+```bash
+git log --format='%h %ad %s' --date=short -S 'taboola' -i -- discovered_cache.json   # 5 commits on 2026-09-04
+git show 5ad8a1d:discovered_cache.json | python -c "import json,sys;[print(j['posted_date'],j['url'],j['title']) for j in json.load(sys.stdin) if 'taboola' in j['company'].lower()]"
+git log --format='%h %ad' --date=short -S 'taboola' -i -- cloud_state/roles_text.jsonl   # the description, when it had one
+git show 24619a1:cloud_state/roles_text.jsonl | grep -i taboola | python -c "import json,sys;[print(json.loads(l)['description'][:400]) for l in sys.stdin]"
+```
+
+Taboola's Product Analyst — the case this subsection exists for — was filed as "gone, zero
+snapshots, description unrecoverable forever". It is not: the second command above prints
+its description from `24619a1` (2026-08-28), the last commit of `roles_text.jsonl` that
+carried it, and the discovery cache holds eight other Taboola titles across five commits.
+What git cannot hold is a page we never fetched: `roles_text.jsonl` carries a description
+only for rows that got one, and a card the classifier judged title-only has no text anywhere.
+
+**2. The Wayback ledger maps a url to its snapshot.** `cloud_state/wayback_ledger.jsonl`
+holds one line per submission to Save Page Now (`archive_evidence.py`, jd-archive 12:30, §4),
+with the capture timestamp when the archive named one. A snapshot is a neutral third party's
+copy of exactly that address on that date — the evidence a wrong-employer or wrong-location
+dispute needs, and the copy that survives the posting's removal:
+
+```bash
+grep -F '<url>' cloud_state/wayback_ledger.jsonl | tail -3          # err "" or "verified" + snap = captured
+python -c "from pipeline.jdfill import wayback_snapshot as w;print(w('<url>'))"   # the newest capture the archive holds, from CDX
+```
+
+`snap` `20260904131416` reads as `https://web.archive.org/web/20260904131416/<url>` (add
+`id_` after the timestamp for the raw bytes). `jdfill.wayback_snapshot` is the programmatic
+reader the matched enricher already uses (`enrich_matched_jd.py`'s `archive` rung), and it
+answers for urls other people archived too — a Comeet posting had a capture from July 2026
+before this ledger existed. A line whose `err` is `pending` is a submission the archive
+accepted without naming the capture; the next run asks the availability API and writes
+`verified`. Postings are submitted oldest-first within tiers (the role store, then the
+discovery net, then the scrape corpus) at 100 a day, so a posting first seen today may wait;
+`backlog` in the `wayback` stamp is how far behind the ledger runs.
+
+**3. The 12:30 jd-archive pass keeps the text of the cards the title gate drops.** The same
+workflow's second step (`enrich_scrape_jd.py --archive-only`) fetches a description for every
+card in `scraped_cache.json` that the classifier never reads (§7a: the archive pool is the
+complement of the title pool) and writes it **into `scraped_cache.json`** — there is no
+separate archive file — which the run then commits, so a dropped card's text is recoverable
+by method 1 against that file. It is ~0.8 MB of patch a day and BACKLOG `445` recommends
+retiring it; if that happens, this paragraph goes with it and method 2 is what remains.
 
 ## 5a. Fetch-failure semantics (what a broken careers board does to our job board)
 *lanes: `ats-fetch` · `scraper` · `infra`*
@@ -3400,6 +3456,8 @@ active rows had no baseline entry). To settle it, run the row yourself:
 *lane: any*
 
 - "Why isn't company X in my email?" → §5b above (ordered runbook).
+- "The posting is gone — what did it say?" → *Recovering expired evidence* under §5: git
+  history of the caches, then the Wayback ledger, then the jd-archive text.
 - "Is this verdict true?" → the row's `notes` names the tool and date; re-run that tool.
 - "Did the run actually work?" → `gh run view <id> -R AnalystJobsIL/pipeline --log`.
   **44+ of the workflow steps are `continue-on-error`, so a green run can still hide a

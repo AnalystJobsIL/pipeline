@@ -39,8 +39,12 @@ PATH = os.path.join(os.path.dirname(__file__), "..", "cloud_state", "pipeline_st
 # Written by `registry` (2026-08-31), which owns neither this file nor the `intel` stamp:
 # shared plumbing, changed loudly rather than filed, because a filed one-line diff is what
 # `468` proved does not get applied.
-ORDER = ["repair", "collect", "expand", "firmo", "intel", "enrich", "queue", "publish",
-         "ci", "cron"]
+#
+# `wayback` (infra, 2026-09-04): `archive_evidence.py` on jd-archive.yml at 12:30 -- what it
+# submitted to Save Page Now, what was refused, and the backlog. Its stamp is a day old at
+# every 05:00 digest by construction; `run.py` alarms at two.
+ORDER = ["repair", "collect", "expand", "firmo", "intel", "enrich", "wayback", "queue",
+         "publish", "ci", "cron"]
 
 
 def _load() -> dict:

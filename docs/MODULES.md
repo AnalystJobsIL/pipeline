@@ -14,11 +14,11 @@ The `runs in` and `imported by` columns are **computed from the code**, not type
 
 | class | meaning | count |
 |---|---|---|
-| `scheduled` | a workflow invokes it | 32 |
+| `scheduled` | a workflow invokes it | 33 |
 | `library` | no workflow runs it; live code imports it | 9 |
 | `operator` | a human or agent runs it; nothing in CI does | 14 |
 | `legacy` | one-shot, superseded, or kept only for the record | 25 |
-| | **total root modules** | **80** |
+| | **total root modules** | **81** |
 
 `pipeline/` is listed at the end. Lane ownership for all of these is in `docs/AGENT_BRIEF.md`.
 
@@ -30,6 +30,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | module | runs in | what it does |
 |---|---|---|
 | `apply_resolved.py` | self-heal | applies out/resolved_configs.json into companies.csv after the self-heal |
+| `archive_evidence.py` | jd-archive | submits every posting URL we have seen (the role store, the discovery net, the scrape corpus) and every active careers page to the Internet Archive's Save Page Now, 100 + 25 a day, one line per attempt in cloud_state/wayback_ledger.jsonl and never any page text -- a neutral snapshot behind every future dispute (jd-archive.yml, 12:30) |
 | `audit_empty_rows.py` | audit-coverage | weekly re-verification of every parked row; also the `verify()` helper every resolver imports |
 | `auto_expand.py` | auto-expand | READS research_companies.json and resolves each name: a free rung (slug probe + own-site guess), then the capped LLM tier. It still cannot DRAIN the queue -- the file is not in this workflow's `--own` list, so a removal here could not be staged -- but since 2026-08-27 the prune in the two discovery bridges drops an entry whose name the registry already holds, which is what took the queue 1,693 -> 498 |
 | `bd_rescue.py` | retry-unreachable | re-fetches unreachable rows through the Bright Data Web Unlocker |

@@ -106,10 +106,12 @@ from the workflow files, not asserted.
 | `listing-hunt` | `repo-state` | yes | yes | `companies.csv`, `registry_ladder.json` |
 | `audit-coverage` | `repo-state` | yes | yes | `companies.csv`, `audit_seen.json` |
 | `firmographics` | `repo-state` | no | yes | `cloud_state/firmographics.json` only — never `seen.db` |
+| `jd-archive` | `repo-state` | yes | no | `scraped_cache.json` (descriptions for the cards the title gate drops), `cloud_state/wayback_ledger.jsonl` (Save Page Now, since 2026-09-04), `pipeline_stages.json` |
 | `tests` | — | no | no | nothing |
 
-**Eight of the nine scheduled workflows share the `repo-state` concurrency group**; only
-`daily-digest` has its own. A long job makes the next one queue or be superseded, with no
+**Nine of the ten scheduled workflows share the `repo-state` concurrency group**; only
+`daily-digest` has its own (this said eight of nine until 2026-09-04, having never listed
+`jd-archive`). A long job makes the next one queue or be superseded, with no
 error anywhere.
 
 ## The other two schedulers

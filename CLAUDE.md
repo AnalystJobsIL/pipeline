@@ -4,7 +4,7 @@
 analytics roles at Israeli companies — **any experience level** since 2026-08-28
 (`docs/decisions/2026-08-28-analyst-scope.md`; internships and student placements are
 excluded) — plus a daily email of the last
-48h. It reads 800+ companies' *own* careers boards every morning (out of a registry of
+48h. It reads 1,000+ companies' *own* careers boards every morning (out of a registry of
 1,500+ rows) and runs entirely on GitHub Actions cron jobs. No server. LinkedIn and
 Indeed are the discovery net that finds employers we have never heard of, never the primary
 source for a company we already cover — but one synthetic `Discovery` row does publish
