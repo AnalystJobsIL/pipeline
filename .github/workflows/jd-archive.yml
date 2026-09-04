@@ -97,7 +97,7 @@ jobs:
         # silent. What it produced is the `[wayback] submitted N` line below and the same
         # numbers in the `wayback` stamp.
         env:
-          WAYBACK_DAY_CAP: "100"
+          WAYBACK_DAY_CAP: "150"
           WAYBACK_BOARD_CAP: "25"
           WAYBACK_REQ_CAP: "140"
           WAYBACK_TIME_BUDGET_MIN: "30"

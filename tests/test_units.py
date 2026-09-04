@@ -16992,6 +16992,49 @@ def test_the_board_guard_is_case_blind_to_a_comeet_uid(tmp_path, monkeypatch):
     row = ["Imagry | Autonomous Driving", "comeet", "B7.00F", "https://x", "true", "n"]
     assert ((row[1] or "").lower(), (row[2] or "").lower()) in boards, (
         "the duplicate-board guard cannot see an uppercase Comeet uid")
+def test_the_board_guard_sees_one_address_under_two_token_spellings(tmp_path, monkeypatch):
+    """A token is one writer's SPELLING of a board. `resolve_deep` writes the Workday
+    composite `tenant/site`; `resolve_llm` returned the site alone -- and both
+    `(platform, token)` lookups in `auto_expand` were green while the 12:53 run of
+    2026-09-04 (`3f9c220`) opened `Aristocrat` beside `Aristocrat (Product Madness)` on ONE
+    `api_url`. Only `test_no_two_active_rows_share_a_board` saw it, at test time, and it
+    redded `guard` for every lane (BACKLOG 576). The address is what both rows READ, so the
+    guard keys on it too -- normalised the way `check_invariants.shared_boards` does -- and
+    `resolve_llm` now spells the token the registry's way."""
+    import sys as _sys
+
+    import auto_expand as E
+    import resolve_llm as L
+
+    api = ("https://aristocrat.wd3.myworkdayjobs.com/wday/cxs/aristocrat/"
+           "AristocratExternalCareersSite/jobs")
+    d = tmp_path / "boards"
+    d.mkdir()
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        f"Aristocrat (Product Madness),workday,aristocrat/AristocratExternalCareersSite,{api},"
+        "true,re-audit 2026-08-21: deep-verified 2/2 IL (was dark)\n", encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(E, "CSV_PATH", str(d / "companies.csv"))
+    monkeypatch.setattr(_sys, "argv", ["auto_expand.py"])
+    boards = E._boards_now()
+    # the token key alone is blind to the second spelling: that is the production miss
+    assert ("workday", "aristocratexternalcareerssite") not in boards
+    assert E._board_taken("workday", "AristocratExternalCareersSite", api, boards)
+    # case- and slash-blind, like the gate; a different tenant is a different board
+    assert E._board_taken("workday", "x", api.upper() + "/", boards)
+    assert not E._board_taken("workday", "other/Site",
+                              "https://other.wd1.myworkdayjobs.com/wday/cxs/other/Site/jobs",
+                              boards)
+    assert not E._board_taken("workday", "x", "", boards), "an empty address is not a board"
+    # ...and the writer that produced the odd spelling now writes the composite
+    assert (L._workday_token("workday", "AristocratExternalCareersSite", api)
+            == "aristocrat/AristocratExternalCareersSite")
+    assert L._workday_token("greenhouse", "gongio",
+                            "https://boards-api.greenhouse.io/v1/boards/gongio/jobs") == "gongio"
+    assert L._workday_token("workday", "kept", "https://example.com/not-workday") == "kept"
+
+
 # --- discovery: the secrethunter company catalog and the intake reject ledger -------------
 
 

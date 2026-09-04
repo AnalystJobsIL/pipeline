@@ -330,6 +330,24 @@ def _try_comeet_via_page(name, careers_url):
     return ("comeet", uid, api_url)
 
 
+_WORKDAY_API = re.compile(r"([a-z0-9-]+)\.wd(\d+)\.myworkdayjobs\.com/wday/cxs/([^/]+)/([^/]+)/")
+
+
+def _workday_token(plat, tok, api):
+    """The registry's Workday token is the composite `tenant/site` (98 of 99 rows; it is
+    what `resolve_deep._detect_ats` writes). The model returns whichever spelling the
+    evidence showed -- the site alone on 2026-09-04 (`AristocratExternalCareersSite`) --
+    and a token is a KEY: `auto_expand._boards_now` matches on it, so a second spelling of
+    one board is a second active row (BACKLOG 576). Derive it from the api url instead."""
+    if (plat or "").lower() != "workday":
+        return tok
+    m = _WORKDAY_API.search((api or "").lower())
+    if not m:
+        return tok
+    site = urllib.parse.urlsplit(api).path.strip("/").split("/")
+    return f"{m.group(1)}/{site[3] if len(site) >= 4 else m.group(4)}"
+
+
 def resolve_llm(name, url):
     """Full fallback attempt. Returns ('ats', (name, platform, token, api_url, n_all, n_il))
     or None. Never raises."""
@@ -357,6 +375,7 @@ def resolve_llm(name, url):
                 got = _try_comeet_via_page(name, p["careers_url"])
                 if got:
                     plat, tok, api = got[0], got[1], got[2]
+            tok = _workday_token(plat, tok, api)
             try:
                 n_all, n_il = _verify(name, plat, tok, api)
                 return ("ats", (name, plat, tok, api, n_all, n_il))

@@ -1868,6 +1868,11 @@ Four more rules this matrix exists to enforce, each violated in production at le
   activate. `tests/rehearse_registry.py --nights 14` (production's flags, DNS banned,
   `repair_dead_urls` and `wayback_rescue` on the schedule, `REHEARSE_SELF_TEST=overwrite` as
   its own control) is the proof; `tests.yml` runs `worst` and `mixed` seeds 1–5 on every push.
+  The writer side of the same rule: `auto_expand._boards_now` keys the boards the registry
+  already reads on `(platform, token)` AND on the address (`_url_key`, the `shared_boards`
+  normalisation), because a token is one writer's spelling — `resolve_llm` returned the Workday
+  site alone where `resolve_deep` writes `tenant/site`, and the 12:53 run of 2026-09-04 opened
+  `Aristocrat` beside `Aristocrat (Product Madness)` with both token lookups green (`576`).
 
 ## 3. Resolution ladder — how a dark company becomes covered
 *lane: `registry`*
@@ -2981,7 +2986,7 @@ answers for urls other people archived too — a Comeet posting had a capture fr
 before this ledger existed. A line whose `err` is `pending` is a submission the archive
 accepted without naming the capture; the next run asks the availability API and writes
 `verified`. Postings are submitted oldest-first within tiers (the role store, then the
-discovery net, then the scrape corpus) at 100 a day, a fifth of it reserved for addresses
+discovery net, then the scrape corpus) at 150 a day (100 until 2026-09-04), a fifth of it reserved for addresses
 refused before — and the discovery net alone adds ~124 a day (measured 2026-09-04), so at
 that cap the scrape corpus is never reached and `backlog` in the `wayback` stamp grows;
 `WAYBACK_DAY_CAP` on the workflow is the lever, and the ledger's `throttled` and

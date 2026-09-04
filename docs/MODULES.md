@@ -76,7 +76,7 @@ If one of these stops working the pipeline degrades silently, because most of th
 | `merge_json_cache.py` | `persist_state.py`, `tests/test_units.py` | three-way merge for the company-keyed JSON caches (deletions honoured since 2026-08-25); persist_state.py applies it |
 | `probe_ats.py` | `auto_expand.py`, `drain_queue.py`, `ingest_research.py` +2 more | guessable-slug probing. **Not deletable**: `auto_expand` imports `probe_bounded`/`bounded_http` for its free rung, `ingest_research` imports `slug_variants` |
 | `resolve_deep.py` | `auto_expand.py`, `bd_rescue.py`, `recheck_suspects.py` +6 more | deterministic resolver tier (recognizable ATS URLs, iframes) |
-| `resolve_llm.py` | `auto_expand.py`, `deep_validate.py`, `listing_hunt.py` +1 more | the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher |
+| `resolve_llm.py` | `auto_expand.py`, `deep_validate.py`, `listing_hunt.py` +2 more | the LLM resolution tier: evidence bundle -> one `claude -p` proposal -> verified through the real fetcher |
 | `scrape_universal.py` | `bd_rescue.py`, `check_invariants.py`, `confirm_zero.py` +12 more | the 5-strategy browser extractor, and a CLI: `python scrape_universal.py "Name" "<url>"`. Has no aggregator logic of its own - never point it at LinkedIn/Indeed |
 
 ## Operator tools - a human or an agent runs these on demand

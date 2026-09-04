@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**627 filed · 452 open · 175 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**628 filed · 452 open · 176 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 577.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 578.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 151 open
+### registry — 150 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -244,9 +244,8 @@ closure convention in the header.
 - **549** `549@registry` **`deep_validate` recorded a NAME-ALIKE's empty board as this company having no
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
-- **576** `576@registry` **Two active rows share the Aristocrat Workday board, and the 12:53 auto-expand cron
 
-### infra — 109 open
+### infra — 110 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -357,6 +356,7 @@ closure convention in the header.
 - **547** `547@infra` **The 06:00 self-heal reads a `stale.json` the digest has not written yet, so a board
 - **560** `560@infra` **`458`'s one line changed the deletion semantics of thirteen state files, not two —
 - **561** `561@infra` **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
+- **577** `577@infra` **`WAYBACK_DAY_CAP` 150 cannot be reached: `WAYBACK_REQ_CAP` 140 counts every send and
 
 ### discovery — 30 open
 
@@ -11503,8 +11503,19 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      percent-encoding corruption in the ledger key — all fixed before the push. Not done: a reader of the ledger on the board (a "snapshot" link on
      a card) — `render`'s, if wanted; retiring `jd-archive.yml` (`445`) would move the step.
 
-576. **Two active rows share the Aristocrat Workday board, and the 12:53 auto-expand cron
-     wrote the second** — lane: `registry`. Filed 2026-09-04 by `infra`, which found it as the
+576. ~~**Two active rows share the Aristocrat Workday board, and the 12:53 auto-expand cron
+     wrote the second**~~ — **CLOSED 2026-09-04 (`registry`)**: `Aristocrat (Product Madness)`
+     parked `alias-of Aristocrat` — the Workday tenant `aristocrat` is the corporate careers
+     site and Product Madness one of its studios; neither row had ever produced a role — and
+     the keeper's token normalised to the composite `aristocrat/AristocratExternalCareersSite`
+     the other 98 Workday rows carry. WHY: `auto_expand._boards_now` keyed boards on
+     `(platform, token)` only, and `resolve_llm` had returned the Workday SITE alone where
+     `resolve_deep` writes `tenant/site` — one board, two spellings, both guards green. Closed
+     at both ends: `_boards_now` also keys the ADDRESS (`_url_key`, the `shared_boards`
+     normalisation) and `_board_taken` checks both at the probe refusal and the append;
+     `resolve_llm._workday_token` derives the composite from the api url
+     (`test_the_board_guard_sees_one_address_under_two_token_spellings`). Record:
+     `docs/sessions/2026-09-04-registry.md`. Original: lane: `registry`. Filed 2026-09-04 by `infra`, which found it as the
      one red in a full local run (`test_no_two_active_rows_share_a_board`): `Aristocrat` and
      `Aristocrat (Product Madness)` both ACTIVE on
      `https://aristocrat.wd3.myworkdayjobs.com/wday/cxs/aristocrat/AristocratExternalCareersSite/jobs`,
@@ -11513,3 +11524,18 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      had. The fix is one `companies.csv` verdict through `pipeline/notes.py`, and the
      question under it is why `auto_expand` activated a second row on a board the registry
      already reads (the board is the identity, `registry` 08-30).
+
+577. **`WAYBACK_DAY_CAP` 150 cannot be reached: `WAYBACK_REQ_CAP` 140 counts every send and
+     stops the day first** — lane: `infra`. Filed 2026-09-04 by `registry`, which applied the
+     operator's one-token dispensation (100 → 150 in `.github/workflows/jd-archive.yml`) and
+     read the step: `archive_evidence.py`'s `_exhausted()` is `rep.requests >= caps.requests`,
+     and `requests` counts postings, boards AND the pending verifications (lines 572, 597,
+     731), so at most 140 − 25 boards − verifications ≈ 115 postings can go out whatever the
+     day cap says. Today's unattended run (`33895459593`) did not reach either cap: it
+     `stopped: throttled` at **110 requests, submitted 28, failed 38**, backlog **4,659**
+     (up from 4,603) — so the reading that proves the drain is the stamp's `backlog`
+     falling, and it will not until the throttle episodes are understood. Exact diff, one
+     token in the same `env:` block: `WAYBACK_REQ_CAP: "140"` → `"220"` (150 + 25 + 45
+     verifications; at `WAYBACK_PACE_S` 6 that is 22 minutes of sends, inside the 30-minute
+     `WAYBACK_TIME_BUDGET_MIN` and under the archive's 15 a minute). Until `infra` applies
+     it, the day cap is documentation.

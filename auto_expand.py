@@ -279,7 +279,34 @@ def _boards_now():
             m2 = _RECRUITEE_IN_URL.search(u or "")     # subdomain tenant, not a path one
             if m2:
                 out.add(("recruitee", m2.group(1).lower()))
+        # ...and the ADDRESS itself, keyed the way `check_invariants.shared_boards` keys it.
+        # A token is one writer's SPELLING of a board, and two writers spell one board two
+        # ways: `resolve_llm` returned the Workday site alone (`AristocratExternalCareersSite`)
+        # where the registry stores the composite `tenant/site`, so the 12:53 run of
+        # 2026-09-04 opened `Aristocrat` beside `Aristocrat (Product Madness)` on ONE
+        # `api_url` with both (platform, token) lookups green, and only the suite's
+        # `test_no_two_active_rows_share_a_board` noticed (BACKLOG 576). The url is what
+        # both rows READ, so it is the key no spelling can dodge.
+        k = _url_key(r.get("api_url"))
+        if k:
+            out.add(k)
     return out
+
+
+def _url_key(api):
+    """`("url", netloc, path)` of a board address, case- and slash-blind -- the same
+    normalisation as `check_invariants.shared_boards`, so the gate and this guard agree."""
+    u = urlparse((api or "").strip().lower().rstrip("/"))
+    return ("url", u.netloc, u.path) if u.netloc else None
+
+
+def _board_taken(plat, tok, api, boards):
+    """Does the registry already read this board? By `(platform, token)` -- lower-cased on
+    BOTH sides (the Comeet uid miss of 2026-08-27) -- or by the address itself."""
+    if ((plat or "").lower(), (tok or "").lower()) in boards:
+        return True
+    k = _url_key(api)
+    return bool(k) and k in boards
 
 
 def _probe_resolve(name, li_slug, boards, deadline):
@@ -324,7 +351,7 @@ def _probe_resolve(name, li_slug, boards, deadline):
     if len({(h["plat"], h["slug"]) for h in live}) > 1:
         return None, "probe-ambiguous"
     h = live[0]
-    if (h["plat"].lower(), h["slug"].lower()) in boards:
+    if _board_taken(h["plat"], h["slug"], h["url"], boards):
         return None, "probe-dup-board"
     # READ THE PAGE OURSELVES. `_row_for_ats` calls `activation_ok(nm, api, n_all)` with NO
     # html, so `board_vouches` -> None sends the gate to fetch `human_board_url` itself --
@@ -915,8 +942,7 @@ def main():
             # every role republished under two employer names, and `check_invariants` check B
             # cannot catch it BECAUSE the names differ. The guard was written for this and
             # missed it by a `.lower()`.
-            if (row[4] == "true"
-                    and ((row[1] or "").lower(), (row[2] or "").lower()) in _boards_now()):
+            if row[4] == "true" and _board_taken(row[1], row[2], row[3], _boards_now()):
                 n_dupe += 1
                 print(f"  dupe {name} ({row[1]}/{row[2]} is already read by another row; "
                       f"not appended)", flush=True)
