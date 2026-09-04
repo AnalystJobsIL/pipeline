@@ -2180,3 +2180,8 @@ Rashi Foundation,scrape,,https://rashi.org.il/career/,false,queue-hunt 2026-09-0
 Padagis Israel,scrape,,https://padagis.co.il/career/,false,queue-hunt 2026-09-04: careers page documented; monitored candidate
 Palziv,scrape,,https://palziv.com/about-us/careers/,false,queue-hunt 2026-09-04: careers page documented; monitored candidate
 Aristocrat,workday,AristocratExternalCareersSite,https://aristocrat.wd3.myworkdayjobs.com/wday/cxs/aristocrat/AristocratExternalCareersSite/jobs,true,auto-expand; 1/1 IL
+Genesys,scrape,https://www.genesys.com/,https://www.genesys.com/,false,scanned; no open Israel roles now | own-site 2026-09-04: www.genesys.com linkback
+Paxos,scrape,https://www.paxos.com/careers,https://www.paxos.com/careers,true,auto-expand scrape; 1 IL
+Peachcontent,scrape,https://www.peachcontent.com/,https://www.peachcontent.com/,false,scanned; no open Israel roles now | own-site 2026-09-04: www.peachcontent.com linkback
+Pelephone,scrape,https://www.pelephone.co.il/ds/heb/home/,https://www.pelephone.co.il/ds/heb/home/,false,scanned; no open Israel roles now | own-site 2026-09-04: www.pelephone.co.il linkback
+Pendo,greenhouse,pendo,https://boards-api.greenhouse.io/v1/boards/pendo/jobs,true,auto-expand slug-probe; 21/1 IL
