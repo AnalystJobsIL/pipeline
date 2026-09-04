@@ -45461,5 +45461,533 @@
   ],
   "last": "2026-09-03",
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "SuperCom": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-04",
+    "url": "https://www.comeet.com/jobs/supercom/46.00A"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "found"
+ },
+ "Primis, Video Discovery": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-04",
+    "url": "https://www.primis.tech/careers/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "found"
+ },
+ "Leiman Schlussel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.l-s.co.il/job/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "COBRA IO": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://job.cobra.co.il/en"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "TransPerfect Connect": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.transperfectconnect.com/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Originai": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.originai.co/careers/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Orr Shalom For Children And Youth At Risk": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://orr-shalom.org.il/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Out For Change": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://careers.change.org"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Paamonim": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.paamonim.org/he/jobs/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Palgey Mayim": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.palgey-maim.com/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Pandor Doors": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://careers.pandoragroup.com/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "קבוצת כלמוביל": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.colmobil.co.il/career-in-colmobil/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "GlassesUSA.com": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Harcatus Community Action Prgm": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.harcatus.org/jobs"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "PPG Digital": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-04",
+    "url": "https://ppg-digital.com/en/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "found"
+ },
+ "Midea Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.midea.com/us/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Oriontech Engineering Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.orionengineering.com/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Ort Israel Technology And Science Educational Network": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Outpost24": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "no-search-results"
+ },
+ "Package AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Palram Industries Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.palram.com/us/careers/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Paradigm US": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-04",
+    "url": "https://www.paradigm.xyz/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "found"
+ },
+ "Algorio": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "ArborKnot": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://arborknot.com/careers/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "BlackEdge": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "http://job-boards.greenhouse.io/blackedgecapital"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Rashi Foundation": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://rashi.org.il/career/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Galil Software Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://galilsoftware.com/company/careers/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Orl": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Osage Co": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://osagecasino.com/careers/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Oversee Biz": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Padagis Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://padagis.co.il/career/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Palziv": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://palziv.com/about-us/careers/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Paretoleads": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-04",
+    "url": "https://paretoleads.com/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "found"
+ },
+ "Sigal Dori (Tepper)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://tepperfoundation.org/about/careers/"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Tnuva": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Rainforest": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://www.rainforestpay.com/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "ISI - ImageSat International": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "עמותה בקופסה (NP in a Box)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Ormat": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "no-search-results"
+ },
+ "Oti Autism": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-04",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "no candidate was this company's live page"
+ },
+ "P M I Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-04",
+    "url": "https://www.pmi.com/careers/overview"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "found"
+ },
+ "Palace America": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-04",
+    "url": "https://thepalace.org/careers"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "documented"
+ },
+ "Panaya": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-04",
+    "url": "https://www.dialog.co.il/new-world/work-search/tools/hitech-companies/companies-list/panaya"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "found"
+ },
+ "Winbond Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-04",
+    "url": "https://www.comeet.com/jobs/winbond/9A.009"
+   }
+  ],
+  "last": "2026-09-04",
+  "verdict": "found"
  }
 }

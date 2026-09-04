@@ -6816,7 +6816,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Experda.com": {
-  "date": "2026-09-03",
+  "date": "2026-09-04",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Experda",
@@ -13184,7 +13184,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kela Technologies": {
-  "date": "2026-09-01",
+  "date": "2026-09-04",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "KELA",
@@ -20634,7 +20634,7 @@
   "why": "\"Software AG Israel\" is a country/entity variant of Software AG (a Software GmbH brand), which hires via its global careers site at softwareag.com."
  },
  "Speedata.io": {
-  "date": "2026-09-03",
+  "date": "2026-09-04",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Speedata",
@@ -23313,7 +23313,7 @@
   }
  },
  "Level App": {
-  "date": "2026-09-03",
+  "date": "2026-09-04",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -24138,7 +24138,7 @@
   }
  },
  "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
-  "date": "2026-09-03",
+  "date": "2026-09-04",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Clal Insurance And Finance",
@@ -24416,6 +24416,98 @@
  },
  "Omnitelecom": {
   "date": "2026-09-03",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Nimble Search": {
+  "date": "2026-09-04",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Nimble",
+  "why": "a rung found this name's board and the registry row 'Nimble' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Nimble",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.nimbleway.com/careers"
+    ]
+   ]
+  }
+ },
+ "Mindspace Poland": {
+  "date": "2026-09-04",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Mindspace",
+  "why": "a rung found this name's board and the registry row 'Mindspace' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Mindspace",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.mindspace.me/careers/"
+    ]
+   ]
+  }
+ },
+ "Wobi Ltd": {
+  "date": "2026-09-04",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Wobi",
+  "why": "the registry row 'Wobi' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Wobi",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "eSentire": {
+  "date": "2026-09-04",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Originhq": {
+  "date": "2026-09-04",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Ovalix": {
+  "date": "2026-09-04",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Pagayais": {
+  "date": "2026-09-04",
   "verdict": "already-a-row",
   "raw_verdict": "already-a-row",
   "other_name": "",
