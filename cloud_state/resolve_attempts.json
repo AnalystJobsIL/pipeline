@@ -732,8 +732,8 @@
   "last": "2026-08-28"
  },
  "Hailo": {
-  "fails": 1,
-  "last": "2026-08-28"
+  "fails": 2,
+  "last": "2026-09-05"
  },
  "4M Analytics": {
   "fails": 2,
@@ -930,5 +930,41 @@
  "Voyage81": {
   "fails": 1,
   "last": "2026-09-04"
+ },
+ "A.P. Moller - Maersk": {
+  "fails": 1,
+  "last": "2026-09-05"
+ },
+ "Axioma System Engineering and Integration": {
+  "fails": 1,
+  "last": "2026-09-05"
+ },
+ "OurCrowd": {
+  "fails": 1,
+  "last": "2026-09-05"
+ },
+ "Regulus": {
+  "fails": 1,
+  "last": "2026-09-05"
+ },
+ "Siemens Digital Industries Software": {
+  "fails": 1,
+  "last": "2026-09-05"
+ },
+ "Xtend": {
+  "fails": 1,
+  "last": "2026-09-05"
+ },
+ "aiOla": {
+  "fails": 1,
+  "last": "2026-09-05"
+ },
+ "airHaifa": {
+  "fails": 1,
+  "last": "2026-09-05"
+ },
+ "entrypoint": {
+  "fails": 1,
+  "last": "2026-09-05"
  }
 }
