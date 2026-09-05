@@ -1090,15 +1090,15 @@
   "why": "Alstom's own SAP SuccessFactors job search site; cookie/JS wall prevented listings from loading, no positions visible."
  },
  "altera|https://altera.wd1.myworkdayjobs.com/wday/cxs/altera/altera/jobs": {
-  "chars": 152,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Altera",
-  "route": "unlocker-thin",
-  "text_chars": 152,
+  "date": "2026-09-05",
   "url": "https://altera.wd1.myworkdayjobs.com/wday/cxs/altera/Altera/jobs",
+  "name": "Altera",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
-  "why": "unreadable (152 visible chars via unlocker-thin)"
+  "why": "unreadable (135 visible chars via unlocker-thin)"
  },
  "amarel ltd|https://www.amarel.net/careers1/": {
   "chars": 395118,
@@ -1490,13 +1490,13 @@
   "why": "Atera's own careers page listing 21 jobs including Tel Aviv roles."
  },
  "augwind energy|https://www.augwind.com/careers": {
-  "chars": 0,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Augwind Energy",
-  "route": "plain-thin",
-  "text_chars": 0,
+  "date": "2026-09-05",
   "url": "https://www.augwind.com/careers",
+  "name": "Augwind Energy",
+  "model": "opus",
+  "route": "plain-thin",
+  "chars": 0,
+  "text_chars": 0,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (0 visible chars via plain-thin)"
  },
@@ -1590,23 +1590,23 @@
   "why": "Ayalon Highways' own site careers section (ayalonhw.co.il), Hebrew nav mentions נתיבי איילון; no visible job listings."
  },
  "babysense|https://www.babysenseglobal.com/": {
-  "chars": 399978,
-  "date": "2026-08-29",
-  "employer_named": "Babysense",
-  "model": "opus",
-  "name": "Babysense",
-  "page_kind": "other",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "not-a-board",
-   "why": "page_kind=other"
-  },
-  "states_no_openings": false,
-  "text_chars": 9000,
+  "date": "2026-09-05",
   "url": "https://www.babysenseglobal.com/",
-  "verdict": "UNVERIFIABLE",
-  "why": "two reads disagreed (NOT-THEIRS then not-a-board); a verdict that does not reproduce is not a verdict"
+  "name": "Babysense",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399978,
+  "text_chars": 9000,
+  "verdict": "not-a-board",
+  "why": "page_kind=about",
+  "employer_named": "Babysense",
+  "page_kind": "about",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "not-a-board",
+   "why": "page_kind=other",
+   "mechanical_said": true
+  }
  },
  "bagira|https://www.comeet.com/careers-api/2.0/company/47.006/positions?token=7462ba415d2245e2ba432ea3a302ba44176245e": {
   "chars": 52625,
@@ -1716,23 +1716,23 @@
   "why": "Beacon Security's own careers page listing its open roles; no country contradiction."
  },
  "beamr|https://www.comeet.com/jobs/beamr/a9.00b": {
-  "chars": 111367,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "Beamr",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "the page is an error or a wall"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/beamr/A9.00B",
+  "name": "Beamr",
+  "model": "opus",
+  "route": "plain",
+  "chars": 112548,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "the page is an error or a wall"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "beamup|http://job-boards.greenhouse.io/beamup": {
   "chars": 20957,
@@ -2822,13 +2822,13 @@
   "why": "a namesake abroad (ChefTek LLC)"
  },
  "chevron|https://chevron.wd5.myworkdayjobs.com/wday/cxs/chevron/jobs/jobs": {
-  "chars": 135,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Chevron",
-  "route": "unlocker-thin",
-  "text_chars": 135,
+  "date": "2026-09-05",
   "url": "https://chevron.wd5.myworkdayjobs.com/wday/cxs/chevron/jobs/jobs",
+  "name": "Chevron",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (135 visible chars via unlocker-thin)"
  },
@@ -2891,13 +2891,13 @@
   "why": "CI Systems' own careers page listing its open positions in electro-optics; Israeli company."
  },
  "cipia|https://cipia.com/careers/": {
-  "chars": 309,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Cipia",
-  "route": "render-thin",
-  "text_chars": 72,
+  "date": "2026-09-05",
   "url": "https://cipia.com/careers/",
+  "name": "Cipia",
+  "model": "opus",
+  "route": "render-thin",
+  "chars": 309,
+  "text_chars": 72,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (72 visible chars via render-thin)"
  },
@@ -3366,23 +3366,23 @@
   "why": "CorNeat's own site careers page; states \"There are no current job openings\"; address in Ra'anana, Israel."
  },
  "criaterra|https://www.criaterra.com/careers": {
-  "chars": 30311,
-  "date": "2026-08-29",
-  "employer_named": "Criaterra",
-  "model": "opus",
-  "name": "Criaterra",
-  "page_kind": "error",
-  "route": "render",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "the page is an error or a wall"
-  },
-  "states_no_openings": false,
-  "text_chars": 413,
+  "date": "2026-09-05",
   "url": "https://www.criaterra.com/careers",
-  "verdict": "UNVERIFIABLE",
-  "why": "the page is an error or a wall"
+  "name": "Criaterra",
+  "model": "opus",
+  "route": "render",
+  "chars": 30311,
+  "text_chars": 413,
+  "verdict": "dead-url",
+  "why": "the page loads and says it does not exist",
+  "employer_named": "Criaterra",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "dead-url",
+   "why": "the page loads and says it does not exist",
+   "mechanical_said": true
+  }
  },
  "curesponse|https://curesponse.com/careers": {
   "chars": 56532,
@@ -3498,23 +3498,23 @@
   "why": "Comeet ATS feed for Cyberillium with 4 Tel Aviv openings."
  },
  "cycognito|https://www.comeet.com/jobs/cycognito/14.00a": {
-  "chars": 111452,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "CyCognito",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "the page is an error or a wall"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/CyCognito/14.00A",
+  "name": "CyCognito",
+  "model": "opus",
+  "route": "plain",
+  "chars": 112633,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "the page is an error or a wall"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "cylus|https://www.cylus.com/careers": {
   "chars": 81182,
@@ -3680,23 +3680,23 @@
   "why": "unreadable (28 visible chars via plain-thin)"
  },
  "deloitte|https://apply.deloitte.co.uk/ukcareers/": {
-  "chars": 197810,
-  "date": "2026-08-29",
-  "employer_named": "Deloitte",
-  "model": "opus",
-  "name": "Deloitte",
-  "page_kind": "board",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "ok",
-   "why": "Deloitte's own UK application site (apply.deloitte.co.uk) listing 667 Deloitte openings; same global firm brand, UK-focused but part of the same Deloitte networ"
-  },
-  "states_no_openings": false,
-  "text_chars": 9000,
+  "date": "2026-09-05",
   "url": "https://apply.deloitte.co.uk/UKCareers/",
-  "verdict": "UNVERIFIABLE",
-  "why": "two reads disagreed (NOT-THEIRS then ok); a verdict that does not reproduce is not a verdict"
+  "name": "Deloitte",
+  "model": "opus",
+  "route": "plain",
+  "chars": 197835,
+  "text_chars": 9000,
+  "verdict": "NOT-THEIRS",
+  "why": "a namesake abroad (Deloitte)",
+  "employer_named": "Deloitte",
+  "page_kind": "board",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "a namesake abroad (Deloitte)",
+   "mechanical_said": true
+  }
  },
  "dentsply sirona|https://careers.dentsplysirona.com/search/?q=&locationsearch=israel": {
   "chars": 101778,
@@ -4950,13 +4950,13 @@
   "why": "Forsea's own careers page; says \"Our waters are clear at the moment\" — no open positions currently."
  },
  "fortrea|https://fortrea.wd1.myworkdayjobs.com/wday/cxs/fortrea/fortrea/jobs": {
-  "chars": 135,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Fortrea",
-  "route": "unlocker-thin",
-  "text_chars": 135,
+  "date": "2026-09-05",
   "url": "https://fortrea.wd1.myworkdayjobs.com/wday/cxs/fortrea/Fortrea/jobs",
+  "name": "Fortrea",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (135 visible chars via unlocker-thin)"
  },
@@ -5187,23 +5187,23 @@
   "why": "Gstat's own Hebrew careers page listing open data roles (partly placement roles for clients, but published by Gstat)."
  },
  "g2 risk solutions|https://www.comeet.com/jobs/g2risksolutions/c9.003": {
-  "chars": 136632,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "G2 Risk Solutions",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "the page is an error or a wall"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/g2risksolutions/C9.003",
+  "name": "G2 Risk Solutions",
+  "model": "opus",
+  "route": "plain",
+  "chars": 144810,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "the page is an error or a wall"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "galialahav|https://www.galialahav.com/pages/careers": {
   "chars": 399986,
@@ -5267,15 +5267,15 @@
   "why": "a namesake abroad (GAMMA GRUPPE)"
  },
  "gartner|https://gartner.wd5.myworkdayjobs.com/wday/cxs/gartner/ext/jobs": {
-  "chars": 136,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Gartner",
-  "route": "unlocker-thin",
-  "text_chars": 136,
+  "date": "2026-09-05",
   "url": "https://gartner.wd5.myworkdayjobs.com/wday/cxs/gartner/EXT/jobs",
+  "name": "Gartner",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
-  "why": "unreadable (136 visible chars via unlocker-thin)"
+  "why": "unreadable (135 visible chars via unlocker-thin)"
  },
  "gav systems|https://gav.co.il/jobs/": {
   "chars": 279480,
@@ -5473,34 +5473,34 @@
   "why": "Page title \"דרושים.ות | Gila Project\" indicates the organization's own Hebrew careers/jobs page; body content is only Wix CSS, no listings or statements visible."
  },
  "gilead sciences|https://gilead.wd1.myworkdayjobs.com/wday/cxs/gilead/gileadcareers/jobs": {
-  "chars": 136,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Gilead Sciences",
-  "route": "unlocker-thin",
-  "text_chars": 136,
+  "date": "2026-09-05",
   "url": "https://gilead.wd1.myworkdayjobs.com/wday/cxs/gilead/gileadcareers/jobs",
+  "name": "Gilead Sciences",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
-  "why": "unreadable (136 visible chars via unlocker-thin)"
+  "why": "unreadable (135 visible chars via unlocker-thin)"
  },
  "gini apps|https://www.comeet.com/jobs/gini-apps/66.000": {
-  "chars": 125530,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "Gini Apps",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "a wall or an empty shell we could not read"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/gini-apps/66.000",
+  "name": "Gini Apps",
+  "model": "opus",
+  "route": "plain",
+  "chars": 107328,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "a wall or an empty shell we could not read"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "giraffe ems|https://www.giraffe.co.il/jobs": {
   "chars": 76970,
@@ -5649,15 +5649,15 @@
   "why": "GlobalDots' own careers page listing an open Platform Engineer role."
  },
  "globalfoundries|https://globalfoundries.wd1.myworkdayjobs.com/wday/cxs/globalfoundries/external/jobs": {
-  "chars": 267,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Globalfoundries",
-  "route": "render-thin",
-  "text_chars": 104,
+  "date": "2026-09-05",
   "url": "https://globalfoundries.wd1.myworkdayjobs.com/wday/cxs/globalfoundries/External/jobs",
+  "name": "Globalfoundries",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
-  "why": "unreadable (104 visible chars via render-thin)"
+  "why": "unreadable (135 visible chars via unlocker-thin)"
  },
  "globus packaging|https://globus-intr.co.il/%d7%93%d7%a8%d7%95%d7%a9%d7%99%d7%9d/": {
   "chars": 291921,
@@ -6352,23 +6352,23 @@
   "why": "Greenhouse job board API feed for board token \"harnessinc\", all jobs company_name \"Harness\" linking to harness.io — the company's own board."
  },
  "hcltech|https://careers.hcltech.com/go/nontpdemand/9558355/": {
-  "chars": 130651,
-  "date": "2026-08-29",
-  "employer_named": "HCL Technologies Limited (HCLTech)",
-  "model": "opus",
-  "name": "HCLTech",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "a wall or an empty shell we could not read"
-  },
-  "states_no_openings": false,
-  "text_chars": 5153,
+  "date": "2026-09-05",
   "url": "https://careers.hcltech.com/go/NonTPDemand/9558355/",
+  "name": "HCLTech",
+  "model": "opus",
+  "route": "plain",
+  "chars": 130651,
+  "text_chars": 5153,
   "verdict": "UNVERIFIABLE",
-  "why": "a wall or an empty shell we could not read"
+  "why": "two reads disagreed (UNVERIFIABLE then ok); a verdict that does not reproduce is not a verdict",
+  "employer_named": "HCL Technologies Limited",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "ok",
+   "why": "Hosted on careers.hcltech.com, HCLTech's own SAP SuccessFactors careers site, footer \"Copyright © 2026 HCL Technologies Limited.\" It shows a job requisition (No",
+   "mechanical_said": true
+  }
  },
  "hdr|https://hdr.taleo.net/careersection/hdr_mobile/jobsearch.ftl": {
   "chars": 50071,
@@ -6825,15 +6825,18 @@
   "why": "Huuuge Games' own Recruitee board listing open roles, including a Tel Aviv section; some cities say \"No open positions\" but Tel Aviv/Warsaw roles are listed."
  },
  "hyperguest|https://www.comeet.com/careers-api/2.0/company/09.00b/positions?token=90b3642516390b1b2148583f4d242c90b0": {
-  "chars": 2234,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "HyperGuest",
-  "route": "plain",
-  "text_chars": 2192,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/careers-api/2.0/company/09.00B/positions?token=90B3642516390B1B2148583F4D242C90B0",
-  "verdict": "UNVERIFIABLE",
-  "why": "llm-error timeout(180s)"
+  "name": "HyperGuest",
+  "model": "opus",
+  "route": "plain",
+  "chars": 5484,
+  "text_chars": 5442,
+  "verdict": "ok",
+  "why": "Comeet ATS API feed for HyperGuest listing open positions, including a Product Manager in Ramat Gan, Israel. This is the company's own hosted job data.",
+  "employer_named": "HyperGuest",
+  "page_kind": "board",
+  "states_no_openings": false
  },
  "hyperstrong|https://www.hyperstrong.com/en/join-us/openings": {
   "chars": 129995,
@@ -6850,23 +6853,23 @@
   "why": "Official HyperStrong (Beijing HyperStrong Technology Co., LTD) careers openings page listing 6 roles; own board. Global company site, could include Israel."
  },
  "i4valley|https://i4valley.com/apply/": {
-  "chars": 55494,
-  "date": "2026-08-29",
-  "employer_named": "i4Valley",
-  "model": "opus",
-  "name": "i4Valley",
-  "page_kind": "other",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "not-a-board",
-   "why": "page_kind=other"
-  },
-  "states_no_openings": false,
-  "text_chars": 9000,
+  "date": "2026-09-05",
   "url": "https://i4valley.com/apply/",
-  "verdict": "UNVERIFIABLE",
-  "why": "two reads disagreed (NOT-THEIRS then not-a-board); a verdict that does not reproduce is not a verdict"
+  "name": "i4Valley",
+  "model": "opus",
+  "route": "plain",
+  "chars": 55502,
+  "text_chars": 9000,
+  "verdict": "not-a-board",
+  "why": "page_kind=other",
+  "employer_named": "i4Valley",
+  "page_kind": "other",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "not-a-board",
+   "why": "page_kind=other",
+   "mechanical_said": true
+  }
  },
  "iai - israel aerospace industries|https://jobs.iai.co.il/jobs/": {
   "chars": 65305,
@@ -6897,23 +6900,23 @@
   "why": "Israel Aerospace Industries' own Hebrew jobs board; listings render via unloaded template placeholders."
  },
  "ibi בית השקעות|https://www.ibi.co.il/career/": {
-  "chars": 33115,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "IBI בית השקעות",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "a wall or an empty shell we could not read"
-  },
-  "states_no_openings": false,
-  "text_chars": 9000,
+  "date": "2026-09-05",
   "url": "https://www.ibi.co.il/career/",
+  "name": "IBI בית השקעות",
+  "model": "opus",
+  "route": "plain",
+  "chars": 33131,
+  "text_chars": 9000,
   "verdict": "UNVERIFIABLE",
-  "why": "a wall or an empty shell we could not read"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "ibm|https://www.ibm.com/careers/search?field_keyword_08[0]=israel": {
   "chars": 125875,
@@ -7172,23 +7175,23 @@
   "why": "two reads disagreed (NOT-THEIRS then ok); a verdict that does not reproduce is not a verdict"
  },
  "innplay labs|https://www.innplaylabs.com/careers": {
-  "chars": 212151,
-  "date": "2026-08-29",
-  "employer_named": "Innplay Labs",
-  "model": "opus",
-  "name": "Innplay Labs",
-  "page_kind": "error",
-  "route": "render",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "the page is an error or a wall"
-  },
-  "states_no_openings": false,
-  "text_chars": 2369,
+  "date": "2026-09-05",
   "url": "https://www.innplaylabs.com/careers",
-  "verdict": "UNVERIFIABLE",
-  "why": "the page is an error or a wall"
+  "name": "Innplay Labs",
+  "model": "opus",
+  "route": "render",
+  "chars": 212287,
+  "text_chars": 2428,
+  "verdict": "dead-url",
+  "why": "the page loads and says it does not exist",
+  "employer_named": "Innplay Labs",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "dead-url",
+   "why": "the page loads and says it does not exist",
+   "mechanical_said": true
+  }
  },
  "inspira technologies|https://www.inspira.com/career-options-usa/": {
   "chars": 156939,
@@ -7663,23 +7666,23 @@
   "why": "the page is an aggregator"
  },
  "jeen.ai|https://www.comeet.com/jobs/jeenai/da.008": {
-  "chars": 156362,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "Jeen.ai",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "a wall or an empty shell we could not read"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/jeenai/DA.008",
+  "name": "Jeen.ai",
+  "model": "opus",
+  "route": "plain",
+  "chars": 96529,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "a wall or an empty shell we could not read"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "jerusalem biblical zoo|https://www.jerusalemzoo.org.il/eng/were-hiring": {
   "chars": 131262,
@@ -7724,15 +7727,15 @@
   "why": "Comeet ATS API feed for Jifiti's own board, listing an open role in Modiin, Israel."
  },
  "jll|https://jll.wd1.myworkdayjobs.com/wday/cxs/jll/jllcareers/jobs": {
-  "chars": 136,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "JLL",
-  "route": "unlocker-thin",
-  "text_chars": 136,
+  "date": "2026-09-05",
   "url": "https://jll.wd1.myworkdayjobs.com/wday/cxs/jll/jllcareers/jobs",
+  "name": "JLL",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
-  "why": "unreadable (136 visible chars via unlocker-thin)"
+  "why": "unreadable (135 visible chars via unlocker-thin)"
  },
  "jmb travel limited|https://www.jmbtravel.co.uk/careers": {
   "chars": 176851,
@@ -8478,13 +8481,13 @@
   "why": "Krief Albatros, member of Krief Group, own careers page listing openings in Tel Aviv and Ashdod, Israel."
  },
  "kubiya|https://kubiya.ai/careers": {
-  "chars": 0,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Kubiya",
-  "route": "plain-thin",
-  "text_chars": 0,
+  "date": "2026-09-05",
   "url": "https://kubiya.ai/careers",
+  "name": "Kubiya",
+  "model": "opus",
+  "route": "plain-thin",
+  "chars": 0,
+  "text_chars": 0,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (0 visible chars via plain-thin)"
  },
@@ -8711,23 +8714,23 @@
   "why": "Official careers page of Laniado Hospital (Netanya, Israel) listing open positions by department."
  },
  "lasso security|https://www.comeet.com/jobs/lassosecurity/f9.008": {
-  "chars": 143571,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "Lasso Security",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "a wall or an empty shell we could not read"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/lassosecurity/F9.008",
+  "name": "Lasso Security",
+  "model": "opus",
+  "route": "plain",
+  "chars": 138730,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "a wall or an empty shell we could not read"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "latent ai|https://latentai.com/careers/#open-positions": {
   "chars": 185458,
@@ -8838,13 +8841,13 @@
   "why": "Ledico Ltd's own Hebrew careers page listing its open positions in Israel."
  },
  "leidos|https://leidos.wd5.myworkdayjobs.com/wday/cxs/leidos/external/jobs": {
-  "chars": 135,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Leidos",
-  "route": "unlocker-thin",
-  "text_chars": 135,
+  "date": "2026-09-05",
   "url": "https://leidos.wd5.myworkdayjobs.com/wday/cxs/leidos/External/jobs",
+  "name": "Leidos",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (135 visible chars via unlocker-thin)"
  },
@@ -8877,23 +8880,23 @@
   "why": "Lely's own global vacancies page listing 254 openings."
  },
  "lema ai|https://www.comeet.com/jobs/lemalabs/ea.001": {
-  "chars": 106943,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "Lema AI",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "a wall or an empty shell we could not read"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/lemalabs/EA.001",
+  "name": "Lema AI",
+  "model": "opus",
+  "route": "plain",
+  "chars": 158759,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "a wall or an empty shell we could not read"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "lemon mss|https://lemon-mss.com/jobs/": {
   "chars": 140362,
@@ -9437,15 +9440,15 @@
   "why": "Ashby job-board API feed for Lumana, listing its own roles in Tel Aviv/Caesarea, Israel."
  },
  "lumentum|https://lumentum.wd5.myworkdayjobs.com/wday/cxs/lumentum/lite/jobs": {
-  "chars": 136,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Lumentum",
-  "route": "unlocker-thin",
-  "text_chars": 136,
+  "date": "2026-09-05",
   "url": "https://lumentum.wd5.myworkdayjobs.com/wday/cxs/lumentum/LITE/jobs",
+  "name": "Lumentum",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
-  "why": "unreadable (136 visible chars via unlocker-thin)"
+  "why": "unreadable (135 visible chars via unlocker-thin)"
  },
  "lumissil|https://www.lumissil.com/about/career/jobs.html": {
   "chars": 244750,
@@ -9556,15 +9559,15 @@
   "why": "Comeet careers API feed for maelyscosmetics listing MAËLYS positions, including Tel Aviv roles."
  },
  "maersk group|https://maersk.wd3.myworkdayjobs.com/wday/cxs/maersk/maersk_careers/jobs": {
-  "chars": 267,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Maersk Group",
-  "route": "render-thin",
-  "text_chars": 104,
+  "date": "2026-09-05",
   "url": "https://maersk.wd3.myworkdayjobs.com/wday/cxs/maersk/Maersk_Careers/jobs",
+  "name": "Maersk Group",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
-  "why": "unreadable (104 visible chars via render-thin)"
+  "why": "unreadable (135 visible chars via unlocker-thin)"
  },
  "magalsolutions|https://www.comeet.com/careers-api/2.0/company/7a.005/positions?token=a7549333449a755e1d34493ebe493329d43ebe": {
   "chars": 18597,
@@ -9609,23 +9612,23 @@
   "why": "Magma Devs' own careers page, Tel Aviv hybrid roles listed but explicitly says \"We are not hiring right now\"."
  },
  "majestic labs ai|https://www.comeet.com/jobs/majesticlabs/aa.004": {
-  "chars": 246149,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "Majestic Labs ai",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "a wall or an empty shell we could not read"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/majesticlabs/AA.004",
+  "name": "Majestic Labs ai",
+  "model": "opus",
+  "route": "plain",
+  "chars": 251597,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "a wall or an empty shell we could not read"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "make gems|https://www.makegems.com/careers": {
   "chars": 7827,
@@ -9897,23 +9900,23 @@
   "why": "MaxLinear's own careers page with featured jobs and links to US/international listings; global company, could include Israel."
  },
  "maytronics|https://www.comeet.com/jobs/maytronics/e3.008": {
-  "chars": 256143,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "Maytronics",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "a wall or an empty shell we could not read"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/maytronics/E3.008",
+  "name": "Maytronics",
+  "model": "opus",
+  "route": "plain",
+  "chars": 269433,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "a wall or an empty shell we could not read"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "Maytronics",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "mazebolt|https://www.comeet.com/careers-api/2.0/company/a7.00c/positions?token=7ac2e081eb0f581eb07ac35b435b47ac35b4": {
   "chars": 1445,
@@ -10901,13 +10904,13 @@
   "why": "belongs to Mosaic"
  },
  "motorola solutions|https://motorolasolutions.wd5.myworkdayjobs.com/wday/cxs/motorolasolutions/careers/jobs": {
-  "chars": 135,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Motorola Solutions",
-  "route": "unlocker-thin",
-  "text_chars": 135,
+  "date": "2026-09-05",
   "url": "https://motorolasolutions.wd5.myworkdayjobs.com/wday/cxs/motorolasolutions/Careers/jobs",
+  "name": "Motorola Solutions",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (135 visible chars via unlocker-thin)"
  },
@@ -11020,13 +11023,13 @@
   "why": "page_kind=other"
  },
  "nanomedic|https://nanomedic.com/careers": {
-  "chars": 7018,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Nanomedic",
-  "route": "render-thin",
-  "text_chars": 130,
+  "date": "2026-09-05",
   "url": "https://nanomedic.com/careers",
+  "name": "Nanomedic",
+  "model": "opus",
+  "route": "render-thin",
+  "chars": 7018,
+  "text_chars": 130,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (130 visible chars via render-thin)"
  },
@@ -11274,23 +11277,23 @@
   "why": "Own careers/\"wanted\" page of נונו מימי restaurant group in Israel; invites applications by region/role but shows no listed positions."
  },
  "nostromo energy|https://nostromo.energy/": {
-  "chars": 58484,
-  "date": "2026-08-29",
-  "employer_named": "Nostromo",
-  "model": "opus",
-  "name": "Nostromo Energy",
-  "page_kind": "about",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "not-a-board",
-   "why": "page_kind=about"
-  },
-  "states_no_openings": false,
-  "text_chars": 3786,
+  "date": "2026-09-05",
   "url": "https://nostromo.energy/",
-  "verdict": "UNVERIFIABLE",
-  "why": "two reads disagreed (NOT-THEIRS then not-a-board); a verdict that does not reproduce is not a verdict"
+  "name": "Nostromo Energy",
+  "model": "opus",
+  "route": "plain",
+  "chars": 58484,
+  "text_chars": 3786,
+  "verdict": "not-a-board",
+  "why": "page_kind=about",
+  "employer_named": "Nostromo",
+  "page_kind": "about",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "not-a-board",
+   "why": "page_kind=about",
+   "mechanical_said": true
+  }
  },
  "novelsat|https://novelsat.com/careers/": {
   "chars": 91647,
@@ -11335,13 +11338,13 @@
   "why": "NSO Group's own site posting a single job with apply form."
  },
  "nutanix|https://nutanix.eightfold.ai/careers?location=israel": {
-  "chars": 9622,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Nutanix",
-  "route": "render-thin",
-  "text_chars": 47,
+  "date": "2026-09-05",
   "url": "https://nutanix.eightfold.ai/careers?location=Israel",
+  "name": "Nutanix",
+  "model": "opus",
+  "route": "render-thin",
+  "chars": 9684,
+  "text_chars": 47,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (47 visible chars via render-thin)"
  },
@@ -11421,23 +11424,23 @@
   "why": "Company's own site with careers section; positions failed to load (\"Loading positions...\"), no statement of no openings."
  },
  "oligosecurity|https://www.comeet.com/jobs/oligosecurity/5a.00b": {
-  "chars": 113666,
-  "date": "2026-08-29",
-  "employer_named": "",
-  "model": "opus",
-  "name": "oligosecurity",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "a wall or an empty shell we could not read"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/oligosecurity/5A.00B",
+  "name": "oligosecurity",
+  "model": "opus",
+  "route": "plain",
+  "chars": 111255,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "a wall or an empty shell we could not read"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "omnisys|https://www.omnisys.co.il/careers-2/": {
   "chars": 116253,
@@ -12082,23 +12085,23 @@
   "why": "Questrade's own careers page on questrade.com; mentions Israel office; no job listings shown."
  },
  "quris ai|https://www.comeet.com/jobs/quris/17.000": {
-  "chars": 110890,
-  "date": "2026-08-29",
-  "employer_named": "\"\"",
-  "model": "opus",
-  "name": "Quris AI",
-  "page_kind": "error",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "UNVERIFIABLE",
-   "why": "the page is an error or a wall"
-  },
-  "states_no_openings": false,
-  "text_chars": 1592,
+  "date": "2026-09-05",
   "url": "https://www.comeet.com/jobs/quris/17.000",
+  "name": "Quris AI",
+  "model": "opus",
+  "route": "plain",
+  "chars": 112071,
+  "text_chars": 1592,
   "verdict": "UNVERIFIABLE",
-  "why": "the page is an error or a wall"
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
  },
  "raaam memory technologies|https://raaam-tech.com/careers/": {
   "chars": 92456,
@@ -12420,15 +12423,15 @@
   "why": "unreadable (267 visible chars via plain-thin)"
  },
  "ribbon communications|https://vhr-genband.wd1.myworkdayjobs.com/wday/cxs/vhr_genband/ribboncareers/jobs": {
-  "chars": 136,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Ribbon Communications",
-  "route": "unlocker-thin",
-  "text_chars": 136,
+  "date": "2026-09-05",
   "url": "https://vhr-genband.wd1.myworkdayjobs.com/wday/cxs/vhr_genband/ribboncareers/jobs",
+  "name": "Ribbon Communications",
+  "model": "opus",
+  "route": "unlocker-thin",
+  "chars": 135,
+  "text_chars": 135,
   "verdict": "UNVERIFIABLE",
-  "why": "unreadable (136 visible chars via unlocker-thin)"
+  "why": "unreadable (135 visible chars via unlocker-thin)"
  },
  "riverside.fm|https://careers.riverside.com/?beb8cc75_page=2": {
   "chars": 250056,
@@ -12520,23 +12523,18 @@
   "why": "Own careers page on roshelop.co.il listing two open positions in Netanya, Israel."
  },
  "rovr|https://rovrstack.ai/jobs": {
-  "chars": 174337,
-  "date": "2026-08-29",
-  "employer_named": "RoVR Technologies, Inc.",
-  "model": "opus",
-  "name": "ROVR",
-  "page_kind": "board",
-  "route": "plain",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "ok",
-   "why": "Own careers page of RoVR Technologies listing its own open roles (NYC/Remote); healthcare AI company, could be the same entity though jobs listed are US-based."
-  },
-  "states_no_openings": false,
-  "text_chars": 1572,
+  "date": "2026-09-05",
   "url": "https://rovrstack.ai/jobs",
-  "verdict": "UNVERIFIABLE",
-  "why": "two reads disagreed (NOT-THEIRS then ok); a verdict that does not reproduce is not a verdict"
+  "name": "ROVR",
+  "model": "opus",
+  "route": "plain",
+  "chars": 174337,
+  "text_chars": 1572,
+  "verdict": "ok",
+  "why": "The page is RoVR's own careers page (\"Careers at RoVR\", © 2026 RoVR Technologies, Inc.) listing open engineering positions. The distinctive name matches; nothing plainly ties it to a different country",
+  "employer_named": "RoVR Technologies, Inc.",
+  "page_kind": "board",
+  "states_no_openings": false
  },
  "run:ai|https://careers.smartrecruiters.com/runai1": {
   "chars": 92915,
@@ -13169,13 +13167,13 @@
   "why": "SOURCIX's own careers page listing four Tel Aviv roles."
  },
  "spacepharma|https://www.space4p.com/careers": {
-  "chars": 1245,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "SpacePharma",
-  "route": "render-thin",
-  "text_chars": 267,
+  "date": "2026-09-05",
   "url": "https://www.space4p.com/careers",
+  "name": "SpacePharma",
+  "model": "opus",
+  "route": "render-thin",
+  "chars": 1245,
+  "text_chars": 267,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (267 visible chars via render-thin)"
  },
@@ -13325,23 +13323,23 @@
   "why": "Steadicopter's own careers page (Migdal HaEmek, Israel) listing a C# software engineer opening."
  },
  "stealth startup|https://jobs.ashbyhq.com/stealth-startup/": {
-  "chars": 21803,
-  "date": "2026-08-29",
-  "employer_named": "Stealth Startup",
-  "model": "opus",
-  "name": "Stealth Startup",
-  "page_kind": "board",
-  "route": "render",
-  "second_read": {
-   "mechanical_said": true,
-   "verdict": "ok",
-   "why": "Ashby-hosted board titled \"Stealth Startup\" listing 4 of its own openings; no other employer named. Roles are US-remote but nothing shows it is a different coun"
-  },
-  "states_no_openings": false,
-  "text_chars": 780,
+  "date": "2026-09-05",
   "url": "https://jobs.ashbyhq.com/stealth-startup/",
-  "verdict": "UNVERIFIABLE",
-  "why": "two reads disagreed (NOT-THEIRS then ok); a verdict that does not reproduce is not a verdict"
+  "name": "Stealth Startup",
+  "model": "opus",
+  "route": "render",
+  "chars": 21803,
+  "text_chars": 780,
+  "verdict": "NOT-THEIRS",
+  "why": "a namesake abroad (Stealth Startup)",
+  "employer_named": "Stealth Startup",
+  "page_kind": "board",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Stealth Startup",
+   "mechanical_said": true
+  }
  },
  "stemrad|https://www.stemrad.com/company/careers": {
   "chars": 98387,
@@ -13823,15 +13821,15 @@
   "why": "Comeet ATS API feed for Terra Security's own positions, including Tel Aviv roles."
  },
  "tesla|https://www.tesla.com/careers/search/?site=il": {
-  "chars": 33617,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Tesla",
-  "route": "unlocker-thin",
-  "text_chars": 231,
+  "date": "2026-09-05",
   "url": "https://www.tesla.com/careers/search/?site=IL",
+  "name": "Tesla",
+  "model": "opus",
+  "route": "render-thin",
+  "chars": 307,
+  "text_chars": 223,
   "verdict": "UNVERIFIABLE",
-  "why": "unreadable (231 visible chars via unlocker-thin)"
+  "why": "unreadable (223 visible chars via render-thin)"
  },
  "teva pharmaceutical industries|https://www.tevapharm.com/your-career/": {
   "chars": 130333,
@@ -14567,13 +14565,13 @@
   "why": "the page is an aggregator"
  },
  "vidazoo|https://boards-api.greenhouse.io/v1/boards/vidazoo/jobs": {
-  "chars": 30,
-  "date": "2026-08-29",
-  "model": "opus",
-  "name": "Vidazoo",
-  "route": "plain-thin",
-  "text_chars": 30,
+  "date": "2026-09-05",
   "url": "https://boards-api.greenhouse.io/v1/boards/vidazoo/jobs",
+  "name": "Vidazoo",
+  "model": "opus",
+  "route": "plain-thin",
+  "chars": 30,
+  "text_chars": 30,
   "verdict": "UNVERIFIABLE",
   "why": "unreadable (30 visible chars via plain-thin)"
  },
@@ -21039,6 +21037,663 @@
   "verdict": "ok",
   "why": "OPSWAT's own open-positions page listing 80 jobs across locations including Israel.",
   "employer_named": "OPSWAT",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "mertens - malam team|https://mertens.malam.com/career/": {
+  "date": "2026-09-05",
+  "url": "https://mertens.malam.com/career/",
+  "name": "Mertens - Malam Team",
+  "model": "opus",
+  "route": "plain",
+  "chars": 84752,
+  "text_chars": 2053,
+  "verdict": "ok",
+  "why": "Hebrew career page on mertens.malam.com listing open tech positions across Israel (Jerusalem, Gush Dan) posted by \"חברת Mertens - MalamTeam\". Clearly the company's own hiring board for the Israeli ent",
+  "employer_named": "Mertens - MalamTeam",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "baz|https://baz.ai/careers": {
+  "date": "2026-09-05",
+  "url": "https://baz.ai/careers",
+  "name": "Baz",
+  "model": "opus",
+  "route": "plain",
+  "chars": 58640,
+  "text_chars": 1001,
+  "verdict": "ok",
+  "why": "Baz's own careers page listing open positions including \"AI Engineer - Tel Aviv,\" matching the Israeli hiring seed.",
+  "employer_named": "Baz Technologies, Inc.",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "particulatech|https://particula-tech.com/pages/careers": {
+  "date": "2026-09-05",
+  "url": "https://particula-tech.com/pages/careers",
+  "name": "Particulatech",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399969,
+  "text_chars": 2488,
+  "verdict": "ok",
+  "why": "This is the careers page on Particula's own product site (particula-tech.com), maker of GoCube, GoDice, GoChess — the Israeli company. The visible content is store navigation with a Careers link; no p",
+  "employer_named": "Particula (GoCube)",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "passportcardd|https://www.passportcard.co.il/career/": {
+  "date": "2026-09-05",
+  "url": "https://www.passportcard.co.il/career/",
+  "name": "Passportcardd",
+  "model": "opus",
+  "route": "plain",
+  "chars": 151398,
+  "text_chars": 9000,
+  "verdict": "ok",
+  "why": "PassportCard's own Hebrew career page (passportcard.co.il) listing multiple open positions based in Netanya, Israel. Own board, Israeli entity.",
+  "employer_named": "PassportCard פספורטכארד",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "peak tech innovation|https://pickpeak.co/en/career/": {
+  "date": "2026-09-05",
+  "url": "https://pickpeak.co/en/career/",
+  "name": "Peak Tech Innovation",
+  "model": "opus",
+  "route": "plain",
+  "chars": 272505,
+  "text_chars": 4214,
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator",
+  "employer_named": "PEAK / Pick",
+  "page_kind": "aggregator",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator",
+   "mechanical_said": true
+  }
+ },
+ "pendo io japan|https://www.pendo.io/careers/": {
+  "date": "2026-09-05",
+  "url": "https://www.pendo.io/careers/",
+  "name": "Pendo IO Japan",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399685,
+  "text_chars": 9000,
+  "verdict": "ok",
+  "why": "This is Pendo.io's own careers page. It lists Herzliya (Israel) among its global offices, matching the Israeli entity. It describes culture and benefits with \"See open roles\" links but no actual posit",
+  "employer_named": "Pendo.io",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "amitim pension funds|https://amitim.com/career/": {
+  "date": "2026-09-05",
+  "url": "https://amitim.com/career/",
+  "name": "Amitim Pension Funds",
+  "model": "opus",
+  "route": "plain",
+  "chars": 107382,
+  "text_chars": 6581,
+  "verdict": "ok",
+  "why": "This is Amitim's own Hebrew careers page describing why to work at the Israeli pension fund organization, with a link to \"כל המשרות\" (all jobs) but no positions listed on the page itself. It's the Isr",
+  "employer_named": "עמיתים (Amitim)",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "yuval hr - talent agency and advisory|https://yuvalhr.com/jobs/category/hr": {
+  "date": "2026-09-05",
+  "url": "https://yuvalhr.com/jobs/category/hr",
+  "name": "Yuval HR - Talent agency and advisory",
+  "model": "opus",
+  "route": "plain",
+  "chars": 20821,
+  "text_chars": 1907,
+  "verdict": "UNVERIFIABLE",
+  "why": "two reads disagreed (NOT-THEIRS then ok); a verdict that does not reproduce is not a verdict",
+  "employer_named": "Yuval HR",
+  "page_kind": "aggregator",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "ok",
+   "why": "The company under review IS Yuval HR, a tech headhunting and HR consulting agency in Israel. This page is published by Yuval HR itself, naming it explicitly and",
+   "mechanical_said": true
+  }
+ },
+ "dr. fischer|https://www.dr-fischer-group.com/en/career/": {
+  "date": "2026-09-05",
+  "url": "https://www.dr-fischer-group.com/en/career/",
+  "name": "Dr. Fischer",
+  "model": "opus",
+  "route": "plain",
+  "chars": 132671,
+  "text_chars": 3356,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to DR. FISCHER Group (Speziallampenfabrik DR. FISCHER GmbH)",
+  "employer_named": "DR. FISCHER Group (Speziallampenfabrik DR. FISCHER GmbH)",
+  "page_kind": "careers-landing",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to DR. FISCHER Group (Speziallampenfabrik DR. FISCHER GmbH)",
+   "mechanical_said": true
+  }
+ },
+ "partner israel|https://www.partner.co.il/jobs": {
+  "date": "2026-09-05",
+  "url": "https://www.partner.co.il/jobs",
+  "name": "Partner Israel",
+  "model": "opus",
+  "route": "render",
+  "chars": 826810,
+  "text_chars": 4393,
+  "verdict": "ok",
+  "why": "This is the official careers page of Partner Communications (פרטנר תקשורת בע\"מ), the Israeli telecom company, on its own domain partner.co.il. It describes the hiring process and links to job listings",
+  "employer_named": "פרטנר תקשורת בע\"מ (Partner)",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "payme io|https://payme.io/careers/": {
+  "date": "2026-09-05",
+  "url": "https://payme.io/careers/",
+  "name": "Payme IO",
+  "model": "opus",
+  "route": "plain",
+  "chars": 129052,
+  "text_chars": 2025,
+  "verdict": "ok",
+  "why": "PayMe's own careers page listing multiple open positions based in Tel Aviv, Israel. Regulated by Israeli Capital Markets Authority.",
+  "employer_named": "PayMe",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "pearson|https://pearson.jobs/jobs/": {
+  "date": "2026-09-05",
+  "url": "https://pearson.jobs/jobs/",
+  "name": "Pearson",
+  "model": "opus",
+  "route": "render",
+  "chars": 170012,
+  "text_chars": 6399,
+  "verdict": "ok",
+  "why": "Pearson's own careers board (pearson.jobs) listing 827 jobs including \"Quality Assurance Engineer, Haifa, ISR\", confirming Israel hiring.",
+  "employer_named": "Pearson",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "vetric|https://www.comeet.com/jobs/vetric/a9.009": {
+  "date": "2026-09-05",
+  "url": "https://www.comeet.com/jobs/vetric/A9.009",
+  "name": "vetric",
+  "model": "opus",
+  "route": "plain",
+  "chars": 142776,
+  "text_chars": 1592,
+  "verdict": "UNVERIFIABLE",
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
+ },
+ "genpire|https://www.genpire.com/careers": {
+  "date": "2026-09-05",
+  "url": "https://www.genpire.com/careers",
+  "name": "Genpire",
+  "model": "opus",
+  "route": "plain",
+  "chars": 252060,
+  "text_chars": 9000,
+  "verdict": "ok",
+  "why": "Genpire's own careers page at genpire.com, Tel Aviv HQ, listing 4 open roles with application via hello@genpire.com. Matches the Israeli company from the seed.",
+  "employer_named": "Genpire",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "pathlock|https://pathlock.com/careers/": {
+  "date": "2026-09-05",
+  "url": "https://pathlock.com/careers/",
+  "name": "Pathlock",
+  "model": "opus",
+  "route": "plain",
+  "chars": 398820,
+  "text_chars": 2831,
+  "verdict": "ok",
+  "why": "The page is titled \"Careers | Pathlock\" and is hosted on pathlock.com, the company's own domain, so it's Pathlock's own careers page. No job listings are visible in the extracted text, and it doesn't ",
+  "employer_named": "Pathlock",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "pazgas|https://www.pazgas.co.il/careers": {
+  "date": "2026-09-05",
+  "url": "https://www.pazgas.co.il/careers",
+  "name": "Pazgas",
+  "model": "opus",
+  "route": "plain",
+  "chars": 15651,
+  "text_chars": 526,
+  "verdict": "UNVERIFIABLE",
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
+ },
+ "peax dorcom|https://peaxideo.com/careers": {
+  "date": "2026-09-05",
+  "url": "https://peaxideo.com/careers",
+  "name": "Peax Dorcom",
+  "model": "opus",
+  "route": "plain",
+  "chars": 25406,
+  "text_chars": 2052,
+  "verdict": "ok",
+  "why": "Hebrew careers page for \"peax ideo,\" part of the peax group, listing 5 open positions (Full Stack, AI/ML, DevOps, Product Designer, Product Manager) in Tel Aviv. This is the company's own hiring board",
+  "employer_named": "peax ideo",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "perfect line|https://careers.linecorp.com": {
+  "date": "2026-09-05",
+  "url": "https://careers.linecorp.com",
+  "name": "Perfect Line",
+  "model": "opus",
+  "route": "plain",
+  "chars": 40655,
+  "text_chars": 9000,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to LINE",
+  "employer_named": "LINE",
+  "page_kind": "careers-landing",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to LINE",
+   "mechanical_said": true
+  }
+ },
+ "deeplan|https://www.deeplan.co.il/careers": {
+  "date": "2026-09-05",
+  "url": "https://www.deeplan.co.il/careers",
+  "name": "DeePlan",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399364,
+  "text_chars": 9000,
+  "verdict": "ok",
+  "why": "DeePlan's own Hebrew careers page (deeplan.co.il/דרושים) listing multiple open positions like PMO, project managers, Agile Coach. Israeli .co.il domain matches the seed employer.",
+  "employer_named": "DeePlan",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "gofmans' smart marketing|https://gofmans.co.il/en/": {
+  "date": "2026-09-05",
+  "url": "https://gofmans.co.il/en/",
+  "name": "Gofmans' Smart Marketing",
+  "model": "opus",
+  "route": "plain",
+  "chars": 359918,
+  "text_chars": 9000,
+  "verdict": "not-a-board",
+  "why": "page_kind=about",
+  "employer_named": "Gofmans Smart Marketing",
+  "page_kind": "about",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "not-a-board",
+   "why": "page_kind=about",
+   "mechanical_said": true
+  }
+ },
+ "pcb|https://www.pcb.com/about/careers": {
+  "date": "2026-09-05",
+  "url": "https://www.pcb.com/about/careers",
+  "name": "Pcb",
+  "model": "opus",
+  "route": "plain",
+  "chars": 123246,
+  "text_chars": 9000,
+  "verdict": "ok",
+  "why": "This is PCB Piezotronics' own careers page (part of Amphenol), describing career areas and benefits with a \"View Current Openings\" link but no positions listed here. A global company whose internation",
+  "employer_named": "PCB Piezotronics",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "a security|https://www.comeet.com/jobs/a_security/ea.007": {
+  "date": "2026-09-05",
+  "url": "https://www.comeet.com/jobs/a_security/EA.007",
+  "name": "A Security",
+  "model": "opus",
+  "route": "plain",
+  "chars": 154353,
+  "text_chars": 1592,
+  "verdict": "UNVERIFIABLE",
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
+ },
+ "biomica|https://biomica.com/company/careers": {
+  "date": "2026-09-05",
+  "url": "https://biomica.com/company/careers",
+  "name": "Biomica",
+  "model": "opus",
+  "route": "plain-thin",
+  "chars": 3316,
+  "text_chars": 96,
+  "verdict": "UNVERIFIABLE",
+  "why": "unreadable (96 visible chars via plain-thin)"
+ },
+ "incredo (douxmatok)|https://incredotech.com/careers/": {
+  "date": "2026-09-05",
+  "url": "https://incredotech.com/careers/",
+  "name": "Incredo (DouxMatok)",
+  "model": "opus",
+  "route": "plain",
+  "chars": 95373,
+  "text_chars": 5425,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Incredo Technologies",
+  "employer_named": "Incredo Technologies",
+  "page_kind": "board",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Incredo Technologies",
+   "mechanical_said": true
+  }
+ },
+ "sorbet|https://careers.sorbet.studio/jobs/careers": {
+  "date": "2026-09-05",
+  "url": "https://careers.sorbet.studio/jobs/Careers",
+  "name": "Sorbet",
+  "model": "opus",
+  "route": "plain",
+  "chars": 400000,
+  "text_chars": 9000,
+  "verdict": "UNVERIFIABLE",
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "Studio Sorbet",
+  "page_kind": "error",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "UNVERIFIABLE",
+   "why": "a wall or an empty shell we could not read",
+   "mechanical_said": true
+  }
+ },
+ "blender|https://www.blender.org/jobs/": {
+  "date": "2026-09-05",
+  "url": "https://www.blender.org/jobs/",
+  "name": "Blender",
+  "model": "opus",
+  "route": "plain",
+  "chars": 63458,
+  "text_chars": 3723,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Blender (Blender Foundation, Amsterdam)",
+  "employer_named": "Blender (Blender Foundation, Amsterdam)",
+  "page_kind": "careers-landing",
+  "states_no_openings": true,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Blender (Blender Foundation)",
+   "mechanical_said": true
+  }
+ },
+ "cytoreason|https://www.cytoreason.com/cytoreason careers.dc.html": {
+  "date": "2026-09-05",
+  "url": "https://www.cytoreason.com/CytoReason Careers.dc.html",
+  "name": "CytoReason",
+  "model": "opus",
+  "route": "plain",
+  "chars": 44231,
+  "text_chars": 997,
+  "verdict": "ok",
+  "why": "CytoReason's own careers page (CytoReason LTD © 2026), inviting applications. Role listings are unrendered JS templates, so no positions are actually visible; it does not state there are no openings.",
+  "employer_named": "CytoReason LTD",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "constru|https://www.careersinconstruction.com/companies": {
+  "date": "2026-09-05",
+  "url": "https://www.careersinconstruction.com/companies",
+  "name": "Constru",
+  "model": "opus",
+  "route": "render",
+  "chars": 107390,
+  "text_chars": 3249,
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator",
+  "employer_named": "Careers in Construction",
+  "page_kind": "aggregator",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator",
+   "mechanical_said": true
+  }
+ },
+ "civ robotics|https://www.civrobotics.com/careers": {
+  "date": "2026-09-05",
+  "url": "https://www.civrobotics.com/careers",
+  "name": "Civ Robotics",
+  "model": "opus",
+  "route": "plain",
+  "chars": 51162,
+  "text_chars": 1631,
+  "verdict": "ok",
+  "why": "This is Civ Robotics' own careers page listing multiple open positions. It belongs to the company itself, matching the named employer. Nothing contradicts it being the Israeli company of that name.",
+  "employer_named": "Civ Robotics",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "so digital - splash & optiwise|https://www.optiwise.ai/career-opportunities/": {
+  "date": "2026-09-05",
+  "url": "https://www.optiwise.ai/career-opportunities/",
+  "name": "SO Digital - Splash & OptiWise",
+  "model": "opus",
+  "route": "plain",
+  "chars": 145807,
+  "text_chars": 2343,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Optiwise.ai Inc",
+  "employer_named": "Optiwise.ai Inc",
+  "page_kind": "board",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Optiwise.ai Inc",
+   "mechanical_said": true
+  }
+ },
+ "gamma gruppe|https://careers.gamma.app/": {
+  "date": "2026-09-05",
+  "url": "https://careers.gamma.app/",
+  "name": "Gamma Gruppe",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399895,
+  "text_chars": 4830,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Gamma",
+  "employer_named": "Gamma",
+  "page_kind": "board",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Gamma",
+   "mechanical_said": true
+  }
+ },
+ "kai capital|https://kai.pro/careers": {
+  "date": "2026-09-05",
+  "url": "https://kai.pro/careers",
+  "name": "Kai Capital",
+  "model": "opus",
+  "route": "plain",
+  "chars": 188939,
+  "text_chars": 1491,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Kai (Kaiizen, Inc)",
+  "employer_named": "Kai (Kaiizen, Inc)",
+  "page_kind": "careers-landing",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to Kai (Kaiizen, Inc)",
+   "mechanical_said": true
+  }
+ },
+ "city of knoxville iowa|http://knoxvilleia.gov/jobs.aspx?communityjobs=false": {
+  "date": "2026-09-05",
+  "url": "http://knoxvilleia.gov/jobs.aspx?CommunityJobs=False",
+  "name": "City Of Knoxville Iowa",
+  "model": "opus",
+  "route": "plain",
+  "chars": 160267,
+  "text_chars": 3279,
+  "verdict": "NOT-THEIRS",
+  "why": "a namesake abroad (Knoxville, IA (Knoxville City Hall))",
+  "employer_named": "Knoxville, IA (Knoxville City Hall)",
+  "page_kind": "board",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "a namesake abroad (Knoxville, IA (City of Knoxville))",
+   "mechanical_said": true
+  }
+ },
+ "bloor homes|https://careers.bloorhomes.com/job-search/job-search/": {
+  "date": "2026-09-05",
+  "url": "https://careers.bloorhomes.com/job-search/job-search/",
+  "name": "Bloor Homes",
+  "model": "opus",
+  "route": "render",
+  "chars": 648178,
+  "text_chars": 2645,
+  "verdict": "NOT-THEIRS",
+  "why": "a namesake abroad (Bloor Homes)",
+  "employer_named": "Bloor Homes",
+  "page_kind": "board",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "a namesake abroad (Bloor Homes)",
+   "mechanical_said": true
+  }
+ },
+ "city of sunbury ohio|https://sunburyohio.org/jobs.aspx?communityjobs=false&catid=open-positions-99": {
+  "date": "2026-09-05",
+  "url": "https://sunburyohio.org/jobs.aspx?CommunityJobs=False&CatID=Open-Positions-99",
+  "name": "City Of Sunbury Ohio",
+  "model": "opus",
+  "route": "plain",
+  "chars": 176599,
+  "text_chars": 3684,
+  "verdict": "NOT-THEIRS",
+  "why": "a namesake abroad (City of Sunbury, Ohio)",
+  "employer_named": "City of Sunbury, Ohio",
+  "page_kind": "board",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "a namesake abroad (City of Sunbury, Ohio)",
+   "mechanical_said": true
+  }
+ },
+ "vacatures.sr | surinamejobs.com|https://www.surinamejobs.com/jobs": {
+  "date": "2026-09-05",
+  "url": "https://www.surinamejobs.com/jobs",
+  "name": "Vacatures.sr | SurinameJobs.com",
+  "model": "opus",
+  "route": "plain",
+  "chars": 107024,
+  "text_chars": 1971,
+  "verdict": "NOT-THEIRS",
+  "why": "the page is an aggregator",
+  "employer_named": "SurinameJobs.com (A platform by EXLLNT.COM)",
+  "page_kind": "aggregator",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "the page is an aggregator",
+   "mechanical_said": true
+  }
+ },
+ "chorus|https://chorus.com/jobs": {
+  "date": "2026-09-05",
+  "url": "https://chorus.com/jobs",
+  "name": "Chorus",
+  "model": "opus",
+  "route": "plain",
+  "chars": 45388,
+  "text_chars": 888,
+  "verdict": "NOT-THEIRS",
+  "why": "a namesake abroad (Chorus)",
+  "employer_named": "Chorus",
+  "page_kind": "careers-landing",
+  "states_no_openings": true,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "a namesake abroad (Chorus)",
+   "mechanical_said": true
+  }
+ },
+ "wipro limited|https://careers.wipro.com/search?location=israel&locale=en_us": {
+  "date": "2026-09-05",
+  "url": "https://careers.wipro.com/search?location=Israel&locale=en_US",
+  "name": "Wipro Limited",
+  "model": "opus",
+  "route": "plain",
+  "chars": 120552,
+  "text_chars": 5605,
+  "verdict": "ok",
+  "why": "This is Wipro's own careers site (careers.wipro.com) searching for jobs in Israel. It is a job search/board page for Wipro Limited's own hiring, a global company that includes Israel. No results shown",
+  "employer_named": "Wipro Limited",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "קבוצת כלמוביל|https://www.colmobil.co.il/career-in-colmobil/jobs/": {
+  "date": "2026-09-05",
+  "url": "https://www.colmobil.co.il/career-in-colmobil/jobs/",
+  "name": "קבוצת כלמוביל",
+  "model": "opus",
+  "route": "render",
+  "chars": 1032786,
+  "text_chars": 7833,
+  "verdict": "ok",
+  "why": "Official Colmobil Group careers page on colmobil.co.il listing many open positions across Israeli locations.",
+  "employer_named": "קבוצת כלמוביל",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "peachcontent|https://www.peachcontent.com/jobs/": {
+  "date": "2026-09-05",
+  "url": "https://www.peachcontent.com/jobs/",
+  "name": "Peachcontent",
+  "model": "opus",
+  "route": "plain",
+  "chars": 99652,
+  "text_chars": 1394,
+  "verdict": "ok",
+  "why": "Peach's own careers page, address in Bnei Brak, Israel. Lists roles (Project Manager, Creative, Client Manager) with application forms.",
+  "employer_named": "Peach - content We like",
   "page_kind": "board",
   "states_no_openings": false
  }

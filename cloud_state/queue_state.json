@@ -45989,5 +45989,413 @@
   ],
   "last": "2026-09-04",
   "verdict": "found"
+ },
+ "Mertens - Malam Team": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://mertens.malam.com/career/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Baz": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://baz.ai/careers"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "Playnance | The Blockchain of On-Chain Entertainment": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Particulatech": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://particula-tech.com/pages/careers"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Passportcardd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://www.passportcard.co.il/career/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "Paxis Ceramics": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Peak Tech Innovation": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://pickpeak.co/en/career/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "Pendo IO Japan": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://www.pendo.io/careers/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Amitim Pension Funds": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://amitim.com/career/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Yuval HR - Talent agency and advisory": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://yuvalhr.com/jobs/category/hr"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "Xpend": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Dr. Fischer": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://www.dr-fischer-group.com/en/career/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Partner Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://www.partner.co.il/jobs"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Pasternak Shoam Investment House": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Payme IO": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://payme.io/careers/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "Pearson": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://pearson.jobs/jobs/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "Perah Special Education": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "no candidate was this company's live page"
+ },
+ "vetric": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://www.comeet.com/jobs/vetric/A9.009"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "KUKI Strategies": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Genpire": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://www.genpire.com/careers"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "Altshuler Shaham": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Partnerverseasb": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Pathlock": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://pathlock.com/careers/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Pazgas": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://www.pazgas.co.il/careers"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Peax Dorcom": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://peaxideo.com/careers"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "Perfect Line": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://careers.linecorp.com"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "DeePlan": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://www.deeplan.co.il/careers"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Gofmans' Smart Marketing": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://gofmans.co.il/en/"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
+ },
+ "Particleformen": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Pas Gon 1996 Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Patnet Pro": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Pcb": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-05",
+    "url": "https://www.pcb.com/about/careers"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "documented"
+ },
+ "Peerspotdotcom": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-05",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "no candidate was this company's live page"
+ },
+ "A Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-05",
+    "url": "https://www.comeet.com/jobs/a_security/EA.007"
+   }
+  ],
+  "last": "2026-09-05",
+  "verdict": "found"
  }
 }

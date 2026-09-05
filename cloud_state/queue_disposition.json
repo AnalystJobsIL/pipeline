@@ -6612,7 +6612,7 @@
   "why": "\"ELAD HR\" is the HR/recruitment arm of Elad Software Systems; its careers site is careers.eladsoft.com, listing Elad's own openings — a division/brand name rather than a separate employer."
  },
  "EPAM Systems": {
-  "date": "2026-09-01",
+  "date": "2026-09-05",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "EPAM Systems, Inc.",
@@ -23313,7 +23313,7 @@
   }
  },
  "Level App": {
-  "date": "2026-09-04",
+  "date": "2026-09-05",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -24138,7 +24138,7 @@
   }
  },
  "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
-  "date": "2026-09-04",
+  "date": "2026-09-05",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Clal Insurance And Finance",
@@ -24444,7 +24444,7 @@
   }
  },
  "Mindspace Poland": {
-  "date": "2026-09-04",
+  "date": "2026-09-05",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Mindspace",
@@ -24508,6 +24508,127 @@
  },
  "Pagayais": {
   "date": "2026-09-04",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Primis, Video Discovery": {
+  "date": "2026-09-05",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Primis",
+  "why": "a rung found this name's board and the registry row 'Primis' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Primis",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.primis.tech/careers/"
+    ]
+   ]
+  }
+ },
+ "Galil Software Ltd.": {
+  "date": "2026-09-05",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Galil Systems",
+  "why": "a rung found this name's board and the registry row 'Galil Systems' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Galil Systems",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://galilsoftware.com/company/careers/"
+    ]
+   ]
+  }
+ },
+ "Paretoleads": {
+  "date": "2026-09-05",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Pareto Leads - Customer Acquisition at Scale",
+  "why": "a rung found this name's board and the registry row 'Pareto Leads - Customer Acquisition at Scale' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "Pareto Leads - Customer Acquisition at Scale",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://paretoleads.com/careers"
+    ]
+   ]
+  }
+ },
+ "Consist": {
+  "date": "2026-09-05",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Consist Group",
+  "why": "the registry row 'Consist Group' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Consist Group",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Genesys": {
+  "date": "2026-09-05",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Paxos": {
+  "date": "2026-09-05",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Peachcontent": {
+  "date": "2026-09-05",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Pelephone": {
+  "date": "2026-09-05",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Pendo": {
+  "date": "2026-09-05",
   "verdict": "already-a-row",
   "raw_verdict": "already-a-row",
   "other_name": "",
