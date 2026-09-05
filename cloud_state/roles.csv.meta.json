@@ -3,24 +3,24 @@
  "download_url": "https://analystjobsil.github.io/board/roles.csv",
  "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
  "published_on_pages": true,
- "generated_at": "2026-09-04T10:09:06Z",
- "run_date": "2026-09-04",
- "rows": 151,
+ "generated_at": "2026-09-05T09:37:22Z",
+ "run_date": "2026-09-05",
+ "rows": 153,
  "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
  "window": {
   "days": 90,
   "basis": "last_seen",
-  "start": "2026-06-07",
-  "end": "2026-09-04",
-  "rule": "2026-06-07 <= last_seen <= 2026-09-04, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
+  "start": "2026-06-08",
+  "end": "2026-09-05",
+  "rule": "2026-06-08 <= last_seen <= 2026-09-05, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
   "fully_covered": false,
-  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-07. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
+  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-08. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
  },
  "store": {
-  "records": 233,
+  "records": 235,
   "by_status": {
    "closed": 29,
-   "open": 126,
+   "open": 128,
    "purged": 17,
    "superseded": 13,
    "withdrawn": 48
@@ -801,13 +801,13 @@
  "archive": {
   "file": "roles_archive.csv",
   "rows": 0,
-  "rule": "status open or closed AND last_seen < 2026-06-07 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
+  "rule": "status open or closed AND last_seen < 2026-06-08 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
   "download_url": "https://analystjobsil.github.io/board/roles_archive.csv",
   "published_on_pages": true
  },
  "reconciliation": {
-  "rows": 151,
+  "rows": 153,
   "archived": 0,
   "superseded": 13,
   "purged": 17,
@@ -817,7 +817,7 @@
   "unreadable": 0,
   "blocked_excluded": 2,
   "pending_excluded": 2,
-  "store_records": 233,
+  "store_records": 235,
   "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable + blocked_excluded + pending_excluded == store_records",
   "holds": true
  },
@@ -860,7 +860,7 @@
    "description_blocker"
   ],
   "quality": {
-   "jd": 151,
+   "jd": 153,
    "snippet": 0,
    "none": 0,
    "unmeasured": 0,
@@ -871,7 +871,7 @@
    "structural": 2,
    "pending": 2,
    "structural:not-a-job-url(donors:0)": 1,
-   "unfillable:js-shell": 1
+   "structural:js-shell(donors:0)": 1
   }
  },
  "funnel": {
@@ -913,7 +913,7 @@
   },
   "posted_date": {
    "doc": "The date the EMPLOYER states the role was posted. Empty when the board publishes none.",
-   "nulls": 16
+   "nulls": 17
   },
   "first_seen": {
    "doc": "The first day this pipeline ever saw the role, across all of its spells. Not a posting date.",
@@ -942,7 +942,7 @@
   },
   "closed_on": {
    "doc": "The day we recorded it closed. Empty while open.",
-   "nulls": 123
+   "nulls": 125
   },
   "emailed": {
    "doc": "true if this role went out in a daily digest email.",
@@ -950,7 +950,7 @@
   },
   "emailed_on": {
    "doc": "The date it was first emailed. Empty if never emailed.",
-   "nulls": 59
+   "nulls": 51
   },
   "episodes": {
    "doc": "How many separate spells we have seen this role open (a reappearance after an absence starts a new one).",
@@ -983,7 +983,7 @@
   },
   "years_experience": {
    "doc": "Years of experience asked for, read from the DESCRIPTION text. Empty when the text does not say.",
-   "nulls": 17
+   "nulls": 18
   },
   "family": {
    "doc": "Role family, from title first and the opening of the description second.",
@@ -1010,7 +1010,7 @@
   },
   "degree_level": {
    "doc": "Highest degree the posting requires or prefers.",
-   "nulls": 87,
+   "nulls": 88,
    "enum": {
     "PhD": "highest degree the posting names",
     "MSc": "highest degree the posting names",
@@ -1019,7 +1019,7 @@
   },
   "degree_status": {
    "doc": "Whether that degree is required or merely preferred.",
-   "nulls": 87,
+   "nulls": 88,
    "enum": {
     "required": "stated as a requirement",
     "preferred": "stated as an advantage"
@@ -1027,7 +1027,7 @@
   },
   "degree_fields": {
    "doc": "Fields of study named alongside it, separated by ';'.",
-   "nulls": 106,
+   "nulls": 107,
    "enum": {
     "CS": "field of study named alongside the degree",
     "Industrial Eng.": "field of study named alongside the degree",
@@ -1043,7 +1043,7 @@
   },
   "ai": {
    "doc": "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned.",
-   "nulls": 109,
+   "nulls": 111,
    "enum": {
     "AI for efficiency": "Expected to use AI tools (Copilot, ChatGPT, Cursor…) to work faster",
     "AI for automation": "Using AI to automate processes and workflows",
@@ -1090,19 +1090,19 @@
   },
   "description_blocker": {
    "doc": "Why a weak text (description_quality snippet/none) is structurally hard to complete, or empty. Recorded verdicts (jd-text's matched.jd_why, 'structural:*') verbatim; else derived: 'gone' (the posting 404s on the employer's own board), 'unfillable:<why>' (a host no rung we own can read), 'listing-page' (the only address we hold is a shared listing, not the posting's own). Under the live policy (meta description_text.blocked.policy — 'exclude' since the operator's 2026-09-01 ruling) a blocked row is excluded from this file with its reason counted in the meta; a weak row with NO blocker is pending a fill and stays; the archive keeps history either way.",
-   "nulls": 151
+   "nulls": 153
   },
   "sector": {
    "doc": "Company sector (firmographics).",
-   "nulls": 1
+   "nulls": 0
   },
   "sub_sector": {
    "doc": "Narrower niche (firmographics, free text).",
-   "nulls": 1
+   "nulls": 0
   },
   "stage": {
    "doc": "Company stage (firmographics).",
-   "nulls": 1,
+   "nulls": 0,
    "enum": {
     "acquired-by-bigtech": "company stage, as researched (firmographics)",
     "early-private": "company stage, as researched (firmographics)",
@@ -1113,11 +1113,11 @@
   },
   "stage_note": {
    "doc": "Ticker or acquisition note behind that stage.",
-   "nulls": 1
+   "nulls": 0
   },
   "size_band": {
    "doc": "Headcount band (firmographics).",
-   "nulls": 1,
+   "nulls": 0,
    "enum": {
     "S": "under 200 employees globally",
     "M": "200-1,000",
@@ -1127,7 +1127,7 @@
   },
   "employees_global": {
    "doc": "Global headcount, all sites (firmographics).",
-   "nulls": 16
+   "nulls": 17
   },
   "founded": {
    "doc": "Year founded (firmographics).",
@@ -1135,19 +1135,19 @@
   },
   "business_model": {
    "doc": "How the company earns money (firmographics, free text).",
-   "nulls": 1
+   "nulls": 0
   },
   "customer_type": {
    "doc": "Who buys from it (firmographics, free text).",
-   "nulls": 1
+   "nulls": 0
   },
   "il_center": {
    "doc": "Its main Israeli site(s) (firmographics).",
-   "nulls": 1
+   "nulls": 0
   },
   "firmo_as_of": {
    "doc": "The date those company facts were researched.",
-   "nulls": 1
+   "nulls": 0
   },
   "firmo_match": {
    "doc": "How the company facts were matched to this row's company_registry (the brand in `company` renders only on an exact match).",
@@ -1164,19 +1164,19 @@
   },
   "skills_query": {
    "doc": "Skills of category 'query' only, separated by ';' — group by this without parsing.",
-   "nulls": 25
+   "nulls": 26
   },
   "skills_de": {
    "doc": "Skills of category 'de' only, separated by ';' — group by this without parsing.",
-   "nulls": 85
+   "nulls": 87
   },
   "skills_pa": {
    "doc": "Skills of category 'pa' only, separated by ';' — group by this without parsing.",
-   "nulls": 121
+   "nulls": 122
   },
   "skills_prog": {
    "doc": "Skills of category 'prog' only, separated by ';' — group by this without parsing.",
-   "nulls": 86
+   "nulls": 88
   },
   "skills_method": {
    "doc": "Skills of category 'method' only, separated by ';' — group by this without parsing.",
@@ -1184,11 +1184,11 @@
   },
   "skills_cloud": {
    "doc": "Skills of category 'cloud' only, separated by ';' — group by this without parsing.",
-   "nulls": 133
+   "nulls": 135
   },
   "skills_lang": {
    "doc": "Skills of category 'lang' only, separated by ';' — group by this without parsing.",
-   "nulls": 111
+   "nulls": 112
   }
  }
 }

@@ -134,6 +134,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Darrow": {
+  "careers_url": "https://www.comeet.com/jobs/darrow-ai/D8.000",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
  "Datos Health": {
   "careers_url": "https://www.datos-health.com/join-us/",
   "platform": "scrape",
@@ -168,6 +173,11 @@
   "careers_url": "https://ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/CX_3001/requisitions",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "DoubleVerify": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/doubleverify/jobs",
+  "platform": "greenhouse",
+  "reason": "regressed-to-zero"
  },
  "Dynamic Yield": {
   "careers_url": "https://www.dynamicyield.com/careers/",
@@ -209,6 +219,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Genesys": {
+  "careers_url": "https://genesys.wd1.myworkdayjobs.com/Genesys",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
  "Gini Apps": {
   "careers_url": "https://www.comeet.com/jobs/gini-apps/66.000",
   "platform": "scrape",
@@ -228,6 +243,11 @@
   "careers_url": "https://egmn.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "Hilti Israel": {
+  "careers_url": "https://careers.hilti.group/en/jobs/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "IAI - Israel Aerospace Industries": {
   "careers_url": "https://jobs.iai.co.il/jobs/",
@@ -276,6 +296,11 @@
  },
  "Majestic Labs ai": {
   "careers_url": "https://www.comeet.com/jobs/majesticlabs/AA.004",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Mami": {
+  "careers_url": "https://www.comeet.com/jobs/mami/BA.008",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
@@ -346,19 +371,13 @@
  },
  "Revolut": {
   "careers_url": "https://www.revolut.com/en-US/careers/",
-  "error": "scrape: http:403 (1 night)",
   "platform": "scrape",
-  "reason": "fetch-error"
+  "reason": "regressed-to-zero"
  },
  "Shortical": {
   "careers_url": "https://www.comeet.com/jobs/shortical/3B.00A",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Siemens Digital Industries Software": {
-  "careers_url": "https://jobs.sw.siemens.com/jobs/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "Sola Security": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/A9.003/positions",
@@ -417,16 +436,12 @@
  },
  "Xtend": {
   "careers_url": "https://www.xtend.me/working-at-xtend",
+  "error": "scrape: http:500 (1 night)",
   "platform": "scrape",
-  "reason": "regressed-to-zero"
+  "reason": "fetch-error"
  },
  "aiOla": {
   "careers_url": "https://aiola.ai/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "airHaifa": {
-  "careers_url": "https://www.airhaifa.com/careers-he/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -444,10 +459,5 @@
   "careers_url": "https://www.working-rooms.co.il/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "scaleops": {
-  "careers_url": "https://job-boards.eu.greenhouse.io/scaleops",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
  }
 }
