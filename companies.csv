@@ -2196,3 +2196,4 @@ Partner Israel,scrape,,https://www.partner.co.il/jobs,false,queue-hunt 2026-09-0
 Pathlock,scrape,,https://pathlock.com/careers/,false,queue-hunt 2026-09-05: careers page documented; monitored candidate
 DeePlan,scrape,,https://www.deeplan.co.il/careers,false,queue-hunt 2026-09-05: careers page documented; monitored candidate
 Pcb,scrape,,https://www.pcb.com/about/careers,false,queue-hunt 2026-09-05: careers page documented; monitored candidate
+AEYE Health,greenhouse,aeyeinc,https://boards-api.greenhouse.io/v1/boards/aeyeinc/jobs,true,auto-expand; 3/0 IL
