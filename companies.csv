@@ -1700,7 +1700,7 @@ Globaldots,scrape,,https://www.globaldots.com/careers/,true,queue-drain 2026-08-
 Kenes Group,scrape,,https://kenes.applytojob.com/apply,true,queue-drain 2026-08-29 hunt; 4/4 IL
 Lumissil,scrape,,https://www.lumissil.com/about/career/jobs.html,true,queue-drain 2026-08-29 hunt; 2/2 IL
 Gdolim Mehachaim,scrape,,https://gdolim.org.il/jobs/,true,queue-drain 2026-08-29 hunt; 1/1 IL
-Glassesusa Llc,scrape,,https://jobs.glassesusa.com/#jobs,true,queue-drain 2026-08-29 hunt; 5/5 IL
+Glassesusa Llc,scrape,,https://jobs.glassesusa.com/#jobs,false,queue-drain 2026-08-29 hunt; 5/5 IL | scrape rotted (error 6d) 2026-09-05: extraction yields 0 — no ATS detected; parked for re-hunt
 Jurni AI,scrape,,https://getjurni.ai/careers,true,queue-drain 2026-08-29 hunt; 7/7 IL
 Kardome,scrape,,https://www.kardome.com/jobs/,true,queue-drain 2026-08-29 hunt; 2/2 IL
 Kinneret,scrape,,https://kinneret.ac.il/en/career-center/,false,"queue-search 2026-08-30: no address found; needs re-resolution | dark-triage 2026-09-01: extract-gap (LLM found 4: Group Counselor, Co-Counselor) | listing-hunt 2026-09-04: no IL listing; monitored candidate"
