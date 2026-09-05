@@ -2197,3 +2197,8 @@ Pathlock,scrape,,https://pathlock.com/careers/,false,queue-hunt 2026-09-05: care
 DeePlan,scrape,,https://www.deeplan.co.il/careers,false,queue-hunt 2026-09-05: careers page documented; monitored candidate
 Pcb,scrape,,https://www.pcb.com/about/careers,false,queue-hunt 2026-09-05: careers page documented; monitored candidate
 AEYE Health,greenhouse,aeyeinc,https://boards-api.greenhouse.io/v1/boards/aeyeinc/jobs,true,auto-expand; 3/0 IL
+Sandisk,smartrecruiters,sandisk,https://api.smartrecruiters.com/v1/companies/sandisk/postings,true,auto-expand slug-probe; 285/9 IL
+Phasev,greenhouse,phasev,https://boards-api.greenhouse.io/v1/boards/phasev/jobs,true,auto-expand slug-probe; 12/2 IL
+Picker Agrobotics,scrape,https://picker-agrobotics.com,https://picker-agrobotics.com,false,scanned; no open Israel roles now | own-site 2026-09-05: picker-agrobotics.com linkback
+Plastics App,scrape,https://plastics-app.com,https://plastics-app.com,false,scanned; no open Israel roles now | own-site 2026-09-05: plastics-app.com linkback
+Plataine,scrape,https://www.plataine.com/careers/,https://www.plataine.com/careers/,true,auto-expand scrape; 2 IL
