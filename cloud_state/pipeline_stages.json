@@ -127,17 +127,17 @@
   "finished_at": "2026-09-06T12:54:24+00:00"
  },
  "firmo": {
-  "attempted": 15,
-  "budget_min": 20.0,
+  "attempted": 22,
+  "budget_min": 60.0,
   "date": "2026-09-06",
-  "failed": 1,
-  "finished_at": "2026-09-06T09:39:16+00:00",
-  "gated": 6,
+  "failed": 0,
+  "finished_at": "2026-09-06T13:45:02+00:00",
+  "gated": 7,
   "left": 0,
-  "minutes": 2.4,
-  "records": 1501,
-  "researched": 14,
-  "todo": 15,
+  "minutes": 3.7,
+  "records": 1524,
+  "researched": 22,
+  "todo": 22,
   "unavailable": 0
  },
  "intel": {
