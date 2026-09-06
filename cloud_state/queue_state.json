@@ -46397,5 +46397,689 @@
   ],
   "last": "2026-09-05",
   "verdict": "found"
+ },
+ "ERGO NEXT": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.nextinsurance.com/careers/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Adva Biotechnology": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://www.advabio.com/Careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Nanox Vision": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.comeet.com/jobs/nanox/43.00F/qa-manage/BB.44E"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Vessel Technologies, Inc.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.vesseltechnologies.com/careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Viz.ai": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.viz.ai/jobs"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Rewire Solutions - Business Automation": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://rewirenow.com/en/about/culture-and-ai-careers/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Tripledot Studios": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "http://job-boards.eu.greenhouse.io/tripledotstudios"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Tourist Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no-search-results"
+ },
+ "Phcbiomed": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Phoenixfinancialltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Pi Sec": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Pipelbiz": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://pipelbiz.com/careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Pkf Amit Halfon": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Planungxgruppe": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.workinbim.com/jobs/tag/company/PLANUNGXGRUPPE"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Ariel University": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Israel Railways Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Mindrift": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://mindrift.ai/apply"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Apartment List": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.apartmentlist.com/about/careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Planview": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://careers.planview.com/careers-home/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "HUMAN": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://careers.humana.com"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "TASC Consulting & Capital": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://www.tasc-consulting.com/careers/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Axon": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "http://job-boards.greenhouse.io/axon"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Peri Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://peri-eng.co.il/en/career/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Phibro Animal Health": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://jobs.pahc.com"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Phototips": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Pic Time Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://www.pic-time.com/careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Pipl": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "http://pipl.com/careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Place En Space": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no-search-results"
+ },
+ "Plasan Sasa Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Nalco Water, An Ecolab Company": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://jobs.ecolab.com"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Lastprice": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Itron, Inc.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://itron.wd5.myworkdayjobs.com/Early_Careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Five Sigma - AI Claims Management": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://fivesigmalabs.com/careers/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Jumpstart": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://talent.jumpstartinc.org/jobs"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Yad Vashem, the World Holocaust Remembrance Center": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://www.yadvashem.org/he/jobs.html"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Arad Technologies": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.comeet.com/jobs/aradtec/48.00E/market--technologies-analyst/C8.558"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Perme Dna Profile": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Phibro Me Eu": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Physioswiss": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://physioswiss.ch/ueber-uns/jobs-karriere/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Picanti": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Pixcell Medical": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.pixcell-medical.com/careers/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Placerlabs": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Plastopil Bv": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://www.plastopil-group.com/careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Dreamhub": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://jobs.jibevc.com/companies/dreamhub"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Profitian Finance": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://profitian.co.il/jobs/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "SuperCom (NASDAQ: SPCB)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://www.nasdaq.com/careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Google DeepMind": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Levontin": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "SodaStream International, Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.pepsicojobs.com/sodastream"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "TBO.COM": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Persona Ly": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://persona.ly/blog/tag/persona-ly-careers/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Phoenix Ad": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://thephoenixgroup.ca/careers"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Pi Cardia": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.comeet.com/jobs/pi-cardia/A5.00B/regulatory-affairs-specialist/2A.C63"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Pikoya": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-06",
+    "url": "https://www.facebook.com/100054556655154/videos/-pikoya-is-hiring-a-campaign-manager-join-uswe-are-a-leading-ad-tech-company-bas/1068019805367742/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "documented"
+ },
+ "Pixellotltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Planet Nine IO": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-06",
+    "url": "https://www.planet-nine.io/career/"
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "found"
+ },
+ "Plate App Il": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-06",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-06",
+  "verdict": "no candidate was this company's live page"
  }
 }

@@ -169,26 +169,26 @@
  },
  "queue": {
   "answered_on_disk": 1,
-  "date": "2026-09-05",
+  "date": "2026-09-06",
   "delta": 0,
   "direction": "flat",
-  "empty_search_share": 0.045,
-  "finished_at": "2026-09-05T00:38:28+00:00",
+  "empty_search_share": 0.035,
+  "finished_at": "2026-09-06T00:40:10+00:00",
   "new_intake": 0,
-  "on_cadence": 457,
+  "on_cadence": 496,
   "owed": 0,
-  "retired": 346,
+  "retired": 350,
   "retired_in_queue": 1,
-  "rows_from_queue": 609,
-  "searched_recently": 78,
+  "rows_from_queue": 619,
+  "searched_recently": 91,
   "selectable": 0,
   "stuck": 0,
-  "unsettled": 457,
-  "unverified_rows": 25
+  "unsettled": 496,
+  "unverified_rows": 6
  },
  "repair": {
-  "date": "2026-09-05",
-  "finished_at": "2026-09-05T01:04:39+00:00"
+  "date": "2026-09-06",
+  "finished_at": "2026-09-06T01:03:58+00:00"
  },
  "wayback": {
   "backlog": 4835,

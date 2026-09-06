@@ -6612,7 +6612,7 @@
   "why": "\"ELAD HR\" is the HR/recruitment arm of Elad Software Systems; its careers site is careers.eladsoft.com, listing Elad's own openings — a division/brand name rather than a separate employer."
  },
  "EPAM Systems": {
-  "date": "2026-09-05",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "EPAM Systems, Inc.",
@@ -6816,7 +6816,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Experda.com": {
-  "date": "2026-09-04",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Experda",
@@ -13184,7 +13184,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kela Technologies": {
-  "date": "2026-09-04",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "KELA",
@@ -20634,7 +20634,7 @@
   "why": "\"Software AG Israel\" is a country/entity variant of Software AG (a Software GmbH brand), which hires via its global careers site at softwareag.com."
  },
  "Speedata.io": {
-  "date": "2026-09-04",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Speedata",
@@ -23313,7 +23313,7 @@
   }
  },
  "Level App": {
-  "date": "2026-09-05",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -24138,7 +24138,7 @@
   }
  },
  "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
-  "date": "2026-09-05",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Clal Insurance And Finance",
@@ -24444,7 +24444,7 @@
   }
  },
  "Mindspace Poland": {
-  "date": "2026-09-05",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Mindspace",
@@ -24518,7 +24518,7 @@
   }
  },
  "Primis, Video Discovery": {
-  "date": "2026-09-05",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Primis",
@@ -24536,7 +24536,7 @@
   }
  },
  "Galil Software Ltd.": {
-  "date": "2026-09-05",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Galil Systems",
@@ -24572,7 +24572,7 @@
   }
  },
  "Consist": {
-  "date": "2026-09-05",
+  "date": "2026-09-06",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Consist Group",
@@ -24629,6 +24629,121 @@
  },
  "Pendo": {
   "date": "2026-09-05",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "PayMe": {
+  "date": "2026-09-06",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Payme IO",
+  "why": "a rung found this name's board and the registry row 'Payme IO' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Payme IO",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://payme.io/careers/"
+    ]
+   ]
+  }
+ },
+ "Pendo IO Japan": {
+  "date": "2026-09-06",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Pendo.io",
+  "why": "a rung found this name's board and the registry row 'Pendo.io' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Pendo.io",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.pendo.io/careers/"
+    ]
+   ]
+  }
+ },
+ "SMARTSHOOTER": {
+  "date": "2026-09-06",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Smart Shooter",
+  "why": "the registry row 'Smart Shooter' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Smart Shooter",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Jafora-Tabori": {
+  "date": "2026-09-06",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Jafora Tabori",
+  "why": "the registry row 'Jafora Tabori' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Jafora Tabori",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Sandisk": {
+  "date": "2026-09-06",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Phasev": {
+  "date": "2026-09-06",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Picker Agrobotics": {
+  "date": "2026-09-06",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Plastics App": {
+  "date": "2026-09-06",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Plataine": {
+  "date": "2026-09-06",
   "verdict": "already-a-row",
   "raw_verdict": "already-a-row",
   "other_name": "",
