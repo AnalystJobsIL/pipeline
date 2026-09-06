@@ -2217,3 +2217,4 @@ Pic Time Ltd,scrape,,https://www.pic-time.com/careers,false,queue-hunt 2026-09-0
 Pipl,scrape,,http://pipl.com/careers,false,queue-hunt 2026-09-06: careers page documented; monitored candidate
 "Itron, Inc.",scrape,,https://itron.wd5.myworkdayjobs.com/Early_Careers,false,queue-hunt 2026-09-06: careers page documented; monitored candidate | crack-walled 2026-09-06: skip
 "Yad Vashem, the World Holocaust Remembrance Center",scrape,,https://www.yadvashem.org/he/jobs.html,false,queue-hunt 2026-09-06: careers page documented; monitored candidate
+vetric,scrape,https://www.vetric.io/careers,https://www.vetric.io/careers,true,auto-expand scrape; 2 IL

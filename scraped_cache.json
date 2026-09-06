@@ -33124,6 +33124,32 @@
    "url": "https://www.terasky.com/careers/careers-inner?uid=E5.F65"
   }
  ],
+ "vetric": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "vetric",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.comeet.com/jobs/vetric/A9.009/account-manager/C3.277",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Account Manager",
+   "url": "https://www.comeet.com/jobs/vetric/A9.009/account-manager/C3.277"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "vetric",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.comeet.com/jobs/vetric/A9.009/devops-engineer/1D.07C",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "DevOps Engineer",
+   "url": "https://www.comeet.com/jobs/vetric/A9.009/devops-engineer/1D.07C"
+  }
+ ],
  "vi": [
   {
    "_jd_attempted": "2026-08-29",
