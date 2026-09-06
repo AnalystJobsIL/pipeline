@@ -1310,6 +1310,19 @@
     "stage_note": "$32M+ total raised, VC-backed (Innovation Endeavors)",
     "sub_sector": "AI copywriting / performance marketing content generation"
   },
+  "Apartment List": {
+    "as_of": "2026-09-06",
+    "business_model": "Online rental marketplace connecting renters with apartments/landlords",
+    "customer_type": "B2C/B2B (renters and property managers/landlords)",
+    "employees_global": 520,
+    "founded": 2008,
+    "il_center": "Not applicable / no known Israel presence",
+    "sector": "real estate technology (proptech)",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Series D, ~$163M total raised (incl. $50M Series C)",
+    "sub_sector": "Rental listings marketplace"
+  },
   "Apiiro": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS subscriptions to its ASPM platform, priced per developer/repository coverage",
@@ -4687,6 +4700,19 @@
     "stage_note": "Raised $300M at ~$4B valuation (May 2026, Nvidia/Amazon backing); Anthropic reportedly in talks to acquire at ~$6B (Aug 2026)",
     "sub_sector": "Frontier AI lab building real-time generative world models and video AI at millisecond latency"
   },
+  "DeePlan": {
+    "as_of": "2026-09-06",
+    "business_model": "B2B professional services & software implementation (PMO, project & knowledge management solutions, SharePoint/Clarizen/Power BI consulting)",
+    "customer_type": "enterprise",
+    "employees_global": null,
+    "founded": 2001,
+    "il_center": "Caesarea (HQ)",
+    "sector": "it services / enterprise software consulting",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped Israeli IT services company, no venture funding found; formerly known as P.Z. Projects Ltd.",
+    "sub_sector": "Project & Knowledge Management Solutions (PMO, SharePoint, Clarizen, Power BI)"
+  },
   "Deel": {
     "as_of": "2026-08-21",
     "business_model": "SaaS subscriptions plus per-worker fees for employer-of-record, payroll and contractor payment services (~$1.4B ARR)",
@@ -4782,6 +4808,7 @@
     "as_of": "2026-08-22",
     "business_model": "Sells PCs, servers, storage and networking hardware plus attached software, financing and support services to businesses and consumers",
     "customer_type": "enterprises",
+    "display_name": "Dell",
     "employees_global": 97000,
     "founded": 1984,
     "il_center": "Herzliya (Glil Yam), Haifa & Beer Sheva (R&D, ex-EMC Center of Excellence); HQ in US",
@@ -5143,6 +5170,20 @@
     "stage_note": "NYSE: EPAM",
     "sub_sector": "Digital Engineering & AI Consulting"
   },
+  "ERGO NEXT": {
+    "as_of": "2026-09-06",
+    "business_model": "Digital small business insurance (insurtech) platform",
+    "customer_type": "B2B (small businesses) / B2C",
+    "display_name": "ERGO NEXT Insurance",
+    "employees_global": 700,
+    "founded": 2016,
+    "il_center": "Tel Aviv (R&D); HQ in Palo Alto, US",
+    "sector": "insurtech",
+    "size_band": "M",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Fully acquired by ERGO Group/Munich Re for $2.6B, completed July 2025",
+    "sub_sector": "Small business insurance"
+  },
   "EY": {
     "as_of": "2026-08-22",
     "business_model": "Fee-for-service professional services: audit/assurance, tax, consulting and strategy/transactions engagements billed to clients",
@@ -5364,6 +5405,19 @@
     "stage": "public",
     "stage_note": "Listed on London Stock Exchange (ENOG) and Tel Aviv Stock Exchange",
     "sub_sector": "Oil & Gas E&P (offshore natural gas)"
+  },
+  "Enigmatos": {
+    "as_of": "2026-09-06",
+    "business_model": "B2B",
+    "customer_type": "Enterprise (automotive OEMs, fleet operators)",
+    "employees_global": 30,
+    "founded": 2015,
+    "il_center": "Yavne (HQ)",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Small VC-backed startup, seed/early-stage funding since 2015",
+    "sub_sector": "Automotive Cybersecurity"
   },
   "Enlight Renewable Energy": {
     "as_of": "2026-08-21",
@@ -6121,6 +6175,19 @@
     "stage": "growth-private",
     "stage_note": "$125M Series B led by Eclipse (2025); $195M total raised",
     "sub_sector": "Robotic platform (ORYOM) for ophthalmic microsurgery, starting with cataract procedures"
+  },
+  "Forbes Advisor": {
+    "as_of": "2026-09-06",
+    "business_model": "B2C media/marketplace (financial and consumer product reviews, comparison, and lead-generation)",
+    "customer_type": "B2C",
+    "employees_global": null,
+    "founded": 2020,
+    "il_center": "Unknown / no identified Israel office",
+    "sector": "media & publishing",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Division of Forbes Media, majority-owned by Austin Russell (2023) after Integrated Whale Media/Hong Kong consortium investment; not venture-funded",
+    "sub_sector": "Consumer finance/product review and comparison marketplace"
   },
   "Forcepoint": {
     "as_of": "2026-08-29",
@@ -8634,6 +8701,19 @@
     "stage_note": "NASDAQ: JAMF, IPO 2020",
     "sub_sector": "Apple device management (MDM) and endpoint security for Mac/iOS fleets"
   },
+  "Jazz": {
+    "as_of": "2026-09-06",
+    "business_model": "B2B",
+    "customer_type": "Enterprise",
+    "employees_global": 45,
+    "founded": 2024,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Raised $61M seed+Series A (Glilot, Team8, Ten Eleven Ventures, MassMutual)",
+    "sub_sector": "Data Loss Prevention / AI Data Security"
+  },
   "Jeen.ai": {
     "as_of": "2026-08-28",
     "business_model": "B2B enterprise GenAI platform (chat, transcription, digital assistants, custom AI bots) plus defense-focused AI subsidiary",
@@ -10130,6 +10210,19 @@
     "stage": "public",
     "stage_note": "IPO on Tel Aviv Stock Exchange Q1 2021; trades as TASE: MSVT",
     "sub_sector": "large-format industrial additive manufacturing systems using proprietary Gel Dispensing Printing (GDP) for oversized parts, molds and tooling"
+  },
+  "Massivit 3D Printing Technologies Ltd.": {
+    "as_of": "2026-09-06",
+    "business_model": "Manufacturer of large-format 3D printers and materials (hardware + consumables)",
+    "customer_type": "B2B",
+    "employees_global": 150,
+    "founded": 2013,
+    "il_center": "Lod (HQ)",
+    "sector": "3d printing / additive manufacturing",
+    "size_band": "S",
+    "stage": "public",
+    "stage_note": "Traded on Tel Aviv Stock Exchange, TASE:MSVT",
+    "sub_sector": "Large-format industrial 3D printers"
   },
   "Mastercard": {
     "as_of": "2026-08-21",
@@ -12961,6 +13054,20 @@
     "stage_note": "No public funding info found; appears to be a bootstrapped/privately-owned agency",
     "sub_sector": "Lead Generation / Performance Marketing"
   },
+  "Particulatech": {
+    "as_of": "2026-09-06",
+    "business_model": "B2C hardware/consumer electronics with companion apps (\"phygital\" smart toys)",
+    "customer_type": "B2C",
+    "display_name": "Particula",
+    "employees_global": 30,
+    "founded": 2017,
+    "il_center": "Netanya (HQ)",
+    "sector": "consumer electronics",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Israeli startup founded 2017, best known for GoCube Kickstarter launch 2018; still small private venture-backed company",
+    "sub_sector": "Smart toys / connected gaming devices"
+  },
   "Partnerize": {
     "as_of": "2026-09-02",
     "business_model": "B2B SaaS",
@@ -13327,6 +13434,19 @@
     "stage_note": "TASE: PHOE; renamed from The Phoenix Holdings to Phoenix Financial in Aug 2024",
     "sub_sector": "Israel's largest insurance, pension and asset-management group (life, P&C, health, retirement, wealth, credit)"
   },
+  "Phytech": {
+    "as_of": "2026-09-06",
+    "business_model": "B2B AgTech IoT sensors and SaaS platform",
+    "customer_type": "B2B",
+    "employees_global": 172,
+    "founded": 2011,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "agtech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Raised $23.5M growth round in 2020 from THL Automation Fund and existing investors",
+    "sub_sector": "Agricultural IoT / Precision Farming"
+  },
   "Pi Security": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS — sells an AI-powered security platform that analyzes code, cloud infrastructure, and communications to triage and remediate vulnerabilities",
@@ -13381,6 +13501,20 @@
     "stage_note": "NYSE: PINS, IPO April 2019; FY2025 revenue ~$4.2B, 14% growth",
     "sub_sector": "visual discovery and inspiration platform where users save ideas ('Pins') into boards, monetized through shoppable ads"
   },
+  "Pixcell Medical": {
+    "as_of": "2026-09-06",
+    "business_model": "Manufacturer of point-of-care blood diagnostic devices (HemoScreen CBC analyzer)",
+    "customer_type": "B2B (hospitals, clinics, diagnostic labs)",
+    "display_name": "PixCell Medical",
+    "employees_global": 80,
+    "founded": 2008,
+    "il_center": "Yokneam Ilit (HQ)",
+    "sector": "medical devices / diagnostics",
+    "size_band": "S",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Soulbrain (South Korea) in Feb 2022",
+    "sub_sector": "Point-of-care hematology diagnostics"
+  },
   "Pixellot": {
     "as_of": "2026-08-21",
     "business_model": "Sells AI camera systems plus SaaS subscriptions for automated game capture, streaming, highlights and analytics (Vidswap)",
@@ -13419,6 +13553,19 @@
     "stage": "growth-private",
     "stage_note": "Series C $75M led by Insight Partners (Dec 2021); ~$100M raised total, valuation undisclosed",
     "sub_sector": "Identity security — policy-based access control (PBAC) / centralized authorization platform for applications, APIs and data"
+  },
+  "Planview": {
+    "as_of": "2026-09-06",
+    "business_model": "B2B SaaS",
+    "customer_type": "enterprise",
+    "employees_global": 1500,
+    "founded": 1989,
+    "il_center": "Tel Aviv / Hod HaSharon (R&D, ex-Clarizen); HQ in Austin, US",
+    "sector": "enterprise software",
+    "size_band": "L",
+    "stage": "growth-private",
+    "stage_note": "PE/growth-equity owned; TPG/TA Associates acquired from Thoma Bravo for $1.6B (2020/2021)",
+    "sub_sector": "Portfolio & Work Management Software"
   },
   "Plarium": {
     "as_of": "2026-08-22",
@@ -17170,6 +17317,19 @@
     "stage_note": "$16.5M Series B (2023) led by Firstime VC with LG Technology Ventures, Millennium Food-Tech; ~$52M raised to date",
     "sub_sector": "ferments food waste into lactic acid and PLA bioplastic (CIRCULAC)"
   },
+  "Tripledot Studios": {
+    "as_of": "2026-09-06",
+    "business_model": "B2C",
+    "customer_type": "Consumer",
+    "employees_global": 580,
+    "founded": 2017,
+    "il_center": "Tel Aviv (via Supersonic acquisition); HQ in London",
+    "sector": "gaming",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Series A $78M 2021 from Eldridge, Access Industries, Lightspeed; valued at ~$5B in 2024 secondary sale",
+    "sub_sector": "Mobile Games"
+  },
   "Tripleten": {
     "as_of": "2026-08-24",
     "business_model": "B2C tuition for online bootcamp programs (installments/ISA-style deferred payment and a tuition-refund job guarantee), plus subsidized enrollments in some markets",
@@ -17387,6 +17547,7 @@
     "as_of": "2026-08-31",
     "business_model": "Software platform (game engine, monetization/ad tech via ironSource)",
     "customer_type": "B2B",
+    "display_name": "Unity Technologies",
     "employees_global": 5000,
     "founded": 2004,
     "il_center": "Tel Aviv (major hub, ex-ironSource); HQ in San Francisco, US",
@@ -17773,6 +17934,19 @@
     "stage_note": "Venture-backed private Israeli company; investors include A-Labs and Beer Itzhak Energy; no IPO or acquisition; total raised not publicly disclosed",
     "sub_sector": "soil-based (geoponic) vertical farming containers and living green walls for urban sites, retail and buildings"
   },
+  "Vessel Technologies, Inc.": {
+    "as_of": "2026-09-06",
+    "business_model": "B2B",
+    "customer_type": "Real estate developers/builders",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Israel (design/engineering innovation hub); HQ in New York",
+    "sector": "construction technology / proptech",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "NYC-based venture-backed startup building standardized housing; expanded Israel engineering hub",
+    "sub_sector": "Standardized/modular housing solutions"
+  },
   "Via": {
     "as_of": "2026-08-21",
     "business_model": "sells SaaS licenses and turnkey operated transit services (per-contract fees) to transit agencies, plus Remix planning software subscriptions",
@@ -17839,6 +18013,19 @@
     "stage": "public",
     "stage_note": "NYSE: V; FY2025 10-K reports ~34,100 employees",
     "sub_sector": "global payments network — card processing, digital payments infrastructure"
+  },
+  "Viz.ai": {
+    "as_of": "2026-09-06",
+    "business_model": "B2B",
+    "customer_type": "enterprise",
+    "employees_global": 500,
+    "founded": 2016,
+    "il_center": "Tel Aviv (R&D); HQ in San Francisco",
+    "sector": "healthcare technology / ai",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "$100M raised at $1.2B valuation (2022), unicorn status",
+    "sub_sector": "AI-powered medical imaging & care coordination"
   },
   "Volkswagen (CARIAD)": {
     "as_of": "2026-08-22",
@@ -19521,6 +19708,19 @@
     "stage": "growth-private",
     "stage_note": "Raised $185M in 3 rounds since 2024, led by Accel; ~$800M valuation as of 2026",
     "sub_sector": "Security analytics / threat detection & investigation"
+  },
+  "vetric": {
+    "as_of": "2026-09-06",
+    "business_model": "B2B SaaS/API for public web data collection (OSINT) serving public safety, government, and enterprise clients",
+    "customer_type": "B2B",
+    "employees_global": 30,
+    "founded": 2022,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "data/osint & public safety tech",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Bootstrapped, profitable startup, no public funding rounds identified",
+    "sub_sector": "Web scraping / data intelligence APIs"
   },
   "vi": {
     "as_of": "2026-08-22",

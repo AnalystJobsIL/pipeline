@@ -1,81 +1,40 @@
 {
- "4M Analytics": {
-  "careers_url": "https://www.comeet.com/jobs/4manalytics/b6.00f",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
+ "Riskified": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/riskified/jobs",
+  "platform": "greenhouse",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/riskified"
  },
- "A.P. Moller - Maersk": {
-  "careers_url": "https://www.maersk.com/careers",
-  "platform": "scrape",
+ "Immunefi": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/immunefi/jobs",
+  "platform": "greenhouse",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/immunefi/"
+ },
+ "Next Insurance": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/nextinsurance66/jobs",
+  "platform": "greenhouse",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/nextinsur"
+ },
+ "MongoDB": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/mongodb/jobs",
+  "platform": "greenhouse",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/mongodb/j"
+ },
+ "NeuReality": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/89.002/positions",
+  "platform": "comeet",
   "reason": "regressed-to-zero"
  },
- "ABB": {
-  "careers_url": "https://careers.abb/global/en/search-results",
-  "platform": "scrape",
+ "Swimm": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.007/positions",
+  "platform": "comeet",
   "reason": "regressed-to-zero"
  },
- "ASML": {
-  "careers_url": "https://www.asml.com/en/careers/find-your-job",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "ASTERRA": {
-  "careers_url": "https://asterra.io/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "AU10TIX": {
-  "careers_url": "https://www.au10tix.com/company/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "AWS": {
-  "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Adi Il": {
-  "careers_url": "https://adi-il.org.il/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Airspan Networks": {
-  "careers_url": "https://airspan.com/careers/airspan-careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Aitechsystems": {
-  "careers_url": "https://www.comeet.com/jobs/aitechsystems/88.004",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "AlgoSec": {
-  "careers_url": "https://www.algosec.com/company/careers/find-a-job",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Amazon Israel": {
-  "careers_url": "https://www.amazon.jobs/en/search",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Amazon Web Services (AWS)": {
-  "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Arm": {
-  "careers_url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Arrow Components": {
-  "careers_url": "https://careers.arrow.com/us/search-results",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Axioma System Engineering and Integration": {
-  "careers_url": "https://www.axioma-in.com/jobopenings",
+ "Bright Security": {
+  "careers_url": "https://www.brightsec.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -84,53 +43,83 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "BigPanda": {
-  "careers_url": "https://www.bigpanda.io/careers/",
+ "Portnox": {
+  "careers_url": "https://www.portnox.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Bits of Gold": {
-  "careers_url": "https://blog.bitsofgold.co.il/jobs/",
+ "Radiflow": {
+  "careers_url": "https://www.radiflow.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Boa Ideas": {
-  "careers_url": "https://www.comeet.com/jobs/boaideas/EA.009",
+ "Ludeo": {
+  "careers_url": "https://www.ludeo.com/careers",
   "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
+  "reason": "regressed-to-zero"
  },
- "Brandshield": {
-  "careers_url": "https://www.comeet.com/jobs/brandshield/13.002",
+ "Netafim": {
+  "careers_url": "https://orbia-orbia-precision-agriculture-netafim.teamtailor.com",
   "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
+  "reason": "regressed-to-zero"
+ },
+ "ABB": {
+  "careers_url": "https://careers.abb/global/en/search-results",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "REE Automotive": {
+  "careers_url": "https://ree.auto/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Dynamic Yield": {
+  "careers_url": "https://www.dynamicyield.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "AlgoSec": {
+  "careers_url": "https://www.algosec.com/company/careers/find-a-job",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Bridgewise": {
   "careers_url": "https://www.comeet.com/jobs/bridgewise/F9.009",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Bright Security": {
-  "careers_url": "https://www.brightsec.com/careers/",
+ "AU10TIX": {
+  "careers_url": "https://www.au10tix.com/company/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Challenge Group": {
-  "careers_url": "https://career.challenge-group.com/go/Israel-Airlines-Jobs/9594055/",
+ "SolarEdge": {
+  "careers_url": "https://www.solaredge.com/en/search",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Comeet": {
-  "careers_url": "https://www.comeet.com/careers",
+ "ASTERRA": {
+  "careers_url": "https://asterra.io/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Predicta Med": {
+  "careers_url": "https://predicta-med.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "AWS": {
+  "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Cyabra": {
-  "careers_url": "https://cyabra.bamboohr.com/careers",
+ "Deutsche Telekom": {
+  "careers_url": "https://telekom-growthhub.eightfold.ai/careers",
   "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
+  "reason": "regressed-to-zero"
  },
- "Cybersixgill": {
-  "careers_url": "https://cybersixgill.com/company/careers",
+ "Volkswagen (CARIAD)": {
+  "careers_url": "https://jobs.volkswagen-group.com/cariad/search/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -139,50 +128,185 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Datos Health": {
-  "careers_url": "https://www.datos-health.com/join-us/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "DealHub.ai": {
-  "careers_url": "https://www.comeet.com/jobs/dealhub/86.005",
+ "HUB Security": {
+  "careers_url": "https://www.comeet.com/jobs/hub-technologies/07.00F",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Dentsply Sirona": {
-  "careers_url": "https://careers.dentsplysirona.com/search/",
+ "Bits of Gold": {
+  "careers_url": "https://blog.bitsofgold.co.il/jobs/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Deutsche Post DHL": {
-  "careers_url": "https://careers.dhl.com/global/en/search-results",
+ "OpenText": {
+  "careers_url": "https://careers.opentext.com/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Deutsche Telekom": {
-  "careers_url": "https://telekom-growthhub.eightfold.ai/careers",
+ "GenCell": {
+  "careers_url": "https://www.gencellprojects.com/jobs",
   "platform": "scrape",
   "reason": "regressed-to-zero"
+ },
+ "Stigg": {
+  "careers_url": "https://jobs.ashbyhq.com/stigg",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
  },
  "Digital Turbine": {
   "careers_url": "https://www.digitalturbine.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Comeet": {
+  "careers_url": "https://www.comeet.com/careers",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "aiOla": {
+  "careers_url": "https://aiola.ai/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Airspan Networks": {
+  "careers_url": "https://airspan.com/careers/airspan-careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Amazon Israel": {
+  "careers_url": "https://www.amazon.jobs/en/search",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Deutsche Post DHL": {
+  "careers_url": "https://careers.dhl.com/global/en/search-results",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Talenya": {
+  "careers_url": "https://www.talenya.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Hailo": {
+  "careers_url": "https://hailo.ai/company-overview/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "BigPanda": {
+  "careers_url": "https://www.bigpanda.io/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Cyabra": {
+  "careers_url": "https://cyabra.bamboohr.com/careers",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "StarkWare": {
+  "careers_url": "https://starkware.co/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Fairmatic": {
+  "careers_url": "https://jobs.workable.com/company/w9nAMpewLQVYmxHXhj1TRS/jobs-at-fairmatic",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Xtend": {
+  "careers_url": "https://www.xtend.me/working-at-xtend",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Datos Health": {
+  "careers_url": "https://www.datos-health.com/join-us/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Lam Research": {
+  "careers_url": "https://careers.lamresearch.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Navan": {
+  "careers_url": "https://navan.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Eureka Security": {
+  "careers_url": "https://www.eureka.security/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Cybersixgill": {
+  "careers_url": "https://cybersixgill.com/company/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Nova": {
+  "careers_url": "https://www.novami.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Arm": {
+  "careers_url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Quantum Art": {
+  "careers_url": "https://www.quantum-art.tech/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "entrypoint": {
+  "careers_url": "https://entrypoint.co.il/he/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Shortical": {
+  "careers_url": "https://www.comeet.com/jobs/shortical/3B.00A",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Menora Mivtachim Group": {
+  "careers_url": "https://www.menoramivt.co.il/job-posting/jobs",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Revolut": {
+  "careers_url": "https://www.revolut.com/en-US/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Amazon Web Services (AWS)": {
+  "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Whalo": {
+  "careers_url": "https://www.whalo.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Mami": {
+  "careers_url": "https://www.comeet.com/jobs/mami/BA.008",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "aspectiva": {
+  "careers_url": "https://www.comeet.com/jobs/walmart/35.000",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "4M Analytics": {
+  "careers_url": "https://www.comeet.com/jobs/4manalytics/b6.00f",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
  "Discount Bank": {
   "careers_url": "https://ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/CX_3001/requisitions",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "DoubleVerify": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/doubleverify/jobs",
-  "platform": "greenhouse",
-  "reason": "regressed-to-zero"
- },
- "Dynamic Yield": {
-  "careers_url": "https://www.dynamicyield.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "ENI-ONE LTD": {
   "careers_url": "https://eni-one-ltd.breezy.hr",
@@ -194,208 +318,33 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Echo": {
-  "careers_url": "https://www.comeet.com/jobs/echo/9A.006",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Eureka Security": {
-  "careers_url": "https://www.eureka.security/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Exodigo": {
   "careers_url": "https://www.comeet.com/jobs/exodigo/89.005",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Fairmatic": {
-  "careers_url": "https://jobs.workable.com/company/w9nAMpewLQVYmxHXhj1TRS/jobs-at-fairmatic",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "GenCell": {
-  "careers_url": "https://www.gencellprojects.com/jobs",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Genesys": {
-  "careers_url": "https://genesys.wd1.myworkdayjobs.com/Genesys",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Gini Apps": {
-  "careers_url": "https://www.comeet.com/jobs/gini-apps/66.000",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "HUB Security": {
-  "careers_url": "https://www.comeet.com/jobs/hub-technologies/07.00F",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Hailo": {
-  "careers_url": "https://hailo.ai/company-overview/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "Harmonic": {
   "careers_url": "https://egmn.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Hilti Israel": {
-  "careers_url": "https://careers.hilti.group/en/jobs/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "IAI - Israel Aerospace Industries": {
   "careers_url": "https://jobs.iai.co.il/jobs/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "Jafi": {
-  "careers_url": "https://www.comeet.com/jobs/jafi/C8.008",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
  },
  "Jeen.ai": {
   "careers_url": "https://www.comeet.com/jobs/jeenai/DA.008",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Just Eat Takeaway Com": {
-  "careers_url": "https://careers.justeattakeaway.com/il/he/israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "K2view": {
-  "careers_url": "https://www.k2view.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Kimberly-Clark": {
-  "careers_url": "https://careers.kimberly-clark.com/en/job-search",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Lam Research": {
-  "careers_url": "https://careers.lamresearch.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Lema AI": {
   "careers_url": "https://www.comeet.com/jobs/lemalabs/EA.001",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Ludeo": {
-  "careers_url": "https://www.ludeo.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Majestic Labs ai": {
   "careers_url": "https://www.comeet.com/jobs/majesticlabs/AA.004",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Mami": {
-  "careers_url": "https://www.comeet.com/jobs/mami/BA.008",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Menora Mivtachim Group": {
-  "careers_url": "https://www.menoramivt.co.il/job-posting/jobs",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Navan": {
-  "careers_url": "https://navan.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Netafim": {
-  "careers_url": "https://orbia-orbia-precision-agriculture-netafim.teamtailor.com",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "NeuReality": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/89.002/positions",
-  "platform": "comeet",
-  "reason": "regressed-to-zero"
- },
- "Nova": {
-  "careers_url": "https://www.novami.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "OpenText": {
-  "careers_url": "https://careers.opentext.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "OurCrowd": {
-  "careers_url": "https://www.comeet.com/jobs/ourcrowd/D3.00A",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Portnox": {
-  "careers_url": "https://www.portnox.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Predicta Med": {
-  "careers_url": "https://predicta-med.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Quantum Art": {
-  "careers_url": "https://www.quantum-art.tech/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "REE Automotive": {
-  "careers_url": "https://ree.auto/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Radiflow": {
-  "careers_url": "https://www.radiflow.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Regulus": {
-  "careers_url": "https://www.comeet.com/jobs/regulus/9A.00D",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Revolut": {
-  "careers_url": "https://www.revolut.com/en-US/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Shortical": {
-  "careers_url": "https://www.comeet.com/jobs/shortical/3B.00A",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
- "Sola Security": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/A9.003/positions",
-  "platform": "comeet",
-  "reason": "regressed-to-zero"
- },
- "SolarEdge": {
-  "careers_url": "https://www.solaredge.com/en/search",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "StarkWare": {
-  "careers_url": "https://starkware.co/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Stigg": {
-  "careers_url": "https://jobs.ashbyhq.com/stigg",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
@@ -404,54 +353,23 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Swimm": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.007/positions",
-  "platform": "comeet",
-  "reason": "regressed-to-zero"
- },
- "Talenya": {
-  "careers_url": "https://www.talenya.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Teads": {
   "careers_url": "https://job-boards.eu.greenhouse.io/teads1",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Volkswagen (CARIAD)": {
-  "careers_url": "https://jobs.volkswagen-group.com/cariad/search/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Whalo": {
-  "careers_url": "https://www.whalo.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Workiz": {
-  "careers_url": "https://www.workiz.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Xtend": {
-  "careers_url": "https://www.xtend.me/working-at-xtend",
-  "error": "scrape: http:500 (1 night)",
-  "platform": "scrape",
-  "reason": "fetch-error"
- },
- "aiOla": {
-  "careers_url": "https://aiola.ai/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "aspectiva": {
-  "careers_url": "https://www.comeet.com/jobs/walmart/35.000",
+ "Regulus": {
+  "careers_url": "https://www.comeet.com/jobs/regulus/9A.00D",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "entrypoint": {
-  "careers_url": "https://entrypoint.co.il/he/careers",
+ "Sola Security": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/A9.003/positions",
+  "platform": "comeet",
+  "reason": "regressed-to-zero"
+ },
+ "K2view": {
+  "careers_url": "https://www.k2view.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -459,5 +377,100 @@
   "careers_url": "https://www.working-rooms.co.il/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
+ },
+ "Challenge Group": {
+  "careers_url": "https://career.challenge-group.com/go/Israel-Airlines-Jobs/9594055/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Kimberly-Clark": {
+  "careers_url": "https://careers.kimberly-clark.com/en/job-search",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "ASML": {
+  "careers_url": "https://www.asml.com/en/careers/find-your-job",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Dentsply Sirona": {
+  "careers_url": "https://careers.dentsplysirona.com/search/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Gini Apps": {
+  "careers_url": "https://www.comeet.com/jobs/gini-apps/66.000",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "DealHub.ai": {
+  "careers_url": "https://www.comeet.com/jobs/dealhub/86.005",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Arrow Components": {
+  "careers_url": "https://careers.arrow.com/us/search-results",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Just Eat Takeaway Com": {
+  "careers_url": "https://careers.justeattakeaway.com/il/he/israel",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Echo": {
+  "careers_url": "https://www.comeet.com/jobs/echo/9A.006",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Aitechsystems": {
+  "careers_url": "https://www.comeet.com/jobs/aitechsystems/88.004",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Jafi": {
+  "careers_url": "https://www.comeet.com/jobs/jafi/C8.008",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Brandshield": {
+  "careers_url": "https://www.comeet.com/jobs/brandshield/13.002",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Boa Ideas": {
+  "careers_url": "https://www.comeet.com/jobs/boaideas/EA.009",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "A.P. Moller - Maersk": {
+  "careers_url": "https://www.maersk.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "DoubleVerify": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/doubleverify/jobs",
+  "platform": "greenhouse",
+  "reason": "regressed-to-zero"
+ },
+ "Hilti Israel": {
+  "careers_url": "https://careers.hilti.group/en/jobs/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "OurCrowd": {
+  "careers_url": "https://www.comeet.com/jobs/ourcrowd/D3.00A",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Genesys": {
+  "careers_url": "https://genesys.wd1.myworkdayjobs.com/Genesys",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Tripledot Studios": {
+  "careers_url": "http://job-boards.eu.greenhouse.io/tripledotstudios",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
  }
 }
