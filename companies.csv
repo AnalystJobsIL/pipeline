@@ -2218,3 +2218,7 @@ Pipl,scrape,,http://pipl.com/careers,false,queue-hunt 2026-09-06: careers page d
 "Itron, Inc.",scrape,,https://itron.wd5.myworkdayjobs.com/Early_Careers,false,queue-hunt 2026-09-06: careers page documented; monitored candidate | crack-walled 2026-09-06: skip
 "Yad Vashem, the World Holocaust Remembrance Center",scrape,,https://www.yadvashem.org/he/jobs.html,false,queue-hunt 2026-09-06: careers page documented; monitored candidate
 vetric,scrape,https://www.vetric.io/careers,https://www.vetric.io/careers,true,auto-expand scrape; 2 IL
+First Connect Insurance Services,greenhouse,firstconnectinsurance,https://boards-api.greenhouse.io/v1/boards/firstconnectinsurance/jobs,true,auto-expand slug-probe; 14/2 IL
+Poc System,scrape,https://poc-system.com,https://poc-system.com,false,scanned; no open Israel roles now | own-site 2026-09-06: poc-system.com linkback
+Ppltx,scrape,https://ppltx.co.il,https://ppltx.co.il,false,scanned; no open Israel roles now | own-site 2026-09-06: ppltx.co.il linkback
+Profimex,scrape,https://www.profimex.com/careers/,https://www.profimex.com/careers/,true,auto-expand scrape; 2 IL

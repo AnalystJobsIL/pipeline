@@ -26124,6 +26124,34 @@
    "url": "https://www.prismaphotonics.com/job/senior-devops/"
   }
  ],
+ "Profimex": [
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Profimex",
+   "country_code": "",
+   "description": "",
+   "job_id": "70bd39d6c4e41e01",
+   "location": "רעננה",
+   "posted_date": "",
+   "title": "נציג/ת פיתוח מכירות (SDR)",
+   "url": "https://www.profimex.com/careers/"
+  },
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Profimex",
+   "country_code": "",
+   "description": "",
+   "job_id": "cbc98da386cef0aa",
+   "location": "רעננה",
+   "posted_date": "",
+   "title": "Investor Relations Manager",
+   "url": "https://www.profimex.com/careers/"
+  }
+ ],
  "Profisea": [
   {
    "_loc_src": "own",
