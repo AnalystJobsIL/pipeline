@@ -4293,6 +4293,19 @@
     "stage_note": "Acquired by Embracer Group (Sweden) in Aug 2021 for up to ~$700M; operates under Embracer's DECA Games",
     "sub_sector": "casual and hyper-casual mobile game development and publishing (7B+ downloads, TabTale heritage)"
   },
+  "Credible": {
+    "as_of": "2026-09-07",
+    "business_model": "Online marketplace connecting consumers with lenders for student loans, personal loans, mortgages, and insurance",
+    "customer_type": "B2C",
+    "employees_global": 200,
+    "founded": 2012,
+    "il_center": "None identified; HQ in San Francisco, USA",
+    "sector": "fintech",
+    "size_band": "M",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Fox Corporation for ~$265M/AU$585M in 2019",
+    "sub_sector": "Consumer finance marketplace (loan/insurance comparison)"
+  },
   "Cresta": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS subscriptions for real-time conversation intelligence, agent coaching, and AI virtual agents in contact centers",
@@ -14394,6 +14407,19 @@
     "stage_note": "NYSE: PSTG since 2015; announced Feb 2026 rebrand to Everpure alongside acquisition of Israeli startup 1touch.io",
     "sub_sector": "All-flash storage arrays and data-management/STaaS platform (rebranding to Everpure, 2026, pivoting to AI-era data management)"
   },
+  "Pvml": {
+    "as_of": "2026-09-07",
+    "business_model": "B2B",
+    "customer_type": "Enterprise",
+    "employees_global": 30,
+    "founded": 2021,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "data security / ai",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Raised $8M seed round led by NFX (2024)",
+    "sub_sector": "Data access & privacy platform"
+  },
   "Pynt": {
     "as_of": "2026-08-21",
     "business_model": "SaaS subscriptions for its API security testing platform, with a free developer tier",
@@ -14419,6 +14445,19 @@
     "stage": "early-private",
     "stage_note": "Series A of $26M (total ~$30.7M) closed July 2025, with IBM and Korea Investment Partners joining TPY Capital",
     "sub_sector": "quantum error suppression and mitigation software (QESEM) that boosts accuracy of existing quantum hardware"
+  },
+  "Qima": {
+    "as_of": "2026-09-07",
+    "business_model": "B2B services",
+    "customer_type": "Enterprise (retailers, brands, manufacturers)",
+    "employees_global": 6000,
+    "founded": 2005,
+    "il_center": "No confirmed Israel office; HQ in Hong Kong/France, global operations",
+    "sector": "quality control & supply chain compliance",
+    "size_band": "XL",
+    "stage": "growth-private",
+    "stage_note": "Backed by growth equity investors (e.g., Bpifrance, ChrysCapital); private, venture/growth-equity funded",
+    "sub_sector": "Testing, Inspection & Certification (TIC)"
   },
   "Qlik Israel": {
     "as_of": "2026-09-02",
