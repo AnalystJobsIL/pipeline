@@ -6612,7 +6612,7 @@
   "why": "\"ELAD HR\" is the HR/recruitment arm of Elad Software Systems; its careers site is careers.eladsoft.com, listing Elad's own openings — a division/brand name rather than a separate employer."
  },
  "EPAM Systems": {
-  "date": "2026-09-06",
+  "date": "2026-09-07",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "EPAM Systems, Inc.",
@@ -6816,7 +6816,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Experda.com": {
-  "date": "2026-09-06",
+  "date": "2026-09-07",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Experda",
@@ -13184,7 +13184,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kela Technologies": {
-  "date": "2026-09-06",
+  "date": "2026-09-07",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "KELA",
@@ -20634,7 +20634,7 @@
   "why": "\"Software AG Israel\" is a country/entity variant of Software AG (a Software GmbH brand), which hires via its global careers site at softwareag.com."
  },
  "Speedata.io": {
-  "date": "2026-09-06",
+  "date": "2026-09-07",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Speedata",
@@ -22031,38 +22031,27 @@
   "why": "yit.co.il is a real Israeli digital agency (Yedioth Tech) with clients like ynet/Calcalist; site has a \"קריירה\" link but a 12-path careers probe on its own domain returned nothing. The yitgroup.com/en/careers result is the unrelated Finnish construction firm YIT."
  },
  "Yad Vashem": {
-  "date": "2026-08-30",
+  "date": "2026-09-07",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Yad Vashem, the World Holocaust Remembrance Center",
+  "why": "a rung found this name's board and the registry row 'Yad Vashem, the World Holocaust Remembrance Center' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+   "row": "Yad Vashem, the World Holocaust Remembrance Center",
+   "matched_on": "url",
+   "tried": [
+    [
+     "hunt",
+     "no-listing",
+     "https://www.yadvashem.org/he/jobs.html"
+    ],
+    [
+     "search-llm",
+     "documented",
+     "https://www.yadvashem.org/he/jobs.html"
     ]
-   },
-   "read_page": "https://www.yadvashem.org/he/jobs.html",
-   "search_pages": [
-    "https://www.yadvashem.org/he/jobs.html",
-    "http://yadvashemcareers.org",
-    "https://www.atid.org.il/yad-and-shem/",
-    "https://www.facebook.com/groups/multilingual/posts/4451409454963186/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Yad Vashem is a real Israeli employer (Holocaust remembrance authority) and does have a careers page with listed openings at yadvashem.org/he/jobs.html, so \"no board\" does not apply even though the 12 standard careers paths failed. None of the other categories (acquired, duplicate, not-an-employer, "
+   ]
+  }
  },
  "Yael Software": {
   "board_url_if_any": "",
@@ -24138,7 +24127,7 @@
   }
  },
  "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
-  "date": "2026-09-06",
+  "date": "2026-09-07",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Clal Insurance And Finance",
@@ -24536,7 +24525,7 @@
   }
  },
  "Galil Software Ltd.": {
-  "date": "2026-09-06",
+  "date": "2026-09-07",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Galil Systems",
@@ -24572,7 +24561,7 @@
   }
  },
  "Consist": {
-  "date": "2026-09-06",
+  "date": "2026-09-07",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Consist Group",
@@ -24744,6 +24733,86 @@
  },
  "Plataine": {
   "date": "2026-09-06",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Nanox Vision": {
+  "date": "2026-09-07",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Nanox",
+  "why": "a rung found this name's board and the registry row 'Nanox' already reads it (matched on comeet-uid, never on the name)",
+  "evidence": {
+   "row": "Nanox",
+   "matched_on": "comeet-uid",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.comeet.com/jobs/nanox/43.00F/qa-manage/BB.44E"
+    ]
+   ]
+  }
+ },
+ "Five Sigma - AI Claims Management": {
+  "date": "2026-09-07",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Five Sigma",
+  "why": "a rung found this name's board and the registry row 'Five Sigma' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Five Sigma",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://fivesigmalabs.com/careers/"
+    ]
+   ]
+  }
+ },
+ "First Connect Insurance Services": {
+  "date": "2026-09-07",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Poc System": {
+  "date": "2026-09-07",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Ppltx": {
+  "date": "2026-09-07",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Profimex": {
+  "date": "2026-09-07",
   "verdict": "already-a-row",
   "raw_verdict": "already-a-row",
   "other_name": "",

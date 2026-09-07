@@ -47081,5 +47081,473 @@
   ],
   "last": "2026-09-06",
   "verdict": "no candidate was this company's live page"
+ },
+ "COMAX": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://en.comaxtek.com/careers/join_us/index.html"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Mars Media Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://mars.media/careers"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "CargoSeer": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Lawgital": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Playrix Entertainment": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://playrix.com/job"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Powergen1": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Precise Financial Management Services Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://precise-int.com/career/"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Presse Service Greiner": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://www.greiner-assistec.com/en/Career"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Primetech Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://www.primetechltd.ca/careers.html"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Probit Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://probit-group.com/careers/"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "Jazz": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://www.comeet.com/jobs/jazz/6A.009"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "SportAtlas": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Synergia Compliance Systems LTD": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://www.compliancesolutions.com/en/career/"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Prosana": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://www.theprosana.com/job-openings"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Pointfive US": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://www.pointfive.co/careers"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "Powermat": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://powermat.com/careers/"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Preludesecurity": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Prilenia": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://careers.amplitudevc.com/companies/prilenia/jobs/32962740-director-expanded-access-programs-and-clinical-operations"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "Primevideoamazonstudios": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Prodactive": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://prodactivesolutions.com/careers"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Guardoc Health": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://guardoc.health/careers"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "flow": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://www.flowcorp.com/about-us/careers"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Breevy": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://remotejobs.org/companies/breevy"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Plattform Zkb": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Postman Platform": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://www.postman.com/company/careers/"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Practical Vision": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://practicalvision.com/career/"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "Premium Merchant Funding": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://www.pmfus.com/careers/"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "Primaform Ag": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://primaform.ch/about/careers"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Primis Um": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://www.primis.tech/careers/"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "Profly Media Inc": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no candidate was this company's live page"
+ },
+ "U.P.PRO": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://www.comeet.com/jobs/uppro/18.003"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "Fluent Trade Technologies": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://www.comeet.com/jobs/fluenttech/E5.00E"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "CookieByte Entertainment": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Playeola": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-07",
+    "url": "https://playeola.com/careers"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "found"
+ },
+ "Powell Electronics": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://www.powellind.com/careers"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Practitest": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-07",
+    "url": "https://www.practitest.com/jobs/"
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "documented"
+ },
+ "Presidency Of The Council Of Ministers": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Primesecurityai": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Privacyteam": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-07",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-07",
+  "verdict": "no-search-results"
  }
 }

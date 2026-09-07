@@ -192,3 +192,13 @@
 {"at":"2026-09-06T09:18:30Z","cap":250,"capped":false,"ci":true,"credits":17,"pid":2323,"tool":"discovery_daily.py"}
 {"at":"2026-09-06T12:12:38Z","cap":250,"capped":false,"ci":true,"credits":155,"pid":3383,"tool":"audit_empty_rows.py"}
 {"at":"2026-09-06T12:35:50Z","cap":250,"capped":false,"ci":true,"credits":9,"pid":17240,"tool":"crack_walled.py"}
+{"at":"2026-09-06T21:06:50Z","cap":250,"capped":false,"ci":true,"credits":8,"pid":3032,"tool":"repair_dead_urls.py"}
+{"at":"2026-09-06T21:39:28Z","cap":250,"capped":false,"ci":true,"credits":6,"pid":3123,"tool":"repair_extract_gap.py"}
+{"at":"2026-09-07T00:00:04Z","cap":250,"capped":false,"ci":true,"credits":46,"pid":13445,"tool":"listing_hunt.py"}
+{"at":"2026-09-07T00:03:27Z","cap":250,"capped":false,"ci":true,"credits":14,"pid":67381,"tool":"queue_resolve_search.py"}
+{"at":"2026-09-07T00:06:07Z","cap":250,"capped":false,"ci":true,"credits":12,"pid":67378,"tool":"queue_resolve_search.py"}
+{"at":"2026-09-07T00:06:13Z","cap":250,"capped":false,"ci":true,"credits":10,"pid":67379,"tool":"queue_resolve_search.py"}
+{"at":"2026-09-07T00:06:32Z","cap":250,"capped":false,"ci":true,"credits":11,"pid":67380,"tool":"queue_resolve_search.py"}
+{"at":"2026-09-07T00:12:24Z","cap":250,"capped":false,"ci":true,"credits":1,"pid":72207,"tool":"queue_pipeline.py"}
+{"at":"2026-09-07T00:23:11Z","cap":250,"capped":false,"ci":true,"credits":8,"pid":73591,"tool":"queue_pipeline.py"}
+{"at":"2026-09-07T00:53:31Z","cap":250,"capped":false,"ci":true,"credits":57,"pid":75800,"tool":"crack_walled.py"}

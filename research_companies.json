@@ -240,12 +240,6 @@
   "slug": "y-h-dimri-construction"
  },
  {
-  "name": "Yad Vashem",
-  "careers_url": "https://secrethunter.io/companies/yad-vashem",
-  "ats": "unknown",
-  "slug": "yad-vashem"
- },
- {
   "name": "Youth Futures",
   "careers_url": "https://secrethunter.io/companies/youth-futures",
   "ats": "unknown",
@@ -2754,22 +2748,10 @@
   "slug": "profitian-finance"
  },
  {
-  "name": "Nanox Vision",
-  "careers_url": "https://il.linkedin.com/jobs/view/junior-software-developer-at-nanox-vision-4462872969",
-  "ats": "unknown",
-  "slug": "nanox-imaging"
- },
- {
   "name": "SuperCom (NASDAQ: SPCB)",
   "careers_url": "https://il.linkedin.com/jobs/view/junior-product-designer-at-supercom-nasdaq-spcb-4462808904",
   "ats": "unknown",
   "slug": "supercom"
- },
- {
-  "name": "Five Sigma - AI Claims Management",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-software-engineer-at-five-sigma-ai-claims-management-4461994354",
-  "ats": "unknown",
-  "slug": "five-sigma"
  },
  {
   "name": "Google DeepMind",
@@ -2982,46 +2964,10 @@
   "slug": ""
  },
  {
-  "name": "HUNTHEAD",
-  "careers_url": "https://il.linkedin.com/jobs/view/statistician-at-hunthead-4461954766",
-  "ats": "unknown",
-  "slug": "hunthead"
- },
- {
   "name": "Jazz",
   "careers_url": "https://il.linkedin.com/jobs/view/senior-bi-developer-at-jazz-4462687236",
   "ats": "unknown",
   "slug": "jazzsecurity"
- },
- {
-  "name": "NATASHA DENONA IL",
-  "careers_url": "https://il.linkedin.com/jobs/view/planning-specialist-at-natasha-denona-il-4461066954",
-  "ats": "unknown",
-  "slug": "natasha-denona-il"
- },
- {
-  "name": "EPAM Systems",
-  "careers_url": "https://il.linkedin.com/jobs/view/data-scientist-at-epam-systems-4461699762",
-  "ats": "unknown",
-  "slug": "epam-systems"
- },
- {
-  "name": "SkyGini",
-  "careers_url": "https://il.linkedin.com/jobs/view/performance-growth-manager-at-skygini-4459297452",
-  "ats": "unknown",
-  "slug": "skygini"
- },
- {
-  "name": "Clal Insurance & Finance- כלל ביטוח ופיננסים",
-  "careers_url": "https://il.linkedin.com/jobs/view/business-intelligence-team-lead-at-clal-insurance-finance-%D7%9B%D7%9C%D7%9C-%D7%91%D7%99%D7%98%D7%95%D7%97-%D7%95%D7%A4%D7%99%D7%A0%D7%A0%D7%A1%D7%99%D7%9D-4461051921",
-  "ats": "unknown",
-  "slug": "clal-insurance-"
- },
- {
-  "name": "Consist",
-  "careers_url": "https://il.linkedin.com/jobs/view/sap-business-warehouse-consultant-at-consist-4460714527",
-  "ats": "unknown",
-  "slug": "consist"
  },
  {
   "name": "Guardoc Health",
@@ -3054,58 +3000,16 @@
   "slug": "flowhello"
  },
  {
-  "name": "First Connect Insurance Services",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-insurtech-platform-at-first-connect-insurance-services-4460078119",
-  "ats": "unknown",
-  "slug": "firstconnectinsurance"
- },
- {
-  "name": "Speedata.io",
-  "careers_url": "https://il.linkedin.com/jobs/view/software-engineer-at-speedata-io-4461556660",
-  "ats": "unknown",
-  "slug": "speedataio"
- },
- {
   "name": "Fluent Trade Technologies",
   "careers_url": "https://il.linkedin.com/jobs/view/mysql-dba-at-fluent-trade-technologies-4461702955",
   "ats": "unknown",
   "slug": "fluent-trade-technologies"
  },
  {
-  "name": "Experda.com",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-sql-database-administrator-at-experda-com-4434280474",
-  "ats": "unknown",
-  "slug": "experda-com"
- },
- {
-  "name": "Kela Technologies",
-  "careers_url": "https://il.linkedin.com/jobs/view/director-of-fp-a-at-kela-technologies-4462437451",
-  "ats": "unknown",
-  "slug": "kela-technologies"
- },
- {
-  "name": "NVIDIA AI",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-applied-ai-engineer-at-nvidia-ai-4461189479",
-  "ats": "unknown",
-  "slug": ""
- },
- {
-  "name": "Galil Software Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/applied-ai-engineer-at-galil-software-ltd-4462780928",
-  "ats": "unknown",
-  "slug": "galil-software-ltd-"
- },
- {
   "name": "CargoSeer",
   "careers_url": "https://il.linkedin.com/jobs/view/senior-ai-engineer-remote-based-in-israel-at-cargoseer-4461660124",
   "ats": "unknown",
   "slug": "cargoseerai"
- },
- {
-  "name": "Mobile Group Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/algorithm-developer-at-mobile-group-ltd-4460929966",
-  "ats": "unknown",
-  "slug": "mobile-group-ltd"
  },
  {
   "name": "Synergia Compliance Systems LTD",
@@ -3132,22 +3036,10 @@
   "slug": "lawgital-israel"
  },
  {
-  "name": "Apester",
-  "careers_url": "https://il.linkedin.com/jobs/view/programmatic-account-manager-at-apester-4460719534",
-  "ats": "unknown",
-  "slug": "apester"
- },
- {
   "name": "Prosana",
   "careers_url": "https://il.linkedin.com/jobs/view/senior-media-buyer-at-prosana-4461968378",
   "ats": "unknown",
   "slug": "the-prosana"
- },
- {
-  "name": "ERGO NEXT Insurance",
-  "careers_url": "https://il.linkedin.com/jobs/view/user-acquisition-manager-at-ergo-next-insurance-4431923432",
-  "ats": "unknown",
-  "slug": "ergo-next-insurance"
  },
  {
   "name": "Plattform Zkb",
@@ -3166,12 +3058,6 @@
   "careers_url": "https://secrethunter.io/companies/playrix-entertainment",
   "ats": "unknown",
   "slug": "playrix-entertainment"
- },
- {
-  "name": "Poc System",
-  "careers_url": "https://secrethunter.io/companies/poc-system",
-  "ats": "unknown",
-  "slug": "poc-system"
  },
  {
   "name": "Pointfive US",
@@ -3202,12 +3088,6 @@
   "careers_url": "https://secrethunter.io/companies/powermat",
   "ats": "unknown",
   "slug": "powermat"
- },
- {
-  "name": "Ppltx",
-  "careers_url": "https://secrethunter.io/companies/ppltx",
-  "ats": "unknown",
-  "slug": "ppltx"
  },
  {
   "name": "Practical Vision",
@@ -3304,12 +3184,6 @@
   "careers_url": "https://secrethunter.io/companies/prodactive",
   "ats": "unknown",
   "slug": "prodactive"
- },
- {
-  "name": "Profimex",
-  "careers_url": "https://secrethunter.io/companies/profimex",
-  "ats": "unknown",
-  "slug": "profimex"
  },
  {
   "name": "Profly Media Inc",
