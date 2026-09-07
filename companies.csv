@@ -1688,7 +1688,7 @@ Y D Barzani,scrape,,https://www.ydb.co.il/en/career,true,queue-drain 2026-08-29 
 Aisap AI,scrape,,https://www.aisap.ai/careers,true,queue-drain 2026-08-29 hunt; 4/4 IL
 Kibeeri,scrape,,https://kibeeri.com/careers/,true,queue-drain 2026-08-29 hunt; 8/8 IL
 Latet Ngo,scrape,,https://www.latet.org.il/careers/#positionsBanner,true,queue-drain 2026-08-29 hunt; 21/21 IL
-Aitechsystems,scrape,,https://www.comeet.com/jobs/aitechsystems/88.004,true,queue-drain 2026-08-29 hunt; 9/9 IL
+Aitechsystems,comeet,88.004,https://www.comeet.com/careers-api/2.0/company/88.004/positions?token=88433183B9C110844204CA43318033180,true,queue-drain 2026-08-29 hunt; 9/9 IL | self-heal 2026-09-07: re-resolved to comeet
 Gav Systems,scrape,,https://gav.co.il/jobs/,true,queue-drain 2026-08-29 hunt; 1/1 IL
 Globalbit,scrape,,https://globalbit.co.il/career,true,queue-drain 2026-08-29 hunt; 6/6 IL
 Lev Haolam,ashby,levhaolam,https://api.ashbyhq.com/posting-api/job-board/levhaolam,true,queue-drain 2026-08-29 hunt; 1/1 IL | self-heal 2026-08-31: re-resolved to ashby
@@ -1869,7 +1869,7 @@ Jafi,scrape,,https://www.comeet.com/jobs/jafi/C8.008,true,queue-drain 2026-08-29
 Bio Technology General,scrape,,https://www.btgil.com/vacancies/,true,queue-drain 2026-08-29 search-llm; 4/4 IL
 Bitsight,workday,bitsight/Bitsight,https://bitsight.wd1.myworkdayjobs.com/wday/cxs/bitsight/Bitsight/jobs,true,queue-drain 2026-08-29 search-llm; 1/1 IL | self-heal 2026-08-31: re-resolved to workday
 Blackcube1,scrape,,https://www.blackcube.com/careers,true,queue-drain 2026-08-29 search-llm; 3/3 IL
-Canopy Care,scrape,,https://job-boards.greenhouse.io/canopycare,true,queue-drain 2026-08-29 search-llm; 3/3 IL | wrong-url 2026-09-06: board names Canopy (Canopy Oncology); needs re-resolution | listing-hunt 2026-09-06: verified 3 IL via job-boards.greenhouse.io
+Canopy Care,greenhouse,canopycare,https://boards-api.greenhouse.io/v1/boards/canopycare/jobs,true,wrong-url 2026-09-06: board names Canopy (Canopy Oncology); needs re-resolution | listing-hunt 2026-09-06: verified 3 IL via job-boards.greenhouse.io | self-heal 2026-09-07: re-resolved to greenhouse
 Centrical,scrape,,https://centrical.com/company/careers/,true,queue-drain 2026-08-29 search-llm; 1/1 IL
 Xcurrent Energy Solutions,scrape,,https://www.xcurrent.tech/careers,true,queue-drain 2026-08-29 search-llm; 4/4 IL
 Malam,scrape,,https://malam-academy.co.il/vacancies/,true,queue-drain 2026-08-29 search-llm; 4/4 IL
@@ -2180,7 +2180,7 @@ Rashi Foundation,scrape,,https://rashi.org.il/career/,true,queue-hunt 2026-09-04
 Padagis Israel,scrape,,https://padagis.co.il/career/,false,"listing-hunt 2026-09-04: another company's board; no listing found | dark-triage 2026-09-05: extract-gap (LLM found 4: אחראי.ת קו אריזה, מפעיל.ת אריזה טכני.ת)"
 Palziv,scrape,,https://palziv.com/about-us/careers/,true,queue-hunt 2026-09-04: careers page documented; monitored candidate | listing-hunt 2026-09-04: verified 1 IL via palziv.com
 Aristocrat,workday,aristocrat/AristocratExternalCareersSite,https://aristocrat.wd3.myworkdayjobs.com/wday/cxs/aristocrat/AristocratExternalCareersSite/jobs,true,auto-expand; 1/1 IL
-Genesys,scrape,,https://genesys.wd1.myworkdayjobs.com/Genesys?source=genesyscareers,true,scanned; no open Israel roles now | own-site 2026-09-04: www.genesys.com linkback | listing-hunt 2026-09-04: verified 1 IL via genesys.wd1.myworkdayjobs.com
+Genesys,workday,genesys/Genesys,https://genesys.wd1.myworkdayjobs.com/wday/cxs/genesys/Genesys/jobs,true,scanned; no open Israel roles now | own-site 2026-09-04: www.genesys.com linkback | listing-hunt 2026-09-04: verified 1 IL via genesys.wd1.myworkdayjobs.com | self-heal 2026-09-07: re-resolved to workday
 Paxos,scrape,https://www.paxos.com/careers,https://www.paxos.com/careers,true,auto-expand scrape; 1 IL
 Peachcontent,scrape,https://www.peachcontent.com/,https://www.peachcontent.com/jobs/,false,"scanned; no open Israel roles now | dark-triage 2026-09-05: extract-gap (LLM found 3: Project Manager, Creative) | empty-but-suspect 2026-09-06; 2+ role-near-Israel mentions in HTML"
 Pelephone,scrape,https://www.pelephone.co.il/ds/heb/home/,https://www.pelephone.co.il/ds/heb/home/,false,scanned; no open Israel roles now | dark-triage 2026-09-05: extract-gap (2 role phrases after render) | empty-but-suspect 2026-09-06; 2+ role-near-Israel mentions in HTML

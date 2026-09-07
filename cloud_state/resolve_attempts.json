@@ -308,24 +308,24 @@
   "last": "2026-08-24"
  },
  "Bright Security": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Enlight Renewable Energy": {
   "fails": 1,
   "last": "2026-08-24"
  },
  "BeeHero": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Portnox": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Radiflow": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Greeneye Technology": {
   "fails": 2,
@@ -336,40 +336,40 @@
   "last": "2026-08-24"
  },
  "ABB": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "ParaZero": {
   "fails": 1,
   "last": "2026-08-24"
  },
  "Dynamic Yield": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Hunters": {
   "fails": 1,
   "last": "2026-08-24"
  },
  "Bridgewise": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "ASTERRA": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "AWS": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Akamai": {
   "fails": 3,
   "last": "2026-09-01"
  },
  "Deutsche Telekom": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Fortinet": {
   "fails": 1,
@@ -380,16 +380,16 @@
   "last": "2026-08-24"
  },
  "Workiz": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Miggo Security": {
   "fails": 1,
   "last": "2026-08-24"
  },
  "HUB Security": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Sivo": {
   "fails": 1,
@@ -416,68 +416,68 @@
   "last": "2026-08-24"
  },
  "Stigg": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Digital Turbine": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Comeet": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Amazon Israel": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "BigPanda": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Anchor": {
   "fails": 1,
   "last": "2026-08-24"
  },
  "Fairmatic": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Sony (Sony Semiconductor Israel)": {
   "fails": 1,
   "last": "2026-08-24"
  },
  "Navan": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "myInterview": {
   "fails": 1,
   "last": "2026-08-24"
  },
  "Eureka Security": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Cybersixgill": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Nova": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Mentee Robotics": {
   "fails": 1,
   "last": "2026-08-24"
  },
  "Menora Mivtachim Group": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Revolut": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Modellama": {
   "fails": 1,
@@ -492,8 +492,8 @@
   "last": "2026-08-24"
  },
  "Amazon Web Services (AWS)": {
-  "fails": 2,
-  "last": "2026-08-31"
+  "fails": 3,
+  "last": "2026-09-07"
  },
  "Tripleten": {
   "fails": 1,
@@ -772,96 +772,92 @@
   "last": "2026-09-04"
  },
  "Swimm": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Sensos": {
   "fails": 1,
   "last": "2026-08-31"
  },
  "SolarEdge": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Volkswagen (CARIAD)": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "OpenText": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Deutsche Post DHL": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Arm": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Quantum Art": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Whalo": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "EPAM Systems, Inc.": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "IAI - Israel Aerospace Industries": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Strauss Water Ltd. שטראוס מים": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "rooms": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Challenge Group": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Dentsply Sirona": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Gini Apps": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "DealHub.ai": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Echo": {
-  "fails": 1,
-  "last": "2026-08-31"
- },
- "Aitechsystems": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "אסם": {
   "fails": 1,
   "last": "2026-08-31"
  },
  "Jafi": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Brandshield": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Boa Ideas": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-07"
  },
  "Sisense": {
   "fails": 1,
@@ -966,5 +962,49 @@
  "entrypoint": {
   "fails": 1,
   "last": "2026-09-05"
+ },
+ "Zesty": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "Cynet": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "Darrow": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "Mami": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "Xpend Global Marketing": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "Exyte": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "Bringits": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "DoubleVerify": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "Hilti Israel": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "Tripledot Studios": {
+  "fails": 1,
+  "last": "2026-09-07"
+ },
+ "Pipl": {
+  "fails": 1,
+  "last": "2026-09-07"
  }
 }
