@@ -2232,3 +2232,11 @@ Precise Financial Management Services Ltd,scrape,,https://precise-int.com/career
 Powermat,scrape,,https://powermat.com/careers/,false,queue-hunt 2026-09-07: careers page documented; monitored candidate
 Prodactive,scrape,,https://prodactivesolutions.com/careers,false,queue-hunt 2026-09-07: careers page documented; monitored candidate
 Postman Platform,scrape,,https://www.postman.com/company/careers/,false,queue-hunt 2026-09-07: careers page documented; monitored candidate
+DataCore,greenhouse,datacor,https://boards-api.greenhouse.io/v1/boards/datacor/jobs,true,auto-expand; 15/0 IL
+Anomity,scrape,https://anomity.ai,https://anomity.ai,false,scanned; no open Israel roles now | own-site 2026-09-07: anomity.ai linkback
+Credible,greenhouse,credible,https://boards-api.greenhouse.io/v1/boards/credible/jobs,true,auto-expand slug-probe; 6/1 IL
+Crossing Hurdles,scrape,https://crossinghurdles.com,https://crossinghurdles.com,false,scanned; no open Israel roles now | own-site 2026-09-07: crossinghurdles.com linkback
+Protegohealth,scrape,https://www.protegohealth.ai/,https://www.protegohealth.ai/,false,scanned; no open Israel roles now | own-site 2026-09-07: www.protegohealth.ai linkback
+Pvml,scrape,https://pvml.com/careers/,https://pvml.com/careers/,true,auto-expand scrape; 4 IL
+Qima,smartrecruiters,qima,https://api.smartrecruiters.com/v1/companies/qima/postings,true,auto-expand slug-probe; 729/1 IL
+Radix Eng,scrape,https://radix-eng.com,https://radix-eng.com,false,scraped page is not this company's; no listing found | own-site 2026-09-07: radix-eng.com linkback

@@ -26695,6 +26695,56 @@
    "url": "https://careers.publicisgroupe.com/jobs/149739?lang=en-us&previousLocale=en-US"
   }
  ],
+ "Pvml": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Pvml",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://pvml.com/careers/job/marketing-manager/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Marketing Manager",
+   "url": "https://pvml.com/careers/job/marketing-manager/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Pvml",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://pvml.com/careers/job/sales-development-representative-sdr/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Sales Development Representative (SDR)",
+   "url": "https://pvml.com/careers/job/sales-development-representative-sdr/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Pvml",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://pvml.com/careers/job/frontend-engineer/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Frontend Engineer",
+   "url": "https://pvml.com/careers/job/frontend-engineer/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Pvml",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://pvml.com/careers/job/backend-engineer/",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Backend Engineer",
+   "url": "https://pvml.com/careers/job/backend-engineer/"
+  }
+ ],
  "Pynt": [
   {
    "_jd_attempted": "2026-08-30",
