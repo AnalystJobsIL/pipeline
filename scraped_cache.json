@@ -553,7 +553,8 @@
  ],
  "ActiveFence": [
   {
-   "_jd_attempted": "2026-09-01",
+   "_jd_attempted": "2026-09-07",
+   "_jd_shared_page": true,
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "ActiveFence",
@@ -1669,6 +1670,8 @@
  ],
  "Alice IO": [
   {
+   "_jd_attempted": "2026-09-07",
+   "_jd_shared_page": true,
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "Alice IO",
@@ -2737,7 +2740,7 @@
    "url": "https://jobs.apple.com/en-us/details/200669536-0865/senior-security-researcher-red-team?team=HRDWR"
   },
   {
-   "_jd_attempted": "2026-09-06",
+   "_jd_attempted": "2026-09-07",
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "Apple",
@@ -3758,12 +3761,12 @@
    "url": "https://www.ballerine.com/career/agentic-commerce-specialist"
   },
   {
-   "_jd_attempted": "2026-09-06",
+   "_jd_attempted": "2026-09-07",
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "Ballerine",
    "country_code": "",
-   "description": " AI Fraud Data Analyst (Senior) Platform Products Underwriting Make faster risk decisions using AI-powered analysis tailored to your policies Monitoring Continuously detect and respond to evolving merchant risk with real-time insights Onboarding Automate KYB and onboarding with AI-driven agents and real-time merchant risk profiles Partner oversight Manage risk across your partnerships Policy Fit Audit ready AUP violation detection Company Analysis Audit ready merchant analysis for POS and offline commerce Scam &amp; Fraud API Detect fake merchants in real time with AI-powered risk intelligence Blocklist Stop known bad merchants before onboarding Agentic Commerce Readiness and governance for safe agent–merchant interactions KYB &amp; Ownership Audit ready UBO and ownership verification Transaction analysis Audit ready merchant analysis for POS and offline commerce High Risk verticals Instant merchant pre-qualification analysis for ISOs, payfacs, and acquirers FEATURED 7 real fraud use cases That Detect Fake Merchants before onboarding Get your Free Playbook Solutions Mastercard MMSP Compliance Meet the 2026 Mastercard MMP Standards Try Our Free Web Presence Analysis explore how we can help protect your business from risk Get 5 Free Reports Industries Industry pages Merchant Acquiring Banking Fintech Marketplaces Featured article The new era of merchant risk: How AI and data are reshaping Get your Free Playbook FEATURED 7 real fraud use cases That Detect Fake Merchants before onboarding Get your Free Playbook Company get to know us About us Careers Contact Us FEATURED 7 real fraud use cases That Detect Fake Merchants before onboarding Get your Free Playbook Resources Learn more Blog Guides Event and Conferences The Agentic Commerce Readiness report 2026 Books Merchant Risk in the AI era The Synthetic Merchant Economy Risk definitions Glossary On-Demand Content Merchant Fraud in 2026 Behavioral Detection &amp; Real-World Interventions Why Payment Companies Can&#x27;t Scale Risk Operations Build Call Center Warm transfer with handoff message Knowledge Auto-sync website or documents Book Appointment Native integration with cal.com Navigate IVR Ability to press digits to navigate IVR Depoy Batch Call Seamlessly send hundreds of calls Branded Call ID Display brand name Verified Phone Numbers Prevent being marked as spam Monitor Post Call Analysis Custom analysis FEATURED 7 real fraud use cases That Detect Fake Merchants before onboarding Get your Free Playbook FEATURED The new era of merchant risk: How AI and data are reshaping Get your Free Playbook Schedule Demo Copyright © 2025. Ballerine Inc. All rights reserved. Schedule Demo AI Fraud Data Analyst (Senior) Tel Aviv Full-Tme Who we are Ballerine is the AI-native, agentic merchant risk and compliance platform for acquirers, PSPs, and banks. We power merchant underwriting, KYB/AML, ongoing monitoring, and financial crime management for payment companies worldwide. And we go beyond the platform: we help our customers transform their risk and compliance processes to be agentic, so they can save time and money, scale, and manage risk and compliance in a safer and more efficient way. ‍ Our customers operate in one of the most regulated corners of financial services. They don&#x27;t just need software, they need it working inside their real workflows, policies, and constraints. That&#x27;s why we&#x27;re growing our forward-deployed engineering team. ‍ ‍ Ballerine is a leading AI-native risk platform that uncovers and stops scams, fraud, and other bad actors before they enter financial systems. We scan and interpret the entire digital footprint of a business - from websites and social media to hidden online mentions - revealing who they really are and whether they pose a risk. Global financial institutions and payment providers rely on us to stop fraudsters running shell companies, selling counterfeit goods, or laundering money. The Role What We Do? What You&#x27;ll Do This is a full-ti",
+   "description": "The Role\nWhat We Do?\nWhat You&#x27;ll Do\nThis is a full-time on-site role for an AI Data Analyst, located in the Tel Aviv District, Israel. The AI Data Analyst will be responsible for analyzing data, developing data models, conducting statistical analysis, and communicating findings to relevant stakeholders. Daily tasks will include interpreting complex data sets, generating actionable insights through data analytics, and supporting the development of AI-powered compliance solutions.\nWhat You Bring\nStrong Analytical Skills and proficiency in Data Analytics in Fraud/Payments related role\nStrong with Statistics and Data Modeling\nStrong background in SQL and writing scripts in Python / JS\nExcellent Communication skills and Business understanding\nAbility to work on-site in the Tel Aviv District, Israel\nBachelor&#x27;s degree in Data Science, Statistics, Computer Science, Math, or related field\nExperience in the fraud / payments / compliance industry is a plus\nWhy join us\nWhat We Offer\nPlatform\nUnderwriting Monitoring Onboarding Partner oversight Policy Fit GoSignal Scam & Fraud API Agentic Commerce KYB & Ownership Transaction analysis High Risk verticals\nSolution\nMastercard MMSP Compliance\nIndustries\nMerchant Acquiring Banking Fintech Marketplaces\nResources\nBlog The Synthetic Merchant Economy Risk in the AI era Glossary\nCompany\nAbout Us Careers Contact us\nStay Tuned\nLinkedIn\nYouTube\nPrivacy Terms of Use\nLocations\n3101 Park Blvd, Palo Alto, CA 94306\n22 Cross St, Singapore 048421\nLincoln St 20, Tel Aviv-Jaffa, 6713412\nGet 5 Free Reports\nGet 5 free web presence reports and explore how we can help protect your business from risk\nSchedule Demo",
    "job_id": "https://www.ballerine.com/career/ai-fraud-data-analyst-senior",
    "location": "Tel Aviv",
    "posted_date": "",
@@ -7312,7 +7315,7 @@
  ],
  "Cognyte": [
   {
-   "_jd_attempted": "2026-09-06",
+   "_jd_attempted": "2026-09-07",
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "Cognyte",
@@ -7325,7 +7328,7 @@
    "url": "https://www.cognyte.com/careers/4F.F60/data-analyst"
   },
   {
-   "_jd_attempted": "2026-09-06",
+   "_jd_attempted": "2026-09-07",
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "Cognyte",
@@ -7377,7 +7380,7 @@
    "url": "https://www.cognyte.com/careers/06.070/gco-service-continuous-improvement-specialist"
   },
   {
-   "_jd_attempted": "2026-09-06",
+   "_jd_attempted": "2026-09-07",
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "Cognyte",
@@ -9315,11 +9318,12 @@
    "url": "https://careers.ey.com/ey/job/Tel-Aviv-Technology-Risk-Consultant-6706703/1201402001/"
   },
   {
+   "_jd_attempted": "2026-09-07",
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "EY",
    "country_code": "",
-   "description": "",
+   "description": "Data Scientist לצוות Industry Tech Job Details | EY\nCookie information\nWelcome to the EY careers job search site. This website is based on the SuccessFactors software provided by SAP. On this page, functional and optional cookies are used to improve your experience and design our careers site more user-friendly and in line with your needs. In this context, cookies from providers in third countries may also be used and data may be transmitted to providers such as social media services outside the EU. For this we require your consent. By clicking \"Accept All Cookies\", you agree to these. This also includes your consent to the transmission of certain personal data to third countries, including the USA, in accordance with Art. 49 (1) (a) GDPR. You can select your settings by clicking &ldquo;Modify Cookie Preferences&rdquo; to confirm your choices from the optional cookie tracking and selecting the required cookies required to remain on the site. You can change your selection at any time by clicking the link at the bottom of the page.\nModify Cookie Preferences\nReject All Cookies\nAccept All Cookies\nSkip to main content\nLanguage\nDeutsch (Deutschland)\nEnglish (United Kingdom)\nEnglish (United States)\nEspañol (México)\nFrançais (Canada)\nFrançais (France)\nעִבְרִית (יִשְׂרָאֵל)\n日本語 (日本)\n한국어 (대한민국)\nPortuguês (Brasil)\n简体中文\n繁體中文\nView profile\nCareers at EY\nWhat you can do here\nWhat it’s like to work here\nHow to join us\nJob search\nExperienced professionals\nEarly careers\nLanguage\nDeutsch (Deutschland)\nEnglish (United Kingdom)\nEnglish (United States)\nEspañol (México)\nFrançais (Canada)\nFrançais (France)\nעִבְרִית (יִשְׂרָאֵל)\n日本語 (日本)\n한국어 (대한민국)\nPortuguês (Brasil)\n简体中文\n繁體中文\nView profile\nCareers at EY\nWhat you can do here\nWhat it’s like to work here\nHow to join us\nJob search\nExperienced professionals\nEarly careers\nLanguage\nDeutsch (Deutschland)\nEnglish (United Kingdom)\nEnglish (United States)\nEspañol (México)\nFrançais (Canada)\nFrançais (France)\nעִבְרִית (יִשְׂרָאֵל)\n日本語 (日本)\n한국어 (대한민국)\nPortuguês (Brasil)\n简体中文\n繁體中文\nView profile\nCareers at EY\nWhat you can do here\nWhat it’s like to work here\nHow to join us\nJob search\nExperienced professionals\nEarly careers\nSearch by keyword and/or location\nShow More Options\nLoading...\nBusiness Area\nAll\nCountry/Region\nAll\nCity\nAll\nClear\nSelect how often (in days) to receive an alert:\nCreate Alert\n×\nSelect how often (in days) to receive an alert:\nApply now »\nApply now\nStart applying with LinkedIn\nApply Now\nStart\nPlease wait...\nData Scientist לצוות Industry Tech\nLocation:\nTel Aviv\nOther locations:\nPrimary Location Only\nSalary:\nCompetitive\nDate:\n27 Aug 2026\nJob description\nRequisition ID:\n1739011\nצוות Industry Tech ב- EY מוביל פרויקטים חדשניים בעולמות התעשייה, הייצור והטכנולוגיה, ומשלב יכולות Data Science, AI ו -Computer Vision לפתרון אתגרים עסקיים ותפעוליים מורכבים עבור לקוחות מובילים .\nתיאור התפקיד:\nפיתוח אלגוריתמים ופתרונות AI בסביבת Production\nהובלת פרויקטים בתחומי אוטומציה ואופטימיזציה של קווי ייצור .\nפיתוח פתרונות Computer Vision ועיבוד תמונה לתהליכים תעשייתיים .\nבניית מודלי חיזוי, סימולציות ופתרונות לשרשרת אספקה .\nפיתוח Agentic AI ו -AI Agents למגוון שימושים עסקיים .\nעבודה עם תשתיות Data ו -ML מתקדמות בסביבה עננית ובסקייל .\nדרישות התפקיד:\nתואר שני במדעי הנתונים, מדעי המחשב, הנדסה או תחום כמותי רלוונטי .\nלפחות שנתיים ניסיון בפיתוח אלגוריתמים , Machine Learning או Data Science\nניסיון בפיתוח ב- Python ו- C ++\nניסיון בעבודה עם PyTorch\nניסיון בעבודה עם Databricks\nניסיון בעבודה בסביבת ענן AWS ו/או Azure\nיכולת למידה עצמאית גבוהה ורצון להעמיק בטכנולוגיות ותחומים חדשים .\nיתרונות:\nניסיון ב -Computer Vision ועיבוד תמונה .\nניסיון בפרויקטי אופטימיזציה, סימולציות או Supply Chain\nניסיון בעבודה עם Generative AI ו Agentic AI\nApply now »\nApply now\nStart applying with LinkedIn\nApply Now\nStart\nPlease wait...\nFind",
    "job_id": "https://careers.ey.com/ey/job/Tel-Aviv-Data-Scientist-%D7%9C%D7%A6%D7%95%D7%95%D7%AA-Industry-Tech-6706703/1430792833/",
    "location": "Tel Aviv",
    "posted_date": "",
@@ -16885,7 +16889,7 @@
  ],
  "Legit Security": [
   {
-   "_jd_attempted": "2026-09-06",
+   "_jd_attempted": "2026-09-07",
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "Legit Security",
@@ -30075,7 +30079,7 @@
  ],
  "TELUS Digital": [
   {
-   "_jd_attempted": "2026-09-06",
+   "_jd_attempted": "2026-09-07",
    "_loc_src": "own",
    "_own_url": false,
    "ats_platform": "scrape",
@@ -30146,7 +30150,8 @@
    "url": "https://job-boards.eu.greenhouse.io/teads1/jobs/4911670101"
   },
   {
-   "_jd_attempted": "2026-09-06",
+   "_jd_attempted": "2026-09-07",
+   "_jd_shared_page": true,
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "Teads",
@@ -34489,7 +34494,7 @@
    "url": "https://www.fnx.co.il/career/open-positions/50400002"
   },
   {
-   "_jd_attempted": "2026-09-06",
+   "_jd_attempted": "2026-09-07",
    "_loc_src": "own",
    "ats_platform": "scrape",
    "company": "הפניקס",

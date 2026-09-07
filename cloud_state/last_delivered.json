@@ -1,10 +1,10 @@
 {
- "date": "2026-09-06",
- "first_line": "# 🎯 3 new analytics roles — 2026-09-06",
+ "date": "2026-09-07",
+ "first_line": "# 🎯 7 new analytics roles (5 posted in the last 48h, 2 at newly covered companies) — 2026-09-07",
  "past_cutoff": false,
  "reason": "first delivery for the day",
- "roles": 3,
- "run_url": "https://github.com/AnalystJobsIL/pipeline/actions/runs/34024063957",
- "sha256": "8e3600764b38590fa55df3baf77920ac97628ff94a37266aa63b016e84691b7f",
- "written_at": "2026-09-06T09:55:01Z"
+ "roles": 7,
+ "run_url": "https://github.com/AnalystJobsIL/pipeline/actions/runs/34109345898",
+ "sha256": "0acdd954b5cc0dc87cca21d33087c5f7e1d5a49f557c576125d9f422b5b67e95",
+ "written_at": "2026-09-07T10:50:07Z"
 }

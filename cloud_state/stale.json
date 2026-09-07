@@ -1,37 +1,67 @@
 {
- "Riskified": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/riskified/jobs",
-  "platform": "greenhouse",
+ "Lusha": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/73.00B/positions",
+  "platform": "comeet",
   "reason": "fetch-error",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/riskified"
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/73.00"
  },
- "Immunefi": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/immunefi/jobs",
-  "platform": "greenhouse",
+ "Zencity": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.00B/positions",
+  "platform": "comeet",
   "reason": "fetch-error",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/immunefi/"
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/56.00"
  },
- "Next Insurance": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/nextinsurance66/jobs",
+ "Cybereason": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/cybereason/jobs",
   "platform": "greenhouse",
   "reason": "fetch-error",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/nextinsur"
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/cybereaso"
  },
- "MongoDB": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/mongodb/jobs",
+ "Bounce AI": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/E9.00C/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/E9.00"
+ },
+ "Zesty": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/06.000/positions",
+  "platform": "comeet",
+  "reason": "regressed-to-zero"
+ },
+ "Eleos Health": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/eleoshealth/jobs",
   "platform": "greenhouse",
   "reason": "fetch-error",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/mongodb/j"
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/eleosheal"
+ },
+ "Noma Security": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/3A.005/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/3A.00"
+ },
+ "Compugen": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/D9.00E/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/D9.00"
  },
  "NeuReality": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/89.002/positions",
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
+ "Trax Retail": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/22.007/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/22.00"
+ },
  "Swimm": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.007/positions",
   "platform": "comeet",
-  "reason": "regressed-to-zero"
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/56.00"
  },
  "Bright Security": {
   "careers_url": "https://www.brightsec.com/careers/",
@@ -55,6 +85,11 @@
  },
  "Ludeo": {
   "careers_url": "https://www.ludeo.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Cynet": {
+  "careers_url": "https://www.cynet.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -120,6 +155,11 @@
  },
  "Volkswagen (CARIAD)": {
   "careers_url": "https://jobs.volkswagen-group.com/cariad/search/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Workiz": {
+  "careers_url": "https://www.workiz.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -253,6 +293,12 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Innoviz": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/52.004/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/52.00"
+ },
  "Quantum Art": {
   "careers_url": "https://www.quantum-art.tech/careers",
   "platform": "scrape",
@@ -278,6 +324,12 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Modellama": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/26.00E/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/26.00"
+ },
  "Amazon Web Services (AWS)": {
   "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
   "platform": "scrape",
@@ -293,10 +345,22 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Black Rabbit": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/E9.009/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/E9.00"
+ },
  "aspectiva": {
   "careers_url": "https://www.comeet.com/jobs/walmart/35.000",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "Verifone": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/verifone/jobs",
+  "platform": "greenhouse",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/verifone/"
  },
  "4M Analytics": {
   "careers_url": "https://www.comeet.com/jobs/4manalytics/b6.00f",
@@ -363,10 +427,22 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "pango": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/59.002/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/59.00"
+ },
  "Sola Security": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/A9.003/positions",
   "platform": "comeet",
   "reason": "regressed-to-zero"
+ },
+ "Seeking Alpha": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/46.006/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/46.00"
  },
  "K2view": {
   "careers_url": "https://www.k2view.com/careers/",
@@ -398,6 +474,12 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Mitiga": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/26.00B/positions",
+  "platform": "comeet",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/26.00"
+ },
  "Gini Apps": {
   "careers_url": "https://www.comeet.com/jobs/gini-apps/66.000",
   "platform": "scrape",
@@ -410,6 +492,11 @@
  },
  "Arrow Components": {
   "careers_url": "https://careers.arrow.com/us/search-results",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Xpend Global Marketing": {
+  "careers_url": "https://www.xpendmarketing.com/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -433,6 +520,11 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Canopy Care": {
+  "careers_url": "https://job-boards.greenhouse.io/canopycare",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
  "Brandshield": {
   "careers_url": "https://www.comeet.com/jobs/brandshield/13.002",
   "platform": "scrape",
@@ -443,8 +535,18 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Exyte": {
+  "careers_url": "https://careers.exyte.net/global/en/c/engineering-jobs",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "A.P. Moller - Maersk": {
   "careers_url": "https://www.maersk.com/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Bringits": {
+  "careers_url": "https://bringits.com/company/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -458,6 +560,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "L.Raphael": {
+  "careers_url": "https://apply.workable.com/l-dot-r-aphael/",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
  "OurCrowd": {
   "careers_url": "https://www.comeet.com/jobs/ourcrowd/D3.00A",
   "platform": "scrape",
@@ -468,8 +575,19 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Phasev": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/phasev/jobs",
+  "platform": "greenhouse",
+  "reason": "fetch-error",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/phasev/jo"
+ },
  "Tripledot Studios": {
   "careers_url": "http://job-boards.eu.greenhouse.io/tripledotstudios",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
+ "Pipl": {
+  "careers_url": "https://www.comeet.com/jobs/pipl/22.008",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  }
