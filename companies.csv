@@ -2254,3 +2254,5 @@ Qpoint Technologies,scrape,,https://www.qpoint.co.il/job/דרוש-ה-מהנדס-
 Rafa Labartories,scrape,,https://www.rafa.co.il/careers,false,queue-hunt 2026-09-08: careers page documented; monitored candidate
 Innodata Inc.,scrape,,http://job-boards.greenhouse.io/innodatainc,false,queue-hunt 2026-09-08: careers page documented; monitored candidate
 Qspark,scrape,,https://qspark.co/opportunities,false,queue-hunt 2026-09-08: careers page documented; monitored candidate
+Practitest,scrape,https://www.practitest.com/,https://www.practitest.com/,false,scanned; no open Israel roles now | own-site 2026-09-08: www.practitest.com linkback
+Prilenia,scrape,https://prilenia.com,https://prilenia.com,false,scanned; no open Israel roles now | own-site 2026-09-08: prilenia.com linkback
