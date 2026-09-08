@@ -480,8 +480,8 @@
   "last": "2026-09-07"
  },
  "Modellama": {
-  "fails": 1,
-  "last": "2026-08-24"
+  "fails": 2,
+  "last": "2026-09-08"
  },
  "PassportCard": {
   "fails": 1,
@@ -504,20 +504,20 @@
   "last": "2026-08-24"
  },
  "Ludeo": {
-  "fails": 2,
-  "last": "2026-09-01"
+  "fails": 3,
+  "last": "2026-09-08"
  },
  "WSC Sports": {
   "fails": 1,
   "last": "2026-08-25"
  },
  "REE Automotive": {
-  "fails": 2,
-  "last": "2026-09-01"
+  "fails": 3,
+  "last": "2026-09-08"
  },
  "AU10TIX": {
-  "fails": 2,
-  "last": "2026-09-01"
+  "fails": 3,
+  "last": "2026-09-08"
  },
  "Continental Israel": {
   "fails": 1,
@@ -528,8 +528,8 @@
   "last": "2026-08-25"
  },
  "Bits of Gold": {
-  "fails": 2,
-  "last": "2026-09-01"
+  "fails": 3,
+  "last": "2026-09-08"
  },
  "GenCell Energy": {
   "fails": 1,
@@ -544,8 +544,8 @@
   "last": "2026-08-25"
  },
  "StarkWare": {
-  "fails": 2,
-  "last": "2026-09-01"
+  "fails": 3,
+  "last": "2026-09-08"
  },
  "Siemens EDA": {
   "fails": 1,
@@ -1006,5 +1006,37 @@
  "Pipl": {
   "fails": 1,
   "last": "2026-09-07"
+ },
+ "Black Rabbit": {
+  "fails": 1,
+  "last": "2026-09-08"
+ },
+ "Bounce AI": {
+  "fails": 1,
+  "last": "2026-09-08"
+ },
+ "Innoviz": {
+  "fails": 1,
+  "last": "2026-09-08"
+ },
+ "Lusha": {
+  "fails": 1,
+  "last": "2026-09-08"
+ },
+ "Mitiga": {
+  "fails": 1,
+  "last": "2026-09-08"
+ },
+ "Noma Security": {
+  "fails": 1,
+  "last": "2026-09-08"
+ },
+ "Seeking Alpha": {
+  "fails": 1,
+  "last": "2026-09-08"
+ },
+ "pango": {
+  "fails": 1,
+  "last": "2026-09-08"
  }
 }
