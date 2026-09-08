@@ -34,15 +34,15 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Adi Il": {
+  "careers_url": "https://adi-il.org.il/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Airspan Networks": {
   "careers_url": "https://airspan.com/careers/airspan-careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "Aitechsystems": {
-  "careers_url": "https://www.comeet.com/jobs/aitechsystems/88.004",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
  },
  "AlgoSec": {
   "careers_url": "https://www.algosec.com/company/careers/find-a-job",
@@ -69,6 +69,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Axioma System Engineering and Integration": {
+  "careers_url": "https://www.axioma-in.com/jobopenings",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "BeeHero": {
   "careers_url": "https://www.beehero.io/careers",
   "platform": "scrape",
@@ -84,22 +89,16 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Black Rabbit": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/E9.009/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/E9.00",
-  "platform": "comeet",
+ "BlueVine": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/bluevineisrael/jobs",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/bluevinei",
+  "platform": "greenhouse",
   "reason": "fetch-error"
  },
  "Boa Ideas": {
   "careers_url": "https://www.comeet.com/jobs/boaideas/EA.009",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Bounce AI": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/E9.00C/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/E9.00",
-  "platform": "comeet",
-  "reason": "fetch-error"
  },
  "Brandshield": {
   "careers_url": "https://www.comeet.com/jobs/brandshield/13.002",
@@ -121,13 +120,13 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Canopy Care": {
-  "careers_url": "https://job-boards.greenhouse.io/canopycare",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
  "Challenge Group": {
   "careers_url": "https://career.challenge-group.com/go/Israel-Airlines-Jobs/9594055/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Citi": {
+  "careers_url": "https://jobs.citi.com/search-jobs/Israel",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -136,30 +135,13 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Compugen": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/D9.00E/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/D9.00",
-  "platform": "comeet",
-  "reason": "fetch-error"
- },
  "Cyabra": {
   "careers_url": "https://cyabra.bamboohr.com/careers",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Cybereason": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/cybereason/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/cybereaso",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
- },
  "Cybersixgill": {
   "careers_url": "https://cybersixgill.com/company/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Cynet": {
-  "careers_url": "https://www.cynet.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -228,9 +210,9 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Eleos Health": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/eleoshealth/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/eleosheal",
+ "Elastic": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/elastic/jobs",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/elastic/j",
   "platform": "greenhouse",
   "reason": "fetch-error"
  },
@@ -244,30 +226,31 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Exyte": {
-  "careers_url": "https://careers.exyte.net/global/en/c/engineering-jobs",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Fairmatic": {
   "careers_url": "https://jobs.workable.com/company/w9nAMpewLQVYmxHXhj1TRS/jobs-at-fairmatic",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "G Stat": {
+  "careers_url": "https://g-stat.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "GenCell": {
   "careers_url": "https://www.gencellprojects.com/jobs",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Genesys": {
-  "careers_url": "https://genesys.wd1.myworkdayjobs.com/Genesys",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
  "Gini Apps": {
   "careers_url": "https://www.comeet.com/jobs/gini-apps/66.000",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "Guidde": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/guidde/jobs",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/guidde/jo",
+  "platform": "greenhouse",
+  "reason": "fetch-error"
  },
  "HUB Security": {
   "careers_url": "https://www.comeet.com/jobs/hub-technologies/07.00F",
@@ -294,11 +277,16 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Innoviz": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/52.004/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/52.00",
-  "platform": "comeet",
+ "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ": {
+  "careers_url": "https://careers.iec.co.il/",
+  "error": "scrape: http:403 (15 nights)",
+  "platform": "scrape",
   "reason": "fetch-error"
+ },
+ "IRP Systems": {
+  "careers_url": "https://www.irpsystems.com/careers/#openings",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Jafi": {
   "careers_url": "https://www.comeet.com/jobs/jafi/C8.008",
@@ -317,6 +305,11 @@
  },
  "K2view": {
   "careers_url": "https://www.k2view.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Keter": {
+  "careers_url": "https://careers.ketergroup.com",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -345,12 +338,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Lusha": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/73.00B/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/73.00",
-  "platform": "comeet",
-  "reason": "fetch-error"
- },
  "Majestic Labs ai": {
   "careers_url": "https://www.comeet.com/jobs/majesticlabs/AA.004",
   "platform": "scrape",
@@ -361,22 +348,20 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Menlo Security Inc.": {
+  "careers_url": "https://jobs.ashbyhq.com/menlosecurity",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
  "Menora Mivtachim Group": {
   "careers_url": "https://www.menoramivt.co.il/job-posting/jobs",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Mitiga": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/26.00B/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/26.00",
-  "platform": "comeet",
-  "reason": "fetch-error"
- },
- "Modellama": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/26.00E/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/26.00",
-  "platform": "comeet",
-  "reason": "fetch-error"
+ "Microsoft Israel": {
+  "careers_url": "https://apply.careers.microsoft.com/careers",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
  },
  "Navan": {
   "careers_url": "https://navan.com/careers",
@@ -393,11 +378,10 @@
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
- "Noma Security": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/3A.005/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/3A.00",
-  "platform": "comeet",
-  "reason": "fetch-error"
+ "Nirlat": {
+  "careers_url": "https://careers.nirlat.com",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Nova": {
   "careers_url": "https://www.novami.com/careers",
@@ -414,11 +398,10 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Phasev": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/phasev/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/phasev/jo",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
+ "ParaZero": {
+  "careers_url": "https://parazero.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Pipl": {
   "careers_url": "https://www.comeet.com/jobs/pipl/22.008",
@@ -450,6 +433,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Rashi Foundation": {
+  "careers_url": "https://rashi.org.il/career/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Regulus": {
   "careers_url": "https://www.comeet.com/jobs/regulus/9A.00D",
   "platform": "scrape",
@@ -460,11 +448,10 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Seeking Alpha": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/46.006/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/46.00",
-  "platform": "comeet",
-  "reason": "fetch-error"
+ "Sensos": {
+  "careers_url": "https://www.sensos.io/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Shortical": {
   "careers_url": "https://www.comeet.com/jobs/shortical/3B.00A",
@@ -486,6 +473,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Sternum": {
+  "careers_url": "https://sternumiot.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Stigg": {
   "careers_url": "https://jobs.ashbyhq.com/stigg",
   "platform": "scrape",
@@ -498,9 +490,8 @@
  },
  "Swimm": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.007/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/56.00",
   "platform": "comeet",
-  "reason": "fetch-error"
+  "reason": "regressed-to-zero"
  },
  "Talenya": {
   "careers_url": "https://www.talenya.com/careers",
@@ -512,20 +503,14 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Trax Retail": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/22.007/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/22.00",
-  "platform": "comeet",
-  "reason": "fetch-error"
- },
  "Tripledot Studios": {
   "careers_url": "http://job-boards.eu.greenhouse.io/tripledotstudios",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Verifone": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/verifone/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/verifone/",
+ "Twilio": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/twilio/jobs",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/twilio/jo",
   "platform": "greenhouse",
   "reason": "fetch-error"
  },
@@ -539,11 +524,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Workiz": {
-  "careers_url": "https://www.workiz.com/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Xpend Global Marketing": {
   "careers_url": "https://www.xpendmarketing.com/careers",
   "platform": "scrape",
@@ -554,11 +534,10 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Zencity": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.00B/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/56.00",
+ "Zemingo": {
+  "careers_url": "https://www.comeet.com/careers-api/2.0/company/80.005/positions",
   "platform": "comeet",
-  "reason": "fetch-error"
+  "reason": "regressed-to-zero"
  },
  "Zesty": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/06.000/positions",
@@ -580,15 +559,14 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "pango": {
-  "careers_url": "https://www.comeet.com/careers-api/2.0/company/59.002/positions",
-  "error": "HttpError: network error for https://www.comeet.com/careers-api/2.0/company/59.00",
-  "platform": "comeet",
-  "reason": "fetch-error"
- },
  "rooms": {
   "careers_url": "https://www.working-rooms.co.il/careers",
   "platform": "scrape",
   "reason": "regressed-to-zero"
+ },
+ "somekhchaikin": {
+  "careers_url": "https://www.comeet.com/jobs/somekhchaikin/F3.007",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
  }
 }
