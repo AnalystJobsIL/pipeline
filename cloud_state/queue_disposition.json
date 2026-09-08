@@ -5050,16 +5050,22 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Candex": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-09-08",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Candex Technologies",
+  "why": "the registry row 'Candex Technologies' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "dedup_key": "dup-name",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
-  },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string"
+   "row": "Candex Technologies",
+   "matched_on": "name-normalised",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.candex.com/careers"
+    ]
+   ]
+  }
  },
  "Candivore": {
   "board_url_if_any": "",
@@ -6612,7 +6618,7 @@
   "why": "\"ELAD HR\" is the HR/recruitment arm of Elad Software Systems; its careers site is careers.eladsoft.com, listing Elad's own openings — a division/brand name rather than a separate employer."
  },
  "EPAM Systems": {
-  "date": "2026-09-07",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "EPAM Systems, Inc.",
@@ -13184,7 +13190,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kela Technologies": {
-  "date": "2026-09-07",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "KELA",
@@ -20634,7 +20640,7 @@
   "why": "\"Software AG Israel\" is a country/entity variant of Software AG (a Software GmbH brand), which hires via its global careers site at softwareag.com."
  },
  "Speedata.io": {
-  "date": "2026-09-07",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Speedata",
@@ -20726,7 +20732,7 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-09-03",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Strauss Water Ltd. שטראוס מים",
@@ -23302,7 +23308,7 @@
   }
  },
  "Level App": {
-  "date": "2026-09-06",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -24127,7 +24133,7 @@
   }
  },
  "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
-  "date": "2026-09-07",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Clal Insurance And Finance",
@@ -24525,7 +24531,7 @@
   }
  },
  "Galil Software Ltd.": {
-  "date": "2026-09-07",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Galil Systems",
@@ -24561,7 +24567,7 @@
   }
  },
  "Consist": {
-  "date": "2026-09-07",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Consist Group",
@@ -24743,7 +24749,7 @@
   }
  },
  "Nanox Vision": {
-  "date": "2026-09-07",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Nanox",
@@ -24761,7 +24767,7 @@
   }
  },
  "Five Sigma - AI Claims Management": {
-  "date": "2026-09-07",
+  "date": "2026-09-08",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Five Sigma",
@@ -24819,6 +24825,166 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Fluent Trade Technologies": {
+  "date": "2026-09-08",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Fluenttech",
+  "why": "a rung found this name's board and the registry row 'Fluenttech' already reads it (matched on comeet-uid, never on the name)",
+  "evidence": {
+   "row": "Fluenttech",
+   "matched_on": "comeet-uid",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.comeet.com/jobs/fluenttech/E5.00E"
+    ]
+   ]
+  }
+ },
+ "Primis Um": {
+  "date": "2026-09-08",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Primis",
+  "why": "a rung found this name's board and the registry row 'Primis' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Primis",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.primis.tech/careers/"
+    ]
+   ]
+  }
+ },
+ "DataCore": {
+  "date": "2026-09-08",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Anomity": {
+  "date": "2026-09-08",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Linx Security": {
+  "date": "2026-09-08",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Linxsecurity",
+  "why": "the registry row 'Linxsecurity' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Linxsecurity",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Credible": {
+  "date": "2026-09-08",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Crossing Hurdles": {
+  "date": "2026-09-08",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Marketeam.ai": {
+  "date": "2026-09-08",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Marketeam AI",
+  "why": "the registry row 'Marketeam AI' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Marketeam AI",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Protegohealth": {
+  "date": "2026-09-08",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Pvml": {
+  "date": "2026-09-08",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Qima": {
+  "date": "2026-09-08",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Radix Eng": {
+  "date": "2026-09-08",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "vizai": {
+  "date": "2026-09-08",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Viz.ai",
+  "why": "the registry row 'Viz.ai' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Viz.ai",
+   "matched_on": "name-normalised",
    "tried": []
   }
  }

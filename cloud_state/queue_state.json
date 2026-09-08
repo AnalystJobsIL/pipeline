@@ -47549,5 +47549,701 @@
   ],
   "last": "2026-09-07",
   "verdict": "no-search-results"
+ },
+ "Communix": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://www.comeet.com/jobs/comunix/86.006"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Luna Media": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://lunamedia.io/jobs/account-manager-3/"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Jones Software": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://careers.edwardjones.com/career-areas/home-office/home-office-divisions/technology/"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "LabOS": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://labos.co/careers/"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "iTalent - Hire Smarter": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Altshuler Shaham Financial Services": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "M.R.C Ltd-Laboratory Equipment": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no-search-results"
+ },
+ "TAU.nano - The Center for Nanoscience and Nanotechnology at Tel Aviv University": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Projetoampliar": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Pruvo": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://www.pruvo.com/careers"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Qb Systems Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Quality In Rehab": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://qualitycenterrehab.com/contact/careers/"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Raaberbahn Ag": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Railvision": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://www.comeet.com/jobs/railvision/84.000/--/DF.869"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Comunix": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://www.comeet.com/jobs/comunix/86.006"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Points Location Intelligence": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "18/24": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Holon Institute of Technology": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "QuilrAI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Retym, Inc": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://www.comeet.com/jobs/retym/C6.003"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Accenture España": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://www.accenture.com/es-es/careers"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Elina Technologies Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://elina.co.il"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "SAM GUARD": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Propharma Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://propharmagroup.wd1.myworkdayjobs.com/ppgcareers"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Psi Cro Ag": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://careers.smartrecruiters.com/psicro"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Qodoai": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Quantum Source Labs Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://www.qs-labs.com/careers"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Rachip Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://jobswipe.co/jobs/חברת-rachip-ממשיכה-לגדול-לצמוח-ולהתרחב-ואנו-ממשיכים-לגייס-בהילוך-גבוה-60fd09309057fe1013714d20"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Rakia Drones Services": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Nebius Global": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://careers.nebius.com"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "LETSGO": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://www.letsgowithstem.org/jobs"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "CONNACT": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no-search-results"
+ },
+ "Child2Parent": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Amal educational network": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "WeDev Technologies": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "http://job-boards.eu.greenhouse.io/wedev"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Rotal Adhesives & Chemicals Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "HB Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://www.hb.net.au/jobs"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Elysian-Softech": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no-search-results"
+ },
+ "Prostir Community": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://www.prostir.ua/?jobs=vakansiya-community-engagement-analyst-2-positions-kyiv-dnipro"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Pwrads": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Qpoint Technologies": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://www.qpoint.co.il/job/דרוש-ה-מהנדס-ת-devops-cloudops/"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Questarauto": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://questar.applytojob.com/apply"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Rafa Labartories": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://www.rafa.co.il/careers"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Ram Aderet Engineering": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://www.ram-aderet.co.il/careers/252"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Enosh-The Israeli Mental Health Association": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://www.enosh.org.il/career"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Persona.ly": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://persona.ly/blog/tag/persona-ly-careers/"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Innodata Inc.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "http://job-boards.greenhouse.io/innodatainc"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "CBRE Global Workplace Solutions (GWS)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://www.cbre.com/careers"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Menlo Security Inc.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://jobs.ashbyhq.com/menlosecurity"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Limy AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://limy.ai/careers"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Thermo Fisher Scientific": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no-search-results"
+ },
+ "Sherf Motion Technologies LTD": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no-search-results"
+ },
+ "Provision IO": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://provision.com/careers"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "Qarakal Quantum": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://qarakal.ai/careers/"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Qspark": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-08",
+    "url": "https://qspark.co/opportunities"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "documented"
+ },
+ "R H Electronics": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-08",
+    "url": "https://rh-global.com/jobs-available/"
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "found"
+ },
+ "Rafael Advanced Defense Systems Official": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Ramat Hasharon Municipality": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-08",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-08",
+  "verdict": "no candidate was this company's live page"
  }
 }
