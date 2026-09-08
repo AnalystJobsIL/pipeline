@@ -2256,3 +2256,13 @@ Innodata Inc.,scrape,,http://job-boards.greenhouse.io/innodatainc,false,queue-hu
 Qspark,scrape,,https://qspark.co/opportunities,false,queue-hunt 2026-09-08: careers page documented; monitored candidate
 Practitest,scrape,https://www.practitest.com/,https://www.practitest.com/,false,scanned; no open Israel roles now | own-site 2026-09-08: www.practitest.com linkback
 Prilenia,scrape,https://prilenia.com,https://prilenia.com,false,scanned; no open Israel roles now | own-site 2026-09-08: prilenia.com linkback
+AccessFintech,workable,accessfintech,https://apply.workable.com/api/v1/widget/accounts/accessfintech?details=true,true,auto-expand; 5/2 IL
+Marvell Technology,scrape,https://www.marvell.com/company/careers.html,https://www.marvell.com/company/careers.html,true,auto-expand scrape; 2 IL
+EffectivBIZ,scrape,https://effectivbiz.co.il,https://effectivbiz.co.il,false,scanned; no open Israel roles now | own-site 2026-09-08: effectivbiz.co.il linkback
+Converge Bio,scrape,https://converge-bio.com,https://converge-bio.com,false,scanned; no open Israel roles now | own-site 2026-09-08: converge-bio.com linkback
+Lizzy AI,scrape,https://lizzyai.com,https://lizzyai.com,false,scanned; no open Israel roles now | own-site 2026-09-08: lizzyai.com linkback
+רם אדרת | Ram Aderet,scrape,https://www.ram-aderet.co.il/ram-aderet-group/careers,https://www.ram-aderet.co.il/ram-aderet-group/careers,true,auto-expand scrape; 6 IL
+TechAviv,scrape,https://techaviv.com,https://techaviv.com,false,scanned; no open Israel roles now | own-site 2026-09-08: techaviv.com linkback
+Rapaport,scrape,https://rapaport.com,https://rapaport.com,false,scanned; no open Israel roles now | own-site 2026-09-08: rapaport.com linkback
+Razorlabs,scrape,https://razorlabs.com,https://razorlabs.com,false,scanned; no open Israel roles now | own-site 2026-09-08: razorlabs.com linkback
+Reachplayers,scrape,https://reachplayers.com,https://reachplayers.com,false,scanned; no open Israel roles now | own-site 2026-09-08: reachplayers.com linkback
