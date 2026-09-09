@@ -340,8 +340,8 @@
   "last": "2026-09-07"
  },
  "ParaZero": {
-  "fails": 1,
-  "last": "2026-08-24"
+  "fails": 2,
+  "last": "2026-09-09"
  },
  "Dynamic Yield": {
   "fails": 3,
@@ -404,8 +404,8 @@
   "last": "2026-09-04"
  },
  "Microsoft Israel": {
-  "fails": 1,
-  "last": "2026-08-24"
+  "fails": 2,
+  "last": "2026-09-09"
  },
  "MDClone": {
   "fails": 1,
@@ -600,8 +600,8 @@
   "last": "2026-08-26"
  },
  "Predicta Med": {
-  "fails": 2,
-  "last": "2026-09-02"
+  "fails": 3,
+  "last": "2026-09-09"
  },
  "NetApp": {
   "fails": 1,
@@ -632,8 +632,8 @@
   "last": "2026-08-26"
  },
  "GenCell": {
-  "fails": 2,
-  "last": "2026-09-02"
+  "fails": 3,
+  "last": "2026-09-09"
  },
  "Refine Intelligence": {
   "fails": 1,
@@ -684,8 +684,8 @@
   "last": "2026-08-26"
  },
  "aspectiva": {
-  "fails": 2,
-  "last": "2026-09-02"
+  "fails": 3,
+  "last": "2026-09-09"
  },
  "Lightricks": {
   "fails": 1,
@@ -776,8 +776,8 @@
   "last": "2026-09-07"
  },
  "Sensos": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-09"
  },
  "SolarEdge": {
   "fails": 2,
@@ -864,32 +864,32 @@
   "last": "2026-09-01"
  },
  "ASML": {
-  "fails": 1,
-  "last": "2026-09-02"
+  "fails": 2,
+  "last": "2026-09-09"
  },
  "Adi Il": {
-  "fails": 1,
-  "last": "2026-09-02"
+  "fails": 2,
+  "last": "2026-09-09"
  },
  "Cyabra": {
-  "fails": 1,
-  "last": "2026-09-02"
+  "fails": 2,
+  "last": "2026-09-09"
  },
  "Harmonya Technologies": {
   "fails": 1,
   "last": "2026-09-02"
  },
  "Just Eat Takeaway Com": {
-  "fails": 1,
-  "last": "2026-09-02"
+  "fails": 2,
+  "last": "2026-09-09"
  },
  "K2view": {
-  "fails": 1,
-  "last": "2026-09-02"
+  "fails": 2,
+  "last": "2026-09-09"
  },
  "Shortical": {
-  "fails": 1,
-  "last": "2026-09-02"
+  "fails": 2,
+  "last": "2026-09-09"
  },
  "AlgoSec": {
   "fails": 1,
@@ -1038,5 +1038,41 @@
  "pango": {
   "fails": 1,
   "last": "2026-09-08"
+ },
+ "Citi": {
+  "fails": 1,
+  "last": "2026-09-09"
+ },
+ "G Stat": {
+  "fails": 1,
+  "last": "2026-09-09"
+ },
+ "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ": {
+  "fails": 1,
+  "last": "2026-09-09"
+ },
+ "IRP Systems": {
+  "fails": 1,
+  "last": "2026-09-09"
+ },
+ "Keter": {
+  "fails": 1,
+  "last": "2026-09-09"
+ },
+ "Nirlat": {
+  "fails": 1,
+  "last": "2026-09-09"
+ },
+ "Rashi Foundation": {
+  "fails": 1,
+  "last": "2026-09-09"
+ },
+ "Zemingo": {
+  "fails": 1,
+  "last": "2026-09-09"
+ },
+ "somekhchaikin": {
+  "fails": 1,
+  "last": "2026-09-09"
  }
 }

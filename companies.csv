@@ -2242,7 +2242,7 @@ Qima,smartrecruiters,qima,https://api.smartrecruiters.com/v1/companies/qima/post
 Radix Eng,scrape,https://radix-eng.com,https://radix-eng.com,false,"dark-triage 2026-09-07: wrong-page (LLM: not Radix Eng's careers page (This is the company's homepage, which in)) | listing-hunt 2026-09-07: another company's board; no listing found"
 Accenture España,scrape,,https://www.accenture.com/es-es/careers,true,queue-drain 2026-09-08 search-llm; 9/9 IL
 Ram Aderet Engineering,scrape,,https://www.ram-aderet.co.il/careers/252,true,queue-drain 2026-09-08 search-llm; 5/5 IL
-Menlo Security Inc.,scrape,,https://jobs.ashbyhq.com/menlosecurity,true,queue-drain 2026-09-08 search-llm; 1/1 IL
+Menlo Security Inc.,ashby,menlosecurity,https://api.ashbyhq.com/posting-api/job-board/menlosecurity,true,queue-drain 2026-09-08 search-llm; 1/1 IL | self-heal 2026-09-09: re-resolved to ashby
 Limy AI,scrape,,https://limy.ai/careers,true,queue-drain 2026-09-08 search-llm; 3/3 IL
 Qarakal Quantum,scrape,,https://qarakal.ai/careers/,true,queue-drain 2026-09-08 search-llm; 4/4 IL
 R H Electronics,scrape,,https://rh-global.com/jobs-available/,true,queue-drain 2026-09-08 search-llm; 1/1 IL
