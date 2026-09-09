@@ -48245,5 +48245,629 @@
   ],
   "last": "2026-09-08",
   "verdict": "no candidate was this company's live page"
+ },
+ "Hyperspace Talents": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.hyperspaceventures.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "CloudBuzz": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://cloudbuzz.ai/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "MAGNUS International Search and Rescue": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://magnusafety.com/career"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Origami.ms": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://origami.chat/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Tadbik": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Credo": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://credosemi.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "OneForma": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-09",
+    "url": "https://www.oneforma.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "found"
+ },
+ "Rami Levi": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Rayzone Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://rayzone.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Real Estate In Jeans Rej": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Reason Software Inc": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://careers.reasonstudios.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Recon Engineering And Construction": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://recon-inc.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Reeco": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.reeco.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Menahel4U": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Q-nomy": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.qnomy.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "הרשות לניירות ערך - Israel Securities Authority": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Elevation": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.elevationrecruitmentgroup.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "SUN PHARMA": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://jobs.sunpharma.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Ursa Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.ursa.com/careers/"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Real Hires": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://realhires.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Ravendb": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Rb Doors Rav Bariach Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Real Time Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://realtime.jobs"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Rebootmonkey": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://jobs.rebootmonkey.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Redholt": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://redholt.net/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Regatta Data": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://regatta.dev/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Ingram Micro": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://careers.ingrammicro.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "UR talent": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-09",
+    "url": "https://urtalent.co"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "found"
+ },
+ "Biolojic Design, Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://biolojic.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Merck Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://careers.merckgroup.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "RAD": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://careers.bio-rad.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Reichman University": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Cynet Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-09",
+    "url": "https://www.cynet.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "found"
+ },
+ "Ravona": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Readymix Israel A Cemex Enterprise": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://readymix.co.il/career"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Realize Finance": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.realize-finance.co.il/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Reckitt": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://careers.reckitt.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Redler Technologies": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-09",
+    "url": "https://www.redlertechnologies.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "found"
+ },
+ "Regulus C Uxs": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-09",
+    "url": "https://regulus.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "found"
+ },
+ "N.P.R HR": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "no candidate was this company's live page"
+ },
+ "TALI GOSHEN - TALENT & GROWTH": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://talentedge.co.il"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Tzahala community country club": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.clubmedjobs.com"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Netspark": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.netsparkmobile.com/en/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "easybizy": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://app.easybizy.net/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Slice | Global Equity": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://slice.careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Rambam Health Care Campus": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://rambamfamilyhealth.org/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Raycol": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-09",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Real Dev Li": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.real.dev/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Realsenseai": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.realsenseai.com/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Reclaim Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://reclaim.security/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Redline Group Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-09",
+    "url": "https://www.redlinegroup.com/jobs"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "documented"
+ },
+ "Reindeer AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-09",
+    "url": "https://reindeer.ai/careers"
+   }
+  ],
+  "last": "2026-09-09",
+  "verdict": "found"
  }
 }

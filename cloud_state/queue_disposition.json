@@ -3351,7 +3351,7 @@
   "why": "blender.global is BLender, a real Israeli embedded-finance/lending company (the intake name \"Blender Loans\" matches its loans business). A 12-path careers probe of its own domain returned nothing, and no machine-readable job board was found."
  },
  "Blink": {
-  "date": "2026-09-01",
+  "date": "2026-09-09",
   "verdict": "settled-by-a-rung",
   "raw_verdict": "already-a-row",
   "other_name": "",
@@ -5050,7 +5050,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Candex": {
-  "date": "2026-09-08",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Candex Technologies",
@@ -6618,7 +6618,7 @@
   "why": "\"ELAD HR\" is the HR/recruitment arm of Elad Software Systems; its careers site is careers.eladsoft.com, listing Elad's own openings — a division/brand name rather than a separate employer."
  },
  "EPAM Systems": {
-  "date": "2026-09-08",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "EPAM Systems, Inc.",
@@ -13190,7 +13190,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kela Technologies": {
-  "date": "2026-09-08",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "KELA",
@@ -20732,7 +20732,7 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-09-08",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Strauss Water Ltd. שטראוס מים",
@@ -21060,7 +21060,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Teva Pharmaceuticals": {
-  "date": "2026-09-01",
+  "date": "2026-09-09",
   "verdict": "settled-by-a-rung",
   "raw_verdict": "already-a-row",
   "other_name": "",
@@ -23308,7 +23308,7 @@
   }
  },
  "Level App": {
-  "date": "2026-09-08",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -24439,7 +24439,7 @@
   }
  },
  "Mindspace Poland": {
-  "date": "2026-09-06",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Mindspace",
@@ -24531,7 +24531,7 @@
   }
  },
  "Galil Software Ltd.": {
-  "date": "2026-09-08",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Galil Systems",
@@ -24567,7 +24567,7 @@
   }
  },
  "Consist": {
-  "date": "2026-09-08",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Consist Group",
@@ -24749,7 +24749,7 @@
   }
  },
  "Nanox Vision": {
-  "date": "2026-09-08",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Nanox",
@@ -24767,7 +24767,7 @@
   }
  },
  "Five Sigma - AI Claims Management": {
-  "date": "2026-09-08",
+  "date": "2026-09-09",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Five Sigma",
@@ -24985,6 +24985,212 @@
   "evidence": {
    "row": "Viz.ai",
    "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Calanit by one": {
+  "date": "2026-09-09",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Calanit",
+  "why": "a rung found this name's board and the registry row 'Calanit' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Calanit",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://calanit.co.il/משרות/"
+    ]
+   ]
+  }
+ },
+ "Quantum Source Labs Ltd": {
+  "date": "2026-09-09",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Quantum Source",
+  "why": "a rung found this name's board and the registry row 'Quantum Source' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Quantum Source",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.qs-labs.com/careers"
+    ]
+   ]
+  }
+ },
+ "Questarauto": {
+  "date": "2026-09-09",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Questar Auto Technologies",
+  "why": "a rung found this name's board and the registry row 'Questar Auto Technologies' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Questar Auto Technologies",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://questar.applytojob.com/apply"
+    ]
+   ]
+  }
+ },
+ "Nebius Global": {
+  "date": "2026-09-09",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Nebius",
+  "why": "a rung found this name's board and the registry row 'Nebius' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "Nebius",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://careers.nebius.com"
+    ]
+   ]
+  }
+ },
+ "AccessFintech": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Marvell Technology": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "EffectivBIZ": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Converge Bio": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Gini-Apps": {
+  "date": "2026-09-09",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Gini Apps",
+  "why": "the registry row 'Gini Apps' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Gini Apps",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Lizzy AI": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Weebit Nano Ltd": {
+  "date": "2026-09-09",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Weebit Nano",
+  "why": "the registry row 'Weebit Nano' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Weebit Nano",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "רם אדרת | Ram Aderet": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "TechAviv": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Rapaport": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Razorlabs": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Reachplayers": {
+  "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
    "tried": []
   }
  }

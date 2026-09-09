@@ -11383,6 +11383,164 @@
    "url": "https://www.globaldots.com/careers/"
   }
  ],
+ "Gong.io": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4628626006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-06",
+   "title": "Engineering Team Lead - Application Infrastructure",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4628626006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4666594006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-21",
+   "title": "R&D, Manager - AI Agentic Frameworks",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4666594006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4668007006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-06",
+   "title": "Senior Backend Engineer - AI Framework (Python)",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4668007006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4668069006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-09-06",
+   "title": "Senior Cloud Security Engineer",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4668069006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4673075006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-08-23",
+   "title": "Senior SRE Engineer /Senior DevOps",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4673075006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4693375006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-08-30",
+   "title": "Developer Experience (DevEx) Team Lead",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4693375006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4699279006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-09-01",
+   "title": "Senior Data Scientist - AI Research & Reliability",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4699279006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4700779006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-08-23",
+   "title": "Senior DevOps Engineer",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4700779006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4704221006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-08-20",
+   "title": "Senior DevSecOps Manager",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4704221006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4699925006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-08-20",
+   "title": "Senior Bookkeeper - Global AP Team Lead",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4699925006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4672099006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-06",
+   "title": "Senior Director of Platform Security",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4672099006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4672107006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-06",
+   "title": "Head of AI Security",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4672107006"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Gong.io",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/gongio/jobs/4697159006",
+   "location": "Tel Aviv",
+   "posted_date": "2026-08-27",
+   "title": "Senior Product Analyst",
+   "url": "https://job-boards.greenhouse.io/gongio/jobs/4697159006"
+  }
+ ],
  "Google Israel": [
   {
    "_loc_src": "own",
@@ -19467,6 +19625,34 @@
    "posted_date": "",
    "title": "Contact Us",
    "url": "https://www.me-med.com/contact/"
+  }
+ ],
+ "MediWound": [
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "MediWound",
+   "country_code": "",
+   "description": "",
+   "job_id": "d195ff35ff2f5482",
+   "location": "Yavne",
+   "posted_date": "",
+   "title": "Maintenance Technician",
+   "url": "https://mediwound.com/careers/"
+  },
+  {
+   "_loc_src": "assumed",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "MediWound",
+   "country_code": "",
+   "description": "",
+   "job_id": "e34debff0ff97001",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Process & system Engineer",
+   "url": "https://mediwound.com/careers/"
   }
  ],
  "Medison Pharma": [
