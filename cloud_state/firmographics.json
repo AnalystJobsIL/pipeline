@@ -1787,6 +1787,19 @@
     "stage_note": "Private; bootstrapped until $48M KKR investment in 2020; reported $300M ARR at the start of 2026",
     "sub_sector": "Subscription licensing platform for royalty-free music, SFX, footage and AI-powered video creation tools"
   },
+  "Aryon Security": {
+    "as_of": "2026-09-09",
+    "business_model": "B2B",
+    "customer_type": "Enterprise cloud security teams",
+    "employees_global": 30,
+    "founded": 2024,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Raised $29M Series A led by Brightmind Partners, June 2026; $38M total funding",
+    "sub_sector": "Cloud Security"
+  },
   "Ashley Digital": {
     "as_of": "2026-08-22",
     "business_model": "Sells mattresses, bedding and home furnishings direct to consumers online (owned brands plus retail/wholesale channels), earning product margin",
@@ -1955,6 +1968,19 @@
     "stage": "growth-private",
     "stage_note": "$75M round Feb 2025 at ~$1B valuation; ~$369M raised total",
     "sub_sector": "AI-driven machine health & process health monitoring (predictive maintenance) for manufacturing"
+  },
+  "AutoDS - Automatic Dropshipping Tools": {
+    "as_of": "2026-09-09",
+    "business_model": "SaaS platform for dropshipping automation",
+    "customer_type": "B2C/SMB - individual dropshippers and e-commerce entrepreneurs",
+    "employees_global": 259,
+    "founded": 2018,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "e-commerce / saas",
+    "size_band": "M",
+    "stage": "acquired-by-bigtech",
+    "stage_note": "Acquired by Fiverr in 2024, bootstrapped prior to acquisition",
+    "sub_sector": "Dropshipping automation tools"
   },
   "Autodesk": {
     "as_of": "2026-08-21",
@@ -2973,6 +2999,19 @@
     "stage_note": "$100M Series E (2021) at ~$1B valuation; ~$184.5M total raised",
     "sub_sector": "cloud/AI last-mile delivery orchestration and fulfillment management platform"
   },
+  "Bringits": {
+    "as_of": "2026-09-09",
+    "business_model": "B2B",
+    "customer_type": "Enterprises and AI/data companies needing web data extraction infrastructure",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Israel (HQ)",
+    "sector": "data infrastructure / web scraping",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Israeli-registered private company; no public funding details found",
+    "sub_sector": "Real-time web data extraction & scraping platform"
+  },
   "Bringoz": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS subscriptions for delivery/fleet management software connecting shippers, retailers and courier capacity",
@@ -3207,6 +3246,19 @@
     "stage": "private-enterprise",
     "stage_note": "Acquired Sept 2025 by Fives, the privately held French industrial engineering group; last independent round was a $12M Series B in Nov 2020 ($26M total raised)",
     "sub_sector": "Cloud-controlled autonomous mobile robots for goods-to-person and piece-picking order fulfillment in warehouses"
+  },
+  "Calanit": {
+    "as_of": "2026-09-09",
+    "business_model": "B2B outsourced IT/technical support and helpdesk services for organizations",
+    "customer_type": "B2B",
+    "employees_global": null,
+    "founded": null,
+    "il_center": "Netanya (HQ)",
+    "sector": "it services",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Privately-held IT support/outsourcing services company, not VC-backed",
+    "sub_sector": "Technical Support / Helpdesk Outsourcing"
   },
   "Calculum": {
     "as_of": "2026-09-01",
@@ -3619,6 +3671,19 @@
     "stage": "public",
     "stage_note": "NYSE: CVX, publicly traded since 1879 (as Standard Oil of California)",
     "sub_sector": "Upstream oil & gas exploration and production (incl. Israeli offshore gas fields - Tamar, Leviathan)"
+  },
+  "Chimes Israel": {
+    "as_of": "2026-09-09",
+    "business_model": "Nonprofit social services / rehabilitation care provider",
+    "customer_type": "People with disabilities and their families; funded via government/state contracts and donations",
+    "employees_global": 1000,
+    "founded": 1991,
+    "il_center": "Ramat HaHayal, Tel Aviv (HQ); multiple sites nationwide (e.g., Rosh HaAyin, Ashkelon, Modiin)",
+    "sector": "nonprofit / social services",
+    "size_band": "L",
+    "stage": "private-enterprise",
+    "stage_note": "Registered Israeli nonprofit (amuta, reg. 580188894), part of global Chimes network",
+    "sub_sector": "Disability rehabilitation and care services"
   },
   "Chunk Foods": {
     "as_of": "2026-08-22",
@@ -4968,7 +5033,6 @@
     "as_of": "2026-08-22",
     "business_model": "Sells PCs, servers, storage and networking hardware plus attached software, financing and support services to businesses and consumers",
     "customer_type": "enterprises",
-    "display_name": "Dell",
     "employees_global": 97000,
     "founded": 1984,
     "il_center": "Herzliya (Glil Yam), Haifa & Beer Sheva (R&D, ex-EMC Center of Excellence); HQ in US",
@@ -7159,6 +7223,19 @@
     "stage": "growth-private",
     "stage_note": "Series E $250M at $7.25B (2021); ~$4.5B in Nov 2025 secondary, ~$500M ARR",
     "sub_sector": "AI revenue-intelligence platform that records and analyzes sales calls and deals"
+  },
+  "Gong.io": {
+    "as_of": "2026-09-09",
+    "business_model": "B2B SaaS - revenue intelligence platform for sales teams",
+    "customer_type": "B2B",
+    "employees_global": 1300,
+    "founded": 2015,
+    "il_center": "Ramat Gan/Tel Aviv (R&D); HQ in San Francisco/Palo Alto, US",
+    "sector": "software/saas",
+    "size_band": "L",
+    "stage": "growth-private",
+    "stage_note": "Series E $250M at $7.25B valuation (2021); secondary at $4.5B (2025)",
+    "sub_sector": "Revenue Intelligence / Conversation Analytics"
   },
   "Google Israel": {
     "as_of": "2026-08-22",
@@ -10367,6 +10444,19 @@
     "stage_note": "$63M Series C (Mar 2022) led by Warburg Pincus and Viola Growth; ~$104-112M raised total, no exit",
     "sub_sector": "self-service healthcare data exploration and synthetic-data platform (ADAMS) for hospitals and health systems"
   },
+  "MER Group": {
+    "as_of": "2026-09-09",
+    "business_model": "B2B/B2G",
+    "customer_type": "enterprise/government",
+    "employees_global": 600,
+    "founded": 1982,
+    "il_center": "Or Yehuda (HQ)",
+    "sector": "security, telecom & infrastructure",
+    "size_band": "M",
+    "stage": "public",
+    "stage_note": "Public on TASE as C. Mer Industries",
+    "sub_sector": "Public safety, security & surveillance, telecom infrastructure"
+  },
   "MSD": {
     "as_of": "2026-09-04",
     "business_model": "Pharmaceuticals & biotech - research, development and marketing of prescription medicines, vaccines and animal health products",
@@ -10751,6 +10841,19 @@
     "stage": "growth-private",
     "stage_note": "Series C, $18M round, investors incl. Baxter Ventures, Olive Tree Ventures",
     "sub_sector": "pain monitoring / digital health"
+  },
+  "MediWound": {
+    "as_of": "2026-09-09",
+    "business_model": "Biopharmaceutical - develops enzymatic therapeutics for tissue repair (wound care/burn treatment)",
+    "customer_type": "B2B/B2G - hospitals, healthcare providers, government stockpiles",
+    "employees_global": 120,
+    "founded": 2001,
+    "il_center": "Yavne (HQ &amp; manufacturing)",
+    "sector": "biotech/pharma",
+    "size_band": "S",
+    "stage": "public",
+    "stage_note": "Nasdaq: MDWD",
+    "sub_sector": "Wound Care / Tissue Repair Therapeutics"
   },
   "MediaForce": {
     "as_of": "2026-08-23",
@@ -12393,6 +12496,19 @@
     "stage": "growth-private",
     "stage_note": "$20M Series A led by Next47 and Workday Ventures (2025); ~$30M raised total after $9.2M seed",
     "sub_sector": "agentic AI platform layered on ERP systems to automate accounting and financial close workflows"
+  },
+  "Notch": {
+    "as_of": "2026-09-09",
+    "business_model": "AI agent platform automating customer support/CX workflows for regulated industries (SaaS)",
+    "customer_type": "B2B",
+    "employees_global": 50,
+    "founded": 2021,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "software / ai",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Raised $30M Series A led by Headline in 2026, total funding ~$45M",
+    "sub_sector": "AI Customer Experience / Agentic AI"
   },
   "Nova": {
     "as_of": "2026-08-22",
@@ -14634,6 +14750,19 @@
     "stage_note": "$70M Series B led by Qumra Capital, Mar 2026; $120M total raised",
     "sub_sector": "AI code review, testing and quality/governance agents for verifying (AI-generated) code"
   },
+  "Qspark": {
+    "as_of": "2026-09-09",
+    "business_model": "B2B",
+    "customer_type": "enterprise",
+    "employees_global": 30,
+    "founded": 2013,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "fintech",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Bootstrapped/unfunded, no public VC rounds identified",
+    "sub_sector": "Algorithmic trading / low-latency trading platforms"
+  },
   "Qualcomm": {
     "as_of": "2026-08-22",
     "business_model": "sells Snapdragon chipsets/modems to device and car makers (QCT) and licenses its cellular patent portfolio for royalties (QTL)",
@@ -15095,6 +15224,19 @@
     "stage": "growth-private",
     "stage_note": "Series G $110M at ~$2B valuation (Apr 2021); ~$555M total raised; IPO discussed but still private as of 2026",
     "sub_sector": "in-memory NoSQL database / real-time data platform (commercial company behind open-source Redis, now with vector search for AI)"
+  },
+  "Redler Technologies": {
+    "as_of": "2026-09-09",
+    "business_model": "B2B hardware manufacturer",
+    "customer_type": "enterprise",
+    "employees_global": null,
+    "founded": 1994,
+    "il_center": "Kfar Saba (HQ)",
+    "sector": "industrial tech / defense electronics",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held Israeli manufacturer, no public VC funding rounds identified",
+    "sub_sector": "Power Electronics & Motion Control"
   },
   "Refine Intelligence": {
     "as_of": "2026-08-25",
@@ -18246,7 +18388,6 @@
     "as_of": "2026-08-31",
     "business_model": "Software platform (game engine, monetization/ad tech via ironSource)",
     "customer_type": "B2B",
-    "display_name": "Unity Technologies",
     "employees_global": 5000,
     "founded": 2004,
     "il_center": "Tel Aviv (major hub, ex-ironSource); HQ in San Francisco, US",
@@ -18367,6 +18508,19 @@
     "stage": "early-private",
     "stage_note": "$22M Series A extension led by Red Dot Capital (Sep 2025), ~$52M total raised since 2022",
     "sub_sector": "Institutional digital-asset operations platform — MPC wallets and stablecoin infrastructure for enterprises"
+  },
+  "Uvision Group": {
+    "as_of": "2026-09-09",
+    "business_model": "Manufacturer of loitering munitions (kamikaze drones) and defense systems, B2G/B2B",
+    "customer_type": "B2B/B2G",
+    "employees_global": 300,
+    "founded": 2011,
+    "il_center": "Emek Hefer (HQ)",
+    "sector": "defense &amp; aerospace",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Reportedly pursuing multi-billion dollar Nasdaq IPO (2025); privately funded, acquired SpearUAV in Dec 2025",
+    "sub_sector": "Loitering munitions / UAV systems"
   },
   "VAST Data": {
     "as_of": "2026-08-22",
@@ -18855,6 +19009,19 @@
     "stage": "growth-private",
     "stage_note": "Raised $60M growth round in Feb 2024 led by CPMG with Tenable Ventures",
     "sub_sector": "OT/ICS security — hardware-enforced unidirectional security gateways for critical infrastructure"
+  },
+  "Wayve": {
+    "as_of": "2026-09-09",
+    "business_model": "Embodied AI / autonomous driving software (AI Driver model) licensed to automakers and mobility platforms",
+    "customer_type": "B2B",
+    "employees_global": 700,
+    "founded": 2017,
+    "il_center": "Herzliya (R&D); HQ in London, UK",
+    "sector": "automotive tech / ai",
+    "size_band": "M",
+    "stage": "growth-private",
+    "stage_note": "Series D, Feb 2026, $1.2B raise at $8.6B valuation led by Eclipse, Balderton, SoftBank Vision Fund 2",
+    "sub_sector": "Autonomous Driving / ADAS"
   },
   "Webbing": {
     "as_of": "2026-08-28",
