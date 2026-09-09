@@ -4175,6 +4175,19 @@
     "stage_note": "Merged into/acquired by Spark Hire in June 2023 in a ~$50M deal backed by PE firm Boathouse Capital; operates as a Spark Hire company",
     "sub_sector": "Collaborative applicant tracking system (ATS) and recruiting-workflow automation platform"
   },
+  "Comet": {
+    "as_of": "2026-09-09",
+    "business_model": "B2B",
+    "customer_type": "Enterprise/Developer teams (MLOps platform for data scientists & ML engineers)",
+    "employees_global": 150,
+    "founded": 2017,
+    "il_center": "Tel Aviv",
+    "sector": "software / ai-ml infrastructure",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Series B, ~$63M total raised from OpenView, Scale Venture Partners, Two Sigma Ventures",
+    "sub_sector": "MLOps / Machine Learning Experiment Tracking Platform"
+  },
   "CommIT": {
     "as_of": "2026-08-21",
     "business_model": "Fee-based technology services: outsourced software/cloud/IoT/cyber development, integration and managed projects for clients",
@@ -15423,6 +15436,19 @@
     "stage": "growth-private",
     "stage_note": "Venture-backed: $2.5M seed (YL Ventures, 2018) + $7M Series A led by OurCrowd (Nov 2020), ~$10.6M total; 2026 JV with Dhoot Transmission (India)",
     "sub_sector": "AI camera-based collision-alert (ADAS) system for motorcycles and two-wheelers"
+  },
+  "Ridewithvia": {
+    "as_of": "2026-09-09",
+    "business_model": "B2B/B2G SaaS platform for transit agencies, plus on-demand rideshare app",
+    "customer_type": "B2B/B2G",
+    "employees_global": 1000,
+    "founded": 2012,
+    "il_center": "Tel Aviv (major R&D); HQ in New York, US",
+    "sector": "mobility / transittech",
+    "size_band": "L",
+    "stage": "public",
+    "stage_note": "IPO'd on NYSE Sept 2025, valued ~$3.94B",
+    "sub_sector": "On-demand transit & ride-sharing software"
   },
   "RightHear": {
     "as_of": "2026-08-22",
