@@ -28321,6 +28321,164 @@
    "url": "https://www.replaitech.ai/careers"
   }
  ],
+ "Ridewithvia": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8620691002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-06",
+   "title": "Staff ML Engineer",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8620691002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/7992214002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-05-19",
+   "title": "Senior Backend Engineer",
+   "url": "https://job-boards.greenhouse.io/via/jobs/7992214002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8171972002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-05-19",
+   "title": "Senior Platform Engineer",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8171972002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8327606002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-20",
+   "title": "Senior Software Engineer, Routing",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8327606002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8356511002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-05-19",
+   "title": "Senior DevOps Engineer",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8356511002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8533935002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-20",
+   "title": "Senior Algorithms Developer",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8533935002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8549463002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-05-19",
+   "title": "Senior Fullstack Engineer",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8549463002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8557879002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-05-21",
+   "title": "Software & Data Engineer",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8557879002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8587562002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-06-11",
+   "title": "Senior Backend Engineer- Routing Data",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8587562002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8625905002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-09",
+   "title": "Mobile Team Lead",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8625905002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8627735002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-13",
+   "title": "Front-End Engineer",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8627735002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8629901002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-07-13",
+   "title": "Front-End Team lead",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8629901002"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Ridewithvia",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://job-boards.greenhouse.io/via/jobs/8574774002",
+   "location": "Tel Aviv",
+   "posted_date": "2026-06-02",
+   "title": "DevSecOps Engineer",
+   "url": "https://job-boards.greenhouse.io/via/jobs/8574774002"
+  }
+ ],
  "Riverside": [
   {
    "_jd_attempted": "2026-09-08",
@@ -32838,6 +32996,44 @@
    "company": "Weebit Nano",
    "country_code": "",
    "description": " Sr. Memory Architect | Weebit Skip to content Products Embedded ReRAM IP Overview Weebit ReRAM in DB HiTek 130 Weebit ReRAM in SkyWater S130 Technology Technology Overview ReRAM Advantages Meet the ReRAM Bitcell ReRAM Memory Module Technology Discrete Chip Development FAQ Market Market Overview Applications AI Inference Resources Articles &#038; Papers Presentations Videos Whitepapers Brochures Investors Investor Center ASX Announcements Analyst Coverage ASX Filings Presentations &#038; Interviews IR Events Corporate Governance Company Values Glossary Guide to ReRAM Company About Leadership Partners Sustainability Careers News Newsroom Press Releases Media Coverage Events &#038; Conferences Newsletters Media Kit &#038; Contacts Blog Products Embedded ReRAM IP Overview Weebit ReRAM in DB HiTek 130 Weebit ReRAM in SkyWater S130 Technology Technology Overview ReRAM Advantages Meet the ReRAM Bitcell ReRAM Memory Module Technology Discrete Chip Development FAQ Market Market Overview Applications AI Inference Resources Articles &#038; Papers Presentations Videos Whitepapers Brochures Investors Investor Center ASX Announcements Analyst Coverage ASX Filings Presentations &#038; Interviews IR Events Corporate Governance Company Values Glossary Guide to ReRAM Company About Leadership Partners Sustainability Careers News Newsroom Press Releases Media Coverage Events &#038; Conferences Newsletters Media Kit &#038; Contacts Blog Contact Us Products Embedded ReRAM IP Overview Weebit ReRAM in DB HiTek 130 Weebit ReRAM in SkyWater S130 Technology Technology Overview ReRAM Advantages Meet the ReRAM Bitcell ReRAM Memory Module Technology Discrete Chip Development FAQ Market Market Overview Applications AI Inference Resources Articles &#038; Papers Presentations Videos Whitepapers Brochures Investors Investor Center ASX Announcements Analyst Coverage ASX Filings Presentations &#038; Interviews IR Events Corporate Governance Company Values Glossary Guide to ReRAM Company About Leadership Partners Sustainability Careers News Newsroom Press Releases Media Coverage Events &#038; Conferences Newsletters Media Kit &#038; Contacts Blog Contact Us Back to Careers Sr. Memory Architect Job Location Israel, Hod HaSharon Job Brief A senior memory architect, with at least 10 years of volatile or non-volatile semiconductor memory design experience Job Description A senior memory architect to lead the development of Novel NVM modules in advanced nodes using state-of-the-art EDA tools Proven ability to lead a memory design from the architecture exploration phase, through block level design &amp; layout up to full module assembly, verification &amp; characterization Interaction with product marketing &amp; customers to analyze &amp; propose memory architectures meeting the needs of the customer Required Skills and Experience Knowledgeable in all aspects of memory circuit design, analog design, timing &amp; power optimization, and Design for Test Experience in memory timing &amp; power characterization Proficiency in Low-Power, Low-Voltage &amp; Low-Leakage design practices Experience in advanced geometries and understanding of different technologies (FDSOI, FinFet) Experience with memory compilers is an advantage Proficient in Cadence virtuoso schematic design, Spice simulators, Fast-Spice &amp; mixed-signal simulators, High-Sigma analysis tools, Parasitic extraction &amp; modeling, Memory characterization Apply now &#916; First Name (Required) Last Name (Required) Phone (Required) Email (Required) Upload your resume in a PDF format (Required) Max. file size: 100 MB. Comments CAPTCHA Apply Learn how Weebit ReRAM can make all the difference for your design. Contact Us Follow us on: Linkedin-in Youtube Wordpress +972-9-7797832 24 Hanagar St. Hod Hasharon, 4527713 info@weebit-nano.com Products Embedded ReRAM IP Overview Weebit ReRAM in DB HiTek 130 Weebit ReRAM in SkyWater S130 Embedded ReRAM IP Overview Weebit ReRAM in DB HiTek 130 Weebit ReRAM in SkyWater S130 T",
+   "job_id": "https://www.weebit-nano.com/job/sr-memory-architect-2/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Sr. Memory Architect",
+   "url": "https://www.weebit-nano.com/job/sr-memory-architect-2/"
+  }
+ ],
+ "Weebit Nano Ltd": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Weebit Nano Ltd",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.weebit-nano.com/job/failure-analysis-engineer/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Failure Analysis Engineer",
+   "url": "https://www.weebit-nano.com/job/failure-analysis-engineer/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Weebit Nano Ltd",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.weebit-nano.com/job/analog-design-engineer/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Analog Design Engineer",
+   "url": "https://www.weebit-nano.com/job/analog-design-engineer/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Weebit Nano Ltd",
+   "country_code": "",
+   "description": "",
    "job_id": "https://www.weebit-nano.com/job/sr-memory-architect-2/",
    "location": "Israel",
    "posted_date": "",

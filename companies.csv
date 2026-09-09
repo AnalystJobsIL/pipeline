@@ -2277,3 +2277,10 @@ Regatta Data,scrape,,https://regatta.dev/careers,false,queue-hunt 2026-09-09: ca
 Ingram Micro,scrape,,https://careers.ingrammicro.com,false,queue-hunt 2026-09-09: careers page documented; monitored candidate
 "Biolojic Design, Ltd.",scrape,,https://biolojic.com/careers,false,queue-hunt 2026-09-09: careers page documented; monitored candidate
 Reckitt,scrape,,https://careers.reckitt.com,false,queue-hunt 2026-09-09: careers page documented; monitored candidate
+Comet,greenhouse,comet,https://boards-api.greenhouse.io/v1/boards/comet/jobs,true,auto-expand slug-probe; 3/1 IL
+Sojo Industries,scrape,https://www.sojoindustries.com/,https://www.sojoindustries.com/,false,scanned; no open Israel roles now | own-site 2026-09-09: www.sojoindustries.com linkback
+Indus3Design,scrape,https://www.indus3design.com/,https://www.indus3design.com/,false,scanned; no open Israel roles now | own-site 2026-09-09: www.indus3design.com linkback
+Israel Shipyards Ltd,scrape,https://israel-shipyards.com,https://israel-shipyards.com,false,scanned; no open Israel roles now | own-site 2026-09-09: israel-shipyards.com linkback
+Renesas,scrape,https://www.renesas.com/en,https://www.renesas.com/en,false,scanned; no open Israel roles now | own-site 2026-09-09: www.renesas.com linkback
+Repair Carbon,scrape,https://www.repair-carbon.com/,https://www.repair-carbon.com/,false,scanned; no open Israel roles now | own-site 2026-09-09: www.repair-carbon.com linkback
+Ridewithvia,scrape,https://ridewithvia.com/careers/jobs?hsLang=en,https://ridewithvia.com/careers/jobs?hsLang=en,true,auto-expand scrape; 13 IL
