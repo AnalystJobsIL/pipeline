@@ -4873,6 +4873,19 @@
     "stage_note": "NASDAQ: DDOG, IPO 2019",
     "sub_sector": "Cloud monitoring, observability and security platform (infrastructure, APM, logs)"
   },
+  "Dataflow Forensics": {
+    "as_of": "2026-09-10",
+    "business_model": "B2G",
+    "customer_type": "enterprise",
+    "employees_global": 30,
+    "founded": 2022,
+    "il_center": "Herzliya / Tel Aviv (R&D); HQ in New York, US",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Privately held, part of Dataflow Security Group; no public funding details found",
+    "sub_sector": "Mobile threat detection / forensics (government)"
+  },
   "Datarails": {
     "as_of": "2026-08-21",
     "business_model": "B2B SaaS subscriptions for its FP&A/finance platform sold to finance teams",
@@ -14210,6 +14223,19 @@
     "stage_note": "Series C $75M led by Insight Partners (Dec 2021); ~$100M raised total, valuation undisclosed",
     "sub_sector": "Identity security — policy-based access control (PBAC) / centralized authorization platform for applications, APIs and data"
   },
+  "Planet Nine": {
+    "as_of": "2026-09-10",
+    "business_model": "B2B/B2G cyber intelligence, AI & OSINT solutions",
+    "customer_type": "Governments, financial institutions, tech organizations",
+    "employees_global": null,
+    "founded": 2021,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "cybersecurity",
+    "size_band": "S",
+    "stage": "early-private",
+    "stage_note": "Stealth-mode cyber intelligence startup founded 2021",
+    "sub_sector": "Cyber Intelligence / AI / OSINT"
+  },
   "Planview": {
     "as_of": "2026-09-06",
     "business_model": "B2B SaaS",
@@ -15792,6 +15818,19 @@
     "stage": "private-enterprise",
     "stage_note": "Owner-founded Israeli private services firm (founded by Yehuda Lasri; Israeli Companies Registrar no. 514621499); no disclosed venture or growth funding",
     "sub_sector": "Outsourced/remote database administration (SQL Server), performance tuning, and SAP Business One / Priority ERP maintenance"
+  },
+  "Ryzebeyond": {
+    "as_of": "2026-09-10",
+    "business_model": "Performance/digital marketing company connecting brands with high-intent consumers via lead generation and user acquisition campaigns",
+    "customer_type": "B2B",
+    "employees_global": 111,
+    "founded": 2011,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "marketing technology / adtech",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Privately held performance marketing firm, no known VC funding rounds",
+    "sub_sector": "Performance Marketing / Lead Generation"
   },
   "SAP": {
     "as_of": "2026-08-21",
