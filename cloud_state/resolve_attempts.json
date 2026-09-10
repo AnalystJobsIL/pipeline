@@ -468,8 +468,8 @@
   "last": "2026-09-07"
  },
  "Mentee Robotics": {
-  "fails": 1,
-  "last": "2026-08-24"
+  "fails": 2,
+  "last": "2026-09-10"
  },
  "Menora Mivtachim Group": {
   "fails": 3,
@@ -644,8 +644,8 @@
   "last": "2026-08-26"
  },
  "Sanofi": {
-  "fails": 1,
-  "last": "2026-08-26"
+  "fails": 2,
+  "last": "2026-09-10"
  },
  "Verizon": {
   "fails": 1,
@@ -692,16 +692,16 @@
   "last": "2026-08-27"
  },
  "Netafim": {
-  "fails": 2,
-  "last": "2026-09-03"
+  "fails": 3,
+  "last": "2026-09-10"
  },
  "Airspan Networks": {
   "fails": 2,
   "last": "2026-09-04"
  },
  "Lam Research": {
-  "fails": 2,
-  "last": "2026-09-03"
+  "fails": 3,
+  "last": "2026-09-10"
  },
  "Intuit": {
   "fails": 1,
@@ -892,36 +892,36 @@
   "last": "2026-09-09"
  },
  "AlgoSec": {
-  "fails": 1,
-  "last": "2026-09-03"
+  "fails": 2,
+  "last": "2026-09-10"
  },
  "Arrow Components": {
-  "fails": 1,
-  "last": "2026-09-03"
+  "fails": 2,
+  "last": "2026-09-10"
  },
  "Datos Health": {
-  "fails": 1,
-  "last": "2026-09-03"
+  "fails": 2,
+  "last": "2026-09-10"
  },
  "Kimberly-Clark": {
-  "fails": 1,
-  "last": "2026-09-03"
+  "fails": 2,
+  "last": "2026-09-10"
  },
  "NeuReality": {
-  "fails": 1,
-  "last": "2026-09-03"
+  "fails": 2,
+  "last": "2026-09-10"
  },
  "Siemens Israel": {
   "fails": 1,
   "last": "2026-09-03"
  },
  "Sola Security": {
-  "fails": 1,
-  "last": "2026-09-03"
+  "fails": 2,
+  "last": "2026-09-10"
  },
  "Talenya": {
-  "fails": 1,
-  "last": "2026-09-03"
+  "fails": 2,
+  "last": "2026-09-10"
  },
  "Voyage81": {
   "fails": 1,
@@ -1074,5 +1074,73 @@
  "somekhchaikin": {
   "fails": 1,
   "last": "2026-09-09"
+ },
+ "Alice (Formerly ActiveFence)": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "AllCloud": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Artlist": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Cellebrite": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Cenevo": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "DriveNets": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Imagene AI": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "LiveU": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Localize": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Mize": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Ness Technologies | נס טכנולוגיות": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Nexite": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Play Perfect": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "PrettyDamnQuick": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Rounds": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "Scodix": {
+  "fails": 1,
+  "last": "2026-09-10"
+ },
+ "helfy": {
+  "fails": 1,
+  "last": "2026-09-10"
  }
 }
