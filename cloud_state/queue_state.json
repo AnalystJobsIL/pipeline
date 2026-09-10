@@ -48869,5 +48869,605 @@
   ],
   "last": "2026-09-09",
   "verdict": "found"
+ },
+ "World Food Programme": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "AI Light": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://light.inc/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Loops Lab": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://www.getloops.ai/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "נגה - החברה לניהול מערכת החשמל Noga - Israel Independent System Operator": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://www.noga-iso.co.il/jobs"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Israel Assist": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Future Scientists Center": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "MicroCon Vision Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://microconvis.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Renuar": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Resonetics": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://resonetics.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Ribcage Games": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.redthreadgames.com/jobs"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Riverpool": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Roi Labs1": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Annapurna Labs": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no-search-results"
+ },
+ "תיגבור - מאגר כח אדם מקצועי זמני בע''מ": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://tigbur.co.il/career"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "BST Group Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://bst.co.il/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Way2Deep LTD": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://way2deep.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Analiza Education Center": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://analiza.org.il/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Boost": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://careers.myboost.co"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Blumberg Investments": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://careers.blumbergcapital.com"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Reline Services Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Replaiai": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Restaurantsizzling": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Rimini Street": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.riministreet.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Rlabs Company": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://rlabs.ca/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Roladin": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://roladinrestaurant.com/jobs"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "inmanage": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.inmanage.co.il/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Geocartography Knowledge Group (GeoKG)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.geokg.com/jobs"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "F2 Venture Capital": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Tiebreak": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://tiebreak.dev"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "UST": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.ust.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Real Time Group - Software Solutions": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://rt-ed.co.il/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "raven_sport": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.ravenscroft.org/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Renewable Energy Place Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Reshet TV": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Restaurantsmalta": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Risecodes": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Roboteam Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://stage.robo-team.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Rom Israel Lifts": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Legion Security": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://careers.legionsecurity.ai/"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Veracyte, Inc.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://www.veracyte.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Amital": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "NBS-HR": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "FireArc Technologies .LTD": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://fire-arc.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Dolphin Public Relations": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://dolphinentertainment.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Rentsafe Israel Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Residential And Dining": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Retorno": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Ritual Relationships": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://careers.rituals.com"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Rockwell Automation": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://www.rockwellautomation.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Rooms By Fattal": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  }
 }

@@ -6618,7 +6618,7 @@
   "why": "\"ELAD HR\" is the HR/recruitment arm of Elad Software Systems; its careers site is careers.eladsoft.com, listing Elad's own openings — a division/brand name rather than a separate employer."
  },
  "EPAM Systems": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "EPAM Systems, Inc.",
@@ -13190,7 +13190,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Kela Technologies": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "KELA",
@@ -19437,16 +19437,32 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Nebius Group": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-09-10",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Nebius",
+  "why": "the registry row 'Nebius' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "dedup_key": "dup-name",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
-  },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string"
+   "row": "Nebius",
+   "matched_on": "name-normalised",
+   "tried": [
+    [
+     "hunt",
+     "found",
+     "https://careers.nebius.com"
+    ],
+    [
+     "hunt",
+     "found",
+     "https://careers.nebius.com/"
+    ],
+    [
+     "search-llm",
+     "found",
+     "https://careers.nebius.com"
+    ]
+   ]
+  }
  },
  "Neema - Better Than a Bank": {
   "board_url_if_any": "",
@@ -20732,7 +20748,7 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Strauss Water Ltd. שטראוס מים",
@@ -23308,7 +23324,7 @@
   }
  },
  "Level App": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -24513,7 +24529,7 @@
   }
  },
  "Primis, Video Discovery": {
-  "date": "2026-09-06",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Primis",
@@ -24531,7 +24547,7 @@
   }
  },
  "Galil Software Ltd.": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Galil Systems",
@@ -24567,7 +24583,7 @@
   }
  },
  "Consist": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Consist Group",
@@ -24749,7 +24765,7 @@
   }
  },
  "Nanox Vision": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Nanox",
@@ -24767,7 +24783,7 @@
   }
  },
  "Five Sigma - AI Claims Management": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Five Sigma",
@@ -24887,7 +24903,7 @@
   }
  },
  "Linx Security": {
-  "date": "2026-09-08",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Linxsecurity",
@@ -25128,7 +25144,7 @@
   }
  },
  "Weebit Nano Ltd": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Weebit Nano",
@@ -25185,6 +25201,101 @@
  },
  "Reachplayers": {
   "date": "2026-09-09",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Cynet Security": {
+  "date": "2026-09-10",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Cynet",
+  "why": "a rung found this name's board and the registry row 'Cynet' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "Cynet",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.cynet.com/careers"
+    ]
+   ]
+  }
+ },
+ "Comet": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Sojo Industries": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Indus3Design": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Israel Shipyards Ltd": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Renesas": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Repair Carbon": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Ridewithvia": {
+  "date": "2026-09-10",
   "verdict": "already-a-row",
   "raw_verdict": "already-a-row",
   "other_name": "",
