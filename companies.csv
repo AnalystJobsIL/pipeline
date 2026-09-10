@@ -2300,3 +2300,10 @@ UST,scrape,,https://www.ust.com/careers,false,queue-hunt 2026-09-10: careers pag
 FireArc Technologies .LTD,scrape,,https://fire-arc.com/careers,false,queue-hunt 2026-09-10: careers page documented; monitored candidate
 Dolphin Public Relations,scrape,,https://dolphinentertainment.com/careers,false,queue-hunt 2026-09-10: careers page documented; monitored candidate | domain-dead 2026-09-10 (conn-dead (RemoteDisconnected))
 Ilyon,comeet,42.00A,https://www.comeet.com/careers-api/2.0/company/42.00A/positions?token=24A9281250DBCDBC928DBC494149A928,true,auto-expand; 2/2 IL
+Tomax Think Academy,scrape,http://tomax.io,http://tomax.io,false,scraped page is not this company's; no listing found
+Planet Nine,comeet,3B.005,https://www.comeet.com/careers-api/2.0/company/3B.005/positions?token=B354E7359A80219F64DD64DD219F219F219F,true,auto-expand; 6/6 IL
+HBX Group,scrape,https://www.hbxgroup.com/,https://www.hbxgroup.com/,false,scanned; no open Israel roles now | own-site 2026-09-10: www.hbxgroup.com linkback
+Dataflow Forensics,scrape,https://df-f.com/careers/#current-openings,https://df-f.com/careers/#current-openings,true,auto-expand scrape; 4 IL
+Acumen Strategy,scrape,https://acumen-strategy.com,https://acumen-strategy.com,false,scanned; no open Israel roles now | own-site 2026-09-10: acumen-strategy.com linkback
+Gevasol,scrape,https://www.gevasol.com/,https://www.gevasol.com/,false,scanned; no open Israel roles now | own-site 2026-09-10: www.gevasol.com linkback
+Ryzebeyond,scrape,https://ryzebeyond.com/careers,https://ryzebeyond.com/careers,true,auto-expand scrape; 2 IL
