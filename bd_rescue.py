@@ -234,6 +234,18 @@ def unlock_status(url, timeout=90, purpose="unlock"):
 
     `purpose` is what this credit is FOR (see `SPENT`); it defaults to `unlock`, so every
     caller that does not name one reads exactly as it did before."""
+    # The per-PURPOSE monthly allowance, when `BD_ALLOWANCES=1` arms it (off by default, so
+    # this is a dict lookup and a string on every other night). Consulted BEFORE the request
+    # is built and never counted as spend, exactly like the cap below: a refusal must be
+    # distinguishable from an empty page, or a budget writes facts about companies.
+    _may, _why = _allowance(purpose)
+    if not _may:
+        if not SPENT.get("allowance_said"):
+            SPENT["allowance_said"] = True
+            print(f"::warning::bd_rescue: {_why}; later rungs report `bd-allowance`, not "
+                  f"`empty`. Unset BD_ALLOWANCES to lift it.", flush=True)
+        LAST.update(error="bd-allowance", status=None)
+        return "", "bd-allowance"
     cap = run_cap()
     if cap is not None and SPENT["n"] >= cap:
         if not SPENT["capped"]:
@@ -270,6 +282,16 @@ def unlock_status(url, timeout=90, purpose="unlock"):
     except Exception:  # noqa: BLE001
         LAST.update(error="timeout", status=None)
         return "", "timeout"
+
+
+def _allowance(purpose):
+    """`pipeline.bd_budget.may_spend`, and never an exception: a budget reader that can
+    raise is a budget reader that takes a night's coverage with it."""
+    try:
+        from pipeline import bd_budget
+        return bd_budget.may_spend(purpose)
+    except Exception:  # noqa: BLE001
+        return True, "allowance unreadable"
 
 
 def unlock(url, timeout=90, purpose="unlock"):

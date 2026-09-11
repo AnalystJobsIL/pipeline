@@ -246,6 +246,65 @@ def stamp(root="", today=None):
         return {}
 
 
+# ------------------------------------------------ per-purpose allowances: BUILT, and OFF
+# `BD_ALLOWANCES=1` turns this from a no-op into an enforcing split of `SOFT` across the
+# four purposes. It ships OFF, deliberately: there is no ceiling to enforce this month, and
+# an allowance nobody asked for is a silent coverage cut waiting for a busy night.
+#
+# Why build it now rather than when it is needed: the hard part is the SEAM, not the
+# arithmetic -- every one of the fourteen spenders has to reach one place, and that is only
+# obvious while all fourteen are in view. The flag is the whole difference; a test
+# parametrised over the spenders proves each one reaches the seam whether it is on or off.
+#
+# WHAT WOULD TURN IT ON: a second consecutive month projecting past `SOFT` with the operator
+# unwilling to pay it. That is a decision, not a threshold, which is why no code makes it.
+#
+# The split follows the 2026-09-11 measurement (search 76%, unlock 19%, discovery 4%,
+# jd-fill dark because the ceiling had stopped it) but deliberately does NOT copy it: the
+# dataset-critical rung is the one that must never be the first to starve, so `jd-fill` is
+# given the largest share AND the right to borrow. Every other class is capped where it
+# stands today or a little under, which is what makes the split a budget rather than a
+# description.
+ALLOWANCES = {"jd-fill": 1500, "search": 2000, "unlock": 700, "discovery": 800}
+
+
+def month_by_purpose(root="", today=None):
+    """Credits spent this calendar month, per purpose, from the committed ledger."""
+    today = today or dt.date.today()
+    per = {}
+    for _day, purpose, n in _ledger_lines(root, days=today.day, today=today):
+        per[purpose if purpose in ALLOWANCES else "unlock"] = \
+            per.get(purpose if purpose in ALLOWANCES else "unlock", 0) + n
+    return per
+
+
+def may_spend(consumer_class="unlock", today=None, root=""):
+    """(may, why) for one PURPOSE, under the per-purpose allowances.
+
+    Off (the shipped default) this is `(True, "allowances off")` and costs a dict lookup.
+
+    On, `jd-fill` is privileged: when its own allowance is gone it may borrow whatever the
+    other three have not spent, because a role published with no description is a defect in
+    the product and a company re-checked a week late is not. Everything else stops at its
+    own line.
+
+    FAILING OPEN IS THE SAME DELIBERATE CHOICE AS EVERYWHERE ELSE HERE: an unreadable
+    ledger reads as nothing spent, so a missing file or a half-written line can never zero a
+    night's coverage. `BD_RUN_CAP` is the bound that needs no state at all."""
+    if (os.environ.get("BD_ALLOWANCES") or "").strip() != "1":
+        return True, "allowances off"
+    cls = consumer_class if consumer_class in ALLOWANCES else "unlock"
+    spent = month_by_purpose(root, today)
+    used, allow = spent.get(cls, 0), ALLOWANCES[cls]
+    if used < allow:
+        return True, f"{cls} {used:,}/{allow:,}"
+    if cls == "jd-fill":
+        spare = sum(max(0, ALLOWANCES[p] - spent.get(p, 0)) for p in ALLOWANCES if p != cls)
+        if used < allow + spare:
+            return True, f"jd-fill {used:,}/{allow:,} borrowing {spare:,} unspent"
+    return False, f"bd-allowance: {cls} has spent {used:,} of {allow:,} this month"
+
+
 def main(argv=None):
     """Report to stdout and to the run page. Exit 1 means the paid rungs must not run.
 

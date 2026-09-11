@@ -99,12 +99,16 @@ Per-consumer caps, all env vars, all re-derivable with
 | `DEEP_BD_SEARCH_CAP` / `LLM_BD_SEARCH_CAP` / `AUDIT_BD_SEARCH_CAP` | 5 | `deep_validate.py`, `resolve_llm.py`, the Sunday audit |
 | `SCRAPE_UNLOCK_PAGES` | 5 | `scrape_universal.py`, per company |
 | `JD_BD` | **`1` — it defaults to SPENDING** | every JD enricher; set `JD_BD=0` for any local run |
+| `BD_ALLOWANCES` | **unset = OFF** | when `1`, `bd_budget.may_spend(purpose)` enforces a per-purpose split of the free tier (`search` 2,000 · `jd-fill` 1,500 · `discovery` 800 · `unlock` 700). `jd-fill` is privileged: it borrows every other class's unspent remainder before it is refused. Built 2026-09-11 and shipped OFF — there is no ceiling to enforce; the flag exists so the seam is proven rather than designed later. A refusal reads `bd-allowance`, never `empty` |
 
 `JD_BD` is the one to remember: it is not a cap but a switch, it defaults to on, and every
 rehearsal harness in `tests/` sets it to `0` for exactly that reason.
 
-**Two holes in the table, both known.** `bd_employees.unlock` does not go through
-`bd_rescue`, so `BD_RUN_CAP` never sees it and it writes no ledger line. And the table is a
-list of *caps*, not of *locks*: the one thing that cannot spend at all is the test suite, which
-`tests/conftest.py` holds by banning the transport rather than by any variable here — see
+**One hole in the table, and one thing it is not.** `bd_employees.unlock` still does not go
+through `bd_rescue.unlock_status`, so `BD_RUN_CAP` never sees it — but since 2026-09-11 it
+books its credit and consults the allowance through `bd_rescue` in two lines, so it is no
+longer invisible to the ledger or to the gauge. `pipeline/jdfill`'s own `Unlocker` is the
+same shape and books `jd-fill`. And the table is a list of *caps*, not of *locks*: the one
+thing that cannot spend at all is the test suite, which `tests/conftest.py` holds by banning
+the transport rather than by any variable here — see
 `docs/decisions/2026-08-28-tests-cannot-spend.md` before adding a cap-shaped guard to it.

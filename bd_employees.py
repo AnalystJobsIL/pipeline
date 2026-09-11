@@ -53,11 +53,20 @@ def unlock(url, timeout=90):
     Returns the HTML body, or None on INFRASTRUCTURE failure (expired key -> HTTPError,
     network down, quota exhausted). None must never be treated as "page not found":
     stamping per-name misses during an outage gates the whole cohort for a month."""
+    # The fourth module that POSTs to `api.brightdata.com` directly (`bd_rescue`,
+    # `pipeline/jdfill`, `setup_brightdata` are the others), so it reaches neither
+    # `BD_RUN_CAP` nor the spend ledger on its own. Both are one line each, and both are
+    # `bd_rescue`'s: `book()` records the credit under a purpose, `_allowance` consults the
+    # per-purpose monthly allowance when one is armed (off by default).
+    import bd_rescue as _bd
+    if not _bd._allowance("unlock")[0]:
+        return None
     body = json.dumps({"zone": os.environ["BRIGHTDATA_ZONE"], "url": url,
                        "format": "raw"}).encode()
     req = urllib.request.Request("https://api.brightdata.com/request", data=body, method="POST",
                                  headers={"Authorization": f"Bearer {os.environ['BRIGHTDATA_API_KEY']}",
                                           "Content-Type": "application/json"})
+    _bd.book("unlock")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.read(2_000_000).decode("utf-8", "replace")

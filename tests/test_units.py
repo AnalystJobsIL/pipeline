@@ -30831,3 +30831,121 @@ def test_the_digest_stamps_the_gauge_before_it_renders_the_mail():
     assert "continue-on-error: true" in step and "BRIGHTDATA_API_KEY" in step
     from pipeline import stages
     assert stages.ORDER.index("bd") < stages.ORDER.index("publish")
+
+
+# ---- the reserve: BUILT and OFF. One flag makes it enforcing; the seam is the hard part ----
+_BD_SPENDERS = [
+    # every tool that appears in `cloud_state/bd_spend.jsonl`, plus the two modules that POST
+    # to api.brightdata.com without going through `bd_rescue.unlock_status`
+    ("listing_hunt.py", "search"), ("crack_walled.py", "search"),
+    ("queue_resolve_search.py", "search"), ("resolve_broken.py", "search"),
+    ("audit_empty_rows.py", "search"), ("queue_pipeline.py", "search"),
+    ("repair_dead_urls.py", "search"), ("repair_extract_gap.py", "search"),
+    ("triage_dark.py", "unlock"), ("deep_validate.py", "search"),
+    ("auto_expand.py", "search"), ("drain_queue.py", "search"),
+    ("bd_rescue.py", "unlock"), ("discovery_daily.py", "discovery"),
+    ("scrape_universal.py", "unlock"), ("resolve_llm.py", "search"),
+    ("pipeline/jdfill.py", "jd-fill"), ("bd_employees.py", "unlock"),
+]
+
+
+_BD_SEAM_WORDS = ("google_via_unlocker", "unlock_status", "unlock(", "may_spend", "_allowance")
+
+
+def _bd_reaches_seam(root, mod, seen=None):
+    """Does `mod` reach a paid-rung seam, following first-party imports?
+
+    By the GRAPH and not by the file's own text, because two spenders reach it only through
+    a library: `repair_extract_gap` buys through `scrape_universal.scrape`, `auto_expand`
+    through the gate and the drain. A test that greps one file would call both of them
+    unbudgeted -- and the next session would 'fix' a seam that is already there."""
+    import os as _os
+    import re as _re
+    seen = set() if seen is None else seen
+    if mod in seen or len(seen) > 60:
+        return False
+    seen.add(mod)
+    path = _os.path.join(root, *mod.split("/"))
+    if not _os.path.exists(path):
+        return False
+    src = open(path, encoding="utf-8").read()
+    if any(w in src for w in _BD_SEAM_WORDS):
+        return True
+    for m in _re.finditer(r"^\s*(?:from|import)\s+([A-Za-z_][\w.]*)", src, _re.M):
+        name = m.group(1)
+        nxt = name.replace(".", "/") + ".py"
+        if _os.path.exists(_os.path.join(root, nxt)) and _bd_reaches_seam(root, nxt, seen):
+            return True
+    return False
+
+
+@pytest.mark.parametrize("mod,_purpose", _BD_SPENDERS)
+def test_every_bright_data_spender_reaches_the_one_allowance_seam(mod, _purpose):
+    """A budget with a seam most spenders miss is the ceiling this repo just replaced: it
+    bound ONE of fourteen, and the one it bound was the dataset-critical rung. Each module
+    below buys through `bd_rescue.unlock*` (which consults the allowance before it builds the
+    request), through `deep_validate.google_via_unlocker` (which is `unlock`), or -- for the
+    two that POST to api.brightdata.com themselves -- names `may_spend` / `_allowance`
+    directly. Directly or through its imports: see `_bd_reaches_seam`."""
+    import os as _os
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    assert _bd_reaches_seam(root, mod), \
+        f"{mod} spends Bright Data credits and reaches no allowance seam"
+
+
+def test_the_allowance_split_is_off_by_default_and_privileges_the_jd_rungs(tmp_path, monkeypatch):
+    """The split arithmetic, and the one rule that matters in it: `jd-fill` may borrow every
+    other class's unspent remainder before it is refused, because a role published with no
+    description is a defect in the PRODUCT while a company re-checked a week late is not."""
+    from pipeline import bd_budget as B
+    assert sum(B.ALLOWANCES.values()) == B.SOFT, "the split must be of the free tier, not extra"
+    monkeypatch.delenv("BD_ALLOWANCES", raising=False)
+    assert B.may_spend("search")[0] is True, "SHIPPED OFF: one flag is the whole difference"
+    day = dt.date(2026, 9, 11)
+    root = _bd_ledger(tmp_path, [
+        {"at": "2026-09-02T01:00:00Z", "tool": "listing_hunt.py", "credits": 2000},
+        {"at": "2026-09-03T01:00:00Z", "tool": "run.py", "credits": 1500,
+         "purpose": {"jd-fill": 1500}},
+    ])
+    monkeypatch.setenv("BD_ALLOWANCES", "1")
+    may, why = B.may_spend("search", day, root)
+    assert may is False and why.startswith("bd-allowance:") and "2,000" in why
+    may, why = B.may_spend("jd-fill", day, root)
+    assert may is True and "borrowing" in why, \
+        "unlock 700 + discovery 800 are unspent: jd-fill borrows before it is refused"
+    assert B.may_spend("unlock", day, root)[0] is True, "its own 700 is untouched"
+    assert B.may_spend("a-class-nobody-declared", day, root)[0] is True   # treated as unlock
+    # and the whole pool gone means even the privileged rung stops
+    full = _bd_ledger(tmp_path / "f", [{"at": "2026-09-02T01:00:00Z", "tool": "run.py",
+                                        "credits": 5000, "purpose": {"jd-fill": 5000}}])
+    assert B.may_spend("jd-fill", day, full)[0] is False
+
+
+def test_an_unreadable_ledger_lets_the_allowance_spend(tmp_path, monkeypatch):
+    """Fail OPEN, like every other budget reader here: a missing file or a half-written line
+    must never zero a night's coverage. `BD_RUN_CAP` is the bound that needs no state."""
+    from pipeline import bd_budget as B
+    monkeypatch.setenv("BD_ALLOWANCES", "1")
+    assert B.may_spend("search", dt.date(2026, 9, 11), str(tmp_path / "nothing-here"))[0] is True
+    (tmp_path / "cloud_state").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "cloud_state" / "bd_spend.jsonl").write_text('{"at": "2026-09-0', encoding="utf-8")
+    assert B.may_spend("search", dt.date(2026, 9, 11), str(tmp_path))[0] is True
+
+
+def test_an_allowance_refusal_is_never_read_as_an_empty_page(monkeypatch):
+    """A refusal must be distinguishable from a page with nothing on it, or a budget writes
+    facts about companies -- CLAUDE.md rule 2, and the reason `bd-capped` exists. The refusal
+    also books NO credit: nothing was fetched."""
+    import bd_rescue as B
+    monkeypatch.setenv("BD_ALLOWANCES", "1")
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setattr(B, "_allowance", lambda purpose: (False, "bd-allowance: search 9/9"))
+    B.SPENT.update(n=0, capped=False)
+    B.SPENT["by"].clear()
+    html, err = B.unlock_status("https://example.com", purpose="search")
+    assert (html, err) == ("", "bd-allowance") and B.LAST["error"] == "bd-allowance"
+    assert B.SPENT["n"] == 0, "a call that never reached the wire books no credit"
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "sys", jdfill.sys)          # keep the pytest short-circuit visible
+    assert jdfill._monthly_ceiling_reached() == "", "under pytest the JD layer never asks"

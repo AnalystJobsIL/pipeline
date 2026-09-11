@@ -1459,7 +1459,13 @@ def _monthly_ceiling_reached():
         return ""
     try:
         from . import bd_budget
-        return "" if bd_budget.verdict()[0] else "monthly-ceiling"
+        if not bd_budget.verdict()[0]:
+            return "monthly-ceiling"
+        # ...and the per-purpose allowance, when one is armed (`BD_ALLOWANCES=1`; off by
+        # default). This rung is the PRIVILEGED one -- it may borrow every other class's
+        # unspent remainder before it is refused -- so a `bd-allowance` here means the whole
+        # month's pool is gone, not that JD fill outspent its share.
+        return "" if bd_budget.may_spend("jd-fill")[0] else "bd-allowance"
     except Exception:  # noqa: BLE001 - a budget reader never costs the run it reports on
         return ""
 
