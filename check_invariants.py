@@ -65,7 +65,10 @@ POOL = (r"no ATS detected|unsupported ATS|scrape rotted|monitored candidate|host
         r"redirects to|scanned via brightdata|empty-but-suspect|needs re-resolution|"
         # url-cleared / url-flagged: the stored address was an aggregator or another
         # company's page. The row needs the hunt MORE than most, not less.
-        r"needs manual resolution|dark-triage|url-cleared|url-flagged")
+        # abandoned-board: the board answers and its newest posting is a year old
+        # (`fetchers.BoardAbandoned`). The row is parked ACTIVE=false and must be
+        # re-resolved like any other dark row -- where does this company post now?
+        r"needs manual resolution|dark-triage|url-cleared|url-flagged|abandoned-board")
 # Terminal states: no re-check pool should ever look at these again.
 #   alias-of — a second row for a company we already scan at the SAME url. Not a
 #   dark company; the opposite, a company covered twice (roles listed under both

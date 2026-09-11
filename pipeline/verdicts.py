@@ -36,6 +36,9 @@ TOKENS = {
     "needs re-resolution":     "manual",
     "needs manual resolution": "manual",
     "dark-triage":             "triage_dark",
+    # the board answered and its newest posting is a year old (`pipeline.health.abandoned`,
+    # `fetchers.BoardAbandoned`): an abandoned tenant, parked so a re-check pool owns it
+    "abandoned-board":         "ats-fetch / health.abandoned",
 }
 
 # states that are deliberately final — never re-checked. THE one list: audit_empty_rows,

@@ -28,6 +28,10 @@ Two exceptions to "they only fetch":
 * `BoardEmpty` is raised (never returned) when a scoped fetcher can tell the whole board
   is empty, so the row reaches the failed list in the mail and the self-heal queue with a
   reason instead of a silent zero.
+* `BoardAbandoned` is raised by `fetch_company` (never by a fetcher) when the board answered
+  and `pipeline.health.abandoned` judges its newest posting a year old or older — an
+  abandoned tenant that keeps answering. The postings ride on the exception (`.jobs`) for a
+  caller that wants to look at what was refused; nothing publishes them.
 """
 from __future__ import annotations
 
@@ -49,6 +53,34 @@ class BoardEmpty(Exception):
     tenant with nothing on it has almost always moved (Moon Active's Comeet sat at 0 for
     weeks while 33 jobs were on Ashby). Raised so the row is treated as a fetch failure —
     named in the mail, queued for the 06:00 self-heal — rather than counted as healthy."""
+
+
+class BoardAbandoned(Exception):
+    """The board answered, and its NEWEST posting is `health.STALE_BOARD_DAYS` old or older:
+    an abandoned tenant (`smartrecruiters/HiBob` answered `totalFound 1` for a London role
+    released 2020-01-24; `TLVTech` published a 2024 posting as a new role on 2026-08-28).
+    Raised by `fetch_company`, so every path that fetches — the digest, the self-heal's
+    re-verification, every activation tool — refuses the board with a reason, instead of
+    reading a stale posting as a live one.
+
+    `.jobs`, `.newest` and `.age_days` carry what was refused, so a caller that wants the
+    census answer rather than the failure reads it off the exception instead of re-fetching:
+    `registry_health.stale_boards` catches THIS class before its bare `Exception`, and would
+    otherwise report 0 abandoned boards by construction — the census that asked for this
+    verdict blinded by it."""
+
+    def __init__(self, message, *, jobs=(), newest="", age_days=0):
+        super().__init__(message)
+        self.jobs, self.newest, self.age_days = list(jobs), newest, int(age_days)
+
+    def newest_date(self):
+        """`.newest` as a `datetime.date`, or None — the field is built from one
+        (`health.abandoned`), but an exception carried across a process boundary or
+        constructed by hand may hold anything, and a census must not die on it."""
+        try:
+            return _dt.date.fromisoformat(str(self.newest or "")[:10])
+        except ValueError:
+            return None
 
 
 # 4xx = the endpoint itself is dead — except the four that mean "not now": 401 / 403
@@ -317,6 +349,13 @@ def fetch_lever(row):
     return jobs
 
 
+# `createdAt` is the only date Lever publishes and it never moves while a requisition stays
+# open, so a board-freshness verdict on it gets a second look (`_hosted_board_alive`): the
+# hosted board answers 200 for a live tenant (Tonkean) and 404 for a dead slug (Waterfall).
+fetch_lever.hosted_board = lambda row: (
+    f"https://jobs.lever.co/{(row.get('token') or '').strip() or _re.search(r'/postings/([^/?]+)', row.get('api_url') or '').group(1)}")
+
+
 def fetch_smartrecruiters(row):
     """SmartRecruiters paginates (limit<=100). Loop offset until all collected."""
     jobs = []
@@ -360,7 +399,10 @@ def fetch_recruitee(row):
             "location": _clean(p.get("location")),
             "country_code": (p.get("country_code") or "").strip().upper(),
             "url": p.get("careers_url") or p.get("careers_apply_url") or "",
-            "posted_date": _iso_date(p.get("published_at")),
+            # the fresher of the two, as greenhouse reads `updated_at`: UBQ Materials'
+            # one offer was published 2023-10-24 and last touched 2026-07-23 — a tended
+            # board, not an abandoned one (2026-08-30)
+            "posted_date": _iso_date(p.get("updated_at")) or _iso_date(p.get("published_at")),
             "ats_platform": "recruitee",
             "job_id": str(p.get("id") or ""),
             "description": _snippet(p.get("description")),
@@ -712,6 +754,32 @@ def _sf_location(block, url):
     return _clean(m.group(1).replace("-", " ")) if m else ""
 
 
+def _sf_country(location):
+    """The ISO country a SuccessFactors tile states in its own location line, when that
+    country is Israel — else `""`, which leaves the decision to the text scan.
+
+    A tile writes the place as `<City>, <country>, <postcode?>`, and two tenants state a
+    country the Israeli place-name vocabulary does not know: `Shlomi, ISR, IL` (West
+    Pharmaceutical) and `Bar Lev, IL, 20156` (Dentsply Sirona). Six real Israeli postings of
+    218 across eleven tenants were read as foreign for that reason alone, one of them an
+    *Inventory & Logistics Analyst* (measured 2026-09-11).
+
+    **It only ever stamps `IL`, and that asymmetry is the whole safety of it.** A country
+    code is authoritative in BOTH directions — `israel.is_israel_job` trusts a non-IL code as
+    a negative and skips the text scan entirely — so filling in a foreign token would make
+    this fetcher able to DELETE a posting the place-name scan accepts, on a two-letter
+    fragment that may not be a country at all (`Ra'anana, ISR, IL` has two, and a tile is
+    free to put a state or a business unit in that slot). Stamping only the code an existing
+    predicate recognises needs no country vocabulary to maintain and cannot lose a row:
+    measured +6 / -0 / 212 unchanged over those same 218 postings.
+    """
+    from .israel import country_is_israel
+    for part in str(location or "").split(",")[1:]:
+        if country_is_israel(part):
+            return "IL"
+    return ""
+
+
 def fetch_successfactors(row):
     """SAP SuccessFactors "career site builder" tenants (SAP, Stratasys, Boston Scientific,
     John Deere, VW, …). There is no public JSON: the site renders job TILES server-side, and
@@ -755,11 +823,12 @@ def fetch_successfactors(row):
             if not title:
                 continue
             got = {k.lower(): _strip_html(v) for k, v in _SF_FIELD.findall(b)}
+            place = _sf_location(b, url)
             out.append({
                 "company": row["company_name"],
                 "title": title,
-                "location": _sf_location(b, url),
-                "country_code": "",
+                "location": place,
+                "country_code": _sf_country(place),
                 "url": url if url.startswith("http") else f"https://{host}{url}",
                 "posted_date": _iso_date(got.get("date")),
                 "ats_platform": "successfactors",
@@ -828,6 +897,10 @@ def fetch_jobvite(row):
 
 # Declared, not scoped: the list is the whole board, so an empty list IS evidence.
 fetch_jobvite.israel_scoped = False
+# Declared undated: the list publishes no dates, so the board-freshness verdict can never
+# judge it (`health.abandoned` is strict about an undated posting) — `platform_check` shows
+# the blind spot instead of letting it pass as "healthy".
+fetch_jobvite.undated = True
 
 
 def fetch_workable(row):
@@ -1168,9 +1241,52 @@ FETCHERS = {
 
 
 def fetch_company(row):
-    """Fetch + normalize one company row. Raises on unknown platform."""
+    """Fetch + normalize one company row. Raises on unknown platform, and `BoardAbandoned`
+    on a board whose newest posting is a year old (`pipeline.health.abandoned` — imported
+    lazily: health imports this module lazily too, and neither may do so at module level)."""
     platform = row["ats_platform"].strip().lower()
     fn = FETCHERS.get(platform)
     if fn is None:
         raise ValueError(f"unknown ats_platform {platform!r} for {row['company_name']}")
-    return fn(row)
+    jobs = fn(row)
+    if not isinstance(jobs, list):          # the verdict reads the postings once; a fetcher
+        jobs = list(jobs or ())             # handing back an iterator must not be drained
+    from . import health
+    verdict = health.abandoned(platform, row.get("api_url", ""), jobs)
+    if verdict and not _hosted_board_alive(fn, row):
+        raise BoardAbandoned(health.abandoned_message(verdict), jobs=jobs,
+                             newest=verdict["newest"], age_days=verdict["age_days"])
+    return jobs
+
+
+def _hosted_board_alive(fn, row):
+    """The second look a creation-dated platform gets before it is refused. Lever publishes
+    ONE date, `createdAt`, and never bumps it while a requisition stays open — so on
+    2026-08-30 Tonkean (two Tel Aviv roles created 2024-02, rendered live on
+    `jobs.lever.co/tonkean` and embedded on tonkean.com/careers) read exactly like Waterfall
+    Security's tenant (`jobs.lever.co/waterfall`: HTTP 404, a stranger's postings). A fetcher
+    that declares `hosted_board(row) -> url` names the page a LIVE tenant serves and a dead
+    one does not; it is asked only for a board the dates have already condemned (one GET per
+    refused board per morning), and a 2xx withdraws the verdict. A 4xx confirms it; a
+    5xx / network answer is "could not tell" and also withdraws it, because a false positive
+    here is sticky and a transient one is not (`_whole_board_or_raise` fails the same way).
+    SmartRecruiters has no such page: `careers.smartrecruiters.com/TLVTech` renders a polished
+    site for a tenant whose company domain no longer resolves."""
+    probe = getattr(fn, "hosted_board", None)
+    if probe is None:
+        return False
+    try:
+        url = probe(row)
+    except Exception:  # noqa: BLE001 — a row the probe cannot address gets no second look
+        return False
+    # ...and neither does a row whose address is not one (a token with a space): the
+    # request would fail before it left, and "never asked" must not read as "answered"
+    if not url or any(c.isspace() for c in url) or not urlsplit(url).netloc:
+        return False
+    try:
+        http.get_text(url, retries=1, timeout=10)      # one bounded GET; a lever board is ~700 KB
+        return True
+    except http.HttpError as e:
+        return not _CLIENT_ERROR.search(str(e))      # 404 = dead; 401/403/408/429 = not now
+    except Exception:  # noqa: BLE001
+        return True

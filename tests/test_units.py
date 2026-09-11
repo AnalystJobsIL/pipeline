@@ -10656,36 +10656,6 @@ def test_the_queue_and_the_job_cache_are_written_atomically():
         assert 'open("discovered_cache.json", "w"' not in src, fn.__name__
 
 
-def test_the_blank_re_ask_has_a_wall_clock_bound_not_just_a_count():
-    """A count is not a bound. `_li_guest` waits up to 40 s on the socket, so 20 re-asks that
-    all time out is 13 minutes on top of a step that took 4m11s on 2026-08-26 and is killed at
-    25 (`daily-digest.yml`) with `continue-on-error: true` — i.e. a silent loss of the whole
-    day's cache and queue write. Found by dry-running the change, not by review."""
-    import discovery_daily as dd
-    real, pause = dd._li_guest, dd._BLANK_RETRY_PAUSE
-    dd._BLANK_RETRY_PAUSE = 0.0
-    dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)
-    calls = []
-
-    def slow_blank(kw, loc, d, st):
-        calls.append(st)
-        dd._li_last_present[0] = set()
-        if len(calls) % 2:                      # first attempt blank, re-ask "slow" but ok
-            return [], True
-        dd._blank_retry["spent"] += 1000        # stand in for a socket that hung
-        return [], True
-    try:
-        dd._li_guest = slow_blank
-        for start in range(0, 200, 10):
-            dd._guest_page("x", "Israel", 7, start)
-        # one re-ask was allowed; after it blew the clock budget, no more were made
-        assert dd._blank_retry["spent"] >= dd.LINKEDIN_BLANK_RETRY_SECONDS
-        assert dd._blank_retry["left"] == dd.LINKEDIN_BLANK_RETRIES - 1, dd._blank_retry
-    finally:
-        dd._li_guest, dd._BLANK_RETRY_PAUSE = real, pause
-        dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)
-
-
 # =====================================================================================
 # scraper lane, 2026-08-26 (evening) — a reading that names roles but knows none of their
 # addresses must not END the ladder, and must not be believed when it replaces a board.
@@ -31240,8 +31210,12 @@ def test_the_freshness_window_is_one_constant_and_no_fixture_sits_inside_it(fn, 
     src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_units.py"),
                encoding="utf-8").read()
     lines = src.split("\n")
+    # ...and the board-freshness verdict, whose window is a YEAR rather than 21 days but
+    # rots the same way: a fixture dated by hand drifts past `STALE_BOARD_DAYS` and then
+    # flips on a date instead of on a defect (`ats-fetch` 2026-09-11; its own 14 tests
+    # pin `today=` and carry no literal, which is what this arm keeps true).
     judged = _re.compile(r"\b(linkedin_normalize|workable_normalize|indeed_normalize|"
-                         r"fetch_discovery|dd\.main)\b")
+                         r"fetch_discovery|dd\.main|health\.abandoned|board_freshness)\b")
     dated = _re.compile(r'"(?:posted_date|created|created_at|published)":\s*"(20\d\d-\d\d-\d\d)')
     rotting = []
     for node in _ast.walk(_ast.parse(src)):
@@ -31278,3 +31252,517 @@ def test_the_cache_shrink_alarm_keeps_its_bars_and_exempts_the_list_that_should_
     out = capsys.readouterr().out
     assert "shrink-exempt" in out and "108 -> 74" in out, \
         "withheld from the alarm, never from the record"
+# =====================================================================================
+# ats-fetch lane, 2026-08-30 — the board-freshness verdict (docs/BACKLOG.md 406). A board
+# whose newest posting is a year old is an abandoned tenant whatever its HTTP status;
+# `fetch_company` refuses it (`BoardAbandoned`), health records it as its own reason, the
+# mail names it. Every test pins its own clock. Record: docs/sessions/2026-08-30-ats-fetch.md
+# =====================================================================================
+import datetime as _abnd_dt
+
+_ABND_TODAY = _abnd_dt.date(2026, 8, 30)
+
+
+def _abnd_job(days_old, **kw):
+    """One normalized posting, `days_old` days before the pinned clock."""
+    j = {"company": "X", "title": "Data Analyst", "location": "Tel Aviv", "country_code": "IL",
+         "url": "https://jobs.example/1", "ats_platform": "smartrecruiters", "job_id": "1",
+         "description": "",
+         "posted_date": (_ABND_TODAY - _abnd_dt.timedelta(days=days_old)).isoformat()}
+    j.update(kw)
+    return j
+
+
+def test_board_freshness_is_strict_about_a_posting_it_cannot_date():
+    """An undated posting is COUNTED, never skipped — `abandoned()` refuses to judge a board
+    with one. Under the lenient reading (max over the dated ones) `fetch_successfactors`'
+    partially-dated tiles would condemn a live board on the strength of one old tile."""
+    from pipeline import health
+    assert health.board_freshness([]) == (None, 0, 0)
+    assert health.board_freshness(None) == (None, 0, 0)
+    newest, dated, undated = health.board_freshness([_abnd_job(400), _abnd_job(10), _abnd_job(30)])
+    assert (newest, dated, undated) == (_ABND_TODAY - _abnd_dt.timedelta(days=10), 3, 0)
+    for bad in ("", None, "Posted 30+ Days Ago", "2019", "2026-13-45", "20240101", 20240101,
+                "2026-08-1", "13/08/2026"):
+        assert health.board_freshness([_abnd_job(400), _abnd_job(400, posted_date=bad)])[1:] == (1, 1), repr(bad)
+    # a posting that is not a dict, or a generator of postings, never raises
+    assert health.board_freshness([None, "junk", _abnd_job(5)]) == (_ABND_TODAY - _abnd_dt.timedelta(days=5), 1, 2)
+    assert health.board_freshness(j for j in [_abnd_job(5)])[1] == 1
+    # an ISO datetime dates the posting; a future date is the newest, never negative-age noise
+    assert health.board_freshness([_abnd_job(0, posted_date="2026-08-13T08:53:48Z")])[0] == _abnd_dt.date(2026, 8, 13)
+    assert health.board_freshness([_abnd_job(400), _abnd_job(-30)])[0] == _ABND_TODAY + _abnd_dt.timedelta(days=30)
+
+
+def test_abandoned_needs_every_posting_dated_and_a_year_of_silence():
+    from pipeline import health
+    url = "https://api.smartrecruiters.com/v1/companies/tlvtech/postings"
+    v = health.abandoned("smartrecruiters", url, [_abnd_job(400), _abnd_job(677)], today=_ABND_TODAY)
+    assert v == {"newest": (_ABND_TODAY - _abnd_dt.timedelta(days=400)).isoformat(), "age_days": 400, "n": 2}
+    assert health.abandoned("smartrecruiters", url, [_abnd_job(364)], today=_ABND_TODAY) is None
+    assert health.abandoned("smartrecruiters", url, [_abnd_job(365)], today=_ABND_TODAY)["age_days"] == 365
+    # strict: one undated posting and the board cannot be judged
+    assert health.abandoned("smartrecruiters", url, [_abnd_job(400), _abnd_job(400, posted_date="")], today=_ABND_TODAY) is None
+    # no postings is `empty-board`'s question, not this one; a future posting is never abandoned
+    assert health.abandoned("smartrecruiters", url, [], today=_ABND_TODAY) is None
+    assert health.abandoned("smartrecruiters", url, [_abnd_job(400), _abnd_job(-1)], today=_ABND_TODAY) is None
+    # the message is under run.py's 70-character cut and the parser reads it back
+    msg = health.abandoned_message(v)
+    assert msg == f"newest posting {v['newest']} (400 days old), 2 postings" and len(msg) < 70 and "?" not in msg
+    assert health.abandoned_from_error("BoardAbandoned: " + msg) == (v["newest"], 400)
+    assert health.abandoned_message({"newest": "2014-03-18", "age_days": 4548, "n": 1}).endswith("1 posting")
+    assert health.abandoned_from_error("BoardEmpty: 0 postings worldwide") is None
+    assert health.abandoned_from_error(None) is None
+
+
+def test_no_scoped_or_pseudo_platform_is_ever_judged_on_freshness():
+    """The 69-Workday-row mass refusal this must never produce: a scoped fetcher's postings
+    are Israel hits, and one stale Israel hit on a live 2,700-posting tenant would condemn
+    the tenant. Derived from the FETCHERS map, so a new scoped fetcher is covered."""
+    from pipeline import fetchers, health
+    scoped = sorted(k for k, f in fetchers.FETCHERS.items() if getattr(f, "israel_scoped", False))
+    unscoped = sorted(k for k, f in fetchers.FETCHERS.items()
+                      if k not in ("scrape", "discovery") and not getattr(f, "israel_scoped", False))
+    assert len(unscoped) == 12 and "smartrecruiters" in unscoped and "workday" in scoped
+    ancient = [_abnd_job(4000)]
+    for plat in scoped + ["scrape", "discovery"]:
+        assert health.abandoned(plat, "https://x.example/board", ancient, today=_ABND_TODAY) is None, plat
+    for plat in unscoped:
+        assert health.abandoned(plat, "https://x.example/board", ancient, today=_ABND_TODAY), plat
+
+
+def test_a_row_whose_url_asks_the_board_for_israel_is_not_judged():
+    """SAP's row is `successfactors` — an unscoped PLATFORM — but its own address is
+    `?q=&locationsearch=Israel`: the fetch is scoped by the URL, its postings are a subset,
+    and their dates say nothing about the board. Parameter NAMES, not values: a Comeet
+    `?token=`, a Greenhouse `?content=true` or Oracle's `finder=findReqs;siteNumber=CX` is
+    not a scope."""
+    from pipeline import health
+    sap = "https://jobs.sap.com/tile-search-results/?q=&locationsearch=Israel"
+    assert health.url_scoped(sap)
+    assert health.abandoned("successfactors", sap, [_abnd_job(700)], today=_ABND_TODAY) is None
+    for u in ("https://www.comeet.co/careers-api/2.0/company/A1.B2C/positions?token=abc&details=true",
+              "https://boards-api.greenhouse.io/v1/boards/wix/jobs?content=true",
+              "https://x.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=CX",
+              "https://api.smartrecruiters.com/v1/companies/tlvtech/postings", "", None):
+        assert not health.url_scoped(u), u
+    for u in ("https://x.example/jobs?country=IL", "https://x.example/jobs?keywords=analyst",
+              "https://x.example/jobs?searchText=Israel", "https://x.example/jobs?q=israel"):
+        assert health.url_scoped(u), u
+
+
+def test_fetch_company_raises_board_abandoned_with_the_jobs_it_refused(monkeypatch):
+    """The TLVTech shape: a SmartRecruiters tenant answering `totalFound 1` for a posting
+    released 2024-10-22. `fetch_company` — not the fetcher — raises, the exception carries
+    what was refused, and run.py's recorded text is read back as `abandoned-board`."""
+    from pipeline import fetchers, health
+    state = {"released": "2024-10-22T10:00:00.000Z"}
+
+    def sr(url, **k):
+        return {"totalFound": 1, "content": [{"id": "744000021957355", "name": "Data Analyst",
+                                              "releasedDate": state["released"],
+                                              "location": {"city": "Tel Aviv", "country": "il"}}]}
+    monkeypatch.setattr(fetchers.http, "get_json", sr)
+    row = {"company_name": "TLVTech", "ats_platform": "smartrecruiters", "token": "tlvtech",
+           "api_url": "https://api.smartrecruiters.com/v1/companies/tlvtech/postings"}
+    with pytest.raises(fetchers.BoardAbandoned) as ei:
+        fetchers.fetch_company(row)
+    e = ei.value
+    assert e.newest == "2024-10-22" and e.age_days >= 677 and [j["title"] for j in e.jobs] == ["Data Analyst"]
+    # exactly what pipeline/run.py records (class name, query strings cut, 70 characters)
+    _msg = re.sub(r"\?\S*", "", str(e))[:70]
+    why = f"{e.__class__.__name__}: {_msg}"
+    assert why.startswith("BoardAbandoned: newest posting 2024-10-22 (")
+    assert health.stale_reason("smartrecruiters", row["api_url"], 0, "error", 1, error=why) == "abandoned-board"
+    assert health.abandoned_from_error(why) == ("2024-10-22", e.age_days)
+    # the same tenant with a fresh release is read as any other board
+    state["released"] = _abnd_dt.date.today().isoformat() + "T10:00:00.000Z"
+    assert [j["job_id"] for j in fetchers.fetch_company(row)] == ["744000021957355"]
+    # a fetcher handing back an iterator is read once and never drained (wave-1 attacker)
+    monkeypatch.setitem(fetchers.FETCHERS, "smartrecruiters",
+                        lambda r: (j for j in [_abnd_job(5, ats_platform="smartrecruiters")]))
+    assert [j["title"] for j in fetchers.fetch_company(row)] == ["Data Analyst"]
+    monkeypatch.setitem(fetchers.FETCHERS, "smartrecruiters",
+                        lambda r: (j for j in [_abnd_job(4000, ats_platform="smartrecruiters")]))
+    with pytest.raises(fetchers.BoardAbandoned) as ei:
+        fetchers.fetch_company(row)
+    assert len(ei.value.jobs) == 1
+
+
+def test_a_creation_dated_platform_gets_a_second_look_before_it_is_refused(monkeypatch):
+    """Lever publishes one date, `createdAt`, and never bumps it: Tonkean's two Tel Aviv
+    roles (created 2024-02) are on a board that renders live today, Waterfall Security's
+    slug is a stranger's tenant whose hosted board 404s. `hosted_board(row)` is the second
+    look: 2xx withdraws the verdict, a 4xx confirms it, "could not tell" withdraws it too
+    (a false positive is sticky, a transient one is not). SmartRecruiters declares none —
+    its hosted page renders for a dead tenant — and Recruitee reads `updated_at` first."""
+    from pipeline import fetchers
+    seen = []
+
+    def lever(url, **k):
+        return [{"id": "1", "text": "Senior DevOps Engineer", "createdAt": 1708560000000,
+                 "categories": {"location": "Tel Aviv"}, "hostedUrl": "https://jobs.lever.co/tonkean/1"}]
+    monkeypatch.setattr(fetchers.http, "get_json", lever)
+    row = {"company_name": "Tonkean", "ats_platform": "lever", "token": "tonkean",
+           "api_url": "https://api.lever.co/v0/postings/tonkean?mode=json"}
+    assert fetchers.fetch_lever.hosted_board(row) == "https://jobs.lever.co/tonkean"
+    assert fetchers.fetch_lever.hosted_board({"token": "", "api_url": row["api_url"]}) == "https://jobs.lever.co/tonkean"
+
+    def alive(url, **k):
+        seen.append((url, k)); return "<html>We're hiring</html>"
+    monkeypatch.setattr(fetchers.http, "get_text", alive)
+    assert [j["title"] for j in fetchers.fetch_company(row)] == ["Senior DevOps Engineer"]
+    assert seen == [("https://jobs.lever.co/tonkean", {"retries": 1, "timeout": 10})], \
+        "one bounded GET, only for a board the dates condemned — no retry budget on the second look"
+    # a row the probe cannot address gets no second look, whichever way it fails to
+    seen.clear()
+    with pytest.raises(fetchers.BoardAbandoned):
+        fetchers.fetch_company(dict(row, token=" my company "))
+    with pytest.raises(fetchers.BoardAbandoned):
+        fetchers.fetch_company(dict(row, token="", api_url="https://api.lever.co/v0/nope"))
+    assert seen == []
+
+    def dead(url, **k):
+        raise fetchers.http.HttpError("HTTP 404 for " + url)
+    monkeypatch.setattr(fetchers.http, "get_text", dead)
+    with pytest.raises(fetchers.BoardAbandoned):
+        fetchers.fetch_company(dict(row, token="waterfall"))
+
+    def flaky(url, **k):
+        raise fetchers.http.HttpError("HTTP 503 for " + url)
+    monkeypatch.setattr(fetchers.http, "get_text", flaky)
+    assert len(fetchers.fetch_company(row)) == 1, "could not tell withdraws the verdict"
+    monkeypatch.setattr(fetchers.http, "get_text", lambda u, **k: (_ for _ in ()).throw(OSError("net")))
+    assert len(fetchers.fetch_company(row)) == 1
+    # a fresh board never asks
+    seen.clear()
+    monkeypatch.setattr(fetchers.http, "get_text", alive)
+    monkeypatch.setattr(fetchers.http, "get_json", lambda u, **k: [dict(lever(u)[0], createdAt=int(
+        _abnd_dt.datetime.now().timestamp() * 1000))])
+    assert len(fetchers.fetch_company(row)) == 1 and seen == []
+    assert not hasattr(fetchers.fetch_smartrecruiters, "hosted_board")
+    # recruitee: the fresher of the two dates
+    monkeypatch.setattr(fetchers.http, "get_json", lambda u, **k: {"offers": [
+        {"id": 9, "title": "Open Application", "published_at": "2023-10-24T10:00:00.000+02:00",
+         "updated_at": "2026-07-23T09:00:00.000+02:00", "careers_url": "https://x.recruitee.com/o/open"}]})
+    got = fetchers.fetch_company({"company_name": "UBQ Materials", "ats_platform": "recruitee", "token": "",
+                                  "api_url": "https://ubq.recruitee.com/api/offers/"})
+    assert [j["posted_date"] for j in got] == ["2026-07-23"]
+
+
+def test_an_abandoned_board_is_its_own_reason_not_a_fetch_error(tmp_path):
+    """A fetch error is repaired by re-resolving the address; an abandoned tenant by finding
+    where the company posts now. `record()` stores the date and the age beside the reason,
+    a misconfigured scrape row is still judged on its shape first, and the five-positional
+    `stale_reason` call every older test and `platform_check` make still works."""
+    from pipeline import health
+    why = "BoardAbandoned: newest posting 2024-10-22 (677 days old), 7 postings"
+    results = {
+        "TLVTech": {"platform": "smartrecruiters", "n": 0, "status": "error", "api": "https://api.smartrecruiters.com/v1/companies/tlvtech/postings?x=1", "error": why},
+        "Decart": {"platform": "ashby", "n": 0, "status": "error", "api": "u", "error": "HttpError: HTTP 404"},
+        "Skin": {"platform": "scrape", "n": 0, "status": "error", "api": "https://boards.greenhouse.io/skin", "error": why},
+        "Wix": {"platform": "greenhouse", "n": 40, "status": "ok", "api": "u"},
+    }
+    stale = health.record(results, baseline_path=str(tmp_path / "b.json"), stale_path=str(tmp_path / "s.json"))
+    assert stale["TLVTech"] == {"careers_url": "https://api.smartrecruiters.com/v1/companies/tlvtech/postings",
+                                "platform": "smartrecruiters", "reason": "abandoned-board", "error": why,
+                                "newest": "2024-10-22", "age_days": 677}
+    assert stale["Decart"]["reason"] == "fetch-error" and stale["Skin"]["reason"] == "misconfig-scrape-on-ats"
+    assert "Wix" not in stale
+    assert json.load(open(tmp_path / "s.json", encoding="utf-8"))["TLVTech"]["age_days"] == 677
+    assert health.stale_reason("greenhouse", "", 0, "empty", 0) == "empty-board"
+    assert health.stale_reason("greenhouse", "", 0, "error", 0) == "fetch-error"
+    assert health.stale_reason("greenhouse", "", 0, "error", 0, error="BoardEmpty: 0 postings") == "fetch-error"
+
+
+def test_the_mail_names_new_abandoned_boards_once_then_counts_them():
+    """Seventeen unchanging names every morning is the noise the delta line exists to
+    escape: named with their dates the day they enter, counted after — the misconfig
+    pattern. The four-reason standing line older tests pin reads the same with one added."""
+    from pipeline import health
+    tlv = {"reason": "abandoned-board", "platform": "smartrecruiters", "age_days": 677,
+           "error": "BoardAbandoned: newest posting 2024-10-22 (677 days old), 7 postings"}
+    nex = {"reason": "abandoned-board", "platform": "smartrecruiters", "age_days": 3496,
+           "error": "BoardAbandoned: newest posting 2017-02-02 (3496 days old), 2 postings"}
+    dec = {"reason": "fetch-error", "error": "HttpError: HTTP 404"}
+    assert health.mail_lines({"TLVTech": tlv, "Nexar": nex, "Decart": dec}, previous={}) == [
+        "changed today: new: 1 fetch error (Decart: HttpError: HTTP 404) · 2 abandoned boards "
+        "(Nexar: BoardAbandoned: newest posting 2017-02-02 (3496 days old), 2 postings; "
+        "TLVTech: BoardAbandoned: newest posting 2024-10-22 (677 days old), 7 postings)",
+        "standing: 1 fetch error (Decart: HttpError: HTTP 404) · 2 abandoned boards"]
+    line = health.mail_lines({
+        "Decart": {"reason": "fetch-error", "error": "HttpError: HTTP 404 for https://api.ashbyhq.com/..."},
+        "Leadspace": {"reason": "empty-board"}, "Salesforce": {"reason": "regressed-to-zero"},
+        "TLVTech": tlv, **{f"S{i}": {"reason": "misconfig-scrape-on-ats"} for i in range(25)}})
+    assert line == ["standing: 1 fetch error (Decart: HttpError: HTTP 404 for https://api.ashbyhq.com/...) · "
+                    "1 regressed to zero (Salesforce) · 1 empty (Leadspace) · "
+                    "25 scrape rows on an ATS host · 1 abandoned board"]
+    # a fetch-error row that becomes abandoned today is `new` (the reason changed), and a
+    # standing abandoned row is not re-announced
+    assert health.mail_lines({"TLVTech": tlv}, previous={"TLVTech": dec}) == [
+        "changed today: new: 1 abandoned board (TLVTech: BoardAbandoned: newest posting 2024-10-22 (677 days old), 7 postings)",
+        "standing: 1 abandoned board"]
+    assert health.mail_lines({"TLVTech": tlv}, previous={"TLVTech": tlv}) == ["standing: 1 abandoned board"]
+
+
+def test_an_abandoned_row_that_leaves_is_never_announced_as_cleared(monkeypatch):
+    """`cleared` means the board recovered, and for this reason the run cannot tell: a tenant
+    that posted again and a fetcher whose dates went blank both make `abandoned()` answer
+    None and the fetch succeed (wave-1 attacker: 14 smartrecruiters rows "cleared" the
+    morning `releasedDate` vanished). The general rule (`_fetched_none`) cannot rescue it
+    either — an abandoned board DOES return postings. So such rows get their own words,
+    several at once say what they look like, a recorded age below today's threshold left
+    because the rule moved (not announced), and a MISSING age never suppresses anything."""
+    from pipeline import health
+    prev = {"TLVTech": {"reason": "abandoned-board", "platform": "smartrecruiters", "age_days": 677,
+                        "careers_url": "https://api.smartrecruiters.com/v1/companies/tlvtech/postings"}}
+    scanned = {"TLVTech": {"platform": "smartrecruiters", "n": 7, "status": "ok", "api": "u"}}
+    assert health.mail_lines({}, prev, scanned=scanned) == ["changed today: no longer refused as abandoned: TLVTech"]
+    assert not any("cleared" in l for l in health.mail_lines({}, prev, scanned=scanned))
+    monkeypatch.setattr(health, "STALE_BOARD_DAYS", 700)
+    assert health.mail_lines({}, prev, scanned=scanned) == []
+    # a caller that passes only names gets the same answer — the clause is pure
+    assert health.mail_lines({}, prev, scanned={"TLVTech"}) == []
+    monkeypatch.setattr(health, "STALE_BOARD_DAYS", 365)
+    assert health.mail_lines({}, prev, scanned={"TLVTech"}) == ["changed today: no longer refused as abandoned: TLVTech"]
+    # a row that left because it was parked overnight is still never announced
+    assert health.mail_lines({}, prev, scanned={"Other"}) == []
+    # "we cannot tell" (no recorded age) never suppresses
+    bare = {"TLVTech": {"reason": "abandoned-board", "platform": "smartrecruiters"}}
+    assert health.mail_lines({}, bare, scanned=scanned) == ["changed today: no longer refused as abandoned: TLVTech"]
+    # fourteen at once is a fetcher's date field, and the line says so — in full, no `+8 more`
+    many = {f"SR{i:02d}": dict(prev["TLVTech"]) for i in range(14)}
+    lines = health.mail_lines({}, many, scanned={n: {"platform": "smartrecruiters", "n": 3} for n in many})
+    assert len(lines) == 1 and "SR13" in lines[0] and "+" not in lines[0] and "cleared" not in lines[0]
+    assert lines[0].endswith("(14 at once — a tenant posts again one at a time; a fetcher's dates going blank reads the same)")
+
+
+def test_the_freshness_verdict_cannot_condemn_a_whole_platform_in_one_morning():
+    """CLAUDE.md rule 2 has no seam at the point of verdict (one row at a time), so the mail
+    is where a platform-wide date-field change is told from N dead tenants: over the rows
+    refused TODAY (a standing count would print for ever), fleet-wide at 45 / 10 % and PER
+    PLATFORM at 5 rows / 50 % — smartrecruiters has 20 judgeable rows against ~450, so the
+    fleet floor alone could never fire for the platform that produced 11 of the 17 (wave 1).
+    Scoped rows are not in the denominator; a caller passing bare names gets no mass line."""
+    from pipeline import health
+
+    def morning(abandoned, judged, scoped=0, plat="greenhouse", others=0):
+        stale = {f"A{i:03d}": {"reason": "abandoned-board", "platform": plat, "age_days": 500,
+                               "error": "BoardAbandoned: newest posting 2024-01-01 (500 days old), 1 posting"}
+                 for i in range(abandoned)}
+        scanned = {f"A{i:03d}": {"platform": plat, "n": 0, "status": "error"} for i in range(abandoned)}
+        scanned.update({f"G{i:03d}": {"platform": plat, "n": 3, "status": "ok"} for i in range(judged - abandoned)})
+        scanned.update({f"O{i:03d}": {"platform": "comeet", "n": 3, "status": "ok"} for i in range(others)})
+        scanned.update({f"W{i:03d}": {"platform": "workday", "n": 0, "status": "empty"} for i in range(scoped)})
+        return stale, scanned
+
+    def mass(stale, scanned, previous=None):
+        lines = health.mail_lines(stale, previous={} if previous is None else previous, scanned=scanned)
+        return [l for l in lines if l.startswith("mass verdict")]
+
+    stale, scanned = morning(50, 60, scoped=100)
+    lines = health.mail_lines(stale, previous={}, scanned=scanned)
+    assert lines[0].startswith("mass verdict: 50 boards newly refused as abandoned this morning (50 of the 60 greenhouse rows judged)")
+    assert lines[1].startswith("changed today: new: 50 abandoned boards (")
+    # the fleet floor: 45 rows AND 10 % of what was judged — and the judged count leaves out
+    # scoped platforms and url-scoped rows (wave-2 mutants 23/24: 200 Workday rows or 540
+    # SAP-shaped addresses in the denominator would push the 10 % floor past 45)
+    stale, scanned = morning(45, 451, plat="comeet", scoped=200)
+    assert mass(stale, scanned)[0].startswith(
+        "mass verdict: 45 boards newly refused as abandoned this morning (45 of the 451 rows judged)")
+    stale, scanned = morning(50, 60, plat="comeet")
+    scanned.update({f"U{i:03d}": {"platform": "comeet", "n": 3, "status": "ok",
+                                  "api": "https://jobs.sap.com/tile-search-results/?q=&locationsearch=Israel"}
+                    for i in range(540)})
+    assert mass(stale, scanned)[0].startswith(
+        "mass verdict: 50 boards newly refused as abandoned this morning (50 of the 60 comeet rows judged)")
+    stale, scanned = morning(50, 600, plat="comeet")          # 10 % of 600 is 60
+    assert mass(stale, scanned) == []
+    stale, scanned = morning(44, 100, plat="comeet")          # the 45-row floor binds on its own
+    assert mass(stale, scanned) == []
+    stale, scanned = morning(45, 100, plat="comeet")
+    assert mass(stale, scanned)[0].startswith(
+        "mass verdict: 45 boards newly refused as abandoned this morning (45 of the 100 rows judged)")
+    # the platform floor: 11 of 20 smartrecruiters rows in a fleet of 451 fires, exactly 50 %
+    # fires, 9 of 20 and 3 of 20 do not
+    stale, scanned = morning(11, 20, plat="smartrecruiters", others=431)
+    assert mass(stale, scanned)[0].startswith("mass verdict: 11 boards newly refused as abandoned this morning "
+                                              "(11 of the 20 smartrecruiters rows judged)")
+    stale, scanned = morning(10, 20, plat="smartrecruiters", others=431)
+    assert mass(stale, scanned)[0].startswith("mass verdict: 10 boards")
+    for k in (9, 3):
+        stale, scanned = morning(k, 20, plat="smartrecruiters", others=431)
+        assert mass(stale, scanned) == [], k
+    stale, scanned = morning(4, 4, plat="breezy", others=447)  # 100 % of four rows is under the 5-row floor
+    assert mass(stale, scanned) == []
+    # TODAY's refusals only: the same 11 standing since yesterday print nothing
+    stale, scanned = morning(11, 20, plat="smartrecruiters", others=431)
+    assert mass(stale, scanned, previous=dict(stale)) == []
+    assert health.mail_lines(stale, previous=dict(stale), scanned=scanned) == ["standing: 11 abandoned boards"]
+    # no delta (previous=None) and a bare set of names both give no mass line
+    stale, scanned = morning(60, 60)
+    assert mass(stale, set(scanned)) == []
+    assert not any(l.startswith("mass") for l in health.mail_lines(stale, scanned=scanned))
+
+
+def test_platform_check_says_which_platforms_the_freshness_verdict_can_judge(monkeypatch):
+    """The verdict's blind spots as a report, the way `israel_scoped` is: `scoped` (never
+    judged), `undated` (the list publishes no dates — declared), `ok`. MISSING both ways: a
+    fetcher that writes a blank date without declaring it, or declares it and dates its
+    postings. The cell sits BEFORE the two behaviour cells an older test reads as the last
+    two tokens of the line — that ordering is what this test pins."""
+    from pipeline import fetchers, platform_check
+    import contextlib, io
+
+    def grid():
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            platform_check.check()
+        return {l.split()[0]: l.split() for l in buf.getvalue().splitlines() if l and l.split()[0] in fetchers.FETCHERS}
+    base = grid()
+    assert base["workday"][-2:] == ["ok", "ok"] and base["oraclehcm"][-2:] == ["ok", "ok"]
+    assert base["workday"][-3] == "scoped" and base["jobvite"][-3] == "undated"
+    assert base["greenhouse"][-3] == "ok" and base["smartrecruiters"][-3] == "ok"
+    assert all(len(v) == len(base["workday"]) for v in base.values())
+    monkeypatch.delattr(fetchers.fetch_jobvite, "undated")
+    assert grid()["jobvite"][-3] == "MISSING", "emits a blank date, undeclared: the verdict is silently blind"
+    monkeypatch.setattr(fetchers.fetch_greenhouse, "undated", True, raising=False)
+    assert grid()["greenhouse"][-3] == "MISSING", "declares undated but dates every posting"
+
+
+def test_the_successfactors_fixture_is_safe_because_two_of_its_three_tiles_are_undated(monkeypatch):
+    """`test_successfactors_and_jobvite_read_the_boards_that_published_no_json` carries one
+    dated tile (2026-08-20) among three. Under a lenient rule `fetch_company` would start
+    raising on that fixture on 2027-08-21; under the strict one the board is never judged.
+    Named here so the reason cannot be lost."""
+    from pipeline import fetchers, health
+    monkeypatch.setattr(fetchers.http, "get_text", lambda u, **k: _SF_FRAGMENT if "startrow=0" in u else "")
+    row = {"company_name": "T", "ats_platform": "successfactors", "token": "",
+           "api_url": "https://jobs.sap.com/tile-search-results/?q=&locationsearch=Israel"}
+    jobs = fetchers.fetch_company(row)
+    assert len(jobs) == 3 and health.board_freshness(jobs)[1:] == (1, 2)
+    far = _abnd_dt.date(2031, 1, 1)
+    assert health.abandoned("successfactors", row["api_url"], jobs, today=far) is None       # scoped URL
+    assert health.abandoned("successfactors", "https://x.example/tiles", jobs, today=far) is None   # undated
+    only_dated = [j for j in jobs if j["posted_date"]]
+    assert health.abandoned("successfactors", "https://x.example/tiles", only_dated, today=far)
+
+
+def test_health_and_fetchers_import_each_other_lazily():
+    """`fetch_company` imports health for the verdict and health imports fetchers for
+    `israel_scoped` — both inside functions. A module-level import in either file is a
+    cycle the day the other one is "simplified" to match."""
+    import ast, subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for mod, other in (("fetchers", "health"), ("health", "fetchers")):
+        tree = ast.parse(open(os.path.join(root, "pipeline", f"{mod}.py"), encoding="utf-8").read())
+        for node in tree.body:
+            if isinstance(node, ast.ImportFrom):
+                assert other not in [a.name for a in node.names] and other not in str(node.module), (mod, other)
+            if isinstance(node, ast.Import):
+                assert not any(other in a.name for a in node.names), (mod, other)
+    for first, second in (("health", "fetchers"), ("fetchers", "health")):
+        p = subprocess.run([sys.executable, "-c", f"import pipeline.{first}, pipeline.{second}; "
+                            "from pipeline import fetchers, health; assert health.israel_scoped('workday'); "
+                            "assert 'smartrecruiters' in fetchers.FETCHERS"],
+                           cwd=root, capture_output=True, text=True)
+        assert p.returncode == 0, p.stderr
+
+
+def test_no_two_helpers_in_this_file_share_a_name():
+    """A module-level name defined twice in a 31,000-line test file is not a redefinition of
+    a helper — it is a SILENT THEFT of every earlier caller, because Python resolves the name
+    at call time and the last definition wins for the whole module. Measured 2026-09-11: the
+    `ats-fetch` board-freshness block was written on 2026-08-30 against a tree with no
+    `_bf_job` in it, master grew a classifier-backfill `_bf_job` in between, and appending the
+    block made four backfill tests assert against a posting helper from another lane (`assert
+    (1 == 30)`). Both names were reasonable; neither author could have seen the other.
+    Functions AND assignments, tests included: two tests sharing a name is the same theft with
+    the loser never running at all."""
+    import ast as _ast
+    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_units.py"),
+               encoding="utf-8").read()
+    seen, dupes = {}, []
+    for node in _ast.parse(src).body:               # module level only: a nested def is scoped
+        for name in ([node.name] if isinstance(node, (_ast.FunctionDef, _ast.ClassDef)) else
+                     [t.id for t in getattr(node, "targets", []) if isinstance(t, _ast.Name)]):
+            if name in seen:
+                dupes.append((name, seen[name], node.lineno))
+            seen[name] = node.lineno
+    assert not dupes, ("a module-level name defined twice — the second silently replaces the "
+                       "first for every caller in the file: %r" % dupes)
+
+
+def test_a_successfactors_tile_that_states_israel_as_a_country_is_read_as_israeli():
+    """`Shlomi, ISR, IL` (West Pharmaceutical) and `Bar Lev, IL, 20156` (Dentsply Sirona) are
+    Israeli places the location vocabulary does not know, and the tile states the country
+    itself — six real postings of 218 across eleven live SuccessFactors tenants were dropped
+    as foreign for that reason alone, one an *Inventory & Logistics Analyst* (2026-09-11).
+
+    The asymmetry is the guard: a foreign token must stay `""`, because
+    `israel.is_israel_job` trusts a non-IL country code as a NEGATIVE and skips the text scan
+    — so stamping one would let this fetcher delete a posting the place-name scan accepts."""
+    from pipeline import fetchers, israel
+    assert fetchers._sf_country("Shlomi, ISR, IL") == "IL"
+    assert fetchers._sf_country("Bar Lev, IL, 20156") == "IL"
+    for foreign in ("Milan, IT, 20156", "Exton, PA, US", "Bengaluru, KA, IND", "", None,
+                    "Israel"):     # the city slot is never read: `Israel, ...` is a place name
+        assert fetchers._sf_country(foreign) == "", foreign
+    tile = {"company": "X", "title": "Inventory & Logistics Analyst",
+            "location": "Shlomi, ISR, IL", "url": "https://careers.example/job/Shlomi-x/1/",
+            "ats_platform": "successfactors", "job_id": "1", "description": "",
+            "posted_date": ""}
+    assert not israel.is_israel_job(dict(tile, country_code="")),         "the place-name scan cannot know Shlomi — that is why the country field is read"
+    assert israel.is_israel_job(dict(tile, country_code=fetchers._sf_country(tile["location"])))
+    # ...and the FETCHER fills the field, not only the helper: the call site is what those
+    # six postings needed, and a test of the helper alone passes with the call site reverted.
+    tile_html = ('<li class="job-tile job-id-77" data-url="/job/Shlomi-Inventory-x-1/77/">'
+                 '<a class="jobTitle-link">Inventory &amp; Logistics Analyst</a>'
+                 '<span id="job-77-desktop-section-location-value">Shlomi, ISR, IL</span></li>')
+    pages = [tile_html, ""]
+    real = fetchers.http.get_text
+    try:
+        fetchers.http.get_text = lambda u, **kw: pages.pop(0) if pages else ""
+        jobs = fetchers.fetch_successfactors(
+            {"company_name": "West Pharmaceutical Services", "ats_platform": "successfactors",
+             "token": "", "api_url": "https://careers.example/tile-search-results/?q=&locationsearch=Israel"})
+    finally:
+        fetchers.http.get_text = real
+    assert [j["country_code"] for j in jobs] == ["IL"], jobs
+    assert israel.is_israel_job(jobs[0]), "the posting the country field rescues"
+
+
+def test_the_stale_board_census_reads_the_refusal_instead_of_being_blinded_by_it(monkeypatch, capsys):
+    """The census that found this class would have reported ZERO of it the day the verdict
+    shipped: `fetch_company` now REFUSES an abandoned tenant by raising, and `stale_boards`
+    caught a bare `Exception` and booked every raise as "could not fetch". The tool and the
+    thing it measures were on opposite sides of one `except` clause.
+
+    The second half is the split. A row the dates condemn and the fetch spares
+    (`_hosted_board_alive`: Tonkean's Lever board still answers) must be counted apart, or
+    this tool and the morning mail disagree every day with neither of them wrong."""
+    import registry_health as RH
+    from pipeline import fetchers
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"],
+            ["Abandoned Co", "smartrecruiters", "ab", "https://api.smartrecruiters.com/v1/companies/ab/postings",
+             "true", ""],
+            ["Spared Co", "lever", "sp", "https://api.lever.co/v0/postings/sp?mode=json", "true", ""],
+            ["Live Co", "greenhouse", "lv", "https://boards-api.greenhouse.io/v1/boards/lv/jobs", "true", ""]]
+    old = (_dtm.date.today() - _dtm.timedelta(days=900)).isoformat()
+    fresh = (_dtm.date.today() - _dtm.timedelta(days=3)).isoformat()
+
+    def fake_fetch(row):
+        name = row["company_name"]
+        if name == "Abandoned Co":                       # what the shipped verdict does
+            raise fetchers.BoardAbandoned("newest posting %s (900 days old), 2 postings" % old,
+                                          jobs=[{}, {}], newest=old, age_days=900)
+        if name == "Spared Co":                          # condemned by dates, spared by the probe
+            return [{"posted_date": old}, {"posted_date": old}]
+        return [{"posted_date": fresh}]
+    monkeypatch.setattr(RH, "stale_boards", RH.stale_boards)     # keep the real function
+    monkeypatch.setattr("pipeline.fetchers.fetch_company", fake_fetch)
+    stale = RH.stale_boards(rows[1:], workers=1)
+    got = {r[0]: (d.isoformat(), n, refused) for r, d, n, refused in stale}
+    assert got == {"Abandoned Co": (old, 2, True), "Spared Co": (old, 2, False)}, got
+    line = capsys.readouterr().out.splitlines()[0]
+    assert "ABANDONED (newest >= 365d) 2" in line and "SPARED by a live hosted board 1" in line \
+        and "REFUSED 1" in line, line

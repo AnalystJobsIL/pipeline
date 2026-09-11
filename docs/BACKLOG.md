@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**642 filed · 456 open · 186 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**643 filed · 456 open · 187 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 593.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 594.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 149 open
+### registry — 150 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -243,6 +243,7 @@ closure convention in the header.
 - **549** `549@registry` **`deep_validate` recorded a NAME-ALIKE's empty board as this company having no
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
+- **593** `593@registry` **An abandoned board is refused, alarmed and re-resolved
 
 ### infra — 114 open
 
@@ -508,7 +509,7 @@ closure convention in the header.
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 - **579** `579@company-intel` **Four firmographics record pairs describe one employer each**
 
-### ats-fetch — 20 open
+### ats-fetch — 19 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
 - **1** `1@ats-fetch` **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
@@ -526,7 +527,6 @@ closure convention in the header.
 - **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
 - **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
 - **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
-- **406** `406@ats-fetch` **18 ACTIVE rows point at an ABANDONED tenant
 - **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
@@ -7358,8 +7358,17 @@ Record: `docs/sessions/2026-08-28-registry-evening.md`. Numbers re-derived again
     repo-wide by `test_no_root_module_defines_anything_after_its_entry_point` (AST over every
     root module; positive control run against the unfixed file at `origin/master`).
 
-406. **18 ACTIVE rows point at an ABANDONED tenant — a board that answers perfectly and has not
-    been touched in years — and nothing in this repo could ever have found them** — lane:
+406. ~~**18 ACTIVE rows point at an ABANDONED tenant — a board that answers perfectly and has
+    not been touched in years — and nothing in this repo could ever have found them**~~ —
+    **CLOSED 2026-09-11 (`ats-fetch`)**: the verdict is `pipeline.health.abandoned` and
+    `fetchers.fetch_company` RAISES `BoardAbandoned` on it, so the row is a failed fetch with
+    its own `stale.json` reason (`abandoned-board`), named in the mail and re-resolved by the
+    06:00 self-heal; no posting from such a board reaches the classifier. The census now reads
+    the refusal instead of being blinded by it (it caught a bare `Exception`, so it would have
+    reported 0 of this class the day the verdict shipped) and splits REFUSED from SPARED. The
+    19 rows were drained the same day: **19 → 1**, the one left being `Tonkean`, whose Lever
+    board still answers and which the verdict therefore spares. What is NOT done is `593`:
+    nothing PARKS an abandoned row without a session. Original text: — lane:
     `ats-fetch` (the verdict belongs in `pipeline/health.py`), found by `registry` 2026-08-28 on
     the operator's tip. `HiBob` was `smartrecruiters/HiBob`: HTTP 200, valid JSON,
     `totalFound 1`, and the one posting was *IT Assistant*, **London**, released
@@ -11985,3 +11994,45 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      kept as a pointer rather than deleted, so an existing citation resolves to text and
      not to a gap. Everything it said is in `591`, which states the attribution command
      better: `git log -S '<record id>' -- tests/mutations.json`.
+
+593. **An abandoned board is refused, alarmed and re-resolved — and nothing PARKS it** — lane:
+     `registry` (the park), with `roles` and `discovery` clauses. Filed 2026-09-11 by
+     `ats-fetch` with `406`, which is closed: `fetchers.fetch_company` raises `BoardAbandoned`
+     and `health` records `abandoned-board`, so the row is in `stale.json` and the 06:00
+     self-heal re-resolves it weekly. `resolve_broken._skip` then **gives up after 5 strikes
+     and leaves the row ACTIVE**, and every parked pool needs `active == "false"` — so a
+     tenant the self-heal cannot repair returns to being owned by nothing, which is the exact
+     shape of the class `406` existed to kill. Today's 19 were parked BY HAND
+     (`abandoned-board <date>: newest <d>, N postings; needs re-resolution`, now a token in
+     all three pool spellings), and a hand-drain is not a mechanism.
+
+     (a) **`registry`** — the exact diff, in `resolve_broken.main()`, where the strike is
+     recorded:
+
+     ```python
+     a["fails"] = a.get("fails", 0) + 1
+     a["last"] = today
+     +   # a board REFUSED for its dates that five re-resolutions could not repair is not a
+     +   # transient failure: park it so a re-check pool owns it again (BACKLOG 593)
+     +   if a["fails"] >= 5 and (stale.get(name) or {}).get("reason") == "abandoned-board":
+     +       park_abandoned(name, stale[name])       # notes.replace_own("abandoned-board", …)
+     ```
+
+     `candidates()` should keep returning `abandoned-board` rows (the question "where does
+     this company post now?" is exactly what the self-heal asks), so the cost is unchanged
+     until the fifth strike. Decide also whether the 19:00 hunt or `triage_dark` owns the
+     parked row: both select it today, because the segment carries `needs re-resolution`.
+
+     (b) **`roles`** — a company in `failed` is never judged (`judged = … c not in failed`),
+     so a role from a refused board stays `open` in the public `cloud_state/roles.csv` until
+     its 60-day `last_seen` window ends, while `docs/index.html` drops it after `run.py`'s
+     7-day `fail_grace`. The two disagree for ~52 days. `TLVTech`'s 2024 *Data Analyst* — the
+     posting that proved `406` — is the live example. An `abandoned` closure is the missing
+     state.
+
+     (c) **`discovery`** — `discovery_daily._TARGETABLE` is `("empty-board",
+     "regressed-to-zero", "fetch-error")` and is pinned by
+     `test_targeted_discovery_skips_rows_whose_board_is_not_actually_broken`. It does not
+     include `abandoned-board`, so the targeted LinkedIn rotation skips precisely the
+     companies whose board has moved — the rows most likely to be posting somewhere we are
+     not reading.

@@ -52,7 +52,10 @@ _TOOL = re.compile(r"^\s*(dark-triage|listing-hunt|deep-validated|crack-walled|d
                    # a conflict day cannot carry two of any tool's segment -- `url-repaired`
                    # (12 live rows) and `self-heal` (4) were keyed by seg[:28] (BACKLOG 35/67)
                    r"empty-but-suspect|scrape rotted|url-repaired|url-cleared|url-flagged|"
-                   r"self-heal|activated|platform-fix|identity|chrome-verified)\b")
+                   # `abandoned-board <date>: newest <d>, N postings; needs re-resolution`
+                   # (ats-fetch 2026-09-11): its date and counts vary, so without a key here
+                   # two nights' segments would both survive a conflict merge under seg[:28]
+                   r"self-heal|activated|platform-fix|identity|chrome-verified|abandoned-board)\b")
 
 
 def _seg_key(seg):

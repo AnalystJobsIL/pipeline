@@ -74,23 +74,41 @@ def check():
         fn = FETCHERS[p]
         scoped = bool(getattr(fn, "israel_scoped", False))
         declared = hasattr(fn, "israel_scoped")      # True, or an explicit False (oraclehcm:
-        narrows = bool(re.search(r"Israel|ISR", inspect.getsource(fn)))   # a hybrid pass)
+        src = inspect.getsource(fn)
+        narrows = bool(re.search(r"Israel|ISR", src))                     # a hybrid pass)
         verdict_ok = (health.stale_reason(p, "", 0, "empty", 0) is None) == scoped
+        # Can the board-freshness verdict (`health.abandoned`) judge this platform? `scoped`:
+        # never (its postings are Israel hits, not the board). `undated`: never (the list
+        # publishes no dates — the fetcher writes a literal `"posted_date": ""` and DECLARES
+        # `undated = True`). `ok`: yes. MISSING, both directions like the scope cell: a
+        # fetcher that writes the blank without declaring it, or declares it and dates its
+        # postings (the declaration is a lie). A SOURCE-level cell, and it says so: a
+        # platform whose tenants leave the date field empty (bamboohr: 0 dated of 82
+        # postings on 2026-08-30; successfactors 0 of 28) reads `ok` here and is blind at
+        # runtime — the census, not this grid, is what sees that.
+        # The cell sits BEFORE the two behaviour cells: `tests/test_units.py` reads those
+        # two positionally as the last two tokens of the printed line.
+        blank = bool(re.search(r'"posted_date":\s*""', src))
+        undated = bool(getattr(fn, "undated", False))
+        row["freshness(judge)"] = ("MISSING" if blank != undated else
+                                   "scoped" if scoped else "undated" if undated else "ok")
         # both directions: narrows ⇒ declared (a forgotten attribute flags healthy zeros);
         # scoped ⇒ narrows (a fetcher that does NOT ask for Israel yet claims to would
         # switch empty-board detection off for its whole platform)
         row["israel-scoped(fetcher)"] = "ok" if ((declared or not narrows) and (narrows or not scoped)) else "MISSING"
         row["empty->flag(health)"] = "ok" if verdict_ok else "MISSING"
+        missing_total += row["freshness(judge)"] == "MISSING"
         missing_total += row["israel-scoped(fetcher)"] == "MISSING"
         missing_total += row["empty->flag(health)"] == "MISSING"
         rows.append(row)
 
-    labels = list(sources) + ["israel-scoped(fetcher)", "empty->flag(health)"]
+    labels = list(sources) + ["freshness(judge)", "israel-scoped(fetcher)", "empty->flag(health)"]
     w = max(len(p) for p in platforms) + 1
     print(f"{'platform':<{w}} " + " ".join(f"{l[:14]:<15}" for l in labels))
     for r in rows:
+        # the freshness cell has three healthy words; every other cell is ok / MISSING
         line = f"{r['platform']:<{w}} " + " ".join(
-            f"{('ok' if r[l] == 'ok' else 'MISSING'):<15}" for l in labels)
+            f"{(r[l] if l == 'freshness(judge)' or r[l] == 'ok' else 'MISSING'):<15}" for l in labels)
         print(line)
     print(f"\n{len(platforms)} platforms · {missing_total} missing wirings")
     if missing_total:

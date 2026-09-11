@@ -151,7 +151,11 @@ HUNT_POOL = re.compile(
     r"empty-but-suspect|needs re-resolution|needs manual resolution|"
     # the stored address was an aggregator or another company's page: these rows
     # need the hunt more than most
-    r"url-cleared|url-flagged")
+    r"url-cleared|url-flagged|"
+    # an abandoned tenant: the board answers, its newest posting is a year old, and
+    # the question the hunt asks -- where does this company post NOW -- is the one
+    # that repairs it (ats-fetch 2026-09-11)
+    r"abandoned-board")
 
 
 def in_hunt_pool(r):

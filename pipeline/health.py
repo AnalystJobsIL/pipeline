@@ -7,6 +7,10 @@ standalone weekly sweep (health_check.py) reuses the same logic as a backstop.
 
 Stale reasons, in the order they are decided:
   misconfig-scrape-on-ats — set to `scrape` while the URL is a real ATS host
+  abandoned-board         — the board answered, and its NEWEST posting is `STALE_BOARD_DAYS`
+                            old or older: an abandoned tenant that keeps answering
+                            (`fetchers.BoardAbandoned`, judged here by `abandoned()`; the
+                            fetch refuses the postings, so nothing from it can publish)
   fetch-error             — the fetch raised: the endpoint 404s / 422s / times out, or the
                             fetcher itself said the board is empty worldwide
                             (`fetchers.BoardEmpty`) or mis-pointed (ValueError) — or, for a
@@ -37,6 +41,39 @@ in Israel, 31 honest zeros), because the rot file had no reader.
 
 The mail line (`mail_lines`) is what makes any of this visible: `stale.json` is read by the
 self-heal job, not by a person.
+
+**A board is judged on its own freshness, never a role on its age (2026-08-30).** Seventeen
+ACTIVE native rows pointed at tenants that answer HTTP 200 with one to seven postings whose
+newest date was one to twelve years old (11 SmartRecruiters, 3 Recruitee, 2 Lever, 1 Comeet
+on 2026-08-30; `docs/BACKLOG.md` 406 counted 18 with HiBob, since repaired), and
+`TLVTech`'s *Data Analyst*, posted 2024-10-22, was emailed as a new role on 2026-08-28.
+Every predicate here saw `n > 0` and called that healthy. The operator rejected a maximum
+age on ROLES ("if we saw honeybook still posted then its still relevant even if old" —
+HoneyBook's 233-day-old role sits on a board that posts every month), so the verdict is the
+BOARD's: `abandoned()` says a board whose newest posting is `STALE_BOARD_DAYS` old is an
+abandoned tenant whatever its HTTP status, and `fetchers.fetch_company` RAISES
+`BoardAbandoned` on it — the `BoardEmpty` precedent — so the run records it as a failed
+fetch with this reason, the mail names it, the self-heal re-resolves it, and no posting from
+it reaches the classifier. It is a raise and not a stale reason alone because
+`resolve_broken._works` reads a board with postings as a SUCCESSFUL re-resolution: a
+reason-only verdict would be laundered back onto the row every morning. The company's
+already-matched roles survive `run.py`'s seven-day `fail_grace` (that rule is `run.py`'s), so
+the mail says it on day one and the board forgets the roles on day eight — which is also the
+window a human has if the verdict is wrong for a whole platform (`MASS_ABANDONED_MIN`).
+
+The judgement is STRICT: every posting must carry a parseable date, and an Israel-scoped
+fetch (`israel_scoped`, or a row whose own URL asks the board for a place or a keyword) is
+never judged, because its postings are a filtered subset whose dates say nothing about the
+board. A false positive here is sticky — a live board refused every morning until a person
+acts — while the false negative is the status quo this rule replaces. The date's MEANING is
+the platform's: comeet and greenhouse hand back an update stamp (a dead board stops being
+updated — safe), smartrecruiters a release date it never bumps, lever a creation date it
+never bumps. The one live board among the 17 (Tonkean, lever, two Tel Aviv roles created
+2024-02 and still open) is why a creation-dated platform gets a second look before the
+raise — `fetchers._hosted_board_alive` — and why bamboohr's and successfactors' tenants,
+which fill no date at all (0 dated of 82 and of 28 postings), can never be judged: the
+verdict is blind to those three platforms and `platform_check` can only show the declared
+one (jobvite), not the ones that go blank at runtime.
 """
 from __future__ import annotations
 
@@ -91,6 +128,32 @@ _MAIL_MAX_NAMES = 6
 # was supposed to report it. 25 names ≈ 3 KB, and the largest real morning on record is 3.
 _MAIL_MAX_ERRORS = 25
 
+# A board whose newest posting is this old is an abandoned tenant. A plain constant, not an
+# environment knob: flipping it for one run would take every abandoned row out of
+# `stale.json` and announce them all as `cleared`. Tests pin it with monkeypatch.
+# `registry_health.STALE_BOARD_DAYS` is the same number for the same reason.
+STALE_BOARD_DAYS = 365
+
+# `fetch_company` judges one row at a time, so CLAUDE.md rule 2 (a mass verdict is a broken
+# run) can only be applied where every judged row is visible at once: `mail_lines`, over the
+# rows refused TODAY (a standing count would print the line every morning for ever). Two
+# floors, because a date field breaks per PLATFORM and smartrecruiters has 20 judgeable rows
+# against a fleet of ~450: the whole fleet at MIN / PCT, or one platform at PLATFORM_MIN
+# rows and PLATFORM_PCT of that platform's judged rows.
+MASS_ABANDONED_MIN = 45
+MASS_ABANDONED_PCT = 10
+MASS_ABANDONED_PLATFORM_MIN = 5
+MASS_ABANDONED_PLATFORM_PCT = 50
+
+# The message `fetchers.BoardAbandoned` carries and `run.py` records as
+# `BoardAbandoned: <message>[:70]` — built AND parsed here, so the string is a contract.
+_ABANDONED_MSG = "newest posting {newest} ({age} days old), {n} posting{s}"
+_ABANDONED_RX = re.compile(r"^BoardAbandoned: newest posting (\d{4}-\d{2}-\d{2}) \((\d+) days old\)")
+
+# A query parameter that asks the board for a place or a keyword: that row's fetch is scoped
+# by its URL (`jobs.sap.com/...?q=&locationsearch=Israel`) even when the platform is not.
+_SCOPED_PARAM = re.compile(r"(?i)^(?:.*(?:location|country|keyword|searchtext).*|q)$")
+
 
 def _load(path):
     """A state file, or {} — for a missing file, unreadable JSON, or valid JSON that is not
@@ -109,7 +172,9 @@ def israel_scoped(platform):
     """The fetcher for this platform narrows to Israel itself (`fetch_x.israel_scoped`),
     so neither its zero nor its baseline says anything about the board. Read off the
     fetcher, so a new scoped fetcher cannot be forgotten here."""
-    from .fetchers import FETCHERS   # lazy: health is imported inside the run, never by fetchers
+    # lazy, and it must stay lazy: `fetchers.fetch_company` imports this module (lazily too)
+    # for `abandoned()`, so a module-level import in either direction is a cycle
+    from .fetchers import FETCHERS
     return bool(getattr(FETCHERS.get((platform or "").strip().lower()), "israel_scoped", False))
 
 
@@ -119,6 +184,76 @@ def zero_is_a_measurement(platform):
     refresh_scrape_cache's business)."""
     plat = (platform or "").strip().lower()
     return plat in _PSEUDO_OR_BY_DESIGN or israel_scoped(plat)
+
+
+def url_scoped(api_url):
+    """Does this row's own address ask the board for a place or a keyword? Then its postings
+    are a filtered subset whatever the platform declares, and their dates say nothing about
+    the board. Reads parameter NAMES in the query string only: a Comeet `?token=` or a
+    Greenhouse `?content=true` is not a scope."""
+    query = str(api_url or "").partition("?")[2]
+    return any(_SCOPED_PARAM.match(part.partition("=")[0].strip())
+               for part in re.split(r"[&;]", query) if part.strip())
+
+
+def board_freshness(jobs):
+    """(newest date or None, dated, undated) over a fetcher's postings. A `posted_date` that
+    is empty or not a `YYYY-MM-DD` prefix (`fetchers._iso_date` may hand back raw text) is
+    UNDATED — counted, never skipped, because `abandoned()` is strict about it."""
+    dated, undated = [], 0
+    for j in jobs or ():
+        d = str((j or {}).get("posted_date") or "").strip()[:10] if isinstance(j, dict) else ""
+        # the shape first: `date.fromisoformat` also accepts `20240101`, and an epoch or a
+        # job id that happens to be eight digits must not become a date
+        try:
+            ok = len(d) == 10 and d[4] == "-" and d[7] == "-"
+            dated.append(_dt.date.fromisoformat(d) if ok else None)
+        except ValueError:
+            dated.append(None)
+        if dated[-1] is None:
+            dated.pop()
+            undated += 1
+    return (max(dated) if dated else None), len(dated), undated
+
+
+def abandoned(platform, api_url, jobs, today=None):
+    """The board-freshness verdict: `{"newest", "age_days", "n"}` when this board is an
+    abandoned tenant, else None. None — never a verdict — when:
+
+      * the platform's zero is a measurement (`israel_scoped`, `scrape`, `discovery`): the
+        postings are Israel hits, not the board (a stale Israel role on a live 2,700-posting
+        Workday tenant would otherwise condemn the tenant), or a scrape row, whose dates are
+        the scraper's to judge (4.8 % of cached postings carry one);
+      * the row's own URL scopes the fetch (`url_scoped`);
+      * there are no postings (that is `empty-board`'s question);
+      * ANY posting is undated — cannot tell. Strict on purpose: a false positive is sticky.
+
+    `today` is injectable so a replay is date-independent; a future-dated posting can never
+    be abandoned (negative age)."""
+    plat = (platform or "").strip().lower()
+    if not jobs or zero_is_a_measurement(plat) or url_scoped(api_url):
+        return None
+    newest, dated, undated = board_freshness(jobs)     # counts, so a generator is never len()'d
+    if newest is None or undated:
+        return None
+    age = ((today or _dt.date.today()) - newest).days
+    if age < STALE_BOARD_DAYS:
+        return None
+    return {"newest": newest.isoformat(), "age_days": age, "n": dated}
+
+
+def abandoned_message(verdict):
+    """The text `fetchers.BoardAbandoned` carries: `newest posting 2024-10-22 (677 days old),
+    1 posting`. Under 70 characters with no `?`, so `run.py`'s cut keeps the date and the age."""
+    n = int(verdict.get("n") or 0)
+    return _ABANDONED_MSG.format(newest=verdict["newest"], age=verdict["age_days"], n=n,
+                                 s="" if n == 1 else "s")
+
+
+def abandoned_from_error(error):
+    """`(newest, age_days)` from a recorded `BoardAbandoned: …` error text, else None."""
+    m = _ABANDONED_RX.match(str(error or ""))
+    return (m.group(1), int(m.group(2))) if m else None
 
 
 def _int(value, default):
@@ -183,16 +318,23 @@ def overnight_verdict(entry, today=None):
     return None
 
 
-def stale_reason(platform, api_url, n, status, baseline_best, overnight=None):
+def stale_reason(platform, api_url, n, status, baseline_best, overnight=None, *, error=None):
     """`overnight` is `overnight_verdict(...)[0]` for a scrape row with an empty cache
     (None for everything else). It only ever REPLACES a `regressed-to-zero`: an overnight
     error names the failure, an overnight measurement withdraws the flag. A row that never
     produced (baseline 0) gets no flag from it — the scraper's own rot parking owns that
     row after 7 error nights, and 18 such rows on 2026-08-26 would otherwise have entered
-    the weekly self-heal and the targeted LinkedIn rotation for nothing."""
+    the weekly self-heal and the targeted LinkedIn rotation for nothing.
+
+    `error` is the recorded exception text (`Class: message`, as `run.py` and
+    `health_check.py` both write it): a `BoardAbandoned:` prefix is the freshness verdict
+    the fetch already reached, and it is its own reason — a fetch error is repaired by
+    re-resolving the address, an abandoned tenant by finding where the company posts now."""
     plat = (platform or "").strip().lower()
     if plat == "scrape" and ATS_HOST.search(api_url or ""):
         return "misconfig-scrape-on-ats"
+    if status == "error" and abandoned_from_error(error):
+        return "abandoned-board"
     if status == "error":
         return "fetch-error"
     # An Israel-scoped fetcher answers "is the board dead?" itself (`BoardEmpty`), and its
@@ -238,12 +380,16 @@ def record(results, baseline_path=BASELINE, stale_path=STALE, rot_path=ROT, *, w
         # board. No registry row has one today (0 of 1,245) — this keeps it that way.
         api = _public(r.get("api", ""))
         reason = stale_reason(plat, api, n, r.get("status", "ok"), best,
-                              overnight=verdict[0] if verdict else None)
+                              overnight=verdict[0] if verdict else None, error=r.get("error"))
         if reason:
             stale[name] = {"careers_url": api, "platform": plat, "reason": reason}
             error = r.get("error") or (verdict[1] if verdict and reason == "fetch-error" else "")
             if error:
                 stale[name]["error"] = str(error)[:120]
+            if reason == "abandoned-board":
+                # kept on the row so `mail_lines` can tell "the tenant posted again" from
+                # "the threshold moved under it" the morning the row leaves this file
+                stale[name]["newest"], stale[name]["age_days"] = abandoned_from_error(error)
     if not write:
         return stale
     try:
@@ -326,7 +472,59 @@ _REASONS = (
     ("regressed-to-zero", "regressed to zero", _MAIL_MAX_NAMES),
     ("empty-board", "empty", _MAIL_MAX_NAMES),
     ("misconfig-scrape-on-ats", "scrape row{s} on an ATS host", _MAIL_MAX_NAMES),
+    # last, so the standing line the tests pin for the four above reads the same; the name
+    # carries the recorded text (`BoardAbandoned: newest posting 2024-10-22 (677 days old) …`)
+    # and the delta is the ONLY line that ever names one (quiet standing), so it gets the
+    # fetch-error cap: 15 names on the morning they enter, never `+9 more`. (The names are
+    # public either way: `run.py`'s `Failed companies:` line carries every refused row with
+    # this same text.)
+    ("abandoned-board", "abandoned board{s}", _MAIL_MAX_ERRORS),
 )
+
+# reasons the standing line counts without naming: the same names every morning is the
+# noise the delta line exists to escape (25 misconfig rows; 15 abandoned tenants)
+_QUIET_STANDING = ("misconfig-scrape-on-ats", "abandoned-board")
+
+
+def _judged_by_platform(scanned):
+    """`{platform: rows}` this run's freshness verdict could have judged — rows on a platform
+    whose zero is evidence, at an address that does not scope the fetch. The denominators
+    of the mass-verdict floors; `{}` for a caller that passed only names."""
+    out = {}
+    if not hasattr(scanned, "items"):
+        return out
+    for v in scanned.values():
+        if not isinstance(v, dict):
+            continue
+        plat = (v.get("platform") or "").strip().lower()
+        if zero_is_a_measurement(plat) or url_scoped(v.get("api")):
+            continue
+        out[plat] = out.get(plat, 0) + 1
+    return out
+
+
+def _mass_verdict(new_abandoned, stale, scanned):
+    """The rule-2 line, or None. `new_abandoned` are the rows refused as abandoned TODAY."""
+    judged = _judged_by_platform(scanned)
+    total = sum(judged.values())
+    if not total or not new_abandoned:
+        return None
+    by_plat = {}
+    for n in new_abandoned:
+        plat = ((stale.get(n) or {}).get("platform") or "").strip().lower()
+        by_plat[plat] = by_plat.get(plat, 0) + 1
+    fleet = len(new_abandoned) >= max(MASS_ABANDONED_MIN, total * MASS_ABANDONED_PCT // 100)
+    plat_hits = sorted((p, k) for p, k in by_plat.items()
+                       if judged.get(p) and k >= max(MASS_ABANDONED_PLATFORM_MIN,
+                                                     judged[p] * MASS_ABANDONED_PLATFORM_PCT // 100))
+    if not fleet and not plat_hits:
+        return None
+    where = "; ".join(f"{k} of the {judged[p]} {p} rows judged" for p, k in plat_hits) or \
+            f"{len(new_abandoned)} of the {total} rows judged"
+    return (f"mass verdict: {len(new_abandoned)} board{'s' if len(new_abandoned) != 1 else ''} newly "
+            f"refused as abandoned this morning ({where}) — a platform-wide date change reads exactly "
+            f"like this; check two by hand before believing {len(new_abandoned)} dead tenants. Their "
+            f"roles leave the board in 7 days")
 
 
 def _fetched_none(scanned, name):
@@ -401,9 +599,20 @@ def mail_lines(stale, previous=None, scanned=None, rot_path=ROT, today=None):
         # file the day that rule landed), and a scrape row whose zero the scraper measured
         # (roles found, none in Israel).
         rot = None
-        gone = []
+        gone, unrefused = [], []
         for n, v in previous.items():
             if n in stale or (scanned is not None and n not in scanned):
+                continue
+            # An `abandoned-board` row that left is NEVER "cleared": the general rule below
+            # cannot see it (an abandoned board returns postings, so `_fetched_none` is
+            # False), and the run's outcome cannot tell a tenant that posted again from a
+            # date field that went blank — both make `abandoned()` return None. So they are
+            # listed under their own word, and several at once are called what they are.
+            # The one exception: a recorded age below today's threshold left because the
+            # rule moved (a commit), not the board — not announced at all.
+            if v.get("reason") == "abandoned-board":
+                if _int(v.get("age_days"), STALE_BOARD_DAYS) >= STALE_BOARD_DAYS:
+                    unrefused.append(n)
                 continue
             # THE GENERAL RULE, when the caller passed this run's outcomes and not just names
             # (`run.py` and `health_check.py` both pass the results dict): a row flagged for
@@ -437,14 +646,28 @@ def mail_lines(stale, previous=None, scanned=None, rot_path=ROT, today=None):
                     continue
             gone.append(n)
         gone.sort()
+        unrefused.sort()
         if new:
             delta.append("new: " + " · ".join(_by_reason({n: stale[n] for n in new})))
         if gone:
             delta.append("cleared: " + _names([(n, "") for n in gone]))
+        if unrefused:
+            delta.append("no longer refused as abandoned: " + _names([(n, "") for n in unrefused], _MAIL_MAX_ERRORS)
+                         + (f" ({len(unrefused)} at once — a tenant posts again one at a time; a "
+                            f"fetcher's dates going blank reads the same)" if len(unrefused) >= 3 else ""))
+        # CLAUDE.md rule 2, applied at the only point that sees every judged row: a morning
+        # on which a platform's dates read as years old is a date-field change, not N dead
+        # tenants. The fetch has already refused them (it cannot be un-raised from here);
+        # `run.py`'s seven-day `fail_grace` is the window this line has to reach a person.
+        mass = _mass_verdict([n for n in new if stale[n].get("reason") == "abandoned-board"], stale, scanned)
+    else:
+        mass = None
     # the standing line names the misconfig rows by count only: 25 of them, the same 25 every
     # morning, is exactly the noise the delta line exists to escape
-    parts = _by_reason(stale, quiet=("misconfig-scrape-on-ats",))
+    parts = _by_reason(stale, quiet=_QUIET_STANDING)
     out = []
+    if mass:
+        out.append(mass)
     if delta:
         out.append("changed today: " + " · ".join(delta))
     if parts:

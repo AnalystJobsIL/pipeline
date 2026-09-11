@@ -352,6 +352,7 @@ def region_report(rows, fetch=False, out=print):
     if not fetch:
         out("  (add --fetch for the Israel counts -- one request per native row)")
         return hits
+    from pipeline import fetchers
     from pipeline.israel import is_israel_job
     from pipeline.fetchers import fetch_company
     cache = {}
@@ -367,6 +368,8 @@ def region_report(rows, fetch=False, out=print):
             try:
                 jobs = fetch_company(dict(zip(
                     ["company_name", "ats_platform", "token", "api_url", "active", "notes"], r)))
+            except fetchers.BoardAbandoned as e:
+                jobs = e.jobs          # refused for its dates; still measurable for REGION
             except Exception:                                     # noqa: BLE001
                 continue
         else:
@@ -385,6 +388,12 @@ def region_report(rows, fetch=False, out=print):
 # --------------------------------------------------------------------------------------- #
 # abandoned tenants -- the HiBob class
 # --------------------------------------------------------------------------------------- #
+# The operator replaced "seen 3+ times earns a fetcher" with ONE row on 2026-08-26
+# (ARCHITECTURE.md section 1, support policy), and this tool went on labelling `BUILD` at 3 —
+# so a platform with one or two rows read `below` here while the policy the docs state says
+# build it. Two rows sat under that label for a fortnight. One constant, both call sites.
+BUILD_MIN_ROWS = 1
+
 STALE_BOARD_DAYS = 365
 
 
@@ -425,8 +434,20 @@ def stale_boards(rows, days=STALE_BOARD_DAYS, out=print, workers=8):
     posting as a current job is the product harm this measures.
 
     Native rows only: a scrape row's dates come from the cache and are the scraper's to judge.
+
+    **Since 2026-09-11 this is a report ABOUT a verdict, not a second opinion beside it.**
+    `fetchers.fetch_company` refuses an abandoned tenant by raising `BoardAbandoned`, so the
+    rows this tool exists to find no longer come back as postings at all -- they are caught
+    here and counted, and the headline splits them the way the pipeline does: REFUSED is what
+    the morning mail will name, SPARED is a row the dates condemn and the fetch does not
+    (`fetchers._hosted_board_alive`: Tonkean's two 2024 Lever roles are still served by
+    `jobs.lever.co/tonkean`, and Lever never bumps `createdAt`). Without that split this tool
+    and the mail would disagree every morning with neither of them wrong.
+
+    Returns the stale rows as `(row, newest_date, n_postings, refused)`.
     """
     import concurrent.futures as _cf
+    from pipeline import fetchers
     from pipeline.fetchers import fetch_company
     cols = ["company_name", "ats_platform", "token", "api_url", "active", "notes"]
     native = [r for r in rows if len(r) > 5 and r[4] == "true"
@@ -435,8 +456,14 @@ def stale_boards(rows, days=STALE_BOARD_DAYS, out=print, workers=8):
     def newest(r):
         try:
             jobs = fetch_company(dict(zip(cols, r)))
+        except fetchers.BoardAbandoned as e:
+            # THE ONE EXCEPTION THAT IS THIS CENSUS'S OWN ANSWER. `fetch_company` refuses an
+            # abandoned tenant by raising, so a bare `except Exception` below would count the
+            # rows this tool exists to find as "could not fetch" and report 0 of them -- the
+            # census blinding itself the morning the verdict it asked for shipped.
+            return r, e.newest_date(), len(e.jobs), True
         except Exception:                                         # noqa: BLE001
-            return r, None, 0
+            return r, None, 0, False
         seen = []
         for j in jobs:
             d = (j.get("posted_date") or "").strip()[:10]
@@ -445,19 +472,26 @@ def stale_boards(rows, days=STALE_BOARD_DAYS, out=print, workers=8):
                     seen.append(dt.date.fromisoformat(d))
                 except ValueError:
                     pass
-        return r, (max(seen) if seen else None), len(jobs)
+        return r, (max(seen) if seen else None), len(jobs), False
 
     with _cf.ThreadPoolExecutor(max_workers=workers) as pool:
         got = list(pool.map(newest, native))
     today = dt.date.today()
-    dated = [(r, d, n) for r, d, n in got if d and n]
-    stale = sorted([(r, d, n) for r, d, n in dated if (today - d).days >= days],
-                   key=lambda x: x[1])
+    dated = [(r, d, n, refused) for r, d, n, refused in got if d and n]
+    stale = sorted([x for x in dated if (today - x[1]).days >= days], key=lambda x: x[1])
+    # The headline is what the PIPELINE does, not what the dates say, and the two differ by
+    # design: a creation-dated platform whose hosted board still answers is spared the refusal
+    # (`fetchers._hosted_board_alive` -- Tonkean's two 2024 Lever roles are live on
+    # `jobs.lever.co/tonkean`). Reporting the date count alone would have this tool and the
+    # morning mail disagree for ever, with neither wrong.
+    spared = [x for x in stale if not x[3]]
     out("active native rows %d - with a dated posting %d - ABANDONED (newest >= %dd) %d"
-        % (len(native), len(dated), days, len(stale)))
-    for r, d, n in stale:
-        out("  %-30s newest %s  %-14s %3d postings  %s"
-            % (r[0][:30], d.isoformat(), (r[1] or "")[:14], n, (r[5] or "")[:44]))
+        " - of which SPARED by a live hosted board %d = REFUSED %d"
+        % (len(native), len(dated), days, len(stale), len(spared), len(stale) - len(spared)))
+    for r, d, n, refused in stale:
+        out("  %-30s newest %s  %-14s %3d postings  %s%s"
+            % (r[0][:30], d.isoformat(), (r[1] or "")[:14], n,
+               "" if refused else "[spared] ", (r[5] or "")[:44]))
     return stale
 
 
@@ -911,7 +945,7 @@ def _report(rows, live=False, want_ats=False, ladder=True):
         print("\nunsupported ATS platforms — rows waiting on a native fetcher")
         print("  (ARCHITECTURE.md section 1: 3+ rows earns one; recipe in section 6)")
         for plat_name, e in unsupported_ats(rows).items():
-            flag = ("WIRE " if e["fetcher"] else "BUILD" if e["rows"] >= 3 else "     ")
+            flag = ("WIRE " if e["fetcher"] else "BUILD" if e["rows"] >= BUILD_MIN_ROWS else "     ")
             note = f" [fetcher `{e['fetcher']}` EXISTS — crack the tenant, don't build]" \
                 if e["fetcher"] else ""
             print(f"  {flag} {plat_name:18} {e['rows']:3} rows ({e['active']} active): "
@@ -1103,11 +1137,10 @@ def main():
         return 0
     if "--ats" in argv and len(argv) == 1:
         for plat_name, e in unsupported_ats(rows).items():
-            # SAME ladder as the report path above, which labels BUILD only at 3+ rows
-            # (ARCHITECTURE.md section 1's support policy). These two paths of one tool
-            # printed different verdicts for the same platform: `jobvite` (1 row) was
-            # `BUILD` here and blank there.
-            flag = ("WIRE " if e["fetcher"] else "BUILD" if e["rows"] >= 3 else "below")
+            # SAME ladder as the report path above, through the one constant
+            # (`BUILD_MIN_ROWS`). These two paths of one tool printed different verdicts for
+            # the same platform: `jobvite` (1 row) was `BUILD` here and blank there.
+            flag = ("WIRE " if e["fetcher"] else "BUILD" if e["rows"] >= BUILD_MIN_ROWS else "below")
             print(f"{flag} {plat_name:18} {e['rows']:3} rows "
                   f"({e['active']} active): {', '.join(e['companies'])}")
         return 0

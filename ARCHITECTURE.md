@@ -514,14 +514,79 @@ comeet, greenhouse, lever, smartrecruiters, recruitee, ashby, workday, oraclehcm
 custom_json (Amazon), workable, breezy,
 bamboohr, **successfactors** (no JSON at all — the `/tile-search-results/` fragment the site's
 own pagination calls, added 2026-08-26 when the operator lowered the support bar to ONE row:
-Stratasys went 0 → 13 Israel roles, SAP 2 → 3), **jobvite** (the `/`<slug>`/search` list;
-Varonis 0 → 3),
+Stratasys went 0 → 13 Israel roles, SAP 2 → 3; **nine more tenants were converted from
+`scrape` on 2026-09-11** — EY 63/63 IL where the page scrape read 5, Alstom 48/38 where it
+read 16 while timing out, Ormat 27/14, Energean 16/8, West Pharmaceutical 7/5, NovoCure 6/6,
+Dentsply Sirona and Sapiens 2/2 each — every one verified through `fetch_company` before the
+row moved, and the platform is the whole reason: these sites answer a browser slowly or not
+at all, and the fragment their own pagination calls answers in one GET. `John Deere` and
+`Challenge Group` serve 0 tiles and stay `scrape` (`docs/BACKLOG.md` 245)), **jobvite**
+(the `/`<slug>`/search` list; Varonis 0 → 3),
 **eightfold** (the `/api/pcsx/search` endpoint; `microsoft` is the same fetcher
 under the name its rows have always carried, because the store keys roles on
 `{ats_platform}:{job_id}`), **phenom** (`POST /widgets`), plus the pseudo-platforms `scrape`
 and `discovery`. Five fetchers ask the board for Israel itself and carry
 `israel_scoped = True` — workday, eightfold/microsoft, phenom, custom_json — which §5a
-explains.
+explains. **A fetcher's job includes the country field, and an empty one is not free:**
+`israel.is_israel_job` reads `country_code` first and trusts a NON-Israeli one as a negative,
+so a fetcher that leaves it blank hands the decision to the place-name scan — which does not
+know every Israeli town. `fetch_successfactors` now reads the country the tile states in its
+own location line (`_sf_country`), and only ever writes `IL`: six real postings of 218 across
+eleven live tenants were being dropped as foreign — four at `Shlomi, ISR, IL` (West
+Pharmaceutical) and two at `Bar Lev, IL, 20156` (Dentsply Sirona), one of them an *Inventory
+& Logistics Analyst* — and the asymmetry is the safety, because stamping a foreign token
+would give a fetcher the power to DELETE a posting the text scan accepts, on a two-letter
+fragment that need not be a country at all. Measured +6 / −0 / 212 unchanged, 2026-09-11. **`fetch_company` is the one entry point, and since 2026-08-30 it judges the
+board it just read before handing the postings on:** a board whose newest `posted_date` is
+`health.STALE_BOARD_DAYS` (365) old or older is an abandoned tenant, and the call raises
+`fetchers.BoardAbandoned` — the `BoardEmpty` precedent — instead of returning postings
+nobody has touched in years. Census 2026-08-30 over the 451 platform-unscoped native rows
+(449 the rule can judge — SAP and Stratasys are url-scoped; one free fetch each): **17
+boards with a newest posting a year old** — 11 `smartrecruiters`, 3 `recruitee`, 2 `lever`,
+1 `comeet` — oldest Ness Technologies 2014-03-18 (its one posting is titled *Test Job*), and
+among them `TLVTech`, whose 2024-10-22 *Data Analyst* the pipeline had emailed as new on
+2026-08-28. An adversarial pass read all 17 by hand: 15 right — four of them a stranger's
+tenant the identity gate had admitted (Riseup is a French e-learning firm,
+`valens.recruitee.com` a German physiotherapy practice; Gloat's and Waterfall Security's real
+boards are live Comeet tenants the registry does not know, both re-pointed on
+2026-09-11), and one, UBQ Materials,
+right for the wrong reason (a tended board whose only offer is an evergreen *Open
+Application*: nothing publishable either way) — one unverifiable behind Cloudflare
+(Fairtility), and **one wrong: Tonkean**, two Tel Aviv roles created 2024-02 on a Lever board
+that renders live today —
+Lever publishes only `createdAt` and never bumps it. So a creation-dated platform gets a
+second look before the raise (`fetchers._hosted_board_alive`: a fetcher declaring
+`hosted_board(row)` names the page a live tenant serves and a dead slug 404s — Tonkean 200,
+Waterfall 404; one GET, only for a board the dates have condemned), and `fetch_recruitee`
+reads `updated_at` before `published_at` as greenhouse does (UBQ Materials: published
+2023-10-24, touched 2026-07-23 — so its 8 rows' `posted_date` changes meaning on the morning
+this lands, and an edited old posting can be emailed once and badged *reposted*, exactly as
+a greenhouse one is). **After both corrections `fetch_company` refuses 15 of the 17.** The rule is the
+board's, never a role's — HoneyBook's board (newest posting 5 days old) keeps its 233-day-old
+role — and it is strict: a single undated posting, an `israel_scoped` fetcher or a row whose
+own URL scopes the fetch (`health.url_scoped`: SAP's `?q=&locationsearch=Israel`) means
+"cannot tell", never a verdict. `jobvite` publishes no dates at all and declares
+`fetch_jobvite.undated = True`; `python -m pipeline.platform_check` shows which platforms the
+verdict can judge (`freshness(judge)`: `ok` / `scoped` / `undated`, MISSING when a fetcher
+emits a blank date without declaring it) — a SOURCE-level cell: bamboohr (0 dated of 82
+postings across its 10 rows) and successfactors (0 of 28) go blank at runtime and read `ok`,
+so the verdict is blind to three platforms, not one. What the verdict does downstream is §5a's; what it
+costs the registry's tools is that every caller of `fetch_company` now sees an exception for
+an abandoned board — right for every activation path (none may adopt a dead tenant), and
+`registry_health.stale_boards` must catch `BoardAbandoned` (it carries `.jobs`, `.newest`,
+`.age_days`) or it reports 0 by construction — it caught a bare `Exception` until the verdict
+landed, so the census that found the class would have reported none of it.
+
+**Landed 2026-09-11, and the pool was drained the same day: 19 → 1.** The 2026-08-30 census
+above was re-derived that morning as **19 rows** (two had aged in, HiBob was repaired), and
+every one was disposed of by hand: **11 boards re-pointed** — Gloat (Comeet `E5.000`, 5/5 IL),
+Waterfall Security (`C7.009`, 5/4 IL, its Lever slug 404s) and nine SuccessFactors conversions
+below — and **15 rows parked** `abandoned-board <date>: newest <d>, N postings; needs
+re-resolution`, a token now in all three spellings of the re-check pool (`verdicts.TOKENS`,
+`check_invariants.POOL`, `listing_hunt.HUNT_POOL`). What is left is `Tonkean`, which the
+verdict SPARES, so the census and the mail agree by construction: the census headline now
+reads `ABANDONED … 1 - of which SPARED by a live hosted board 1 = REFUSED 0`. The hand-drain
+is the part that is not a mechanism — `docs/BACKLOG.md` 593.
 
 Support policy: **one row earns native support** (the operator, 2026-08-26; it was "3+ times"
 until then, which had left SuccessFactors and Jobvite unread while 21 of their 27 rows
@@ -3062,8 +3127,75 @@ digest, from each row's outcome, both files through `pipeline.atomic.write_json`
 2026-08-26; `health_check.py` is the Monday backstop with the same code — since 2026-08-26
 it records the same `Class: message` text and prints the two `Boards` lines, where until
 then its overwrite stripped every `error` reason the digest had written): `misconfig-scrape-on-ats` (a `scrape` row whose URL is a native-ATS host) →
+`abandoned-board` (the fetch raised `BoardAbandoned`, below) →
 `fetch-error` (raised) → `regressed-to-zero` (baseline > 0, now 0; the baseline is the
-all-time high, so this latches) → `empty-board` (0 postings, no baseline). **Zero is a
+all-time high, so this latches) → `empty-board` (0 postings, no baseline).
+
+**`abandoned-board` — a board is judged on its own freshness, never a role on its age
+(2026-08-30, measured again and landed 2026-09-11, `ats-fetch`).** Nineteen ACTIVE native
+rows pointed at tenants that answer
+HTTP 200 with one to seven postings whose newest date was one to twelve years old, and
+every predicate here saw `n > 0` and called that healthy — `docs/BACKLOG.md` 406 lists the
+six structural escapes, and `TLVTech`'s *Data Analyst*, posted 2024-10-22, was emailed as a
+new role on 2026-08-28 and published in `cloud_state/roles.csv`. The operator rejected a
+maximum age on roles ("if we saw honeybook still posted then its still relevant even if
+old"), so the verdict is the BOARD's: `health.abandoned(platform, api_url, jobs)` says a
+board whose newest `posted_date` is `STALE_BOARD_DAYS` (365) old or older is abandoned, and
+`fetchers.fetch_company` raises `BoardAbandoned` on it. From there everything is the
+`fetch-error` path with its own name: `run.py` records `BoardAbandoned: newest posting
+2024-10-22 (677 days old), 7 postings` (health builds that text and parses it back —
+`abandoned_message` / `abandoned_from_error` — so `stale.json` carries `newest` and
+`age_days` beside the reason), the `Failed companies` line names it, the self-heal
+re-resolves it, and **no posting from it reaches the classifier**. It is a raise and not a
+reason alone because `resolve_broken._works` reads any board with postings as a successful
+re-resolution: a reason-only verdict would have been laundered back onto the row every
+morning, and the exception is what makes the ladder keep hunting for where the company
+posts now — which is how HiBob's real board (`careers.hibob.com`, 17/17 IL) was found.
+Three costs, stated: (1) the company's already-matched roles survive `run.py`'s seven-day
+`fail_grace`, so the mail names the board on day one and the board forgets the roles on
+day eight (TLVTech's 2024 role: first refused 2026-08-31, off the board ~2026-09-07 — but
+`open` in the public `cloud_state/roles.csv` until its 60-day `last_seen` window ends, because
+`roles` never judges a failed company's role, `593`); (2) a refused row enters the self-heal queue,
+up to five weekly attempts each — a render plus a `google_via_unlocker` search, ~2 Bright Data
+credits an attempt, so at most ~150 credits over five weeks once the 09-01 cap applies —
+before it gives up and leaves the row ACTIVE — an abandoned row nobody parks is registry's
+item (`593`, with the exact diff); (3)
+`discovery_daily._TARGETABLE` does not include the new reason, so the LinkedIn rotation does
+not cover exactly the companies whose board moved (`discovery`, `593`). The judgement is
+STRICT and exempts what it cannot read: an `israel_scoped` fetcher's postings are Israel
+hits, not the board (a stale Israel role on a live 2,700-posting Workday tenant would
+otherwise condemn the tenant — 69 rows); a row whose own URL asks the board for a place or
+a keyword (`health.url_scoped`: SAP's `?q=&locationsearch=Israel`, Stratasys) is scoped
+whatever the platform declares; a board with ANY undated posting cannot be judged
+(`fetch_successfactors` dates the tiles that carry a date div; `jobvite` dates nothing);
+zero postings is `empty-board`'s question. A false positive here is sticky — a live board
+refused every morning until a person acts — so the rule errs toward the status quo. The
+census that proved it (2026-08-30, 451 platform-unscoped rows, 448 with postings): strict and
+lenient agree on the same 17, 13 boards carry only undated postings (10 bamboohr, 1 jobvite,
+2 successfactors) and every one of them is large and live, HoneyBook's newest posting is 5
+days old. CLAUDE.md rule 2 has no seam at the point of
+verdict (one row at a time), so `mail_lines` supplies it: at `max(MASS_ABANDONED_MIN (45),
+MASS_ABANDONED_PCT (10) % of the rows judged)` abandoned boards in one morning the first
+`Boards` line reads `mass verdict: N boards newly refused as abandoned this morning (11 of
+the 20 smartrecruiters rows judged) — a platform-wide date change reads exactly like this;
+check two by hand …`, inside the seven days `fail_grace` gives a human. It is counted over
+the rows refused TODAY (a standing count would print for ever) and per platform as well as
+fleet-wide (`MASS_ABANDONED_PLATFORM_MIN` 5 rows and `_PCT` 50 %), because a date field
+breaks per platform and smartrecruiters has 20 judgeable rows against ~450 — so it fires on
+the first cloud morning, for smartrecruiters, on 11 boards a person has already read; that
+is the seam speaking once. There is no
+environment knob: lowering the threshold for one run would take every abandoned row out of
+`stale.json`. **An `abandoned-board` row that leaves the file is never `cleared`**: the
+run's outcome cannot tell a tenant that posted again from a fetcher whose dates went blank
+(both make `abandoned()` answer None and the fetch succeed), so such rows are listed under
+`no longer refused as abandoned:` — three or more at once say so in words — and a row whose
+recorded `age_days` is below today's `STALE_BOARD_DAYS` left because the rule moved and is
+not announced at all. On the standing line the reason is quiet-counted like `misconfig`
+(15 unchanging names every morning is the noise the delta exists to escape); on the delta it
+is named with its date, up to 25 names like a fetch error, because that line is the only
+`Boards` line that ever names it — the names are public regardless, on the `Failed
+companies:` line `run.py` prints for every refused row. A lost `stale.json` re-announces
+them all as new and re-fires the mass line: one morning, and it says why. **Zero is a
 measurement, not a fault, for a fetcher marked `israel_scoped`** — workday, eightfold /
 microsoft, phenom, custom_json ask the board for Israel, so their empty list means "no
 Israel roles today": on 2026-08-24 `stale.json` held 26 Workday `empty-board` rows (25
@@ -3159,10 +3291,13 @@ previous, scanned)`):
 - **Boards** changed today: new: 1 fetch error (Dell Technologies: BoardEmpty: … 0 postings
   worldwide) · 2 regressed to zero (X; Y) · cleared: Guardz
 - **Boards** standing: 3 fetch errors (Decart: HttpError: HTTP 404 for …; Dell Technologies:
-  BoardEmpty: … 0 postings worldwide; Akamai: scrape: http:403 (1 night)) · 31 regressed to zero (…) · 36 empty (…) · 25 scrape rows on an ATS host
+  BoardEmpty: … 0 postings worldwide; Akamai: scrape: http:403 (1 night)) · 31 regressed to zero (…) · 36 empty (…) · 25 scrape rows on an ATS host · 17 abandoned boards
 ```
 
-(Illustrative — the shape, with one of each reason. The real 2026-08-26 standing line read
+(Illustrative — the shape, with one of each reason; an abandoned board is named with its
+date on the delta line the morning it enters — `new: 3 abandoned boards (Nexar:
+BoardAbandoned: newest posting 2017-02-02 (3496 days old), 2 postings; …)`, the exact text
+of a scoped local run on 2026-08-30 — and counted after. The real 2026-08-26 standing line read
 `5 fetch errors · 55 regressed to zero · 34 empty · 25 scrape rows on an ATS host`, and its
 delta carried 36 names — 30 scrape `regressed-to-zero`, 3 `fetch-error`, 3 `misconfig`.)
 
