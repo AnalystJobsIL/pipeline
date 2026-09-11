@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**641 filed · 455 open · 186 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**642 filed · 456 open · 186 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 592.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 593.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -244,7 +244,7 @@ closure convention in the header.
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
 
-### infra — 113 open
+### infra — 114 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -359,6 +359,7 @@ closure convention in the header.
 - **589** `589@infra` **A cheap model could pick the one right SERP result instead of fetching four**
 - **590** `590@infra` **`cloud_state/queue_state.json` has no trim, and three row rungs now append to it** —
 - **591** `591@infra` **A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
+- **592** `592@infra` **A mutation shard's red surfaces on whatever sha is at the head of the queue, not on
 
 ### discovery — 30 open
 
@@ -11965,3 +11966,32 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
      Related but distinct from `442` (the shard budget) and from `386` (a guard that cannot
      fail): this is about ATTRIBUTION, not about coverage or runtime.
+
+592. **A mutation shard's red surfaces on whatever sha is at the head of the queue, not on
+     the sha that introduced it** — lane: `infra` (`tools/mutate.py`, `.github/workflows/tests.yml`).
+     Filed 2026-09-11 by `infra` on a measurement handed over by the `registry` session, which
+     found it the way this repo usually finds things: by being blamed for someone else's red.
+
+     `tools/mutate.py` runs its catalogue against the working tree and reports a surviving
+     mutant as a failure of THIS run. The catalogue is `tests/mutations.json`, which every
+     lane appends to, so a record that stops matching its anchor — or a test that stops
+     killing it — becomes visible on the next lane to push, not on the lane that moved the
+     line. On 2026-09-11 `jd-text`'s second broken record was invisible on `jd-text`'s own run
+     and visible on `registry`'s; on the same day this lane re-aimed two records
+     (`bd-policy-retry`, `hunt-suspect-drop`) whose anchors its own change had moved, and
+     nothing would have said so if it had not checked all 312 by hand.
+
+     Why it matters more than it sounds: the reader of a red mutation shard has no reason to
+     look at another lane's commit, so the diagnosis starts in the wrong file every time. The
+     cheap half of the fix is a report, not a gate — `tools/mutate.py` already knows which
+     record failed, and `git log -1 --format=%h -- <record's file>` names the commit that last
+     touched the line it anchors on. Printing that beside the failure turns "your shard is
+     red" into "this record's anchor was last moved by `<sha>` (`<lane>`)". The expensive half
+     — running the catalogue against the merge-base as well, to attribute the red — is a
+     doubling of the gate's cost and is NOT proposed.
+
+     A guard already exists for the adjacent half of this class and is worth citing rather
+     than rebuilding: `test_the_mutation_selector_keeps_every_documented_killer`
+     (`tests/test_registry.py`) and the stale-anchor check every session should run before a
+     push — `for r in mutations: src.count(r["find"]) == 1`. Neither attributes a red; both
+     stop one being introduced.
