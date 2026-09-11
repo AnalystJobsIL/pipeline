@@ -29793,6 +29793,17 @@ def test_the_refused_vocabulary_arms_reach_nothing_the_shipped_appeal_does_not()
         desc = r.get("description") or ""
         assert seniority._relevance(t, c, desc) in ("excluded", "none"), r["title"]
         assert not seniority._DESC_APPEAL_PHRASE.search("כלכלן") and not seniority._DESC_APPEAL_TOOL.search("אקסל")
+    # ...and the tool that measures the gate walks the same gate (574, closed the same day):
+    # a card the shipped appeal admits is bucketed as PASSING, not rejected. Before the fix
+    # `corpus()` passed the title alone and filed every appealed card as `rejected`, so the
+    # 09-03 false-negative rate was measured over a population that included its own fix.
+    sys.path.insert(0, os.path.join(repo, "tools"))
+    import measure_title_gate as mtg
+    cache = {"Zoll": [{"title": "Business Operations, CMS", "location": "Tel Aviv, Israel",
+                       "description": _ZOLL_TEXT}]}
+    _, rejected = mtg.corpus(cache, tier="rejected")
+    _, passing = mtg.corpus(cache, tier="passing")
+    assert rejected == [] and len(passing) == 1 and passing[0][0] == "signal", (rejected, passing)
 
 
 def test_the_delta_audit_lines_bind_to_exactly_one_record_each():
