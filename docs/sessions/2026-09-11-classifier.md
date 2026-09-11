@@ -144,12 +144,12 @@ line (`[classify] superseded verdict cannot be re-judged (…): <key> <- <prefix
 ## 7. Green, and where
 
 **Locally, from the worktree at `origin/master` + this diff:** `python -m pytest` (not `-q`)
-**{{PYTEST}}**; `python check_invariants.py` **`companies.csv OK: 2330 rows, 1365 active, 0
-orphans, pool=824`**; `python docs/check_docs.py` **{{DOCS}}**; `python docs/backlog.py check`
-clean. `python tools/guard_kill.py --base origin/master`: **{{GUARDKILL}}**. The one new
-mutation record, `confirmed-loses-peak-innovation`, run singly: **{{MUTATE}}**.
+****3 failed, 1859 passed, 13 skipped** (run twice on the merged tree; the three are the inherited calendar-rot tests below)**; `python check_invariants.py` **`companies.csv OK: 2330 rows, 1365 active, 0
+orphans, pool=824`**; `python docs/check_docs.py` ****0 error(s), 3 warning(s) over 119 documents****; `python docs/backlog.py check`
+clean. `python tools/guard_kill.py --base origin/master`: ****KILLS 3, CANNOT-FAIL 0** — the vocabulary guard read CANNOT-FAIL on its first run (a refusal is the status quo, the 09-03 lesson) and now also pins the `574` tool fix, which reverting `tools/measure_title_gate.py` breaks**. The one new
+mutation record, `confirmed-loses-peak-innovation`, run singly: ****killed** (`tools/mutate.py --id`, with baseline, 311 s); the re-anchored `desc-appeal-survives-a-shared-careers-page` was proven directly — both mutants applied in the working tree red their named killers and both are green after the revert — because a `--skip-baseline` run today is not evidence (four inherited reds unfilter the killers)**.
 
-**In CI, on the commit that was pushed: {{CI}}.** Inherited before this push: run
+**In CI, on the commit that was pushed: run **34611525857**, conclusion `failure`, **14 of 16 jobs green** — `guard-kill`, six `rehearse` shards and seven of eight `mutation-gate` shards. `guard` red: `3 failed, 1871 passed, 1 skipped` and the three are exactly the inherited calendar-rot tests named below (`infra`). `mutation-gate (5)` red: `39 mutation(s): 38 killed, 1 SURVIVING/failed` — the one is jd-text's `jd-head-skip-uses-the-classifier-regex-again`, "killed ONLY by source-text guard(s)", inherited from `1c1e4a3` where it red that run's shard 3 (run 34610661040); both of this session's records read `killed`.** Inherited before this push: run
 34595704316 on `284f0af` was `failure` on `guard` alone — `3 failed, 1848 passed` — the three
 calendar-rot tests `infra` owns (`test_a_junior_posting_still_contributes_its_employer`,
 `test_workable_reads_the_field_names_the_api_actually_sends`,
