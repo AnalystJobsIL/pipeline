@@ -1462,7 +1462,7 @@ def test_indeed_search_retries_and_names_its_failure_mode():
     calls = {"n": 0}
     blob = ('window.mosaic.providerData["mosaic-provider-jobcards"] = '
             '{"metaData":{"mosaicProviderJobCardsModel":{"results":[{"jobkey":"a"}]}}};')
-    def flaky(url, timeout=90):
+    def flaky(url, timeout=90, **_k):        # **_k: the seam carries a `purpose` since 09-11
         calls["n"] += 1
         return "" if calls["n"] == 1 else blob        # fail once, then succeed
     real = bd_rescue.unlock
@@ -1697,7 +1697,7 @@ def test_an_exhausted_guest_pool_is_not_a_block_and_costs_nothing():
     import discovery_daily as dd
     import bd_rescue
     calls = {"paid": 0}
-    def never_paid(url, timeout=120):
+    def never_paid(url, timeout=120, **_k):
         calls["paid"] += 1
         return ""
     real_guest, real_unlock = dd._li_guest, bd_rescue.unlock
@@ -1834,7 +1834,7 @@ def test_a_hard_blocked_guest_endpoint_still_gets_every_paid_page():
             '<a class="base-card__full-link" href="https://il.linkedin.com/jobs/view/a-%d">'
             '<span class="sr-only"> Data Analyst </span></a>'
             '<h4 class="base-search-card__subtitle">A Co</h4></div></li>')
-    def fake_unlock(url, timeout=120):
+    def fake_unlock(url, timeout=120, **_k):
         paid.append(url)
         return card % (100 + len(paid), 100 + len(paid))
     real_guest, real_unlock = dd._li_guest, bd_rescue.unlock
@@ -2114,7 +2114,7 @@ def test_city_queries_never_pay_even_when_the_guest_endpoint_is_blocked():
     import discovery_daily as dd
     import bd_rescue
     calls = {"paid": 0}
-    def never_paid(url, timeout=120):
+    def never_paid(url, timeout=120, **_k):   # **_k: the seam carries a `purpose` since 09-11
         calls["paid"] += 1
         return ""
     real_guest, real_unlock = dd._li_guest, bd_rescue.unlock
@@ -17457,7 +17457,7 @@ def test_the_only_working_search_rung_actually_parses_a_result(monkeypatch):
         '<div>https://careers.maytronics.co.il/ Careers IL</div></body></html>')
     asked = {}
 
-    def _unlock(u):
+    def _unlock(u, **_k):                    # **_k: the seam carries a `purpose` since 09-11
         asked["url"] = u
         return page
 
