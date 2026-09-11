@@ -2219,12 +2219,21 @@ def test_display_name_writes_only_a_recognisably_same_company():
         ("Bluewhite Robotics", "Bluewhite", "Bluewhite"),    # brand-shorter containment
         ("withfaye", "Faye", "Faye"),                        # brand inside an ATS slug
         ("Jether Energy", "Jether Energy Research", "Jether Energy Research"),  # adds 1 word
-        ("DT", "Direct Travel", "Direct Travel"),            # acronym arm
+        ("HPE", "Hewlett Packard Enterprise",
+         "Hewlett Packard Enterprise"),                       # acronym arm
         ("Abcloudz", "ABCloudz, Inc.", "ABCloudz"),          # legal tail stripped
     ]
     for reg, named, want in cases:
         verdict, payload = F.display_name_from_evidence(reg, named)
         assert (verdict, payload) == ("write", want), (reg, named, verdict, payload)
+    # `DT` -> `Direct Travel` was in that list until 2026-09-11, written by the acronym
+    # arm, and it was WRONG on the board every day: the registry`s `DT` is Digital Turbine
+    # (its LinkedIn card 4452910748 names Digital Turbine six times; dt.com is an unrelated
+    # US travel agency). The acronym arm cannot tell the two apart from strings alone --
+    # what tells them apart is the declaration `ALIASES["dt"] = "digital turbine"`, which
+    # moves `DT`s stem and makes the acronym stop matching. This is the record of that.
+    assert F.display_name_from_evidence("DT", "Direct Travel") == ("report", "different-name")
+    assert F.identity_key("DT") == "digital turbine"
 
 
 def test_display_name_reports_a_divergent_or_junk_name_instead_of_writing():

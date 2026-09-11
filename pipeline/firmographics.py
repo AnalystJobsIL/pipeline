@@ -254,6 +254,45 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     # across all 2,162 rows plus both role stores nothing else answers to `doit` or
     # `doitintl`. A third employer on either string would make this declaration wrong.
     "doit": "doitintl",
+    # --- 2026-09-11, the `registry` identity batch. Six employers were publishing one
+    # opening under two names each. Unlike every declaration above, the alias string here
+    # IS a `companies.csv` row -- which is exactly why they could not be declared before:
+    # `roles._alias_fold_target` refused any registry name in any state, so `522` (Oak) and
+    # `571` (Investing) each spent a session discovering the refusal. That gate now takes
+    # the registry's own dated `alias-of <R>` verdict as the second declaration, and each
+    # row below carries one. Both halves are required and both are dated; remove either and
+    # the fold stops, which is the intended failure direction.
+    #
+    # `DT` is Digital Turbine. The published card read `Direct Travel | Senior Data
+    # Scientist` because the parked `DT` row pointed at dt.com (Direct Travel, a US travel
+    # agency) while the posting (il.linkedin.com/.../senior-data-scientist-at-dt-4452910748)
+    # names Digital Turbine six times and Herzliya twice; Digital Turbine's Workday board
+    # serves the same opening as `Senior Data Scientist JR101044`, Petah Tikva.
+    "dt": "digital turbine",
+    # `Gong.io` and `Port.io` are the `.io` domain spellings of two rows we already scan on
+    # their native ATS. Measured before parking, so no coverage was traded: Gong's
+    # greenhouse tenant `gongio` serves 13 Israel postings and the `Gong.io` scrape cache
+    # held exactly those 13 (every url a job-boards.greenhouse.io/gongio one); Port's comeet
+    # 59.004 serves 9 Israel postings and `Port.io`'s cache held those same 9. The daily
+    # mail had carried `claim conflicts 2 (Gong<-Gong.io, Port<-Port.io)` since 08-16.
+    "gong io": "gong",
+    "port io": "port",
+    # `AutoDS - Automatic Dropshipping Tools` is the LinkedIn spelling of `autods`, whose
+    # greenhouse tenant is the board. One `Data Analyst` published twice on 2026-09-09
+    # (LinkedIn 4464481513, 4,033 chars; greenhouse 5417867008, 1,906) -- two open records
+    # sharing no id, no url and no posting key, so only a name-level declaration joins them.
+    "autods automatic dropshipping tools": "autods",
+    # `Investing.com` is `571` itself, parked `alias-of Investing` since 2026-08-28 with the
+    # SAME api_url as the live row (investing-careers.com/open-positions).
+    "investing com": "investing",
+    # Menora: two active rows, `Menora Mivtachim Group` and the Hebrew holdings string
+    # `מנורה מבטחים החזקות`, each publishing its own live analyst role and each
+    # carrying a blurb (`blurb-names-other` fired on the pair every morning). The Latin row
+    # is crowned and holds the own board; the Hebrew row is parked `alias-of`. The direction
+    # is also the only one a single declaration can express: `identity_key` strips `Group`,
+    # so the Latin name's stem and its plain form differ and the declared gate (which tests
+    # the plain form) could not bridge them without a second key.
+    "מנורה מבטחים החזקות": "menora mivtachim",
     "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
     "vmware broadcom": "vmware",
     "simply joytunes": "simply",

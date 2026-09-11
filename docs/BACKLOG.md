@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**628 filed · 452 open · 176 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**630 filed · 454 open · 176 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 578.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 580.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -478,7 +478,7 @@ closure convention in the header.
 - **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
 - **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
 
-### company-intel — 22 open
+### company-intel — 23 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -502,6 +502,7 @@ closure convention in the header.
 - **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
 - **550** `550@company-intel` **The board shows `Holisto` for a company that now calls itself trivago Innovation
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
+- **579** `579@company-intel` **Four firmographics record pairs describe one employer each**
 
 ### ats-fetch — 20 open
 
@@ -548,7 +549,7 @@ closure convention in the header.
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 - **574** `574@classifier` **The classifier lane's own two measurement tools no longer walk the gate they claim to
 
-### jd-text — 17 open
+### jd-text — 18 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -567,6 +568,7 @@ closure convention in the header.
 - **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
 - **567** `567@jd-text` **A closed row's stored JD carries a second posting's bullets, and it moved a verdict** —
 - **572** `572@jd-text` **The role ledger has no refutation channel, so a repair to a wrong-but-longer JD is
+- **578** `578@jd-text` **Three Menora cards carry a CAPTCHA page as their description**
 
 ### render — 6 open
 
@@ -11389,6 +11391,55 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      Until then the duplicate leaves the dataset by a url-precise retraction on the LinkedIn
      copy (`cloud_state/roles_retractions.jsonl`, 2026-09-03) — **which is a hand-drain for
      one posting and not a fix for the class.** The next `Investing` posting duplicates again.
+
+     **CLOSED 2026-09-11 (`registry`) — and NOT by the rename this item asked for.** The
+     morning's audit found five more pairs of the same shape (DT/Digital Turbine,
+     Gong.io/Gong, Port.io/Port, AutoDS - Automatic Dropshipping Tools/autods, Menora ×2),
+     which is what a rename cannot answer: it would have taken six renames, each of them a
+     delete+add that `merge_csv_rows` resurrects on the next cloud merge, and it would have
+     left the trap armed for occurrence #4. What shipped instead reads the ruling the
+     registry had already written. `pipeline/verdicts.alias_target` parses the surviving
+     name out of an `alias-of <R> <date>:` segment (64 of 64 live rows parse), `run.py`
+     hands `_alias_fold_target` that map as `aliased`, and a registry name folds only when
+     the note's `<R>` and an `ALIASES` key naming the same row AGREE — two dated
+     declarations, `declared` gate only, never `casefold`. `Investing.com` keeps its name
+     and its 2026-08-28 verdict and folds; the tripwire in
+     `test_the_live_registry_lets_the_doit_declaration_fold` was flipped to the positive
+     form in the same commit, and a new live-registry test pins all six pairs. A SEVENTH
+     pair, `Aqurate Data`/`aQurate`, began folding the same day with no new declaration —
+     it had carried both halves since 2026-08-23 and nothing had ever read them.
+
+578. **Three Menora cards carry a CAPTCHA page as their description** — lane: `jd-text`
+     (the text) / `scraper` (the fetch). Filed 2026-09-11 by `registry`.
+     `scraped_cache.json` holds three `מנורה מבטחים החזקות` cards (around lines 38541,
+     38554, 38567) whose description is the Radware interstitial — *"Please solve this
+     CAPTCHA to request unblock to the website ... from 20.186.237.1 on September 06 2026,
+     02:22:41 UTC"*. It passes whatever length floor let it in, so `description_len` is a
+     lie for those rows and a classifier reading one is reading the block page. The row was
+     parked `alias-of` on 2026-09-11 and the board address moved to `Menora Mivtachim
+     Group`, so no NEW card arrives under that name — but the stored text stays until
+     something refuses it. The generic half is the ask: a block-page predicate beside
+     `looks_like_jd` (`CAPTCHA to request unblock`, `Request Rejected`, `support ID`), so
+     the class cannot enter under any company. menoramivt.co.il answers a plain GET with
+     either the board or the captcha depending on the hour, which is why this is a fetch
+     question as much as a text one.
+
+579. **Four firmographics record pairs describe one employer each** — lane:
+     `company-intel`. Filed 2026-09-11 by `registry`.
+     `cloud_state/firmographics.json` holds `DT` beside `Digital Turbine`, `autods` beside
+     `AutoDS - Automatic Dropshipping Tools`, `Gong` beside `Gong.io`, and `Port` beside
+     `Port.io`. They disagree with each other: the two AutoDS records say 264 and 259
+     employees, the two Port records 508 and 200 — a 2.5x spread on one company, and
+     whichever one a card joins to is the one the reader sees. The registry parked the
+     second of each pair `alias-of` on 2026-09-11 and `firmographics.identity_key` now
+     folds all four alias strings onto the survivor, so the JOIN is already right; what is
+     left is the stored duplicate, which will keep being re-researched and keep costing a
+     research call. `DT`'s record is the one to read first: every substantive field is
+     Digital Turbine's (Nasdaq APPS, Austin, Fyber) while `display_name` said
+     `Direct Travel`, and that field is what put an unrelated company's name on the board.
+     `display_name_from_evidence("DT", "Direct Travel")` now answers
+     `("report", "different-name")` rather than writing it, so the source is closed; the
+     record still has to be merged.
 
 572. **The role ledger has no refutation channel, so a repair to a wrong-but-longer JD is
      undone by the next digest** — lane: `jd-text` (the predicate) / `roles` (the file).

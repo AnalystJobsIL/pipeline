@@ -750,7 +750,8 @@ def _plain_norm(name):
     return " ".join(re.sub(r"[^0-9a-z֐-׿]+", " ", s).split())
 
 
-def _alias_fold_target(name, url, registry_names, active_by_identity, origins):
+def _alias_fold_target(name, url, registry_names, active_by_identity, origins,
+                       aliased=None):
     """(canonical registry name, evidence label) when `name` is a provable alias of
     exactly one ACTIVE registry row — else None. The evidence-driven half of the 533 fix;
     `merge_key` itself never changes (a pure key has nowhere to put an evidence gate, and
@@ -759,7 +760,8 @@ def _alias_fold_target(name, url, registry_names, active_by_identity, origins):
 
     Hard refusals, in order: a REGISTRY name (active or parked) is never rewritten — a
     parked twin like `Meta Israel` keeps its historical string, and Bounce / Bounce AI are
-    both active rows besides having different identity keys; an identity that is EMPTY
+    both active rows besides having different identity keys, UNLESS the registry has itself
+    already ruled that the row is a duplicate (`aliased`, below); an identity that is EMPTY
     (a pure-Cyrillic or pure-punctuation name — `identity_key` deletes those scripts, so
     `''` must never become a bucket junk names fold through); an identity two active rows
     answer to (Amazon/AWS/Amazon Israel — 11 such groups, deliberately separate scanner
@@ -782,9 +784,31 @@ def _alias_fold_target(name, url, registry_names, active_by_identity, origins):
     urls produce one, while 7 pass `_same_origin` against a FOREIGN active row
     (OTORIO->Armis, finbounce->Bounce, DealHub->DealHub.ai, ...). The `url` parameter
     stays in the signature so a future gate has the seam, and so the sweep and intake
-    call sites do not churn."""
+    call sites do not churn.
+
+    `aliased` is the ONE exception to the registry-name refusal, added 2026-09-11 after the
+    class had cost three separate declarations (`522` Oak, `571` Investing, then six pairs
+    in one morning — DT/Digital Turbine, Gong.io/Gong, Port.io/Port, AutoDS/autods,
+    Investing.com/Investing and Menora ×2, every one of them publishing one opening under
+    two names). The refusal is right for a name nobody has ruled on. It was wrong for a row
+    whose OWN note carries a dated verdict a human wrote, `alias-of <R>`: there the registry
+    has already decided this row duplicates R, and refusing anyway only meant the duplicate
+    kept publishing while the `ALIASES` declaration sat inert — silently, no log line, no
+    counter, which is what made the class cost three sessions to see.
+
+    It is `{registry row name -> the survivor that row's own note names}`, built by the
+    caller from `companies.csv` through `verdicts.alias_target`, and a name in it folds only
+    when TWO independently dated declarations AGREE: the registry verdict and an `ALIASES`
+    entry naming the same row. Neither alone is enough — prose can be truncated
+    (`alias_target`'s docstring) and a curated map can outlive the row it described. Such a
+    name gets the `declared` gate ONLY; `casefold` would let a spelling twin move with
+    nobody having ruled. Nothing here rewrites a `companies.csv` cell: the row keeps its
+    historical string, and only ROLE RECORDS fold."""
     name = str(name or "")
-    if not name or name in registry_names:
+    if not name:
+        return None
+    ruled = (aliased or {}).get(name)         # this row's own dated `alias-of <R>` verdict
+    if name in registry_names and not ruled:
         return None
     _ = url                                   # see the docstring: the deleted third gate
     from .firmographics import ALIASES, identity_key
@@ -795,6 +819,12 @@ def _alias_fold_target(name, url, registry_names, active_by_identity, origins):
     if len(targets) != 1:
         return None
     r = next(iter(targets))
+    if ruled:
+        # a registry row: the survivor its note names and the row the declaration points at
+        # must be the SAME, and `casefold` is not on offer -- two declarations, or nothing
+        if ruled == r and ALIASES.get(_plain_norm(name)) == ident:
+            return (r, "declared")
+        return None
     if _plain_norm(name) == _plain_norm(r):
         return (r, "casefold")
     if ALIASES.get(_plain_norm(name)) == ident:
@@ -802,7 +832,8 @@ def _alias_fold_target(name, url, registry_names, active_by_identity, origins):
     return None
 
 
-def fold_company_aliases(jobs, *, registry_names, active_by_identity, origins):
+def fold_company_aliases(jobs, *, registry_names, active_by_identity, origins,
+                         aliased=None):
     """Rewrite each provable alias name onto its canonical registry row's exact string,
     BEFORE `classify_grouped` groups by `merge_key` — so one employer's role is one group,
     one classifier call, one record, one card (the 533 class at intake). The original
@@ -811,7 +842,7 @@ def fold_company_aliases(jobs, *, registry_names, active_by_identity, origins):
     folds = {}
     for j in jobs:
         hit = _alias_fold_target(j.get("company"), j.get("url"),
-                                 registry_names, active_by_identity, origins)
+                                 registry_names, active_by_identity, origins, aliased)
         if not hit:
             continue
         r, _gate = hit

@@ -351,6 +351,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # rewritten — Bounce and Bounce AI are both rows; Meta Israel keeps its historical
     # string), and the active names per identity (two active rows on one identity —
     # Amazon/AWS — fold onto neither).
+    from . import verdicts as _verdicts
     from .firmographics import identity_key as _ik
     _registry_names = {r["company_name"] for r in _all_rows}
     _active_by_ident = {}
@@ -358,8 +359,22 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         if (_r.get("active") or "").strip().lower() == "true":
             _active_by_ident.setdefault(_ik(_r["company_name"]), set()).add(_r["company_name"])
 
+    # ...and the registry's OWN dated rulings: a parked row whose note reads
+    # `alias-of <R> <date>:` has already been judged a duplicate of R by a human, which is
+    # the one thing that lifts the refusal above (2026-09-11; `571` and the five pairs
+    # beside it). The verdict alone does not fold anything -- `_alias_fold_target` also
+    # requires a `firmographics.ALIASES` declaration naming the same row.
+    _aliased = {}
+    for _r in _all_rows:
+        if (_r.get("active") or "").strip().lower() == "true":
+            continue
+        _t = _verdicts.alias_target(_r.get("notes") or "")
+        if _t:
+            _aliased[_r["company_name"]] = _t
+
     def _fold_resolver(name, url):
-        return roles._alias_fold_target(name, url, _registry_names, _active_by_ident, _origins)
+        return roles._alias_fold_target(name, url, _registry_names, _active_by_ident,
+                                        _origins, _aliased)
     if only:
         want = {o.strip().lower() for o in only}
         rows = [r for r in rows if r["company_name"].strip().lower() in want]
@@ -417,7 +432,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # groups by merge_key — one employer, one group, one classifier call, one record.
     candidates, _fold_notes = roles.fold_company_aliases(
         candidates, registry_names=_registry_names,
-        active_by_identity=_active_by_ident, origins=_origins)
+        active_by_identity=_active_by_ident, origins=_origins, aliased=_aliased)
     accepted = roles.classify_grouped(candidates, clf, jdfill, stats, paths)
     print("  " + jdfill.summary(), flush=True)
     # the enrich stage's verdict on itself (both backfill scripts stamp it) and the inline fill's
@@ -441,7 +456,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         stats["israel_matched"] += len(gcands)
         gcands, _gf = roles.fold_company_aliases(
             gcands, registry_names=_registry_names,
-            active_by_identity=_active_by_ident, origins=_origins)
+            active_by_identity=_active_by_ident, origins=_origins, aliased=_aliased)
         for _k, _n in _gf.items():
             _fold_notes[_k] = _fold_notes.get(_k, 0) + _n
         accepted += roles.classify_grouped(gcands, clf, jdfill, stats, paths)

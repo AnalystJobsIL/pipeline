@@ -1165,7 +1165,7 @@ single most common way this codebase breaks (§8). Taxonomy of verdicts:
 | `unsupported ATS <x>` | false | ATS known, no extraction path yet. **Run `python registry_health.py --ats`** — it splits `WIRE` (a fetcher exists, the row just needs its tenant cracked) from `BUILD` (no fetcher) and reports which `BUILD` names clear §1's "seen 3+ times" threshold. *(Typing that split into this cell has produced a wrong statement twice; run it.)* | several jobs claim it — run `registry_health.py`, don't trust this cell |
 | `domain-dead …` | false | DNS/conn dead (GET-verified, lenient TLS — strict TLS on the scanning machine produced 6 false positives) | re-tested **daily** by `scan_dead_domains` (`_rescannable` defaults to 1d) inside the 05:00 digest, and again by the Sunday audit; **a revived domain clears the flag automatically** |
 | `defunct: …` | false | company confirmed shut down/acquired | permanently excluded |
-| `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel) | nobody — **terminal**, and re-opening it republishes every role twice |
+| `alias-of <name>` | false | a SECOND row for a company already scanned at the same board (eBay / eBay Israel). **It is also read by code since 2026-09-11**: `pipeline/verdicts.alias_target` parses the surviving name out of the segment, and that is what lets the roles alias fold rewrite this row's postings onto `<name>` (§7c) — so write it in the dated form `alias-of <name> <date>: <evidence>`, and keep `<name>` spelled exactly as the surviving row | nobody — **terminal**, and re-opening it republishes every role twice |
 | `chrome-verified …` | either | a human-equivalent browser check confirmed the state | as per its class |
 
 Recruiting/staffing agencies are excluded by **two** mechanisms, and neither is sufficient
@@ -6460,7 +6460,7 @@ aggregators, where `_posting_key` and `_tenant` are `''` by construction. `NVIDI
 a LinkedIn showcase page, not an employer.
 
 `roles._alias_fold_target` decides, and the decision is evidence-driven, never a string
-rule. A non-registry name C folds onto active registry name R only when
+rule. A name C folds onto active registry name R only when
 `identity_key(C) == identity_key(R)`, exactly ONE active name matches that identity, and
 one of two gates passes: **casefold** (the strings differ only in case/width/whitespace
 — `Helfy`/`helfy`); or **declared** (the name is a `firmographics.ALIASES` key for that
@@ -6480,6 +6480,26 @@ fullwidth name — never a bucket junk folds through); an identity two active ro
 to (the Amazon/AWS class — 11 such groups are deliberately separate scanner rows); and
 bare suffix-strip equality with no declaration (`AppSec Labs` /
 `AppSec`, two employers, BACKLOG 144 — that pair stays a render `title-twin` warning).
+
+**The one exception, 2026-09-11: a row the registry has already ruled on.** The
+registry-name refusal is right for a name nobody has judged, and it was wrong for a row
+whose OWN note carries a dated `alias-of <R>` verdict — there a human has already decided
+this row duplicates R, and refusing anyway only meant the duplicate kept publishing while
+the `ALIASES` declaration sat inert, silently: no log line, no counter, nothing in the
+ledger. The class cost three sessions to see (`522` Oak, `571` Investing, then six pairs
+in one morning: DT/Digital Turbine, Gong.io/Gong, Port.io/Port, AutoDS/autods,
+Investing.com/Investing, Menora ×2 — one board card read `Direct Travel | Senior Data
+Scientist` for a Digital Turbine role, and the mail had carried `claim conflicts 2
+(Gong<-Gong.io, Port<-Port.io)` since 08-16). So `run.py` also passes `aliased`, built from
+`companies.csv` with `verdicts.alias_target`: `{parked row name -> the survivor its note
+names}`. Such a name folds only when **two independently dated declarations agree** — the
+registry verdict and an `ALIASES` entry pointing at the same row — and it gets the
+`declared` gate only, never `casefold`. Neither half alone folds anything: prose can be
+truncated, and a curated map can outlive the row it described. Nothing about this rewrites
+a `companies.csv` cell; the row keeps its historical string, which is why parking is still
+the whole registry-side action. The 2026-09-11 registry batch is the worked example
+(`docs/sessions/2026-09-11-registry.md`), and a seventh pair, `Aqurate Data`/`aQurate`,
+started folding the same day without a new declaration: it already had both halves.
 
 It applies in two places, both before anything downstream can split: `run.py` folds the
 candidate list BEFORE `classify_grouped` (one group, one classifier call — the folded

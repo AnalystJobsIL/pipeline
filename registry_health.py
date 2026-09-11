@@ -840,6 +840,30 @@ def alarms(rows=None, live=False, res=None, prev=None):
 
 # ---------------------------------------------------------------- report
 
+_RECRUITER_VERDICT = re.compile(r"^recruiter \d{4}-\d{2}-\d{2}\s*:", re.I)
+
+
+def recruiter_verdicts_without_a_mechanism(rows):
+    """Rows a human judged a staffing agency whose NAME nothing in code recognises.
+
+    A note is not a mechanism. `Peak Innovation` was parked `recruiter 2026-08-31: ...` and
+    LinkedIn intake created `peak innovation|data analyst` five days later, because the
+    purge that removed Abra reads `recruiters.is_recruiter` -- which answers on the NAME and
+    had never heard of it (2026-09-11; `Hila & Co.` was the same). Parking the row does not
+    help: discovery carries the employer NAME, not the row. So this counts the GAP, and it
+    goes to zero by adding each name to `recruiters._CONFIRMED` with its evidence line.
+    """
+    from pipeline.recruiters import is_recruiter
+    out = []
+    for r in rows:
+        if not r or len(r) < 6 or (r[4] or "").strip().lower() == "true":
+            continue
+        if any(_RECRUITER_VERDICT.match(s.strip()) for s in (r[5] or "").split("|")) \
+                and not is_recruiter(r[0]):
+            out.append(r[0])
+    return out
+
+
 def _report(rows, live=False, want_ats=False, ladder=True):
     from collections import Counter
     act = [r for r in rows if r[4] == "true"]
@@ -861,6 +885,14 @@ def _report(rows, live=False, want_ats=False, ladder=True):
         for g in d["gone"]:
             print(f"  {'[ok]' if g['explained'] else '[??]'} GONE {g['company']}: "
                   f"{g['last_note'][:90] or '(no note)'}")
+
+    unmech = recruiter_verdicts_without_a_mechanism(rows)
+    print(f"\nrecruiter verdicts that are not a mechanism: {len(unmech)}"
+          + (f" -- {', '.join(unmech)}" if unmech else ""))
+    if unmech:
+        print("  (parked with a dated `recruiter <date>:` note, but `recruiters.is_recruiter`")
+        print("   answers False, so intake keeps re-creating their roles -- add the name to")
+        print("   `pipeline/recruiters._CONFIRMED` with its evidence line)")
 
     print("\nre-check ownership (recomputed from each tool's own filter):")
     for label, members in pools(rows).items():

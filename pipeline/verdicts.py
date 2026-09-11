@@ -54,6 +54,42 @@ TERM_RX = re.compile("|".join(r"\b" + t + r"\b" if t == "recruiter" else re.esca
                               for t in TERMINAL), re.I)
 
 
+# `alias-of <canonical name> <date>: <evidence>` -- the shape 61 of the 64 alias-of rows
+# use. The name is captured so a reader (`roles._alias_fold_target`) can ask WHICH row this
+# one duplicates, instead of only "is this note terminal". Anchored at a segment start
+# because `alias-of` also appears inside prose. Three rows predate the dated form and write
+# `alias-of <name>: ...` or `alias-of <name> (<evidence>)` -- JPMorgan Chase, Unframe AI,
+# Agency -- so the undated spelling is read too, second and only when the first misses.
+ALIAS_OF_RX = re.compile(r"^alias-of\s+(.+?)\s+\d{4}-\d{2}-\d{2}(?=\s*[:|]|\s*$)")
+ALIAS_OF_UNDATED_RX = re.compile(r"^alias-of\s+(.+?)\s*(?::|\s\(|$)")
+
+
+def alias_target(note: str) -> str | None:
+    """The canonical company this row was parked as a duplicate OF, or None.
+
+    Reads the row's own dated verdict -- the string a human wrote when they parked it -- so
+    the registry's ruling is available to code and not only to a reader. Only an `alias-of`
+    segment answers: `duplicate of` / `redundant` / `defunct` are terminal too but name no
+    survivor. A note is an append-log, so the FIRST alias-of wins and a later one is ignored
+    rather than silently merged.
+
+    It is a READING of prose, never an authority on its own: the undated fallback cuts a
+    target at ` (`, so a survivor whose own name contains a parenthesis (`Wix (Wixpress)`,
+    `Habana Labs (Intel)`) would come back truncated. Every caller must therefore treat the
+    answer as one of TWO agreeing declarations -- `roles._alias_fold_target` accepts it only
+    when `firmographics.ALIASES` independently names the same row -- and a truncated read
+    then simply refuses to fold. New verdicts get the dated form.
+    """
+    for seg in str(note or "").split("|"):
+        seg = seg.strip()
+        m = ALIAS_OF_RX.match(seg) or ALIAS_OF_UNDATED_RX.match(seg)
+        if m:
+            t = m.group(1).strip()
+            if t:
+                return t
+    return None
+
+
 def in_pool(note: str) -> bool:
     """True if this row is still eligible for some re-check."""
     n = note or ""

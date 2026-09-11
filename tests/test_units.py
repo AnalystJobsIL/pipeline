@@ -7223,9 +7223,17 @@ def test_a_display_name_that_is_another_companys_identity_is_refused_at_the_sour
                                  _claimed_by=["Port.io"]), "2026-08-30",
                             firmographics={"Port": {"display_name": "Port.io"}})
     assert ported["display_company"] == "Port.io" and ported["also_listed_as"] == []
+    # `Port.io` became this employer`s DECLARED other spelling on 2026-09-11 (the row is
+    # parked `alias-of Port` and `ALIASES["port io"] = "port"`), so it now folds to the
+    # card`s own identity and is suppressed whether or not a brand is shown -- the rule
+    # this field carries in its own comment, applied to one more name. A claimant that is
+    # genuinely another employer is still listed.
     unbranded = rolecard.build(_job(company="Port", url="https://p.io/1", mkey="p|1",
                                     _claimed_by=["Port.io"]), "2026-08-30")
-    assert unbranded["also_listed_as"] == ["Port.io"]
+    assert unbranded["also_listed_as"] == []
+    other = rolecard.build(_job(company="Port", url="https://p.io/1", mkey="p|1",
+                                _claimed_by=["Harbor Analytics"]), "2026-08-30")
+    assert other["also_listed_as"] == ["Harbor Analytics"]
     # one brand folding TWO registry rows onto one cell is a collision even when the raw
     # names fold too (a registry duplicate must not render as if it were one employer) —
     # while the same case-twin WITHOUT a brand stays silent, as always
@@ -26827,9 +26835,151 @@ def test_the_live_registry_lets_the_doit_declaration_fold():
     # ...and the refusal that made `Investing` a retraction rather than a declaration. This
     # is an assertion about the REGISTRY, so it goes green the moment that row is renamed --
     # which is exactly when the declaration below it becomes safe to add.
-    assert "investing com" not in ALIASES
-    assert "Investing.com" in names, "the parked row went: `investing com` can now be declared"
+    # ...and `Investing`, which was the SECOND time a registry row sat on a string a
+    # declaration needed (571). It is not answered by a rename: `Investing.com` is still a
+    # row, parked, and it still carries the `alias-of Investing 2026-08-28` verdict a human
+    # wrote. What changed on 2026-09-11 is that the fold READS that verdict -- so the
+    # declaration below is now legal, and the refusal still stands for a caller that does
+    # not pass the registry's rulings in.
+    assert "investing com" in ALIASES
+    assert "Investing.com" in names, "the parked row went: re-check the declaration below"
     assert roles._alias_fold_target("Investing.com", "", names, abi, origins) is None
+    _ruled = {"Investing.com": "Investing"}
+    assert roles._alias_fold_target("Investing.com", "", names, abi, origins, _ruled) == \
+        ("Investing", "declared")
+
+
+def test_a_parked_rows_own_alias_of_verdict_is_what_lifts_the_registry_refusal():
+    """The 2026-09-11 exception, and the whole of it: a registry name folds ONLY when the
+    row's own dated `alias-of <R>` verdict and a `firmographics.ALIASES` declaration name
+    the SAME row. Either alone refuses -- which is what keeps `Meta Israel` (a verdict, no
+    declaration) and an undeclared spelling twin exactly where they were."""
+    from pipeline import roles
+    from pipeline.firmographics import ALIASES
+    rn, abi, org = _fold_env(active=("NVIDIA",), parked=("NVIDIA AI",))
+    assert "nvidia ai" in ALIASES                      # the declaration half exists
+    assert roles._alias_fold_target("NVIDIA AI", "", rn, abi, org) is None, \
+        "a registry name with no ruling passed in must still refuse"
+    ruled = {"NVIDIA AI": "NVIDIA"}
+    assert roles._alias_fold_target("NVIDIA AI", "", rn, abi, org, ruled) == \
+        ("NVIDIA", "declared")
+    # the note names someone else -> refuse (a truncated read must never fold)
+    assert roles._alias_fold_target("NVIDIA AI", "", rn, abi, org,
+                                    {"NVIDIA AI": "NVIDIA Corp"}) is None
+    # ...and a ruling with no declaration refuses too: `Meta Israel` is parked `alias-of
+    # Meta` in the live registry and has no ALIASES key
+    rn2, abi2, org2 = _fold_env(active=("Meta",), parked=("Meta Israel",))
+    assert "meta israel" not in ALIASES
+    assert roles._alias_fold_target("Meta Israel", "", rn2, abi2, org2,
+                                    {"Meta Israel": "Meta"}) is None
+
+
+def test_a_ruled_registry_name_is_never_folded_by_casefold_alone():
+    """`casefold` moves a record on a SPELLING difference, which is right for a name nobody
+    is a row (`Helfy`/`helfy`) and wrong for a registry row: there, a human ruling plus a
+    curated declaration are the price. A row whose note says `alias-of <R>` and whose name
+    differs from R only in case must still refuse, or the exception would quietly become
+    "any parked row folds"."""
+    from pipeline import roles
+    rn, abi, org = _fold_env(active=("helfy",), parked=("Helfy",))
+    assert roles._alias_fold_target("Helfy", "", rn, abi, org, {"Helfy": "helfy"}) is None
+    # the same string, NOT a registry row, still folds on casefold -- the old path is intact
+    rn2, abi2, org2 = _fold_env(active=("helfy",), parked=())
+    assert roles._alias_fold_target("Helfy", "", rn2, abi2, org2, {}) == ("helfy", "casefold")
+
+
+def test_the_live_registry_folds_the_six_pairs_declared_on_2026_09_11():
+    """LIVE DATA. Six employers were publishing one opening under two names each on
+    2026-09-11 -- the board read `Direct Travel | Senior Data Scientist` for a Digital
+    Turbine role, two AutoDS cards carried one greenhouse opening, and the mail had carried
+    `claim conflicts 2 (Gong<-Gong.io, Port<-Port.io)` since 08-16. Each pair is now a
+    parked row carrying `alias-of <R>` plus an `ALIASES` key, and this asserts the OUTCOME
+    on the shipped registry: it reds if a row is re-activated, renamed, or loses its
+    verdict segment, and it reds if the declaration is dropped."""
+    import csv as _c
+    import os as _o
+    from pipeline import roles, verdicts
+    from pipeline.firmographics import identity_key
+    root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
+    rows = [r for r in list(_c.reader(open(_o.path.join(root, "companies.csv"),
+                                           encoding="utf-8")))[1:] if r]
+    names = {r[0] for r in rows}
+    origins = {r[0]: ((r[2] or "").strip() or r[3] or "") for r in rows}
+    abi, ruled = {}, {}
+    for r in rows:
+        if (r[4] or "").strip().lower() == "true":
+            abi.setdefault(identity_key(r[0]), set()).add(r[0])
+        else:
+            t = verdicts.alias_target(r[5] or "")
+            if t:
+                ruled[r[0]] = t
+    pairs = {"DT": "Digital Turbine", "Gong.io": "Gong", "Port.io": "Port",
+             "AutoDS - Automatic Dropshipping Tools": "autods",
+             "Investing.com": "Investing",
+             "\u05de\u05e0\u05d5\u05e8\u05d4 \u05de\u05d1\u05d8\u05d7\u05d9\u05dd \u05d4\u05d7\u05d6\u05e7\u05d5\u05ea": "Menora Mivtachim Group"}
+    for alias, canon in pairs.items():
+        assert ruled.get(alias) == canon, f"{alias}: its `alias-of {canon}` verdict is gone"
+        assert roles._alias_fold_target(alias, "", names, abi, origins, ruled) == \
+            (canon, "declared"), f"{alias} no longer folds onto {canon}"
+        assert roles._alias_fold_target(alias, "", names, abi, origins) is None
+
+
+def test_alias_target_reads_the_registrys_own_verdict_in_both_spellings():
+    """`verdicts.alias_target` is a reading of prose, so it is pinned on the prose that is
+    actually in the file: 61 rows write the dated form and three predate it (JPMorgan Chase,
+    Unframe AI, Agency). It must never answer for a terminal verdict that names no survivor,
+    or `duplicate of Foo` would fold a row onto a company nobody vouched for."""
+    from pipeline import verdicts
+    assert verdicts.alias_target(
+        "alias-of Check Point Software 2026-08-23: identical board URL") == \
+        "Check Point Software"
+    assert verdicts.alias_target("alias-of JPMorganChase: same Oracle HCM board") == \
+        "JPMorganChase"
+    assert verdicts.alias_target("alias-of Unframe (one board; its <title>)") == "Unframe"
+    assert verdicts.alias_target("alias-of Workday 2026-08-23") == "Workday"
+    assert verdicts.alias_target(
+        "listing-hunt 2026-08-28: verified 3 IL | alias-of Investing 2026-08-28: same board"
+    ) == "Investing"
+    assert verdicts.alias_target("duplicate of Foo 2026-08-23: one board") is None
+    assert verdicts.alias_target("redundant 2026-09-01: was Oak") is None
+    assert verdicts.alias_target("dark-triage 2026-09-08: js-shell") is None
+    assert verdicts.alias_target("") is None
+    # the first alias-of wins; a second is ignored rather than merged
+    assert verdicts.alias_target("alias-of A 2026-01-01: x | alias-of B 2026-02-02: y") == "A"
+
+
+def test_every_alias_of_row_in_the_live_registry_still_parses():
+    """LIVE DATA. `alias_target` returning None for a row that IS parked `alias-of` means
+    that row's ruling is invisible to the fold -- the failure is silent, which is the class
+    this whole change exists to end. 64 rows carried the verdict on 2026-09-11 and all 64
+    parsed; a new spelling that does not must be caught here, not in a digest."""
+    import csv as _c
+    import os as _o
+    from pipeline import verdicts
+    root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
+    rows = [r for r in list(_c.reader(open(_o.path.join(root, "companies.csv"),
+                                           encoding="utf-8")))[1:] if r]
+    carry = [r for r in rows if "alias-of" in (r[5] or "")]
+    assert len(carry) >= 60, f"only {len(carry)} alias-of rows -- did a merge drop them?"
+    unreadable = [r[0] for r in carry if not verdicts.alias_target(r[5])]
+    assert not unreadable, f"alias-of verdicts the fold cannot read: {unreadable}"
+
+
+def test_a_recruiter_verdict_without_a_mechanism_is_counted_not_assumed():
+    """`Peak Innovation` was parked `recruiter 2026-08-31:` and LinkedIn intake created
+    `peak innovation|data analyst` on 09-04 anyway: the purge reads `is_recruiter`, which
+    answers on the NAME, and parking a row does not teach it one. The census counts that
+    gap so it cannot sit unseen again."""
+    import registry_health as H
+    rows = [["Peak Innovation", "scrape", "", "https://x.co/career/", "false",
+             "listing-hunt 2026-08-28: queue-hunt | recruiter 2026-08-31: staffing agency"],
+            ["Experis", "scrape", "", "https://y.co/", "false",
+             "recruiter 2026-08-24: agency"],                     # in _CONFIRMED -> covered
+            ["Wix (Wixpress)", "scrape", "", "https://z.co/", "false",
+             "deep-validated 2026-08-30: smartrecruiters board"],  # no recruiter VERDICT
+            ["Acme", "scrape", "", "https://a.co/", "true",
+             "recruiter 2026-09-01: agency"]]                      # active -> not this class
+    assert H.recruiter_verdicts_without_a_mechanism(rows) == ["Peak Innovation"]
 
 
 def test_alias_fold_never_rewrites_a_registry_name():

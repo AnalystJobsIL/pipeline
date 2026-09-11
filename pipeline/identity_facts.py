@@ -118,6 +118,18 @@ DECLARED = {
 
     # --- brand/parent domains, migrated verbatim from company_identity.KNOWN_PARENT
     #     (admit-only, ordinary hosts; each was verified by hand when it was added there)
+    # Cal is the brand. The legal name on its own site footer is כרטיסי אשראי לישראל (Israel
+    # Credit Cards Ltd) and its careers page is cal-online.co.il/about/jobs/ -- a host no
+    # string rule can derive from either half of the registry name, so `verdict` scores it
+    # `mismatch` and `is_foreign` refused the row. Read in a browser on 2026-09-11:
+    # "קריירה בכאל", ~30 postings, footer כל הזכויות שמורות לחברת כאל.
+    # The row had sat parked "no pages reachable" because the host answers a plain GET
+    # with an Akamai 400 (`Request Rejected`); the unlocker rung reads it.
+    "Cal (Israel Credit Cards)": {
+        "domains": ("cal-online.co.il",),
+        "why": "Cal is כרטיסי אשראי לישראל; its own careers page is "
+               "https://www.cal-online.co.il/about/jobs/, read 2026-09-11 -- it carries the "
+               "LinkedIn role 4463470239 as אנליסט.ית ניהול ופיתוח אשראי צרכני. 2026-09-11"},
     "AWS": {"domains": ("amazon.jobs", "amazon.com"), "why": "KNOWN_PARENT migration"},
     "Amazon Web Services": {"domains": ("amazon.jobs", "amazon.com"),
                             "why": "KNOWN_PARENT migration; a synonym key, not a registry row"},
