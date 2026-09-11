@@ -31226,6 +31226,26 @@ def test_the_freshness_window_is_one_constant_and_no_fixture_sits_inside_it(fn, 
                             if m.group(1) >= "2021-01-01"]
     assert not rotting, ("a literal date inside the freshness window of the code under test "
                          "-- use _days_ago(n): %r" % rotting)
+    # ...and, on the same read of this file, the other way a test silently stops being one:
+    # a module-level name defined twice. Python resolves it at CALL time, so the second
+    # definition is a SILENT THEFT of every earlier caller across 31,000 lines. Measured
+    # 2026-09-11: the `ats-fetch` board-freshness block was written on 2026-08-30 against a
+    # tree with no `_bf_job` in it, master grew a classifier-backfill `_bf_job` in between,
+    # and appending the block made four backfill tests assert against a posting helper from
+    # another lane (`assert (1 == 30)`). Both names were reasonable; neither author could
+    # have seen the other. It found a second, older instance immediately: two identical
+    # copies of `test_the_blank_re_ask_has_a_wall_clock_bound`, the first of which had never
+    # run. It rides HERE rather than in a test of its own because its subject is this file,
+    # which `tools/guard_kill.py` keeps at HEAD — alone it could never go red.
+    seen, dupes = {}, []
+    for node in _ast.parse(src).body:          # module level only: a nested def is scoped
+        for name in ([node.name] if isinstance(node, (_ast.FunctionDef, _ast.ClassDef)) else
+                     [t.id for t in getattr(node, "targets", []) if isinstance(t, _ast.Name)]):
+            if name in seen:
+                dupes.append((name, seen[name], node.lineno))
+            seen[name] = node.lineno
+    assert not dupes, ("a module-level name defined twice — the second silently replaces the "
+                       "first for every caller in the file: %r" % dupes)
 
 
 def test_the_cache_shrink_alarm_keeps_its_bars_and_exempts_the_list_that_should_shrink(capsys, tmp_path):
@@ -31386,6 +31406,27 @@ def test_fetch_company_raises_board_abandoned_with_the_jobs_it_refused(monkeypat
     with pytest.raises(fetchers.BoardAbandoned) as ei:
         fetchers.fetch_company(row)
     assert len(ei.value.jobs) == 1
+    # ...and the seam that verdict rides on stays lazy in BOTH directions: `fetch_company`
+    # imports health for the judgement and health imports fetchers for `israel_scoped`, each
+    # inside a function. A module-level import in either file is a cycle the day the other is
+    # "simplified" to match. This lived in a test of its own until 2026-09-11, when guard_kill
+    # called it CANNOT-FAIL and was right: it forbids a FUTURE change, so there is nothing at
+    # base for it to catch. Folded into the test whose subject it protects, which does die.
+    import ast, subprocess
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for mod, other in (("fetchers", "health"), ("health", "fetchers")):
+        tree = ast.parse(open(os.path.join(root, "pipeline", f"{mod}.py"), encoding="utf-8").read())
+        for node in tree.body:
+            if isinstance(node, ast.ImportFrom):
+                assert other not in [a.name for a in node.names] and other not in str(node.module), (mod, other)
+            if isinstance(node, ast.Import):
+                assert not any(other in a.name for a in node.names), (mod, other)
+    for first, second in (("health", "fetchers"), ("fetchers", "health")):
+        p = subprocess.run([sys.executable, "-c", f"import pipeline.{first}, pipeline.{second}; "
+                            "from pipeline import fetchers, health; assert health.israel_scoped('workday'); "
+                            "assert 'smartrecruiters' in fetchers.FETCHERS"],
+                           cwd=root, capture_output=True, text=True)
+        assert p.returncode == 0, p.stderr
 
 
 def test_a_creation_dated_platform_gets_a_second_look_before_it_is_refused(monkeypatch):
@@ -31647,49 +31688,8 @@ def test_the_successfactors_fixture_is_safe_because_two_of_its_three_tiles_are_u
     assert health.abandoned("successfactors", "https://x.example/tiles", only_dated, today=far)
 
 
-def test_health_and_fetchers_import_each_other_lazily():
-    """`fetch_company` imports health for the verdict and health imports fetchers for
-    `israel_scoped` — both inside functions. A module-level import in either file is a
-    cycle the day the other one is "simplified" to match."""
-    import ast, subprocess
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    for mod, other in (("fetchers", "health"), ("health", "fetchers")):
-        tree = ast.parse(open(os.path.join(root, "pipeline", f"{mod}.py"), encoding="utf-8").read())
-        for node in tree.body:
-            if isinstance(node, ast.ImportFrom):
-                assert other not in [a.name for a in node.names] and other not in str(node.module), (mod, other)
-            if isinstance(node, ast.Import):
-                assert not any(other in a.name for a in node.names), (mod, other)
-    for first, second in (("health", "fetchers"), ("fetchers", "health")):
-        p = subprocess.run([sys.executable, "-c", f"import pipeline.{first}, pipeline.{second}; "
-                            "from pipeline import fetchers, health; assert health.israel_scoped('workday'); "
-                            "assert 'smartrecruiters' in fetchers.FETCHERS"],
-                           cwd=root, capture_output=True, text=True)
-        assert p.returncode == 0, p.stderr
 
 
-def test_no_two_helpers_in_this_file_share_a_name():
-    """A module-level name defined twice in a 31,000-line test file is not a redefinition of
-    a helper — it is a SILENT THEFT of every earlier caller, because Python resolves the name
-    at call time and the last definition wins for the whole module. Measured 2026-09-11: the
-    `ats-fetch` board-freshness block was written on 2026-08-30 against a tree with no
-    `_bf_job` in it, master grew a classifier-backfill `_bf_job` in between, and appending the
-    block made four backfill tests assert against a posting helper from another lane (`assert
-    (1 == 30)`). Both names were reasonable; neither author could have seen the other.
-    Functions AND assignments, tests included: two tests sharing a name is the same theft with
-    the loser never running at all."""
-    import ast as _ast
-    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_units.py"),
-               encoding="utf-8").read()
-    seen, dupes = {}, []
-    for node in _ast.parse(src).body:               # module level only: a nested def is scoped
-        for name in ([node.name] if isinstance(node, (_ast.FunctionDef, _ast.ClassDef)) else
-                     [t.id for t in getattr(node, "targets", []) if isinstance(t, _ast.Name)]):
-            if name in seen:
-                dupes.append((name, seen[name], node.lineno))
-            seen[name] = node.lineno
-    assert not dupes, ("a module-level name defined twice — the second silently replaces the "
-                       "first for every caller in the file: %r" % dupes)
 
 
 def test_a_successfactors_tile_that_states_israel_as_a_country_is_read_as_israeli():
