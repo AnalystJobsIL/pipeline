@@ -9,15 +9,15 @@ answer**, and they had been going round a seven-day loop since 2026-09-04.
 
 | | before | after |
 |---|---|---|
-| names with no facts (render set, `identity_key`) | 10, and 10 of the 10 struck | see §6 — measured after the live run |
-| of those, names in a loop no retry can end | **10** | 0 by mechanism; the residue is named |
+| names with no facts (render set, `identity_key`) | 10, and 10 of the 10 struck | **1** — `Mars Antennas And Rf Systems`, named |
+| of those, names in a loop no retry can end | **10** | 1, and it is now visible every morning |
 | firmographics records | 1,607 | 1,598 — nine declared duplicates folded |
 | `Company intel:` says which drain stamped it | no (`474`, wrong on 4 of 4 mornings) | yes, off `budget_min` |
 | a CI red any cron can cause on a clean tree | `<= 10` in `tests/test_company_intel.py` | the gauge is measured, printed, and alarmed in the MAIL |
 
-Spend: **0 Bright Data credits** (this lane's seam is `claude -p` + WebSearch; `secrets.env`
-holds only SerpApi and Bright Data keys, so a worktree can run the research and cannot
-spend a credit). Seam calls: §6.
+Spend: **0 Bright Data credits** and **12 seam calls / 14 searches / 243 s** (this lane's
+seam is `claude -p` + WebSearch; `secrets.env` holds only SerpApi and Bright Data keys, so a
+worktree can run the research and cannot spend a credit).
 
 ## 1. The test was not flaky — the ten names were stuck
 
@@ -172,10 +172,59 @@ name is held.
 Rejected: counting only "stuck" rows in CI (still a census over cron-written state — the
 morning a wrong-url row is activated, every lane goes red again).
 
-## 6. The live run
+## 6. The live run: 9 of the 10, and the tenth proves the class
 
-*(filled in after the armed `--only` pass; numbers, `ok`/`FAIL` lines and the seam's own
-audit are quoted in `HANDOFF.md`.)*
+`python research_firmographics.py --workers 2 --only "<the ten>"` from this worktree —
+`--only` records no strike and stamps nothing, so a hand run cannot make the mail describe a
+laptop:
+
+    1414 active companies, 1598 researched, 10 to do
+    4 name(s) gained their board's own live titles from the scrape cache
+    ok   Arrow Components: electronics distribution / technology solutions / public / XL
+    ok   Bdo International: professional services / private-enterprise / XL
+    ok   DataCore: enterprise software / private-enterprise / S
+    ok   Greylock Partners: financial services / private-enterprise / S
+    ok   Loops Lab: software / data analytics / growth-private / S
+    ok   Noga Iso: energy / utilities / private-enterprise / M
+    FAIL Mars Antennas And Rf Systems (held: research profiled 'Mars, Incorporated', …)
+    ok   Rafa Labartories: pharmaceuticals / private-enterprise / M
+    ok   Shabak - Israeli Security Agency - Career: government / defense & intelligence / …
+    ok   Regatta Data: data infrastructure / databases / growth-private / S
+    9 researched, 1 failed, 1607 total in store; 10 to do, 10 attempted, 0 left (2.2 min)
+    seam: claude-sonnet-5 x12 | 12 calls, 243s, 14 searches, 1 SEARCHLESS
+
+Then `--export`: **1,607 records** (1,598 after the fold plus these nine), and the strike
+ledger 16 → **7**, eleven cleared. The gauge, re-derived from the committed files:
+**10 → 1**, and the active-rows gauge the same.
+
+Five of the nine are the class-A fix doing its work — `Arrow Components`, `Rafa
+Labartories`, `Noga Iso`, `Shabak - … - Career` and `Loops Lab` passed the echo guard on the
+FIRST ask because of `_same_company_loose` and the three declarations. Four more
+(`Bdo International`, `DataCore`, `Greylock Partners`, `Regatta Data`) answered on the first
+ask this time where they had refused before; twelve calls for ten names says two names
+bought a second one.
+
+Three of the records are worth quoting, because they are the evidence `594` is filed on:
+
+* `Greylock Partners` — *"Partner-owned VC firm founded 1965; not itself the employer for
+  the listed jobs, which are portfolio-company openings"*. The model said the thing the row
+  is wrong about, in its own `stage_note`.
+* `DataCore` — *"HQ in Florham Park, NJ"*, which is **Datacor Inc**, the company whose
+  greenhouse tenant the row actually reads. The facts match the BOARD; the NAME on the row
+  is the defect, and `il_center` is honestly `None identified`.
+* `Bdo International` — BDO's global network, with `Tel Aviv (HQ of BDO Israel/Ziv Haft)`
+  named. Honest about a network rather than a company.
+
+**The tenth is the one that proves the mechanism is not a wish.** `Mars Antennas And Rf
+Systems` was asked again about the NAME, with `careers.mars.com` named as the confectioner's
+page and off limits — and the answer still echoed `Mars, Incorporated`, so the guard held it
+a second time and nothing was cached. That is the correct outcome for this row on this url:
+the record we do not have is better than the confectioner's, and the row is `594`.
+
+One caveat this run surfaced and did not fix: `1 SEARCHLESS` of 12 calls — one of these nine
+records is a parametric guess — and **the run does not say which name**. The count is in the
+mail and the name is nowhere, which is the same shape as the refusals this repo makes print
+their name. Filed as `595`.
 
 ## 7. What I made harder for the next lane
 

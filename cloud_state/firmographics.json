@@ -1774,6 +1774,20 @@
     "stage_note": "Bootstrapped, never raised external capital; profitable since inception (founded 2016)",
     "sub_sector": "AI/ML-driven real-time bidding and programmatic media acquisition platform"
   },
+  "Arrow Components": {
+    "as_of": "2026-09-11",
+    "business_model": "Distribution/B2B - electronic components distribution and computing solutions/value-added services",
+    "customer_type": "B2B",
+    "display_name": "Arrow Electronics",
+    "employees_global": 21000,
+    "founded": 1935,
+    "il_center": "Israel sales/support office (part of EMEA); HQ in Centennial, Colorado, US",
+    "sector": "electronics distribution / technology solutions",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NYSE: ARW, Fortune 500 company",
+    "sub_sector": "Electronic components and enterprise computing solutions distribution"
+  },
   "Artlist": {
     "as_of": "2026-08-22",
     "business_model": "Recurring subscriptions giving creators and businesses unlimited licensed use of music/video assets and editing tools",
@@ -1968,20 +1982,6 @@
     "stage": "growth-private",
     "stage_note": "$75M round Feb 2025 at ~$1B valuation; ~$369M raised total",
     "sub_sector": "AI-driven machine health & process health monitoring (predictive maintenance) for manufacturing"
-  },
-  "AutoDS - Automatic Dropshipping Tools": {
-    "as_of": "2026-09-09",
-    "business_model": "SaaS platform for dropshipping automation",
-    "customer_type": "B2C/SMB - individual dropshippers and e-commerce entrepreneurs",
-    "display_name": "AutoDS",
-    "employees_global": 259,
-    "founded": 2018,
-    "il_center": "Tel Aviv (HQ)",
-    "sector": "e-commerce / saas",
-    "size_band": "M",
-    "stage": "acquired-by-bigtech",
-    "stage_note": "Acquired by Fiverr in 2024, bootstrapped prior to acquisition",
-    "sub_sector": "Dropshipping automation tools"
   },
   "Autodesk": {
     "as_of": "2026-08-21",
@@ -2298,6 +2298,19 @@
     "stage": "early-private",
     "stage_note": "Extended Seed funding to $17M total, led by Battery Ventures and boldstart ventures (2026)",
     "sub_sector": "AI Code Review & Agentic Coding Governance"
+  },
+  "Bdo International": {
+    "as_of": "2026-09-11",
+    "business_model": "B2B professional services",
+    "customer_type": "Enterprises, public companies, private businesses across sectors",
+    "employees_global": 115000,
+    "founded": 1963,
+    "il_center": "Tel Aviv (HQ of BDO Israel/Ziv Haft); multiple branches across Israel",
+    "sector": "professional services",
+    "size_band": "XL",
+    "stage": "private-enterprise",
+    "stage_note": "Global partnership network of independent member firms (BDO Israel/Ziv Haft is the local member firm), not VC-backed",
+    "sub_sector": "Audit, Tax & Advisory"
   },
   "Beach Bum": {
     "as_of": "2026-08-30",
@@ -3221,19 +3234,6 @@
     "stage": "public",
     "stage_note": "NASDAQ: CDNS, ~$90B market cap; ~13,800 employees as of Dec 2025",
     "sub_sector": "Electronic design automation software and IP for chip and system design"
-  },
-  "Cadence Design Systems": {
-    "as_of": "2026-08-21",
-    "business_model": "Licenses EDA software and semiconductor IP plus sells emulation/prototyping hardware, largely via recurring subscription/term licenses",
-    "customer_type": "semiconductor and electronics-systems companies",
-    "employees_global": 14049,
-    "founded": 1988,
-    "il_center": "Petah Tikva (R&D + sales) and Haifa (R&D, ex-Jasper); HQ in San Jose, US",
-    "sector": "semiconductors / eda",
-    "size_band": "XL",
-    "stage": "public",
-    "stage_note": "NASDAQ: CDNS, S&P 500 component",
-    "sub_sector": "Electronic design automation software, IP, and hardware for chip and system design"
   },
   "Cadence Israel": {
     "as_of": "2026-08-21",
@@ -4820,19 +4820,6 @@
     "stage_note": "Privately owned by founder Don Wilson since 1992; not venture-backed",
     "sub_sector": "Proprietary trading firm / quantitative trading"
   },
-  "DT": {
-    "as_of": "2026-09-01",
-    "business_model": "Mobile advertising and app monetization platform (adtech)",
-    "customer_type": "B2B",
-    "employees_global": 700,
-    "founded": 1998,
-    "il_center": "Herzliya (R&D); HQ in Austin, Texas, US",
-    "sector": "adtech / mobile advertising",
-    "size_band": "M",
-    "stage": "public",
-    "stage_note": "Nasdaq: APPS; public company, Israel R&D via Triapodi and Fyber acquisitions (2021)",
-    "sub_sector": "Mobile ad monetization and app publishing platform"
-  },
   "Dario": {
     "as_of": "2026-09-06",
     "business_model": "Digital therapeutics / connected health platform for chronic disease management",
@@ -4872,6 +4859,19 @@
     "stage": "growth-private",
     "stage_note": "Raised $100M funding round (reported 2026, Times of Israel) to secure AI applications and autonomous agents",
     "sub_sector": "AI Agent / Agentic AI Security"
+  },
+  "DataCore": {
+    "as_of": "2026-09-11",
+    "business_model": "B2B",
+    "customer_type": "enterprise",
+    "employees_global": 150,
+    "founded": 1981,
+    "il_center": "None identified; HQ in Florham Park, NJ, USA",
+    "sector": "enterprise software",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Long-standing privately held US software vendor, no VC funding rounds identified",
+    "sub_sector": "ERP software for chemical/process manufacturing"
   },
   "Databricks": {
     "as_of": "2026-08-21",
@@ -7315,19 +7315,6 @@
     "stage_note": "Series E $250M at $7.25B (2021); ~$4.5B in Nov 2025 secondary, ~$500M ARR",
     "sub_sector": "AI revenue-intelligence platform that records and analyzes sales calls and deals"
   },
-  "Gong.io": {
-    "as_of": "2026-09-09",
-    "business_model": "B2B SaaS - revenue intelligence platform for sales teams",
-    "customer_type": "B2B",
-    "employees_global": 1300,
-    "founded": 2015,
-    "il_center": "Ramat Gan/Tel Aviv (R&D); HQ in San Francisco/Palo Alto, US",
-    "sector": "software/saas",
-    "size_band": "L",
-    "stage": "growth-private",
-    "stage_note": "Series E $250M at $7.25B valuation (2021); secondary at $4.5B (2025)",
-    "sub_sector": "Revenue Intelligence / Conversation Analytics"
-  },
   "Google Israel": {
     "as_of": "2026-08-22",
     "business_model": "Advertising on Search/YouTube plus Google Cloud subscriptions and consumer hardware/services",
@@ -7379,6 +7366,19 @@
     "stage": "growth-private",
     "stage_note": "~$50M raised total; $20M round led by Deep Insight (April 2024)",
     "sub_sector": "AI-based precision spraying systems that retrofit agricultural sprayers for selective weed control"
+  },
+  "Greylock Partners": {
+    "as_of": "2026-09-11",
+    "business_model": "B2B",
+    "customer_type": "Startups/portfolio companies",
+    "employees_global": null,
+    "founded": 1965,
+    "il_center": "Herzliya (Greylock Israel office)",
+    "sector": "financial services",
+    "size_band": "S",
+    "stage": "private-enterprise",
+    "stage_note": "Partner-owned VC firm founded 1965; not itself the employer for the listed jobs, which are portfolio-company openings aggregated on Greylock's jobs board",
+    "sub_sector": "Venture Capital"
   },
   "Grip Security": {
     "as_of": "2026-08-21",
@@ -8842,19 +8842,6 @@
     "stage_note": "Nasdaq: INTC, listed since 1971",
     "sub_sector": "CPU/GPU design and chip manufacturing (foundry), plus data-center and AI silicon"
   },
-  "Intel Corporation": {
-    "as_of": "2026-08-22",
-    "business_model": "Designs, manufactures and sells microprocessors and related silicon/platform products, plus contract foundry manufacturing",
-    "customer_type": "OEMs, cloud/data-center operators, enterprises",
-    "employees_global": 85000,
-    "founded": 1968,
-    "il_center": "Haifa (chip design & AI R&D), Petah Tikva, Jerusalem (R&D); Kiryat Gat (Fab 28 manufacturing); HQ in US",
-    "sector": "semiconductors",
-    "size_band": "XL",
-    "stage": "public",
-    "stage_note": "NASDAQ: INTC, listed since 1971",
-    "sub_sector": "CPUs, chipsets, foundry services and AI/data-center silicon design and manufacturing"
-  },
   "Intel Israel": {
     "as_of": "2026-08-21",
     "business_model": "sells processors and chip platforms to OEMs/cloud providers plus contract foundry manufacturing",
@@ -8958,19 +8945,6 @@
     "stage": "private-enterprise",
     "stage_note": "Majority stake acquired by Joffre Capital (Hong Kong PE/investment firm) in 2021 for ~$500M; chairman has since floated pursuing an IPO",
     "sub_sector": "financial markets data, news, and trading tools platform (real-time quotes, analysis, broker reviews, InvestingPro subscriptions)"
-  },
-  "Investing.com": {
-    "as_of": "2026-09-02",
-    "business_model": "B2C financial news, market data, and analysis platform (Investing.com website/app)",
-    "customer_type": "B2C",
-    "employees_global": 250,
-    "founded": 2007,
-    "il_center": "Tel Aviv (HQ/main office)",
-    "sector": "fintech / financial media",
-    "size_band": "M",
-    "stage": "private-enterprise",
-    "stage_note": "Acquired by Hong Kong-based investment firm Joffre Capital in 2021",
-    "sub_sector": "Financial news, market data & trading tools"
   },
   "Ironblocks": {
     "as_of": "2026-08-22",
@@ -9158,19 +9132,6 @@
     "stage": "public",
     "stage_note": "NYSE: JLL, global commercial real estate services firm",
     "sub_sector": "Commercial real estate, facilities management, investment management"
-  },
-  "JPMorgan Chase": {
-    "as_of": "2026-08-22",
-    "business_model": "Interest income on loans/deposits plus fees from investment banking, trading, asset management and payments",
-    "customer_type": "consumers, SMBs, enterprises, institutional investors",
-    "employees_global": 318512,
-    "founded": 1799,
-    "il_center": "Herzliya (Israel Tech Center R&D) + Tel Aviv (banking office); HQ in New York, US",
-    "sector": "fintech / banking",
-    "size_band": "XL",
-    "stage": "public",
-    "stage_note": "NYSE: JPM; ~318,512 employees per FY2025 10-K",
-    "sub_sector": "Global bank; Israel Tech Center builds trading (Athena), AI, fraud-detection and blockchain systems"
   },
   "JPMorganChase": {
     "as_of": "2026-08-22",
@@ -10415,6 +10376,20 @@
     "stage": "growth-private",
     "stage_note": "Private, ~$148M raised total; $52M Series D (2019), later $23M round; no IPO or acquisition as of 2026",
     "sub_sector": "AI-powered open-source-based observability platform (log management, metrics, tracing built on ELK/OpenSearch, Prometheus, OpenTelemetry)"
+  },
+  "Loops Lab": {
+    "as_of": "2026-09-11",
+    "business_model": "B2B SaaS - no-code AI-driven product/data analytics platform",
+    "customer_type": "B2B",
+    "display_name": "Loops",
+    "employees_global": 30,
+    "founded": 2020,
+    "il_center": "Tel Aviv (HQ)",
+    "sector": "software / data analytics",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Bootstrapped/self-funded startup, ~$6.1M ARR and ~$18.2M valuation (2025)",
+    "sub_sector": "AI-powered product & data analytics platform"
   },
   "Loora": {
     "as_of": "2026-08-21",
@@ -12588,6 +12563,19 @@
     "stage_note": "Publicly traded on TASE since 2020 (TLV: NOFR)",
     "sub_sector": "Renewable energy (solar, wind, battery storage) development and operation"
   },
+  "Noga Iso": {
+    "as_of": "2026-09-11",
+    "business_model": "Grid/system operation and electricity market management (state-mandated monopoly service)",
+    "customer_type": "B2B/B2G",
+    "employees_global": 300,
+    "founded": 2018,
+    "il_center": "Haifa (HQ)",
+    "sector": "energy / utilities",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Israeli government-owned company, spun off from Israel Electric Corporation as part of the 2018 electricity market reform",
+    "sub_sector": "Electricity transmission system operation"
+  },
   "Nogamy": {
     "as_of": "2026-08-22",
     "business_model": "Fee-based professional services — consulting, implementation and staffing/outsourcing of BI, data and CRM projects billed per project or per consultant",
@@ -14484,19 +14472,6 @@
     "stage_note": "$100M Series C led by General Atlantic at $800M valuation (Dec 2025); $158M total raised",
     "sub_sector": "Internal developer portal (software catalog, self-service actions, AI agents for engineering orgs)"
   },
-  "Port.io": {
-    "as_of": "2026-08-22",
-    "business_model": "B2B SaaS subscriptions to its internal developer portal platform (tiered by developer seats), with a free tier as funnel",
-    "customer_type": "enterprises and mid-size engineering organizations (platform/DevOps teams; customers include LG, British Telecom, GitHub)",
-    "employees_global": 200,
-    "founded": 2022,
-    "il_center": "Tel Aviv (HQ)",
-    "sector": "devtools / platform engineering",
-    "size_band": "M",
-    "stage": "growth-private",
-    "stage_note": "$100M Series C led by General Atlantic at an $800M valuation (2026); ~$158-160M total raised",
-    "sub_sector": "Internal developer portal (IDP) — service catalog, self-service actions, scorecards, and AI agents for platform engineering teams"
-  },
   "Portnox": {
     "as_of": "2026-08-21",
     "business_model": "SaaS subscriptions for its cloud-native NAC/zero-trust access platform",
@@ -15174,6 +15149,19 @@
     "stage_note": "Privately held member of the RAD Group (Zisapel family); never IPO'd or acquired — 2020s acquisition rumors (e.g. Ceragon) never materialized",
     "sub_sector": "Fixed wireless broadband — point-to-point/point-to-multipoint radio links and wireless mobility for trains and vehicles"
   },
+  "Rafa Labartories": {
+    "as_of": "2026-09-11",
+    "business_model": "Manufactures and markets prescription, OTC, and consumer health pharmaceutical products",
+    "customer_type": "B2B/B2C (pharmacies, healthcare providers, consumers)",
+    "employees_global": null,
+    "founded": 1937,
+    "il_center": "Jerusalem (HQ)",
+    "sector": "pharmaceuticals",
+    "size_band": "M",
+    "stage": "private-enterprise",
+    "stage_note": "Long-established privately/family-owned Israeli pharmaceutical company since 1937, not VC-backed",
+    "sub_sector": "Pharmaceutical manufacturing (Rx, OTC, generics)"
+  },
   "Rakuten Viber": {
     "as_of": "2026-08-22",
     "business_model": "Viber for Business messaging/API fees, in-app advertising, and paid services (Viber Out calls, stickers)",
@@ -15472,6 +15460,20 @@
     "stage": "early-private",
     "stage_note": "Series B $22M led by Fulcrum Equity Partners (2024); ~$28M total raised",
     "sub_sector": "web exposure management — continuous monitoring of third-party scripts and client-side website risks"
+  },
+  "Regatta Data": {
+    "as_of": "2026-09-11",
+    "business_model": "B2B SaaS/software - data management platform",
+    "customer_type": "Enterprises needing scale-out hybrid transactional/analytical database",
+    "display_name": "Regatta",
+    "employees_global": 50,
+    "founded": 2021,
+    "il_center": "Beit Hananya (HQ)",
+    "sector": "data infrastructure / databases",
+    "size_band": "S",
+    "stage": "growth-private",
+    "stage_note": "Raised $58.3M total from Lightspeed, 83North, Amdocs Ventures, Comcast Ventures, Salesforce Ventures",
+    "sub_sector": "Database platform (Hybrid OLTP/OLAP - OLxP)"
   },
   "Regulus": {
     "as_of": "2026-09-04",
@@ -16615,6 +16617,19 @@
     "stage": "public",
     "stage_note": "NYSE: NOW, IPO 2012, mega-cap enterprise software company",
     "sub_sector": "AI-driven digital workflow automation platform (ITSM, ITOM, HR, CRM workflows)"
+  },
+  "Shabak - Israeli Security Agency - Career": {
+    "as_of": "2026-09-11",
+    "business_model": "government security/intelligence agency",
+    "customer_type": "State of Israel (government/public)",
+    "employees_global": null,
+    "founded": 1948,
+    "il_center": "Tel Aviv / nationwide (HQ)",
+    "sector": "government / defense & intelligence",
+    "size_band": "XL",
+    "stage": "private-enterprise",
+    "stage_note": "Israeli government intelligence/internal security agency, established 1948",
+    "sub_sector": "Internal security & counter-intelligence agency"
   },
   "Shavit Software": {
     "as_of": "2026-08-22",
@@ -20348,6 +20363,7 @@
     "as_of": "2026-08-22",
     "business_model": "Tiered monthly/annual SaaS subscriptions for dropshippers, scaled by catalog/order volume, plus add-on sourcing and fulfillment services",
     "customer_type": "SMBs — independent e-commerce sellers and small dropshipping businesses",
+    "display_name": "AutoDS",
     "employees_global": 264,
     "founded": 2018,
     "il_center": "Tel Aviv (HQ and main R&D); operates as a Fiverr subsidiary",
@@ -21234,19 +21250,6 @@
     "stage": "public",
     "stage_note": "TASE: MTRX, listed on TA-90 index",
     "sub_sector": "Systems integration, BI, Big Data, AI & Cloud consulting"
-  },
-  "מנורה מבטחים החזקות": {
-    "as_of": "2026-08-28",
-    "business_model": "Insurance, pensions, and financial services holding group",
-    "customer_type": "B2C and B2B (individuals, businesses, pension/savings clients)",
-    "employees_global": null,
-    "founded": 1935,
-    "il_center": "Tel Aviv (HQ)",
-    "sector": "financial services / insurance",
-    "size_band": "L",
-    "stage": "public",
-    "stage_note": "Publicly traded on TASE; one of Israel's largest insurance/financial groups, manages ~₪440B in assets",
-    "sub_sector": "Insurance & Pension/Long-term Savings Holding Group"
   },
   "קבוצת כלמוביל": {
     "as_of": "2026-09-04",

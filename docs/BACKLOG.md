@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**646 filed · 456 open · 190 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**647 filed · 457 open · 190 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 597.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 598.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -485,7 +485,7 @@ closure convention in the header.
 - **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
 - **583** `583@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
 
-### company-intel — 21 open
+### company-intel — 22 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -508,6 +508,7 @@ closure convention in the header.
 - **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
 - **550** `550@company-intel` **The board shows `Holisto` for a company that now calls itself trivago Innovation
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
+- **597** `597@company-intel` **A searchless research answer is counted and never named**
 
 ### ats-fetch — 19 open
 
@@ -12161,3 +12162,17 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      The row is `registry`'s cell: repoint or park each one, and `Greylock Partners` needs
      the prior question — whether an aggregator page earns an active row at all (`441`'s
      shape, on the registry side).
+
+597. **A searchless research answer is counted and never named** — lane: `company-intel`,
+     filed 2026-09-11 by itself. `llm._searches()` sums `modelUsage[m].webSearchRequests`
+     per CALL, and `meta` accumulates the total, so the run says `12 calls, 243s, 14
+     searches, 1 SEARCHLESS` and the mail warns that *some* record is a parametric guess
+     cached until 2027-02 — without saying which of the nine names it is. Every other
+     refusal in this lane prints the name it refused, for the reason §1a states ("a count
+     alone makes a false positive unrecoverable"), and this is the same shape: the warning
+     is actionable only if you can find the record and re-ask it. The fix is a name beside
+     the count, which means `firmographics.ask` returning the per-call search count to its
+     caller (`research_company_detail` has it in `res`) and `_record` / `_research` keeping
+     the names, as `failed_reasons` already does — `pipeline/llm.py` itself need not change,
+     which matters because it is shared plumbing. Measured 2026-09-11: 1 of 12 calls, on a
+     run whose nine records are otherwise all search-backed.
