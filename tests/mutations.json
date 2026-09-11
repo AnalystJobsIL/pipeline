@@ -2528,7 +2528,7 @@
   "class": "M6-fallback-removal",
   "find": "        winner[\"seen_ids\"] = sorted((set(winner.get(\"seen_ids\") or [])\n                                     | set(loser.get(\"seen_ids\") or [])) - {\"\"})",
   "replace": "        winner[\"seen_ids\"] = sorted(set(winner.get(\"seen_ids\") or []) - {\"\"})",
-  "why": "the loser's seen_ids are what filter_new consults: without the union the winner row does not carry the id the posting was DELIVERED under, and the role is re-emailed under the canonical name - the exact class resolve_claims' stored-id union already guards at run time. Re-anchored 2026-09-11: the alias sweep and the title sweep (580) now share one `_fold_into_twin` seam, so this one record covers both. Killed by test_alias_sweep_supersedes_the_stored_twin_and_unions_its_ids and by test_the_title_sweep_supersedes_into_a_live_twin_instead_of_overwriting_it.",
+  "why": "the loser's seen_ids are what filter_new consults: without the union the winner row does not carry the id the posting was DELIVERED under, and the role is re-emailed under the canonical name - the exact class resolve_claims' stored-id union already guards at run time. Re-anchored 2026-09-11: the alias sweep and the title sweep (585) now share one `_fold_into_twin` seam, so this one record covers both. Killed by test_alias_sweep_supersedes_the_stored_twin_and_unions_its_ids and by test_the_title_sweep_supersedes_into_a_live_twin_instead_of_overwriting_it.",
   "must_be_killed_by_behavioural": true
  },
  {

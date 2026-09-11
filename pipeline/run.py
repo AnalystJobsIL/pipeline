@@ -433,7 +433,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     candidates, _fold_notes = roles.fold_company_aliases(
         candidates, registry_names=_registry_names,
         active_by_identity=_active_by_ident, origins=_origins, aliased=_aliased)
-    # ...and the TITLE, in the same place and for the same reason (lane: roles, 580): the
+    # ...and the TITLE, in the same place and for the same reason (lane: roles, 585): the
     # title is the other half of `merge_key`, so a card blob ("We're Hiring Web Analyst -
     # Practical Vision") is half of the role's identity until it is cut here.
     candidates, _canon_notes = roles.canonicalize_titles(candidates)
@@ -605,7 +605,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # and so re-badges the whole board after an outage (BACKLOG 139). None when the ledger
     # is frozen, and `upsert_matched` then keeps the calendar rule.
     _closed = ledger.closed_keys()
-    # A role closed by its own page (581) must stop being upserted, or the discovery cache
+    # A role closed by its own page (586) must stop being upserted, or the discovery cache
     # re-serves the card for up to 21 days and every morning re-opens it: `upsert_matched`
     # finds the key in `closed_keys()`, treats it as a REAPPEARANCE, resets `first_seen` to
     # today and mints a fresh episode — a daily `reopened 1` for a posting that is gone.
@@ -689,7 +689,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         if ledger.retractions.match(j) is not None:
             return False
         # ...and a LinkedIn-only posting whose own stored page says it stopped accepting
-        # applications (lane: roles, BACKLOG 581). `last_seen` cannot answer this: the card
+        # applications (lane: roles, BACKLOG 586). `last_seen` cannot answer this: the card
         # is re-served from our own 21-day discovery cache, so the freshness below is OUR
         # memory of the card, not LinkedIn's claim that the job is live.
         if roles.page_closed(j, ledger.records.get(store.merge_key(j))):

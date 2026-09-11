@@ -231,7 +231,7 @@ class Retractions:
         unowned, which is the pre-2026-09-02 behaviour — under-withdrawing, which the
         `unmatched` alarm shows, rather than over-withdrawing, which nothing shows."""
         records = records or {}
-        # A role_id a title canon RENAMED (580) is still the name its author wrote down, so
+        # A role_id a title canon RENAMED (585) is still the name its author wrote down, so
         # every record answers to the ids it used to carry as well as the one it has now.
         # Without this a line naming the old key would go `unmatched` the morning after a
         # rename and the posting would return to the board — and since the classifier lane
@@ -259,7 +259,7 @@ class Retractions:
         if not self.entries or not isinstance(rec, dict):
             return []
         rid = rec.get("role_id") or rec.get("mkey") or ""
-        ids = {rid} | {x for x in (rec.get("renamed_from") or []) if x}   # 580: a renamed key
+        ids = {rid} | {x for x in (rec.get("renamed_from") or []) if x}   # 585: a renamed key
         own = {_url_key(rec["url"])} if rec.get("url") else set()
         sid_keys = set()
         sids = rec.get("seen_ids") or []
@@ -300,7 +300,7 @@ def _url_key(u):
     return host.lower() + (sep + rest.rstrip("/") if sep else "")
 
 
-# ---- the posting's own page says it is closed (docs/BACKLOG.md 581) ---------------------
+# ---- the posting's own page says it is closed (docs/BACKLOG.md 586) ---------------------
 # The marker sits in LinkedIn's page chrome, above the description body: offsets 264, 344,
 # 377 and 501 in the four live texts that carry it on 2026-09-11. A window keeps it a
 # CHROME reading — a description that merely quotes the phrase ("we are no longer accepting
@@ -497,7 +497,7 @@ _PLACE_WORDS = {"israel", "il", "remote", "hybrid", "office", "site", "on",
                 "full", "part", "time"}
 
 
-# ---- the title canon (docs/BACKLOG.md 580) ---------------------------------------------
+# ---- the title canon (docs/BACKLOG.md 585) ---------------------------------------------
 # A card blob is not a title. `We're Hiring Junior Web Analyst - Practical Vision` and
 # `We’re Hiring Web Analyst - Practical Vision` were published and EMAILED on 2026-09-11,
 # and both are one employer's hiring call wrapped around a two-word role name. The title is
@@ -1297,7 +1297,7 @@ class Ledger:
         self.alias_folds = []           # company-string folds ("R<-orig"), fold_aliases'
         self.twin_folds = 0             # sweep_store's at-rest twin count
         self.live_contract = ""         # the classifier contract this run judges under (544)
-        self.renamed = {}               # old role_id -> new, this run's title renames (580)
+        self.renamed = {}               # old role_id -> new, this run's title renames (585)
         self.title_folds = []           # "new<-old" strings, for the mail line
         # The hand-written retractions, read OUTSIDE `_guard` and before any seam: `run.py`'s
         # `_alive` consults them directly, so a frozen (corrupt) ledger day cannot put a
@@ -1937,7 +1937,7 @@ class Ledger:
         return lines
 
     def fold_titles(self):
-        """Apply the title canon to what the store ALREADY holds (docs/BACKLOG.md 580).
+        """Apply the title canon to what the store ALREADY holds (docs/BACKLOG.md 585).
 
         The intake canon fixes tomorrow; this fixes the five records that are published
         under a card blob today. Unlike the alias sweep, "leave it in place" is not an
@@ -2292,7 +2292,7 @@ class Ledger:
                 c["purged_total"] += 1    # running total that never decays
             elif (prev_status not in RETRACTABLE and judged(rec.get("company"))
                     and page_closed(rec, rec)):
-                # The posting's own page says it stopped accepting applications (581). It is
+                # The posting's own page says it stopped accepting applications (586). It is
                 # ahead of the `onboard` arm because `onboard` is satisfied by our own
                 # 21-day discovery cache, which is the very thing that kept these four roles
                 # published. `closed_on` is the day the TEXT was captured, not today: that is
@@ -2562,7 +2562,7 @@ class Ledger:
                         rec["updated"] = stamp
                     out[rid] = {k: v for k, v in rec.items()
                                 if k != "description" and not k.startswith("_")}
-                # A renamed role_id (580) is a key this run deliberately retired. The shrink
+                # A renamed role_id (585) is a key this run deliberately retired. The shrink
                 # guard compares KEY SETS, not counts, so a rename — which keeps the record
                 # count identical — still reads as a lost record and would refuse the file
                 # every morning while sqlite is already rekeyed. `may_drop` is the sanctioned
@@ -3438,7 +3438,7 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
             "records": len(records),
             # A role_id is a PUBLIC join key (roles_text.jsonl joins on it), so the one
             # thing that can change it — a card-blob title canonicalised into the role's
-            # real name (580) — says so here rather than looking like a row that vanished
+            # real name (585) — says so here rather than looking like a row that vanished
             # and a row that appeared.
             "renamed": [{"role_id": rid, "from": r.get("renamed_from") or [],
                          "on": r.get("renamed_on", "")}

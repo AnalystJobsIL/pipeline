@@ -26027,7 +26027,7 @@ def test_the_dataset_publishes_the_contract_and_the_meta_counts_the_stale_cells(
 
 
 def test_canonical_title_cuts_only_furniture_on_the_measured_population():
-    """580, measured on the 2026-09-11 store and caches. Every CHANGED case is a real
+    """585, measured on the 2026-09-11 store and caches. Every CHANGED case is a real
     published title; every kept case is a real title a looser rule would have damaged."""
     from pipeline import roles
     ct = roles.canonical_title

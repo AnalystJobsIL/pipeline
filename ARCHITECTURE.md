@@ -6860,7 +6860,7 @@ the file gave a reader no way to see it.
 
 ### A card blob is not a title — the title canon
 
-*2026-09-11, lane `roles`, `580`.*
+*2026-09-11, lane `roles`, `585`.*
 
 `We're Hiring Junior Web Analyst - Practical Vision` and `We’re Hiring Web Analyst -
 Practical Vision` were published and emailed. The title is half of `merge_key`, so a blob is
@@ -6912,7 +6912,7 @@ stay hidden. That alarm belongs to `scraper`/`render` and is unchanged.
 
 ### A posting whose own page says it is closed
 
-*2026-09-11, lane `roles`, `581`.*
+*2026-09-11, lane `roles`, `586`.*
 
 `migdal|business analyst` was on the board for 17 days and in the 08-26 email, while the page
 we ourselves stored for it said `כבר לא מקבלים בקשות` — *no longer accepting applications* —

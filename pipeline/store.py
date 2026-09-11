@@ -864,7 +864,7 @@ class SeenStore:
 
     def rekey_matched(self, mkey, new_mkey, **fields):
         """Move one role's row to a new `mkey` — the ledger's rename seam (lane: roles,
-        docs/BACKLOG.md 580: a card-blob title canonicalised into the role's real name mints
+        docs/BACKLOG.md 585: a card-blob title canonicalised into the role's real name mints
         a new key, because the title is half of `merge_key`).
 
         Refuses — returning False, never raising — when `new_mkey` already exists. A rename
