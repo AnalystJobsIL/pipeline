@@ -3912,6 +3912,13 @@ def test_auto_expand_rereads_the_registry_before_appending_a_PARKED_row(tmp_path
                   "unreachable; could not scan", file=fh)
         return ("empty", None)
     monkeypatch.setattr(E, "resolve", _resolve)
+    # The free search rung is a LIVE request and this path reaches it (`auto_expand` ->
+    # the drain -> `deep_validate.ddg`). It has always reached it; `tests/conftest.py`'s
+    # transport ban only learned about the endpoint on 2026-09-11, and this test was one of
+    # two it caught going out to the internet on every run. Stub the fetch, not `ddg`: the
+    # rung's own parsing and 202 handling stay exercised wherever a test wants them.
+    import deep_validate as _DV
+    monkeypatch.setattr(_DV, "_ddg_fetch", lambda url, timeout=15: (200, ""))
     E.main()
 
     import csv

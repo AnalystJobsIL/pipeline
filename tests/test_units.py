@@ -22949,6 +22949,11 @@ def test_search_one_returns_a_dict_when_every_search_raises(monkeypatch):
     def boom(name):
         raise RuntimeError("unlocker 502")
     monkeypatch.setattr(DV, "google_via_unlocker", boom)
+    # ...and the FREE rung, which since 2026-09-11 is asked first. Stubbed to answer nothing,
+    # because this test is about what the PAID one's exception does. Unstubbed it reached the
+    # live endpoint on the runner and came back with four real careers URLs (`conftest`'s
+    # transport ban now refuses that outright, which is how this was caught).
+    monkeypatch.setattr(DV, "ddg", lambda name, limit=4: [])
     monkeypatch.setattr(QRS.time, "sleep", lambda s: None)
     got = QRS.search_one("Acme")
     assert isinstance(got, dict) and got["urls"] == [] and got["why"].startswith("search-error")
@@ -31052,12 +31057,17 @@ def test_the_paid_search_measures_the_free_one_for_nothing(monkeypatch):
     monkeypatch.setattr(D.time, "sleep", lambda *_a: None)
     monkeypatch.setattr(D, "_ddg_fetch",
                         lambda url, timeout=15: (200, '<a href="https://wix.com/jobs">a</a>'))
-    D._search_ab("Wix", ["https://wix.com/careers"])
+    # `force=True`: the A/B makes a REAL request, so it is off under pytest -- a unit suite
+    # that reaches the live internet is slow and flaky, and this one cost a CI run on
+    # 2026-09-11. The behaviour stays covered by driving it here with the fetch stubbed.
+    assert D._search_ab("Wix", ["https://wix.com/careers"]) is None and D._AB["n"] == 0, \
+        "off under pytest unless a test asks for it"
+    D._search_ab("Wix", ["https://wix.com/careers"], force=True)
     assert (D._AB["n"], D._AB["answered"], D._AB["agree"]) == (1, 1, 1)
-    D._search_ab("Fiverr", ["https://elsewhere.example/jobs"])
+    D._search_ab("Fiverr", ["https://elsewhere.example/jobs"], force=True)
     assert (D._AB["n"], D._AB["answered"], D._AB["agree"]) == (2, 2, 1), "a disagreement counts"
     D._AB["cap"] = 2
-    D._search_ab("Third", ["https://x.io"])
+    D._search_ab("Third", ["https://x.io"], force=True)
     assert D._AB["n"] == 2, "bounded per process: a free rung still costs seconds"
     D._AB.update(n=0, agree=0, answered=0, cap=40)
 
@@ -31084,7 +31094,11 @@ def test_the_linkedin_guest_walk_is_paced_and_re_asks_a_block_before_paying():
     spaced and a hard block gets one paced re-ask, once per query."""
     import discovery_daily as dd
     src = open(dd.__file__, encoding="utf-8").read()
-    assert dd.LINKEDIN_GUEST_PAUSE_S >= 2.0 and dd.LINKEDIN_BLOCK_PAUSE_S >= 10
+    # the DEFAULTS in the source, not the live constants: `tests/conftest.py` sets both to 0
+    # so the suite does not spend ten tests' worth of wall clock inside `time.sleep`. The
+    # number production runs on is the default, and that is what this pins.
+    assert 'os.environ.get("LINKEDIN_GUEST_PAUSE_S", "2.5")' in src
+    assert 'os.environ.get("LINKEDIN_BLOCK_PAUSE_S", "20")' in src
     assert "time.sleep(LINKEDIN_GUEST_PAUSE_S)" in src
     assert src.index("_blocked_reask[qkey] = True") < src.index("jobs/search?{q}"), \
         "the re-ask must come BEFORE the paid render, or it is not a saving"

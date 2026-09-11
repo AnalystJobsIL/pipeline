@@ -42,9 +42,18 @@ import pytest
 # dataset triggers (`/datasets/v3/trigger`), which bill per RECORD.
 PAID_HOSTS = {"api.brightdata.com"}
 
+# ...and hosts that cost no money but are still the LIVE INTERNET, which a unit suite must
+# never touch. Added 2026-09-11 (infra) after the free DuckDuckGo rung went in ahead of the
+# paid search: `test_search_one_returns_a_dict_when_every_search_raises` stubbed the PAID
+# rung, the new free one ran for real on the runner, and the test failed on CI holding four
+# genuine careers URLs for a company called Acme. The same run was killed at its 7-minute
+# budget inside `ssl.py`. A free rung is not a harmless one: it makes the suite
+# non-hermetic, slow, and dependent on somebody else's rate limiter.
+FREE_BUT_LIVE_HOSTS = {"html.duckduckgo.com", "lite.duckduckgo.com"}
+
 
 class PaidCallInTests(BaseException):
-    """Raised when a test reaches a host that costs money.
+    """Raised when a test reaches a host that costs money, or the live internet.
 
     **`BaseException`, deliberately.** `bd_rescue.unlock_status`, `bd_employees.unlock` and
     `pipeline/jdfill`'s unlocker all wrap their request in a blanket `except Exception` that
@@ -59,15 +68,35 @@ _real_urlopen = urllib.request.urlopen
 
 def _no_paid_calls(req, *args, **kwargs):
     url = req if isinstance(req, str) else getattr(req, "full_url", "")
-    if urlsplit(url).hostname in PAID_HOSTS:
+    host = urlsplit(url).hostname
+    if host in PAID_HOSTS:
         raise PaidCallInTests(
             f"a test reached {url} -- that is real money. Stub `urllib.request.urlopen` (or "
             f"the caller) in this test; see tests/conftest.py and docs/BACKLOG.md 381."
+        )
+    if host in FREE_BUT_LIVE_HOSTS:
+        raise PaidCallInTests(
+            f"a test reached {url} -- free, but the LIVE INTERNET. Stub the rung this test "
+            f"exercises (`deep_validate._ddg_fetch` is the seam) rather than letting the "
+            f"suite depend on somebody else's rate limiter; see tests/conftest.py."
         )
     return _real_urlopen(req, *args, **kwargs)
 
 
 urllib.request.urlopen = _no_paid_calls
+
+# THE SUITE DOES NOT SLEEP. Set here, at import, so the constants that read these names pick
+# up the zero whatever imports them later. Added 2026-09-11 (infra) with the LinkedIn guest
+# walk's pacing: 2.5 s between guest pages and a 20 s pause before paying for a blocked one
+# are right in production -- a 429 there routes the query to the PAID render -- and in the
+# suite they are dead time on ten tests that walk 50 pages against a stub. Measured the day
+# they went in: `guard` on CI was killed at its 7-minute budget with ~197 s of the run inside
+# `time.sleep`. A test that wants to prove the pace exists reads the DEFAULT in the source
+# (`test_the_linkedin_guest_walk_is_paced_and_re_asks_a_block_before_paying`), which is the
+# number production runs on.
+os.environ.setdefault("LINKEDIN_GUEST_PAUSE_S", "0")
+os.environ.setdefault("LINKEDIN_BLOCK_PAUSE_S", "0")
+os.environ.setdefault("DDG_PACE_S", "0")
 
 # SET TO EMPTY, NEVER POPPED -- and that one word is the difference between working and not.
 # Every arming path is now the ONE loader, `pipeline/secretsenv.load` (`438`/`468`: four

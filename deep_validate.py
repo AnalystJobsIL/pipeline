@@ -185,8 +185,17 @@ def _host(u):
     return p[2].lower() if len(p) > 2 else ""
 
 
-def _search_ab(name, paid):
-    """Ask the free rung the same question and print what it would have answered."""
+def _search_ab(name, paid, force=False):
+    """Ask the free rung the same question and print what it would have answered.
+
+    Never under pytest: this is a PRODUCTION measurement that makes a real request, and a
+    unit suite that reaches the live internet is slow, flaky and dependent on somebody
+    else's rate limiter. It cost a CI run on 2026-09-11 -- a test that stubbed the paid rung
+    watched the free one answer for real, and the job was killed at its 7-minute budget
+    inside `ssl.py`. `test_the_paid_search_measures_the_free_one_for_nothing` drives this
+    function directly with `_ddg_fetch` stubbed, which is how the behaviour stays covered."""
+    if "pytest" in sys.modules and not force:
+        return
     if (os.environ.get("SEARCH_AB", "1") or "").strip() == "0" or _DDG["blocked"]:
         return
     if _AB["n"] >= _AB["cap"]:
