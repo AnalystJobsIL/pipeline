@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**640 filed · 454 open · 186 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**641 filed · 455 open · 186 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 591.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 592.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -244,7 +244,7 @@ closure convention in the header.
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
 
-### infra — 112 open
+### infra — 113 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -358,6 +358,7 @@ closure convention in the header.
 - **582** `582@infra` **One throttle episode ends the archive day, and it is now the binding constraint, not
 - **589** `589@infra` **A cheap model could pick the one right SERP result instead of fetching four**
 - **590** `590@infra` **`cloud_state/queue_state.json` has no trim, and three row rungs now append to it** —
+- **591** `591@infra` **A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
 
 ### discovery — 30 open
 
@@ -11932,3 +11933,35 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      that keeps the last two per rung would hold it flat and lose nothing any predicate
      reads. Not done here because the file is another lane's and the fix is not urgent —
      the number to watch is `ls -l cloud_state/queue_state.json`.
+
+591. **A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
+     the sha that introduced it** — lane: `infra` (the harness). Filed 2026-09-11 by `jd-text`
+     at the `registry` session's request; both of us hit it from opposite sides the same
+     afternoon.
+     `tools/mutate.py` mutates a `git archive HEAD` of the run's own commit, so a record broken
+     by lane A is re-run by every lane that pushes after it and fails on THEIR run. Measured:
+     this session shipped two records with the same defect in `1c1e4a3`. `mutation-gate (3)` of
+     its own run 34610661040 named ONE of them
+     (`jd-head-cut-moves-inside-jd-body`, "killed ONLY by source-text guard(s)"); the second,
+     `jd-head-skip-uses-the-classifier-regex-again`, was invisible there and surfaced on
+     `registry`'s run 34611730419 and on `classifier`'s 34611525857 — other lanes' shas,
+     neither of which contained a line either lane wrote. It was found only because this
+     session re-classified all ten of its records instead of fixing the one that shouted.
+
+     **So a lane cannot rely on its own CI run to tell it what it broke**, and the cost lands
+     on whoever pushes next: three lanes read a red shard for one lane's record, and the item
+     `registry` opened about it was about to be re-derived a third time.
+
+     Two cheap fixes, neither of them a new job:
+
+     * **Local, before the push** — `tools/mutate._classify_killer('.', 'tests/test_units.py::<killer>')`
+       must return `behavioural` or `direct` for every record the commit adds; `static` means
+       the named killer reads source and `must_be_killed_by_behavioural` has nothing to count.
+       One line in the pre-push contract next to `guard_kill`, which already runs there.
+     * **In the report** — a shard's failure line names the record but not the commit that
+       introduced it. `git log -S '<record id>' -- tests/mutations.json` answers it in one
+       command; printing that sha beside the `** FAIL **` line would have routed all three of
+       today's reds to the right lane immediately.
+
+     Related but distinct from `442` (the shard budget) and from `386` (a guard that cannot
+     fail): this is about ATTRIBUTION, not about coverage or runtime.
