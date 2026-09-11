@@ -5748,7 +5748,8 @@ Product Analyst`, an open in-scope role, through a stray `seen_id` on that recor
 were **refuted** on their own JDs. A confirmed-OUT row needs a human retraction line even
 when the seam already re-judged it NO, because `rec["class"]` is fed from `merged` and a
 reject is not in `merged`: `Percepto` and `Chainalysis` were both flipped by earlier runs and
-both still read `accept` in the dataset today. That gap is `543@roles`, filed with the diff.
+both still read `accept` in the dataset today. That gap was `543@roles`, **closed 2026-09-11**
+by the reject map below — the hand-written line is no longer the only channel.
 
 **2026-09-02 — the ruling that finished the audit: a closed row is held to the LIVE
 contract.** The operator's acceptance bar is that every published row is relevant *including
@@ -5959,7 +5960,7 @@ tomorrow, bounded by the cap; nothing escalates yet (BACKLOG 123).
 
 `pipeline/class_backfill.py`, 2026-08-31. `cloud_state/roles.csv` published **33 of 167 rows
 with an empty `class_decision`**, every one `closed`, 30 with a real description.
-`rec["class"]` has ONE writer (`pipeline/roles.py`, from this run's `merged` jobs), so a role
+`rec["class"]` had ONE writer (`pipeline/roles.py`, from this run's `merged` jobs), so a role
 that closed before that field existed is never in `merged` again and its cell stays empty for
 ever — and the contract drain cannot reach it either, because the drain re-judges RECORDED
 verdicts and these have none. Nothing was going to fix it, and every role that closes during
@@ -6270,7 +6271,8 @@ jd_attempted`), `status` (`open | closed | superseded | purged | withdrawn`, wit
 reappearance because the email must re-alert, and the ledger keeps the earlier opening
 instead of undoing that), `reposts` (dates the posting was bumped ≥3 days past its
 episode's `first_seen` — the render rule, recorded at ingest), `class` (decision / path /
-reason from the classifier), `tags` (`roleprofile.extract` snapshot, `v: 1`, recomputed when
+reason / **contract** from the classifier — which contract judged it, so a frozen verdict is
+visible as one; `544`), `tags` (`roleprofile.extract` snapshot, `v: 1`, recomputed when
 the description's sha1 changes — `render` owns the vocabulary, this lane owns the column),
 `attribution` (platform, host, tenant slug, `claimed_by`: the other company names that
 fetched the same posting), `sent` (`seen_id → first_sent`, mirrored from the `sent` table)
@@ -6805,6 +6807,137 @@ conflates four different facts (see the limitations below and BACKLOG 313).
 and the bold `Stages:` line says `roles mass-close held (N of M …)`. Rehearsed:
 `--case massclose`.
 
+### The verdict cell: this run's rejects, and which contract judged it
+
+*2026-09-11, lane `roles`, closing `543` and `544`.*
+
+`rec["class"]` is fed from `merged`, and `merged` is `classify_grouped`'s ACCEPTED output. So
+a role the seam re-judged NO was not in it: the cell kept yesterday's `accept`, the role
+dropped off the board, and the public dataset published it as a false accept for the rest of
+the 90-day window. Twelve rows were in that state on 2026-09-01, and the only channel for
+correcting one was a human writing a line in `cloud_state/roles_retractions.jsonl` — **32 of
+its 48 lines were written by hand between 09-01 and 09-11**.
+
+`roles.reject_map(jobs)` reads the same candidate lists `classify_grouped` judged (every copy
+still carries the `_class` it was stamped with) and returns `{role_id: class}` for the
+rejects. `run.py` hands it to `record_run(class_rejects=…)` beside the backfill map, under
+the same quarantine rule — a seam this run has declared broken writes nothing — and
+`_record_run` applies it **after** the status ladder and **before** the backfill map. Three
+refusals, and each is a rule rather than a precaution:
+
+* **a role this run accepted keeps the live verdict** (`rid in by_key`). A mixed group puts
+  one role_id in both places, and the reject would contradict the board the same run renders.
+* **a withdrawn or purged record is never stamped.** That cell is a human's adjudication;
+  a machine verdict must not overwrite one. A superseded record is not published at all.
+* **the status is not touched.** `_alive` is the liveness rule and nothing else is. A
+  rejected posting is simply never upserted, so `last_seen` stops moving and the record
+  closes tomorrow on the ordinary ladder, inside the mass-close guard. Closing it here would
+  skip that guard and misuse `closed`, which the column vocabulary defines as *the posting
+  was gone from the board* — it is not gone, it is not ours.
+
+The counter is `class-rejected N` on the `Roles:` line, and it is a DELTA: a steady morning
+prints nothing. A keyword-rule change never enters `Classifier.quarantine()` (that reads the
+LLM tier only), so a scope edit could in principle flip many rows at once — `roles
+mass-reject (N of M open roles re-judged NO in one run)` is an alarm, deliberately not a
+hold, because holding would republish the very accepts this exists to stop.
+
+**And the cell now says which contract judged it.** The classifier's verdict dict carries
+`contract` (`pipeline/seniority.py`, the same lane's commit); `roles._class_of` is the ONE
+whitelist all three writers use — the live stamp, the reject map and the backfill map — and
+it fills the key from the run's contract only where the PATH proves it (`llm` was bought this
+run, `keyword` is the deterministic head under live rules). An `llm_cache` hit may be current
+or superseded and only the seam knows which, so it exports `""` = unknown. It never infers a
+contract from the reason string: those are the classifier lane's prose and one 09-02 commit
+rewrote 13 of them, so a hash guessed from a sentence and printed as provenance is the
+confident-but-false number `ARCHITECTURE.md` §8 is about.
+
+The export gains `class_contract` (58 columns) and the meta gains `classifier_contract`
+(`live`, `rows_current`, `rows_stale`, `rows_unknown`). A reader compares the two: equal is a
+verdict under today's rules, different is one made under retired rules and never re-judged —
+which a CLOSED role never is, because it never re-enters the run. **38 of 262 records were
+`closed` + `accept` on 2026-09-11**, frozen exactly that way, and until this column existed
+the file gave a reader no way to see it.
+
+### A card blob is not a title — the title canon
+
+*2026-09-11, lane `roles`, `580`.*
+
+`We're Hiring Junior Web Analyst - Practical Vision` and `We’re Hiring Web Analyst -
+Practical Vision` were published and emailed. The title is half of `merge_key`, so a blob is
+half of the role's identity: the same posting listed under its real name mints a second
+record and the two never fold. `roles.canonical_title` cuts only what is provably not part of
+the role's name, and refuses rather than guess:
+
+| rule | cuts | never cuts |
+|---|---|---|
+| hiring call | a leading `We're Hiring` / `Now Hiring` / `דרוש/ה` | a card that is ONLY the call (`We’re Hiring` at sensi keeps its blob) |
+| terms tail | a ` \| ` segment whose every token is schedule/place furniture or a word of the job's own location | the FIRST segment, ever; `\| SQL & Power BI`; `\| Corporate Banking Division Headquarters 3103` |
+| own-name suffix | a trailing ` - X` where `X` is the employer by `_norm_company` or `firmographics.identity_key` | `- Temporary position`, `- Marketing`, `- Payments`, `, Growth` |
+
+It runs at INTAKE, beside `fold_company_aliases` and for the same reason (the 2026-08-31 fold
+decision: canonicalise where the string enters the record, never migrate the key afterwards).
+The raw string rides `_raw_title`; the mail says `title canon at intake: hiring-call x2, …`.
+
+**At rest, `Ledger.fold_titles()` RENAMES** — and here "leave it in place", which the alias
+sweep chooses when it finds no twin, is not available. The canonical key now arrives from
+intake every morning, so an uncanonical record would stop being fed, close as if the posting
+had gone, and be replaced by a new record with today's `first_seen`: one posting published
+twice, with a false closure and a false "new". So the record either folds into a live twin
+(`_fold_into_twin`, the seam this shares with the alias sweep: union the `seen_ids` and the
+`sent` marks, then supersede) or it is renamed across all three stores in one seam —
+`store.rekey_matched` (which REFUSES a key another row owns, so a rename can never destroy a
+history), the ledger record, and its `roles_text.jsonl` line, which joins on `role_id` and
+would otherwise be orphaned and then pruned. `renamed_from` stays on the record: it is what
+lets a retraction line naming the old key keep binding, and it is published in the meta's
+`store.renamed`, because a role_id is a public join key and a silent change of one reads as a
+row that vanished beside a row that appeared.
+
+The shrink guard compares KEY SETS, not counts, so a rename — which keeps the record count
+identical — still loses a key and would be refused every morning while sqlite was already
+rekeyed. `may_drop` is the sanctioned channel for a deliberate removal and the rename
+declares itself through it, exactly as the text prune does. **5 of 262 records renamed on the
+first run** (Practical Vision ×2, Points Location Intelligence, Analytical Factor, aQurate).
+
+The render's `is_mangled_title` still hides what it always hid: the canon removes furniture,
+not a descriptive ` | ` segment, so the three LinkedIn pipe titles the board hides each day
+stay hidden. That alarm belongs to `scraper`/`render` and is unchanged.
+
+### A posting whose own page says it is closed
+
+*2026-09-11, lane `roles`, `581`.*
+
+`migdal|business analyst` was on the board for 17 days and in the 08-26 email, while the page
+we ourselves stored for it said `כבר לא מקבלים בקשות` — *no longer accepting applications* —
+at character 264 of 4,523. Three more open roles were in the same state, and one already
+purged.
+
+The cause is not the text, it is the cache. A LinkedIn card is carried forward in
+`discovered_cache.json` for 21 days by its `posted_date` (`discovery_daily.py`,
+`fetchers.fetch_discovery`), so the card keeps arriving, `last_seen` keeps moving, and
+`_alive`'s *we saw it in the latest scan* is satisfied by our own memory of the card rather
+than by LinkedIn's claim that the job is live. Nothing read the page.
+
+`roles.page_closed(row, rec)` is that reading, and it is deliberately narrow:
+
+* the address is the posting's own and it is LinkedIn's;
+* **every** source is a `discovery-*` one. A role the employer's own board still lists is
+  open whatever a mirror says — the board is the authority, and the mirror is 21 days stale
+  by construction;
+* the evidence is the chrome marker within the first `PAGE_CLOSED_WINDOW` (600) characters —
+  where LinkedIn's own furniture puts it, at offsets 264-501 in the four live texts — or
+  jd-text's `jd_why` stamp `closed-by-page:<date>`, or the ledger's own memory. That memory
+  (`closed_by`, `closed_page`) is url-bound on purpose: it survives a later chrome strip,
+  which would otherwise silently reopen every one of these, while a posting re-listed at a
+  NEW address is not the address we closed and reopens on the ordinary ladder.
+
+`closed_on` is **the day the text was captured** (`jd_attempted`, else the text line's
+`updated`, else today), not today — a reader takes that column for the day the posting went
+away, and today would claim we watched it close. The closure rides `_close`, so the
+mass-close guard counts it: a LinkedIn layout change that puts the phrase on every page is a
+bad read, not fifty closures. And `run.py` stops upserting a page-closed row, or the cache
+would re-serve the card, `closed_keys()` would read it as a reappearance, and `first_seen`
+would reset with a fresh episode **every morning for up to 21 days**.
+
 ### What the mail says
 
 One line in the audit block, from `summary["roles"]`:
@@ -6841,8 +6974,8 @@ by `pipeline/roles.py` beside the ledger and committed by the digest's existing
 
 | file | what |
 |---|---|
-| `cloud_state/roles.csv` | one row per role, 57 columns, `last_seen` inside the window |
-| `cloud_state/roles_archive.csv` | the same 57 columns for every role the window has aged OUT — regenerated whole from the ledger each run, so nothing is ever evicted (header-only until the first eviction, ~2026-11-14) |
+| `cloud_state/roles.csv` | one row per role, 58 columns, `last_seen` inside the window |
+| `cloud_state/roles_archive.csv` | the same 58 columns for every role the window has aged OUT — regenerated whole from the ledger each run, so nothing is ever evicted (header-only until the first eviction, ~2026-11-14) |
 | `cloud_state/roles.csv.meta.json` | what the CSV cannot say about itself: window, exclusions, the `withdrawn` list, per-column null counts, every enum's values spelled out, and a reconciliation identity |
 | `cloud_state/roles_retractions.jsonl` | **hand-written**: the postings a human withdrew, with the reason (below) |
 | `cloud_state/funnel.csv` | one row per FULL run: postings → Israel → judged → matched → alive → board → emailed |

@@ -507,6 +507,31 @@ closure convention in the header.
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 - **579** `579@company-intel` **Four firmographics record pairs describe one employer each**
 
+### roles — 22 open
+
+- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
+- **3** `3@roles` **`pipeline/dates.py`**
+- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
+- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
+- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
+- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
+- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
+- **534** `534@roles` **One posting, two `merge_key`s
+- **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
+- **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
+
 ### ats-fetch — 20 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
@@ -10696,8 +10721,28 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
      Filed 2026-09-01.
 
-543. **A drain flip never reaches the published dataset, so a role the seam has re-judged NO
-     stays in the file as `accept` until a human writes a retraction line** — lane: `roles`.
+543. ~~**A drain flip never reaches the published dataset, so a role the seam has re-judged NO
+     stays in the file as `accept` until a human writes a retraction line**~~ — lane:
+     `roles`. **CLOSED 2026-09-11: `roles.reject_map` hands `record_run` the run's own
+     rejects.**
+     `classify_grouped` already stamps `_class` on every judged copy, so the map is read from
+     the candidate lists `run.py` still holds, keyed by `merge_key`, and applied AFTER the
+     status ladder (a record withdrawn this morning is never stamped) and BEFORE the backfill
+     map (which is fill-only-empty and cannot undo it). It refuses three things and each is a
+     rule: a role THIS run accepted keeps the live verdict (`rid in by_key` — a mixed group
+     puts one role_id in both places); a withdrawn, purged or superseded record is never
+     touched; and the STATUS is not changed, because `_alive` is the liveness rule — a reject
+     is never upserted, so `last_seen` stops moving and the record closes tomorrow on the
+     ordinary ladder inside the mass-close guard. Closing it here would contradict the board
+     the same run renders, skip that guard, and misuse `closed` ("the posting was gone"). The
+     mail carries `class-rejected N` as a DELTA, plus a `roles mass-reject` alarm, because a
+     KEYWORD-rule change never enters `Classifier.quarantine()` and could otherwise flip many
+     rows in one morning unremarked. The quarantine discard sits outside the backfill's
+     `use_llm and not (only or limit)` gate and outside its `try`, so a scoped LLM run is
+     covered and the backfill's `except` cannot swallow it. NOT closed by this: an
+     adjudication against a verdict the seam still holds as YES under the live contract — the
+     drain never re-judges it, so a hand-written retraction line is still the only channel
+     (`classifier`, 2026-09-11, six such lines that day). Original report:
      Filed by `classifier` 2026-09-01. `rec["class"]` has one writer fed from `merged`
      (`pipeline/roles.py`), and `merged` is the ACCEPTED output of `classify_grouped`, so a
      role the contract drain flips to reject is not in it: the cell keeps `accept`, the row
@@ -10716,9 +10761,25 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      respects: it must not run before the quarantine check, or a run the seam has just
      declared broken can stamp `reject` onto published rows.
 
-544. **A published `class_decision` cannot say which contract judged it, so a bump leaves the
-     closed half of the dataset carrying verdicts under a dead contract with no way to tell**
-     — lane: `roles`. Filed by `classifier` 2026-09-01. The ledger's `class` dict is
+544. ~~**A published `class_decision` cannot say which contract judged it, so a bump leaves
+     the closed half of the dataset carrying verdicts under a dead contract with no way to
+     tell**~~ — lane: `roles`. **CLOSED 2026-09-11 (with `classifier`).** The verdict dict carries
+     `contract` (classifier's commit: both `base` dicts, the hand-built backfill rejects, and
+     a 5th element on `_lookup` naming the prefix that actually answered, so a superseded
+     cache hit reports the retired hash rather than nothing); `roles._class_of` is the ONE
+     whitelist all three writers share — live stamp, reject map (`543`), backfill map. Where
+     the classifier does not supply it, the fallback fills it only where the PATH proves it
+     (`llm` bought this run, `keyword` the deterministic head under live rules); an
+     `llm_cache` hit exports `""` = unknown, because only the seam knows its vintage.
+     Explicitly REJECTED: inferring the contract from the reason string — those are the
+     classifier lane's prose and one 09-02 commit rewrote 13 of them, so a hash guessed from
+     a sentence and printed as provenance is the exact failure §8 names. The export gains
+     `class_contract` (57 → 58 columns) and the meta `classifier_contract`
+     (`live`/`rows_current`/`rows_stale`/`rows_unknown`), so a stale cell is VISIBLE: **38 of
+     262 records were `closed` + `accept`** on 2026-09-11, frozen because a closed role never
+     re-enters `merged`. NOT closed by this: nothing DRAINS them — the column makes the
+     freeze legible, and re-judging a closed row is still `classifier`'s
+     `judge_backfill` reaching only empty cells. Original report: Filed by `classifier` 2026-09-01. The ledger's `class` dict is
      `{decision, path, reason}` and both whitelists (`roles.py`, the live-stamp and the
      `class_backfill` map) drop any other key, so there is no contract, no date and no
      provenance on the cell. And the cell freezes for a reason worth stating precisely, because it is easy to get wrong: the LIVE path overwrites `rec["class"]` unconditionally on every run the role is in `merged` (`pipeline/roles.py`), and only the `class_backfill` map is fill-only-empty — so a verdict freezes not because the cell refuses writes but because a CLOSED role never re-enters `merged` (which is `543`'s mechanism). After the 2026-09-01 bump and this commit's withdrawals, **26 of the ~136 published rows** are closed and carry a verdict made under a retired contract, permanently, and nothing in the file says so. The lane's acceptance test ("0 records without a

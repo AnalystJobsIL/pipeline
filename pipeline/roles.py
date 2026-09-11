@@ -231,9 +231,16 @@ class Retractions:
         unowned, which is the pre-2026-09-02 behaviour — under-withdrawing, which the
         `unmatched` alarm shows, rather than over-withdrawing, which nothing shows."""
         records = records or {}
+        # A role_id a title canon RENAMED (580) is still the name its author wrote down, so
+        # every record answers to the ids it used to carry as well as the one it has now.
+        # Without this a line naming the old key would go `unmatched` the morning after a
+        # rename and the posting would return to the board — and since the classifier lane
+        # stamped a `role_id` onto every line on 2026-09-11, that is now every line.
+        was = {old: r for r in records.values() if isinstance(r, dict)
+               for old in (r.get("renamed_from") or [])}
         for e in self.entries:
             rid = e.get("role_id")
-            rec = records.get(rid) if rid else None
+            rec = (records.get(rid) or was.get(rid)) if rid else None
             if isinstance(rec, dict) and rec.get("url"):
                 e["_urls"].add(_url_key(rec["url"]))
         owned = {_url_key(r["url"]) for r in list(records.values()) + list(extra or ())
@@ -252,6 +259,7 @@ class Retractions:
         if not self.entries or not isinstance(rec, dict):
             return []
         rid = rec.get("role_id") or rec.get("mkey") or ""
+        ids = {rid} | {x for x in (rec.get("renamed_from") or []) if x}   # 580: a renamed key
         own = {_url_key(rec["url"])} if rec.get("url") else set()
         sid_keys = set()
         sids = rec.get("seen_ids") or []
@@ -263,7 +271,7 @@ class Retractions:
                 if tail.startswith(("http://", "https://")):
                     sid_keys.add(_url_key(tail))
         return [e for e in self.entries
-                if (e.get("role_id") and e["role_id"] == rid)
+                if (e.get("role_id") and e["role_id"] in ids)
                 or (own & e["_urls"])
                 or (sid_keys & e["_urls"]
                     and not e.get("_owned") and not e.get("role_id"))]
@@ -290,6 +298,63 @@ def _url_key(u):
     u = re.sub(r"^https?://", "", u, flags=re.I)
     host, sep, rest = u.partition("/")
     return host.lower() + (sep + rest.rstrip("/") if sep else "")
+
+
+# ---- the posting's own page says it is closed (docs/BACKLOG.md 581) ---------------------
+# The marker sits in LinkedIn's page chrome, above the description body: offsets 264, 344,
+# 377 and 501 in the four live texts that carry it on 2026-09-11. A window keeps it a
+# CHROME reading — a description that merely quotes the phrase ("we are no longer accepting
+# applications by email") 2,000 characters in is a sentence about the job, not a verdict on
+# the posting.
+PAGE_CLOSED_WINDOW = 600
+_PAGE_CLOSED = re.compile(r"No longer accepting applications|כבר לא מקבלים בקשות", re.I)
+
+
+def page_says_closed(desc):
+    """Does this stored page text say, in its chrome, that the posting is closed?"""
+    return bool(_PAGE_CLOSED.search(str(desc or "")[:PAGE_CLOSED_WINDOW]))
+
+
+def page_closed(row, rec=None):
+    """Is this a LinkedIn-only role whose OWN page says it stopped accepting applications?
+
+    A LinkedIn card is carried forward in `discovered_cache.json` for 21 days by its
+    `posted_date` (`discovery_daily.py`, `fetchers.fetch_discovery`), so the card keeps
+    arriving, `last_seen` keeps moving, and `_alive`'s "we saw it in the latest scan" is
+    satisfied by our own cache rather than by LinkedIn. Four of the 44 open LinkedIn-only
+    records were in that state on 2026-09-11 — `migdal|business analyst` had been on the
+    board for 17 days and emailed on 08-26 — each with the closure printed in the text we
+    ourselves stored.
+
+    Three gates, and each one is what keeps this a narrow reading rather than a text oracle:
+
+      * the address is the posting's own and it is LinkedIn's. A marker in a text we got
+        from somewhere else says nothing about THIS posting (the 2026-09-01 lesson: the
+        text a row carries is not always the text of the row's own posting).
+      * every source is a discovery one. A role its employer's OWN board still lists is
+        open whatever a LinkedIn mirror says — the board is the authority, and the mirror
+        is 21 days stale by construction.
+      * the evidence is the chrome marker, jd-text's `closed-by-page` stamp, or the
+        ledger's own memory of having read it. The memory arm is url-bound on purpose: it
+        survives a later chrome strip (`jd-text` may clean the furniture out of stored text
+        at any time, which would otherwise silently reopen every one of these), while a
+        posting re-listed at a NEW address is not the address we closed and reopens on the
+        ordinary ladder."""
+    if not isinstance(row, dict):
+        return False
+    host, _path = _store._url_parts(row.get("url"))
+    if host not in ("linkedin.com", "il.linkedin.com"):
+        return False
+    srcs = row.get("sources") or []
+    srcs = [s for s in (srcs.split("+") if isinstance(srcs, str) else srcs) if s]
+    if not srcs or not all(str(s).startswith("discovery-") for s in srcs):
+        return False
+    if page_says_closed(row.get("description")):
+        return True
+    if str(row.get("jd_why") or "").startswith("closed-by-page"):
+        return True
+    return (isinstance(rec, dict) and rec.get("closed_by") == "page"
+            and _url_key(rec.get("closed_page")) == _url_key(row.get("url")))
 
 
 def load(path):
@@ -327,8 +392,8 @@ def load(path):
     return records, "ok", bad
 
 
-_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description", "purge_reason", "withdraw_reason", "retracted_on", "purged_on", "held_since"]
-_LIST_FIELDS = ("sources", "seen_ids", "episodes", "reposts")
+_STR_FIELDS = [c for c in CORE if c not in ("sources", "seen_ids")] + ["role_id", "closed_on", "emailed_on", "updated", "desc_sha1", "description", "purge_reason", "withdraw_reason", "retracted_on", "purged_on", "held_since", "closed_by", "closed_page", "renamed_on"]
+_LIST_FIELDS = ("sources", "seen_ids", "episodes", "reposts", "renamed_from")
 _DICT_FIELDS = ("sent", "tags", "attribution", "class")
 
 
@@ -422,6 +487,101 @@ _PLACE_WORDS = {"israel", "il", "remote", "hybrid", "office", "site", "on",
                 # twin): never role semantics — the prefix rule still refuses
                 # "Part Time Analyst" vs "Analyst" and ", Growth" stays a second role
                 "full", "part", "time"}
+
+
+# ---- the title canon (docs/BACKLOG.md 580) ---------------------------------------------
+# A card blob is not a title. `We're Hiring Junior Web Analyst - Practical Vision` and
+# `We’re Hiring Web Analyst - Practical Vision` were published and EMAILED on 2026-09-11,
+# and both are one employer's hiring call wrapped around a two-word role name. The title is
+# half of `merge_key`, so the blob is also half of the role's identity: the same posting
+# retitled by the board mints a second record, and the two never fold.
+#
+# Every rule below cuts only what is provably not part of the role's name, and each refuses
+# rather than guess. The measured population on 2026-09-11 is 5 records of 262.
+_HIRING_CALL = re.compile(r"^\s*(?:we.?re|we\s+are|now)\s+hiring\b[\s:!\-–—]*", re.I)
+# "דרוש/ה", "דרוש.ה", "דרושים" — the Hebrew "Wanted:" opener a board glues onto a title.
+_HEBREW_CALL = re.compile(r"^\s*דרוש(?:[/.\-]?(?:ה|ים|ות))?\s+")
+# Schedule and place furniture. `_PLACE_WORDS` already carries israel/il/remote/hybrid/
+# office/site/on/full/part/time; a job card's employment terms add these.
+_TERMS_WORDS = _PLACE_WORDS | {"onsite", "temporary", "temp", "permanent", "shifts"}
+_SEG = re.compile(r"\s+\|\s+")
+_OWN_TAIL = re.compile(r"^(.*\S)\s+[-–—|]\s+([^-–—|]{2,}?)\s*$")
+
+
+def _furniture_only(seg, location):
+    """Is this title segment nothing but employment terms and places?"""
+    toks = _store._norm(seg).split()
+    allowed = _TERMS_WORDS | set(_store._norm(location).split())
+    return bool(toks) and all(t in allowed for t in toks)
+
+
+def _same_employer(name, company):
+    """Is this trailing name the employer the posting already belongs to?
+
+    `_norm_company` answers for `Practical Vision`; `identity_key` is needed for
+    `DATA analyst - Aqurate Data` under the company `aQurate`, where the tail is a declared
+    alias of the row rather than a spelling of it. Both are existing, tested normalisers —
+    the same pair the alias fold is built on — so this rule cuts a suffix exactly when the
+    repo already believes the two names are one employer, and never on a resemblance."""
+    a, b = _store._norm_company(name), _store._norm_company(company)
+    if a and a == b:
+        return True
+    from .firmographics import identity_key
+    ia = identity_key(name)
+    return bool(ia) and ia == identity_key(company)
+
+
+def _canon(title, company, location=""):
+    """(canonical title, [rules that fired]). The title unchanged when nothing fires, or
+    when a rule would leave less than a role name behind."""
+    raw = " ".join(str(title or "").split())
+    t, rules = raw, []
+    for rx in (_HIRING_CALL, _HEBREW_CALL):
+        m = rx.match(t)
+        if m:
+            rest = t[m.end():].strip()
+            # `We’re Hiring` alone is a whole scraped card at sensi: cutting the call
+            # leaves nothing, so the card keeps its blob and the render keeps hiding it.
+            if rest and _store._norm(rest) and not _furniture_only(rest, location):
+                t, rules = rest, rules + ["hiring-call"]
+            break
+    segs = _SEG.split(t)
+    if len(segs) > 1:
+        # the FIRST segment is the role name and is never dropped; the rest go only if they
+        # are pure furniture. `Business Data Analyst | SQL & Power BI` and `Business Analyst
+        # | Corporate Banking Division Headquarters 3103` are descriptive and stay whole.
+        keep = [segs[0]] + [s for s in segs[1:] if not _furniture_only(s, location)]
+        if len(keep) < len(segs):
+            t, rules = " | ".join(keep), rules + ["terms tail"]
+    m = _OWN_TAIL.match(t)
+    if m and _same_employer(m.group(2), company):
+        t, rules = m.group(1), rules + ["own-name suffix"]
+    t = " ".join(t.split())
+    if len(t) < 2 or not _store._norm(t) or _furniture_only(t, location):
+        return raw, []
+    return (t, rules) if t != raw else (raw, [])
+
+
+def canonical_title(title, company, location=""):
+    """The role's name with the card's furniture removed. Pure; safe to call anywhere."""
+    return _canon(title, company, location)[0]
+
+
+def canonicalize_titles(jobs):
+    """Rewrite blob titles at INTAKE, before `classify_grouped` groups by `merge_key` — the
+    same place and the same reason as `fold_company_aliases` (the 2026-08-31 fold decision:
+    canonicalise where the string ENTERS the record, never migrate the key afterwards).
+
+    The raw string rides `_raw_title`, so nothing is lost. Returns (jobs, {rule: n})."""
+    folds = {}
+    for j in jobs:
+        raw = str(j.get("title") or "")
+        canon, rules = _canon(raw, j.get("company"), j.get("location"))
+        if canon != raw:
+            j["_raw_title"], j["title"] = raw, canon
+            for r in rules:
+                folds[r] = folds.get(r, 0) + 1
+    return jobs, folds
 
 
 def _titles_agree(a, b):
@@ -609,6 +769,35 @@ def _seniority_pole(job):
     if ws & {"senior", "sr"}:
         return "senior"
     return ""
+
+
+CLASS_KEYS = ("decision", "path", "reason", "contract")
+
+
+def _class_of(cls, live_contract=""):
+    """The classifier's verdict, whitelisted for the record -- and carrying WHICH contract
+    judged it (docs/BACKLOG.md 544).
+
+    The cell used to be `{decision, path, reason}`, so a reader of the public dataset could
+    not tell a verdict made under today's rules from one made under rules retired two scope
+    changes ago. 38 of 262 records are `closed` + `accept` today: a closed role never
+    re-enters `merged`, so its verdict is frozen for ever and nothing in the file said so.
+
+    `contract` comes from the seam that made the verdict (`pipeline/seniority.py`) whenever
+    it is there. The fallback fills it ONLY where the path proves it: `llm` means this run
+    bought the verdict under this run's contract, and `keyword` means the deterministic head
+    decided it under the rules live right now. An `llm_cache` hit may be current or
+    superseded and only the seam knows which, so the key is left absent and exports as
+    "" = unknown.
+
+    What this deliberately does NOT do is read the reason string. Reason strings are the
+    classifier lane's prose -- one 2026-09-02 commit rewrote 13 of them -- so a contract
+    inferred from `reason.endswith("(superseded contract)")` would be a guessed hash printed
+    as provenance, which is the confident-but-false number this repo punishes hardest."""
+    out = {k: cls.get(k) for k in CLASS_KEYS if cls.get(k) is not None}
+    if "contract" not in out and live_contract and out.get("path") in ("keyword", "llm"):
+        out["contract"] = live_contract
+    return out
 
 
 def same_role_twin(a, b, weak_ids=frozenset()):
@@ -1045,6 +1234,30 @@ def classify_grouped(candidates, clf, jdfill, stats, paths):
     return accepted
 
 
+def reject_map(jobs):
+    """`{role_id: class}` for every judged copy the classifier REJECTED this run
+    (docs/BACKLOG.md 543).
+
+    `classify_grouped` stamps `_class` on every member of a judged group and then returns
+    only the accepts, so a role the seam re-judges NO is not in `merged` -- and `merged` is
+    the only thing the live class stamp reads. The cell therefore kept yesterday's `accept`,
+    the role dropped off the board, and the public dataset published it as a false accept
+    for the whole 90-day window. Twelve rows were in that state on 2026-09-01, and each one
+    needed a hand-written retraction line instead: 32 of the 48 lines in
+    `roles_retractions.jsonl` have been written by hand since.
+
+    A reject here is a VERDICT, not a closure. `_record_run` writes the cell and leaves the
+    status alone, because the liveness rule is `_alive` in run.py and nothing else; a
+    rejected role is simply never upserted, so `last_seen` stops moving and it closes on the
+    ordinary ladder tomorrow, mass-close guard included."""
+    out = {}
+    for j in jobs:
+        cls = j.get("_class") or {}
+        if cls.get("decision") == "reject":
+            out[_store.merge_key(j)] = cls
+    return out
+
+
 # --------------------------------------------------------------------------- #
 # the ledger
 # --------------------------------------------------------------------------- #
@@ -1067,6 +1280,9 @@ class Ledger:
         self.retitle_folds = []         # same-company twin folds ("Co: new<-old")
         self.alias_folds = []           # company-string folds ("R<-orig"), fold_aliases'
         self.twin_folds = 0             # sweep_store's at-rest twin count
+        self.live_contract = ""         # the classifier contract this run judges under (544)
+        self.renamed = {}               # old role_id -> new, this run's title renames (580)
+        self.title_folds = []           # "new<-old" strings, for the mail line
         # The hand-written retractions, read OUTSIDE `_guard` and before any seam: `run.py`'s
         # `_alive` consults them directly, so a frozen (corrupt) ledger day cannot put a
         # withdrawn posting back on the board — the file is its own authority.
@@ -1349,6 +1565,44 @@ class Ledger:
                     len(identity_key(name)),
                     name)
         return min(idxs, key=rank)
+
+    def _fold_into_twin(self, loser_key, loser, winner_key, winner, claimed=""):
+        """One record folds into a live twin at rest — the shared body of both at-rest
+        sweeps (the alias fold, and the title canon's).
+
+        The union is the load-bearing half and the reason this is ONE function rather than
+        two copies: the loser's `seen_ids` are what `filter_new` consults, so a winner that
+        does not inherit them is a posting re-emailed under the other name, and its `sent`
+        marks are the same guarantee one layer down. `claimed` records the folded company
+        STRING on the winner's attribution (an alias fold); a title fold has no second
+        company name to record and leaves it alone."""
+        winner["seen_ids"] = sorted((set(winner.get("seen_ids") or [])
+                                     | set(loser.get("seen_ids") or [])) - {""})
+        merged_sent = dict(loser.get("sent") or {})
+        merged_sent.update(winner.get("sent") or {})
+        winner["sent"] = merged_sent
+        if claimed:
+            attr = winner.setdefault("attribution", {})
+            attr["claimed_by"] = sorted(set(attr.get("claimed_by") or []) | {claimed})
+        else:
+            winner["renamed_from"] = sorted(set(winner.get("renamed_from") or []) | {loser_key})
+        self.st.update_matched(winner_key, seen_ids=winner["seen_ids"])
+        self._supersede(loser_key, winner_key)
+        self._touch(winner)
+
+    def _capture_date(self, rid, rec, run_date):
+        """When did we capture the text that says this posting is closed?
+
+        The fill stamp first (`jd_attempted`, which may read `2026-08-28 gone` — the ISO
+        prefix is the date), then the text ledger's own `updated`, then today. Today is the
+        last resort and not the first, because `closed_on` is published: a reader takes it
+        for the day the posting went away, and every day we can name is closer to the truth
+        than the day we happened to notice."""
+        ja = str(rec.get("jd_attempted") or "")[:10]
+        if _iso(ja):
+            return ja
+        upd = str((self.text.get(rid) or {}).get("updated") or "")[:10]
+        return upd if _iso(upd) else run_date
 
     def _supersede(self, loser_key, winner_key):
         if loser_key == winner_key:           # "Acme Ltd" and "Acme" share one mkey
@@ -1643,16 +1897,7 @@ class Ledger:
                 # a twin exists under the canonical name: the resolve_claims loser
                 # treatment at rest — union ids and sent marks so `filter_new` keeps
                 # seeing every delivery, name the folded string on the winner
-                w["seen_ids"] = sorted((set(w.get("seen_ids") or [])
-                                        | set(rec.get("seen_ids") or [])) - {""})
-                merged_sent = dict(rec.get("sent") or {})
-                merged_sent.update(w.get("sent") or {})
-                w["sent"] = merged_sent
-                attr = w.setdefault("attribution", {})
-                attr["claimed_by"] = sorted(set(attr.get("claimed_by") or []) | {orig})
-                self.st.update_matched(new_key, seen_ids=w["seen_ids"])
-                self._supersede(rid, new_key)
-                self._touch(w)
+                self._fold_into_twin(rid, rec, new_key, w, claimed=orig)
                 self.alias_folds.append(f"{r}<-{orig}")
             else:
                 # no twin: leave the record — a role_id rename is a full-store migration
@@ -1673,6 +1918,86 @@ class Ledger:
         if left:
             lines.append(f"alias fold left {len(left)} record(s) in place, no twin "
                          f"({', '.join(sorted(set(left))[:5])})")
+        return lines
+
+    def fold_titles(self):
+        """Apply the title canon to what the store ALREADY holds (docs/BACKLOG.md 580).
+
+        The intake canon fixes tomorrow; this fixes the five records that are published
+        under a card blob today. Unlike the alias sweep, "leave it in place" is not an
+        option here: the canonical key arrives from intake every morning, so an uncanonical
+        record would simply stop being fed, close as if the posting had gone, and be
+        replaced by a brand-new record with today's `first_seen` — one posting published
+        twice, with a false closure and a false "new". So a record either folds into a live
+        twin or is RENAMED, and the rename moves all three stores in one seam."""
+        return self._guard("fold_titles", self._fold_titles, [])
+
+    def _fold_titles(self):
+        if self.frozen:
+            return []
+        renamed, folded, left = [], [], []
+        for rid, rec in list(self.records.items()):
+            if rec.get("status") in ("superseded", "purged", "withdrawn"):
+                continue
+            old_title = str(rec.get("title") or "")
+            canon = canonical_title(old_title, rec.get("company"), rec.get("location"))
+            if canon == old_title:
+                continue
+            new_key = _store.merge_key({"company": rec.get("company"), "title": canon})
+            if new_key == rid:
+                # `_norm` already equated the two spellings (punctuation only), so the key
+                # never moved: this is a FIELD repair and nothing else is at risk.
+                rec["title"] = canon
+                self._touch(rec)
+                self.st.update_matched(rid, title=canon)
+                renamed.append(f"{canon}<-{old_title}")
+                continue
+            w = self.records.get(new_key)
+            if w is not None and w.get("status") not in ("superseded", "purged", "withdrawn"):
+                # a live record already answers to the canonical key: the same twin
+                # treatment the alias sweep uses, through the one seam.
+                self._fold_into_twin(rid, rec, new_key, w)
+                folded.append(f"{canon}<-{old_title}")
+                continue
+            if w is not None or not self.st.rekey_matched(rid, new_key, title=canon):
+                # a retired record, or a sqlite row, already owns the key. Renaming onto it
+                # would destroy a history; leaving this one is the conservative answer and
+                # it is named on the mail line so it cannot rot unseen.
+                left.append(rid)
+                continue
+            self.records.pop(rid)
+            for other in self.records.values():
+                if other.get("superseded_by") == rid:
+                    other["superseded_by"] = new_key
+                    self._touch(other)
+            rec["role_id"], rec["title"] = new_key, canon
+            rec["renamed_from"] = sorted(set(rec.get("renamed_from") or []) | {rid})
+            rec["renamed_on"] = self.run_date
+            self.records[new_key] = rec
+            t = self.text.pop(rid, None)
+            if t is not None:
+                # the text file joins on role_id; leaving it behind would orphan the
+                # description and `flush`'s prune would then DELETE it
+                self.text[new_key] = dict(t, role_id=new_key)
+                self.text_dirty = True
+            self.renamed[rid] = new_key
+            self._touch(rec)
+            renamed.append(f"{canon}<-{old_title}")
+        self.title_folds = renamed + folded
+        lines = []
+        if renamed or folded:
+            parts = []
+            if renamed:
+                parts.append(f"{len(renamed)} renamed ({', '.join(sorted(set(renamed)))})")
+            if folded:
+                parts.append(f"{len(folded)} superseded ({', '.join(sorted(set(folded)))})")
+            lines.append("title folds: " + " · ".join(parts))
+        if left:
+            lines.append(f"title fold left {len(left)} record(s) in place, the canonical key "
+                         f"is taken ({', '.join(sorted(set(left))[:5])})")
+        if self.dirty or self.text_dirty:
+            # the sqlite rows are already rekeyed; the two stores must not end the call split
+            self.flush()
         return lines
 
     # ---- close --------------------------------------------------------------------
@@ -1724,7 +2049,8 @@ class Ledger:
         return hits
 
     def record_run(self, run_date, *, board_jobs, merged, scanned_ok, failed, paths=None,
-                   scoped=True, never_ours=(), class_backfill=None):
+                   scoped=True, never_ours=(), class_backfill=None, class_rejects=None,
+                   contract=""):
         """Status / episodes / reposts / class / tags / attribution for this run, then flush.
         Closure is judged for companies this run looked at and whose fetch succeeded — every
         company but the failed ones on a FULL run (a role whose employer is no registry row
@@ -1747,15 +2073,26 @@ class Ledger:
         `pipeline/class_backfill.py` (lane: `classifier`): verdicts for records this run
         never fetched, so the dataset's `class_decision` is not empty on every role that
         closed before the column existed. It fills only an EMPTY `class` and is applied
-        AFTER the live stamping below, so this run's own verdict always wins."""
+        AFTER the live stamping below, so this run's own verdict always wins.
+
+        `class_rejects` is `{role_id: class}` for the postings THIS RUN rejected
+        (`roles.reject_map`, docs/BACKLOG.md 543) -- the mirror image of the map above. It
+        reaches only records `merged` cannot: a live accept always wins, and a record that
+        is withdrawn, purged or superseded is never stamped. It changes no status.
+
+        `contract` is the live classifier contract (`Classifier.contract`, which is not
+        always `seniority.CONTRACT` -- `CLASSIFY_MODEL` moves it), recorded on every cell
+        this run writes so a stale verdict is visible in the export (544)."""
         return self._guard("record_run", lambda: self._record_run(
             run_date, board_jobs=board_jobs, merged=merged, scanned_ok=scanned_ok, failed=failed,
             paths=paths, scoped=scoped, never_ours=never_ours,
-            class_backfill=class_backfill), ["roles: not recorded (see Stages)"])
+            class_backfill=class_backfill, class_rejects=class_rejects,
+            contract=contract), ["roles: not recorded (see Stages)"])
 
     def _record_run(self, run_date, *, board_jobs, merged, scanned_ok, failed, paths, scoped,
-                    never_ours=(), class_backfill=None):
+                    never_ours=(), class_backfill=None, class_rejects=None, contract=""):
         rows = {r["mkey"]: r for r in self.st.get_matched_since("0000-01-01", include_superseded=True)}
+        self.live_contract = contract or ""
         onboard = {_store.merge_key(j) for j in board_jobs}
         by_key = {_store.merge_key(j): j for j in merged}
         failed = set(failed or ())
@@ -1847,8 +2184,8 @@ class Ledger:
             j = by_key.get(rid)
             if j is not None:
                 cls = j.get("_class") or {}
-                new_cls = {k: cls.get(k) for k in ("decision", "path", "reason") if cls.get(k) is not None}
-                if new_cls and rec.get("class") != new_cls:
+                new_cls = _class_of(cls, self.live_contract)
+                if new_cls.get("decision") and rec.get("class") != new_cls:
                     rec["class"] = new_cls
                     self._touch(rec)
                 att = rec.get("attribution") or {}
@@ -1937,10 +2274,26 @@ class Ledger:
                     self._touch(rec)
                     c["purged"] += 1      # a delta, like `closed today` beside it — not a
                 c["purged_total"] += 1    # running total that never decays
+            elif page_closed(rec, rec):
+                # The posting's own page says it stopped accepting applications (581). It is
+                # ahead of the `onboard` arm because `onboard` is satisfied by our own
+                # 21-day discovery cache, which is the very thing that kept these four roles
+                # published. `closed_on` is the day the TEXT was captured, not today: that is
+                # when we could last have known, and stamping today would claim we watched it
+                # close. It rides `_close` like any other closure, so the mass-close guard
+                # counts it — a morning where this fires for half the board is a bad read of
+                # a changed LinkedIn page, not fifty closures.
+                if prev_status != "closed":
+                    c["to_close"] += 1
+                    rec["_close"] = ("page", self._capture_date(rid, rec, run_date))
+                else:
+                    c["closed"] += 1
             elif rid in onboard:
                 if prev_status != "open":
                     rec["status"], rec["closed_on"] = "open", None
                     self._touch(rec)
+                rec.pop("closed_by", None)            # it is on its board again: no page verdict
+                rec.pop("closed_page", None)
                 c["open"] += 1
             elif judged(rec.get("company")):
                 if fresh:
@@ -1957,6 +2310,39 @@ class Ledger:
                 c[prev_status + "_total"] += 1     # a standing verdict is a total, never a delta
             else:
                 c[prev_status] += 1
+        # This run's OWN rejects, for the records `merged` cannot reach (543). Placed
+        # HERE for two reasons, each of which was a defect when it sat elsewhere:
+        #   * after the ladder above, so a record this morning withdrew, purged or
+        #     superseded is never stamped -- the retraction match runs in that loop, and a
+        #     stamp inside it would overwrite a standing human verdict with a machine one;
+        #   * before the backfill map below, which is fill-only-empty and so cannot undo it.
+        # The STATUS is untouched on purpose. A rejected posting is never upserted, so its
+        # `last_seen` stops moving and it closes tomorrow on the ordinary ladder, inside the
+        # mass-close guard. Closing it here would contradict the board this same run
+        # renders (the role is still in `onboard` for one more morning, on yesterday's
+        # `last_seen`), skip that guard, and misuse `closed`, which the column vocabulary
+        # defines as "the posting was gone from the board" -- it is not gone, it is not ours.
+        for rid, cls in (class_rejects or {}).items():
+            rec = self.records.get(rid)
+            if rec is None or rid in by_key:
+                continue                      # never seen, or this run accepted it: live wins
+            if (rec.get("status") or "open") not in ("open", "closed"):
+                continue
+            new_cls = _class_of(cls, self.live_contract)
+            if new_cls.get("decision") != "reject" or rec.get("class") == new_cls:
+                continue
+            rec["class"] = new_cls
+            self._touch(rec)
+            c["class_rejected"] += 1
+        # A keyword-rule change never enters `Classifier.quarantine()` (which only reads the
+        # LLM tier's verdicts), so a scope edit could in principle flip every open record in
+        # one morning. The stamps are already written when this fires -- it is an alarm, not
+        # a hold, because a verdict is not a closure and holding it would republish the very
+        # accepts 543 exists to stop -- but a human reads the number the morning it happens.
+        if c["class_rejected"] > max(MASS_CLOSE_MIN, MASS_CLOSE_FRAC * max(1, c["open"])):
+            self.alarms.append(f"roles mass-reject ({c['class_rejected']} of {c['open']} open "
+                               f"roles re-judged NO in one run) -- check the classifier's "
+                               f"rules changed on purpose")
         # The classifier's backlog verdicts (lane: `classifier`, `pipeline/class_backfill.py`),
         # applied AFTER the loop above so a record this run actually fetched keeps the verdict
         # the run made for it. Fill-only-empty in both directions: a record that already
@@ -1966,8 +2352,7 @@ class Ledger:
             rec = self.records.get(rid)
             if rec is None or (rec.get("class") or {}) or not cls:
                 continue
-            rec["class"] = {k: cls[k] for k in ("decision", "path", "reason")
-                            if cls.get(k) is not None}
+            rec["class"] = _class_of(cls, self.live_contract)
             self._touch(rec)
             c["class_backfilled"] += 1
         # mass-close guard: statuses are held, the mail is told
@@ -1980,11 +2365,18 @@ class Ledger:
             c["open"] += c["to_close"]
         else:
             for rec in self.records.values():
-                if rec.pop("_close", None):
+                why = rec.pop("_close", None)
+                if not why:
+                    continue
+                if isinstance(why, tuple):            # a page closure carries its own date
+                    rec["status"], rec["closed_on"] = "closed", why[1]
+                    rec["closed_by"], rec["closed_page"] = "page", rec.get("url") or ""
+                    c["closed_by_page"] += 1
+                else:
                     rec["status"], rec["closed_on"] = "closed", run_date
-                    c["closed_today"] += 1
-                    c["closed"] += 1
-                    self._touch(rec)
+                c["closed_today"] += 1
+                c["closed"] += 1
+                self._touch(rec)
         # The alarm that makes a withdrawal visible where a human reads daily: the day a
         # retraction is first applied, `Stages:` names the row and the reason. A line that
         # matched nothing is ALSO an alarm — a typo in the file must not read as "applied".
@@ -2018,6 +2410,9 @@ class Ledger:
                 + (f" · retitle folds {len(self.retitle_folds)}" if self.retitle_folds else "")
                 + (f" · twin folds {self.twin_folds}" if self.twin_folds else "")
                 + (f" · class-backfilled {c['class_backfilled']}" if c["class_backfilled"] else "")
+                + (f" · class-rejected {c['class_rejected']}" if c["class_rejected"] else "")
+                + (f" · closed by page {c['closed_by_page']}" if c["closed_by_page"] else "")
+                + (f" · title folds {len(self.title_folds)}" if self.title_folds else "")
                 + (f" · absorbed {self.report.get('absorbed')} ({c['fresh_closed']} already closed)"
                    if self.report.get("absorbed") else "")
                 + f" · ledger {ledger_n} {'=' if ledger_n == store_n else '!='} store {store_n}")
@@ -2053,7 +2448,8 @@ class Ledger:
                 pass
             rows, archived, counts, _meta = export_files(
                 self.records, self.st.path, run_date=run_date, firmographics=firmographics,
-                window_days=window_days, earliest_run=earliest_run)
+                window_days=window_days, earliest_run=earliest_run,
+                contract=self.live_contract)
             ex = (f"superseded {counts.get('superseded', 0)} · purged {counts.get('purged', 0)}"
                   f" · withdrawn {counts.get('withdrawn', 0)}"
                   f" · outside window {counts.get('outside_window', 0)}")
@@ -2131,7 +2527,12 @@ class Ledger:
                         rec["updated"] = stamp
                     out[rid] = {k: v for k, v in rec.items()
                                 if k != "description" and not k.startswith("_")}
-                dump(self.path, out)
+                # A renamed role_id (580) is a key this run deliberately retired. The shrink
+                # guard compares KEY SETS, not counts, so a rename — which keeps the record
+                # count identical — still reads as a lost record and would refuse the file
+                # every morning while sqlite is already rekeyed. `may_drop` is the sanctioned
+                # channel for a deliberate removal, exactly as the text prune below uses it.
+                dump(self.path, out, may_drop=set(self.renamed))
                 self.dirty = False
             if self.text_dirty and not self.text_frozen:
                 # the prune is deliberate — a description whose role no longer exists is
@@ -2139,7 +2540,7 @@ class Ledger:
                 # everything else still trips the guard
                 pruned = {k for k in self.text if k not in self.records}
                 self.text = {k: v for k, v in self.text.items() if k in self.records}
-                dump(self.text_path, self.text, may_drop=pruned)
+                dump(self.text_path, self.text, may_drop=pruned | set(self.renamed))
                 self.text_dirty = False
             return True
         except LedgerShrink as e:
@@ -2205,6 +2606,14 @@ _COLUMNS = [
     ("skills", "Every skill found in title+description, separated by ';', in extraction order."),
     ("class_decision", "The classifier's verdict on the role when it was last judged."),
     ("class_path", "How that verdict was reached: keyword, llm, llm_cache, ..."),
+    ("class_contract", "Which classifier contract (the hash of its rules and model, e.g. "
+                       "v3.0f84ab84) made that verdict. Equal to the meta's "
+                       "classifier_contract.live: judged under the rules that are live "
+                       "today. Different: judged under retired rules and not re-judged "
+                       "since -- a closed role never re-enters the run, so its verdict is "
+                       "frozen on the day it closed. Empty: not recorded, which is every "
+                       "cell stamped before 2026-09-11 and every verdict served from the "
+                       "cache without the seam saying which contract answered."),
     ("description_len", "Characters of description text we hold. 0 when we captured none."),
     ("description_truncated", "true when the text sits exactly on the 6,000-character capture cap, i.e. the real posting is longer."),
     ("description_sha1", "sha1 of the description text; join to roles_text.jsonl to read it."),
@@ -2822,6 +3231,7 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
             "skills": _j([x[0] for x in skills]),
             "class_decision": cls.get("decision") or "",
             "class_path": cls.get("path") or "",
+            "class_contract": cls.get("contract") or "",
             "description_len": dlen,
             # sha1("") is a real hash of nothing, and publishing it as a join key sends a
             # reader to a line of roles_text.jsonl that does not exist. An empty cell means
@@ -2897,7 +3307,7 @@ def removed_list(records, window_days=WINDOW_DAYS):
 
 
 def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earliest_run="",
-               pages_url="", archived=()):
+               pages_url="", archived=(), contract=""):
     """What the CSV cannot say about itself — above all, where OUR blindness ends and the
     market's silence begins.
 
@@ -2973,8 +3383,35 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
                 f"OUR blindness, not the market's — the pipeline was not yet watching. Do "
                 f"not read the shape of the first days as a trend."),
         },
+        # Which rules judged what is IN this file (544). `live` is the contract this run
+        # classifies under; a row whose `class_contract` differs was judged under retired
+        # rules and has not been re-judged since -- which a CLOSED role never is, because it
+        # never re-enters the run. Without this a reader could not tell a current verdict
+        # from a two-contracts-old one, and the column looked equally authoritative either way.
+        "classifier_contract": {
+            "live": contract,
+            "rows_current": sum(1 for r in rows if contract and r.get("class_contract") == contract),
+            "rows_stale": sum(1 for r in rows
+                              if r.get("class_contract") and r.get("class_contract") != contract),
+            "rows_unknown": sum(1 for r in rows if not r.get("class_contract")),
+            "note": "rows_unknown is not a defect in the row: it is a cell stamped before "
+                    "the contract was recorded (2026-09-11), or a verdict served from the "
+                    "classifier cache without the seam reporting which contract answered. "
+                    "It means 'we cannot say', which is the honest reading and not 'stale'.",
+        },
         "store": {
             "records": len(records),
+            # A role_id is a PUBLIC join key (roles_text.jsonl joins on it), so the one
+            # thing that can change it — a card-blob title canonicalised into the role's
+            # real name (580) — says so here rather than looking like a row that vanished
+            # and a row that appeared.
+            "renamed": [{"role_id": rid, "from": r.get("renamed_from") or [],
+                         "on": r.get("renamed_on", "")}
+                        for rid, r in sorted(records.items())
+                        if isinstance(r, dict) and r.get("renamed_from")],
+            "renamed_note": "a role_id changes only when a card-blob title is canonicalised "
+                            "into the role's name; the record keeps its first_seen, "
+                            "episodes, emailed history and classifier verdict",
             "by_status": dict(sorted(by_status.items())),
             "earliest_first_seen": earliest,
             "earliest_recorded_run": earliest_run,
@@ -3064,7 +3501,7 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
 
 
 def export_files(records, db_path, *, run_date, firmographics=None, window_days=WINDOW_DAYS,
-                 earliest_run=""):
+                 earliest_run="", contract=None):
     """The ONE export: rows, the archive, the meta — written beside `db_path`. Used by the
     run (`Ledger.export_dataset`) and by the re-derive CLI alike, so the two cannot drift:
     the first CLI wrote roles.csv and a meta that said `archive.rows: 0` while
@@ -3084,9 +3521,12 @@ def export_files(records, db_path, *, run_date, firmographics=None, window_days=
     # from the record), header-only until the first eviction.
     archived, _ac = build_rows(records, run_date=run_date, firmographics=firmographics,
                                window_days=window_days, archive=True, texts=texts)
+    if contract is None:
+        from . import seniority as _sen        # lazy: seniority imports llm only, no cycle
+        contract = _sen.CONTRACT
     meta = build_meta(rows, counts, records, run_date=run_date, window_days=window_days,
                       earliest_run=earliest_run, pages_url=os.environ.get(PAGES_URL_ENV, ""),
-                      archived=archived)
+                      archived=archived, contract=contract)
     write_dataset(csv_path, meta_path, rows, meta,
                   archive_path=archive_path(db_path), archive_rows=archived)
     return rows, archived, counts, meta

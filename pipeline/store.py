@@ -862,6 +862,31 @@ class SeenStore:
                           (*vals, mkey))
         self.conn.commit()
 
+    def rekey_matched(self, mkey, new_mkey, **fields):
+        """Move one role's row to a new `mkey` — the ledger's rename seam (lane: roles,
+        docs/BACKLOG.md 580: a card-blob title canonicalised into the role's real name mints
+        a new key, because the title is half of `merge_key`).
+
+        Refuses — returning False, never raising — when `new_mkey` already exists. A rename
+        must never overwrite another role's row: the ledger's caller then treats the pair as
+        a twin and supersedes instead, which keeps both histories. `superseded_by` pointers
+        are repointed in the same transaction, or a chain would walk into a key that no
+        longer exists."""
+        if mkey == new_mkey:
+            return True
+        if self.conn.execute("SELECT 1 FROM matched WHERE mkey=?", (new_mkey,)).fetchone():
+            return False
+        cols = [c for c in fields if c in self.MATCHED_COLS and c != "mkey"]
+        vals = [("+".join(sorted(fields[c])) if isinstance(fields[c], (list, set)) else fields[c])
+                for c in cols]
+        cur = self.conn.execute(
+            "UPDATE matched SET mkey=?" + "".join(", " + c + "=?" for c in cols) + " WHERE mkey=?",
+            (new_mkey, *vals, mkey))
+        self.conn.execute("UPDATE matched SET superseded_by=? WHERE superseded_by=?",
+                          (new_mkey, mkey))
+        self.conn.commit()
+        return cur.rowcount == 1
+
     def insert_matched(self, rec):
         """Rehydrate one role the ledger has and sqlite lacks. Idempotent (INSERT OR IGNORE).
         sqlite carries one status only, `superseded`; open/closed are the ledger's."""

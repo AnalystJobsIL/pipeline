@@ -433,6 +433,10 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     candidates, _fold_notes = roles.fold_company_aliases(
         candidates, registry_names=_registry_names,
         active_by_identity=_active_by_ident, origins=_origins, aliased=_aliased)
+    # ...and the TITLE, in the same place and for the same reason (lane: roles, 580): the
+    # title is the other half of `merge_key`, so a card blob ("We're Hiring Web Analyst -
+    # Practical Vision") is half of the role's identity until it is cut here.
+    candidates, _canon_notes = roles.canonicalize_titles(candidates)
     accepted = roles.classify_grouped(candidates, clf, jdfill, stats, paths)
     print("  " + jdfill.summary(), flush=True)
     # the enrich stage's verdict on itself (both backfill scripts stamp it) and the inline fill's
@@ -443,6 +447,7 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # AGGREGATOR_ENABLED=1 (set only in the scheduled cloud job) so local/test runs never
     # burn the free 100/month SerpApi quota. Skipped cleanly if the key isn't set.
     gjobs = []
+    gcands = []           # bound whether or not the aggregator ran: the reject map reads it
     if os.environ.get("AGGREGATOR_ENABLED") == "1":
         try:
             gjobs = aggregators.fetch_serpapi_google_jobs()
@@ -459,7 +464,17 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
             active_by_identity=_active_by_ident, origins=_origins, aliased=_aliased)
         for _k, _n in _gf.items():
             _fold_notes[_k] = _fold_notes.get(_k, 0) + _n
+        gcands, _gc = roles.canonicalize_titles(gcands)
+        for _k, _n in _gc.items():
+            _canon_notes[_k] = _canon_notes.get(_k, 0) + _n
         accepted += roles.classify_grouped(gcands, clf, jdfill, stats, paths)
+
+    # THE RUN'S OWN REJECTS (lane: roles, docs/BACKLOG.md 543). `classify_grouped` returns
+    # the accepts, so a role the seam re-judged NO simply vanishes from `merged` and the
+    # ledger keeps yesterday's `accept` — published as a false accept for the rest of the
+    # 90-day window, and removable only by a hand-written retraction line. Read from the
+    # CANDIDATE lists, which still hold every judged copy with its `_class` stamped on it.
+    _class_rejects = roles.reject_map(candidates + gcands)
 
     # THE DATASET BACKFILL (lane: classifier, ARCHITECTURE §7b; hook applied 2026-08-31 with
     # the operator's ruling, and it is `infra`'s file — the whole body is one call).
@@ -493,6 +508,17 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         except Exception as e:     # noqa: BLE001 — a backlog pass never breaks the digest
             _line = f"classify dataset backfill FAILED ({type(e).__name__}: {e}) — the column keeps its empty cells"
             _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
+
+    # ...and the same rule for the reject map, for the same reason: a verdict from a seam
+    # this run has declared broken must not overwrite a published row's verdict. Deliberately
+    # OUTSIDE the backfill's `use_llm and not (only or limit)` gate — a scoped LLM run can
+    # quarantine too — and outside its `try`, whose `except` would otherwise swallow this.
+    if _class_rejects and clf.quarantine():
+        _line = (f"classify reject map DISCARDED {len(_class_rejects)} verdict(s): the run is "
+                 f"quarantined ({clf.quarantine()}) and a reject on a published row is a "
+                 f"withdrawal — retried tomorrow")
+        _stage_alarms.append(_line); print(f"::warning::stage {_line}", flush=True)
+        _class_rejects = {}
 
     # persist this run's LLM verdicts NOW (not after rendering): an exception anywhere in the
     # rendering / company-intel code below must not lose what was paid for (a runner timeout
@@ -543,7 +569,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         _line = ("alias folds at intake: "
                  + ", ".join(f"{k} x{n}" for k, n in sorted(_fold_notes.items())))
         print(f"::warning::roles {_line}", flush=True)
+    if _canon_notes:
+        _line = ("title canon at intake: "
+                 + ", ".join(f"{k} x{n}" for k, n in sorted(_canon_notes.items())))
+        print(f"::warning::roles {_line}", flush=True)
     for _line in ledger.fold_aliases(_fold_resolver):
+        print(f"::warning::roles {_line}", flush=True)
+    # ...and the same canon over what the store already holds: the records published under a
+    # blob today. A rename, not a "leave it" — the canonical key arrives from intake every
+    # morning now, so an uncanonical record would close and be re-created as a new role.
+    for _line in ledger.fold_titles():
         print(f"::warning::roles {_line}", flush=True)
     merged = store.merge_duplicates(accepted, _origins)
     # one posting fetched under two company names (two registry rows on one board) is ONE
@@ -570,7 +605,16 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # and so re-badges the whole board after an outage (BACKLOG 139). None when the ledger
     # is frozen, and `upsert_matched` then keeps the calendar rule.
     _closed = ledger.closed_keys()
+    # A role closed by its own page (581) must stop being upserted, or the discovery cache
+    # re-serves the card for up to 21 days and every morning re-opens it: `upsert_matched`
+    # finds the key in `closed_keys()`, treats it as a REAPPEARANCE, resets `first_seen` to
+    # today and mints a fresh episode — a daily `reopened 1` for a posting that is gone.
+    # Skipping the upsert freezes `last_seen`, which is the honest record: we have not seen
+    # this posting since the day its page said so.
+    _page_closed = {rid for rid, r in ledger.records.items() if roles.page_closed(r, r)}
     for j in merged:
+        if store.merge_key(j) in _page_closed:
+            continue
         st.upsert_matched(j, run_date, _closed)
     today = dt.date.fromisoformat(run_date)
     cutoff_email = (today - dt.timedelta(days=1)).isoformat()    # ~48h (date granularity)
@@ -643,6 +687,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         # employer is real, THIS posting was never in scope. Read from the file, not from
         # the ledger's status, so a frozen-ledger day cannot put it back on the board.
         if ledger.retractions.match(j) is not None:
+            return False
+        # ...and a LinkedIn-only posting whose own stored page says it stopped accepting
+        # applications (lane: roles, BACKLOG 581). `last_seen` cannot answer this: the card
+        # is re-served from our own 21-day discovery cache, so the freshness below is OUR
+        # memory of the card, not LinkedIn's claim that the job is live.
+        if roles.page_closed(j, ledger.records.get(store.merge_key(j))):
             return False
         last = j.get("last_seen", "")
         if last >= yesterday:
@@ -839,7 +889,8 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
         run_date, board_jobs=alive_jobs, merged=merged,
         scanned_ok={r["company_name"] for r in rows}, failed=failed_names, paths=paths,
         scoped=bool(only or limit), never_ours=None if _purge_held else _never_ours,
-        class_backfill=_class_backfill)
+        class_backfill=_class_backfill, class_rejects=_class_rejects,
+        contract=clf.contract)
     _role_lines = _role_lines + _claim_lines
     # What the publish gate withheld, on the line the reader already reads for this lane —
     # a role held is a role NOT on the board and NOT in the mail, and a silent gate is the

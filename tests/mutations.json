@@ -2524,11 +2524,11 @@
  {
   "id": "alias-sweep-drops-the-sid-union",
   "file": "pipeline/roles.py",
-  "symbol": "_fold_aliases",
+  "symbol": "_fold_into_twin",
   "class": "M6-fallback-removal",
-  "find": "                w[\"seen_ids\"] = sorted((set(w.get(\"seen_ids\") or [])\n                                        | set(rec.get(\"seen_ids\") or [])) - {\"\"})",
-  "replace": "                w[\"seen_ids\"] = sorted(set(w.get(\"seen_ids\") or []) - {\"\"})",
-  "why": "the loser's seen_ids are what filter_new consults: without the union the winner row does not carry the id the posting was DELIVERED under, and the role is re-emailed under the canonical name - the exact class resolve_claims' stored-id union already guards at run time. Killed by test_alias_sweep_supersedes_the_stored_twin_and_unions_its_ids.",
+  "find": "        winner[\"seen_ids\"] = sorted((set(winner.get(\"seen_ids\") or [])\n                                     | set(loser.get(\"seen_ids\") or [])) - {\"\"})",
+  "replace": "        winner[\"seen_ids\"] = sorted(set(winner.get(\"seen_ids\") or []) - {\"\"})",
+  "why": "the loser's seen_ids are what filter_new consults: without the union the winner row does not carry the id the posting was DELIVERED under, and the role is re-emailed under the canonical name - the exact class resolve_claims' stored-id union already guards at run time. Re-anchored 2026-09-11: the alias sweep and the title sweep (580) now share one `_fold_into_twin` seam, so this one record covers both. Killed by test_alias_sweep_supersedes_the_stored_twin_and_unions_its_ids and by test_the_title_sweep_supersedes_into_a_live_twin_instead_of_overwriting_it.",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -3190,5 +3190,125 @@
   "killers": [
    "tests/test_units.py::test_every_registry_recruiter_verdict_is_a_mechanism"
   ]
+ },
+ {
+  "id": "reject-map-overwrites-a-live-accept",
+  "file": "pipeline/roles.py",
+  "symbol": "_record_run",
+  "class": "M1-gate-removal",
+  "find": "            if rec is None or rid in by_key:\n                continue                      # never seen, or this run accepted it: live wins",
+  "replace": "            if rec is None:\n                continue",
+  "why": "543's reject map must never reach a role THIS RUN accepted. A mixed group (some copies rejected, one accepted) puts the same role_id in both the map and `merged`; without the `by_key` guard the reject is applied after the live stamp and the dataset contradicts the board the same run renders. Killed by test_record_run_stamps_the_runs_own_rejects_on_the_records_merged_cannot_reach.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "reject-map-stamps-a-withdrawn-record",
+  "file": "pipeline/roles.py",
+  "symbol": "_record_run",
+  "class": "M4-guard-removal",
+  "find": "            if (rec.get(\"status\") or \"open\") not in (\"open\", \"closed\"):\n                continue\n            new_cls = _class_of(cls, self.live_contract)",
+  "replace": "            new_cls = _class_of(cls, self.live_contract)",
+  "why": "a withdrawn or purged record carries a HUMAN's standing verdict and a superseded one is not published at all. Stamping a machine reject over any of them overwrites an adjudication with a guess and re-counts rows that left the dataset days ago. Killed by test_record_run_stamps_the_runs_own_rejects_on_the_records_merged_cannot_reach.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "class-contract-guessed-for-a-cache-hit",
+  "file": "pipeline/roles.py",
+  "symbol": "_class_of",
+  "class": "M3-branch-narrowing",
+  "find": "    if \"contract\" not in out and live_contract and out.get(\"path\") in (\"keyword\", \"llm\"):",
+  "replace": "    if \"contract\" not in out and live_contract:",
+  "why": "544's whole point is that the column must not LIE about provenance. An `llm_cache` verdict may have been made under any retired contract and only the classifier's seam knows which; stamping today's onto it publishes a stale verdict as a current one, which is exactly the reading the column was added to make impossible. Killed by test_the_class_cell_carries_the_contract_and_never_guesses_one.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "title-canon-cuts-any-trailing-name",
+  "file": "pipeline/roles.py",
+  "symbol": "_canon",
+  "class": "M4-guard-removal",
+  "find": "    m = _OWN_TAIL.match(t)\n    if m and _same_employer(m.group(2), company):",
+  "replace": "    m = _OWN_TAIL.match(t)\n    if m:",
+  "why": "the trailing-name rule may only cut the EMPLOYER's own name. Without the test it eats a real part of the role: `GTM Business Analyst - Marketing` becomes `GTM Business Analyst`, `BI Developer - Payments` loses its team, and the truncated title becomes half of merge_key - a new role_id for a posting we already publish. Killed by test_canonical_title_cuts_only_furniture_on_the_measured_population.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "title-canon-drops-the-first-segment",
+  "file": "pipeline/roles.py",
+  "symbol": "_canon",
+  "class": "M3-branch-narrowing",
+  "find": "        keep = [segs[0]] + [s for s in segs[1:] if not _furniture_only(s, location)]",
+  "replace": "        keep = [s for s in segs if not _furniture_only(s, location)]",
+  "why": "the first ` | ` segment is the role's NAME and is never a candidate for the furniture cut. Dropping that anchor lets a title whose first segment happens to read as furniture vanish entirely, and the record is then keyed on what is left. Killed by test_canonical_title_cuts_only_furniture_on_the_measured_population.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "title-rename-orphans-the-description",
+  "file": "pipeline/roles.py",
+  "symbol": "_fold_titles",
+  "class": "M6-fallback-removal",
+  "find": "            t = self.text.pop(rid, None)\n            if t is not None:",
+  "replace": "            t = self.text.get(rid)\n            if False:",
+  "why": "roles_text.jsonl joins on role_id. A rename that leaves the text line under the OLD key orphans the description, and `flush`'s orphan prune then DELETES it - the role loses the text that took a paid fetch to get, and the export publishes it as description-less. Killed by test_the_title_sweep_renames_the_record_across_all_three_stores.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "title-rename-not-declared-to-the-shrink-guard",
+  "file": "pipeline/roles.py",
+  "symbol": "flush",
+  "class": "M6-fallback-removal",
+  "find": "                dump(self.path, out, may_drop=set(self.renamed))",
+  "replace": "                dump(self.path, out)",
+  "why": "the shrink guard compares KEY SETS, so a rename - which keeps the record count identical - still loses a key and is refused. sqlite is rekeyed in the same seam, so a refused ledger write leaves the two stores split and yesterday's file standing, every morning. Killed by test_the_title_sweep_renames_the_record_across_all_three_stores.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "rekey-overwrites-an-existing-row",
+  "file": "pipeline/store.py",
+  "symbol": "rekey_matched",
+  "class": "M4-guard-removal",
+  "find": "        if self.conn.execute(\"SELECT 1 FROM matched WHERE mkey=?\", (new_mkey,)).fetchone():\n            return False",
+  "replace": "        pass",
+  "why": "a rename onto a key another role already owns destroys that role's row - its first_seen, its seen_ids and the delivery marks that stop it being emailed again. The refusal is what makes the caller fold into the twin instead, keeping both histories. Killed by test_rekey_matched_refuses_an_existing_key_and_repoints_superseded_by.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "page-closed-reads-the-whole-description",
+  "file": "pipeline/roles.py",
+  "symbol": "page_says_closed",
+  "class": "M3-branch-narrowing",
+  "find": "    return bool(_PAGE_CLOSED.search(str(desc or \"\")[:PAGE_CLOSED_WINDOW]))",
+  "replace": "    return bool(_PAGE_CLOSED.search(str(desc or \"\")))",
+  "why": "the marker is a verdict only where LinkedIn's chrome puts it, in the first few hundred characters. Searched over the whole text, a job description that merely says applications are no longer accepted by email closes a live posting on its own prose. Killed by test_page_says_closed_reads_the_chrome_marker_and_never_a_quote_in_the_body.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "page-closed-ignores-the-employers-own-board",
+  "file": "pipeline/roles.py",
+  "symbol": "page_closed",
+  "class": "M4-guard-removal",
+  "find": "    if not srcs or not all(str(s).startswith(\"discovery-\") for s in srcs):\n        return False",
+  "replace": "    pass",
+  "why": "a LinkedIn mirror is up to 21 days stale by construction, so it may only speak for a posting we know from nowhere else. Without this gate a stale mirror closes a role the employer's own board is still listing today - the board is the authority, which is the rule the whole registry rests on. Killed by test_page_closed_is_only_for_a_linkedin_row_with_no_board_of_its_own.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "page-closure-stamped-with-todays-date",
+  "file": "pipeline/roles.py",
+  "symbol": "_record_run",
+  "class": "M3-branch-narrowing",
+  "find": "                    rec[\"status\"], rec[\"closed_on\"] = \"closed\", why[1]",
+  "replace": "                    rec[\"status\"], rec[\"closed_on\"] = \"closed\", run_date",
+  "why": "`closed_on` is published and a reader takes it for the day the posting went away. These postings closed on the day the page we stored said so - often weeks earlier - and stamping today claims we watched it happen, in the one column a dataset user would use to measure how long roles stay open. Killed by test_record_run_closes_a_page_closed_row_on_the_day_its_text_was_captured.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "page-closed-row-is-upserted-anyway",
+  "file": "pipeline/run.py",
+  "symbol": "main",
+  "class": "M4-guard-removal",
+  "find": "        if store.merge_key(j) in _page_closed:\n            continue",
+  "replace": "        if False:\n            continue",
+  "why": "the discovery cache re-serves the card for up to 21 days. Upserting it puts the key back in `closed_keys()`'s reappearance path, so first_seen resets to today and a fresh episode is minted EVERY morning - a daily `reopened 1` for a posting that is gone, and a role that keeps re-entering the 48h email window. Guarded by test_record_run_closes_a_page_closed_row_on_the_day_its_text_was_captured.",
+  "must_be_killed_by_behavioural": true
  }
 ]

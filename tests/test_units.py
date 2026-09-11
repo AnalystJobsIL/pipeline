@@ -25896,6 +25896,490 @@ def test_record_run_applies_the_backfill_map_and_never_overwrites_a_live_verdict
     assert lg.records[ids[1]]["class"]["decision"] == "reject"
     assert not (lg.records[ids[2]].get("class") or {})     # not in the map: still empty
     assert any("class-backfilled 1" in ln for ln in lines)
+def test_record_run_stamps_the_runs_own_rejects_on_the_records_merged_cannot_reach(tmp_path):
+    """A role the seam re-judges NO is not in `merged`, and `merged` is all the live class
+    stamp reads — so the cell kept yesterday's `accept` and the dataset published a false
+    accept for the rest of the 90-day window (BACKLOG 543). Twelve rows were in that state
+    on 2026-09-01 and each needed a hand-written retraction line instead.
+
+    The map reaches exactly the records the live stamp cannot, and nothing else: never a
+    role this run accepted, never a human's standing verdict, never a status."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs = _ledger(5)
+    ids = sorted(recs)
+    accept = {"decision": "accept", "path": "llm", "reason": "judged in scope 2026-08-20"}
+    for rid in ids:
+        recs[rid]["class"] = dict(accept)
+        recs[rid]["description"] = ""
+    recs[ids[0]]["status"] = "closed"                 # closed, still published in the window
+    recs[ids[2]]["status"] = "withdrawn"              # a human's verdict
+    recs[ids[2]]["retracted_on"] = "2026-09-01"
+    recs[ids[2]]["withdraw_reason"] = "the operator said so"
+    recs[ids[4]]["status"] = "superseded"
+    recs[ids[4]]["superseded_by"] = ids[3]
+    _retract_file(tmp_path, {"url": recs[ids[2]]["url"], "role_id": ids[2],
+                             "status": "withdrawn", "reason": "the operator said so",
+                             "on": "2026-09-01"})
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid in ids:
+        st.insert_matched({**recs[rid], "mkey": rid})
+    lg._open_sync()
+
+    reject = {"decision": "reject", "path": "llm", "reason": "out of scope on the 09-01 rule"}
+    live = dict(recs[ids[1]], _class={"decision": "accept", "path": "llm",
+                                      "reason": "this run judged it again"})
+    onboard = dict(recs[ids[3]])                       # still on the board this morning
+    lines = lg.record_run("2026-09-12", board_jobs=[live, onboard], merged=[live],
+                          scanned_ok={r["company"] for r in recs.values()}, failed=set(),
+                          paths={}, scoped=True, contract="v3.test",
+                          class_rejects={ids[0]: dict(reject), ids[1]: dict(reject),
+                                         ids[2]: dict(reject), ids[3]: dict(reject),
+                                         ids[4]: dict(reject), "no|such record": dict(reject)})
+    st.close()
+
+    assert lg.records[ids[0]]["class"]["decision"] == "reject", "a closed row must be corrected"
+    assert lg.records[ids[0]]["class"]["contract"] == "v3.test"
+    assert lg.records[ids[1]]["class"]["reason"] == "this run judged it again", \
+        "a role THIS RUN accepted keeps the live verdict: the map must not reach it"
+    assert lg.records[ids[2]]["class"] == accept and lg.records[ids[2]]["status"] == "withdrawn", \
+        "a human's standing verdict is never overwritten by a machine one"
+    assert lg.records[ids[4]]["class"] == accept, "a superseded record is not published at all"
+    # ...and the on-board row is corrected WITHOUT being closed: the board this same run
+    # renders still shows it, and `_alive` is the liveness rule, not this map.
+    assert lg.records[ids[3]]["class"]["decision"] == "reject"
+    assert lg.records[ids[3]]["status"] == "open" and not lg.records[ids[3]].get("closed_on")
+    assert any("class-rejected 2" in ln for ln in lines), lines
+
+
+def test_a_reject_stamped_today_closes_tomorrow_on_the_ordinary_ladder(tmp_path):
+    """The reject is a verdict, not a closure — so the record must still close the normal
+    way once it stops being fetched, on the mass-close guard's terms, and re-stamping the
+    same verdict must not re-count it."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs = _ledger(1)
+    rid = sorted(recs)[0]
+    recs[rid]["class"] = {"decision": "accept", "path": "llm", "reason": "old"}
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    st.insert_matched({**recs[rid], "mkey": rid})
+    lg._open_sync()
+    reject = {"decision": "reject", "path": "llm", "reason": "out of scope"}
+    onboard = dict(recs[rid])
+    lg.record_run("2026-09-12", board_jobs=[onboard], merged=[], scanned_ok={onboard["company"]},
+                  failed=set(), paths={}, scoped=True, contract="v3.test",
+                  class_rejects={rid: dict(reject)})
+    assert lg.records[rid]["status"] == "open"
+    lines = lg.record_run("2026-09-13", board_jobs=[], merged=[], scanned_ok={onboard["company"]},
+                          failed=set(), paths={}, scoped=True, contract="v3.test",
+                          class_rejects={rid: dict(reject)})
+    st.close()
+    assert lg.records[rid]["status"] == "closed" and lg.records[rid]["closed_on"] == "2026-09-13"
+    assert not any("class-rejected" in ln for ln in lines), \
+        "the same verdict re-offered is not a new flip and must not be counted again"
+
+
+def test_the_class_cell_carries_the_contract_and_never_guesses_one():
+    """544: a published verdict must say which contract judged it. The fallback fills the
+    key only where the PATH proves it — a cache hit may be current or superseded and only
+    the classifier's seam knows which, so it stays empty rather than claiming today's."""
+    from pipeline import roles
+    live = "v3.aaaa1111"
+    assert roles._class_of({"decision": "accept", "path": "llm", "reason": "r"},
+                           live)["contract"] == live
+    assert roles._class_of({"decision": "reject", "path": "keyword", "reason": "r"},
+                           live)["contract"] == live
+    assert "contract" not in roles._class_of(
+        {"decision": "accept", "path": "llm_cache", "reason": "cached LLM verdict"}, live), \
+        "an llm_cache hit of unknown vintage must read as unknown, never as today's"
+    # the seam's own answer always wins over the fallback
+    assert roles._class_of({"decision": "accept", "path": "llm", "reason": "r",
+                            "contract": "v3.old"}, live)["contract"] == "v3.old"
+    assert "relevance" not in roles._class_of(
+        {"decision": "accept", "path": "llm", "reason": "r", "relevance": "strong"}, live)
+
+
+def test_the_dataset_publishes_the_contract_and_the_meta_counts_the_stale_cells():
+    """A reader tells a current verdict from a retired one by comparing the row's
+    `class_contract` with the meta's `classifier_contract.live` — so both must be there and
+    the three counts must add up to the file."""
+    from pipeline import roles
+    recs = _ledger(3)
+    ids = sorted(recs)
+    recs[ids[0]]["class"] = {"decision": "accept", "path": "llm", "reason": "r",
+                             "contract": "v3.live"}
+    recs[ids[1]]["class"] = {"decision": "accept", "path": "llm", "reason": "r",
+                             "contract": "v3.retired"}
+    recs[ids[2]]["class"] = {"decision": "accept", "path": "llm_cache", "reason": "r"}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-31")
+    assert "class_contract" in roles.COLUMNS and "class_contract" in rows[0]
+    by = {r["role_id"]: r["class_contract"] for r in rows}
+    assert by[ids[0]] == "v3.live" and by[ids[1]] == "v3.retired" and by[ids[2]] == ""
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-31", contract="v3.live")
+    cc = meta["classifier_contract"]
+    assert cc["live"] == "v3.live"
+    assert (cc["rows_current"], cc["rows_stale"], cc["rows_unknown"]) == (1, 1, 1)
+    assert cc["rows_current"] + cc["rows_stale"] + cc["rows_unknown"] == len(rows)
+
+
+def test_canonical_title_cuts_only_furniture_on_the_measured_population():
+    """580, measured on the 2026-09-11 store and caches. Every CHANGED case is a real
+    published title; every kept case is a real title a looser rule would have damaged."""
+    from pipeline import roles
+    ct = roles.canonical_title
+    pv = "Practical Vision"
+    assert ct("We're Hiring Junior Web Analyst - " + pv, pv) == "Junior Web Analyst"
+    assert ct("We’re Hiring Web Analyst - " + pv, pv) == "Web Analyst"
+    heb = "דרוש/ה אנליסט/ית עסקי/ת – BI & Data"
+    assert ct(heb, "Points Location Intelligence", "Ramat Gan, Israel") == \
+        "אנליסט/ית עסקי/ת – BI & Data"
+    assert ct("Senior Data Analyst - Supply Chain & Demand Planning Analytics | "
+              "Full-Time, On-Site | Rishon LeZion", "Analytical Factor",
+              "Rishon LeZion, Center District, Israel") == \
+        "Senior Data Analyst - Supply Chain & Demand Planning Analytics"
+    assert ct("DATA analyst - Aqurate Data", "aQurate") == "DATA analyst", \
+        "the tail is a declared alias of the employer, which identity_key knows"
+    # ...and everything a looser rule would have eaten
+    keep = [("We’re Hiring", "sensi", ""),            # the call IS the whole card
+            ("Financial Data Analyst - Temporary position (9 months)", "Check Point", ""),
+            ("GTM Business Analyst - Marketing", "Cato Networks", ""),
+            ("BI Developer - Payments", "Sunflower", ""),
+            ("Data Analyst, Growth", "Fiverr", ""),
+            ("Business Analyst | Corporate Banking Division Headquarters 3103",
+             "Bank Leumi", ""),
+            ("Business Data Analyst | SQL & Power BI", "ONE datAI", ""),
+            ("Junior Data Analyst", "Wix", "")]
+    for t, c, loc in keep:
+        assert ct(t, c, loc) == t, t
+    # a place only counts as furniture, never as a role word
+    assert ct("Data Engineer | Herzliya", "X", "Herzliya, Israel") == "Data Engineer"
+
+
+def test_canonicalize_titles_keeps_the_raw_string_and_counts_by_rule():
+    """Intake rewrites the title before `merge_key` sees it; nothing is lost, and the mail
+    line says which rule fired how often."""
+    from pipeline import roles
+    jobs = [{"title": "We're Hiring Junior Web Analyst - Practical Vision",
+             "company": "Practical Vision", "location": ""},
+            {"title": "Data Analyst, Growth", "company": "Fiverr", "location": ""}]
+    jobs, folds = roles.canonicalize_titles(jobs)
+    assert jobs[0]["title"] == "Junior Web Analyst"
+    assert jobs[0]["_raw_title"] == "We're Hiring Junior Web Analyst - Practical Vision"
+    assert folds == {"hiring-call": 1, "own-name suffix": 1}
+    assert "_raw_title" not in jobs[1] and jobs[1]["title"] == "Data Analyst, Growth"
+
+
+def test_the_title_sweep_renames_the_record_across_all_three_stores(tmp_path):
+    """The canon at intake fixes tomorrow; the sweep fixes the records published under a
+    blob today. A rename is the whole point — and it has to move the ledger, the text file
+    and sqlite together, keeping every fact the record already carried."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    old = "practical vision|we re hiring junior web analyst practical vision"
+    rec = _rec(old, company="Practical Vision",
+               title="We're Hiring Junior Web Analyst - Practical Vision",
+               url="https://practical-vision.com/jobs/junior-web-analyst",
+               seen_ids=["scrape:https://practical-vision.com/jobs/junior-web-analyst"],
+               sources=["scrape"], first_seen="2026-09-07",
+               episodes=[{"first_seen": "2026-09-07", "last_seen": "2026-09-11",
+                          "posted_date": "2026-09-07"}],
+               sent={"scrape:https://practical-vision.com/jobs/junior-web-analyst": "2026-09-08"},
+               emailed_on="2026-09-08")
+    recs = {old: rec}
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    roles.dump(lg.text_path, {old: {"role_id": old, "sha1": "abc", "len": 1200,
+                                    "description": "a real job description",
+                                    "updated": "2026-09-08"}})
+    st.insert_matched({**rec, "mkey": old})
+    lg._open_sync()
+
+    lines = lg.fold_titles()
+    new = "practical vision|junior web analyst"
+    assert new in lg.records and old not in lg.records
+    moved = lg.records[new]
+    assert moved["title"] == "Junior Web Analyst" and moved["role_id"] == new
+    assert moved["first_seen"] == "2026-09-07", "a rename is not a new role"
+    assert moved["episodes"] == rec["episodes"] and moved["emailed_on"] == "2026-09-08"
+    assert moved["renamed_from"] == [old] and moved["renamed_on"] == "2026-09-12"
+    assert lg.text[new]["role_id"] == new and old not in lg.text
+    row = st.conn.execute("SELECT mkey, title, first_seen FROM matched").fetchall()
+    assert row == [(new, "Junior Web Analyst", "2026-09-07")]
+    # on disk, both files, with no shrink alarm: the guard compares KEY SETS, and a rename
+    # loses a key by construction
+    assert sorted(roles.load(lg.path)[0]) == [new]
+    assert sorted(roles.load(lg.text_path)[0]) == [new]
+    assert not lg.alarms, lg.alarms
+    assert any("title folds: 1 renamed" in ln for ln in lines), lines
+    assert lg.fold_titles() == [], "the fold happened once; it must not log again"
+    st.close()
+
+
+def test_the_title_sweep_supersedes_into_a_live_twin_instead_of_overwriting_it(tmp_path):
+    """When the canonical key already names a live record, the blob is that record under a
+    second name: union its ids and its `sent` marks so nothing is re-emailed, and supersede.
+    A rename here would destroy the twin's history."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    old = "practical vision|we re hiring web analyst practical vision"
+    new = "practical vision|web analyst"
+    blob = _rec(old, company="Practical Vision",
+                title="We're Hiring Web Analyst - Practical Vision",
+                seen_ids=["scrape:https://pv.com/a"], sources=["scrape"],
+                sent={"scrape:https://pv.com/a": "2026-09-08"})
+    twin = _rec(new, company="Practical Vision", title="Web Analyst",
+                seen_ids=["scrape:https://pv.com/b"], sources=["scrape"], sent={})
+    recs = {old: blob, new: twin}
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid, r in recs.items():
+        st.insert_matched({**r, "mkey": rid})
+    lg._open_sync()
+    lines = lg.fold_titles()
+    st.close()
+    assert lg.records[old]["status"] == "superseded"
+    assert lg.records[old]["superseded_by"] == new
+    assert set(lg.records[new]["seen_ids"]) == {"scrape:https://pv.com/a",
+                                                "scrape:https://pv.com/b"}
+    assert lg.records[new]["sent"]["scrape:https://pv.com/a"] == "2026-09-08", \
+        "the winner inherits the delivery marks, or filter_new offers the posting again"
+    assert lg.records[new]["renamed_from"] == [old]
+    assert any("1 superseded" in ln for ln in lines), lines
+
+
+def test_the_next_days_card_lands_on_the_renamed_key_and_is_never_re_emailed(tmp_path):
+    """The rename is only safe if tomorrow's canonical card finds the renamed row: same
+    `first_seen`, no new episode, and the delivery marks still in force."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    url = "https://practical-vision.com/jobs/junior-web-analyst"
+    old = "practical vision|we re hiring junior web analyst practical vision"
+    rec = _rec(old, company="Practical Vision",
+               title="We're Hiring Junior Web Analyst - Practical Vision", url=url,
+               seen_ids=["scrape:" + url], sources=["scrape"], first_seen="2026-09-07",
+               last_seen="2026-09-11")
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = {old: rec}
+    roles.dump(lg.path, lg.records)
+    st.insert_matched({**rec, "mkey": old})
+    st.mark_sent({"seen_ids": ["scrape:" + url], "company": "Practical Vision",
+                  "title": "x", "location": "", "url": url}, "2026-09-08")
+    lg._open_sync()
+    lg.fold_titles()
+    new = "practical vision|junior web analyst"
+
+    card = {"company": "Practical Vision", "title": "Junior Web Analyst", "url": url,
+            "location": "Tel Aviv", "posted_date": "2026-09-07", "sources": ["scrape"],
+            "seen_ids": ["scrape:" + url], "description": "a real job description"}
+    assert store.merge_key(card) == new
+    st.upsert_matched(card, "2026-09-12", lg.closed_keys())
+    row = st.conn.execute("SELECT mkey, first_seen, last_seen FROM matched").fetchall()
+    assert row == [(new, "2026-09-07", "2026-09-12")], "first_seen must survive the rename"
+    assert st.filter_new([card]) == [], "the posting was emailed under its old key"
+    lines = lg.record_run("2026-09-12", board_jobs=[card], merged=[card],
+                          scanned_ok={"Practical Vision"}, failed=set(), paths={}, scoped=True)
+    st.close()
+    assert len(lg.records[new]["episodes"]) == 1
+    assert any("reopened 0" in ln for ln in lines), lines
+
+
+def test_a_rename_never_trips_the_shrink_guard_but_a_bare_substitution_still_does(tmp_path):
+    """`may_drop` is the sanctioned channel for a key this run deliberately retired. It must
+    not become a hole: a write that loses a key nobody renamed is still refused."""
+    from pipeline import roles
+    p = str(tmp_path / "roles.jsonl")
+    full = _ledger(4)
+    roles.dump(p, full)
+    ids = sorted(full)
+    renamed = {k: v for k, v in full.items() if k != ids[0]}
+    renamed["c0|analyst"] = _rec("c0|analyst")
+    roles.dump(p, renamed, may_drop={ids[0]})           # a rename: same count, one key moved
+    assert sorted(roles.load(p)[0]) == sorted(renamed)
+    swapped = {k: v for k, v in renamed.items() if k != ids[1]}
+    swapped["c9|other"] = _rec("c9|other")
+    try:
+        roles.dump(p, swapped)
+        raise AssertionError("a substitution nobody declared must still be refused")
+    except roles.LedgerShrink:
+        pass
+
+
+def test_rekey_matched_refuses_an_existing_key_and_repoints_superseded_by(tmp_path):
+    """A rename must never overwrite another role's row, and a supersede chain must not be
+    left pointing at a key that no longer exists."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    a, b, c = "co|blob title", "co|title", "co|loser"
+    for rid in (a, b, c):
+        st.insert_matched({**_rec(rid), "mkey": rid})
+    st.supersede(c, a)
+    assert st.rekey_matched(a, b) is False, "the key is taken: refuse, never overwrite"
+    assert st.rekey_matched(a, "co|new title", title="New Title") is True
+    rows = dict(st.conn.execute("SELECT mkey, title FROM matched").fetchall())
+    assert "co|new title" in rows and a not in rows and rows["co|new title"] == "New Title"
+    assert st.conn.execute("SELECT superseded_by FROM matched WHERE mkey=?",
+                           (c,)).fetchone()[0] == "co|new title"
+    st.close()
+
+
+def test_a_retraction_naming_a_renamed_role_id_still_binds(tmp_path):
+    """Every line in `roles_retractions.jsonl` carries a `role_id` since 2026-09-11, and a
+    title canon can rename one. The line is still the human's verdict about that posting."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    old = "practical vision|we re hiring junior web analyst practical vision"
+    new = "practical vision|junior web analyst"
+    rec = _rec(new, company="Practical Vision", title="Junior Web Analyst",
+               url="https://pv.com/jobs/junior", renamed_from=[old],
+               seen_ids=["scrape:https://pv.com/jobs/junior"], sources=["scrape"])
+    _retract_file(tmp_path, {"url": "https://elsewhere.example/gone", "role_id": old,
+                             "status": "withdrawn", "reason": "never in scope",
+                             "on": "2026-09-10"})
+    r = roles.Retractions.load(roles.retractions_path(str(tmp_path / "seen.db")))
+    r.bind({new: rec})
+    assert r.match(rec) is not None, "the line names the key this record used to carry"
+    assert r.match_all(rec)[0]["role_id"] == old
+    # ...and a line naming a key nothing has ever carried still answers to nothing
+    other = _rec("some|other role")
+    assert r.match(other) is None
+    st.close()
+
+
+def test_page_says_closed_reads_the_chrome_marker_and_never_a_quote_in_the_body():
+    """The four live texts on 2026-09-11 carry the marker at offsets 264-501, in LinkedIn's
+    own chrome above the description. A description that merely mentions the phrase is a
+    sentence about the job, not a verdict on the posting."""
+    from pipeline import roles
+    heb = ("‏" * 3 + "Business Analyst / Migdal Group / Petah Tikva " * 4
+           + "ראה מי Migdal Group "
+           + "כבר לא מקבלים בקשות")
+    eng = "Analyst at Mizrahi Tefahot " * 8 + "No longer accepting applications Report this job"
+    assert roles.page_says_closed(heb) and roles.page_says_closed(eng)
+    assert roles.page_says_closed("no longer accepting applications"), "case-insensitive"
+    deep = "x" * (roles.PAGE_CLOSED_WINDOW + 50) + "No longer accepting applications by email"
+    assert not roles.page_says_closed(deep), "past the chrome it is prose, not a verdict"
+    assert not roles.page_says_closed("") and not roles.page_says_closed(None)
+
+
+def test_page_closed_is_only_for_a_linkedin_row_with_no_board_of_its_own():
+    """The employer's own board is the authority. A LinkedIn mirror is 21 days stale by
+    construction, so it may only speak for a posting we know from nowhere else."""
+    from pipeline import roles
+    marker = "No longer accepting applications"
+    li = "https://il.linkedin.com/jobs/view/business-analyst-at-migdal-group-4458736498"
+    assert roles.page_closed({"url": li, "sources": ["discovery-linkedin"],
+                              "description": marker})
+    assert roles.page_closed({"url": li, "sources": "discovery-linkedin+discovery-indeed",
+                              "description": marker}), "sqlite joins sources with +"
+    assert not roles.page_closed({"url": li, "sources": ["greenhouse", "discovery-linkedin"],
+                                  "description": marker}), "its own board still lists it"
+    assert not roles.page_closed({"url": "https://boards.greenhouse.io/x/jobs/1",
+                                  "sources": ["scrape"], "description": marker})
+    assert not roles.page_closed({"url": li, "sources": [], "description": marker})
+    assert not roles.page_closed({"url": li, "sources": ["discovery-linkedin"],
+                                  "description": "a healthy job description"})
+    # jd-text's stamp is the durable form of the same fact
+    assert roles.page_closed({"url": li, "sources": ["discovery-linkedin"], "description": "",
+                              "jd_why": "closed-by-page:2026-08-28"})
+
+
+def test_the_page_closure_is_remembered_at_its_url_so_a_chrome_strip_cannot_reopen_it():
+    """jd-text may clean the furniture out of stored text at any time. The verdict must
+    survive that — and must NOT survive the posting being re-listed at a new address."""
+    from pipeline import roles
+    li = "https://il.linkedin.com/jobs/view/x-4458736498"
+    rec = {"url": li, "sources": ["discovery-linkedin"], "description": "",
+           "closed_by": "page", "closed_page": li}
+    assert roles.page_closed(rec, rec)
+    relisted = dict(rec, url="https://il.linkedin.com/jobs/view/x-9999999999")
+    assert not roles.page_closed(relisted, relisted), \
+        "a new address is a new posting and reopens on the ordinary ladder"
+
+
+def test_record_run_closes_a_page_closed_row_on_the_day_its_text_was_captured(tmp_path):
+    """`closed_on` is published and a reader takes it for the day the posting went away.
+    The day we captured the page that says so is the closest we can honestly name — never
+    today, which would claim we watched it close."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    li = "https://il.linkedin.com/jobs/view/business-analyst-at-migdal-group-4458736498"
+    rid = "migdal|business analyst"
+    rec = _rec(rid, company="Migdal Group", title="Business Analyst", url=li,
+               sources=["discovery-linkedin"], seen_ids=["discovery-linkedin:linkedin:4458736498"],
+               jd_attempted="2026-08-28", last_seen="2026-09-12",
+               description="x" * 200 + "No longer accepting applications")
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = {rid: rec}
+    roles.dump(lg.path, lg.records)
+    st.insert_matched({**rec, "mkey": rid})
+    lg._open_sync()
+    card = {k: rec[k] for k in ("company", "title", "url", "location", "posted_date",
+                                "sources", "seen_ids", "description")}
+    lines = lg.record_run("2026-09-12", board_jobs=[card], merged=[card],
+                          scanned_ok={"Migdal Group"}, failed=set(), paths={}, scoped=True)
+    assert lg.records[rid]["status"] == "closed"
+    assert lg.records[rid]["closed_on"] == "2026-08-28", "the day the text was captured"
+    assert lg.records[rid]["closed_by"] == "page" and lg.records[rid]["closed_page"] == li
+    assert any("closed by page 1" in ln for ln in lines), lines
+    # the next morning the discovery cache offers the card again; nothing reopens and the
+    # clause does not repeat
+    lines = lg.record_run("2026-09-13", board_jobs=[card], merged=[card],
+                          scanned_ok={"Migdal Group"}, failed=set(), paths={}, scoped=True)
+    st.close()
+    assert lg.records[rid]["status"] == "closed"
+    assert len(lg.records[rid]["episodes"]) <= 1 and "reopened 0" in lines[0]
+    assert not any("closed by page" in ln for ln in lines), lines
+
+
+def test_the_capture_date_falls_back_to_the_text_ledger_then_to_today(tmp_path):
+    """`jd_attempted` is the best answer and `2026-08-30 gone` is one of its shapes; the
+    text line's `updated` is the next; today is the last resort, not the first."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.text = {"a|b": {"updated": "2026-09-04"}}
+    assert lg._capture_date("a|b", {"jd_attempted": "2026-08-30 gone"}, "2026-09-12") == "2026-08-30"
+    assert lg._capture_date("a|b", {"jd_attempted": ""}, "2026-09-12") == "2026-09-04"
+    assert lg._capture_date("zz|zz", {"jd_attempted": "not a date"}, "2026-09-12") == "2026-09-12"
+    st.close()
+
+
+def test_page_closures_are_held_by_the_mass_close_guard_like_any_other_closure(tmp_path):
+    """A LinkedIn layout change that puts the phrase on every page is a bad READ, not fifty
+    closures — so these ride `_close` and the guard counts them."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs, cards = {}, []
+    for i in range(12):
+        rid = "co%d|analyst" % i
+        li = "https://il.linkedin.com/jobs/view/x-%d" % i
+        recs[rid] = _rec(rid, company="Co%d" % i, title="Analyst", url=li,
+                         sources=["discovery-linkedin"], seen_ids=["discovery-linkedin:linkedin:%d" % i],
+                         description="y" * 100 + "No longer accepting applications")
+        cards.append({k: recs[rid][k] for k in ("company", "title", "url", "location",
+                                                "posted_date", "sources", "seen_ids",
+                                                "description")})
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid, r in recs.items():
+        st.insert_matched({**r, "mkey": rid})
+    lg._open_sync()
+    lg.record_run("2026-09-12", board_jobs=cards, merged=cards,
+                  scanned_ok={r["company"] for r in recs.values()}, failed=set(),
+                  paths={}, scoped=True)
+    st.close()
+    assert any("mass-close held" in a for a in lg.alarms), lg.alarms
+    assert all(r["status"] == "open" for r in lg.records.values()), \
+        "a held morning holds the page closures too, and retries tomorrow"
+
+
 def test_a_backfill_reject_is_counted_at_every_tier_and_only_when_published(monkeypatch):
     """The alarm asks a human to write a retraction line, so it has to count every reject on
     a PUBLISHED row — a keyword or cached reject costs the reader exactly as much as a paid
