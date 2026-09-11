@@ -80,13 +80,22 @@ BD_SPEND_LOG = "cloud_state/bd_spend.jsonl"
 # repo knows which posting already has a snapshot, so it is never capped.
 WAYBACK_LEDGER = "cloud_state/wayback_ledger.jsonl"
 PERSIST_LOG_MAX = 400                       # ~a month at 10-15 commits/day
-# PROVISIONAL, n=3. Tuned on the only three regressions ever measured -- 16/279 (5.7%),
-# 16/221 (7.2%) and 24/243 (9.9%) -- to fire on all of them while staying quiet for the
-# 1-4 key deletions a parked row or an alias merge makes. The floor stops noise on a small
-# cache, the percentage stops it on a large one. RE-MEASURE once persist_log.jsonl holds a
-# fortnight (morning check 2026-09-11): a threshold nobody trusts is worse than none.
+# RE-MEASURED 2026-09-11 (n=79 commits, the fortnight the morning check asked for) and KEPT.
+# It was tuned on the only three regressions then known -- 16/279 (5.7%), 16/221 (7.2%),
+# 24/243 (9.9%). Over 37 `scraped_cache.json` commits since, it fires 5 times, the largest
+# loss being 36 of 410 (8.8%, 08-31) and the rest 3.2-5.6%; every other keyed cache in the
+# table lost NOTHING in the whole fortnight. Five alarms in five weeks on the one cache that
+# has actually been losing boards is a signal, so neither bar moves.
 SHRINK_MIN_KEYS = 10
 SHRINK_MIN_PCT = 3.0
+# ...with ONE exemption, and it is about meaning rather than size. `stale.json` is the list
+# of boards that need re-resolving: a board that HEALS leaves it, so shrinking is the
+# outcome the self-heal exists to produce. It fired on 9 of its 18 commits (up to 41 of 108,
+# 38%) and every one was a heal. An alarm that fires on the thing going right is how a
+# reader learns to skip the line -- and this alarm's whole value is being rare. The delta is
+# still measured, printed and logged to `persist_log.jsonl`; only the warning is withheld,
+# so the number stays available to anyone who looks.
+SHRINK_EXEMPT = frozenset(["cloud_state/stale.json"])
 
 
 # ---------------------------------------------------------------- git plumbing
@@ -632,7 +641,10 @@ def key_deltas(owned, base, cwd):
 
 def shrank(d):
     """Is this delta the shape that has been costing boards? Both bars, so a small cache
-    losing two keys and a big one losing 0.5% stay quiet."""
+    losing two keys and a big one losing 0.5% stay quiet -- and never for a path where
+    shrinking IS the good outcome (`SHRINK_EXEMPT`)."""
+    if d.get("path") in SHRINK_EXEMPT:
+        return False
     return d["lost"] >= SHRINK_MIN_KEYS and d["lost"] * 100.0 >= SHRINK_MIN_PCT * max(1, d["before"])
 
 
@@ -654,8 +666,10 @@ def report_deltas(deltas, cwd, message="", base=""):
                             f"First 25: {names}")   # collapsed: a newline ends an annotation
             lines.append(f"- **{arrow} -- {pct:.1f}% LOST**")
         else:
-            print(f"persist_state: {arrow}", flush=True)
-            lines.append(f"- {arrow}")
+            why = " (shrink-exempt: a board that heals leaves this list)" \
+                if d["path"] in SHRINK_EXEMPT and d["lost"] >= SHRINK_MIN_KEYS else ""
+            print(f"persist_state: {arrow}{why}", flush=True)
+            lines.append(f"- {arrow}{why}")
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary_path:
         try:

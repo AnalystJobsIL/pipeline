@@ -1770,8 +1770,11 @@ def test_a_junior_posting_still_contributes_its_employer():
     the breadth sweep's product is employer names — so an unknown Israeli company whose only
     past-week analyst ad says "Junior" was invisible to discovery forever."""
     from discovery_daily import linkedin_normalize
+    # RELATIVE to the clock the code reads, never a literal: `posted_date: "2026-08-20"` was
+    # inside the 21-day window when this was written and outside it from 2026-09-10, so the
+    # guard went red on a date rather than on a defect and told nobody anything for a day.
     j = linkedin_normalize({"job_id": "1", "title": "Junior Data Analyst", "company": "New Co",
-                            "location": "Haifa, Israel", "posted_date": "2026-08-20",
+                            "location": "Haifa, Israel", "posted_date": _days_ago(3),
                             "url": "u", "company_slug": "new-co"})
     assert j is not None and j["_junior"] is True and j["company"] == "New Co"
 
@@ -1921,10 +1924,11 @@ def test_workable_reads_the_field_names_the_api_actually_sends():
     locations requirementsSection socialSharingDescription state title updated url workplace;
     location: city countryName subregion."""
     from discovery_daily import workable_normalize
-    j = workable_normalize({"id": "7", "title": "BI Developer", "created": "2026-08-19T09:00:00Z",
+    day = _days_ago(3)                      # relative: see the junior-posting guard above
+    j = workable_normalize({"id": "7", "title": "BI Developer", "created": day + "T09:00:00Z",
                             "company": {"title": "A Co", "website": "https://a.co"},
                             "location": {"subregion": "Northern District"}, "url": "https://u"})
-    assert j["posted_date"] == "2026-08-19"
+    assert j["posted_date"] == day
     assert j["location"] == "Northern District, Israel"
     assert j["careers_hint"] == "https://a.co", "the employer's own site is why this source exists"
 
@@ -8486,18 +8490,21 @@ def test_the_cache_write_drops_agency_cards_including_carried_ones_and_the_junio
     import discovery_daily as dd
     monkeypatch.chdir(tmp_path)
     (tmp_path / "cloud_state").mkdir()
+    # RELATIVE: the cache prune drops anything older than `FRESH_DAYS`, so a literal date
+    # here is a countdown -- these two were 2026-08-24 and would have started failing on
+    # 2026-09-15 by asserting that a card the prune correctly dropped survives.
     prev = [{"company": "Dialog", "company_slug": "dialog-recruiting", "title": "Data Scientist",
-             "url": "u1", "posted_date": "2026-08-24", "ats_platform": "discovery-linkedin", "_junior": False},
+             "url": "u1", "posted_date": _days_ago(3), "ats_platform": "discovery-linkedin", "_junior": False},
             {"company": "Wix", "company_slug": "wix", "title": "BI Analyst", "url": "u2",
-             "posted_date": "2026-08-24", "ats_platform": "discovery-linkedin", "_junior": False}]
+             "posted_date": _days_ago(3), "ats_platform": "discovery-linkedin", "_junior": False}]
     (tmp_path / "discovered_cache.json").write_text(_j.dumps(prev), encoding="utf-8")
     (tmp_path / "research_companies.json").write_text(_j.dumps(
         [{"name": "Dialog", "careers_url": "x", "ats": "unknown", "slug": "dialog-recruiting"},
          {"name": "Wix", "careers_url": "x", "ats": "unknown", "slug": "wix"}]), encoding="utf-8")
     fresh = [{"company": "Fiverr", "company_slug": "fiverr", "title": "Data Analyst", "url": "u3",
-              "posted_date": "2026-08-25", "ats_platform": "discovery-linkedin", "_junior": False},
+              "posted_date": _days_ago(2), "ats_platform": "discovery-linkedin", "_junior": False},
              {"company": "Nisha Pro", "company_slug": "nishapro", "title": "Analytical Consultant",
-              "url": "u4", "posted_date": "2026-08-25", "ats_platform": "discovery-linkedin"}]
+              "url": "u4", "posted_date": _days_ago(2), "ats_platform": "discovery-linkedin"}]
     from pipeline import sources as _src
     monkeypatch.setattr(_src, "PATH", str(tmp_path / "cloud_state" / "source_health.json"))
     from pipeline import intake_ledger as _led
@@ -10580,7 +10587,7 @@ def test_an_unreadable_queue_is_never_overwritten_by_discovery_daily(tmp_path, m
     import discovery_daily as dd
     _queue_fixture(tmp_path, monkeypatch, queue_bytes)
     fresh = [{"company": "Newco", "company_slug": "newco", "title": "Data Analyst",
-              "url": "u3", "posted_date": "2026-08-25", "ats_platform": "discovery-linkedin"}]
+              "url": "u3", "posted_date": _days_ago(2), "ats_platform": "discovery-linkedin"}]
     monkeypatch.setattr(dd, "indeed_search", lambda q: [])
     monkeypatch.setattr(dd, "workable_search", lambda: [])
     monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": list(fresh))
@@ -29585,11 +29592,14 @@ def test_wayback_targets_come_from_every_store_and_aggregator_copies_are_include
                 "url": "https://boards.greenhouse.io/gone/jobs/1", "seen_ids": ["discovery-indeed:indeed:8018875cc3df2f8b"]}],
         matched=[("fiverr|x", "https://www.comeet.com/jobs/fiverr/60.002/x/BB.066", "2026-08-16"),
                  ("m|only", "https://jobs.lever.co/m/abc", "2026-08-20")],
-        discovered=[{"url": "https://il.linkedin.com/jobs/view/fresh-1", "posted_date": "2026-09-01"},
-                    {"url": "https://il.linkedin.com/jobs/view/old-2", "posted_date": "2026-08-01"},
+        # RELATIVE, even though this test names its own `today`: the discovery cut these
+        # cards face is `fetch_discovery`'s, which reads the REAL clock -- two different
+        # calendars in one fixture, and the literals were 11 days from making `fresh-1` old.
+        discovered=[{"url": "https://il.linkedin.com/jobs/view/fresh-1", "posted_date": _days_ago(3)},
+                    {"url": "https://il.linkedin.com/jobs/view/old-2", "posted_date": _days_ago(40)},
                     {"url": "https://il.indeed.com/viewjob?jk=abcdefabcdefabcd", "posted_date": ""}],
         scraped={"Acme": [{"url": "https://acme.com/careers", "posted_date": ""},
-                          {"url": "https://acme.com/careers/analyst", "posted_date": "2026-08-30"}]},
+                          {"url": "https://acme.com/careers/analyst", "posted_date": _days_ago(5)}]},
         companies=[["Acme", "scrape", "", "https://acme.com/careers", "true", ""],
                    ["Beta", "scrape", "", "https://beta.io/jobs", "true", ""],
                    ["Parked", "scrape", "", "https://parked.io/jobs", "false", ""],
@@ -31064,3 +31074,93 @@ def test_the_linkedin_guest_walk_is_paced_and_re_asks_a_block_before_paying():
     assert src.index("_blocked_reask[qkey] = True") < src.index("jobs/search?{q}"), \
         "the re-ask must come BEFORE the paid render, or it is not a saving"
     assert "linkedin_block_recovered" in src, "a recovered block is counted, like every path"
+
+
+# ---- tests that rot on the calendar: one window, and no fixture sitting inside it ----
+@pytest.mark.parametrize("fn,rec,datekey", [
+    ("linkedin_normalize", {"job_id": "1", "title": "Data Analyst", "company": "New Co",
+                            "location": "Haifa, Israel", "url": "u",
+                            "company_slug": "new-co"}, "posted_date"),
+    ("workable_normalize", {"id": "7", "title": "BI Developer",
+                            "company": {"title": "A Co", "website": "https://a.co"},
+                            "location": {"subregion": "Northern District"},
+                            "url": "https://u"}, "created"),
+    ("indeed_normalize", {"displayTitle": "Data Analyst", "company": "NewCo",
+                          "jobkey": "k", "formattedLocation": "Tel Aviv"}, "pubDate"),
+])
+def test_the_freshness_window_is_one_constant_and_no_fixture_sits_inside_it(fn, rec, datekey):
+    """THREE GUARDS WERE RED ON MASTER ON 2026-09-11 BECAUSE OF THE CALENDAR, not because of
+    a defect: two carried `posted_date: "2026-08-20"` / `created: "2026-08-19"`, which were
+    inside the 21-day intake window when they were written and outside it from 2026-09-10.
+    A guard that fails on a date tested nothing in the weeks before it went red, and the two
+    that were still green had four days left (`2026-08-24`, asserted to SURVIVE the prune).
+
+    So: the window is ONE constant (`discovery_daily.FRESH_DAYS`, was five copies of the same
+    arithmetic plus a sixth in `pipeline/fetchers`), every normalizer reads it through
+    `fresh_cut()`, and no fixture in this file may carry a literal date that the window can
+    walk past. The second half is checked below, inside each case rather than as a separate
+    one, because a case that can only pass is not a guard (`tools/guard_kill.py`).
+    """
+    import datetime as _d
+    import re as _re
+    import ast as _ast
+    from discovery_daily import FRESH_DAYS, fresh_cut
+    import discovery_daily as dd
+    assert FRESH_DAYS == 21 and fresh_cut() == (_d.date.today()
+                                                - _d.timedelta(days=21)).isoformat()
+    inside, outside = _days_ago(FRESH_DAYS - 1), _days_ago(FRESH_DAYS + 1)
+    if datekey == "pubDate":                       # indeed carries epoch MILLIseconds
+        def _stamp(iso):
+            return int(_d.datetime.fromisoformat(iso + "T09:00:00+00:00").timestamp() * 1000)
+    else:
+        def _stamp(iso):
+            return iso + ("T09:00:00Z" if datekey == "created" else "")
+    keep = getattr(dd, fn)(dict(rec, **{datekey: _stamp(inside)}))
+    drop = getattr(dd, fn)(dict(rec, **{datekey: _stamp(outside)}))
+    assert keep is not None and keep["posted_date"] == inside, f"{fn}: a card inside the window"
+    assert drop is None, f"{fn}: a card older than FRESH_DAYS is dropped, in every normalizer"
+
+    # ...and the class itself: a literal date in a fixture that one of these functions judges
+    # is a countdown, not a test. `_days_ago(n)` is how to write one; a date before 2021 is
+    # allowed because nothing can make it fresh again.
+    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_units.py"),
+               encoding="utf-8").read()
+    lines = src.split("\n")
+    judged = _re.compile(r"\b(linkedin_normalize|workable_normalize|indeed_normalize|"
+                         r"fetch_discovery|dd\.main)\b")
+    dated = _re.compile(r'"(?:posted_date|created|created_at|published)":\s*"(20\d\d-\d\d-\d\d)')
+    rotting = []
+    for node in _ast.walk(_ast.parse(src)):
+        if isinstance(node, _ast.FunctionDef) and node.name.startswith("test"):
+            body = "\n".join(lines[node.lineno - 1:node.end_lineno])
+            if judged.search(body):
+                rotting += [(node.name, m.group(1)) for m in dated.finditer(body)
+                            if m.group(1) >= "2021-01-01"]
+    assert not rotting, ("a literal date inside the freshness window of the code under test "
+                         "-- use _days_ago(n): %r" % rotting)
+
+
+def test_the_cache_shrink_alarm_keeps_its_bars_and_exempts_the_list_that_should_shrink(capsys, tmp_path):
+    """Re-measured on 2026-09-11 over 79 persist_log commits (the morning check's fortnight).
+    `scraped_cache.json`: 37 commits, 5 fires, largest 36 of 410 (8.8%) -- kept. `stale.json`:
+    18 commits, 9 fires, up to 38% -- and every one was a board HEALING, which is what the
+    06:00 self-heal is for. An alarm that fires on the good outcome is how a reader learns to
+    skip the line, so that path is exempt; the delta is still measured and still logged."""
+    import persist_state as P
+    assert (P.SHRINK_MIN_KEYS, P.SHRINK_MIN_PCT) == (10, 3.0)
+    real = {"path": "scraped_cache.json", "before": 410, "after": 374, "lost": 36,
+            "gained": 0, "names": ["a"]}
+    heal = {"path": "cloud_state/stale.json", "before": 108, "after": 74, "lost": 41,
+            "gained": 7, "names": ["b"]}
+    assert P.shrank(real) is True, "the 2026-08-31 loss of 36 boards must still alarm"
+    assert P.shrank(heal) is False, "a healed board leaving stale.json is not a loss"
+    assert P.shrank({**real, "lost": 9}) is False and P.shrank({**real, "lost": 12}) is False, \
+        "both bars: 9 keys is under the floor, 12 of 410 is under the percentage"
+    # `cwd=tmp_path`, never `"."`: `report_deltas` APPENDS to `cloud_state/persist_log.jsonl`
+    # under the cwd it is given, and the first draft of this guard wrote two fabricated
+    # lines into the tracked one -- a test mutating the state file it is asserting about.
+    (tmp_path / "cloud_state").mkdir(parents=True, exist_ok=True)
+    P.report_deltas([heal], cwd=str(tmp_path), message="m", base="b")
+    out = capsys.readouterr().out
+    assert "shrink-exempt" in out and "108 -> 74" in out, \
+        "withheld from the alarm, never from the record"

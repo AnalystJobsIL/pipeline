@@ -1013,7 +1013,12 @@ def fetch_discovery(row):
             jobs = _json.load(f)
     except Exception:  # noqa: BLE001
         return []
-    cut = (_dt.date.today() - _dt.timedelta(days=21)).isoformat()
+    # ONE definition of "fresh enough for the board", shared with the four normalizers that
+    # WRITE this cache (`discovery_daily.fresh_cut`, 21 days). It was a sixth copy of the
+    # same arithmetic, in the module that READS what they wrote -- so a change to the window
+    # would have silently applied to the writers and not to the reader.
+    from discovery_daily import fresh_cut
+    cut = fresh_cut()
     # run.py filters recruiter ROWS; discovery jobs carry the real employer name and would
     # bypass that check, so agencies re-posting client roles are dropped per-job here.
     from .company_identity import url_names_other_company

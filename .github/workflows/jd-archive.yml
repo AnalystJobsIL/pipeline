@@ -99,7 +99,14 @@ jobs:
         env:
           WAYBACK_DAY_CAP: "150"
           WAYBACK_BOARD_CAP: "25"
-          WAYBACK_REQ_CAP: "140"
+          # 140 -> 220 (`577@infra`, filed by `registry` 2026-09-04 with this exact token).
+          # `_exhausted()` is `rep.requests >= caps.requests` and `requests` counts postings,
+          # boards AND the pending CDX verifications, so at most 140 - 25 boards - up to 40
+          # verifications = ~75-115 postings could go out whatever WAYBACK_DAY_CAP said: the
+          # day cap was documentation. 220 = 150 + 25 + 45, and at WAYBACK_PACE_S 6 that is
+          # 22 minutes of sends -- inside the 30-minute WAYBACK_TIME_BUDGET_MIN and under the
+          # archive's 15-a-minute limit.
+          WAYBACK_REQ_CAP: "220"
           WAYBACK_TIME_BUDGET_MIN: "30"
           WAYBACK_PACE_S: "6"
           WAYBACK_TIMEOUT_S: "60"

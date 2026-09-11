@@ -525,7 +525,18 @@ def capture_since(url: str, since: str, timeout: float = 30.0):
 
 
 # ------------------------------------------------------------------ the run
-def _now() -> str:
+def _now(today: dt.date | None = None) -> str:
+    """The timestamp a ledger line carries. `today` is the RUN's date when the caller was
+    given one, and the wall clock otherwise (which is every production path).
+
+    Why the run's date matters: `read_ledger` folds `at` into `ok_at` / `pending_at`, and
+    every cadence here is `_days(today, that)`. A run told `today=2026-09-05` that stamps its
+    lines with the real clock produces NEGATIVE day-deltas the moment the real date passes
+    the fixture's -- so a test written in September passed in September and started failing
+    in October, having tested nothing about the code in between. The three-day-old pending
+    line simply stopped being selected for verification and `verified` went to 0."""
+    if today is not None:
+        return f"{today.isoformat()}T12:00:00Z"
     return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
@@ -556,10 +567,10 @@ class _Pool:
     and 15 requests a minute per IP; the gate spaces every send `pace_s` apart whatever
     the thread count."""
 
-    def __init__(self, targets, ledger, out, rep, caps, started, budget_s):
+    def __init__(self, targets, ledger, out, rep, caps, started, budget_s, now=None):
         self.queue = list(targets)
         self.ledger, self.out, self.rep, self.caps = ledger, out, rep, caps
-        self.started, self.budget_s = started, budget_s
+        self.started, self.budget_s, self.now = started, budget_s, now
         self.lock = threading.Lock()
         self.next_send = 0.0
         self.stop = ""
@@ -660,7 +671,7 @@ class _Pool:
 
     def record(self, t: Target, attempt: int, res: Result) -> None:
         with self.lock:
-            self.out.append(_line(t, attempt, res), self.rep)
+            self.out.append(_line(t, attempt, res, self.now), self.rep)
             if res.err in SUCCESS or res.err == "pending":
                 if t.kind == "board":
                     self.rep.boards += 1
@@ -695,6 +706,10 @@ class _Pool:
 
 def run(root: str = ROOT, today: dt.date | None = None, caps: Caps | None = None,
         dry_run: bool = False, limit: int = 0) -> Report:
+    # A caller that names the day stamps the ledger with THAT day: every cadence here is a
+    # difference against `today`, so a line dated by the wall clock in a run dated otherwise
+    # is a cadence measured against two different calendars (see `_now`).
+    now = _now(today)
     today = today or dt.date.today()
     caps = caps or Caps.from_env()
     rep = Report()
@@ -731,12 +746,12 @@ def run(root: str = ROOT, today: dt.date | None = None, caps: Caps | None = None
             rep.requests += 1
             if ts:
                 rep.verified += 1
-                out.append(Line(_now(), url, s["kind"], 0, s["attempts"], 200, ts, "verified"), rep)
+                out.append(Line(now, url, s["kind"], 0, s["attempts"], 200, ts, "verified"), rep)
             elif _days(today, s["pending_at"]) >= PENDING_DAYS:
-                out.append(Line(_now(), url, s["kind"], 0, s["attempts"], 200, "", "unverified"), rep)
+                out.append(Line(now, url, s["kind"], 0, s["attempts"], 200, "", "unverified"), rep)
             _sleep(caps.pace_s)
         # 2. the day's captures
-        _Pool(postings + boards, ledger, out, rep, caps, started, budget_s).run()
+        _Pool(postings + boards, ledger, out, rep, caps, started, budget_s, now).run()
     finally:
         out.close()
     if not rep.alarm and rep.submitted == 0 and rep.boards == 0 and (postings or boards):
@@ -744,8 +759,8 @@ def run(root: str = ROOT, today: dt.date | None = None, caps: Caps | None = None
     return rep
 
 
-def _line(t: Target, attempt: int, res: Result) -> Line:
-    return Line(_now(), t.url, t.kind, t.tier, attempt, res.http, res.snap, res.err)
+def _line(t: Target, attempt: int, res: Result, now: str = "") -> Line:
+    return Line(now or _now(), t.url, t.kind, t.tier, attempt, res.http, res.snap, res.err)
 
 
 def _report(rep: Report, dry_run: bool) -> None:

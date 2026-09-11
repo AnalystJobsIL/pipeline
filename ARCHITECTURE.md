@@ -2470,7 +2470,7 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | cron (UTC) | workflow | effect |
 |---|---|---|
 | `0 0 * * *` | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
-| `30 12 * * *` | jd-archive | **first, `archive_evidence.py`** (2026-09-04): every posting url we have seen and the careers page of every active scrape row, submitted to the Internet Archive's Save Page Now — 100 postings + 25 boards a day, 140 requests, three threads behind one 6-s gate, 30-min budget, `continue-on-error` with the outcome in the `wayback` stamp (a crash is a `Stages:` clause, not silence); one line per attempt in `cloud_state/wayback_ledger.jsonl`, never any text. Then a job description for the cards the TITLE gate drops (the corpus, not the board): `enrich_scrape_jd.py --archive-only`, 90-min budget, `repo-state` group, no `continue-on-error`. *Recovering expired evidence* under §5 is the runbook |
+| `30 12 * * *` | jd-archive | **first, `archive_evidence.py`** (2026-09-04): every posting url we have seen and the careers page of every active scrape row, submitted to the Internet Archive's Save Page Now — 100 postings + 25 boards a day, **220 requests** (140 until 2026-09-11: `requests` counts the boards and the pending CDX verifications too, so the day cap was documentation — `577`), three threads behind one 6-s gate, 30-min budget, `continue-on-error` with the outcome in the `wayback` stamp (a crash is a `Stages:` clause, not silence); one line per attempt in `cloud_state/wayback_ledger.jsonl`, never any text. Then a job description for the cards the TITLE gate drops (the corpus, not the board): `enrich_scrape_jd.py --archive-only`, 90-min budget, `repo-state` group, no `continue-on-error`. *Recovering expired evidence* under §5 is the runbook |
 | `30 2 * * *` | retry-unreachable | Bright Data re-fetch of flaky endpoints |
 | `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → **company-intel drain (20 min, since 2026-08-30: the queue the `Company intel:` line measures is drained in the run that measures it)** → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** → report the run's outcome |
 | — `17 6,7,8,10 * * *` | inbox relay (private repo `AnalystJobsIL/inbox`, not this repo's crons) | **the BACKUP since 2026-08-28.** The relay's real trigger is now `on: push` to `receipts/**`, which `daily-digest`'s last step writes the moment a digest has landed — digest → email via issue+mention, content-hash dedup |
@@ -3573,12 +3573,21 @@ reaches a human if the mail goes out, and on 2026-08-27 and -28 it did not. So t
 surface is the run page, and the log file is what lets *tomorrow's* run say what yesterday
 cost rather than requiring someone to open a run nobody opens.
 
-**The threshold is `>= 10 keys AND >= 3%`, and it is PROVISIONAL on n=3.** It fires on all
-three regressions above (5.7 / 7.2 / 9.9%) and stays quiet for the one-to-four-key deletions a
-parked row or an alias merge makes — the floor stops noise on a small cache, the percentage
-stops it on a large one. Three observations is not a distribution. **Re-measure from
-`persist_log.jsonl` once it holds a fortnight** (morning check, 2026-09-11): a threshold that
-cries wolf is worse than none, and this repo already has an email nobody reads as proof.
+**The threshold is `>= 10 keys AND >= 3%`, re-measured on 2026-09-11 over the fortnight the
+morning check asked for, and KEPT.** It was tuned on n=3 (5.7 / 7.2 / 9.9%); `persist_log.jsonl`
+now holds **79 commits**, of which `scraped_cache.json` is 37. Over those 37 it fires **5
+times** — 36/410 (8.8%, 08-31), then 5.6, 3.6, 3.6 and 3.2% — and **every other keyed cache in
+the `STRATEGY` table lost nothing at all in the fortnight**. Five alarms in five weeks, on the
+one cache that has actually been losing boards, is a signal and not noise, so neither bar
+moves. The floor stops noise on a small cache, the percentage stops it on a large one.
+
+**One path is exempt, and it is about meaning rather than size: `cloud_state/stale.json`**
+(`persist_state.SHRINK_EXEMPT`). It is the list of boards that need re-resolving, so a board
+that HEALS leaves it — shrinking is the outcome the 06:00 self-heal exists to produce. It
+fired on **9 of its 18 commits**, up to 41 of 108 (**38%**), and every one of those was a
+heal. An alarm that fires on the thing going right teaches its reader to skip the line, and
+being rare is this alarm's entire value. The delta is still measured, still printed, still
+written to `persist_log.jsonl`; only the warning is withheld.
 
 **It does not block, deliberately.** Legitimate deletions must keep working, and a wrong
 threshold that silently froze the cache would cost coverage — which is exactly what

@@ -149,6 +149,22 @@ def indeed_search(query, days=INDEED_DAYS, limit=25, tries=2):
     return []
 
 
+# How old a posting may be and still enter the cache. ONE constant and ONE function, because
+# the same arithmetic was written out five times in this file (and once more in
+# `pipeline/fetchers.fetch_discovery`, which filters the cache this one writes): four
+# normalizers and the cache prune, each `(date.today() - timedelta(days=21)).isoformat()`.
+# Copies drift silently -- and every test of them had to carry a literal date inside the
+# window, so the tests rotted on the calendar instead of failing on a bug (2026-09-11: two
+# were red on master, having passed since 2026-08-19).
+FRESH_DAYS = 21
+
+
+def fresh_cut(today=None):
+    """The oldest `posted_date` a posting may carry today, ISO. Older is dropped."""
+    import datetime as _d                  # each normalizer imports its own; so does this
+    return ((today or _d.date.today()) - _d.timedelta(days=FRESH_DAYS)).isoformat()
+
+
 def indeed_normalize(r):
     """One Indeed card -> the shared discovered-job shape (or None to drop it)."""
     import datetime as _dt
@@ -164,7 +180,7 @@ def indeed_normalize(r):
         # the epoch is the only one that survives a locale switch.
         date = _dt.datetime.fromtimestamp(ts / 1000, _dt.timezone.utc).date().isoformat()
     date = date or _dt.date.today().isoformat()    # never undated — see linkedin_normalize
-    if date < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
+    if date < fresh_cut():
         return None
     desc = ""
     sn = r.get("snippet") or ""
@@ -542,7 +558,7 @@ def linkedin_normalize(c):
     # do not): an undated job is skipped by BOTH the write-side prune and the read-side
     # TTL, so it never ages out and sits on the board forever.
     d = c["posted_date"] or _dt.date.today().isoformat()
-    if d < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
+    if d < fresh_cut():
         return None
     # A junior posting is not published, but its EMPLOYER still counts: the breadth sweep's
     # product is employer names, and an unknown Israeli company whose only past-week analyst
@@ -616,7 +632,7 @@ def workable_normalize(r):
     # in it, and an empty posted_date makes a job immortal (see linkedin_normalize).
     d = str(r.get("created") or r.get("published") or r.get("created_at") or "")[:10]
     d = d or _dt.date.today().isoformat()          # never undated — see linkedin_normalize
-    if d < (_dt.date.today() - _dt.timedelta(days=21)).isoformat():
+    if d < fresh_cut():
         return None
     junior = any(k in title[:200].lower() for k in _JUNIOR_HE)
     loc = r.get("location") or {}
@@ -1155,8 +1171,7 @@ def main():
         # unrecoverable because the telegram watermark had advanced past them. And ABSENT is
         # legitimately empty while CORRUPT is not: overwriting a half-written file with this
         # run's jobs alone is the same incident by another door.
-        import datetime as _dtm
-        cut = (_dtm.date.today() - _dtm.timedelta(days=21)).isoformat()
+        cut = fresh_cut()
         prev = []
         if os.path.exists("discovered_cache.json"):
             try:
