@@ -2274,7 +2274,7 @@ class Ledger:
                     self._touch(rec)
                     c["purged"] += 1      # a delta, like `closed today` beside it — not a
                 c["purged_total"] += 1    # running total that never decays
-            elif page_closed(rec, rec):
+            elif prev_status not in RETRACTABLE and page_closed(rec, rec):
                 # The posting's own page says it stopped accepting applications (581). It is
                 # ahead of the `onboard` arm because `onboard` is satisfied by our own
                 # 21-day discovery cache, which is the very thing that kept these four roles
@@ -2283,6 +2283,15 @@ class Ledger:
                 # close. It rides `_close` like any other closure, so the mass-close guard
                 # counts it — a morning where this fires for half the board is a bad read of
                 # a changed LinkedIn page, not fifty closures.
+                #
+                # `prev_status not in RETRACTABLE` is not a formality. A purged or withdrawn
+                # record is a standing verdict — the company was never an employer, or a
+                # human ruled the posting out — and `closed` is a WEAKER, different claim
+                # ("the posting was gone from the board"). Without this, `comblack|business
+                # intelligence developer`, purged, was re-closed the moment it carried the
+                # marker: measured on the committed store, 5 closures where 4 are real.
+                # (The purge branch above only reaches a row whose company is in this run's
+                # `never_ours`, so it cannot be relied on to shield a purged record here.)
                 if prev_status != "closed":
                     c["to_close"] += 1
                     rec["_close"] = ("page", self._capture_date(rid, rec, run_date))

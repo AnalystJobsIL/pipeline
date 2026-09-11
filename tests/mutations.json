@@ -3310,5 +3310,15 @@
   "replace": "        if False:\n            continue",
   "why": "the discovery cache re-serves the card for up to 21 days. Upserting it puts the key back in `closed_keys()`'s reappearance path, so first_seen resets to today and a fresh episode is minted EVERY morning - a daily `reopened 1` for a posting that is gone, and a role that keeps re-entering the 48h email window. Guarded by test_record_run_closes_a_page_closed_row_on_the_day_its_text_was_captured.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "page-closed-re-closes-a-purged-record",
+  "file": "pipeline/roles.py",
+  "symbol": "_record_run",
+  "class": "M4-guard-removal",
+  "find": "            elif prev_status not in RETRACTABLE and page_closed(rec, rec):",
+  "replace": "            elif page_closed(rec, rec):",
+  "why": "`purged` (the company was never an employer) and `withdrawn` (a human ruled this posting out) are standing verdicts, and `closed` is a weaker, different claim - the posting was gone from the board. Without the guard the page arm overwrites one with the other: measured on the committed store, comblack|business intelligence developer is purged AND carries the marker, and the arm reported 5 closures where 4 are real. The purge branch above only reaches a row whose company is in THIS run's never_ours, so it cannot shield a purged record here. Killed by test_a_purged_or_withdrawn_record_is_never_re_closed_by_its_page.",
+  "must_be_killed_by_behavioural": true
  }
 ]

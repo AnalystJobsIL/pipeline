@@ -26337,6 +26337,50 @@ def test_record_run_closes_a_page_closed_row_on_the_day_its_text_was_captured(tm
     assert not any("closed by page" in ln for ln in lines), lines
 
 
+def test_a_purged_or_withdrawn_record_is_never_re_closed_by_its_page(tmp_path):
+    """`closed` is a WEAKER and different claim than `purged` ("the company was never an
+    employer") or `withdrawn` ("a human ruled this posting out"). Measured on the committed
+    store: without the guard the page arm reported 5 closures where 4 are real, because
+    `comblack|business intelligence developer` is purged AND carries the marker."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    marker = "z" * 100 + "No longer accepting applications"
+    recs = {}
+    for rid, status in (("a|analyst", "purged"), ("b|analyst", "withdrawn"),
+                        ("c|analyst", "open")):
+        recs[rid] = _rec(rid, url="https://il.linkedin.com/jobs/view/" + rid[0],
+                         sources=["discovery-linkedin"],
+                         seen_ids=["discovery-linkedin:linkedin:" + rid[0]],
+                         description=marker, status=status, jd_attempted="2026-08-28")
+    recs["a|analyst"]["purge_reason"] = "the row points at an aggregator"
+    recs["b|analyst"]["withdraw_reason"] = "not in Israel"
+    recs["b|analyst"]["retracted_on"] = "2026-09-01"
+    _retract_file(tmp_path, {"url": recs["b|analyst"]["url"], "role_id": "b|analyst",
+                             "status": "withdrawn", "reason": "not in Israel",
+                             "on": "2026-09-01"})
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid, r in recs.items():
+        st.insert_matched({**r, "mkey": rid})
+    lg._open_sync()
+    cards = [{k: r.get(k) for k in ("company", "title", "url", "location", "posted_date",
+                                    "sources", "seen_ids", "description")}
+             for r in recs.values()]
+    # `board_jobs` is `_alive`'s output, and `_alive` refuses all three: two are terminal
+    # and the third is page-closed. `merged` still carries them — the discovery cache
+    # re-serves every card for 21 days, which is the situation this whole guard is about.
+    lines = lg.record_run("2026-09-12", board_jobs=[], merged=cards,
+                          scanned_ok={r["company"] for r in recs.values()}, failed=set(),
+                          paths={}, scoped=False)
+    st.close()
+    assert lg.records["a|analyst"]["status"] == "purged"
+    assert lg.records["b|analyst"]["status"] == "withdrawn"
+    assert lg.records["c|analyst"]["status"] == "closed"
+    assert "closed_by" not in lg.records["a|analyst"]
+    assert any("closed by page 1" in ln for ln in lines), lines
+
+
 def test_the_capture_date_falls_back_to_the_text_ledger_then_to_today(tmp_path):
     """`jd_attempted` is the best answer and `2026-08-30 gone` is one of its shapes; the
     text line's `updated` is the next; today is the last resort, not the first."""
