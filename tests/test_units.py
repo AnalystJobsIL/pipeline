@@ -30177,7 +30177,13 @@ def test_the_head_cut_is_not_wired_into_the_two_readers_that_must_not_have_it():
     the behavioural guard made `jd-head-cut-moves-inside-jd-body` read as "killed ONLY by
     source-text guard(s)" and fail the gate, although the behaviour was pinned three lines
     earlier. The behaviour is what kills the mutant; this says the same thing about the
-    source, and says it where it cannot mask that."""
+    source, and says it where it cannot mask that.
+
+    It passes with the fix reverted -- at any base where `strip_head` exists and `jd_body`
+    does not call it, which is every base but the one that introduced it -- so it is
+    CATALOGUED rather than a guard that cannot fail: the record below is what verifies it.
+
+    Kills `jd-head-cut-moves-inside-jd-body`."""
     import inspect
     from pipeline import jdfill, roles
     assert "strip_head" not in inspect.getsource(jdfill.jd_body)
@@ -30372,9 +30378,14 @@ def test_a_head_repair_is_handed_back_unless_the_ledger_line_is_retracted():
     POINT -- re-clean, retract the ledger line of every row the cut shortened, sync, repeat --
     and this is the assertion that says why the retraction step is not optional.
 
-    Kills: teaching `better_description` the head cut (that is
-    `test_the_page_header_is_cut_at_fetch_and_never_inside_jd_body`, from the other side);
-    and any belief that writing sqlite alone is a repair."""
+    This guard PASSES with the session's fix reverted, and that is honest rather than
+    decorative: it is about `reconcile`, which this session did not touch. `guard_kill`
+    names that shape CANNOT-FAIL unless a mutation record vouches for the test, and one
+    does — teach `jd_body` the head cut and `better_description` trims the header off
+    BOTH sides, the sync stops handing the stale page back, and the first assertion
+    below breaks.
+
+    Kills `jd-head-cut-moves-inside-jd-body`."""
     from pipeline.roles import reconcile
     from pipeline.jdfill import strip_head, jd_body
     head = ("Senior Data Analyst at ACME | LinkedIn Jobs\nSkip to main content\n"

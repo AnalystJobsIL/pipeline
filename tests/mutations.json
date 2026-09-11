@@ -3084,7 +3084,9 @@
   "why": "the placement decision, as a mutation. `jd_body` IS the semantics of `looks_like_jd`, and `roles.better_description` RETURNS `jd_body(...)` -- so a head rule here becomes a second head-SHORTENING path writing BOTH stores with none of `_reclean`'s floor or share ceiling, which is the shape wave 2 measured at 13 rows and 39,956 characters. Killed by test_the_page_header_is_cut_at_fetch_and_never_inside_jd_body.",
   "must_be_killed_by_behavioural": true,
   "killers": [
-   "tests/test_units.py::test_the_page_header_is_cut_at_fetch_and_never_inside_jd_body"
+   "tests/test_units.py::test_the_page_header_is_cut_at_fetch_and_never_inside_jd_body",
+   "tests/test_units.py::test_a_head_repair_is_handed_back_unless_the_ledger_line_is_retracted",
+   "tests/test_units.py::test_the_head_cut_is_not_wired_into_the_two_readers_that_must_not_have_it"
   ]
  },
  {
