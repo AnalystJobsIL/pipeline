@@ -215,11 +215,14 @@ Declare these in your plan before spending them:
    Asking "why was company X activated or refused?" is one command, offline:
    `python registry_health.py --explain "<name>"` (add `--fetch` for the one page GET).
 5. **Say which run mode you are in, and never copy `secrets.env` into a worktree.**
-   The ceiling is `python -m pipeline.bd_budget`, never a number written in prose: it is
-   **unlimited through 2026-08-31 and 5,000/month from 2026-09-01**, no rollover, and both
-   sides of that boundary are pinned by a guard so the rule changes itself on the day
-   (`pipeline/bd_budget.py`; this rule quoted "5,000, ~6,798 already used, permanent and
-   unrecoverable" for two days after the operator replaced it). There are two modes:
+   The ceiling is `python -m pipeline.bd_budget`, never a number written in prose: it was
+   unlimited through 2026-08-31, **5,000/month from 2026-09-01, and unlimited again from
+   2026-09-11** (operator ruling: "unlimited budget for now; optimize once, then let it drive
+   itself"). 5,000 remains the FREE TIER and the soft line the daily mail's `bd:` gauge
+   alarms on; past it a credit is $1.50/1,000. Every side of both boundaries is pinned by a
+   guard so the rule changes itself on the day (`pipeline/bd_budget.py`; this rule quoted
+   "5,000, ~6,798 already used, permanent and unrecoverable" for two days after the operator
+   replaced it). There are two modes:
 
    **Dry** — no `secrets.env`, `JD_BD=0 BD_RUN_CAP=0`. Every paid rung is **disarmed**, and
    that is the trap: a disarmed rung does not error, it returns a refusal. A zero or a

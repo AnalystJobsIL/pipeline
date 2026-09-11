@@ -9,11 +9,25 @@ must not pass 4,500"), while 335 quoted an instruction of 2026-08-27 ("self-suff
 5,000 monthly"). Nobody could tell which was current, and meanwhile `scrape-refresh.yml`
 armed a paid rung with no cap at all and spent 72 credits a night unattended.
 
-THE RULE, settled by the operator on 2026-08-28: **unlimited for the rest of August, 5,000
-from 2026-09-01.** It is encoded here ONCE rather than written in a workflow someone must
-remember to edit, and `tests/test_units.py` pins BOTH SIDES of the boundary — so it changes
-itself on the day, and a guard proves it did. A ceiling nobody re-derives is the whole point:
-this repo has already shipped a document that was confidently wrong for three days.
+THE RULE has been settled twice, and both settlements live here because a ceiling nobody
+re-derives is the whole point — this repo has already shipped a document that was
+confidently wrong for three days:
+
+  * **2026-08-28 (operator):** unlimited for the rest of August, 5,000 from 2026-09-01.
+  * **2026-09-11 (operator):** *"unlimited budget for now; optimize once, then let it drive
+    itself"* — no ceiling from 2026-09-11. The 5,000 stays as a SOFT line (`SOFT`), which
+    alarms in the daily mail and refuses nothing, because 5,000 is Bright Data's free tier
+    and everything past it is $1.50 per 1,000, not a wall.
+
+What forced the second ruling: the ceiling reached 116% on the 11th of the month and the ONE
+consumer that honours it is the digest's JD fill, so the only thing it stopped was the
+dataset-critical one (49 postings judged on their titles alone in the 2026-09-11 mail) while
+thirteen other tools kept buying. A ceiling that binds exactly one of fourteen spenders is
+not a budget; `docs/decisions/2026-09-11-bd-unlimited-optimize-once.md` is the whole story.
+
+Both dates are encoded here ONCE rather than in a workflow someone must remember to edit, and
+`tests/test_units.py` pins EVERY side of both boundaries — so the rule changes itself on the
+day, and a guard proves it did.
 
 WHAT THE NUMBER IS. Month-to-date is read from the LIVE Bright Data account, not from a
 counter in this repo. That matters more than it looks: every cap in this codebase is
@@ -36,21 +50,30 @@ import datetime as dt
 import os
 import sys
 
-# The operator's rule of 2026-08-28. `SWITCH` is the first day the ceiling binds.
+# `SWITCH` is the first day the 5,000 ceiling binds; `UNLIMITED_FROM` is the first day it
+# stops binding again (the operator's ruling of 2026-09-11).
 SWITCH = dt.date(2026, 9, 1)
+UNLIMITED_FROM = dt.date(2026, 9, 11)
 CEILING_AFTER = 5000
 UNLIMITED = 0
+# Bright Data's free tier, and the SOFT line the mail's `bd:` gauge alarms on once no ceiling
+# binds. It refuses nothing: past it a credit costs $1.50/1,000, so the right response to
+# crossing it is a sentence in the digest, not a night with no coverage.
+SOFT = 5000
 
 
 def ceiling(today=None):
-    """The monthly credit ceiling in force on `today`. 0 means unlimited (August 2026)."""
+    """The monthly credit ceiling in force on `today`. **0 means unlimited**, which is both
+    August 2026 (before the first ruling) and 2026-09-11 onwards (after the second)."""
     today = today or dt.date.today()
     if os.environ.get("BD_MONTHLY_BUDGET"):         # an explicit override still wins
         try:
             return max(0, int(os.environ["BD_MONTHLY_BUDGET"]))
         except ValueError:
             pass
-    return CEILING_AFTER if today >= SWITCH else UNLIMITED
+    if today < SWITCH or today >= UNLIMITED_FROM:
+        return UNLIMITED
+    return CEILING_AFTER
 
 
 def spent_this_month(today=None):
@@ -75,8 +98,13 @@ def verdict(today=None):
     mtd, _ = spent_this_month(today)
     if cap == UNLIMITED:
         seen = "unknown" if mtd is None else f"{mtd:,}"
+        if today < SWITCH:
+            return True, (f"Bright Data: {seen} credits month-to-date, **no ceiling in force** "
+                          f"until {SWITCH} (then {CEILING_AFTER:,}).")
         return True, (f"Bright Data: {seen} credits month-to-date, **no ceiling in force** "
-                      f"until {SWITCH} (then {CEILING_AFTER:,}).")
+                      f"(operator ruling {UNLIMITED_FROM}); the soft line is {SOFT:,}, the "
+                      f"free tier — past it a credit costs $1.50/1,000 and the mail's `bd:` "
+                      f"gauge says so.")
     if mtd is None:
         return True, (f"Bright Data: month-to-date UNREADABLE against a ceiling of {cap:,} — "
                       f"spending anyway, because throttling on a number we could not fetch "

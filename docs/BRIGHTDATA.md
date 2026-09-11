@@ -50,22 +50,35 @@ uses the REST API instead — deterministic, works in GitHub Actions, no MCP dep
 
 ## Budget guardrails — one pool, many consumers
 
-There is **one** 5,000-credit monthly pool and **eight workflows hold the key**
+There is **one** 5,000-credit monthly free tier and **eight workflows hold the key**
 (`audit-coverage`, `auto-expand`, `daily-digest`, `listing-hunt`, `retry-unreachable`,
 `scrape-refresh`, `self-heal`, `triage-dark`). The "our weekly pass ≈ 430/mo" line this
 section used to carry described a world with one consumer and has been wrong for weeks —
-the pool was measured at **118 % (5,906/5,000)** on 2026-08-26.
+the pool was measured at **118 % (5,906/5,000)** on 2026-08-26 and **116 % (5,804/5,000) on
+2026-09-11, the 11th day of the month**.
+
+**Since 2026-09-11 the 5,000 is a SOFT line, not a ceiling** (operator ruling: "unlimited
+budget for now; optimize once, then let it drive itself"). Nothing refuses a call on it;
+`pipeline/bd_budget.SOFT` is what the daily mail's `bd:` gauge alarms past, because a credit
+beyond the free tier costs $1.50/1,000 — a sentence in the mail, not a night without
+coverage. Why the ceiling had to go: it bound exactly ONE of fourteen spenders, the digest's
+JD fill, so all it ever stopped was the dataset-critical consumer (49 postings judged on
+their titles alone on 2026-09-11) while thirteen tools bought past it.
+`docs/decisions/2026-09-11-bd-unlimited-optimize-once.md` is the record.
 
 Month-to-date accounting and the projection live in `discovery_daily.py` and print as a
 `[bd-spend]` line in the digest log; the figure is read from the LIVE account, never from a
 counter in this repo. **The ceiling itself moved on 2026-08-28**: it is `pipeline/bd_budget.py`
-now (unlimited for the rest of August, 5,000 from 2026-09-01, both sides pinned by a guard),
-not `discovery_daily.BD_MONTHLY_BUDGET`, which no workflow ever set. That is the number to
-read; nothing else totals the pool.
+now (unlimited for the rest of August, 5,000 from 2026-09-01, unlimited again from
+2026-09-11, every side pinned by a guard), not `discovery_daily.BD_MONTHLY_BUDGET`, which no
+workflow ever set. That is the number to read; nothing else totals the pool.
 
-`cloud_state/bd_spend.jsonl` is **not** that number. It is a per-process audit line so a run's
-spend outlives its deleted run record, nothing reads it yet, and it is never written by a test
-process (BACKLOG 374).
+`cloud_state/bd_spend.jsonl` is the per-process audit line, so a run's spend outlives its
+deleted run record, and it is never written by a test process (BACKLOG 374). Since 2026-09-11
+it also carries a `purpose` map (`search` / `unlock` / `discovery` / `jd-fill`) and
+`pipeline/bd_budget.rates()` reads it back — that is the 7-day rate the `bd:` stamp reports.
+It is still not the month's TOTAL: the account is (the two disagree by the dataset records
+and any spender that does not go through `bd_rescue`).
 
 Per-consumer caps, all env vars, all re-derivable with
 `grep -rn "_BD_CAP\|BD_LIMIT\|UNLOCK_PAGES" --include=*.py --exclude-dir=.claude .`:

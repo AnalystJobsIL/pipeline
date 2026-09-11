@@ -679,6 +679,14 @@ API at one credit per request or record, resetting on the 1st with no rollover
 (`docs.brightdata.com/general/account/billing-and-pricing/free-tier`, verified 2026-08-23).
 Per MONTH, not per day.
 
+**That 5,000 is the FREE TIER, and since 2026-09-11 it is no longer a ceiling** — it is a
+SOFT line (`pipeline/bd_budget.SOFT`). Operator ruling of that date: *unlimited budget for
+now; optimize once, then let it drive itself.* Past the free tier a credit costs **$1.50 per
+1,000**, so the whole of a 15,000-credit September is about **$15**, and the response to
+crossing the line is a sentence in the daily mail (the `bd:` stamp and its `Stages:` clause),
+never a night with no coverage. `docs/decisions/2026-09-11-bd-unlimited-optimize-once.md`
+has the measured split, what the optimisation was, and what was rejected.
+
 | | credits/day |
 |---|---|
 | LinkedIn breadth — keyless guest endpoint, 9 keywords × 50 pages + 18 city queries (free-only) | **~7** (≤18 if LinkedIn blocks it outright; the city product cannot bill) |
@@ -5196,7 +5204,8 @@ nightly. **It was 8 for exactly one night, and that night measured it undersized
 snippet tonight`, so 28 wanted the rung and 8 got it — and a posting judged on a 172-character
 SERP snippet is a verdict reached with no description at all. Two of those 20 (`oak|product
 analyst`, `diageo|performance analytics analyst`) were EMAILED that morning carrying the
-snippet as their text. The arithmetic against the 5,000/month pool that begins 2026-09-01:
+snippet as their text. The arithmetic against the 5,000/month free tier (a ceiling from
+2026-09-01, a soft line again from 2026-09-11):
 inline ceiling 25 × 30 = **750/month (15 %)**, worst case and never expected, against a
 measured demand of 28 that falls as the matched driver's stamps absorb the rows that carry a
 role. It stays INSIDE the shared `JDFILL_BD_CAP`, which `daily-digest.yml` pins at 30 and

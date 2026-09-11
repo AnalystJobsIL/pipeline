@@ -7713,18 +7713,38 @@ def test_the_mutation_shards_partition_the_whole_catalogue():
             M.shard(muts, bad)
 
 
-def test_the_bright_data_ceiling_changes_itself_on_2026_09_01():
-    """The operator's rule of 2026-08-28, pinned on BOTH sides of the boundary so it needs no
-    one to remember it. BACKLOG 192 said 4,500 from September and 335 quoted 5,000; the rule
-    that settled them is unlimited through August, 5,000 from 2026-09-01.
+def test_the_bright_data_ceiling_changes_itself_on_2026_09_01(monkeypatch):
+    """TWO operator rulings, every side of both boundaries pinned so neither needs anyone to
+    remember it. BACKLOG 192 said 4,500 from September and 335 quoted 5,000; the rule that
+    settled them was unlimited through August, 5,000 from 2026-09-01. On 2026-09-11 the
+    operator replaced the NUMBER (not the mechanism): no ceiling from that day, and 5,000
+    becomes `SOFT` -- the free tier the mail's gauge alarms on, which refuses nothing.
 
-    This guard is the whole reason the date may live in code: a dated constant nobody verifies
-    is exactly the confidently-wrong document this repo punishes hardest."""
+    This guard is the whole reason the dates may live in code: a dated constant nobody
+    verifies is exactly the confidently-wrong document this repo punishes hardest. It also
+    pins the ZERO on both unlimited stretches, because `0 == unlimited` is the polarity a
+    reader gets wrong (`bd_rescue.run_cap`'s 0 means the opposite: buy nothing).
+
+    `monkeypatch.delenv`, not `os.environ.pop`: the pop left the variable deleted for every
+    later test in the session -- the same unrestored-environment shape `tests/conftest.py`
+    was written to stop."""
     from pipeline import bd_budget as B
-    os.environ.pop("BD_MONTHLY_BUDGET", None)
+    monkeypatch.delenv("BD_MONTHLY_BUDGET", raising=False)
     assert B.ceiling(dt.date(2026, 8, 31)) == 0, "unlimited on the last day of August"
     assert B.ceiling(dt.date(2026, 9, 1)) == 5000, "the ceiling binds on 2026-09-01"
-    assert B.ceiling(dt.date(2027, 3, 4)) == 5000, "and stays bound"
+    assert B.ceiling(dt.date(2026, 9, 10)) == 5000, "and holds up to the day before the ruling"
+    assert B.ceiling(dt.date(2026, 9, 11)) == 0, "the operator lifted it on 2026-09-11"
+    assert B.ceiling(dt.date(2027, 3, 4)) == 0, "and it stays lifted"
+    assert B.SOFT == 5000, "the free tier survives the ruling as the gauge's soft line"
+    # an explicit override still wins on every date, which is how a month gets a different rule
+    monkeypatch.setenv("BD_MONTHLY_BUDGET", "1234")
+    assert B.ceiling(dt.date(2026, 9, 11)) == 1234
+    # ...and the sentence the run page gets says which rule it is under
+    monkeypatch.delenv("BD_MONTHLY_BUDGET", raising=False)
+    monkeypatch.setattr(B, "spent_this_month", lambda today=None: (6193, {}))
+    may, line = B.verdict(dt.date(2026, 9, 11))
+    assert may is True and "no ceiling in force" in line and "soft line is 5,000" in line
+    assert "6,193" in line, "the month-to-date reading is still reported, ceiling or none"
 
 
 def test_an_unreadable_bright_data_balance_still_lets_the_run_spend(monkeypatch):
@@ -7733,14 +7753,21 @@ def test_an_unreadable_bright_data_balance_still_lets_the_run_spend(monkeypatch)
     does not depend on the network is `bd_rescue.BD_RUN_CAP`, not this."""
     from pipeline import bd_budget as B
     monkeypatch.setattr(B, "spent_this_month", lambda today=None: (None, None))
-    for day in (dt.date(2026, 8, 28), dt.date(2026, 9, 15)):
+    # one date from each of the three regimes: August (no ceiling yet), the ten days the
+    # 5,000 bound, and the operator's 2026-09-11 ruling onwards (no ceiling again)
+    for day in (dt.date(2026, 8, 28), dt.date(2026, 9, 5), dt.date(2026, 9, 15)):
         may, line = B.verdict(day)
         assert may, f"{day}: an unreadable balance must not throttle"
         assert "UNREADABLE" in line or "unknown" in line, line
     monkeypatch.setattr(B, "spent_this_month", lambda today=None: (6193, {}))
-    may, line = B.verdict(dt.date(2026, 9, 15))
+    may, line = B.verdict(dt.date(2026, 9, 5))
     assert not may and "CEILING" in line, line
     assert B.verdict(dt.date(2026, 8, 28))[0], "over 5,000 still spends in August: no ceiling yet"
+    # ...and over 5,000 spends again from 2026-09-11, which is the whole ruling. A date INSIDE
+    # the bound window stays in this test on purpose: it is the only thing that would notice
+    # `UNLIMITED_FROM` being back-dated over the ten days the ceiling really did bind.
+    may, line = B.verdict(dt.date(2026, 9, 15))
+    assert may and "no ceiling in force" in line, line
 
 
 def test_the_shared_bright_data_run_cap_is_off_unless_a_workflow_asks_for_it():
