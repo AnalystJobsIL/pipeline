@@ -17845,7 +17845,10 @@ def test_a_staffing_employer_never_takes_the_keyword_shortcut():
     from pipeline import recruiters
     for name in ("Matrix", "\u05de\u05d8\u05e8\u05d9\u05e7\u05e1", "Logica-IT", "MatchPointIT",
                  "Peak Innovation", "REAL DEV INC"):
-        assert recruiters.is_recruiter(name) is False, name
+        # 2026-09-11: Peak Innovation is the one name here `is_recruiter` now DOES see - it
+        # went into `_CONFIRMED` after its posting published for a week on this exact gap
+        # (docs/sessions/2026-09-11-classifier.md). The demotion below still holds for it.
+        assert recruiters.is_recruiter(name) is (name == "Peak Innovation"), name
         assert seniority._relevance("data analyst", name.lower()) == "signal", name
     assert seniority._relevance("data analyst", "wix") == "strong"
     assert seniority._relevance("data analyst", "matrixcare") == "strong"   # a word, not a prefix
