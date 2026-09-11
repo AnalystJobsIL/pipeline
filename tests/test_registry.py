@@ -7050,7 +7050,11 @@ def test_a_hunted_queue_name_stops_being_a_hunt_target(tmp_path):
     import json
     import queue_state as QS
 
-    doc = {"generated": "2026-08-29", "proposals": [
+    # RELATIVE, not a literal: `tried_within(..., 14)` closes a 14-day window, and a fixture
+    # dated 2026-08-29 went red on 2026-09-12 on a tree nobody touched (`599`). Three days
+    # ago is inside the window on every date this test will ever run.
+    import datetime as _dt
+    doc = {"generated": (_dt.date.today() - _dt.timedelta(days=3)).isoformat(), "proposals": [
         {"name": "Alpha", "kind": "scrape", "rung": "hunt",
          "evidence": {"candidate_url": "https://alpha.example/careers"}},
         {"name": "Beta", "kind": "monitor", "rung": "hunt",
