@@ -279,6 +279,20 @@ calendar closes it. That is the fourth instance of the shape this session remove
 own test the same day — a number the calendar or a cron moves and no push can — and it is
 filed as `599` with the other three by name.
 
+## 6c. The verdicts
+
+| | |
+|---|---|
+| CI, first push (`057f6e0`) | run `34646290064`, **16 of 16 green** |
+| CI, the corrections (`3e55400`) | run `34650341661`, **16 of 16 green** |
+| local, worktree at `3e55400` | **1,954 passed, 13 skipped, 1 failed** — the failure is `599`, inherited and red on any tree today |
+| `check_invariants.py` | 2,330 rows · 1,348 active · 0 orphans |
+| `docs/check_docs.py` | 0 errors |
+| mutation records, this session | 11 run, **11 killed, 0 surviving** (7 new + the 4 re-aimed) |
+
+Note the CI runs are green on the calendar-rot test and the local one is not: the runner was
+still on 2026-09-11 UTC, inside the 14-day window. `599` reds from 09-12 UTC onward.
+
 ## 7. What I made harder for the next lane
 
 Four new names to know, and one behaviour that is no longer where you would look for it:
