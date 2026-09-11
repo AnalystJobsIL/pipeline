@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 582.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 585.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 580, 581, 582 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -422,7 +422,7 @@ closure convention in the header.
 - **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
 - **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
 - **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
-- **581** `581@scraper` **The Logica-IT board's category-and-region suffix is read as title words**
+- **584** `584@scraper` **The Logica-IT board's category-and-region suffix is read as title words**
 
 ### docs — 25 open
 
@@ -481,6 +481,7 @@ closure convention in the header.
 - **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
 - **578** `578@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
 - **580** `580@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
+- **583** `583@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
 
 ### company-intel — 23 open
 
@@ -11703,7 +11704,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
 ## From the classifier lane, 2026-09-11 (the weekly delta audit)
 
-580. **A url-only retraction line loses its record the day LinkedIn re-posts the placement
+583. **A url-only retraction line loses its record the day LinkedIn re-posts the placement
      under a new job id, and the withdrawn agency posting re-opens** — lane: `roles`. Found
      2026-09-11 by the `classifier` session in a rehearsal of the digest on a copy of that
      morning's state: `ingima|data analytics team lead 5485` (withdrawn 2026-09-01, condition
@@ -11726,7 +11727,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      without anyone hand-editing 45 lines again. Check: `grep -c '"role_id"' cloud_state/roles_retractions.jsonl`
      equals the line count.
 
-581. **The Logica-IT board's category-and-region suffix is read as title words** — lane:
+584. **The Logica-IT board's category-and-region suffix is read as title words** — lane:
      `scraper`. Filed 2026-09-11 by `classifier`, measured and NOT taken as a gate change.
      Every card on `https://www.logica-it.com/jobs/` (94 cached) ends in the board's own
      filing labels — `Python Developer BACKEND גוש דן`, `Splunk Dashboard Developer BACKEND

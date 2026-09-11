@@ -29817,7 +29817,7 @@ def test_the_delta_audit_lines_bind_to_exactly_one_record_each():
     ret.bind(records)
     # the shape lock, extended to EVERY line on 2026-09-11: INGIMA's placement was re-posted
     # under a new LinkedIn id, the record absorbed the new url, and the url-only line from
-    # 09-01 named nothing - the withdrawn agency posting re-opened in a rehearsal (580@roles).
+    # 09-01 named nothing - the withdrawn agency posting re-opened in a rehearsal (583@roles).
     # A line that carries its role_id survives the url moving; the 45 url-only lines were
     # stamped from the record that owned each url that day, and no new line may omit it.
     bare = [roles.Retractions._key(e) for e in ret.entries if not e.get("role_id")]
