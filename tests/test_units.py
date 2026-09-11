@@ -26202,6 +26202,19 @@ def test_the_title_sweep_renames_the_record_across_all_three_stores(tmp_path):
     assert not lg.alarms, lg.alarms
     assert any("title folds: 1 renamed" in ln for ln in lines), lines
     assert lg.fold_titles() == [], "the fold happened once; it must not log again"
+    # ...and the exemption the rename needs must not become a hole. `may_drop` names the one
+    # key THIS run retired; a write that loses a key nobody renamed is still refused.
+    # (Folded in from a standalone test that could not fail: `dump`'s `may_drop` predates
+    # this session - the text prune already used it - so only the call site in `flush` is
+    # mine, and only a test that goes through `flush` can see it.)
+    survivors = roles.load(lg.path)[0]
+    short = {k: v for k, v in survivors.items() if k != new}
+    short["practical vision|something else"] = _rec("practical vision|something else")
+    try:
+        roles.dump(lg.path, short)
+        raise AssertionError("a substitution nobody declared must still be refused")
+    except roles.LedgerShrink:
+        pass
     st.close()
 
 
@@ -26272,27 +26285,6 @@ def test_the_next_days_card_lands_on_the_renamed_key_and_is_never_re_emailed(tmp
     st.close()
     assert len(lg.records[new]["episodes"]) == 1
     assert any("reopened 0" in ln for ln in lines), lines
-
-
-def test_a_rename_never_trips_the_shrink_guard_but_a_bare_substitution_still_does(tmp_path):
-    """`may_drop` is the sanctioned channel for a key this run deliberately retired. It must
-    not become a hole: a write that loses a key nobody renamed is still refused."""
-    from pipeline import roles
-    p = str(tmp_path / "roles.jsonl")
-    full = _ledger(4)
-    roles.dump(p, full)
-    ids = sorted(full)
-    renamed = {k: v for k, v in full.items() if k != ids[0]}
-    renamed["c0|analyst"] = _rec("c0|analyst")
-    roles.dump(p, renamed, may_drop={ids[0]})           # a rename: same count, one key moved
-    assert sorted(roles.load(p)[0]) == sorted(renamed)
-    swapped = {k: v for k, v in renamed.items() if k != ids[1]}
-    swapped["c9|other"] = _rec("c9|other")
-    try:
-        roles.dump(p, swapped)
-        raise AssertionError("a substitution nobody declared must still be refused")
-    except roles.LedgerShrink:
-        pass
 
 
 def test_rekey_matched_refuses_an_existing_key_and_repoints_superseded_by(tmp_path):
