@@ -3320,5 +3320,15 @@
   "replace": "            elif page_closed(rec, rec):",
   "why": "`purged` (the company was never an employer) and `withdrawn` (a human ruled this posting out) are standing verdicts, and `closed` is a weaker, different claim - the posting was gone from the board. Without the guard the page arm overwrites one with the other: measured on the committed store, comblack|business intelligence developer is purged AND carries the marker, and the arm reported 5 closures where 4 are real. The purge branch above only reaches a row whose company is in THIS run's never_ours, so it cannot shield a purged record here. Killed by test_a_purged_or_withdrawn_record_is_never_re_closed_by_its_page.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "hiring-call-leaves-a-fragment",
+  "file": "pipeline/roles.py",
+  "symbol": "_canon",
+  "class": "M4-guard-removal",
+  "find": "            if (rest and _store._norm(rest) and not _furniture_only(rest, location)\n                    and _WORD_START.match(rest)):",
+  "replace": "            if rest and _store._norm(rest) and not _furniture_only(rest, location):",
+  "why": "whatever a hiring call leaves behind must BEGIN a role name. Measured over the 6,368 cards in both caches: without this a board that spaces out the gender form leaves `/h mnhl /t ...` and a card whose whole title is the call leaves `- <category>`. A mangled title is worse than the blob it came from, because it becomes half of a role_id and a new record. Killed by test_a_hiring_call_never_leaves_a_fragment_of_itself_behind.",
+  "must_be_killed_by_behavioural": true
  }
 ]

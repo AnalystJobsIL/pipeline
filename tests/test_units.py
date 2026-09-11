@@ -26059,6 +26059,23 @@ def test_canonical_title_cuts_only_furniture_on_the_measured_population():
     assert ct("Data Engineer | Herzliya", "X", "Herzliya, Israel") == "Data Engineer"
 
 
+def test_a_hiring_call_never_leaves_a_fragment_of_itself_behind():
+    """Found by running the canon over the 6,368 cards in the two caches before shipping it:
+    a board that spaces out the gender form, or whose whole title IS the call, left `/ה מנהל
+    /ת ...` and `- רפואה` behind. A mangled title is worse than the blob it came from,
+    because it becomes half of a role_id. 0 of 64 moving cards may start with punctuation."""
+    from pipeline import roles
+    ct = roles.canonical_title
+    # spaced gender forms: the call is cut WHOLE
+    assert ct("דרוש /ה מנהל /ת פרויקטים", "Malam") == "מנהל /ת פרויקטים"
+    assert ct("דרושים /ות מדריכים /ות", "Malam") == "מדריכים /ות"
+    assert ct("דרוש.ה חוקר.ת מדידה", "BrancoWeiss") == "חוקר.ת מדידה"
+    assert ct("דרוש-ה מתמחה/סניור", "EY") == "מתמחה/סניור"
+    # ...and a call that is the whole meaningful prefix is REFUSED, not cut to punctuation
+    for t in ("דרושים - רפואה", "דרושים - רוקחות", "דרושים - מנהל ומטה"):
+        assert ct(t, "Clalit Health Services") == t, t
+
+
 def test_canonicalize_titles_keeps_the_raw_string_and_counts_by_rule():
     """Intake rewrites the title before `merge_key` sees it; nothing is lost, and the mail
     line says which rule fired how often."""

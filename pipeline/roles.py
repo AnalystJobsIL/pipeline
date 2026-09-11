@@ -500,10 +500,11 @@ _PLACE_WORDS = {"israel", "il", "remote", "hybrid", "office", "site", "on",
 # rather than guess. The measured population on 2026-09-11 is 5 records of 262.
 _HIRING_CALL = re.compile(r"^\s*(?:we.?re|we\s+are|now)\s+hiring\b[\s:!\-–—]*", re.I)
 # "דרוש/ה", "דרוש.ה", "דרושים" — the Hebrew "Wanted:" opener a board glues onto a title.
-_HEBREW_CALL = re.compile(r"^\s*דרוש(?:[/.\-]?(?:ה|ים|ות))?\s+")
+_HEBREW_CALL = re.compile("^\s*דרוש(?:ים|ות)?(?:\s*[/.\-]\s*(?:ה|ים|ות|ת))?\s+")
 # Schedule and place furniture. `_PLACE_WORDS` already carries israel/il/remote/hybrid/
 # office/site/on/full/part/time; a job card's employment terms add these.
 _TERMS_WORDS = _PLACE_WORDS | {"onsite", "temporary", "temp", "permanent", "shifts"}
+_WORD_START = re.compile(r"^[0-9A-Za-z֐-׿]")
 _SEG = re.compile(r"\s+\|\s+")
 _OWN_TAIL = re.compile(r"^(.*\S)\s+[-–—|]\s+([^-–—|]{2,}?)\s*$")
 
@@ -542,7 +543,14 @@ def _canon(title, company, location=""):
             rest = t[m.end():].strip()
             # `We’re Hiring` alone is a whole scraped card at sensi: cutting the call
             # leaves nothing, so the card keeps its blob and the render keeps hiding it.
-            if rest and _store._norm(rest) and not _furniture_only(rest, location):
+            #
+            # And the remainder must BEGIN a role name. Measured on the caches: a call whose
+            # gender form the board spaces out (`דרוש /ה מנהל /ת ...`) or that is the whole
+            # meaningful prefix (`דרושים - רפואה`, a Clalit category card) otherwise leaves
+            # `/ה מנהל /ת ...` or `- רפואה` behind -- a title the canon MANGLED, which is worse
+            # than the blob it started from, and it would become half of a role_id.
+            if (rest and _store._norm(rest) and not _furniture_only(rest, location)
+                    and _WORD_START.match(rest)):
                 t, rules = rest, rules + ["hiring-call"]
             break
     segs = _SEG.split(t)

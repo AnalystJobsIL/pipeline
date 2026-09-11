@@ -6870,9 +6870,17 @@ the role's name, and refuses rather than guess:
 
 | rule | cuts | never cuts |
 |---|---|---|
-| hiring call | a leading `We're Hiring` / `Now Hiring` / `דרוש/ה` | a card that is ONLY the call (`We’re Hiring` at sensi keeps its blob) |
+| hiring call | a leading `We're Hiring` / `Now Hiring` / `דרוש/ה` (glued, spaced or plural) | a card that is ONLY the call (`We’re Hiring` at sensi keeps its blob), and anything that would leave a remainder not starting a word |
 | terms tail | a ` \| ` segment whose every token is schedule/place furniture or a word of the job's own location | the FIRST segment, ever; `\| SQL & Power BI`; `\| Corporate Banking Division Headquarters 3103` |
 | own-name suffix | a trailing ` - X` where `X` is the employer by `_norm_company` or `firmographics.identity_key` | `- Temporary position`, `- Marketing`, `- Payments`, `, Growth` |
+
+**The word-start refusal was bought, not designed.** Run over the 6,368 cards in both caches
+before shipping, the first version left `/ה מנהל /ת …` where a board spaces out the gender form
+(`דרוש /ה מנהל /ת …`, Malam and Consist) and `- רפואה` where the call IS the title
+(Clalit's four category cards). A mangled title is worse than the blob it came from, because
+it becomes half of a role_id. The pattern now takes the spaced and plural forms whole, and a
+remainder that does not begin with a letter or digit refuses the cut: **0 of 64 moving cards**
+start with punctuation.
 
 It runs at INTAKE, beside `fold_company_aliases` and for the same reason (the 2026-08-31 fold
 decision: canonicalise where the string enters the record, never migrate the key afterwards).
