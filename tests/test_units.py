@@ -29385,3 +29385,344 @@ def test_wayback_ledger_merge_is_uncapped_and_the_audit_logs_still_cap():
     wf = open(os.path.join(_WB_REPO, ".github", "workflows", "jd-archive.yml"), encoding="utf-8").read()
     assert "cloud_state/wayback_ledger.jsonl" in wf and "python archive_evidence.py" in wf
     assert wf.index("python archive_evidence.py") < wf.index("enrich_scrape_jd.py --archive-only")
+
+
+# =====================================================================================
+# jd-text lane, 2026-09-11 — a job description has a HEAD, and a page has a RAIL.
+# The 2026-09-11 audit of the published file found 49 of 177 rows carrying a similar-jobs
+# list of OTHER employers' postings as their description, and `description_len` overstating
+# the posting two- to three-fold. Two rules were missing and one was borrowed from the wrong
+# lane. Record: docs/sessions/2026-09-11-jd-text.md
+# =====================================================================================
+
+_LI_FIXTURE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           "fixtures", "jdtext", "linkedin_guest_he_alma.html")
+
+
+def _li_guest():
+    return open(_LI_FIXTURE, encoding="utf-8").read()
+
+
+def test_a_hebrew_guest_page_yields_the_posting_and_no_part_of_the_page():
+    """The whole class in one assertion, on a real 2026-09-11 capture of
+    `il.linkedin.com/jobs/view/senior-data-analyst-at-alma-labs-4458892364`.
+
+    Before this shipped, `alma|senior data analyst` published 3,239 characters of which ~2,660
+    were LinkedIn's: the page header and `Report this job` above the posting, then `Show more`
+    / `Show less`, the seniority-employment-function table, the referrals line and 27 other
+    employers' job titles under `עבודות דומות`. Every one of those markers was absent from
+    `_PAGE_FURNITURE`, so `furniture_at` returned None and `jd_body` cut nothing."""
+    from pipeline.jdfill import extract_jd
+    out = extract_jd(_li_guest())
+    assert out.startswith("The Role"), out[:120]
+    assert out.rstrip().endswith("ella.v@almalabs.ai"), out[-120:]
+    for chrome in ("עבודות דומות", "Show more", "Show less", "רמת ותק",
+                   "דווח על עבודה זו", "דילוג לתוכן הראשי",
+                   "הפניות מגדילות את סיכוייכם", "365Scores", "Melio"):
+        assert chrome not in out, chrome
+    assert len(out) < 1000, len(out)     # 576 on the day this was written; it was 3,239
+
+
+def test_the_rail_markers_have_a_twin_in_each_alphabet_and_never_open_a_wall():
+    """`similar jobs` was in the set and `עבודות דומות` was not, which is why a rule written in
+    August fired on none of the Hebrew-locale pages this board actually stores. The pairs are
+    pinned here the way `_NOT_A_JOB`'s two alphabets are.
+
+    The second half is the older rule, restated: a rail marker ENDS a posting and never
+    precedes one, so it may not join `_WALL_MARKS` — a candidate segment opened at a rail
+    marker is the rail itself, other employers' titles under this row's company name."""
+    from pipeline import jdfill
+    src = jdfill._PAGE_FURNITURE.pattern
+    for en, he in (("similar jobs", "עבודות דומות"),
+                   ("referrals increase your chances", "הפניות מגדילות את סיכוייכם"),
+                   ("seniority level", "רמת ותק")):
+        assert en in src and he in src, (en, he)
+    for rail in ("similar jobs", "עבודות דומות", "people also viewed", "רמת ותק",
+                 "show more", "הצג עוד מקומות תעסוקה"):
+        assert rail not in jdfill._WALL_MARKS.pattern, rail
+
+
+def test_the_rail_is_furniture_even_when_the_page_renders_no_show_more_button():
+    """The rail marker's own case, and the reason it is in the set although it decides nothing
+    on today's store: every body carrying the Hebrew rail heading on 2026-09-11 also carries
+    the `Show more` pair EARLIER (68 bodies and 82; rail-first: 0), so the pair does the
+    cutting. A posting short enough that LinkedIn does not fold it renders no button - and
+    then the rail is the first chrome on the page, and it is 25 other employers' job titles
+    standing under this row's company name (`573`).
+
+    Kills: dropping the Hebrew rail heading and keeping only the English `similar jobs`, which
+    never fires on an il.linkedin.com capture."""
+    from pipeline.jdfill import jd_body, furniture_at
+    short = ("\u05ea\u05d9\u05d0\u05d5\u05e8 \u05d4\u05ea\u05e4\u05e7\u05d9\u05d3\n"
+             "\u05e0\u05d9\u05ea\u05d5\u05d7 \u05e0\u05ea\u05d5\u05e0\u05d9\u05dd "
+             "\u05d5\u05d1\u05e0\u05d9\u05d9\u05ea \u05d3\u05e9\u05d1\u05d5\u05e8\u05d3\u05d9\u05dd.\n"
+             "\u05d3\u05e8\u05d9\u05e9\u05d5\u05ea \u05d4\u05ea\u05e4\u05e7\u05d9\u05d3\n"
+             "\u05e9\u05dc\u05d5\u05e9 \u05e9\u05e0\u05d5\u05ea \u05e0\u05d9\u05e1\u05d9\u05d5\u05df "
+             "\u05d1-SQL, \u05d9\u05ea\u05e8\u05d5\u05df Power BI.\n") * 4
+    rail = ("\u05e2\u05d1\u05d5\u05d3\u05d5\u05ea \u05d3\u05d5\u05de\u05d5\u05ea\n"
+            "Senior Data Analyst\nSenior Data Analyst\n365Scores\nTel Aviv-Yafo\n"
+            "Data Analyst\nData Analyst\nBounce\nTel Aviv-Yafo\n")
+    assert "show more" not in (short + rail).lower(), "this page renders no truncation button"
+    assert furniture_at(short + rail) == len(short)
+    assert jd_body(short + rail) == short.rstrip()
+    assert "365Scores" not in jd_body(short + rail)
+
+
+def test_show_more_is_only_furniture_as_the_pair_linkedin_renders():
+    """`Show more` + `Show less` is the button; a bare `show more` is ordinary prose ("show
+    more initiative"), and it is also how the discovery net's Bright Data cards end — the two
+    words whitespace-collapsed onto one line, which the `\\s+` covers."""
+    from pipeline.jdfill import jd_body, furniture_at
+    jd = _j7_jd(1200)
+    assert jd_body(jd + "\nShow more\nShow less\nSeniority level\nAssociate") == jd.rstrip()
+    assert jd_body(jd + " Show more Show less") == jd.rstrip()
+    prose = _j7_jd(900) + " We want someone who will show more initiative than the brief asks."
+    assert furniture_at(prose) is None and jd_body(prose) == prose
+
+
+def test_an_application_form_is_furniture_and_a_single_form_word_is_not():
+    """The density rule, and the four single-word markers measured and REJECTED for it over
+    the 2,513 stored bodies on 2026-09-11: `apply for this job` fires 257 times and pushes 20
+    real postings below the bar (it is a button that also sits at the TOP of a posting),
+    `upload cv` 63/2, the Hebrew upload phrase 41/2, the Hebrew apply phrase 36/9 — nine
+    Aeronautics postings cut from 1,650 characters to 272. Three distinct field labels inside
+    220 characters is a form; one label is a sentence."""
+    from pipeline.jdfill import jd_body, form_at
+    jd = _j7_jd(1400)
+    assert jd_body(jd + "\nFull Name *\nEmail Address *\nPhone Number *\n") == jd.rstrip()
+    assert jd_body(jd + "\nשם מלא*\nטלפון נייד*\nדואר אלקטרוני*\n") == jd.rstrip()
+    one = jd + " To apply for this job, email careers@acme.com and mention the role."
+    assert form_at(one) is None and jd_body(one) == one
+    far = jd + " Full name of your referee. " + "Filler sentence about the team. " * 20 + \
+        " Email address of your referee."
+    assert form_at(far) is None, "two labels 600 characters apart are not a form"
+
+
+def test_the_page_header_is_cut_at_fetch_and_never_inside_jd_body():
+    """Where a rule lives is the decision, not a detail. `jd_body` IS the semantics of
+    `looks_like_jd`, which decides `roles.text_quality` for every published row — and
+    `roles.better_description` RETURNS `jd_body(...)`, so a head rule inside it would become a
+    second head-SHORTENING path writing both stores with none of `_reclean`'s floor or share
+    ceiling. So `strip_head` is called where a text is CREATED and where the store is
+    deliberately rewritten under a floor, and nowhere else.
+
+    Kills: moving the head cut into `jd_body`."""
+    from pipeline import jdfill
+    from pipeline.jdfill import jd_body, strip_head, looks_like_jd
+    head = ("Senior Data Analyst at ACME | LinkedIn Jobs\nSkip to main content\n"
+            "Senior Data Analyst\nACME\nTel Aviv\nReport this job\n")
+    poster = "Direct message the job poster from ACME\nDana Levi\nDana Levi\nTalent at ACME\n"
+    jd = _j7_jd(1200)
+    assert strip_head(head + poster + jd) == jd
+    assert jd_body(head + poster + jd) == head + poster + jd, "the head cut leaked into jd_body"
+    assert looks_like_jd(head + poster + jd), "the bar's answer may not move with the head cut"
+    import inspect
+    assert "strip_head" not in inspect.getsource(jdfill.jd_body)
+    from pipeline import roles
+    assert "strip_head" not in inspect.getsource(roles.better_description)
+
+
+def test_the_head_cut_never_empties_a_short_posting():
+    """`strip_head` is accepted only when what remains still passes the two tests `extract_jd`
+    applies to a fetched body — otherwise a marker firing inside a short posting deletes it.
+    The floor is the same one `_after_the_wall` uses, and for the same reason."""
+    from pipeline.jdfill import strip_head
+    tiny = "Report this job\nAbout the role: we need an analyst. Requirements: SQL."
+    assert strip_head(tiny) == tiny, "a cut that leaves a fragment is not a cut worth making"
+    nothing = _j7_jd(900)
+    assert strip_head(nothing) == nothing
+
+
+def test_extract_jd_starts_at_a_section_heading_and_never_mid_sentence():
+    """The head skip was `seniority._ROLE_START` — the CLASSIFIER's regex, written to find a
+    rough starting point for a keyword count and made of prose alternatives. Used as a CUT it
+    put `revolut|data analyst finance` on the board opening "as a Great Place to Work", and
+    `fiverr|senior business data analyst` opening at "Requirements:" with the whole
+    responsibilities section deleted. 105 of the 244 stored rows had a mid-line first hit.
+
+    Kills: importing `_ROLE_START` back into `extract_jd`; adding `requirements` to
+    `_HEAD_SKIP`; dropping the end-of-line anchor that makes it a heading."""
+    from pipeline import jdfill
+    from pipeline.jdfill import extract_jd, _HEAD_SKIP
+    import inspect
+    assert "_ROLE_START" not in inspect.getsource(jdfill.extract_jd)
+    body = ("<p>Taboola is proud to be recognized as a Great Place to Work. " +
+            "We have offices around the world. " * 8 + "</p><h2>About the role</h2><p>" +
+            "You will own the analytics stack and the dashboards. " * 12 +
+            "</p><h2>Requirements</h2><p>3 years of SQL.</p>")
+    assert extract_jd(body).startswith("About the role")
+    # a requirements-first posting keeps its responsibilities: the cut may not land there
+    reqs = ("<h2>Responsibilities</h2><p>" + "Own the reporting layer and the metrics. " * 12 +
+            "</p><h2>Requirements</h2><p>3 years of SQL and a degree.</p>")
+    assert extract_jd(reqs).startswith("Responsibilities")
+    assert not _HEAD_SKIP.search("The role is based in Tel Aviv and reports to the VP Data "
+                                 "and is a hybrid position with three office days.")
+    assert _HEAD_SKIP.search("📌 The Role\nYou will own analytics.")
+
+
+def test_a_page_slice_is_not_a_job_description():
+    """`567`: a capture that begins mid-sentence AND ends exactly on the cap has no beginning
+    and no end — `gamida cell|senior business analyst commercial data analytics` is 6,000
+    characters opening "responsibilities will be managing internal KPI reporting", carrying
+    six field-sales bullets from another posting, and it moved a classifier verdict to NO.
+
+    The head test is a closed list of function words and NOT "the first character is
+    lower-case": a posting may open with a lower-case brand."""
+    from pipeline.jdfill import looks_like_jd, page_slice, DESC_MAX
+    slice_ = ("as a great place to work we offer dashboards. Requirements: SQL experience. "
+              * 200)[:DESC_MAX]
+    assert len(slice_) == DESC_MAX and page_slice(slice_) and not looks_like_jd(slice_)
+    assert not page_slice(slice_[:DESC_MAX - 1]), "mid-sentence alone is not a slice"
+    brand = ("monday.com is hiring an analyst. Responsibilities: own the dashboards. "
+             "Requirements: 3 years of SQL. " * 120)[:DESC_MAX]
+    assert not page_slice(brand) and looks_like_jd(brand)
+    headed = ("About the role: you will own analytics. Requirements: SQL. " * 200)[:DESC_MAX]
+    assert not page_slice(headed) and looks_like_jd(headed)
+
+
+def test_a_mid_sentence_head_reaches_the_todo_and_buys_no_model_call():
+    """A text that begins in the middle of a sentence is incomplete at a place we can SEE, so
+    there is nothing for the tier to adjudicate — and it must not be paid for. 15 of the 244
+    stored rows on 2026-09-11, 10 of them once the bar refuses the five page-slices."""
+    import enrich_matched_jd as emj
+    from pipeline.jdfill import quality_suspect
+    text = ("you'll move fluidly from reporting to analysis. Responsibilities: own the "
+            "weekly metrics. Requirements: 3 years of SQL. " * 8)
+    assert quality_suspect(text) == "mid-sentence-head"
+    calls = []
+    import sqlite3 as _sq
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, "
+                 "jd_why TEXT, jd_refuted TEXT)")
+    conn.execute("CREATE TABLE llm_cache (title_key TEXT PRIMARY KEY, verdict INT, updated TEXT)")
+    old = emj.jd_quality
+    emj.jd_quality = lambda *a, **k: (calls.append(1), (True, "complete"))[1]
+    try:
+        rows = [("r", "ACME", "Analyst", "u", "", "", text, 0, "2026-09-11")]
+        incomplete, refuted, counts = emj._quality_pass(conn, rows, dry_run=True)
+    finally:
+        emj.jd_quality = old
+    assert incomplete == {"r"} and not refuted and not calls, (incomplete, refuted, calls)
+    assert counts["mid_sentence_head"] == 1 and counts["calls"] == 0
+
+
+def test_a_refutation_outlives_the_run_that_reached_it():
+    """`572`. The verdict "this stored text is not this role's posting" lived in one Python set
+    for the length of one run, so the 09-01 repair of `prisma photonics|senior product analyst`
+    (3,276 -> 2,617 in sqlite) was handed straight back by the 09-02 digest, and a CACHED
+    rejection could never re-open the ratchet at all because `llm_cache.verdict` is a bool that
+    carries no class.
+
+    Kills: dropping the column read from `_store_text`; keying the refutation on raw bytes
+    rather than on `jd_body` (the cache card and the stored copy differ by a truncation);
+    forgetting an earlier verdict when a second one is written."""
+    import enrich_matched_jd as emj
+    from pipeline.jdfill import looks_like_jd, refute_key
+    import sqlite3 as _sq
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, "
+                 "jd_why TEXT, jd_refuted TEXT)")
+    conn.execute("INSERT INTO matched VALUES ('r','',NULL,NULL)")
+    wrong = ("About the role: you will build and maintain scalable data pipelines. " * 8
+             + " Requirements: 5+ years in Data Engineering. ")
+    right = ("About the role: you will analyse product usage and power decisions. " * 5
+             + " Requirements: 3+ years of experience in analytics. ")
+    assert looks_like_jd(wrong) and looks_like_jd(right) and len(right) < len(wrong)
+    assert emj._store_text(conn, "r", wrong, "") is True
+    assert emj._store_text(conn, "r", right, wrong) is False        # the ordinary ratchet
+    assert emj._refute(conn, "r", wrong) is True
+    assert emj._store_text(conn, "r", right, wrong) is True         # ...opened, durably
+    # the same wrong text, offered again by tomorrow's cache card, loses whatever its length
+    assert emj._store_text(conn, "r", wrong, right) is False
+    assert conn.execute("SELECT description FROM matched WHERE mkey='r'").fetchone()[0] == right
+    # keyed on the posting, not the bytes: a truncated, space-padded copy is the same verdict
+    assert refute_key("  " + wrong + "  ") == refute_key(wrong)
+    # append-only, and a store without the column still works
+    emj._refute(conn, "r", right)
+    assert len(emj._refuted_keys(conn, "r")) == 2
+    bare = _sq.connect(":memory:")
+    bare.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT)")
+    bare.execute("INSERT INTO matched VALUES ('r','')")
+    assert emj._refuted_keys(bare, "r") == frozenset() and emj._store_text(bare, "r", wrong, "")
+    conn.close()
+    bare.close()
+
+
+def test_the_stored_refutation_is_read_with_the_tier_switched_off():
+    """It needs no model, so it is read ABOVE the `JD_QUALITY` switch — otherwise the one state
+    where a repair matters most (a runner whose token is refused; `llm-auth13`) is the state
+    where the channel is silent."""
+    import enrich_matched_jd as emj
+    import sqlite3 as _sq
+    import os as _os
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, "
+                 "jd_why TEXT, jd_refuted TEXT)")
+    text = "About the role: analytics ownership. Requirements: 3 years of SQL. " * 8
+    conn.execute("INSERT INTO matched VALUES (?,?,NULL,NULL)", ("r", text))
+    emj._refute(conn, "r", text)
+    rows = [("r", "ACME", "Analyst", "u", "", "", text, 0, "2026-09-11")]
+    old = _os.environ.get("JD_QUALITY")
+    _os.environ["JD_QUALITY"] = "0"
+    try:
+        incomplete, refuted, counts = emj._quality_pass(conn, rows, dry_run=True)
+    finally:
+        if old is None:
+            _os.environ.pop("JD_QUALITY", None)
+        else:
+            _os.environ["JD_QUALITY"] = old
+    assert incomplete == {"r"} and refuted == {"r"} and counts["refuted_stored"] == 1
+    conn.close()
+
+
+def test_the_reclean_cuts_the_head_too_and_keeps_its_floor_and_its_ceiling():
+    """The re-clean is the only path permitted to shorten stored text, and the head cut joins
+    it there rather than in `jd_body`. Both guards still hold: a cut whose result is not a job
+    description is refused row by row, and a mass change is refused whole."""
+    import enrich_matched_jd as emj
+    import sqlite3 as _sq
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    jd = _j7_jd(1400)
+    head = "Skip to main content\nSenior Analyst\nACME\nReport this job\n"
+    every = [("r%d" % i, "ACME", "Analyst", "u", "", "", jd, 0, "2026-09-11") for i in range(19)]
+    every.append(("h", "ACME", "Analyst", "u", "", "", head + jd, 0, "2026-09-11"))
+    n, cut, wrote = emj._reclean(conn, every, dry_run=True)
+    assert n == 1 and wrote["h"] == jd and cut == len(head)
+    # and the ceiling: the same head on every row is a furniture rule matching prose
+    allhead = [(k, c, t, u, a, s, head + jd, n2, l) for k, c, t, u, a, s, _d, n2, l in every]
+    n2, _cut2, wrote2 = emj._reclean(conn, allhead, dry_run=True)
+    assert n2 < 0 and wrote2 == {}, (n2, wrote2)
+    conn.close()
+
+
+def test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed():
+    """The contract agreed live with the `roles` session on 2026-09-11. `roles.page_closed`
+    closes a LinkedIn-only row on `No longer accepting applications`, and that sentence sits
+    in the header block this cut removes — at offsets 260-501 on the five rows that carry it.
+    A text can be re-captured; a verdict about a day that has passed cannot, so the cut writes
+    it where the other lane can still read it.
+
+    Only onto an EMPTY `jd_why`: a `structural:` value is a blocker the published dataset
+    quotes verbatim, and this may not overwrite one."""
+    import enrich_matched_jd as emj
+    from pipeline.jdfill import closed_page_at
+    import sqlite3 as _sq
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    jd = _j7_jd(1400)
+    old = ("Analyst\nACME\nTel Aviv\nNo longer accepting applications\nReport this job\n" + jd)
+    assert closed_page_at(old) is not None and closed_page_at(jd) is None
+    conn.execute("INSERT INTO matched VALUES ('c',?,NULL)", (old,))
+    conn.execute("INSERT INTO matched VALUES ('b',?,'structural:gone(donors:0)')", (old,))
+    rows = [("c", "ACME", "Analyst", "u", "2026-09-11", "", old, 0, "2026-09-11"),
+            ("b", "ACME", "Analyst", "u", "2026-09-11", "", old, 0, "2026-09-11")]
+    rows += [("f%d" % i, "ACME", "A", "u", "", "", jd, 0, "2026-09-11") for i in range(18)]
+    emj._reclean(conn, rows, dry_run=False)
+    assert conn.execute("SELECT jd_why FROM matched WHERE mkey='c'").fetchone()[0] \
+        == "closed-by-page:2026-09-11"
+    assert conn.execute("SELECT jd_why FROM matched WHERE mkey='b'").fetchone()[0] \
+        == "structural:gone(donors:0)", "a blocker was overwritten"
+    # the rail of ANOTHER posting says it too, far down the page: that is not this role closing
+    assert closed_page_at(jd + "\nעבודות דומות\nכבר לא מקבלים בקשות\n") is None
+    conn.close()

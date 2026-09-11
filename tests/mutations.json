@@ -3047,5 +3047,135 @@
   "killers": [
    "tests/test_units.py::test_a_shared_careers_page_takes_back_the_hearing_its_text_bought"
   ]
+ },
+ {
+  "id": "jd-head-skip-uses-the-classifier-regex-again",
+  "file": "pipeline/jdfill.py",
+  "symbol": "extract_jd",
+  "class": "M5-population-widening",
+  "find": "    rs = _HEAD_SKIP.search(text)\n",
+  "replace": "    from .seniority import _ROLE_START\n    rs = _ROLE_START.search(text)\n",
+  "why": "`seniority._ROLE_START` is the classifier's rough starting point for a keyword count, and its alternatives are prose: `as an? `, `you'?ll `, `in this role`, and `requirements?`. Used as a CUT it published descriptions beginning \"as a Great Place to Work\" and descriptions that open at Requirements with the responsibilities deleted -- 105 of 244 stored rows had a mid-line first hit. Killed by test_extract_jd_starts_at_a_section_heading_and_never_mid_sentence.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_extract_jd_starts_at_a_section_heading_and_never_mid_sentence"
+  ]
+ },
+ {
+  "id": "jd-tail-rail-loses-its-hebrew-twin",
+  "file": "pipeline/jdfill.py",
+  "symbol": "_PAGE_FURNITURE",
+  "class": "M1-gate-narrowed",
+  "find": "    r\"עבודות דומות|\"\n",
+  "replace": "",
+  "why": "the Hebrew-locale rail heading. Without it `furniture_at` returns None on every il.linkedin.com capture this board actually stores, which is how 49 of 177 published rows carried 25 other employers' job titles inside their own description. The English `similar jobs` never fires on those pages, and on the 2026-09-11 corpus the `Show more` pair always cuts first -- so the rail marker is the guard for a posting LinkedIn does not fold, where the rail is the first chrome on the page. Killed by test_the_rail_is_furniture_even_when_the_page_renders_no_show_more_button.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_rail_is_furniture_even_when_the_page_renders_no_show_more_button"
+  ]
+ },
+ {
+  "id": "jd-head-cut-moves-inside-jd-body",
+  "file": "pipeline/jdfill.py",
+  "symbol": "jd_body",
+  "class": "M5-population-widening",
+  "find": "    cut = furniture_at(text)\n    return (text or \"\") if cut is None else (text or \"\")[:cut].rstrip()",
+  "replace": "    text = strip_head(text or \"\")\n    cut = furniture_at(text)\n    return (text or \"\") if cut is None else (text or \"\")[:cut].rstrip()",
+  "why": "the placement decision, as a mutation. `jd_body` IS the semantics of `looks_like_jd`, and `roles.better_description` RETURNS `jd_body(...)` -- so a head rule here becomes a second head-SHORTENING path writing BOTH stores with none of `_reclean`'s floor or share ceiling, which is the shape wave 2 measured at 13 rows and 39,956 characters. Killed by test_the_page_header_is_cut_at_fetch_and_never_inside_jd_body.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_page_header_is_cut_at_fetch_and_never_inside_jd_body"
+  ]
+ },
+ {
+  "id": "jd-page-slice-guard-removed",
+  "file": "pipeline/jdfill.py",
+  "symbol": "looks_like_jd",
+  "class": "M1-gate-removal",
+  "find": "    if _is_markup_soup(text) or page_slice(text):\n",
+  "replace": "    if _is_markup_soup(text):\n",
+  "why": "`567`: a capture that begins mid-sentence AND ends on the cap is a slice of a page -- `gamida cell|senior business analyst commercial data analytics` is 6,000 characters carrying six field-sales bullets from another posting, and it turned a classifier verdict to NO. Without the guard it reads as a job description to every keyword rule. Killed by test_a_page_slice_is_not_a_job_description.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_page_slice_is_not_a_job_description"
+  ]
+ },
+ {
+  "id": "jd-refuted-column-ignored-on-the-way-in",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_store_text",
+  "class": "M1-gate-removal",
+  "find": "    if disowned and jdfill.refute_key(text) in disowned:\n",
+  "replace": "    if False and jdfill.refute_key(text) in disowned:\n",
+  "why": "a text this row was told is not its posting, offered again by tomorrow's cache card, must lose whatever its length. Without this the repair of a wrong-but-longer description is handed straight back the next morning -- 572, measured on prisma photonics on 2026-09-02. Killed by test_a_refutation_outlives_the_run_that_reached_it.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_refutation_outlives_the_run_that_reached_it"
+  ]
+ },
+ {
+  "id": "jd-refuted-column-does-not-open-the-ratchet",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_store_text",
+  "class": "M6-fallback-removal",
+  "find": "    if disowned and jdfill.refute_key(have) in disowned:\n        refuted = True\n",
+  "replace": "",
+  "why": "the other half: what is STORED having been disowned is what lets the shorter true posting in. In-memory `refuted` only survives one run and only a FRESH model verdict feeds it, so without the column the row is stuck for ever with no alarm (572's cheaper half). Killed by test_a_refutation_outlives_the_run_that_reached_it.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_refutation_outlives_the_run_that_reached_it"
+  ]
+ },
+ {
+  "id": "jd-refutation-read-below-the-quality-switch",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_quality_pass",
+  "class": "M3-branch-narrowing",
+  "find": "    stored = _durably_refuted(conn, every)\n    if os.environ.get(\"JD_QUALITY\", \"1\") == \"0\":\n        c0 = Counter()\n        if stored:\n            c0[\"refuted_stored\"] = len(stored)\n        return set(stored), set(stored), c0",
+  "replace": "    if os.environ.get(\"JD_QUALITY\", \"1\") == \"0\":\n        return set(), set(), Counter()\n    stored = _durably_refuted(conn, every)",
+  "why": "the durable refutation needs no model, so reading it below the switch silences the channel in exactly the state where a repair matters most: a runner whose token is refused, or a pass run with the tier off. Killed by test_the_stored_refutation_is_read_with_the_tier_switched_off.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_stored_refutation_is_read_with_the_tier_switched_off"
+  ]
+ },
+ {
+  "id": "jd-mid-sentence-head-buys-a-model-call",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_quality_pass",
+  "class": "M6-fallback-removal",
+  "find": "        if why == \"mid-sentence-head\":\n",
+  "replace": "        if False:\n",
+  "why": "a text that begins in the middle of a sentence is incomplete at a place we can see; there is nothing for a model to adjudicate and the call is waste. Without the branch the row buys a verdict that cannot change the answer. Killed by test_a_mid_sentence_head_reaches_the_todo_and_buys_no_model_call.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_mid_sentence_head_reaches_the_todo_and_buys_no_model_call"
+  ]
+ },
+ {
+  "id": "jd-reclean-drops-the-closed-by-page-stamp",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_reclean",
+  "class": "M4-guard-removal",
+  "find": "        closing = (closed_page_at(old) is not None and closed_page_at(new) is None)\n",
+  "replace": "        closing = False\n",
+  "why": "the cut removes the sentence in which LinkedIn says the posting stopped taking applicants, and `roles.page_closed` reads that sentence to close a LinkedIn-only row. Without the stamp the strip blinds the other lane's arm silently -- the text can be re-captured, a verdict about a day that has passed cannot. Contract agreed with the roles session 2026-09-11. Killed by test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed"
+  ]
+ },
+ {
+  "id": "jd-reclean-stamp-overwrites-a-blocker",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_reclean",
+  "class": "M4-guard-removal",
+  "find": "                conn.execute(\"UPDATE matched SET description=?, jd_why=CASE \"\n                             \"WHEN COALESCE(jd_why,'')='' THEN ? ELSE jd_why END \"\n                             \"WHERE mkey=?\", (new, \"closed-by-page:\" + (when or \"\"), mkey))",
+  "replace": "                conn.execute(\"UPDATE matched SET description=?, jd_why=? \"\n                             \"WHERE mkey=?\", (new, \"closed-by-page:\" + (when or \"\"), mkey))",
+  "why": "a `structural:` value is a blocker the published dataset quotes verbatim into `description_blocker`; overwriting it with this stamp deletes the only record that every donor class was enumerated and failed. Killed by test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed"
+  ]
  }
 ]

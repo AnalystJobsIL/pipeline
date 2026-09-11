@@ -33,6 +33,7 @@ retries 30 s x 3 on a miss, and 60 misses at that price would eat the inline bud
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import html as _html_mod
 import json
 import os
@@ -244,22 +245,102 @@ def html_to_text(html):
 # (`continue with google`, `get notified about new`) matched nothing and are left out:
 # an unfired marker carries no measurement, and when a new wall appears the LLM tier
 # (`jd_quality`) is what notices it, after which the marker is added WITH its number.
+# The 2026-09-11 additions are the HEBREW-LOCALE rail, and they are why 49 of the 177
+# published rows carried a similar-jobs list of other employers' postings as their
+# description on that date (`docs/BACKLOG.md` 573, filed on one row; measured here over the
+# whole store). `il.linkedin.com` renders `עבודות דומות` where `www.linkedin.com` renders
+# `similar jobs`, so the English marker above never fired on a Hebrew page — and the block
+# above the rail (`Show more` / `Show less`, the seniority-employment-function table, the
+# referrals line) is chrome in BOTH alphabets and had no marker at all. Measured over every
+# stored body this repo holds on 2026-09-11 -- 2,513 of them (257 `matched`, 1,933
+# `scraped_cache` cards, 323 `discovered_cache` cards): the seven markers fire on 126
+# bodies and would remove 183,400 characters, and exactly THREE stop passing
+# `looks_like_jd` -- `mobileye|experienced data analyst` (2,247 -> 2,115), `modellama|
+# research analyst` (3,294 -> 168) and `mizrahi tefahot bank|analyst` (1,458 -> 1,266).
+# All three are the correct answer and not a regression: the second marker family those
+# rows were clearing the bar on was the chrome's own `Full-time`, read out of LinkedIn's
+# employment-type table rather than out of the posting.
+#
+# One of the seven decides nothing TODAY and is kept anyway, which is worth stating rather
+# than hiding: on the 2026-09-11 corpus every body carrying `עבודות דומות` also carries the
+# `Show more` pair EARLIER (68 and 82 bodies; rail-before-pair: 0), so the rail marker is
+# never the earliest cut. It is here for the page that renders no truncation button at all --
+# a posting short enough not to be folded -- where the rail is the first chrome there is, and
+# `test_the_rail_is_furniture_even_when_the_page_renders_no_show_more_button` is that page.
+#
+# `show more` is matched only as the PAIR `Show more` + `Show less` -- the button renders
+# in English on the Hebrew page too, and the discovery net's Bright Data cards carry the
+# same two words whitespace-collapsed onto one line, which `\s+` covers. A bare `show more`
+# was rejected: it appears inside ordinary prose ("show more initiative").
+# `רמת ותק` / `seniority level` are LINE-ANCHORED (hence re.M): they are table headings, and
+# the English phrase can appear mid-sentence in a real posting about career levels.
 _PAGE_FURNITURE = re.compile(
     r"(agree & join|new to linkedin|forgot password|by clicking (continue|agree)|"
     r"sign in to (set job alerts|create|save|view)|referrals increase your chances|"
     r"people also viewed|similar jobs|"
+    r"show more\s+show less|"
+    r"^\W{0,3}seniority level\s*$|"
     r"פעם ראשונה שלך ב-linkedin|"
     r"שכחת סיסמה|"
     r"כדי להגדיר התראות עבודה|"
     r"דוא”ל או טלפון|"
-    r"הצג עוד מקומות תעסוקה)", re.I)
+    r"עבודות דומות|"
+    r"^\W{0,3}רמת ותק\s*$|"
+    r"הפניות מגדילות את סיכוייכם|"
+    r"ראה את מי שאתה מכיר|"
+    r"היכנס כדי ליצור התראת עבודה|"
+    r"הצג עוד מקומות תעסוקה)", re.I | re.M)
+
+
+# An application FORM is the other thing that follows a posting, and on a company's own
+# careers page it is most of the stored text: `practical vision|we re hiring web analyst`
+# published 3,831 characters of which 1,748 are the form, and `amitim pension funds|data
+# analyst` 3,999 of which 167 are.
+#
+# No single form word survived measurement, and that is why this is a DENSITY rule rather
+# than another alternative in `_PAGE_FURNITURE`. Over the same 2,513 bodies, cutting at the
+# first occurrence of each candidate on its own: `apply for this job` fires 257 times and
+# pushes 20 REAL postings below the bar (TytoCare 3,999 -> 830, Adcore 4,000 -> 705 -- the
+# phrase is a button that also sits at the TOP of a posting); `upload cv` 63 fires / 2
+# lost; `העלאת קורות חיים` 41 / 2 (Keter 4,000 -> 900); `הגשת מועמדות למשרה` 36 / 9
+# (Aeronautics 1,650 -> 272, nine of its postings gutted). A field LABEL is ambiguous on
+# its own; three distinct labels inside 220 characters is a form.
+#
+# Measured at need=3 / span=220: fires on 66 bodies, removes 44,301 characters, and three
+# fall below `looks_like_jd` -- `Taplix|Affiliate Account Manager` (1,824 -> 583, a genuinely
+# short posting followed by a five-step questionnaire: an honest snippet, and it goes back to
+# the todo), `Enigmatos|JOIN OUR TEAM` and `R H Electronics|Jobs available` (both 4,000
+# characters of site navigation that were never a posting). need=4 halves the yield (27
+# bodies) to spare one of those three, and the one it spares is a listing page.
+_FORM_FIELD = re.compile(
+    r"(full name|first name|last name|phone number|email address|city of residence|"
+    r"upload (cv|resume)|attach (resume|cv)|cover letter|linkedin profile|"
+    r"שם מלא|טלפון נייד|דואר אלקטרוני|העלאת קורות חיים|צירוף קורות חיים|מספר טלפון)", re.I)
+_FORM_FIELDS_NEEDED = 3
+_FORM_SPAN = 220
+
+
+def form_at(text):
+    """Where the application form starts in `text`, or None -- `_FORM_FIELDS_NEEDED` DISTINCT
+    field labels inside `_FORM_SPAN` characters, cut at the first of them."""
+    hits = [(m.start(), m.group(0).lower()) for m in _FORM_FIELD.finditer(text or "")]
+    for i, (pos, _w) in enumerate(hits):
+        window = {w for p, w in hits[i:] if p - pos <= _FORM_SPAN}
+        if len(window) >= _FORM_FIELDS_NEEDED:
+            return pos
+    return None
 
 
 def furniture_at(text):
     """Where the page's own chrome starts in `text`, or None. The EARLIEST marker wins: a
-    login wall repeats itself, and the first sighting is where the posting stopped."""
+    login wall repeats itself, and the first sighting is where the posting stopped.
+
+    Since 2026-09-11 an application FORM is chrome too (`form_at`), and the earliest of the
+    two answers -- a careers page renders the form under the posting exactly where LinkedIn
+    renders its rail."""
     m = _PAGE_FURNITURE.search(text or "")
-    return m.start() if m else None
+    cuts = [x for x in (m.start() if m else None, form_at(text)) if x is not None]
+    return min(cuts) if cuts else None
 
 
 # The SIGN-IN subset of `_PAGE_FURNITURE`: the markers a wall-first page renders BEFORE the
@@ -306,6 +387,82 @@ def _after_the_wall(text):
     return ""
 
 
+# --------------------------------------------------------------------------- where it begins
+# The mirror of the tail cut, and the half nobody had written: a LinkedIn guest page renders
+# its own header ABOVE the posting -- the browser title, `Skip to main content`, the title
+# and company again, the applicant count, `Report this job`, and then a four-line block
+# naming the recruiter who posted it. Measured over the 2,513 stored bodies on 2026-09-11:
+# `report this job` / the Hebrew twin on its own line in 21 bodies, every one within 538
+# characters of the start; the Hebrew consent line in 10, every one within 15; a lone
+# `Save` in Hebrew in 7, within 532; `skip to main content` and its Hebrew twin in 23, 21 of
+# them within 1,500. Nothing matched later except two AGILINA scrape cards at 1,516 and
+# 1,528, which is why the window is a window and not the whole text.
+#
+# This is NOT part of `jd_body`, and the reason decides where every rule in this module
+# lives. `jd_body` IS the semantics of `looks_like_jd`, which decides `roles.text_quality`
+# for every published row and `run`'s own publish gate; a head rule inside it re-judges the
+# whole dataset at every reader. Worse, `roles.better_description` RETURNS `jd_body(...)`
+# rather than one of its two inputs (deliberately -- it is what makes a tail repair hold), so
+# a head rule there becomes a second head-SHORTENING path writing BOTH stores with none of
+# `_reclean`'s floor or share ceiling: wave 2's shape, and a positional "drop the next three
+# lines" rule with one false positive would delete a real posting at every reader at once.
+# `looks_like_jd` already declines `_after_the_wall` for the same reason. So the head cut
+# runs where a text is CREATED (`extract_jd`) and where the layer deliberately rewrites the
+# store under a floor and a ceiling (`_reclean`).
+_HEAD_FURNITURE = re.compile(
+    r"(?m)^\W{0,3}(report this job|דווח על עבודה זו|"
+    r"skip to main content|דילוג לתוכן הראשי|"
+    r"[^\n]{0,40}(by clicking (continue|agree)|הלחיצה על)[^\n]*|"
+    r"שמירה)\s*$", re.I)
+# The recruiter block: the line, the name, the SAME name again (LinkedIn renders it twice,
+# once as the avatar's alt text), then the headline. Keyed on the repeated name rather than
+# on a line count, so a page that renders it differently is left alone.
+_POSTER_BLOCK = re.compile(
+    r"(?m)\A\s*(?:direct message the job poster from|הודעה ישירה פוסטר עבודה מ)[^\n]*\n"
+    r"(?P<name>[^\n]{1,80})\n(?P=name)\n[^\n]{0,200}\n", re.I)
+HEAD_WINDOW = 1500
+
+
+# LinkedIn says so on the page itself when a posting stops taking applicants, and the
+# `roles` lane closes a LinkedIn-only row on it (`roles.page_closed`, 2026-09-11: 4 of 44
+# open LinkedIn-only records the day it was measured). The marker sits in the header block
+# `strip_head` cuts -- at offsets 260-501 on those rows -- so stripping the chrome would
+# blind that arm. This predicate is how the cut can STAMP what it is about to remove
+# (`jd_why = "closed-by-page:<date>"`, the contract agreed with that lane on 2026-09-11),
+# which is the durable form: the text can be re-captured, the verdict cannot be re-derived.
+_CLOSED_PAGE = re.compile(r"(no longer accepting applications|כבר לא מקבלים בקשות)", re.I)
+CLOSED_PAGE_WINDOW = 600
+
+
+def closed_page_at(text):
+    """Where this page says the posting stopped taking applicants, or None. Only inside
+    `CLOSED_PAGE_WINDOW`: the same sentence appears in the similar-jobs rail of OTHER
+    postings further down, and that is a statement about somebody else's role."""
+    m = _CLOSED_PAGE.search(str(text or "")[:CLOSED_PAGE_WINDOW])
+    return m.start() if m else None
+
+
+def strip_head(text):
+    """`text` with the page's own header cut off the FRONT, or `text` unchanged.
+
+    The cut runs to the end of the LAST head marker inside `HEAD_WINDOW` -- the markers
+    interleave with the page's title/company/location echo, and the last of them is where the
+    page stops describing itself. It is accepted only when what remains still passes the two
+    tests `extract_jd` applies to a fetched body, so a marker firing inside a short posting
+    can never empty it."""
+    t = text or ""
+    cut = 0
+    for m in _HEAD_FURNITURE.finditer(t[:HEAD_WINDOW]):
+        cut = max(cut, t.find("\n", m.end()) + 1 or m.end())
+    body = t[cut:].lstrip("\n")
+    pb = _POSTER_BLOCK.search(body)
+    if pb:
+        body = body[pb.end():]
+    if body != t and len(body) >= MIN_DESC and len(_marker_families(body)) >= 2:
+        return body
+    return t
+
+
 def jd_body(text):
     """`text` with the page furniture cut off the tail -- the posting's own words, and the one
     thing every other test in this module should be asking about.
@@ -317,9 +474,79 @@ def jd_body(text):
     return (text or "") if cut is None else (text or "")[:cut].rstrip()
 
 
+# Where the posting's own first section begins -- the boilerplate intro above it is the
+# company's, not the role's. Until 2026-09-11 this was `seniority._ROLE_START`, the
+# CLASSIFIER's regex, imported here and used to CUT stored text. It is written to find a
+# rough starting point for a keyword count, and its alternatives are prose rather than
+# headers: `as an? `, `you'?ll `, `the role\b` and `in this role` match mid-sentence, and
+# `requirements?` / `qualifications?` match the requirements header -- so the cut deleted
+# everything above it, which is the responsibilities section. Measured over the 244
+# non-superseded `matched` rows on 2026-09-11: the first `_ROLE_START` hit is MID-LINE on
+# 105 of them and is the requirements header on 13. What that published, on the board, that
+# morning: `revolut|data analyst finance` opening "as a Great Place to Work", `jti|commercial
+# planning data analysis manager` "as a Commercial Planning and Data Analyst", `rapyd|data
+# analyst` "you'll move fluidly", and `fiverr|senior business data analyst` and
+# `mccann digital|marketing analyst` beginning at "Requirements:" with no responsibilities
+# at all.
+#
+# So this one is line-anchored and section-opening, and it deliberately does NOT carry
+# `requirements`/`qualifications`: a text that begins at its requirements has lost half the
+# posting, and no marker may produce that. `\W{0,4}` admits a bullet or an emoji; the
+# `[^\n]{0,60}$` tail is what makes it a HEADING rather than a sentence -- "The role is based
+# in Tel Aviv and reports to the VP Data" is not a cut point. `seniority._ROLE_START` is
+# untouched and still the classifier's: `prompt_slice` and `_desc_is_ml` READ with it, they
+# do not rewrite a description with it.
+_HEAD_SKIP = re.compile(
+    r"(?im)^\W{0,4}(about the (role|job|position)|the role|your role|role overview|"
+    r"job description|responsibilities|what you.?ll (do|own|be doing)|in this role|"
+    r"day[- ]to[- ]day|תיאור (ה)?(תפקיד|משרה)|על התפקיד|תחומי אחריות)\b[^\n]{0,60}$")
+
+# The `567` guard. A capture that begins mid-sentence AND ends exactly on the cap is a SLICE
+# of a page, not a posting: something above it was cut off by a head rule that overshot and
+# something below it by `DESC_MAX`. `gamida cell|senior business analyst commercial data
+# analytics` is the row it was filed for -- 6,000 characters beginning "responsibilities will
+# be managing internal KPI reporting", carrying six field-sales bullets from another posting,
+# and it moved a classifier verdict to NO.
+#
+# The head test is a CLOSED list of function words rather than "the first character is
+# lower-case", because a posting may legitimately open with a lower-case brand: monday.com,
+# eToro, iAngels. Measured over the 2,513 stored bodies: 5 are page-slices -- gamida cell
+# (closed, and its board now carries one unrelated card, so the text cannot be re-fetched),
+# `jti|...` and `revolut|data analyst finance` (open, and re-captured from their own
+# addresses by the session that shipped this), and two `withdrawn` records.
+_MID_SENTENCE_HEAD = re.compile(
+    r"\s*(as|and|the|in|to|of|for|with|we|our|you|your|this|that|is|are|will|be|by|from|at|"
+    r"or|responsibilit\w*|requirements?|qualifications?|[a-z]+[’']\w+)\b(?!\.\w)")
+
+
+def mid_sentence_head(text):
+    """Does this text begin in the middle of a sentence -- i.e. is its first section missing?"""
+    return bool(_MID_SENTENCE_HEAD.match(str(text or "")))
+
+
+def page_slice(text):
+    """Is this text a SLICE of a page rather than a posting -- mid-sentence at the front and
+    truncated by our own cap at the back? Either alone is ordinary; together they mean the
+    text has no beginning and no end."""
+    t = str(text or "")
+    return len(t) >= DESC_MAX and mid_sentence_head(t)
+
+
+def refute_key(text):
+    """The identity of a REFUTED text: the sha1 of the posting inside it.
+
+    Keyed on `jd_body` rather than on the raw bytes so one wrong text is one key wherever it
+    is met -- the 4,000-character `scraped_cache` card and the 3,999 characters of it that
+    reached `matched` differ by a truncation and by leading space, and a raw hash would let
+    the card back in through the donor rung the morning after a repair."""
+    return hashlib.sha1(jd_body(str(text or "").strip()[:DESC_MAX])
+                        .encode("utf-8", "replace")).hexdigest()
+
+
 def extract_jd(html):
-    """Readable JD text; starts at the role section when the boilerplate marker is found, and
-    STOPS where the page's own chrome begins (`jd_body`).
+    """Readable JD text; it starts at the posting's own first HEADING (`_HEAD_SKIP`), stops
+    where the page's chrome begins (`jd_body`), and has the page's own HEADER cut off the
+    front first (`strip_head`).
 
     The tail cut runs before the marker gate, not after, so the gate judges the posting rather
     than the page: a body that is a login wall with four words of job on top is `""` here, and
@@ -327,9 +554,8 @@ def extract_jd(html):
     `DESC_MAX` cap, so a page cannot smuggle furniture in by being long enough to truncate.
     A WALL-FIRST page — sign-in block above the posting — gets one more look through
     `_after_the_wall` before the "" verdict."""
-    from .seniority import _ROLE_START
     full = html_to_text(html)
-    text = jd_body(full)
+    text = strip_head(jd_body(full))
     if _is_markup_soup(full) or _is_markup_soup(text):
         # A serialized object is not a posting however many marker words the prose INSIDE it
         # carries, and the ladder must say so rather than book it as a successful parse. This
@@ -340,12 +566,12 @@ def extract_jd(html):
         # description at all. The veto only defended rows that already held a JD (wave B).
         return ""
     if len(text) < MIN_DESC or len(_marker_families(text)) < 2:
-        text = _after_the_wall(full)
+        text = strip_head(_after_the_wall(full))
         if not text:
             return ""
-    rs = _ROLE_START.search(text)
-    if rs and len(text) - rs.start() >= MIN_DESC:
-        text = text[rs.start():]
+    rs = _HEAD_SKIP.search(text)
+    if rs and len(text) - rs.start(1) >= MIN_DESC:
+        text = text[rs.start(1):]
     return text[:DESC_MAX]
 
 
@@ -395,7 +621,12 @@ def looks_like_jd(text):
     words INSIDE the markup, so it clears the marker bar on prose it is not presenting —
     `techbiz global|data analyst` published 6,000 characters of Recruitee offer JSON."""
     body = jd_body(text)
-    if _is_markup_soup(text):
+    if _is_markup_soup(text) or page_slice(text):
+        # A page-slice has no beginning and no end (`page_slice`, 2026-09-11): it is text we
+        # truncated at both ends, and the middle it leaves reads as a posting to every
+        # keyword rule. `567` is the row that proves the cost -- 6,000 characters carrying
+        # another posting's field-sales bullets, which turned a classifier verdict to NO.
+        # Refusing here is what sends it back to the fetch instead of onto the board.
         return False
     return len(body) >= MIN_DESC and len(_marker_families(body)) >= 2
 
@@ -482,6 +713,15 @@ def quality_suspect(text, shared=False, *, company=""):
         return "furniture"
     if len(t) >= DESC_MAX:
         return "at-desc-max"
+    if mid_sentence_head(t):
+        # A fifth, 2026-09-11, and the cheapest of all: this text begins in the middle of a
+        # sentence, so a head rule above it overshot and the posting's first section is
+        # missing. It costs NO model call -- there is nothing for a model to adjudicate, the
+        # text is simply incomplete at a place we can see -- and `_quality_pass` puts the row
+        # straight into the todo, where the fixed `_HEAD_SKIP` re-captures it from its own
+        # address. 15 of the 244 stored rows on the day this shipped, 10 of them once
+        # `looks_like_jd` has refused the five page-slices.
+        return "mid-sentence-head"
     if company and _echo_checkable(company) and not _company_echoed(company, t):
         return "no-company-echo"
     return ""

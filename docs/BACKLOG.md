@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**630 filed · 454 open · 176 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**632 filed · 454 open · 178 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 580.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 582.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -451,7 +451,7 @@ closure convention in the header.
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 - **563** `563@docs` **Nothing checks that a `NNN@lane` reference resolves to an item that still exists** —
 
-### roles — 24 open
+### roles — 25 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
 - **3** `3@roles` **`pipeline/dates.py`**
@@ -477,6 +477,7 @@ closure convention in the header.
 - **544** `544@roles` **A published `class_decision` cannot say which contract judged it, so a bump leaves the
 - **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
 - **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
+- **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
 
 ### company-intel — 23 open
 
@@ -549,7 +550,7 @@ closure convention in the header.
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 - **574** `574@classifier` **The classifier lane's own two measurement tools no longer walk the gate they claim to
 
-### jd-text — 18 open
+### jd-text — 17 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -566,9 +567,8 @@ closure convention in the header.
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 - **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
 - **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
-- **567** `567@jd-text` **A closed row's stored JD carries a second posting's bullets, and it moved a verdict** —
-- **572** `572@jd-text` **The role ledger has no refutation channel, so a repair to a wrong-but-longer JD is
 - **578** `578@jd-text` **Three Menora cards carry a CAPTCHA page as their description**
+- **581** `581@jd-text` **The scrape cache keeps the page furniture this layer now cuts, and nothing re-cleans it**
 
 ### render — 6 open
 
@@ -11220,7 +11220,19 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      grep the published `roles.csv` for rows whose stored description contains
      `Location: ` followed by a non-Israeli city.
 
-567. **A closed row's stored JD carries a second posting's bullets, and it moved a verdict** —
+567. ~~**A closed row's stored JD carries a second posting's bullets, and it moved a verdict**~~ — **CLOSED 2026-09-11 (`jd-text`)**: the guard this item asked for is
+     `jdfill.page_slice` — a capture that begins mid-sentence AND ends exactly on
+     `DESC_MAX` is a slice of a page, and `looks_like_jd` refuses it. Five bodies in the
+     store; `gamida cell|…` is one and stays unrepairable (its board carries one
+     unrelated card), but it no longer publishes as a job description. The head test is
+     a CLOSED list of function words, not "begins lower-case", so monday.com and eToro
+     are unaffected. Ballerine, the sibling this item names, was repaired in BOTH stores
+     the same day: 3,998 characters of site chrome → the 1,662-character posting from
+     its own page, with the old text refuted so no rung can hand it back. Prisma, the
+     other sibling, was repaired on 09-03. ARCHITECTURE.md §7a *A posting has a HEAD,
+     and a page has a RAIL*. The original report follows.
+
+     **Original** —
      lane: `jd-text`. `gamida cell|senior business analyst commercial data analytics` is
      `closed`, its text frozen at exactly 6,000 characters (the capture cap), beginning
      mid-sentence at *"responsibilities will be managing internal KPI reporting…"*. Inside it,
@@ -11441,8 +11453,24 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `("report", "different-name")` rather than writing it, so the source is closed; the
      record still has to be merged.
 
-572. **The role ledger has no refutation channel, so a repair to a wrong-but-longer JD is
-     undone by the next digest** — lane: `jd-text` (the predicate) / `roles` (the file).
+572. ~~**The role ledger has no refutation channel, so a repair to a wrong-but-longer JD
+     is undone by the next digest**~~ — **CLOSED 2026-09-11 (`jd-text`)**: the channel is
+     `matched.jd_refuted`, `+`-joined `jdfill.refute_key` hashes — the sha1 of `jd_body`,
+     so the 4,000-character cache card and the 3,999 of it that reached `matched` are ONE
+     key. Verified on Amitim the day it shipped: the card cannot win. `_store_text`
+     refuses a text whose key is stored and treats a STORED key as `have=""`, which is
+     the ratchet opening durably; `_quality_pass` reads the column ABOVE the
+     `JD_QUALITY` switch, so the cheaper half this item asked for first — a cached
+     rejection that can never re-open the ratchet — is closed with it. Both stores were
+     written in one pass and the repair proved stable across three further
+     `Ledger.open_sync` runs, which is the check that failed on 09-02.
+     **The `roles` half is NOT done and is now `580`**: `better_description` /
+     `reconcile` / `upsert_matched` still cannot see the column, and that lane's session
+     asked for the change as a proposal rather than a merge. Live exposure is 0 rows
+     today (both refuted rows are `closed` and their cache cards share the key).
+     The original report follows.
+
+     **Original** — lane: `jd-text` (the predicate) / `roles` (the file).
      Filed 2026-09-03; extends `567@jd-text`, which asked for the guard.
      `reconcile` -> `better_description` (`pipeline/roles.py`) keeps the LONGER of two texts
      that both pass `looks_like_jd`, and `daily-digest.yml` runs `Ledger.open_sync` **after**
@@ -11473,6 +11501,13 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
 573. **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
      description** — lane: `scraper` (the capture) / `jd-text` (the guard). Filed 2026-09-03.
+     **The `jd-text` half is CLOSED 2026-09-11**: the rail is furniture in both alphabets
+     now — `עבודות דומות` beside `similar jobs`, plus `Show more`/`Show less`,
+     `רמת ותק`/`Seniority level`, the referrals line and the see-who-you-know line —
+     measured over all 2,513 stored bodies: 126 bodies, 183,400 characters. The count
+     this item asked for (distinct rail markers over `matched`) was **62 published rows**
+     on 2026-09-11 and is **0**. The `scraper` half stands: the CAPTURE still stores the
+     whole page and this layer cuts it afterwards.
      `nestl nespresso sa|data analyst למחלקת השיווק חברת נספרסו` stored **3,353** characters
      for a posting whose actual JD is **693**: a cookie notice, the JD, `#Nespresso`,
      `Show more / Show less`, the seniority/employment/function block, and then ~27
@@ -11590,3 +11625,47 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      verifications; at `WAYBACK_PACE_S` 6 that is 22 minutes of sends, inside the 30-minute
      `WAYBACK_TIME_BUDGET_MIN` and under the archive's 15 a minute). Until `infra` applies
      it, the day cap is documentation.
+
+580. **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
+     the column at all** — lane: `roles` (both files). Filed 2026-09-11 by `jd-text`, which
+     built the other half; that lane's session asked for this as a PROPOSAL rather than a
+     merge, so it is filed with the exact diff rather than applied.
+     `matched.jd_refuted` (ARCHITECTURE.md §7a) is honoured by `enrich_matched_jd._store_text`
+     and by nothing else. Two paths can still install a text this store has been told is not
+     the role's:
+
+     * `pipeline/store.py:775-801` — `description=CASE WHEN length(?) > length(COALESCE(
+       description,'')) THEN ? ELSE description END`. Pure length, no JD test, no refutation.
+       Diff: compute `jdfill.refute_key(new_desc)` in Python and add
+       `AND instr(COALESCE(jd_refuted,''), ?) = 0` to both CASE arms, with `jd_refuted`
+       declared in the store's own schema (the `jd_attempted` precedent).
+     * `pipeline/roles.py:865` — `better_description(a, b)` is symmetric longer-JD-wins, and
+       `reconcile` calls it inside `Ledger.open_sync`, which `daily-digest.yml` runs AFTER the
+       enricher. Diff, four lines: `better_description(a, b, refuted=())`, and after the
+       `jd_body` step `ra, rb = key(a) in refuted, key(b) in refuted; if ra != rb: return b if
+       ra else a`; `reconcile` passes the union of `row["jd_refuted"]` and `rec["jd_refuted"]`
+       and writes `out["jd_refuted"]`; `"jd_refuted"` joins `CORE` and
+       `store._matched_cols_live` beside `jd_why`, generalising the two `jd_why` special cases
+       in `_absorb` and `_open_sync` to a `_CARRIED` tuple.
+
+     **Live exposure today is 0 rows**, which is why this is filed rather than urgent: both
+     refuted rows are `closed`, their own cache cards share the refuted key, and both stores
+     already hold the repaired text. The class returns the moment a LIVE row is refuted — that
+     morning's fetch installs the wrong text through `upsert_matched` before `open_sync` runs,
+     and `reconcile` then has no way to prefer the right one.
+
+581. **The scrape cache keeps the page furniture this layer now cuts, and nothing re-cleans it**
+     — lane: `jd-text`. Filed 2026-09-11.
+     `_reclean` walks `matched` only. Over `scraped_cache.json`'s 1,933 stored descriptions the
+     same rules would cut **3** bodies on the LinkedIn rail and ~60 on the application-form
+     density rule (~44,000 characters, measured 2026-09-11) — and a card is what the `cache`
+     donor rung offers a row whose own address gives nothing, so that furniture is one donor
+     away from a role's description. `enrich_scrape_jd.py` has no re-clean path at all: its
+     `save()` only judges text it has just fetched. Wanted: the same pass over the cache under
+     the same floor (`looks_like_jd` after the cut) and the same share ceiling, in the 12:30
+     `jd-archive` run rather than in the digest. Not done here because the cache is a 0.8 MB
+     patch a day and this session's commit already carries the whole `matched` store.
+     `578@jd-text` is the second reason to build it, and it was filed by `registry` the same
+     day: three cards in this file carry a Bright Data CAPTCHA page as their description,
+     and a pass that re-judges STORED cache text is where that class gets caught.
+

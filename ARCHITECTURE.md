@@ -2961,10 +2961,23 @@ git log --format='%h %ad' --date=short -S 'taboola' -i -- cloud_state/roles_text
 git show 24619a1:cloud_state/roles_text.jsonl | grep -i taboola | python -c "import json,sys;[print(json.loads(l)['description'][:400]) for l in sys.stdin]"
 ```
 
-Taboola's Product Analyst — the case this subsection exists for — was filed as "gone, zero
-snapshots, description unrecoverable forever". It is not: the second command above prints
-its description from `24619a1` (2026-08-28), the last commit of `roles_text.jsonl` that
-carried it, and the discovery cache holds eight other Taboola titles across seven commits.
+**Grep by `role_id`, never by company — this paragraph said the opposite for a week and was
+wrong.** It read: "Taboola's Product Analyst was filed as description unrecoverable forever.
+It is not: the second command above prints its description from `24619a1`." The command does
+print a Taboola description from that commit, and it belongs to a DIFFERENT posting.
+`taboola|product analyst taboola news maternity leave cover` is gh_jid **8035266** (3,967
+characters, in the text ledger since its first commit) and `taboola|data analyst algorithms`
+is 8076468. The withdrawn row is gh_jid **8035268**, `taboola|product analyst maternity leave
+replacement`, and it has never had text in any store at any commit — checked on 2026-09-11
+over every commit of `roles_text.jsonl` (`-S 'maternity leave replacement'` hits are the
+similar-jobs rail of OTHER rows naming that title), over `seen.db` at `2ba55c7`, `9ae9546` and
+`24619a1` (`length(description)` = 0 at all three), over both caches, against the Greenhouse
+API (404), against the Wayback CDX (no snapshot of any of four url forms) and against the live
+page (200, and 0 characters of posting). Its retraction's own evidence — `desc_len 0` — was
+right, and the reinstatement this paragraph invited would have installed another posting's
+text under its name. Three sessions confirmed it independently that day (`jd-text`, `roles`,
+the orchestrator).
+
 What git cannot hold is a page we never fetched: `roles_text.jsonl` carries a description
 only for rows that got one, and a card the classifier judged title-only has no text anywhere.
 
@@ -4711,6 +4724,130 @@ worked and changed nothing. With `lists`, 2,835.
 
 Comeet (36 seen_ids) and Ashby (8) are deliberately out of scope: neither has a per-job
 endpoint, and re-reading a whole board belongs to `ats-fetch` (`docs/BACKLOG.md` 375).
+
+### A posting has a HEAD, and a page has a RAIL — 2026-09-11
+
+*lane: `jd-text`. Record: `docs/sessions/2026-09-11-jd-text.md`. The audit of the published
+file that morning found one text class and it was the largest this layer has had: **49 of the
+177 published rows carried a similar-jobs list of other employers' postings as their own
+description**, plus 13 more whose own board's text had been outranked by a longer LinkedIn
+copy of the same role. `description_len` overstated the posting two- to three-fold on every
+one of them, and `seniority.prompt_slice`'s 1,400-character window could be filled with a
+competitor's listing.*
+
+**Three rules were wrong, and each was wrong in a different way.**
+
+| | what was missing | what it cost |
+|---|---|---|
+| the TAIL | `_PAGE_FURNITURE` carried `similar jobs` but not `עבודות דומות`, and nothing at all for `Show more`/`Show less`, `רמת ותק` / `Seniority level`, the referrals line | `furniture_at` returned None on **every** `il.linkedin.com` capture this board stores, so `jd_body` and the nightly `_reclean` cut nothing |
+| the HEAD | nothing. `jd_body` is a tail rule and there was no head rule at all | the page's own header — title, company, `Report this job`, and a four-line block naming the recruiter — stood where the posting's first line belongs |
+| the head SKIP | `extract_jd` cut at `seniority._ROLE_START`, the CLASSIFIER's regex | its alternatives are prose (`as an? `, `you'?ll `, `in this role`) or the requirements header, so a cut landed mid-sentence on **105 of 244** stored rows and deleted the whole responsibilities section on 13 |
+
+**Where each rule lives is the decision, not a detail.** The tail cut is in `jd_body`, which
+every reader sees. The head cut (`jdfill.strip_head`) is deliberately NOT: `jd_body` IS the
+semantics of `looks_like_jd`, which decides `roles.text_quality` for every published row and
+`run`'s own publish gate — and `roles.better_description` RETURNS `jd_body(...)` rather than
+one of its two inputs, so a head rule there becomes a second head-SHORTENING path writing BOTH
+stores with none of `_reclean`'s floor or share ceiling. That is wave 2's shape (13 rows,
+39,956 characters restored minutes after being cut), and a positional "drop the next three
+lines" rule with one false positive would delete a real posting at every reader at once. So
+the head cut runs where a text is CREATED (`extract_jd`) and where the layer already rewrites
+the store under a floor and a ceiling (`_reclean`), and nowhere else. `looks_like_jd` declines
+`_after_the_wall` for the same reason, and the rule is pinned by a mutation record.
+
+**`_HEAD_SKIP` replaces the borrowed regex** and is line-anchored, section-opening, and
+deliberately free of `requirements`/`qualifications`: a text that begins at its requirements
+has lost half the posting, and no marker may produce that. `seniority._ROLE_START` is
+untouched — `prompt_slice` and `_desc_is_ml` READ with it; they do not rewrite a description
+with it.
+
+**Two guards came out of the same audit.**
+
+* **`page_slice`** (`567`): a capture that begins mid-sentence AND ends exactly on `DESC_MAX`
+  has no beginning and no end. `looks_like_jd` refuses it. Five bodies in the store, one of
+  them `gamida cell|senior business analyst commercial data analytics` — 6,000 characters
+  carrying six field-sales bullets from another posting, which had already turned a classifier
+  verdict to NO. The head test is a CLOSED list of function words, never "the first character
+  is lower-case": a posting may open with a lower-case brand (monday.com, eToro, iAngels).
+* **`mid-sentence-head`** is a fifth `quality_suspect` reason and the only one that buys no
+  model call: there is nothing to adjudicate about a text whose first section is missing, so
+  the row goes straight to the todo and the fixed parser re-captures it.
+
+**The application form is furniture too, and it is a DENSITY rule.** No single form word
+survived measurement over the 2,513 stored bodies: `apply for this job` fires 257 times and
+pushes 20 REAL postings below the bar (it is a button that also sits at the top of a posting),
+`upload cv` 63 fires / 2 lost, `העלאת קורות חיים` 41 / 2, `הגשת מועמדות למשרה` 36 / 9 — nine
+Aeronautics postings cut from 1,650 characters to 272. Three distinct field labels inside 220
+characters is a form; one label is a sentence. At that setting it fires on 66 bodies, removes
+44,301 characters, and three fall below the bar: one genuinely short posting followed by a
+five-step questionnaire, and two site-navigation pages that were never postings.
+
+**The durable refutation channel (`572`).** `matched.jd_refuted` holds `+`-joined
+`jdfill.refute_key` hashes — the sha1 of `jd_body(text)`, so one wrong text is one key wherever
+it is met. Until it existed the verdict "this stored text is not this role's posting" lived in
+one Python set for the length of one run: the 09-01 repair of `prisma photonics|senior product
+analyst` was handed straight back by the 09-02 digest, and a CACHED rejection could never
+re-open the ratchet at all because `llm_cache.verdict` is a bool that carries no class.
+
+| who | what it does with the column |
+|---|---|
+| `_quality_pass` | writes a key when the tier answers `not-a-jd` on a `no-company-echo` candidate, and reads the column ABOVE the `JD_QUALITY` switch — the durable half needs no model, and the state where a repair matters most is a runner whose token is refused |
+| `_store_text` | refuses a text whose key is stored, whatever its length; treats a STORED text whose key is stored as `have=""`, which is the ratchet opening durably |
+| the repair | `_refute(conn, mkey, text)` before installing the true posting |
+
+The key being `jd_body`-based is what makes it hold: Amitim's 4,000-character `scraped_cache`
+card and the 3,999 characters of it that reached `matched` differ by a truncation and a
+leading space, and they share one key — so the donor rung cannot hand the card back the
+morning after the repair. Measured on that row the day it shipped.
+
+**A headed posting outranks a head-truncated one** (`enrich_matched_jd.HEADED_FLOOR`). The
+ratchet compares lengths between two texts that both pass the bar, and a clean re-capture is
+SHORTER precisely because it drops the mangled fragment of company intro the old head skip left
+behind — so it lost every night, for ever. Six rows were in that loop on 2026-09-11
+(`revolut|data analyst finance`: 3,868 characters beginning "as a Great Place to Work" against
+3,524 beginning "About The Role"). The floor is what stops this becoming a way to delete a
+posting: measured over those six, the clean capture keeps 0.74 to 0.91 of the old length, so
+half is far below every real case and far above a fragment.
+
+**`closed-by-page:<date>` is a `jd_why` value written by the cut**, and it is a contract with
+the `roles` lane agreed live on 2026-09-11. `roles.page_closed` closes a LinkedIn-only row on
+`No longer accepting applications` / `כבר לא מקבלים בקשות`, and that sentence sits in the
+header block `strip_head` removes — at offsets 260-501 on the rows that carry it. A text can be
+re-captured; a verdict about a day that has passed cannot, so the cut stamps it where the other
+lane can still read it, and only onto an EMPTY `jd_why` (a `structural:` value is a blocker the
+dataset quotes verbatim). Four rows were stamped by the one-off; a fifth kept its sentence
+because the cut was refused by `_reclean`'s floor, so that lane's text arm still sees it.
+
+**What the one-off did, and why it was a session and not a cron.** 96 rows re-cleaned in
+sqlite (185,872 characters of page furniture), 11 re-captured from their own addresses on free
+rungs, both stores written in the same pass and proved stable across three further
+`Ledger.open_sync` runs — the check that failed on 09-02. **The nightly `_reclean` could not
+have done it**: the share was 39 %, and its ceiling is 15 % precisely so a furniture rule that
+starts matching prose cannot rewrite the store unattended. After the commit the nightly share
+is ~0.
+
+| | before | after |
+|---|---|---|
+| rows whose stored text carries LinkedIn chrome | 62 | **0** |
+| `alma\|senior data analyst` `description_len` | 3,239 | **576** |
+| rows failing `looks_like_jd` (both judged by the new bar) | 15 of 248 | **10 of 248** |
+| rows passing the bar with no strict company echo | 22 | **74** |
+| publishable rows (old code on old text → new code on repaired text) | 241 of 248 | **238 of 248** |
+
+**Two of those numbers moved the wrong way and both are honest.** The echo count rose because
+the chrome used to echo the employer: LinkedIn's header repeats the company name half a dozen
+times, so a posting that never names its own employer looked as though it did. The flag now
+measures the POSTING, which is what it was always meant to ask, and each flagged row buys one
+cached model call. The three rows that stop being publishable are `amazon|…` (already
+`withdrawn`), `gamida cell|…` (`closed`, and the `567` page-slice itself) and
+`mizrahi tefahot bank …|analyst` — the one live row, whose own page says it is no longer
+accepting applications and which the `roles` lane closes on that sentence independently.
+
+**Rejected, with the measurement.** Adding `מה אנחנו מחפשים` to `_JD_MARKERS` would rescue
+that Mizrahi row — it is the Hebrew twin of the existing `we.?re looking` family — but over the
+three caches it promotes **five** bodies and **four of them are site navigation** (Keter's
+careers search, aQurate's, Xtra Mile's, a BrancoWeiss listing page). One real posting is not
+worth four junk ones, and the row is an honest snippet in the todo instead.
 
 ### Which mechanism fills what — read this before believing a cache is empty
 

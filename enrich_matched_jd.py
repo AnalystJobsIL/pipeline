@@ -40,7 +40,8 @@ import time
 from pipeline import jdfill
 from pipeline.jdfill import (DESC_MAX, GONE_MARK, MIN_DESC, RETRY_DAYS, Item, Unlocker,
                              _REPO_ROOT, alarm_for, doc_names_role, due, is_job_url,
-                             jd_body, jd_quality, load_secrets, retry_days_for,
+                             closed_page_at, jd_body, jd_quality, load_secrets,
+                             retry_days_for, strip_head,
                              looks_like_jd, native_candidates, quality_suspect,
                              role_addresses_on, source_copy_url, title_in_slug,
                              record_enrich, run_backfill, stamp_path_for,
@@ -210,6 +211,53 @@ def cache_by_merge_key(path):
     return out
 
 
+def _refuted_keys(conn, mkey):
+    """The texts this row has been told are not its posting, as `jdfill.refute_key` hashes.
+
+    Tolerates a store without the column for the same reason `_store_text` does: this is a
+    library function and a caller may hand it any `matched`-shaped table."""
+    try:
+        row = conn.execute("SELECT COALESCE(jd_refuted,'') FROM matched WHERE mkey=?",
+                           (mkey,)).fetchone()
+    except sqlite3.OperationalError:
+        return frozenset()
+    return frozenset(x for x in str((row or [""])[0]).split("+") if x)
+
+
+def _refute(conn, mkey, text):
+    """Record DURABLY that `text` is not this role's posting. Append-only: a row can be wrong
+    in more than one way, and forgetting an earlier verdict is how the ratchet re-closes on a
+    text somebody already read and disowned."""
+    key = jdfill.refute_key(text)
+    keys = _refuted_keys(conn, mkey)
+    if key in keys:
+        return False
+    try:
+        conn.execute("UPDATE matched SET jd_refuted=? WHERE mkey=?",
+                     ("+".join(sorted(keys | {key})), mkey))
+    except sqlite3.OperationalError:
+        return False
+    conn.commit()
+    return True
+
+
+def _durably_refuted(conn, rows):
+    """The subset of `rows` whose CURRENT text is on that row's own refuted list.
+
+    One query for the whole store: `refute_key` is a sha1 over `jd_body`, so it is only paid
+    for the rows that carry a verdict at all."""
+    try:
+        # `.fetchall()`, never iteration over the cursor: the doubles this suite hands the
+        # tier return a rows OBJECT from `execute` (`_Rows`, with `fetchall` and nothing
+        # else), and iterating it raises a TypeError the driver would report as a crash.
+        got = conn.execute("SELECT mkey, COALESCE(jd_refuted,'') FROM matched").fetchall()
+    except sqlite3.OperationalError:
+        return set()
+    keyed = {m: {x for x in str(v or "").split("+") if x} for m, v in got}
+    return {r[0] for r in rows
+            if keyed.get(r[0]) and jdfill.refute_key(r[6]) in keyed[r[0]]}
+
+
 def _store_text(conn, mkey, text, have, refuted=False):
     """Write `text` unless what is already stored is a better JD.
 
@@ -220,7 +268,10 @@ def _store_text(conn, mkey, text, have, refuted=False):
     not one, and only after both sides are JDs does length decide.
 
     `refuted` is the one thing that opens the length ratchet, and it means: the LLM tier has
-    READ what is stored and answered that it is not this role's posting. Between two texts
+    READ what is stored and answered that it is not this role's posting. Since 2026-09-11 it
+    is also read from the STORE (`matched.jd_refuted`, `_refuted_keys`), so the verdict
+    outlives the run that reached it -- and the same column refuses a disowned text on the way
+    IN, which is what stops a cache card handing it back the morning after a repair. Between two texts
     that both look like job descriptions the ratchet has no way to prefer the right one — it
     compares lengths — so a COMPLETE posting belonging to somebody else is unreplaceable by
     the shorter true one. `prisma photonics|senior product analyst` held 3,276 characters of
@@ -232,6 +283,14 @@ def _store_text(conn, mkey, text, have, refuted=False):
     A refuted row is not open house either — the donor identity gate is untouched, so only
     text that names THIS role at THIS employer can land in the hole this opens."""
     text, have = (text or "")[:DESC_MAX], have or ""
+    disowned = _refuted_keys(conn, mkey)
+    if disowned and jdfill.refute_key(text) in disowned:
+        # This exact text was read and disowned for this row before. Whatever rung offered it
+        # again -- a `scraped_cache` card the morning after a repair, a donor sibling -- it is
+        # still not this role's posting, and the length ratchet must not get to decide.
+        return False
+    if disowned and jdfill.refute_key(have) in disowned:
+        refuted = True
     if jdfill._is_markup_soup(text):
         # Serialization is never a description, so it may not be stored even onto a row that
         # has nothing: `looks_like_jd` is False on BOTH sides there, and the length ratchet
@@ -247,8 +306,29 @@ def _store_text(conn, mkey, text, have, refuted=False):
         have = ""
     if looks_like_jd(have) and not looks_like_jd(text):
         return False
+    if (looks_like_jd(have) and looks_like_jd(text)
+            and jdfill.mid_sentence_head(have) and not jdfill.mid_sentence_head(text)
+            and len(text) >= HEADED_FLOOR * len(have)):
+        # A head-truncated posting is a DEFECTIVE text, not a longer one, and the ratchet
+        # cannot see that: between two texts that both pass the bar it compares lengths, so
+        # the clean re-capture -- which is shorter precisely because it drops the mangled
+        # fragment of company intro the old head skip left behind -- loses every night, for
+        # ever. Six rows were in exactly that loop on 2026-09-11 (`revolut|data analyst
+        # finance` 3,868 characters beginning "as a Great Place to Work" against 3,524
+        # beginning "About The Role").
+        #
+        # `HEADED_FLOOR` is what stops this becoming a way to delete a posting: a tidy
+        # heading on a 300-character fragment must not beat 6,000 characters of real text.
+        # Measured over those six, the clean capture keeps 0.74 to 0.91 of the old length --
+        # it is the same posting minus the fragment -- so a floor at half is far below every
+        # real case and far above a fragment.
+        return _write(conn, mkey, text)
     if looks_like_jd(have) == looks_like_jd(text) and len(text) <= len(have):
         return False
+    return _write(conn, mkey, text)
+
+
+def _write(conn, mkey, text):
     # A `structural:` reason is a claim that this row has NO readable description, and it is
     # published as such by the `roles` export. The moment any path writes one, that claim is
     # false — and the two paths that fill a row without going through the donor pass (the
@@ -264,6 +344,9 @@ def _store_text(conn, mkey, text, have, refuted=False):
     except sqlite3.OperationalError:
         conn.execute("UPDATE matched SET description=? WHERE mkey=?", (text, mkey))
     return True
+
+
+
 
 
 _QUALITY_CONTRACT = hashlib.sha1(
@@ -285,20 +368,25 @@ QUALITY_BUDGET_MIN = 4.0
 # broken run until proven otherwise. On 2026-08-28 the honest number was 17 of 542 stored
 # bodies (3.1 %%); anything above this ceiling means the furniture rule has started matching
 # ordinary prose, and the run refuses rather than rewriting the store.
+# What a clean, properly-headed re-capture must keep of a head-truncated text before it may
+# replace it. Measured 2026-09-11 on the six rows in that loop: 0.74 to 0.91. See `_store_text`.
+HEADED_FLOOR = 0.5
 RECLEAN_MAX_SHARE = 0.15
 # what the archived pass gets first refusal on, so it cannot be starved by the live one
 ARCHIVED_BUDGET_SHARE = 0.25
 
 
 def _reclean(conn, every, dry_run):
-    """Cut the page furniture off the tail of text ALREADY in the store. No requests, no
-    credits, and the only path in this lane permitted to shorten a description.
+    """Cut the page furniture off the tail -- and, since 2026-09-11, the page's own header off
+    the FRONT (`jdfill.strip_head`) -- of text ALREADY in the store. No requests, no credits,
+    and the only path in this lane permitted to shorten a description.
 
     `looks_like_jd` judges `jd_body(text)`, so a row whose furniture starts late still reads
     as a job description and never enters the todo -- but the board renders what is STORED,
     and on 2026-08-28 that was 60,015 characters of LinkedIn sign-in form across 17 bodies,
     twelve of them open. Judging the posting and publishing the page is the worst of both."""
-    todo = [(r[0], r[6], jd_body(r[6])) for r in every]
+    todo = [(r[0], r[6], strip_head(jd_body(r[6])), (str(r[4] or "")[:10] or str(r[8] or "")))
+            for r in every]
     # `looks_like_jd(new)`, not `len(new) >= MIN_DESC`. The cut takes the EARLIEST marker,
     # and on a Hebrew LinkedIn page the sign-in block renders BEFORE the posting -- so for
     # three rows the rule kept 367-682 characters of navigation and deleted the description.
@@ -310,7 +398,7 @@ def _reclean(conn, every, dry_run):
     # the row stays as it is, fails `looks_like_jd` anyway, and goes to the fetch.
     # Measured: 16 rows/56,463 chars under the old guard, 13 rows/39,969 under this one,
     # and the three spared are exactly the three that were damaged.
-    todo = [(k, old, new) for k, old, new in todo if new != old and looks_like_jd(new)]
+    todo = [(k, old, new, d) for k, old, new, d in todo if new != old and looks_like_jd(new)]
     if not todo:
         return 0, 0, {}
     share = len(todo) / float(len(every) or 1)
@@ -319,17 +407,31 @@ def _reclean(conn, every, dry_run):
               f"({share:.0%}) would be shortened, over the {RECLEAN_MAX_SHARE:.0%} ceiling. "
               f"That is a furniture rule matching prose, not a store full of login walls.",
               flush=True)
-        return -len(todo), sum(len(o) - len(n) for _k, o, n in todo), {}
+        return -len(todo), sum(len(o) - len(n) for _k, o, n, _d in todo), {}
     cut = 0
-    for mkey, old, new in todo:
+    for mkey, old, new, when in todo:
         cut += len(old) - len(new)
-        print(f"  [CUT] {mkey[:58]:<58} {len(old):>5} -> {len(new):<5} "
-              f"(-{len(old) - len(new)} of page furniture)", flush=True)
+        # The page said this posting had stopped taking applicants, and the cut is about to
+        # remove the sentence that said so -- it lives in the header block, at offsets
+        # 260-501 on the five rows that carry it. `roles.page_closed` reads it to close a
+        # LinkedIn-only row, so the cut stamps the verdict where that lane can still find it
+        # (contract agreed live with the `roles` session, 2026-09-11). Only onto an EMPTY
+        # `jd_why`: a `structural:` value is a blocker the dataset publishes, and this may
+        # not overwrite one.
+        closing = (closed_page_at(old) is not None and closed_page_at(new) is None)
         if not dry_run:
-            conn.execute("UPDATE matched SET description=? WHERE mkey=?", (new, mkey))
+            if closing:
+                conn.execute("UPDATE matched SET description=?, jd_why=CASE "
+                             "WHEN COALESCE(jd_why,'')='' THEN ? ELSE jd_why END "
+                             "WHERE mkey=?", (new, "closed-by-page:" + (when or ""), mkey))
+            else:
+                conn.execute("UPDATE matched SET description=? WHERE mkey=?", (new, mkey))
+        print(f"  [CUT] {mkey[:58]:<58} {len(old):>5} -> {len(new):<5} "
+              f"(-{len(old) - len(new)} of page furniture"
+              f"{'; closed-by-page ' + (when or '?') if closing else ''})", flush=True)
     if not dry_run:
         conn.commit()
-    return len(todo), cut, {k: new for k, _old, new in todo}
+    return len(todo), cut, {k: new for k, _old, new, _d in todo}
 
 
 def _quality_pass(conn, every, dry_run):
@@ -346,8 +448,17 @@ def _quality_pass(conn, every, dry_run):
 
     An unavailable model returns nothing: the cheap rule verdict stands. A tier that could
     demote a role on an outage would empty the board every time the token expired."""
+    # The DURABLE half of the refutation channel needs no model, so it is read ABOVE the
+    # switch: a row still carrying a text this store has been told is not its posting is
+    # refuted again, for free, on every run -- including a run with the tier turned off and a
+    # run whose token is refused. That is what makes a repair hold (572); before the column
+    # existed the verdict lived in one set for the length of one run.
+    stored = _durably_refuted(conn, every)
     if os.environ.get("JD_QUALITY", "1") == "0":
-        return set(), set(), Counter()
+        c0 = Counter()
+        if stored:
+            c0["refuted_stored"] = len(stored)
+        return set(stored), set(stored), c0
     # Keyed by the TEXT alone, never by (company, text). One careers page fanned across
     # SEVERAL EMPLOYERS is docs/BACKLOG.md 370 in its worst form, and a company-keyed
     # counter can never reach 2 for it: `otorio|senior data analyst` carries 3,556
@@ -369,6 +480,12 @@ def _quality_pass(conn, every, dry_run):
     t0 = time.time()
     c, incomplete, refuted = Counter(), set(), set()
     c["candidates"] = len(cand)
+    # ...and it is carried into this run's answer, so a CACHED rejection can re-open the
+    # ratchet -- which it could never do on its own, `llm_cache.verdict` being a bool that
+    # carries no class (572's cheaper half).
+    refuted |= stored
+    incomplete |= stored
+    c["refuted_stored"] = len(stored)
     # The seam is dead for the whole run or it is not: an outage answers every candidate the
     # same way. Before this, 13 candidates bought 13 doomed CLI subprocesses on a step whose
     # env had no token (2026-09-01). The remaining candidates are still TALLIED under the same
@@ -376,6 +493,17 @@ def _quality_pass(conn, every, dry_run):
     # second reason string here would render `llm-auth1+llm-breaker12` for one outage.
     dead = ""
     for r, why in cand:
+        if r[0] in stored:
+            continue                       # already refuted from the store; nothing to buy
+        if why == "mid-sentence-head":
+            # Nothing for a model to adjudicate: the text begins in the middle of a sentence,
+            # so its first section is missing whatever the rest says. It costs no call, and
+            # the row goes to the todo where the fixed `_HEAD_SKIP` re-captures it.
+            c["mid_sentence_head"] += 1
+            incomplete.add(r[0])
+            print(f"  [ -- ] {(r[1] + ' | ' + r[2])[:60]:<60} begins mid-sentence "
+                  f"({len(r[6])} chars) -> back in the todo, no call", flush=True)
+            continue
         body = jd_body(r[6])
         # The key carries the PROMPT it was judged under, not just the text. Editing the
         # question would otherwise leave every stored verdict standing for ever -- the trap
@@ -441,6 +569,8 @@ def _quality_pass(conn, every, dry_run):
             # other -- but never unlocks the ratchet. That costs one call per text, once.
             refuted.add(r[0])
             c["refuted"] += 1
+            if not dry_run and _refute(conn, r[0], r[6]):
+                c["refuted_written"] += 1
         # An incomplete text is a TODO only when some rung of ours could improve it. A row
         # sitting exactly on `DESC_MAX` is incomplete because WE truncated it: re-fetching
         # returns the same 6,000 characters, `_store_text` correctly declines to rewrite them,
@@ -478,12 +608,22 @@ def _ensure_columns(conn):
         structural:<reason>   every copy we hold has been tried and none can be read
         refused:identity(N)   N copies were found and none of them names this role
 
+    `jd_refuted` (2026-09-11) is the DURABLE half of the refutation channel (`docs/BACKLOG.md`
+    572): `+`-joined `jdfill.refute_key` hashes of texts that were read and disowned for this
+    row. Until it existed the verdict lived in one Python set for the length of one run, so a
+    repair to a wrong-but-longer description was handed straight back the next morning --
+    `prisma photonics|senior product analyst` was repaired in sqlite on 09-01 and reverted by
+    the 09-02 digest. A cached quality rejection cannot re-open the ratchet either, because
+    `llm_cache.verdict` is a bool and carries no class; the column can, because it is keyed on
+    the TEXT rather than on the question.
+
     The `structural:` prefix is written only by `_donor_pass`, and only once every donor class
     has actually been enumerated — it is a statement about the world, not about a budget. The
     `roles` lane WILL read it verbatim into `description_blocker` in the published dataset
     (agreed 2026-08-31 with that lane's session b; `ok:`/`refused:` are never blockers)."""
     cols = {r[1] for r in conn.execute("PRAGMA table_info(matched)")}
-    for name, decl in (("jd_attempted", "TEXT"), ("jd_tries", "INTEGER"), ("jd_why", "TEXT")):
+    for name, decl in (("jd_attempted", "TEXT"), ("jd_tries", "INTEGER"), ("jd_why", "TEXT"),
+                       ("jd_refuted", "TEXT")):
         if name not in cols:
             conn.execute("ALTER TABLE matched ADD COLUMN %s %s" % (name, decl))
     conn.commit()
