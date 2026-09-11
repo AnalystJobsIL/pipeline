@@ -346,7 +346,15 @@ def page_closed(row, rec=None):
     if host not in ("linkedin.com", "il.linkedin.com"):
         return False
     srcs = row.get("sources") or []
-    srcs = [s for s in (srcs.split("+") if isinstance(srcs, str) else srcs) if s]
+    # sqlite joins the list with `+`; a value of any OTHER type is a bad row, and a bad row
+    # must not take the digest down — this predicate is called from `_alive` in run.py,
+    # which is outside every `_guard` the ledger has. (The `_iso` lesson, roles.py: a
+    # type-check that only covers the shapes you expected is not a type-check.)
+    if isinstance(srcs, str):
+        srcs = srcs.split("+")
+    elif not isinstance(srcs, (list, tuple, set)):
+        return False
+    srcs = [s for s in srcs if s]
     if not srcs or not all(str(s).startswith("discovery-") for s in srcs):
         return False
     if page_says_closed(row.get("description")):

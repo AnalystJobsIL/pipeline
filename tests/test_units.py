@@ -26306,6 +26306,26 @@ def test_page_closed_is_only_for_a_linkedin_row_with_no_board_of_its_own():
                               "jd_why": "closed-by-page:2026-08-28"})
 
 
+def test_a_bad_row_never_takes_the_digest_down_through_the_page_predicate():
+    """`page_closed` is called from `_alive` in run.py, which is OUTSIDE every `_guard` the
+    ledger has — so a wrong-typed field here is not a frozen ledger, it is no email at all.
+    The `_iso` lesson: a type check that only covers the shapes you expected is not one."""
+    from pipeline import roles
+    li = "https://il.linkedin.com/jobs/view/x-1"
+    marker = "No longer accepting applications"
+    assert roles.page_closed(None) is False
+    assert roles.page_closed("not a dict") is False
+    assert roles.page_closed({"url": li, "sources": 7, "description": marker}) is False
+    assert roles.page_closed({"url": li, "sources": {"discovery-linkedin"},
+                              "description": marker}) is True      # a set is a list shape
+    assert roles.page_closed({"url": "http://[", "sources": ["discovery-linkedin"],
+                              "description": marker}) is False     # urlsplit raises on this
+    assert roles.page_closed({"url": None, "sources": None, "description": None}) is False
+    # ...and the canon, on the same principle
+    assert roles.canonical_title(None, None) == ""
+    assert roles.canonical_title(123, "X") == "123"
+
+
 def test_the_page_closure_is_remembered_at_its_url_so_a_chrome_strip_cannot_reopen_it():
     """jd-text may clean the furniture out of stored text at any time. The verdict must
     survive that — and must NOT survive the posting being re-listed at a new address."""
