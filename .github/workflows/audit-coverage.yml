@@ -115,9 +115,13 @@ jobs:
         run: |
           # cloud_state/scan_seen.json: written by the liveness re-scan and never committed
           # until 2026-08-25 (BACKLOG 17)
+          # `cloud_state/queue_state.json` since 2026-09-11 (infra): this job runs
+          # `crack_walled.py --apply` on Sundays and that tool's 14-day cadence is recorded
+          # there now. Unowned, the Sunday crack's attempts are dropped at the commit and
+          # every row it touched is re-bought the next night.
           python persist_state.py commit --as "audit-bot" \
             -m "coverage audit $(date -u +%F) [skip ci]" \
             --own companies.csv scraped_cache.json cloud_state/scan_seen.json \
-                  cloud_state/audit_seen.json
+                  cloud_state/audit_seen.json cloud_state/queue_state.json
 
 # (workflow re-index nudge)

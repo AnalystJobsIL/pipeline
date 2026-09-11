@@ -54,6 +54,7 @@ from resolve_llm import _ask_claude
 from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
+import queue_state as QS
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the
@@ -155,8 +156,8 @@ HUNT_POOL = re.compile(
 
 def in_hunt_pool(r):
     """The hunt pool's OWN membership rule -- dateless. `main()` composes it with the
-    14-day cooldown (`_stale_hunt`/`_actionable_mode`), which is a schedule, not
-    ownership. `registry_health` imports THIS instead of re-spelling the filter as a
+    14-day cadence (`queue_state.row_due`) and `_actionable_mode`, which are a schedule,
+    not ownership. `registry_health` imports THIS instead of re-spelling the filter as a
     closure (the one mirror the wave-6 extraction left behind), and the four sibling
     tools export theirs the same way.
 
@@ -412,39 +413,93 @@ def hunt_one(name, seed, documented=False, mode=""):
 
 
 
-def actionable_mode(note):
-    """A fresh triage mode OVERRIDES the 14-day hunt cooldown.
+def actionable_mode(note, since=""):
+    """A fresh triage mode OVERRIDES the 14-day hunt cadence.
 
-    The cooldown means "the generic hunt already failed here". But a mode means we now
+    The cadence means "the generic hunt already failed here". But a mode means we now
     know WHY it failed and will run a different strategy (search instead of the dead
     seed, LLM extraction instead of regex, unlocker instead of a plain fetch). Without
     this, every row triaged today stays suppressed for 14 days and the modes are dead
-    weight — the hunt pool was literally 0 rows before this was added."""
+    weight — the hunt pool was literally 0 rows before this was added.
+
+    `since` is the date of OUR OWN last recorded attempt (`queue_state`), and it replaces
+    the row's `listing-hunt` note stamp as the thing a mode is compared against. That is
+    the whole fix of 2026-09-11 carried into the second predicate: comparing against the
+    stamp meant that on an evicted row -- 80 of the 93 rows due that night -- there was
+    nothing to compare against, `not h` was True, and every triaged row came back nightly
+    whatever the cadence said. The stamp is still the fallback for a caller that has no
+    attempt log, so the meaning is unchanged where nothing was evicted."""
+    note = note or ""
+    stamp = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note)
+    last = str(since or (stamp.group(1) if stamp else ""))
     # a dated `empty-but-suspect` newer than this tool's last verdict is actionable too:
     # validate_empty saw Israel-role text on a page the scraper called empty, and no
     # scheduled tool cleared that verdict (BACKLOG 65) -- the hunt is the right reader
-    ms = re.search(r"empty-but-suspect (\d{4}-\d{2}-\d{2})", note or "")
-    mh = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
-    if ms and (not mh or ms.group(1) > mh.group(1)):
+    ms = re.search(r"empty-but-suspect (\d{4}-\d{2}-\d{2})", note)
+    if ms and (not last or ms.group(1) > last):
         return True
-    m = re.search(r"dark-triage (\d{4}-\d{2}-\d{2}): ([a-z-]+)", note or "")
+    m = re.search(r"dark-triage (\d{4}-\d{2}-\d{2}): ([a-z-]+)", note)
     if not m:
         return False
     if m.group(2) in ("page-empty", "acquired"):
         return False                      # nothing to hunt; the daily probe owns these
-    h = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
-    return (not h) or m.group(1) >= h.group(1)   # mode is at least as new as the stamp
+    return (not last) or m.group(1) >= last      # mode is at least as new as our attempt
 
-def stale_hunt(note):
-    """Re-hunt ANY hunted row after 14 days — a board empty today isn't empty forever.
-    NOTE: this used to require the literal 'monitored candidate', which made the
-    'no listing found' verdict TERMINAL (rows silently retired from the pool forever,
-    so one broken cycle could permanently delete hundreds of companies' coverage)."""
-    m = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", note or "")
-    if not m:
-        return False
-    age = (dt.date.today() - dt.date.fromisoformat(m.group(1))).days
-    return age >= 14
+# `stale_hunt(note)` — "re-hunt ANY hunted row after 14 days", read off the row's own
+# `listing-hunt <date>` stamp — was DELETED on 2026-09-11 (infra). The RULE is unchanged and
+# now lives in `queue_state.row_due(state, name, RUNG, CADENCE_DAYS, url=...)`; what was
+# wrong was the STORE. The stamp shares a 220-character notes cell with eleven other
+# writers and `notes.append` evicts the oldest unprotected segment to make room, so this
+# tool's own schedule was being deleted by the next tool to write. Measured 2026-09-11: of
+# the 93 rows this pool would have taken that night, **80 carried no `listing-hunt` stamp at
+# all** and 62 of those had notes of 160-220 characters. An evicted stamp reads as "never
+# hunted" and sorts FIRST, so a 617-row pool with a documented fortnightly cadence was
+# re-walked — and re-BOUGHT — every three or four nights: 1,741 credits in eleven days, the
+# single largest line in the Bright Data ledger.
+#
+# Protecting the segment in `pipeline/notes.py` was the obvious fix and is the wrong one:
+# those rows are AT the cap, so one more protected segment makes `append` drop the newcomer
+# instead. `docs/decisions/2026-09-11-bd-unlimited-optimize-once.md` §3.
+RUNG = "listing-hunt"
+CADENCE_DAYS = 14
+
+
+def hunt_targets(rows, qstate):
+    """The rows this tool will PAY for tonight, stalest first — exported like the pool
+    predicate above, so the schedule can be read and tested without a network.
+
+    The 14-day cadence is a schedule, not ownership, so it lives here and not in
+    `in_hunt_pool` — but it is read from `cloud_state/queue_state.json`, never from the
+    row's own note (see the block above `RUNG`: eleven other writers share that cell and
+    evict what they find). `actionable_mode` is composed with it, unchanged: a triage mode
+    or a probe wake newer than our last attempt is NEW EVIDENCE about the row, and evidence
+    outranks a clock.
+
+    Least-recently-hunted first, because the pool (619 rows) is larger than one night's time
+    budget and in file order the budget re-walks the same prefix every night while the tail
+    is never touched. The ordering reads the same store as the cadence, for the same reason:
+    a row whose stamp had been evicted used to sort FIRST, which is exactly backwards.
+    """
+    def _last(name):
+        return max((str(a.get("date") or "") for a in QS.attempts(qstate, name, RUNG)),
+                   default="")
+
+    targets = [(i, r) for i, r in enumerate(rows)
+               if r and in_hunt_pool(r)
+               and (QS.row_due(qstate, r[0].strip(), RUNG, CADENCE_DAYS, url=r[3])
+                    or actionable_mode(r[5] or "", since=_last(r[0].strip())))]
+
+    def _hunt_age(ir):
+        last = _last(ir[1][0].strip())
+        if not last:
+            return 9999                       # never hunted: the front of the queue
+        try:
+            return (dt.date.today() - dt.date.fromisoformat(last)).days
+        except ValueError:
+            return 9999
+
+    targets.sort(key=_hunt_age, reverse=True)
+    return targets
 
 
 def main():
@@ -472,23 +527,8 @@ def main():
     queue_min = int(os.environ.get("HUNT_QUEUE_MIN", "60")) if budget_min else 0
     rows_budget_min = max(1, budget_min - queue_min) if budget_min else 0
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
-    _actionable_mode, _stale_hunt = actionable_mode, stale_hunt   # module-level: importable, testable
-
-    targets = [(i, r) for i, r in enumerate(rows)
-               if r and in_hunt_pool(r)
-               # the 14-day cooldown is a schedule, not ownership: it stays here
-               and ("listing-hunt" not in (r[5] or "") or _stale_hunt(r[5])
-                    or _actionable_mode(r[5] or ""))]
-    # Least-recently-hunted first. The pool (212 rows) is larger than one night's time
-    # budget, and in file order the budget re-walks the same prefix every night while the
-    # tail is never touched. Staleness ordering guarantees progress across the whole pool.
-    def _hunt_age(r):
-        m = re.search(r"listing-hunt (\d{4}-\d{2}-\d{2})", r[1][5] or "")
-        if not m:
-            return 9999
-        return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days
-
-    targets.sort(key=_hunt_age, reverse=True)
+    qstate = QS.load()
+    targets = hunt_targets(rows, qstate)
     # HUNT_SHARD="i/n" splits the pool across n concurrent processes (1-based i). Striding
     # rather than slicing keeps each shard's staleness mix even, so a shard that dies early
     # doesn't leave one age band untouched. Each shard MUST run in its own working copy —
@@ -620,6 +660,16 @@ def main():
                             f"listing-hunt {TODAY}: "
                             + ("no listing found" if verdict == "nolisting" else detail))
                 write_csv_rows("companies.csv", fresh)
+                # The attempt, where the notes cap cannot evict it. The ADDRESS recorded is
+                # the one the row CARRIES after this write (re-read from `fresh`, not the
+                # candidate we tried): `row_due` treats a changed address as new evidence,
+                # so recording a refused candidate here would make every refused row due
+                # again tomorrow and buy back the whole cadence.
+                _addr = next((fr[3] for fr in fresh
+                              if fr and fr[0] == name and len(fr) > 3), r[3] if len(r) > 3 else "")
+                QS.record(qstate, name, RUNG, refused or verdict, url=_addr or "")
+        if apply:
+            QS.save(qstate)
     # ---------------- the intake queue: names that have no row at all (BACKLOG 332)
     # Runs LAST, inside the same time budget, so it can never displace the row pool this
     # tool exists for. Every name it touches gets a row, which is both the answer (the

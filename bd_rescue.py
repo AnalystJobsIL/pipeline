@@ -20,6 +20,8 @@ import time
 import urllib.error
 import urllib.request
 
+import queue_state as _QS
+
 from pipeline import identity_gate as _gate
 from pipeline.notes import replace_own as _note_replace
 from pipeline.verdicts import is_terminal
@@ -79,6 +81,28 @@ LAST = {"error": "", "status": None}
 # from a failure unless it reads `LAST["error"]`. `main()` below does; nothing else in the
 # repo does, which is why a capped pass must never be allowed to write a verdict.
 SPENT = {"n": 0, "capped": False}
+
+# This pass's rung name in `cloud_state/queue_state.json`, and how long an answer holds.
+# Fourteen days is the registry's standing re-check cadence (`listing_hunt`, the intake
+# queue's `in_queue_pool`), not a number invented here.
+RUNG = "bd-rescue"
+CADENCE_DAYS = 14
+
+
+def skip_row(name, note, url, qstate):
+    """Why this pass leaves a row alone tonight — exported, like every pool predicate here,
+    so the rule can be read and tested without a network and without `main()`.
+
+    Three reasons, and only the third is a clock: a host Bright Data's policy refuses is
+    never retried (BACKLOG 110); a row this pass has failed three times is retired from the
+    pool for good; everything else waits out `CADENCE_DAYS` since our last ATTEMPT, whatever
+    that attempt concluded. Membership itself is `retry_unreachable.in_retry_pool` and stays
+    there — this is the schedule, not the pool."""
+    note = note or ""
+    m2 = re.search(r"bd-tried (\d{4}-\d{2}-\d{2}) x(\d+)", note)
+    return bool("bd-policy" in note
+                or (m2 and int(m2.group(2)) >= 3)
+                or not _QS.row_due(qstate, name, RUNG, CADENCE_DAYS, url=url))
 
 
 def run_cap():
@@ -225,14 +249,19 @@ def main():
     # would otherwise be unlocked -- and paid for -- 90 s before retry_unreachable skips it)
     from retry_unreachable import in_retry_pool          # the chain's ONE selector
     idx = {r[0].strip(): (i, r[3]) for i, r in enumerate(rows) if in_retry_pool(r)}
-    import datetime as _dtm
-    recent = (_dtm.date.today() - _dtm.timedelta(days=7)).isoformat()
+    # THE CADENCE IS NOT IN THE NOTE ANY MORE (infra, 2026-09-11). The 7-day cooldown this
+    # skip used to apply keyed on `bd-tried <date>`, which is written only when a row is
+    # STILL UNREACHABLE -- and this pass's commonest outcome by far is `validated` (a page
+    # was read, no board on it), whose stamp `scanned via brightdata` carries no date at all.
+    # So 15 of the pool's 17 rows were re-bought every single night: four consecutive nights
+    # read `rescued 0 - validated 16-18` at 80-95 credits each. The attempt is recorded in
+    # `cloud_state/queue_state.json` now, whatever the verdict, and `row_due` is the one
+    # cadence predicate the intake queue already uses.
+    qstate = _QS.load()
     def _skip(name):
-        note = rows[idx[name][0]][5] if len(rows[idx[name][0]]) > 5 else ""
-        m2 = re.search(r"bd-tried (\d{4}-\d{2}-\d{2}) x(\d+)", note)
-        # a host Bright Data's policy refuses is never retried (BACKLOG 110)
-        return bool("bd-policy" in note
-                    or (m2 and (m2.group(1) >= recent or int(m2.group(2)) >= 3)))
+        rowi, url = idx[name]
+        note = rows[rowi][5] if len(rows[rowi]) > 5 else ""
+        return skip_row(name, note, url, qstate)
     names = [n for n in idx if not _skip(n)]
     names = names[:limit] if limit else names
     print(f"bright-data rescuing {len(names)} unreachable ...")
@@ -299,6 +328,7 @@ def main():
                     print(f"  [OK] {name}: {plat} jobs={n_all} il={il}", flush=True)
                     break
         if resolved:
+            _QS.record(qstate, name, RUNG, "rescued", url=url)
             time.sleep(1)
             continue
         if policy and not best_html:
@@ -308,9 +338,13 @@ def main():
                                           "bd-policy", f"bd-policy {_dtm.date.today().isoformat()}: {policy}")
             _MOD.add(name)
             print(f"  pol  {name} ({policy}: host closed to the unlocker; not retried)", flush=True)
+            _QS.record(qstate, name, RUNG, "bd-policy", url=url, why=policy)
             time.sleep(1)
             continue
         if capped:
+            # ...and no ATTEMPT recorded either, for the same reason the note is not
+            # stamped: a budget must never be able to put a row on a 14-day cooldown for a
+            # page nobody fetched (CLAUDE.md rule 2).
             print(f"  skip {name}: BD_RUN_CAP reached, nothing was fetched -- no verdict "
                   f"written, the row keeps its place in tomorrow's pool", flush=True)
             continue
@@ -327,6 +361,7 @@ def main():
                 _base, "bd-tried",
                 f"bd-tried {_dtm.date.today().isoformat()} x{n_try}")
             _MOD.add(name)
+            _QS.record(qstate, name, RUNG, "unreachable", url=url, tries=n_try)
             print(f"  unre {name}", flush=True)
             time.sleep(1)
             continue
@@ -342,6 +377,9 @@ def main():
                              note + " - monitored candidate")
         rows[rowi] = [name, "scrape", best_url, best_url, "false", note]
         _MOD.add(name)
+        # The address this pass settled on, not the one it started from: if the row's own
+        # url moves later, `row_due` treats that as new evidence and buys it again.
+        _QS.record(qstate, name, RUNG, "validated", url=best_url)
         empt += 1
         print(f"  empt {name}", flush=True)
         time.sleep(1)
@@ -352,6 +390,7 @@ def main():
         if fr and len(fr) > 5 and fr[0] in changed:
             fresh[_i] = changed[fr[0]]
     write_csv_rows("companies.csv", fresh)
+    _QS.save(qstate)
     print(f"=== rescued {fixed} · validated {empt} · still unreachable {still} ===")
 
 

@@ -153,6 +153,55 @@ def registry_names():
         return set()
 
 
+# The rungs a parked ROW can be owed a PAID attempt by. They are deliberately NOT in `RUNGS`
+# above: that ladder is the intake queue's, `next_rung` walks it, and a row is not a name.
+# What the two share is the QUESTION -- "has this rung answered this subject inside N days?"
+# -- and therefore the predicate (`tried_within`), which is the whole reason these records
+# live here rather than in a third file.
+#
+# WHY A ROW'S CADENCE MOVED OUT OF THE NOTES COLUMN (infra, 2026-09-11). Every row tool
+# stamped its own dated verdict into `companies.csv` and read that stamp back as its
+# schedule. The notes cell is 220 characters shared by twelve writers, and `notes.append`
+# evicts the oldest UNPROTECTED segment to make room -- so a tool's own schedule was being
+# deleted by the next tool to write. Measured that morning: of the 93 rows `listing_hunt`
+# would have taken that night, 80 carried no `listing-hunt` stamp at all and 62 of those had
+# notes of 160-220 characters. An evicted stamp reads as "never hunted" and sorts FIRST, so
+# a 617-row pool with a documented 14-day cadence was being re-walked, and re-BOUGHT, every
+# three or four nights (1,741 credits in eleven days).
+#
+# Protecting the stamp was the obvious fix and is the wrong one: those rows are at the cap,
+# so one more protected segment makes `append` drop the NEWCOMER instead -- the newest
+# verdict, from whichever tool ran last. A schedule does not belong in a 220-char budget.
+# `docs/decisions/2026-09-11-bd-unlimited-optimize-once.md` 3a-3b.
+ROW_RUNGS = ("bd-rescue", "listing-hunt", "crack-walled")
+
+
+def row_due(state, name, rung, days=14, url=""):
+    """Is a parked ROW owed a paid attempt by `rung` tonight?
+
+    Due when this rung has never tried it, when its last attempt is older than `days`, or
+    when the row's ADDRESS has changed since that attempt -- a different `url` is different
+    evidence, and re-checking it is the point rather than the waste. The row's OTHER escape
+    hatches stay where they are and keep their own owners: `listing_hunt.actionable_mode`
+    (a triage mode or a probe wake newer than the attempt) is composed with this, not
+    replaced by it, because those are facts about the row and this is only a clock.
+
+    Note for a reader of the census: `record()` also updates the per-name top-level
+    `verdict`/`last`, so a name that is BOTH an intake name and a registry row will show its
+    row verdict in `census()`'s CURRENT VERDICT table. That is cosmetic -- such a name is
+    `is_settled` through `registry_names()` long before any rung asks -- and no cadence,
+    stamp or alarm reads that field: they all filter by rung.
+    """
+    tried = attempts(state, name, rung)
+    if not tried:
+        return True                        # never bought: tonight is its first night
+    if url:
+        last = max(tried, key=lambda a: str(a.get("date") or ""))
+        if str(last.get("url") or "") and str(last.get("url") or "") != str(url):
+            return True                    # the address moved; that is new evidence
+    return not tried_within(state, name, rung, days)
+
+
 def in_queue_pool(entry, state, rung, days=14, have=None):
     """THIS rung's own membership rule for a queue entry — the pool a `companies.csv` row has
     and a name did not. Composed with a cadence, exactly as the row pools are."""

@@ -1323,7 +1323,7 @@
   "file": "listing_hunt.py",
   "symbol": "actionable_mode",
   "class": "M1-gate-removal",
-  "find": "    if ms and (not mh or ms.group(1) > mh.group(1)):\n        return True",
+  "find": "    if ms and (not last or ms.group(1) > last):\n        return True",
   "replace": "    if False:\n        return True",
   "why": "a suspect verdict newer than the hunt's last one must re-arm the hunt (BACKLOG 65).",
   "must_be_killed_by_behavioural": true
@@ -1341,10 +1341,10 @@
  {
   "id": "bd-policy-retry",
   "file": "bd_rescue.py",
-  "symbol": "main",
+  "symbol": "skip_row",
   "class": "M1-gate-removal",
-  "find": "        return bool(\"bd-policy\" in note\n                    or (m2 and (m2.group(1) >= recent or int(m2.group(2)) >= 3)))",
-  "replace": "        return bool(m2 and (m2.group(1) >= recent or int(m2.group(2)) >= 3))",
+  "find": "    return bool(\"bd-policy\" in note\n                or (m2 and int(m2.group(2)) >= 3)\n                or not _QS.row_due(qstate, name, RUNG, CADENCE_DAYS, url=url))",
+  "replace": "    return bool((m2 and int(m2.group(2)) >= 3)\n                or not _QS.row_due(qstate, name, RUNG, CADENCE_DAYS, url=url))",
   "why": "a policy-closed host retried nightly spends a credit for the same answer (BACKLOG 110).",
   "must_be_killed_by_behavioural": true
  },

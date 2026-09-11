@@ -30521,3 +30521,157 @@ def test_the_delta_audit_lines_bind_to_exactly_one_record_each():
         assert e["status"] == "withdrawn" and e["url"].startswith("https://")
         hits = [rid for rid, rec in records.items() if e in ret.match_all(rec)]
         assert hits == [e["role_id"]], (e["role_id"], hits)
+
+# ------------------------------------------------------------------ lane: infra, 2026-09-11
+# A parked row's re-check CADENCE moved out of the 220-char notes cell and into
+# `cloud_state/queue_state.json`, because eleven other writers were evicting it and the three
+# paid tools were therefore re-buying rows they had already answered (1,741 + 1,032 + 847
+# credits in eleven days). `docs/decisions/2026-09-11-bd-unlimited-optimize-once.md`.
+#
+# Every fixture date below is RELATIVE to the clock the code reads. A literal date inside a
+# freshness window is the rot this same session had to fix in three other guards.
+def _qs_days_ago(n):
+    import datetime as _d
+    return (_d.date.today() - _d.timedelta(days=n)).isoformat()
+
+
+@pytest.mark.parametrize("rung", ["bd-rescue", "listing-hunt", "crack-walled"])
+def test_a_parked_rows_cadence_is_one_predicate_over_the_attempt_log(rung):
+    """`row_due` is the whole schedule for a paid row tool: never tried, aged out, or the
+    ADDRESS moved. It is a composition of `tried_within` -- the intake queue's cadence -- and
+    not a second one, because this repo keeps one predicate per question."""
+    import queue_state as QS
+    st = {}
+    assert QS.row_due(st, "A", rung, 14, url="u1"), "never tried: bought the first night"
+    QS.record(st, "A", rung, "validated", day=_qs_days_ago(3), url="u1")
+    assert not QS.row_due(st, "A", rung, 14, url="u1"), "answered 3 days ago: not due"
+    assert QS.row_due(st, "A", rung, 14, url="u2"), \
+        "the address moved since that attempt -- different evidence, not the same question"
+    assert QS.row_due(st, "A", "search-llm", 14, url="u1"), "a cadence is PER RUNG"
+    QS.record(st, "B", rung, "validated", day=_qs_days_ago(15), url="u1")
+    assert QS.row_due(st, "B", rung, 14, url="u1"), "aged out at 14 days"
+    # a recorded attempt is a full attempt, whatever it concluded: `validated` (the page was
+    # read, no board on it) was the outcome with NO dated note token, which is why the 02:30
+    # pass re-bought the same 16 rows every night for 80-95 credits
+    assert QS.attempts(st, "A", rung)[0]["verdict"] == "validated"
+    assert rung not in QS.RUNGS, "row rungs are not on the intake ladder `next_rung` walks"
+    assert rung in QS.ROW_RUNGS
+
+
+def test_the_row_cadence_survives_a_notes_cell_that_evicted_the_stamp(tmp_path, monkeypatch):
+    """THE MEASUREMENT THIS EXISTS FOR (2026-09-11): of the 93 rows `listing_hunt` would have
+    taken that night, 80 carried no `listing-hunt` stamp -- evicted by another tool's write
+    into a 220-char cell -- so they read as *never hunted*, sorted FIRST, and were re-bought.
+
+    The row below is that row: a saturated note whose newest segments belong to `retry` and
+    `dark-triage`, with the hunt's own stamp gone. Three days after a recorded attempt it
+    must NOT be selected; a fortnight later it must be."""
+    import csv as _csv
+    import listing_hunt as LH
+    import crack_walled as CW
+    import queue_state as QS
+    note = ("deep-validated %s: no ATS detected (rendered) | dark-triage %s: no-url (no url "
+            "on the row) | retry %s: scanned; no open Israel roles now"
+            % (_qs_days_ago(30), _qs_days_ago(20), _qs_days_ago(0)))
+    assert len(note) >= 160 and "listing-hunt" not in note     # the shape that was measured
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"],
+            ["Evicted Co", "scrape", "", "https://evicted.example/careers", "false", note]]
+    st = {}
+    assert [r[0] for _, r in LH.hunt_targets(rows, st)] == ["Evicted Co"], \
+        "a row nothing has recorded is due: the first night is always bought"
+    QS.record(st, "Evicted Co", LH.RUNG, "nolisting", day=_qs_days_ago(3),
+              url="https://evicted.example/careers")
+    assert LH.hunt_targets(rows, st) == [], \
+        "hunted 3 days ago -- the note lost the stamp, the log did not"
+    # a FRESH log for the aged case, deliberately: `row_due` asks "has this rung answered
+    # inside N days", so a second, older attempt beside a recent one must NOT re-admit the
+    # row -- and a test that appends to the same log would never notice if it did
+    aged = {}
+    QS.record(aged, "Evicted Co", LH.RUNG, "nolisting", day=_qs_days_ago(15),
+              url="https://evicted.example/careers")
+    assert [r[0] for _, r in LH.hunt_targets(rows, aged)] == ["Evicted Co"], "aged out: due again"
+    QS.record(aged, "Evicted Co", LH.RUNG, "nolisting", day=_qs_days_ago(2),
+              url="https://evicted.example/careers")
+    assert LH.hunt_targets(rows, aged) == [], "the NEWEST attempt decides, not the oldest"
+    # ...and a mode triage wrote TODAY still overrides the cadence, because that is evidence
+    st2 = {}
+    QS.record(st2, "Evicted Co", LH.RUNG, "nolisting", day=_qs_days_ago(1),
+              url="https://evicted.example/careers")
+    # triage REPLACES its own segment (`notes.replace_own`), so a row carries exactly one
+    # `dark-triage` — a fixture that appends a second one is testing a shape that cannot
+    # occur, and `actionable_mode` reads the first match
+    rows[1][5] = note.replace("dark-triage %s: no-url (no url on the row)" % _qs_days_ago(20),
+                              "dark-triage %s: js-shell (job XHRs seen)" % _qs_days_ago(0))
+    assert rows[1][5].count("dark-triage") == 1
+    assert [r[0] for _, r in LH.hunt_targets(rows, st2)] == ["Evicted Co"], \
+        "`actionable_mode` is composed with the clock, not replaced by it"
+
+
+def test_the_walled_crack_waits_a_fortnight_and_not_a_night(tmp_path):
+    """`_recrackable(note, days=1)` re-cracked every documented walled host EVERY NIGHT --
+    847 credits in eleven days (16% of the ledger) for 2-3 `cracked-api` a night out of 74
+    rows, because `crack_one` searches when the documented host does not answer. The cadence
+    is the registry's standing fortnight now, and it is the same number in the same place as
+    the other two paid row tools."""
+    import crack_walled as CW
+    import queue_state as QS
+    rows = [["company_name", "ats_platform", "token", "api_url", "active", "notes"],
+            ["Walled Co", "scrape", "", "https://jobs.eightfold.ai/walled", "false",
+             "deep-validated 2026-08-21: unsupported ATS eightfold.ai"]]
+    assert CW.in_crack_pool(rows[1]), "the POOL is unchanged -- only the schedule moved"
+    st = {}
+    assert [r[0] for _, r in CW.crack_targets(rows, st)] == ["Walled Co"]
+    QS.record(st, "Walled Co", CW.RUNG, "nocapture", day=_qs_days_ago(1),
+              url="https://jobs.eightfold.ai/walled")
+    assert CW.crack_targets(rows, st) == [], "yesterday's answer holds: not re-bought tonight"
+    aged = {}
+    QS.record(aged, "Walled Co", CW.RUNG, "nocapture", day=_qs_days_ago(14),
+              url="https://jobs.eightfold.ai/walled")
+    assert [r[0] for _, r in CW.crack_targets(rows, aged)] == ["Walled Co"]
+    assert CW.CADENCE_DAYS == 14 and CW.RUNG == "crack-walled"
+
+
+def test_the_rescue_pass_does_not_re_buy_a_row_it_validated(tmp_path):
+    """`validated` -- a page was READ and carried no board -- is this pass's commonest
+    outcome and its note token (`scanned via brightdata`) carries no date, so the 7-day
+    cooldown keyed on `bd-tried` never applied to it: 15 of the pool's 17 rows were bought
+    every night, four nights running at `rescued 0 - validated 16-18`, 80-95 credits each.
+
+    A validated answer now counts as an answer. The two refusals that are NOT clocks --
+    a policy-closed host and a row failed three times -- are unchanged."""
+    import bd_rescue as B
+    import queue_state as QS
+    st = {}
+    assert not B.skip_row("A", "unreachable; could not scan", "https://a.example", st)
+    QS.record(st, "A", B.RUNG, "validated", day=_qs_days_ago(2), url="https://a.example")
+    assert B.skip_row("A", "scanned via brightdata; no open Israel roles now - monitored "
+                      "candidate", "https://a.example", st), "validated 2 days ago: answered"
+    assert not B.skip_row("A", "scanned via brightdata; no open Israel roles now",
+                          "https://moved.example", st), "the row's address moved: re-read it"
+    aged = {}
+    QS.record(aged, "B", B.RUNG, "validated", day=_qs_days_ago(15), url="https://b.example")
+    assert not B.skip_row("B", "", "https://b.example", aged), "aged out at 14 days"
+    # the two non-clock refusals
+    assert B.skip_row("C", "bd-policy 2026-09-01: policy_20140", "https://c.example", st)
+    assert B.skip_row("D", "bd-tried %s x3" % _qs_days_ago(40), "https://d.example", st)
+    assert not B.skip_row("E", "bd-tried %s x2" % _qs_days_ago(40), "https://e.example", st)
+
+
+def test_every_workflow_that_records_a_row_attempt_owns_the_file_it_records_into():
+    """An unowned path is discarded by `persist_state.py commit`, so the attempt would never
+    land and the row would be re-bought the next night -- the bug the move was made to fix,
+    reintroduced by a missing filename. `crack_walled --apply` runs in TWO workflows (19:00
+    daily and the Sunday audit), which is the one a reviewer misses."""
+    import os as _os
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    runs = {"listing-hunt.yml": ("listing_hunt.py --apply", "crack_walled.py --apply"),
+            "retry-unreachable.yml": ("bd_rescue.py",),
+            "audit-coverage.yml": ("crack_walled.py --apply",)}
+    for wf, tools in runs.items():
+        text = open(_os.path.join(root, ".github", "workflows", wf), encoding="utf-8").read()
+        assert any(t in text for t in tools), f"{wf}: expected to run one of {tools}"
+        assert "cloud_state/queue_state.json" in text.split("--own", 1)[1], \
+            f"{wf} runs a tool that records a row attempt but does not --own queue_state.json"
+    import persist_state as P
+    assert P.strategy_for("cloud_state/queue_state.json")[0] is P.s_company_dict, \
+        "two workflows write it on different schedules: the merge must be per NAME"

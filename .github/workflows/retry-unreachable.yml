@@ -78,8 +78,12 @@ jobs:
         if: always()
         timeout-minutes: 10
         run: |
+          # `cloud_state/queue_state.json` since 2026-09-11 (infra): `bd_rescue` records its
+          # attempt there, and THAT is now its 14-day cadence. Unowned, the record would be
+          # discarded at the commit and this pass would re-buy all 17 rows every night --
+          # which is exactly the bug the move was made to fix.
           python persist_state.py commit --as "retry-bot" \
             -m "retry-unreachable $(date -u +%FT%H:%M) [skip ci]" \
-            --own companies.csv scraped_cache.json
+            --own companies.csv scraped_cache.json cloud_state/queue_state.json
 
 # (workflow re-index nudge)

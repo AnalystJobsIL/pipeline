@@ -37,6 +37,7 @@ from pipeline import identity_gate as _gate
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 from pipeline.company_identity import is_foreign
+import queue_state as QS
 # The identity gate is `pipeline/` because five root tools consult it and it used to live
 # here, in a leaf, reachable from two of them only through a lazy in-function import that
 # existed to dodge an import cycle. docs/BACKLOG.md 30. These names are re-exported under
@@ -97,7 +98,7 @@ def _platform_of(note, url=""):
 
 
 def in_crack_pool(r):
-    """The crack pool's OWN membership rule (dateless -- `main()` adds `_recrackable`,
+    """The crack pool's OWN membership rule (dateless -- `main()` adds the cadence,
     the rotation cooldown). `registry_health` imports this instead of re-spelling
     `is_walled + terminal + recruiter`, and the behavioural cells pin each exclusion:
     a `redundant`-noted walled twin (Marvell Israel) must never re-enter -- dropping
@@ -294,15 +295,45 @@ def crack_one(name, seed, platform):
     return ("novrfy", captures[0], 0, f"host found ({captures[0][1][:60]}) but 0 IL extracted")
 
 
-def _recrackable(note, days=1):
-    """Re-crack after `days` — DAILY by default: the ATS host is already documented,
-    so a re-check is one fetch of a known endpoint, not a rediscovery.
-    (Once-ever filters silently freeze
-    coverage — same bug class fixed in listing_hunt/_stale_hunt and deep_validate)."""
-    m = re.search(r"crack-walled (\d{4}-\d{2}-\d{2})", note or "")
-    if not m:
-        return True
-    return (dt.date.today() - dt.date.fromisoformat(m.group(1))).days >= days
+# `_recrackable(note, days=1)` -- re-crack DAILY, off the row's own `crack-walled <date>`
+# stamp -- was DELETED on 2026-09-11 (infra). Two things were wrong with it and the second
+# is the expensive one:
+#
+#   * the CADENCE. Daily was justified by "the ATS host is already documented, so a re-check
+#     is one fetch of a known endpoint" -- but the measured cost was 847 credits in eleven
+#     days (16% of the whole Bright Data ledger) for 2-3 `cracked-api` a night out of 74
+#     rows, because `crack_one` searches when the documented host does not answer. A
+#     documented walled host that refused yesterday refuses today; the fortnight the rest of
+#     the registry re-checks on is the right number, and it is now the SAME number in one
+#     place.
+#   * the STORE. It read a dated stamp out of a 220-character notes cell shared by twelve
+#     writers, where `notes.append` evicts the oldest unprotected segment -- the identical
+#     defeat measured on `listing_hunt` the same morning (80 of 93 due rows had lost their
+#     stamp). A schedule kept in that cell is a schedule other tools delete.
+#
+# Both now come from `queue_state.row_due(state, name, RUNG, CADENCE_DAYS, url=...)`, which
+# also re-cracks IMMEDIATELY when the row's address changes -- the case the daily sweep was
+# really there for. `docs/decisions/2026-09-11-bd-unlimited-optimize-once.md` §3.
+RUNG = "crack-walled"
+CADENCE_DAYS = 14
+
+
+def crack_targets(rows, qstate):
+    """The rows this tool will PAY for tonight, least-recently-cracked first — exported like
+    the pool predicate above, so the schedule can be read and tested without a network.
+
+    ROTATE: a time budget without rotation is permanent tail blindness (the bug this lane
+    fixed in `scan_dead_domains` and `probe_candidates` and left standing here). Both the
+    cadence and the ordering read `cloud_state/queue_state.json`, never the row's note — see
+    the block above `RUNG`.
+    """
+    targets = [(i, r) for i, r in enumerate(rows)
+               if r and in_crack_pool(r)
+               and QS.row_due(qstate, r[0].strip(), RUNG, CADENCE_DAYS, url=r[3])]
+    targets.sort(key=lambda ir: max((str(a.get("date") or "")
+                                     for a in QS.attempts(qstate, ir[1][0].strip(), RUNG)),
+                                    default=""))          # never cracked sorts first
+    return targets
 
 
 def main():
@@ -321,19 +352,8 @@ def main():
     # already scans at the same board, so cracking it re-creates the duplicate the parking
     # exists to remove, and a `domain-dead` host cannot be cracked by anything. Measured
     # 2026-08-23: 5 of the 33 eligible rows were terminal (15% of a 60-minute budget).
-    targets = [(i, r) for i, r in enumerate(rows)
-               if r and in_crack_pool(r)
-               and _recrackable(r[5] or "")]
-    # ROTATE: least-recently-cracked first. `_budget` below simply breaks out of the loop,
-    # and this tool had no ordering at all, so on any night the budget bit the tail of the
-    # list was never reached - "a time budget without rotation is permanent tail blindness",
-    # which this lane fixed in `scan_dead_domains` and `probe_candidates` and left standing
-    # here. It matters more now that `_is_walled` derives membership from the row's HOST as
-    # well as its note, because that is a larger pool.
-    def _last_crack(ir):
-        m = re.search(r"crack-walled (\d{4}-\d{2}-\d{2})", ir[1][5] or "")
-        return m.group(1) if m else ""        # never cracked sorts first
-    targets.sort(key=_last_crack)
+    qstate = QS.load()
+    targets = crack_targets(rows, qstate)
     if limit:
         targets = targets[:limit]
     print(f"cracking {len(targets)} walled-ATS companies\n", flush=True)
@@ -438,7 +458,15 @@ def main():
                         fr[5] = _note_replace(fr[5], "crack-walled",
                                               f"crack-walled {TODAY}: {verdict}")
             write_csv_rows("companies.csv", fresh)
+            # The attempt, where the notes cap cannot evict it. The address recorded is the
+            # one the row CARRIES after this write, so a later move of that address is read
+            # as new evidence and re-cracks the row the same night.
+            _addr = next((fr[3] for fr in fresh
+                          if fr and fr[0] == name and len(fr) > 3), r[3] if len(r) > 3 else "")
+            QS.record(qstate, name, RUNG, verdict, url=_addr or "")
         time.sleep(0.3)
+    if apply:
+        QS.save(qstate)
     print(f"\n=== crack-walled: {stats} ===", flush=True)
 
 

@@ -1505,11 +1505,32 @@ guard above now walks too. The two tools that still build a row from scratch,
 and run in no workflow. Re-derive rather than trust: `grep -n '"true", f"' *.py`
 (5 hits on 2026-08-27) and the writer census loop above (24 files).
 
-Every re-check filter must have a **staleness escape** (`_stale_hunt` 14d, `_revalidatable`
-30d, `_recrackable` **1d** — daily, because the ATS host is already documented, so a re-check
-is one fetch of a known endpoint rather than a rediscovery). A filter of the form
-`"tool-name" not in note` freezes coverage forever — that pattern has been introduced and
-removed three times.
+Every re-check filter must have a **staleness escape** (`_revalidatable` 30d; the three PAID
+row tools share one at 14 days, below). A filter of the form `"tool-name" not in note`
+freezes coverage forever — that pattern has been introduced and removed three times.
+
+**And a staleness escape may not be kept in the `notes` cell** (lane `infra`, 2026-09-11).
+`listing_hunt._stale_hunt` (14d) and `crack_walled._recrackable` (**1d**) each read their own
+tool's dated stamp out of a 220-character cell shared by twelve writers, and `notes.append`
+evicts the oldest unprotected segment to make room — so each tool's schedule was being
+deleted by the next tool to write. Measured that morning: of the 93 rows `listing_hunt` would
+have taken, **80 carried no `listing-hunt` stamp at all** (62 of them on notes of 160-220
+characters). An evicted stamp reads as *never hunted* and sorts FIRST, so a 617-row pool with
+a documented fortnightly cadence was re-walked, and re-BOUGHT, every three or four nights:
+1,741 Bright Data credits in eleven days. `bd_rescue` had the same fault for a different
+reason — its commonest outcome, `validated`, writes an UNDATED token, so its 7-day cooldown
+never applied to 15 of its 17 rows.
+
+Both tools' cadence, and `bd_rescue`'s, now live in `cloud_state/queue_state.json` under the
+rungs `listing-hunt` / `crack-walled` / `bd-rescue`, selected by **one** predicate,
+`queue_state.row_due(state, name, rung, days=14, url=...)`: due when the rung has never tried
+the row, when its last attempt is older than `days`, **or when the row's address has changed
+since that attempt**. `listing_hunt.actionable_mode` (a triage mode or a probe wake newer than
+our last attempt) is composed with it and now compares against that attempt rather than
+against the stamp. The note stamps stay — `registry_health --explain` and every human reader
+use them — but they are no longer the schedule. Protecting the segment instead was rejected
+on the measurement: those rows are AT the cap, so one more protected segment makes `append`
+drop the NEWCOMER. `docs/decisions/2026-09-11-bd-unlimited-optimize-once.md` §3.
 
 ### The activation rule (read before flipping any row to active)
 
@@ -1781,15 +1802,15 @@ so a given night processes fewer rows than the pool holds.
 | `pools()` key | cron (`.github/workflows/`) | what it owns | activates? |
 |---|---|---|---|
 | `triage_dark (18:00 daily)` | `triage-dark.yml` `0 18 * * *` | rows matching its own `TARGET_NOTES` minus `SKIP_NOTES` — classifies a dark row's failure mode and routes it | no |
-| `listing_hunt (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | parked rows matching `HUNT_POOL`, minus terminal, recruiters, discovery junk and `_triaged_page_empty` | **yes** |
+| `listing_hunt (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | parked rows matching `HUNT_POOL`, minus terminal, recruiters, discovery junk and `_triaged_page_empty` — one fourteenth of them a night (`hunt_targets`: `queue_state.row_due` 14d, stalest first, `actionable_mode` overriding) | **yes** |
 | `repair_extract_gap (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | `in_extract_gap_pool`: rows triage stamped `extract-gap` (`MODE`) with an `http` address, minus terminal and recruiters — the terminal exclusion arrived 2026-08-25, the day it selected a freshly parked `alias-of` twin | **yes** |
 | `queue_resolve_search (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | intake NAMES with no row, no settled verdict (`queue_state`) and no LIVE retirement (`queue_disposition`), never-searched first — 4 shards x a self-budgeted 28 = **112 a night against a measured brand-new intake of 161/day median, 212 mean** (7 days to 2026-08-30) — searches, lets a model ORDER the candidates, and lets the SCRAPE decide what is a board | no — proposals only |
 | `queue_pipeline --apply-proposals (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | every scrape/monitor proposal from the drain; `pipeline/board_verify` reads the RENDERED page and only `ok` reaches `apply_proposals` | **yes**, via the applier's own gates |
 | `queue_pipeline --verify-existing (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | 60 live addresses a night whose verdict has aged past 30 days — a failed one is parked AND ITS ADDRESS CLEARED, so it leaves `probe_candidates`' daily pool | no — it only parks |
-| `crack_walled (19:00 daily + Sun)` | `listing-hunt.yml` `0 19 * * *`, `audit-coverage.yml` `0 4 * * 0` | rows `identity_gate.is_walled` claims — the note token OR a walled ATS host — minus terminal and recruiters | **yes** |
+| `crack_walled (19:00 daily + Sun)` | `listing-hunt.yml` `0 19 * * *`, `audit-coverage.yml` `0 4 * * 0` | rows `identity_gate.is_walled` claims — the note token OR a walled ATS host — minus terminal and recruiters; `crack_targets` re-cracks each on a **14-day** cadence (daily until 2026-09-11: 847 credits in eleven days for 2-3 boards a night) | **yes** |
 | `probe_candidates (05:00 daily)` | `daily-digest.yml` `0 5 * * *` | every parked row with an http, non-aggregator address, minus junk names and `is_terminal_row` — a fact pool (`PROBE_POOL` no longer exists); wakes rather than activates (`_wake_note` strips every stale segment) | no |
 | `validate_empty (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0` | the probe's rows minus walled hosts, whose note carries an empty-class verdict — or, behind `VALIDATE_EMPTY_SIGNALS=1`, whose probe baseline saw job/Israel signals (staged: it activates) | **yes** |
-| `retry_unreachable + bd_rescue (02:30 daily)` | `retry-unreachable.yml` `30 2 * * *` | parked, an http address, the word `unreachable`, not `is_terminal_row` — one predicate both tools select with | **yes** |
+| `retry_unreachable + bd_rescue (02:30 daily)` | `retry-unreachable.yml` `30 2 * * *` | parked, an http address, the word `unreachable`, not `is_terminal_row` — one predicate both tools select with; `bd_rescue.skip_row` then buys a row at most once per **14 days**, counting `validated` as an answer (until 2026-09-11 it re-read all 17 every night) | **yes** |
 | `audit_empty_rows (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0` | `verdicts.in_pool` minus terminal and recruiters | **yes** |
 | `deep_validate rung (Sun 04:00)` | `audit-coverage.yml` `0 4 * * 0`, inside `audit_empty_rows` | the rows the cheap rung left dark, minus those deep-validated within 30 d — Chromium render + network sniff, `deep_validate.validate_one`/`apply_verdict` | **yes** |
 
@@ -2430,8 +2451,10 @@ the short version of the three gates and the code that enforces them.
 - A mass-zero result (e.g. 0 finds across a whole run) is a **broken run, not a
   measurement** — strip its verdicts and re-run after diagnosis (nested-Playwright
   incident: two sync Playwright instances in one thread fail silently). To strip: verdicts
-  are ` | listing-hunt <date>: …` suffixes in the `notes` column; remove that suffix, or the row waits
-  14 days for `_stale_hunt` to re-admit it. (Before 2026-08-22 the `no listing found`
+  are ` | listing-hunt <date>: …` suffixes in the `notes` column; removing that suffix no
+  longer re-admits the row, because since 2026-09-11 the schedule is the attempt log — drop
+  the run's `listing-hunt` attempts from `cloud_state/queue_state.json` as well, or the row
+  waits out its 14 days. (Before 2026-08-22 the `no listing found`
   verdict was **terminal** — a bad batch retired hundreds of companies permanently.)
   Only `refresh_scrape_cache.py` self-protects automatically (aborts if the rebuilt cache
   shrinks >20%); every other runner needs the operator to apply this rule.
@@ -3354,7 +3377,8 @@ rotation moved its rows on some calendar days — BACKLOG 158).
 
 **The four unrelated "14"s** — don't conflate them: the job board's 14-day `first_seen`
 window; `CARRY_MAX_DAYS`=14 (stale scrape jobs); the 14-day deep re-hunt cadence; and
-`_stale_hunt`'s 14-day suppression of a row carrying a hunt verdict.
+`queue_state.row_due`'s 14-day suppression of a row a paid tool has already answered (until
+2026-09-11 that last one was `_stale_hunt`, read from the row's note).
 
 ### `uncached=N unvisited=M` — the rows the digest cannot see
 
