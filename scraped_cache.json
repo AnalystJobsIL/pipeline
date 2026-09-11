@@ -30371,6 +30371,60 @@
    "url": "https://www.redlertechnologies.com/careers"
   }
  ],
+ "Reeco": [
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Reeco",
+   "country_code": "",
+   "description": "",
+   "job_id": "bdbb59ba7954d664",
+   "location": "Tel Aviv",
+   "posted_date": "",
+   "title": "Billing & Collections Specialist",
+   "url": "https://www.reeco.com/careers"
+  },
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Reeco",
+   "country_code": "",
+   "description": "",
+   "job_id": "4e141a6f817f9af7",
+   "location": "Tel Aviv",
+   "posted_date": "",
+   "title": "GTM Engineer - Israel",
+   "url": "https://www.reeco.com/careers"
+  },
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Reeco",
+   "country_code": "",
+   "description": "About Us Welcome to Reeco, where we’re transforming the back-of-house tech for the hospitality industry. Think of it like this: while hotels are all about luxury and convenience, their operations are often stuck in the ‘90s. From emailing suppliers to doing inventory with pen and paper – it’s outdat…",
+   "job_id": "cdd8f408bfb65497",
+   "location": "Tel Aviv-Jaffa",
+   "posted_date": "2026-09-10",
+   "title": "Billing & Collections Specialist",
+   "url": "https://www.reeco.com/careers"
+  },
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Reeco",
+   "country_code": "",
+   "description": "About Us Welcome to Reeco, where we’re transforming the back-of-house tech for the hospitality industry. Think of it like this: while hotels are all about luxury and convenience, their operations are often stuck in the ‘90s. From emailing suppliers to doing inventory with pen and paper – it’s outdat…",
+   "job_id": "cdca39806d696765",
+   "location": "Tel Aviv-Jaffa",
+   "posted_date": "2026-09-10",
+   "title": "GTM Engineer - Israel",
+   "url": "https://www.reeco.com/careers"
+  }
+ ],
  "Regulus": [
   {
    "_jd_attempted": "2026-09-04",
@@ -30659,6 +30713,47 @@
    "posted_date": "",
    "title": "System Engineer - Electronic Warfare Systems",
    "url": "https://www.regulus.com/careers"
+  }
+ ],
+ "Repair Carbon": [
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Repair Carbon",
+   "country_code": "",
+   "description": "",
+   "job_id": "b3319aa50e0e41b0",
+   "location": "Yokneam",
+   "posted_date": "",
+   "title": "Production Line Technician",
+   "url": "https://www.repair-carbon.com/careers"
+  },
+  {
+   "_loc_src": "assumed",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Repair Carbon",
+   "country_code": "",
+   "description": "",
+   "job_id": "99c3577f44995583",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Process Development Engineer",
+   "url": "https://www.repair-carbon.com/careers"
+  },
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Repair Carbon",
+   "country_code": "",
+   "description": "",
+   "job_id": "094aa8c29454c2f6",
+   "location": "Yokneam, Israel",
+   "posted_date": "",
+   "title": "Electrode Production Technician (Electrochemical Manufacturing)",
+   "url": "https://www.repair-carbon.com/careers"
   }
  ],
  "Replai": [

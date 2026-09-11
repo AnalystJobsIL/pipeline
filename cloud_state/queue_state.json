@@ -49469,5 +49469,785 @@
   ],
   "last": "2026-09-10",
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "AWS EMEA SARL (Israel Branch)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Avidan & Co., C.P.A | אבידן ושות', רואי חשבון": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "TikTok": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.tiktok.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Imagen": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://imagen.ai/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Sysnet part of Amanet Tec": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.sysnet-group.co.il/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "ESET Israel | Comsecure LTD": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://comsecure.co.il/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "MANNA – Recipes & Cooking": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.mannasoupkitchen.org/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Cardo Systems, Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "T-Bud": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://bud.co.uk/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Rotshtein Engineering": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.rotshtein.co.il/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Rtgroup": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.rtgroup.ca/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Ryltech Db And IT Services": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.ryltech.co.il/he/jobs/"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Sabio Israel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no-search-results"
+ },
+ "Safefields Technologies": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://safefields-tech.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Sales Career Hub": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://careerhub.com"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Samplead": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Istra Research": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://istrallc.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Intercontinental Exchange Holdings, Inc.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Traffico": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://careers.traffic.group"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Union Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no-search-results"
+ },
+ "Final": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.final.co.il/career"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "AUI™ (Augmented Intelligence)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "ARAN Software": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://aran-rd.co.il/career"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Quality Score LTD": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://qualityscore.co/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "DIGATE": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Roshenroz Construction Management Development": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Rovrlive": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no-search-results"
+ },
+ "Ruumrapp": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "S M C Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://careers.smcusa.com"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Safari Ramat Gan": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Safend": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.safend.com/career"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Salto IO": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://www.salto.io/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Samson Assuta Hospital": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Orda": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.orda.co.il/career"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "REALITY GROUP": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://realitybasedgroup.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Copyleaks": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no-search-results"
+ },
+ "ZyG": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.zyg.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Lattice Semiconductor": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://www.latticesemi.com"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "אלקטרה טרגט ELECTRA TARGET": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://target-market.co.il/jobs"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Geshem Holdings": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "HT VET": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Rotal Adhesives And Chemicals Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Rs Ness Engineering Projects Validation Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://rs-ness.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Rws Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.rws.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Saban Marketing": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.saban.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Safe School Analytics": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "http://safe-school.co.il/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Salah Dabah Sons Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Samelet Motors": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Samsung Electronics": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.samsung.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "DSG.AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.dsg.ai/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Six Values": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://careers.sixvalues.com"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Cronos Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://thecronosgroup.com"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Lumet Technologeis": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Compie Pro": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.compie.co.il/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Lumana": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://www.lumana.ai/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "XTRA Giftcard": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "INFINITY&CO Marketing solutions": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://www.infinityltdonline.com/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Rotem Industries Ltd Corporation": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no-search-results"
+ },
+ "Rtaerostats": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no-search-results"
+ },
+ "Rylohq": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no-search-results"
+ },
+ "Sabina Mus Yev": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Safebooks AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://safebooks.ai/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Salant Id": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-10",
+    "url": "https://salantid.com"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "found"
+ },
+ "Sami Najami Engineering Projects Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-10",
+    "url": "https://sami.eu/careers"
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "documented"
+ },
+ "Samtec Inc": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-10",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-10",
+  "verdict": "no-search-results"
  }
 }

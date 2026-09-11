@@ -15417,7 +15417,11 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Lubinski Group": {
-  "date": "2026-08-31",
+  "date": "2026-09-10",
+  "verdict": "settled-by-a-rung",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -15458,11 +15462,7 @@
      "already-a-row"
     ]
    ]
-  },
-  "other_name": "",
-  "raw_verdict": "already-a-row",
-  "verdict": "settled-by-a-rung",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+  }
  },
  "Ludeoofficial": {
   "date": "2026-08-30",
@@ -18104,34 +18104,27 @@
   "why": "Microchip Technology is a real, independent semiconductor employer. Although the 12 generic careers paths failed, search results show a real careers page (/en-us/about/careers) and a Workday board (microchiphr.wd5.myworkdayjobs.com/External), so \"no board\" is false; none of the other categories appl"
  },
  "Microcon Vision": {
-  "date": "2026-08-30",
+  "date": "2026-09-10",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "MicroCon Vision Ltd.",
+  "why": "the registry row 'MicroCon Vision Ltd.' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://microconvis.com/careers",
-     "https://microconvis.com/careers/",
-     "https://microconvis.com/career"
+   "row": "MicroCon Vision Ltd.",
+   "matched_on": "name-normalised",
+   "tried": [
+    [
+     "hunt",
+     "no-listing",
+     "https://microconvis.com/career/"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career"
+    [
+     "search-llm",
+     "documented",
+     "https://microconvis.com/career/"
     ]
-   },
-   "read_page": "https://microconvis.com/career/",
-   "search_pages": [
-    "https://microconvis.com/career/",
-    "https://www.controp.com/career/",
-    "https://www.facebook.com/groups/165410430473522/posts/2578364192511455/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "Microcon Vision (microconvis.com) is a real defense electro-optics employer with a working careers page listing open positions, so it is not \"no board\". The CONTROP career link in results hints at a possible corporate relationship/subsidiary, but nothing in the evidence confirms an acquisition or du"
+   ]
+  }
  },
  "Micron Technology": {
   "date": "2026-08-30",
@@ -19871,16 +19864,27 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Plus500™": {
-  "board_url_if_any": "",
-  "company_seems_real": true,
-  "date": "2026-08-29",
+  "date": "2026-09-10",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Plus500",
+  "why": "the registry row 'Plus500' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "dedup_key": "dup-name",
-   "row_under_this_exact_name": false,
-   "source": "apply_proposals dry run"
-  },
-  "verdict": "already-a-row",
-  "why": "apply_proposals refused the proposal as dup-name: a registry row already covers this company under another name string"
+   "row": "Plus500",
+   "matched_on": "name-normalised",
+   "tried": [
+    [
+     "hunt",
+     "found",
+     "https://careers.plus500.com"
+    ],
+    [
+     "search-llm",
+     "found",
+     "https://careers.plus500.com/"
+    ]
+   ]
+  }
  },
  "Prime Video & Amazon MGM Studios": {
   "board_url_if_any": "",
@@ -20656,7 +20660,7 @@
   "why": "\"Software AG Israel\" is a country/entity variant of Software AG (a Software GmbH brand), which hires via its global careers site at softwareag.com."
  },
  "Speedata.io": {
-  "date": "2026-09-08",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Speedata",
@@ -21076,7 +21080,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Teva Pharmaceuticals": {
-  "date": "2026-09-09",
+  "date": "2026-09-10",
   "verdict": "settled-by-a-rung",
   "raw_verdict": "already-a-row",
   "other_name": "",
@@ -24937,7 +24941,7 @@
   }
  },
  "Marketeam.ai": {
-  "date": "2026-09-08",
+  "date": "2026-09-10",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Marketeam AI",
@@ -25295,6 +25299,113 @@
   }
  },
  "Ridewithvia": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "נגה - החברה לניהול מערכת החשמל Noga - Israel Independent System Operator": {
+  "date": "2026-09-10",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Noga Iso",
+  "why": "a rung found this name's board and the registry row 'Noga Iso' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "Noga Iso",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.noga-iso.co.il/jobs"
+    ]
+   ]
+  }
+ },
+ "Tomax Think Academy": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Planet Nine": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "HBX Group": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "BlueBird Aero Systems Ltd.": {
+  "date": "2026-09-10",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "BlueBird Aero Systems",
+  "why": "the registry row 'BlueBird Aero Systems' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "BlueBird Aero Systems",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Dataflow Forensics": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Acumen Strategy": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Gevasol": {
+  "date": "2026-09-10",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Ryzebeyond": {
   "date": "2026-09-10",
   "verdict": "already-a-row",
   "raw_verdict": "already-a-row",
