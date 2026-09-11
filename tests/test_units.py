@@ -26101,6 +26101,32 @@ def test_canonical_title_cuts_only_furniture_on_the_measured_population():
     assert ct("Data Engineer | Herzliya", "X", "Herzliya, Israel") == "Data Engineer"
 
 
+def test_the_first_title_segment_is_never_dropped_however_it_reads():
+    """Kills `title-canon-drops-the-first-segment`.
+
+    The furniture cut walks the ` | ` segments AFTER the first; the first is the role's name
+    and is never a candidate, even when it reads as pure furniture.
+
+    That refusal costs nothing and buys the failure mode it prevents. Measured over the
+    6,368 cards in both caches and all 262 ledger records on 2026-09-11: **0 titles have a
+    furniture-only FIRST segment**, so a rule that cut from the front would be written for a
+    shape that does not occur — while the damage it risks is real, because `_TERMS_WORDS`
+    plus the job's own location is a word list I chose, and a title whose opening words
+    happen to fall in it would lose its name and be re-keyed under the remainder.
+
+    So `Tel Aviv | Data Analyst` keeps both halves. The board still hides it: a bare `|` is
+    what `rolecard.is_mangled_title` has always caught, and the canon removes furniture, not
+    the reader's reason to distrust a title."""
+    from pipeline import roles
+    ct = roles.canonical_title
+    for t in ("Tel Aviv | Data Analyst", "Full-Time | BI Developer", "Remote | Analyst"):
+        assert ct(t, "Acme") == t, t
+    assert ct("Herzliya | Data Engineer", "Acme", "Herzliya, Israel") ==         "Herzliya | Data Engineer", "the job's own location does not license a front cut"
+    # ...while the same words AFTER the first segment are still cut
+    assert ct("Data Engineer | Herzliya", "Acme", "Herzliya, Israel") == "Data Engineer"
+    assert ct("Data Analyst | Full-Time, On-Site | Tel Aviv", "Acme", "Tel Aviv") ==         "Data Analyst"
+
+
 def test_a_hiring_call_never_leaves_a_fragment_of_itself_behind():
     """Found by running the canon over the 6,368 cards in the two caches before shipping it:
     a board that spaces out the gender form, or whose whole title IS the call, left `/ה מנהל
@@ -26474,7 +26500,9 @@ def test_the_capture_date_falls_back_to_the_text_ledger_then_to_today(tmp_path):
 
 
 def test_a_page_closed_role_is_not_upserted_so_the_cache_cannot_reopen_it_daily(monkeypatch, tmp_path):
-    """The whole run, not the ledger seam: `pipeline/run.py` must SKIP the upsert for a role
+    """Kills `page-closed-row-is-upserted-anyway`.
+
+    The whole run, not the ledger seam: `pipeline/run.py` must SKIP the upsert for a role
     its own page closed (586).
 
     LinkedIn cards are carried forward in `discovered_cache.json` for 21 days by
@@ -26483,8 +26511,11 @@ def test_a_page_closed_role_is_not_upserted_so_the_cache_cannot_reopen_it_daily(
     `first_seen` resets to today and a fresh episode is minted — so the role reads as
     REOPENED every morning for three weeks and re-enters the 48h email window each time.
 
-    This is the behavioural killer for the `page-closed-row-is-upserted-anyway` mutation:
-    the ledger-level tests cannot reach it, because the skip lives in run.py's upsert loop."""
+    It is CATALOGUED rather than KILLS for `tools/guard_kill.py`, and deliberately so: the
+    fix it guards shipped in `f88f783` and this test landed in `a44abaa` after CI showed the
+    mutation surviving, so reverting the non-test files to the commit before THIS one puts
+    back a tree that already contains the skip. The mutation record is what vouches for it,
+    and `tools/mutate.py` reports `killed ... (behavioural)` against that record."""
     from pipeline import run as run_mod, company_intel, roles, store
     db = str(tmp_path / "t.db")
     url = "https://il.linkedin.com/jobs/view/data-analyst-at-acme-4458736498"
