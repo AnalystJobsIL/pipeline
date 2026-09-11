@@ -34,6 +34,11 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Adi Il": {
+  "careers_url": "https://adi-il.org.il/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Airspan Networks": {
   "careers_url": "https://airspan.com/careers/airspan-careers/",
   "platform": "scrape",
@@ -99,11 +104,10 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Canopy Care": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/canopycare/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/canopycar",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
+ "Castro Hoodies Group": {
+  "careers_url": "https://www.hoodies.co.il/jobs",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Cenevo": {
   "careers_url": "https://www.cenevo.com/careers",
@@ -147,13 +151,8 @@
  },
  "Dentsply Sirona": {
   "careers_url": "https://careers.dentsplysirona.com/search/",
+  "error": "scrape: goto:TimeoutError (1 night)",
   "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Descope": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/descope/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/descope/j",
-  "platform": "greenhouse",
   "reason": "fetch-error"
  },
  "Deutsche Post DHL": {
@@ -193,7 +192,7 @@
  },
  "EPAM Systems, Inc.": {
   "careers_url": "https://careers.epam.com/en/jobs",
-  "error": "scrape: links:unread:403 (1 night)",
+  "error": "scrape: links:unread:403 (2 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -201,12 +200,6 @@
   "careers_url": "https://www.comeet.com/jobs/echo/9A.006",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Elastic": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/elastic/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/elastic/j",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
  },
  "Eureka Security": {
   "careers_url": "https://www.eureka.security/careers",
@@ -218,15 +211,16 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Exyte": {
-  "careers_url": "https://careers.exyte.net/global/en/c/engineering-jobs",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Fairmatic": {
   "careers_url": "https://jobs.workable.com/company/w9nAMpewLQVYmxHXhj1TRS/jobs-at-fairmatic",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "Findings": {
+  "careers_url": "https://api.lever.co/v0/postings/findigs",
+  "error": "HttpError: network error for https://api.lever.co/v0/postings/findigs The read op",
+  "platform": "lever",
+  "reason": "fetch-error"
  },
  "GenCell": {
   "careers_url": "https://www.gencellprojects.com/jobs",
@@ -265,9 +259,14 @@
  },
  "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ": {
   "careers_url": "https://careers.iec.co.il/",
-  "error": "scrape: http:403 (17 nights)",
+  "error": "scrape: http:403 (18 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
+ },
+ "IRP Systems": {
+  "careers_url": "https://www.irpsystems.com/careers/#openings",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Jafi": {
   "careers_url": "https://www.comeet.com/jobs/jafi/C8.008",
@@ -278,11 +277,6 @@
   "careers_url": "https://www.comeet.com/jobs/jeenai/DA.008",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Just Eat Takeaway Com": {
-  "careers_url": "https://careers.justeattakeaway.com/il/he/israel",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  },
  "K2view": {
   "careers_url": "https://www.k2view.com/careers/",
@@ -314,6 +308,12 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Lightricks": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/lightricks/jobs",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/lightrick",
+  "platform": "greenhouse",
+  "reason": "fetch-error"
+ },
  "Ludeo": {
   "careers_url": "https://www.ludeo.com/careers",
   "platform": "scrape",
@@ -338,6 +338,12 @@
   "careers_url": "https://apply.careers.microsoft.com/careers",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "NSO Group": {
+  "careers_url": "https://www.nsogroup.com/job/web-security-researcher/",
+  "error": "scrape: http:403 (15 nights)",
+  "platform": "scrape",
+  "reason": "fetch-error"
  },
  "Navan": {
   "careers_url": "https://navan.com/careers",
@@ -373,6 +379,17 @@
   "careers_url": "https://www.comeet.com/jobs/ourcrowd/D3.00A",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "PAPAYA": {
+  "careers_url": "https://www.papayaglobal.com/careers/",
+  "error": "scrape: http:403 (15 nights)",
+  "platform": "scrape",
+  "reason": "fetch-error"
+ },
+ "ParaZero": {
+  "careers_url": "https://parazero.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  },
  "Pipl": {
   "careers_url": "https://www.comeet.com/jobs/pipl/22.008",
@@ -454,6 +471,11 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Sternum": {
+  "careers_url": "https://sternumiot.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
  "Stigg": {
   "careers_url": "https://jobs.ashbyhq.com/stigg",
   "platform": "scrape",
@@ -463,12 +485,6 @@
   "careers_url": "https://www.strauss-group.co.il/career/jobs/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "Sweet Security": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/sweetsecurity/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/sweetsecu",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
  },
  "Swimm": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.007/positions",
@@ -492,6 +508,16 @@
  },
  "Volkswagen (CARIAD)": {
   "careers_url": "https://jobs.volkswagen-group.com/cariad/search/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Voyage81": {
+  "careers_url": "https://voyage81.com/careers/",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Weizmann Institute of Science": {
+  "careers_url": "https://www.weizmann.ac.il/career/en/jobs",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -549,10 +575,5 @@
   "careers_url": "https://www.comeet.com/jobs/somekhchaikin/F3.007",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "הפניקס": {
-  "careers_url": "https://www.fnx.co.il/career/open-positions",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
  }
 }
