@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**643 filed · 456 open · 187 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**644 filed · 456 open · 188 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 594.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 595.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -245,7 +245,7 @@ closure convention in the header.
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
 - **593** `593@registry` **An abandoned board is refused, alarmed and re-resolved
 
-### infra — 114 open
+### infra — 113 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -302,7 +302,6 @@ closure convention in the header.
 - **180** `180@infra` **Intake has no line of its own in the mail**
 - **182** `182@infra` **Two mutation cells for the 2026-08-25 discovery guards**
 - **191** `191@infra` **`no-url` is a triage mode `check_invariants.TRIAGE_MODES` does not know**
-- **193** `193@infra` **`check_invariants.PLATFORM_HOST` has no `eightfold` / `phenom` entry**
 - **195** `195@infra` **`tests.yml`'s `mutation-gate` comment still says "~15 minutes" and the `guard` job
 - **210** `210@infra` **BACKLOG 83 re-sized: the fetch loop is 3.8–4.7 min of a 20-minute step, the classify
 - **217** `217@infra` **`scrape-refresh.yml` installs `@anthropic-ai/claude-code` unpinned**
@@ -362,6 +361,40 @@ closure convention in the header.
 - **591** `591@infra` **A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
 - **592** `592@infra` **DUPLICATE OF `591`
 
+### scraper — 31 open
+
+- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
+- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
+- **90** `90@scraper` **Per-job strategy provenance in the cache**
+- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
+- **219** `219@scraper` **Strategy 5's model, measured once**
+- **220** `220@scraper` **A `links:` carry has no ceiling**
+- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
+- **222** `222@scraper` **`pipeline/llm.py`
+- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
+- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
+- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
+- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
+- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
+- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
+- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
+- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
+- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
+- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
+- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
+- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
+- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
+- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
+- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
+- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
+- **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
+- **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
+- **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
+- **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
+- **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
+- **584** `584@scraper` **The Logica-IT board's category-and-region suffix is read as title words**
+- **594** `594@scraper` **A board that publishes no place per posting yields one card a night, and the one it
+
 ### discovery — 30 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
@@ -394,39 +427,6 @@ closure convention in the header.
 - **535** `535@discovery` **A role whose own JD names a New York address is published as an Israel role**
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
 - **569** `569@discovery` **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
-
-### scraper — 30 open
-
-- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
-- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
-- **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
-- **219** `219@scraper` **Strategy 5's model, measured once**
-- **220** `220@scraper` **A `links:` carry has no ceiling**
-- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
-- **222** `222@scraper` **`pipeline/llm.py`
-- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
-- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
-- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
-- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
-- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
-- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
-- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
-- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
-- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
-- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
-- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
-- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
-- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
-- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
-- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
-- **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
-- **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
-- **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
-- **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
-- **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
-- **584** `584@scraper` **The Logica-IT board's category-and-region suffix is read as title words**
 
 ### docs — 25 open
 
@@ -3141,7 +3141,13 @@ this pass: **170, 104, 177, 44, 45, 162**; rows for **76, 133 (same-identity hal
     so this item's 4,500 is superseded, and the September ceiling is now in
     `pipeline/bd_budget.ceiling()` rather than in two documents that disagree. See
     `docs/decisions/2026-08-28-bd-ceiling.md` and 335.
-193. **`check_invariants.PLATFORM_HOST` has no `eightfold` / `phenom` entry** — lane: `infra`.
+193. ~~**`check_invariants.PLATFORM_HOST` has no `eightfold` / `phenom` entry**~~ —
+    **CLOSED 2026-09-11 (`ats-fetch`)** — applied thirteen days after it was filed with the diff: the seven
+    patterns are in the table and `check_invariants` is green and `--strict` green on the
+    registry as committed, 0 active rows violating any of them. It was applied by the lane
+    that tripped over it — nine `scrape` rows became `successfactors` that morning, the
+    exact shape C2 could not check, because a platform absent from the table is UNLISTED
+    rather than wrong. Original text: — lane: `infra`.
     Since 2026-08-25 two active rows are on those platforms (Qualcomm `/api/pcsx/`, GE
     HealthCare `/widgets`); check C2 cannot fire for them. Tenant hosts vary, the path does
     not — key the pattern on the path (BACKLOG 76's second half).
@@ -12036,3 +12042,47 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      include `abandoned-board`, so the targeted LinkedIn rotation skips precisely the
      companies whose board has moved — the rows most likely to be posting somewhere we are
      not reading.
+
+594. **A board that publishes no place per posting yields one card a night, and the one it
+     yields carries another posting's city** — lane: `scraper`. Filed 2026-09-11 by
+     `ats-fetch` with the page measured, not guessed; handed over by `registry`, which
+     activated `Cal (Israel Credit Cards)` the same day and reported "1 card of ~30, wrong
+     location". It is not the accordion shape the hand-over assumed. One unlocker fetch of
+     `https://www.cal-online.co.il/about/jobs/` (103,679 bytes, 1 credit) contains **no
+     `<details>`, no `<summary>`, no `accordion`, no `collapse` and no `aria-expanded`**. The
+     board is **29 `<h3>` titles with no class attribute**, each beside a
+     `<button data-job-id="JB-26544" data-job-title="…" data-toggle="modal">` that opens a
+     CV-upload modal — so **no posting has an address of its own**, and the place lives in
+     neither the heading nor the 1,600-byte window after it.
+
+     Three measurements, each reproducible against that page:
+
+     1. **`_CARD_PATTERNS`'s `{5,140}` counts ENTITY characters.** The page serves Hebrew as
+        `&#x5E0;&#x5E6;…` — eight characters a letter — so a 20-letter Hebrew title is 160+
+        characters of markup and overflows the cap. The heading pattern finds **18 headings
+        on the served HTML and 38 on the same HTML `html.unescape`d**; the `('h3', '')` card
+        group holds **11 of the board's 29 titles**. Every Hebrew board served entity-encoded
+        loses cards this way, silently and in proportion to title length.
+     2. **Ten of those eleven are then dropped as locationless.** `_page_is_il` answers only
+        under `SCRAPE_ASSUME_IL`, which `listing_hunt` / `crack_walled` /
+        `repair_extract_gap` set and the 00:00 refresh does not — so the same page yields
+        roles when the hunt reads it and nothing when the cron does, which is exactly why
+        this row "verified ~30" and produces 1. That gate is deliberate and its docstring
+        says *"This function must never widen further"* (a page-level Israel signal let a nav
+        menu with an Israeli footer score as a board), so **the fix is not to widen it** — it
+        is that a registry-vetted Israeli row's own verdict is knowledge the nightly refresh
+        has and does not use. Fleet scale of the class, from tonight's stamp:
+        `loc_unknown=2297`.
+     3. **The survivor's location is another posting's.** `מפתח.ת מודלים` was kept carrying
+        `אילת` (Eilat) — `_from_cards` reads the place from a byte window that runs to the
+        next heading or 1,600 characters, and on a board with no per-card place that window
+        reaches the next posting's city. A card with no place of its own is better
+        locationless than plausibly wrong: the wrong city is what reaches the board and the
+        mail.
+
+     Reproduce: `python -c "import scrape_universal as N; h=open('cal.html',encoding='utf-8').read();
+     print(N._extract('Cal (Israel Credit Cards)','https://www.cal-online.co.il/about/jobs/',
+     N.Rendered(url='https://www.cal-online.co.il/about/jobs/',http_status=200,page_html=h,plain_html=h),
+     fetch=lambda u,t:(None,None))[1])"` — `cards`, one job. `registry`'s row is honest and
+     active; until (1) and (3) are fixed it will read 1 card a night, and the morning-check
+     row that asks for `>= 1 card` will pass while 28 postings are missing.

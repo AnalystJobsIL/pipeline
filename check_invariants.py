@@ -53,6 +53,21 @@ PLATFORM_HOST = {
     "bamboohr": r"bamboohr\.com", "breezy": r"breezy\.hr",
     "workday": r"myworkdayjobs", "oraclehcm": r"oraclecloud\.com",
     "microsoft": r"careers\.microsoft\.com",
+    # Path signatures, not hosts: these platforms serve from the tenant's own domain
+    # (`careers.qualcomm.com/api/pcsx`, `jobs.sap.com/tile-search-results/`), so a
+    # host-only pattern would strict-break five active rows the day it lands.
+    # Applied 2026-09-11 by `ats-fetch` (filed as 193@infra, measured by `registry`
+    # on 2026-08-31): the nine SuccessFactors conversions that morning are exactly the
+    # shape C2 could not check, since a platform absent from this table is UNLISTED
+    # rather than wrong. Re-verified against the registry as committed: 0 active rows
+    # violate any pattern here.
+    "eightfold": r"eightfold\.ai|/api/pcsx",
+    "phenom": r"phenompeople\.com|/widgets",
+    "successfactors": r"successfactors|sapsf|/tile-search-results",
+    "icims": r"\.icims\.com",
+    "jobvite": r"jobvite\.com",
+    "taleo": r"taleo\.net",
+    "avature": r"avature\.net",
     # recruitee supports custom domains, so its host is not checkable
 }
 # deliberate, permanent deactivations — keep this list short and dated in the notes
