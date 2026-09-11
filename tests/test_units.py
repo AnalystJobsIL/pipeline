@@ -30113,19 +30113,38 @@ def test_the_page_header_is_cut_at_fetch_and_never_inside_jd_body():
     deliberately rewritten under a floor, and nowhere else.
 
     Kills: moving the head cut into `jd_body`."""
-    from pipeline import jdfill
     from pipeline.jdfill import jd_body, strip_head, looks_like_jd
+    from pipeline.roles import better_description
     head = ("Senior Data Analyst at ACME | LinkedIn Jobs\nSkip to main content\n"
             "Senior Data Analyst\nACME\nTel Aviv\nReport this job\n")
     poster = "Direct message the job poster from ACME\nDana Levi\nDana Levi\nTalent at ACME\n"
     jd = _j7_jd(1200)
-    assert strip_head(head + poster + jd) == jd
-    assert jd_body(head + poster + jd) == head + poster + jd, "the head cut leaked into jd_body"
-    assert looks_like_jd(head + poster + jd), "the bar's answer may not move with the head cut"
+    page = head + poster + jd
+    assert strip_head(page) == jd
+    assert jd_body(page) == page, "the head cut leaked into jd_body"
+    assert looks_like_jd(page), "the bar's answer may not move with the head cut"
+    # and the reader that would turn a head cut into a second shortening path writing BOTH
+    # stores: it must hand back what it was given, header and all
+    assert better_description(page, "") == page
+    assert better_description("", page) == page
+
+
+def test_the_head_cut_is_not_wired_into_the_two_readers_that_must_not_have_it():
+    """The shape half of the rule above, kept in its OWN test on purpose.
+
+    `tools/mutate._classify_killer` calls any test containing `inspect.getsource` a
+    source-text guard — the whole test, not the assertion — so leaving these two lines inside
+    the behavioural guard made `jd-head-cut-moves-inside-jd-body` read as "killed ONLY by
+    source-text guard(s)" and fail the gate, although the behaviour was pinned three lines
+    earlier. The behaviour is what kills the mutant; this says the same thing about the
+    source, and says it where it cannot mask that."""
     import inspect
+    from pipeline import jdfill, roles
     assert "strip_head" not in inspect.getsource(jdfill.jd_body)
-    from pipeline import roles
     assert "strip_head" not in inspect.getsource(roles.better_description)
+    # and the classifier's regex is not what cuts a stored text any more: the two
+    # rules answer different questions and only one of them may rewrite a description
+    assert "_ROLE_START" not in inspect.getsource(jdfill.extract_jd)
 
 
 def test_the_head_cut_never_empties_a_short_posting():
@@ -30148,10 +30167,7 @@ def test_extract_jd_starts_at_a_section_heading_and_never_mid_sentence():
 
     Kills: importing `_ROLE_START` back into `extract_jd`; adding `requirements` to
     `_HEAD_SKIP`; dropping the end-of-line anchor that makes it a heading."""
-    from pipeline import jdfill
     from pipeline.jdfill import extract_jd, _HEAD_SKIP
-    import inspect
-    assert "_ROLE_START" not in inspect.getsource(jdfill.extract_jd)
     body = ("<p>Taboola is proud to be recognized as a Great Place to Work. " +
             "We have offices around the world. " * 8 + "</p><h2>About the role</h2><p>" +
             "You will own the analytics stack and the dashboards. " * 12 +
