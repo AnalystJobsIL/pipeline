@@ -26431,6 +26431,38 @@ def test_the_capture_date_falls_back_to_the_text_ledger_then_to_today(tmp_path):
     st.close()
 
 
+def test_a_scoped_run_never_closes_a_page_closed_role_it_did_not_look_at(tmp_path):
+    """A role closes ONLY where the run actually looked — the rule every other arm of the
+    ladder carries. The evidence for a page closure is text we already hold, which made the
+    check look redundant; then `python -m pipeline.run --only "Wix"`, the command CLAUDE.md
+    hands every agent as the harmless local run, closes Migdal. Measured on the real store:
+    4 closures from a scoped run that scanned only Wix, 0 after this clause."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    rid = "migdal|business analyst"
+    rec = _rec(rid, company="Migdal Group", url="https://il.linkedin.com/jobs/view/x-1",
+               sources=["discovery-linkedin"], seen_ids=["discovery-linkedin:linkedin:1"],
+               jd_attempted="2026-08-28",
+               description="y" * 100 + "No longer accepting applications")
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = {rid: rec}
+    roles.dump(lg.path, lg.records)
+    st.insert_matched({**rec, "mkey": rid})
+    lg._open_sync()
+    card = {k: rec[k] for k in ("company", "title", "url", "location", "posted_date",
+                                "sources", "seen_ids", "description")}
+    lines = lg.record_run("2026-09-12", board_jobs=[card], merged=[card],
+                          scanned_ok={"Wix"}, failed=set(), paths={}, scoped=True)
+    assert lg.records[rid]["status"] == "open", "this run never looked at Migdal"
+    assert not any("closed by page" in ln for ln in lines), lines
+    # ...and the same evidence, on a run that DID look at it
+    lines = lg.record_run("2026-09-12", board_jobs=[card], merged=[card],
+                          scanned_ok={"Migdal Group"}, failed=set(), paths={}, scoped=True)
+    st.close()
+    assert lg.records[rid]["status"] == "closed"
+    assert any("closed by page 1" in ln for ln in lines), lines
+
+
 def test_page_closures_are_held_by_the_mass_close_guard_like_any_other_closure(tmp_path):
     """A LinkedIn layout change that puts the phrase on every page is a bad READ, not fifty
     closures — so these ride `_close` and the guard counts them."""

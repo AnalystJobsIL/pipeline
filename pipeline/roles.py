@@ -2290,7 +2290,8 @@ class Ledger:
                     self._touch(rec)
                     c["purged"] += 1      # a delta, like `closed today` beside it — not a
                 c["purged_total"] += 1    # running total that never decays
-            elif prev_status not in RETRACTABLE and page_closed(rec, rec):
+            elif (prev_status not in RETRACTABLE and judged(rec.get("company"))
+                    and page_closed(rec, rec)):
                 # The posting's own page says it stopped accepting applications (581). It is
                 # ahead of the `onboard` arm because `onboard` is satisfied by our own
                 # 21-day discovery cache, which is the very thing that kept these four roles
@@ -2308,6 +2309,15 @@ class Ledger:
                 # marker: measured on the committed store, 5 closures where 4 are real.
                 # (The purge branch above only reaches a row whose company is in this run's
                 # `never_ours`, so it cannot be relied on to shield a purged record here.)
+                #
+                # `judged` for the same reason every other closure below carries it: a role
+                # closes ONLY where the run actually looked. The evidence here is text we
+                # already hold, so it was tempting to skip the check -- but then
+                # `--only "Wix"` closes Migdal, and the one command CLAUDE.md hands every
+                # agent for a harmless local run would write closures for companies it never
+                # fetched. Measured: 4 closures on a scoped run that scanned only Wix,
+                # 0 after this clause. A full digest is unaffected, since `judged` is then
+                # true for every company whose board did not fail.
                 if prev_status != "closed":
                     c["to_close"] += 1
                     rec["_close"] = ("page", self._capture_date(rid, rec, run_date))

@@ -6938,6 +6938,12 @@ than by LinkedIn's claim that the job is live. Nothing read the page.
   which would otherwise silently reopen every one of these, while a posting re-listed at a
   NEW address is not the address we closed and reopens on the ordinary ladder.
 
+The arm carries `judged` like every other closure in the ladder — a role closes only where
+the run actually looked. The evidence is text we already hold, so the check looks redundant;
+without it a scoped run closes roles at companies it never fetched (**measured: 4 closures
+from `--only "Wix"`**, the command `CLAUDE.md` hands every agent as the harmless local run).
+A full digest is unaffected.
+
 `closed_on` is **the day the text was captured** (`jd_attempted`, else the text line's
 `updated`, else today), not today — a reader takes that column for the day the posting went
 away, and today would claim we watched it close. The closure rides `_close`, so the
