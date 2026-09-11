@@ -696,8 +696,8 @@
   "last": "2026-09-10"
  },
  "Airspan Networks": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "Lam Research": {
   "fails": 3,
@@ -736,40 +736,40 @@
   "last": "2026-09-05"
  },
  "4M Analytics": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "Discount Bank": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "ENI-ONE LTD": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "Exodigo": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "Harmonic": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "Jeen.ai": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "Lema AI": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "Majestic Labs ai": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "Teads": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-11"
  },
  "Swimm": {
   "fails": 2,
@@ -1142,5 +1142,17 @@
  "helfy": {
   "fails": 1,
   "last": "2026-09-10"
+ },
+ "KELA - Cyber Threat Intelligence": {
+  "fails": 1,
+  "last": "2026-09-11"
+ },
+ "Planview": {
+  "fails": 1,
+  "last": "2026-09-11"
+ },
+ "הפניקס": {
+  "fails": 1,
+  "last": "2026-09-11"
  }
 }
