@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**644 filed · 456 open · 188 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**646 filed · 456 open · 190 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 595.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 597.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 150 open
+### registry — 151 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -244,8 +244,9 @@ closure convention in the header.
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
 - **593** `593@registry` **An abandoned board is refused, alarmed and re-resolved
+- **596** `596@registry` **Five active rows publish another company's careers board, and the intel that names
 
-### infra — 113 open
+### infra — 114 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -360,6 +361,7 @@ closure convention in the header.
 - **590** `590@infra` **`cloud_state/queue_state.json` has no trim, and three row rungs now append to it** —
 - **591** `591@infra` **A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
 - **592** `592@infra` **DUPLICATE OF `591`
+- **595** `595@infra` **A killed `firmo_drain` stamps no `budget_min`, so the mail calls it the bulk cron** —
 
 ### scraper — 31 open
 
@@ -483,7 +485,7 @@ closure convention in the header.
 - **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
 - **583** `583@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
 
-### company-intel — 23 open
+### company-intel — 21 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -497,17 +499,15 @@ closure convention in the header.
 - **390** `390@company-intel` **Nothing clears a research strike on success, and `refresh_abandoned` is date-blind** —
 - **391** `391@company-intel` **A corrupt or write-locked strike ledger is invisible in the mail**
 - **392** `392@company-intel` **A refusal to publish the export discards the whole run's purchases**
-- **393** `393@company-intel` **Two Hebrew-named companies are profiled twice, under contradicting facts**
+- **393** `393@company-intel` **HALF CLOSED 2026-09-11 (`company-intel`)**: the Menora pair is folded — *(half closed)*
 - **394** `394@company-intel` **An `il_center` that DENIES an Israel site still renders as a location chip**
 - **395** `395@company-intel` **The firmographics health heartbeat is gitignored, so the cloud can never write it** —
 - **396** `396@company-intel` **`tests/rehearse_company_intel.py --all` is no longer a usable regression net, and it
 - **452** `452@company-intel` **The blurb call hands up to 600 chars of scraped job text to a factual-identification
-- **474** `474@company-intel` **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
 - **506** `506@company-intel` **OPERATOR DECISION
 - **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
 - **550** `550@company-intel` **The board shows `Holisto` for a company that now calls itself trivago Innovation
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
-- **579** `579@company-intel` **Four firmographics record pairs describe one employer each**
 
 ### ats-fetch — 19 open
 
@@ -4475,7 +4475,14 @@ here — each is another lane's file or a behaviour change this session could no
     path. Fix: on refusal write the union to a rescue file under `cloud_state/` and add
     it to the `--own` list, or split `--export` into its own step.
 
-393. **Two Hebrew-named companies are profiled twice, under contradicting facts** — lane:
+393. **HALF CLOSED 2026-09-11 (`company-intel`)**: the Menora pair is folded —
+     `registry` parked `מנורה מבטחים החזקות` `alias-of Menora Mivtachim Group` and declared
+     the identity, so `fold_aliases` deletes the null-headcount Hebrew record and the Latin
+     one (1,335 employees) survives. **`הפניקס` / `Phoenix Financial` is still open and
+     needs the registry half first**: no parked row, no `alias-of` verdict, so the fold has
+     one declaration and refuses — correctly. The `mećkano` diacritic case below is
+     untouched. Original report:
+     **Two Hebrew-named companies are profiled twice, under contradicting facts** — lane:
     `company-intel`, filed 2026-08-28 by wave 1. `identity_key` keeps Hebrew letters but has
     no Hebrew↔Latin arm, so `display_index` never groups these and both were paid for:
 
@@ -9044,8 +9051,22 @@ the rebase (a collision is what 241–246 are).
      read it: `published_on_pages = bool(os.environ.get("ROLES_PAGES_URL"))` and put the URL
      in `download_url`. Found by wave 1, 2026-08-30.
 
-474. **`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and the
-     digest now writes that stamp itself** — lane: `company-intel`. Since 2026-08-30 the
+474. ~~**`Company intel:` renders the `firmo` stamp as "the bulk cron's last word", and
+     the digest now writes that stamp itself**~~ — **CLOSED 2026-09-11 (`company-intel`)**,
+     by the LABEL, not by a second key. The stamp already knew who wrote it: only the digest
+     passes `--budget-min 20`. `_drain_label` reads `budget_min` and the line says
+     `digest drain (20m):` at or under 30 minutes, `bulk cron (60m):` above it, and keeps the
+     bare `bulk cron:` for a stamp that carries no `budget_min` (every one written before
+     today — and four tests pin that wording). What it was costing: on 09-08..09-11 the mail
+     said the bulk cron had researched 13 of 15 with 2 failures on mornings the 10:17 cron
+     researched 2 of 2 with none. The dead `_age >= 3` warning is replaced rather than
+     revived — the drain stamps daily, so age is 0 whatever the cron did — by a two-halved
+     one: the gap GREW and a name is HELD. **`stages.alarms("firmo", 2)` in `run.py` is left
+     exactly as four tests wrote it**, and the question it was a proxy for ("did the 10:17
+     cron fire?") belongs to the `cron` watch, which measures slots. A `FIRMO_STAGE` split
+     was rejected: it needs `infra`'s workflow line and a re-pin of those four tests, and a
+     label costs one branch. **One-token diff left for `infra`: `595`.** Original report:
+     lane: `company-intel`. Since 2026-08-30 the
      digest runs a 20-minute drain (`daily-digest.yml` `firmo_drain`) before the measurement,
      and `research_firmographics.py` stamps `firmo` on every exit, so
      `pipeline/company_intel.py:830-845` labels the digest's own drain as the 10:17 cron's,
@@ -11537,7 +11558,22 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      either the board or the captcha depending on the hour, which is why this is a fetch
      question as much as a text one.
 
-579. **Four firmographics record pairs describe one employer each** — lane:
+579. ~~**Four firmographics record pairs describe one employer each**~~ — **CLOSED
+     2026-09-11 (`company-intel`)**: `firmographics.fold_aliases`, run inside `union_store`
+     AND `save_shared`, folds a record stored under a registry-DECLARED alias into its
+     survivor's. Nine went, 1,607 → 1,598 — the four pairs below plus `Investing.com`,
+     `Intel Corporation`, `Cadence Design Systems`, `JPMorgan Chase` and 393's Menora pair.
+     The direction is `declared_aliases()`' — the parked row's own dated `alias-of <R>`
+     verdict AND an `identity_key` that agrees, the same two-declaration bar
+     `roles._alias_fold_target` sets — and never `newer()`, which crowns the wrong side in
+     three of these five (`242`). The survivor keeps its own facts and the alias fills only
+     its empties; on the live export that filled nothing, all nine survivors being complete.
+     Refused even when declared: a site form (`Intel Israel`, 23 of the 40 declared pairs —
+     a site record carries the SITE's facts) and any ACTIVE row (`AWS`, `JPMorganChase` are
+     separate scanner rows). It folds at every VIEW because `cloud_state/seen.db` is
+     `SINGLE_WRITER: daily-digest` and would otherwise resurrect the key every morning —
+     `242`'s blocker avoided rather than solved. `ARCHITECTURE.md` §7 carries the rules.
+     Original report:
      `company-intel`. Filed 2026-09-11 by `registry`.
      `cloud_state/firmographics.json` holds `DT` beside `Digital Turbine`, `autods` beside
      `AutoDS - Automatic Dropshipping Tools`, `Gong` beside `Gong.io`, and `Port` beside
@@ -12086,3 +12122,42 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      fetch=lambda u,t:(None,None))[1])"` — `cards`, one job. `registry`'s row is honest and
      active; until (1) and (3) are fixed it will read 1 card a night, and the morning-check
      row that asks for `>= 1 card` will pass while 28 postings are missing.
+
+595. **A killed `firmo_drain` stamps no `budget_min`, so the mail calls it the bulk cron** —
+     lane: `infra`, filed 2026-09-11 by `company-intel`. `daily-digest.yml`'s drain step
+     re-stamps on a non-zero exit with `python -m pipeline.stages stamp firmo
+     "alarm=step-failed(rc $rc)"`, and `stages.stamp` replaces the whole detail dict — so the
+     one morning the drain is KILLED (its 23-minute `timeout`, rc 124/137) is the one morning
+     the `Company intel:` line labels the wreck `bulk cron:` and nobody can tell which job
+     died. One token:
+
+     ```yaml
+     -          python -m pipeline.stages stamp firmo "alarm=step-failed(rc $rc)"
+     +          python -m pipeline.stages stamp firmo budget_min=20 "alarm=step-failed(rc $rc)"
+     ```
+
+     `stages._cli` already casts a bare integer, so `budget_min=20` arrives as `20`, which
+     `_drain_label` reads the same as the script's `20.0`. Until it lands the label is right
+     on every healthy morning and wrong on exactly the broken one.
+
+596. **Five active rows publish another company's careers board, and the intel that names
+     them cannot fix them** — lane: `registry`, filed 2026-09-11 by `company-intel`. Each
+     row's `api_url` belongs to a DIFFERENT employer, which is why research refused them all
+     week (`held: research profiled '<the other company>', not this name`) and why the name
+     came back to the 7-day retry with the same unanswerable question:
+
+     | row | its `api_url` | whose board that is |
+     |---|---|---|
+     | `Mars Antennas And Rf Systems` | `careers.mars.com/us/search-results` | Mars, Incorporated (the confectioner). The row's OWN note says `wrong-url 2026-08-30: board names Mars, Incorporated`, and `listing-hunt 2026-09-03` then re-vouched it `verified 1 IL` |
+     | `Regatta Data` | `www.regattagroupcareers.com/vacancies/` | The Regatta Group (UK outdoor clothing). `Regatta Data` is the Israeli OLxP database startup, `regatta.dev`, founded 2021, Beit Hanania |
+     | `DataCore` | `boards-api.greenhouse.io/v1/boards/datacor/jobs` | Datacor Inc (US chemical-industry ERP). The tenant is `datacor`; the row is `DataCore`, and the note reads `15/0 IL` |
+     | `Bdo International` | `…oraclecloud.com/…siteNumber=BDOEntryLevelCareers` | BDO USA, P.C. — `crack-walled 2026-09-06: verified 0 IL` |
+     | `Greylock Partners` | `greylock.com/jobs/portfolio-jobs/` | nobody's: it is a VC's PORTFOLIO-jobs aggregator, so the postings on it belong to the companies Greylock funds |
+
+     What `company-intel` shipped meanwhile: a `held:` refusal now buys a NAME-ONLY second
+     ask, so the record can land even while the row's url is wrong, and the run says
+     `board-names-other: <the other company>` on the `ok` line and in the mail's `Company
+     intel:` clause. That makes the class VISIBLE every morning; it does not make it right.
+     The row is `registry`'s cell: repoint or park each one, and `Greylock Partners` needs
+     the prior question — whether an aggregator page earns an active row at all (`441`'s
+     shape, on the registry side).

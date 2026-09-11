@@ -2985,10 +2985,11 @@ def test_every_name_this_lane_publishes_facts_for_has_them(tmp_path):
     names are never bought. 2026-08-31 evening: 3 -> 0 (`Hila & Co.`, `Oak`, `University
     of Notre Dame`).
 
-    It is a FLOOR, not a pin: the registry grows every night and this lane's crons drain
-    behind it, so a handful of fresh rows with no facts yet is a normal morning, not a
-    regression. What is never normal is the shape this session fixed -- a name that no
-    amount of re-asking could ever answer."""
+    It measures and PRINTS the gap; it does not pin it (2026-09-11). The registry grows
+    every night and this lane's crons drain behind it, so the number moves without a commit
+    and a cap here reddens every lane's CI on a tree nobody touched. What is never normal is
+    the shape this session fixed -- a name that no amount of re-asking could ever answer --
+    and that one is an alarm in the mail, where somebody reads it every morning."""
     import csv as _csv
     import sqlite3 as _sq
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -3005,7 +3006,15 @@ def test_every_name_this_lane_publishes_facts_for_has_them(tmp_path):
     con.close()
     gap = sorted(n for n in universe
                  if not F.not_a_company(n) and not (recs.get(n) or index.get(F.identity_key(n))))
-    assert len(gap) <= 10, f"{len(gap)} companies can render a card with no facts: {gap[:12]}"
+    # NO CAP. The count this used to pin (`<= 10`) is the drain's CADENCE, not the code's
+    # behaviour: every cron that adds a row moves it and no push can, so on 2026-09-11 the
+    # 12:59 auto-expand took it from 10 to 12 and reddened `guard` for three other lanes on
+    # a clean origin/master, and the 14:27 intel cron took it back to 10 with nobody having
+    # fixed anything. A number a runner can flip while the tree stands still belongs where
+    # a human reads it daily -- the mail's `registry backlog N (+D since <date>)`, and since
+    # today the `N held (...)` clause beside it, which names the shape that is never normal.
+    # What stays here is what the CODE decides: the names below, each a closed class.
+    print(f"gauge: {len(gap)} companies can render a card with no facts: {gap[:12]}")
     # the four this session closed stay closed, by name -- each one a class, not a row:
     #   Oak                       an identity fold the evidence settled
     #   Hila & Co.                researched from its own posting after the name failed twice
@@ -3153,3 +3162,255 @@ def test_only_refuses_the_discovery_pseudo_row_and_repeats(tmp_path, monkeypatch
                                       "Discovery,Wix,Wix"])
     R.main()
     assert asked == ["Wix"], asked   # pseudo-row refused, the repeat researched once
+
+
+# ---- 2026-09-11: the held name, and the fold the registry already declared ----------- #
+# Ten names sat in `cloud_state/firmo_failed.json` that morning, every one of them asked,
+# refused, struck and re-asked the same way for a week at a time, and they were exactly the
+# ten the mail's `registry backlog` could never lose. Two causes, and they need opposite
+# fixes: an echo the relation was too strict about, and a board that belongs to somebody
+# else. Both are below, with the live strings.
+
+
+def _held_seam(monkeypatch, *answers):
+    """A scripted seam, installed the way every other test here installs one: through
+    monkeypatch, so an answer cannot leak into the next test."""
+    seam = _Seam(*answers)
+    monkeypatch.setattr(F, "ask", seam)
+    return seam
+
+
+def test_the_echo_may_wear_the_pages_own_annotation_but_never_another_companys_name():
+    """`_same_company` compares the name we asked about with the name the model says it
+    profiled, and five of the ten stuck names differed only in how the PAGE spells itself.
+    The two arms are not equally trusting, and the pairs that must still be REFUSED are the
+    point of the test -- a false accept caches another company's facts until 2027-02."""
+    same = F._same_company
+    # the annotation: a gloss, a domain, a bilingual tail. Live echoes, 2026-09-08..09-11
+    assert same("Loops Lab", "Loops (getloops.ai)")
+    assert same("Shabak - Israeli Security Agency - Career",
+                "Shabak (Israel Security Agency / Shin Bet)")
+    assert same("Noga Iso", 'Noga - Israel Independent System Operator (נגה)')
+    # ...and NOT for a division, where the parenthetical is the whole identity
+    assert not same("Sony (Semiconductor)", "Sony (PlayStation)")
+    assert F.is_division_name("Sony (Semiconductor)")
+    # the connectives, EQUALITY ONLY. `Mars Antennas And Rf Systems` is our spelling of
+    # `MARS Antennas & RF Systems Ltd.`; `The Regatta Group` is a UK clothing retailer and
+    # `Regatta Data` is an Israeli database startup, and containment would have joined them
+    assert same("Mars Antennas And Rf Systems", "MARS Antennas & RF Systems Ltd.")
+    assert not same("Regatta Data", "The Regatta Group")
+    assert not same("Mars Antennas And Rf Systems", "Mars, Incorporated")
+    assert not same("Bdo International", "BDO USA, P.C.")
+    # the strict relation is untouched: slug, suffix, acronym, empty echo
+    assert same("withfaye", "Faye") and same("SolarEdge", "SolarEdge Technologies")
+    assert same("X", "") and not same("Kidum Rehab Projects", "Kidum Advancement Group")
+    # and the three declarations that carry a board as their evidence
+    for asked, echo in (("Rafa Labartories", "Rafa Laboratories Ltd."),
+                        ("Arrow Components", "Arrow Electronics, Inc.")):
+        assert same(asked, echo), asked
+        assert F.identity_key(asked) == F.identity_key(echo.rsplit(",", 1)[0])
+
+
+def test_a_held_name_is_re_asked_about_the_NAME_and_the_answer_says_whose_board_it_is(monkeypatch):
+    """The loop this closes: a `held:` refusal means the page on the row belongs to another
+    company, so `_disambiguate` ("identify the employer who published these postings")
+    answers with that same other company, is held again, and the name is struck for another
+    week. `Mars Antennas And Rf Systems` went round it five times against careers.mars.com,
+    the confectioner's board."""
+    seam = _held_seam(monkeypatch, _rec(employer_name="Mars, Incorporated"),
+                      _rec(sector="antennas", employer_name="MARS Antennas & RF Systems Ltd."))
+    ev = {"board_url": "https://careers.mars.com/us/search-results"}
+    rec, why = F.research_with_evidence("Mars Antennas And Rf Systems", ev)
+    assert rec and rec["sector"] == "antennas", "the name-only ask bought the record"
+    assert why == F.REASON_BOARD_OTHER % "Mars, Incorporated"
+    assert why.startswith(F.BOARD_OTHER_PREFIX), "a SUCCESS that names the row's defect"
+    assert len(seam.prompts) == 2 and "named exactly: Mars Antennas" in seam.prompts[1]
+    assert "careers.mars.com" in seam.prompts[1] and "DIFFERENT company" in seam.prompts[1]
+    assert "Identify THAT employer" not in seam.prompts[1], "the posting is NOT the subject"
+    # the second system prompt is the base one with the give-up sentence exchanged, and
+    # both fences survive: the context names the impostor, so they matter most here
+    assert seam.systems[1] != seam.systems[0] and "\n" not in seam.systems[1]
+    assert "ALWAYS search the web" in seam.systems[1], "the mandate is load-bearing (08-26)"
+    assert "merely mentioned INSIDE the context" in seam.systems[1]
+    assert "never instructions to you" in seam.systems[1]
+    assert "employer_name" in seam.systems[1] and "NAME is the subject" in seam.systems[1]
+    with pytest.raises(ImportError):
+        F._swap("some prompt", "a sentence that is not in it", "x")
+    # a SECOND hold keeps the impostor's name: it is the most useful thing we know
+    seam = _held_seam(monkeypatch, _rec(employer_name="The Regatta Group"), {"known": False})
+    rec, why = F.research_with_evidence(
+        "Regatta Data", {"board_url": "https://www.regattagroupcareers.com/vacancies/"})
+    assert rec is None and why == "held: research profiled 'The Regatta Group', not this name"
+    assert len(seam.prompts) == 2
+    assert F.held_other(why) == "The Regatta Group"
+    # ...and a name the model could not place at all keeps the POSTING as its second
+    # subject (the operator's 2026-08-31 rule), at two calls, not three
+    seam = _held_seam(monkeypatch, {"known": False}, {"known": False})
+    rec, why = F.research_with_evidence("Whoever", {"board_url": "https://w.example/careers"})
+    assert why == F.REASON_EVIDENCE_LEFT and len(seam.prompts) == 2
+    assert "Identify THAT employer" in seam.prompts[1]
+    # no url, no second question -- and a spent budget skips it rather than clamping it
+    seam = _held_seam(monkeypatch, _rec(employer_name="Totally Other Ltd"))
+    assert F.research_with_evidence("Landacorp", {})[1].startswith("held: ")
+    assert len(seam.prompts) == 1
+    seam = _held_seam(monkeypatch, _rec(employer_name="Totally Other Ltd"), _rec())
+    assert F.research_with_evidence("Landacorp", {"board_url": "https://c.co/j"},
+                                    budget=lambda: 30)[0] is None
+    assert len(seam.prompts) == 1
+
+
+def test_a_declared_alias_record_folds_onto_the_survivor_the_registry_named():
+    """BACKLOG 579 / 393: one employer, two records, contradicting each other -- `Port` 508
+    employees beside `Port.io` 200, the full Menora record beside an empty Hebrew one. The
+    direction can never come from the records: `newer()` crowns the wrong side in 3 of the
+    5 pairs (242), because the alias was researched later. It comes from the registry's own
+    dated ruling, and only when TWO declarations agree."""
+    rows = [{"company_name": "Port", "active": "true", "notes": ""},
+            {"company_name": "Port.io", "active": "false",
+             "notes": "alias-of Port 2026-09-11: its 9 cards are comeet port/59.004"},
+            # an ACTIVE row is never an alias: AWS and Amazon are two scanner rows
+            {"company_name": "AWS", "active": "true",
+             "notes": "alias-of Amazon 2026-01-01: never read, the row is active"},
+            {"company_name": "Amazon", "active": "true", "notes": ""},
+            # the note names a company `identity_key` does not agree with: one declaration
+            {"company_name": "OTORIO", "active": "false", "notes": "alias-of Armis 2026-09-01: x"},
+            {"company_name": "Armis", "active": "true", "notes": ""},
+            # a site form: declared, and still not folded (its record is the SITE's facts)
+            {"company_name": "Intel Israel", "active": "false",
+             "notes": "alias-of Intel 2026-08-20: one company, two rows"},
+            {"company_name": "Intel", "active": "true", "notes": ""}]
+    declared = F.declared_aliases(rows)
+    assert declared == {"Port.io": "Port", "Intel Israel": "Intel"}, declared
+    recs = {"Port": {**REC, "employees_global": 508, "founded": 2022, "as_of": "2026-08-21",
+                     "il_center": ""},
+            "Port.io": {**REC, "employees_global": 200, "as_of": "2026-08-22",
+                        "il_center": "Tel Aviv (HQ)", "display_name": "Port.io"},
+            "Intel": {**REC, "employees_global": 84629, "founded": 1968},
+            "Intel Israel": {**REC, "employees_global": 12000, "founded": 1974},
+            "Amazon": {**REC}, "AWS": {**REC, "employees_global": 150000}}
+    folded = F.fold_aliases(recs, declared)
+    assert folded == [("Port.io", "Port")], folded
+    assert "Port.io" not in recs and "AWS" in recs and "Intel Israel" in recs
+    assert recs["Port"]["employees_global"] == 508, "the survivor's own count survives"
+    assert recs["Port"]["as_of"] == "2026-08-21", "a fold learns nothing new"
+    assert recs["Port"]["il_center"] == "Tel Aviv (HQ)", "the alias fills only EMPTIES"
+    assert "display_name" not in recs["Port"], "evidence-only, and it has a single writer"
+    assert recs["Port"]["size_band"] == F.band_for(508)
+    assert F.fold_aliases(recs, declared) == [], "idempotent"
+    # ...and when only the ALIAS has a record nothing is renamed: a key migration is 459
+    only_alias = {"Gong.io": {**REC}}
+    assert F.fold_aliases(only_alias, {"Gong.io": "Gong"}) == []
+    assert "Gong.io" in only_alias
+
+
+def test_the_fold_survives_the_sqlite_copy_and_the_export_guard_knows_it_is_deliberate(
+        env, monkeypatch, tmp_path):
+    """Two things the fold has to beat. `cloud_state/seen.db` is SINGLE_WRITER:daily-digest,
+    so a key deleted from the export comes BACK out of the runner's sqlite copy every
+    morning -- which is why `union_store` folds at every view rather than once on the file
+    (BACKLOG 242's first blocker, answered without a tombstone). And `--export` refuses to
+    publish a union that drops a record the export holds, which is exactly what a fold
+    does on purpose."""
+    import research_firmographics as RF
+    st, export, _, _ = env
+    monkeypatch.setattr(F, "declared_aliases", lambda rows=None: {"DT": "Digital Turbine"})
+    export.write_text(json.dumps({"Digital Turbine": REC, "DT": {**REC, "founded": 1998}}),
+                      encoding="utf-8")
+    st.save_firmographics({"DT": {**REC, "founded": 1998}}, TODAY)   # the runner's copy
+    assert "DT" in st.load_firmographics()
+    assert "DT" not in F.union_store(st, F.load_shared()), "sqlite cannot resurrect it"
+    monkeypatch.setattr(RF, "EXPORT", str(tmp_path / "state" / "firmographics.json"))
+    monkeypatch.setattr(RF, "SeenStore", lambda *a, **k: st)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--export"])
+    assert RF.main() != 1, "a DECLARED fold is not a lost record"
+    published = json.load(open(export, encoding="utf-8"))
+    assert set(published) == {"Digital Turbine"}
+    assert published["Digital Turbine"]["founded"] == REC["founded"]
+    # a key that vanishes with NO survivor is still the loss the guard exists for.
+    # `union_store` is imported into RF's own namespace, so it is RF's name that is patched
+    export.write_text(json.dumps({"Ghost": REC, "Digital Turbine": REC}), encoding="utf-8")
+    monkeypatch.setattr(RF, "union_store", lambda *a, **k: {"Digital Turbine": REC})
+    assert RF.main() == 1
+
+
+def test_the_verify_row_of_a_folded_alias_vouches_for_the_survivor(env):
+    """`autods` is the greenhouse tenant and the record's key; the page that NAMES the
+    employer is `autods.com/jobs/`, whose verify row is keyed by the parked alias
+    `AutoDS - Automatic Dropshipping Tools`. Fold without this and the brand is deleted
+    with the duplicate -- the board goes back to rendering a lowercase slug."""
+    records = {"autods": {**REC}}
+    verify = {"autods - automatic dropshipping tools|https://www.autods.com/jobs/":
+              {"verdict": "ok", "employer_named": "AutoDS", "date": "2026-08-29"}}
+    aliased = {"AutoDS - Automatic Dropshipping Tools": "autods"}
+    rep = F.apply_display_names(records, verify, aliased=aliased)
+    assert records["autods"]["display_name"] == "AutoDS" and rep["added"] == 1
+    # the survivor's OWN page outranks the alias's: the vouch is not even built for a
+    # survivor that has a row, so the alias row goes back to being unmatched
+    records = {"autods": {**REC}}
+    verify["autods|https://boards.greenhouse.io/autods"] = {
+        "verdict": "ok", "employer_named": "AutoDS Global", "date": "2026-09-01"}
+    plan, _hold, unmatched = F.display_plan(records, verify, aliased)
+    assert [(k, named) for k, named, _v, _p in plan] == [("autods", "AutoDS Global")]
+    assert unmatched == 1, "the alias page vouches for nobody once the survivor has its own"
+    # ...and with no declaration the page vouches for nobody
+    records = {"autods": {**REC}}
+    F.apply_display_names(records, {list(verify)[0]: verify[list(verify)[0]]}, aliased={})
+    assert "display_name" not in records["autods"]
+
+
+def test_the_mail_says_which_drain_stamped_the_line_and_names_what_is_held():
+    """BACKLOG 474: the digest runs its own 20-minute drain minutes before this line is
+    composed and `research_firmographics` stamps `firmo` on every exit, so `bulk cron:
+    ... 13 researched of 15, 2 failed` described the DIGEST on four mornings the 10:17 cron
+    had researched 2 of 2 with no failures (09-08..09-11). The stamp already knows which:
+    only the digest passes 20 minutes."""
+    def line(**cron):
+        r = {**CI._report(), "registry_backlog": 10, "published": True, "cron": cron}
+        return CI.audit_lines(r)
+    drain = line(age=0, date="2026-09-11", researched=13, todo=15, left=0, failed=2,
+                 held=2, held_names="mars-antennas-and-rf+regatta-data", board_other=3,
+                 budget_min=20.0)[0][0]
+    assert "digest drain (20m): last ran 2026-09-11 (today), 13 researched of 15 to do" in drain
+    assert "2 held (mars-antennas-and-rf+regatta-data)" in drain, "named, not counted"
+    assert "3 board-names-other" in drain
+    assert "bulk cron (60m): last ran 2026-09-11 (today), 2 researched of 2 to do" in \
+        line(age=0, date="2026-09-11", researched=2, todo=2, left=0, budget_min=60.0)[0][0]
+    # an old-shape stamp says nothing about who wrote it, and the four tests above this one
+    # pin that wording -- so the fallback stays `bulk cron`
+    assert "bulk cron: last ran 2026-09-10 (1d ago), 19 researched" in \
+        line(age=1, date="2026-09-10", researched=19)[0][0]
+    # the warning the age rule can no longer raise (the drain stamps every morning): the
+    # gap GREW and a name is held, which no retry of ours can answer
+    grew = {**CI._report(), "registry_backlog": 12, "backlog_delta": 2, "published": True,
+            "backlog_prev_date": "2026-09-10",
+            "cron": {"age": 0, "date": "x", "researched": 1, "held": 2,
+                     "held_names": "mars+regatta", "budget_min": 20.0}}
+    assert [w for w in CI.audit_lines(grew)[1] if "are HELD" in w and "mars+regatta" in w]
+    falling = {**grew, "backlog_delta": -1}
+    assert not [w for w in CI.audit_lines(falling)[1] if "are HELD" in w], \
+        "a stuck name on a falling gap is not an alarm"
+
+
+def test_the_stamp_counts_held_and_borrowed_boards_in_one_token_per_key(tmp_path, monkeypatch):
+    """`Stage order:` is `k=v` pairs joined by spaces and a guard pins the token shape, so
+    the held names travel as one hyphenated, `+`-joined token -- never a space, never a
+    semicolon. And the count has to be in the STAMP, because the mail reads the stamp."""
+    from pipeline import stages
+    R, _ = _stamp_env(tmp_path, monkeypatch, {})
+    rows = [{"company_name": n, "ats_platform": "scrape", "active": "true",
+             "api_url": "https://x.example/jobs"} for n in ("Mars Antennas And Rf Systems",
+                                                            "Regatta Data", "Wix")]
+    monkeypatch.setattr(R, "load_companies", lambda **kw: rows)
+    answers = {"Mars Antennas And Rf Systems": (None, "held: research profiled 'Mars, "
+                                                "Incorporated', not this name"),
+               "Regatta Data": (None, "held: research profiled 'The Regatta Group', not "
+                                "this name"),
+               "Wix": ({**REC}, F.REASON_BOARD_OTHER % "Somebody Else")}
+    monkeypatch.setattr(R, "research_with_evidence",
+                        lambda name, *a, **k: answers[name])
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--workers", "1"])
+    R.main()
+    d = json.load(open(stages.PATH, encoding="utf-8"))["firmo"]
+    assert d["held"] == 2 and d["board_other"] == 1
+    assert d["held_names"] == "mars-antennas-and-rf+regatta-data", d["held_names"]
+    assert " " not in d["held_names"] and ";" not in d["held_names"]

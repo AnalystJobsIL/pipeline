@@ -38,7 +38,7 @@ annotation on the run page as well as a bold line in the mail. `run.py` emits th
 | `Decision paths:` | `seniority.Classifier` | `keyword` / `llm` / `llm_cache` / `merged-copy`; **must sum to Israel-matched**, and `run.py` alarms if it does not |
 | `LLM calls this run: N` | `seniority.Classifier` | 0 with a large fallback count is the token-expiry symptom |
 | `- **Boards** changed today:` / `standing:` | `pipeline/health.py::_by_reason` | new and cleared fetch errors, then the standing counts |
-| `- **Company intel:**` | `pipeline/company_intel.py` | research and blurb spend for the run |
+| `- **Company intel:**` | `pipeline/company_intel.py` | research and blurb spend for the run. `digest drain (20m):` / `bulk cron (60m):` names which drain stamped `firmo` (2026-09-11); `N held (…)` is a name whose own board belongs to another company and `N board-names-other` the same shape rescued by the name-only re-ask — both are `registry` work, and `ARCHITECTURE.md` §7 has the rules |
 | `- **Roles:**` | `pipeline/roles.py` | open / closed / reopened / reposted / `ledger N = store N` |
 | `- **Render:**` | `pipeline/digest.py` | board, archive and email card counts |
 | `- Stage order:` | `stages.summary()` | every cron's last stamp, in pipeline order, with its detail keys |

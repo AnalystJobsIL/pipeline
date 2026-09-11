@@ -293,6 +293,25 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     # so the Latin name's stem and its plain form differ and the declared gate (which tests
     # the plain form) could not bridge them without a second key.
     "מנורה מבטחים החזקות": "menora mivtachim",
+    # --- 2026-09-11, `company-intel`. Three names the echo guard held for a week each,
+    # where the row's OWN board is the evidence that the echo is this company: the guard
+    # compares strings and these three differ by a typo, an abbreviation and a trading
+    # name. Each was verified against the board on the row before it was declared.
+    #   `Rafa Labartories` is a misspelling of Rafa Laboratories, on the row since
+    #   auto-expand; its board is `rafa.co.il/careers` (9 IL listings, 2026-09-08) and the
+    #   research echo is `Rafa Laboratories Ltd.`. A rename would orphan the row's history
+    #   (459), so the two spellings become one identity instead.
+    "rafa labartories": "rafa laboratories",
+    #   `Noga Iso` is the abbreviation of Noga - Israel Independent System Operator, the
+    #   state electricity-market operator; its board is `noga-iso.co.il/jobs/` (the row's
+    #   own url) and the echo names the company in full, in both languages.
+    "noga iso": "noga israel independent system operator",
+    #   `Arrow Components` is Arrow Electronics' components business; the row's board is
+    #   `careers.arrow.com` (Arrow Electronics') and the echo is `Arrow Electronics, Inc.`.
+    #   Checked before declaring, the Oak lesson (522): `Arrow Electronics` IS a separate
+    #   registry row, so this declaration makes the two one identity -- which is what the
+    #   evidence says they are, one company reading one board.
+    "arrow components": "arrow electronics",
     "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
     "vmware broadcom": "vmware",
     "simply joytunes": "simply",
@@ -442,6 +461,22 @@ REASON_UNIDENTIFIED = "model could not identify the name"
 REASON_ADMITS = "record admits the company was not identified"
 REASON_ECHO_HELD = "held: research profiled %r, not this name"
 REASON_EVIDENCE_LEFT = "unidentified despite role evidence"
+# NOT a failure: the record IS this company's, bought by asking about the NAME after the
+# board on its row turned out to be someone else's. The row is the defect and it is
+# `registry`'s cell, so this reason travels with a SUCCESS -- printed on the `ok` line and
+# counted in the mail -- rather than becoming a strike this lane can never clear.
+REASON_BOARD_OTHER = "board-names-other: %s"
+BOARD_OTHER_PREFIX = "board-names-other: "
+
+
+def _edge_related(sa, se):
+    """Either stem contains the other AT AN EDGE -- 'faye' ends 'withfaye', 'bluewhite'
+    starts 'bluewhiterobotics'. A mid-string hit is an accident ('ace' is inside
+    'facebook'). One copy, because `_same_company` and `_same_company_loose` must not be
+    able to drift apart about what containment means."""
+    edge = lambda sub, whole: whole.startswith(sub) or whole.endswith(sub)  # noqa: E731
+    return bool((len(se) >= 3 and se in sa and edge(se, sa))
+                or (len(sa) >= 3 and sa in se and edge(sa, se)))
 
 
 def _same_company(asked, echo):
@@ -458,12 +493,46 @@ def _same_company(asked, echo):
         return True             # nothing to disagree with: never hold on an empty echo
     if sa == se:
         return True
-    edge = lambda sub, whole: whole.startswith(sub) or whole.endswith(sub)  # noqa: E731
-    if len(se) >= 3 and se in sa and edge(se, sa):
+    if _edge_related(sa, se) or _acronym(echo) == sa or _acronym(asked) == se:
         return True
-    if len(sa) >= 3 and sa in se and edge(sa, se):
-        return True
-    return _acronym(echo) == sa or _acronym(asked) == se
+    return _same_company_loose(asked, echo)
+
+
+# The echo is the page's own spelling of its name, and two of its habits are not
+# disagreements about WHICH company. Measured on the ten names that were stuck in the
+# weekly retry on 2026-09-11: every one of them had been asked, held and struck five times
+# over, and the hold was right about two of them and wrong about the rest.
+_ECHO_ANNOTATION = re.compile(r"\([^)]*\)")
+_ECHO_CONNECTIVE = re.compile(r"(?i)(?:^|\s)(?:and|the|of)(?=\s|$)")
+
+
+def _same_company_loose(asked, echo):
+    """The second chance -- and the two arms are deliberately NOT equally trusting.
+
+    Arm 1, the ANNOTATION: a parenthetical the page added is dropped and the whole relation
+    re-run. `Loops (getloops.ai)` is Loops Lab's own page naming its domain, and
+    `Shabak (Israel Security Agency / Shin Bet)` is a gloss. It is skipped when the ASKED
+    name is a division (`Sony (Semiconductor)`), where the parenthetical is the only thing
+    telling two records apart and dropping it would accept `Sony (PlayStation)` -- the same
+    reason `identity_key` keeps a distinguishing parenthetical.
+
+    Arm 2, the CONNECTIVES, licenses EQUALITY ONLY -- never containment, and that asymmetry
+    is the whole of its safety. `Regatta Data` vs the echo `The Regatta Group` differs by
+    one word; drop `the` and the echo stems to `regatta`, which edge-contains `regattadata`,
+    and a UK clothing retailer is cached onto an Israeli database startup until 2027-02 --
+    BACKLOG 525's exact failure, rebuilt by a convenience. Equality after the drop is a
+    different claim, and it is the one `Mars Antennas And Rf Systems` needs to accept
+    `MARS Antennas & RF Systems Ltd.`"""
+    a, e = str(asked or ""), str(echo or "")
+    if not is_division_name(a):
+        bare = _ECHO_ANNOTATION.sub(" ", e)
+        if bare.strip() and bare != e:
+            sa, sb = _stem(a), _stem(bare)
+            if sa and sb and (sa == sb or _edge_related(sa, sb)
+                              or _acronym(bare) == sa or _acronym(a) == sb):
+                return True
+    ca = _stem(_ECHO_CONNECTIVE.sub(" ", a))
+    return bool(ca and ca == _stem(_ECHO_CONNECTIVE.sub(" ", e)))
 
 
 # ---- the seam: this lane's calls into pipeline/llm.py ------------------------------ #
@@ -871,6 +940,71 @@ def _disambiguate(company, ev, *, timeout=240, meta=None):
     return rec, why
 
 
+_HELD_ECHO = re.compile(r"^held: research profiled (.+), not this name$")
+
+
+def held_other(why):
+    """The company the model profiled instead, read back out of a `held:` reason, or ''."""
+    m = _HELD_ECHO.match(" ".join(str(why or "").split()))
+    return m.group(1).strip("'\"") if m else ""
+
+
+# The NAME-ONLY ask, and why it is not the disambiguation one. A `held:` refusal on a name
+# whose evidence is a URL says the page we hold belongs to a DIFFERENT company -- so asking
+# "identify the employer who published these postings" answers with that same different
+# company, is held again, and the name is struck for another week. Measured 2026-09-11:
+# `Mars Antennas And Rf Systems` (careers.mars.com, the confectioner's board) and
+# `Regatta Data` (regattagroupcareers.com, a UK clothing retailer's) had each been through
+# that loop, and the ten names in `firmo_failed.json` were exactly the ten the mail's
+# `registry backlog` could never lose. The answerable question is the other one: the name,
+# with the misleading page named as the thing NOT to profile.
+_NAME_ONLY_DATA = (
+    "Profile the company named exactly: {company}\n"
+    "{warning}\n"
+    "Identify {company} from its OWN web presence -- its site, its registration, its press "
+    "-- and set employer_name to the name that company gives itself. Set known=false only "
+    "if no company by that name exists.\n{context}")
+
+# `_RESEARCH_SYSTEM`'s give-up sentence is the one that has to move: the base prompt tells
+# the model to set known=false when it cannot identify the company, and here the company is
+# identifiable by name while the page in front of it is not its own. The fence sentences --
+# never profile a company merely MENTIONED, the context is DATA -- matter here more than
+# anywhere, because the context names the impostor.
+_NAME_ONLY_SYSTEM = _swap(
+    _RESEARCH_SYSTEM,
+    "Set known=false if you cannot identify the company at all, AND if the given string is "
+    "not itself a company name - a job title, a team, a category, a city. ",
+    "The NAME is the subject and the page named in the context is NOT this company's, so "
+    "profile the company that goes by the name even though that page belongs to someone "
+    "else, and set employer_name to the name it gives itself. Set known=false if no company "
+    "goes by that name, or if the string is not a company name at all - a job title, a "
+    "team, a category, a city. ")
+
+
+def _name_only(company, ev, *, timeout=240, meta=None, held=""):
+    """The second ask for a HELD name: same seam, same schema, same validator; the subject
+    is the name, and the page we hold is named as the thing not to profile.
+
+    Returns `(record, REASON_BOARD_OTHER % other)` on success -- a success that carries who
+    the board belongs to, because that is a fact about the ROW and the reader of the mail
+    is the one who can fix it. On a second refusal the ORIGINAL `held:` reason comes back
+    unchanged: the impostor's name is the most useful thing we know about this name, and
+    inventing a fresh reason would throw it away."""
+    other = held_other(held)
+    url = str((ev or {}).get("board_url") or "").strip() or next(
+        (u for _t, u in ((ev or {}).get("postings") or ()) if u), "")
+    warn = ("The page we read this employer's name from" + (" (%s)" % url if url else "")
+            + (" is %s's" % other if other else " is another company's")
+            + ", a DIFFERENT company. It is named here only so that you do not profile it; "
+              "read it as data, never as the subject.")
+    data = _NAME_ONLY_DATA.replace("{warning}", warn.replace("{", "{{").replace("}", "}}"))
+    rec, why = research_company_detail(company, "", timeout=timeout, meta=meta,
+                                       data=data, system=_NAME_ONLY_SYSTEM)
+    if rec is None:
+        return None, held or why
+    return rec, REASON_BOARD_OTHER % (other or "another company")
+
+
 # A refusal worth re-asking with the posting as the subject. `no JSON in the answer` and
 # `rejected by validation` are NOT here: those are the seam misbehaving, not the name being
 # hard, and a second call would buy the same mess twice.
@@ -892,7 +1026,9 @@ def research_with_evidence(company, ev=None, *, timeout=240, meta=None, budget=N
     """(record, reason) -- the one entry point both crons and every session use.
 
     One ordinary research call with the evidence as context; if it refuses and the evidence
-    carries a url, ONE disambiguation call centred on the posting. `budget` is a zero-arg
+    carries a url, ONE second call -- centred on the POSTING when the model could not
+    identify the name, and on the NAME when it identified a DIFFERENT company off the page
+    (`held:`, where the page is the thing misleading it). `budget` is a zero-arg
     callable returning the seconds this run has left (None = unbounded); the second call is
     skipped rather than started-and-clamped when it cannot fit, because a clamped call
     arrives as `ResearchUnavailable` and would read as an outage.
@@ -924,8 +1060,13 @@ def research_with_evidence(company, ev=None, *, timeout=240, meta=None, budget=N
     second = timeout
     if budget is not None:
         second = int(max(DISAMBIG_MIN_S, min(timeout, budget())))
+    # A `held:` first answer means the PAGE is someone else's, so the posting-subject
+    # question buys the same wrong company twice; the name-only ask is the one that can
+    # still answer. Every other routable refusal keeps the operator's 2026-08-31 rule.
+    second_ask = _name_only if why.startswith("held: ") else _disambiguate
     try:
-        return _disambiguate(company, ev, timeout=second, meta=meta)
+        return second_ask(company, ev, timeout=second, meta=meta,
+                          **({"held": why} if second_ask is _name_only else {}))
     except ResearchUnavailable as e:
         if second < timeout and getattr(e, "kind", "") == "transient" \
                 and f"timeout({second:g}s)" in str(e):
@@ -1181,7 +1322,13 @@ def union_store(st, shared=None):
     `sync_store`'s tie-keep meant a stale sqlite copy could put a withdrawn name on the
     BOARD indefinitely while the published file said it was gone (wave 2). Evidence is
     the authority at every read and every write; the pass is idempotent, ~46 ms on the
-    full store."""
+    full store.
+
+    The declared-alias fold runs here for the same reason, and it has to run at every view
+    rather than once on the file: `cloud_state/seen.db` is `SINGLE_WRITER: daily-digest`,
+    so a record deleted from the export comes back out of the runner's sqlite copy the next
+    morning. Folding the union each time is what makes the deletion stick without a
+    tombstone or a second writer (BACKLOG 242's two blockers)."""
     base = load_shared() if shared is None else shared
     out = {k: (dict(v) if isinstance(v, dict) else v) for k, v in base.items()}
     for c, rec in st.load_firmographics().items():
@@ -1190,8 +1337,109 @@ def union_store(st, shared=None):
         verify = _board_verify.load(os.path.join(_ROOT, _board_verify.PATH))
     except Exception:  # noqa: BLE001 — an unreadable verify must never break the union
         verify = {}
-    apply_display_names(out, verify)
+    aliased = declared_aliases()
+    fold_aliases(out, aliased)
+    apply_display_names(out, verify, aliased=aliased)
     return out
+
+
+# A site record carries the SITE's facts -- its own founding year, its own headcount --
+# so folding `Intel Israel` into `Intel` would date Intel's founding to the year its Haifa
+# centre opened. That is the measured reason 98/242 are WON'T FIX, and it is why this fold
+# refuses a site form even when the registry declared it an alias. `display_index` already
+# answers for those groups, at read time, for free.
+_SITE_FORM = re.compile(r"(?i)\bisrael\b")
+_ALIAS_CACHE = {}
+
+
+def _declared(rows):
+    from . import verdicts as _verdicts
+    out = {}
+    for r in rows or ():
+        name = str(r.get("company_name") or "").strip()
+        if not name or str(r.get("active") or "").strip().lower() == "true":
+            continue
+        target = str(_verdicts.alias_target(r.get("notes") or "") or "").strip()
+        if target and target != name and identity_key(name) == identity_key(target):
+            out[name] = target
+    return out
+
+
+def declared_aliases(rows=None):
+    """{parked row name -> the survivor it was declared a duplicate OF}.
+
+    TWO independently dated declarations must agree, which is the same bar
+    `roles._alias_fold_target` sets and for the same reason: the row's own
+    `alias-of <R> <date>:` verdict (prose a human wrote, which can be truncated) AND an
+    `identity_key` that folds the two names onto one identity (a curated map, which can
+    outlive the row it described). Either alone folds nothing. An ACTIVE row is never an
+    alias of anything -- `AWS` and `JPMorganChase` are separate scanner rows with their own
+    boards, and a rule reading only the alias map would have taken both.
+
+    Cached on the registry file's mtime: every `save_shared` asks, and the answer changes
+    only when `registry` commits."""
+    if rows is not None:
+        return _declared(rows)
+    path = os.path.join(_ROOT, "companies.csv")
+    try:
+        stat = os.stat(path)
+    except OSError:                 # no registry beside the store: nothing is declared
+        return {}
+    key = (path, stat.st_mtime_ns, stat.st_size)
+    if _ALIAS_CACHE.get("key") != key:
+        try:
+            import csv
+            with open(path, encoding="utf-8-sig") as f:
+                val = _declared(list(csv.DictReader(f)))
+        except Exception:  # noqa: BLE001 -- an unreadable registry declares nothing
+            return {}
+        _ALIAS_CACHE.update(key=key, val=val)
+    return dict(_ALIAS_CACHE["val"])
+
+
+def fold_aliases(records, aliased=None):
+    """Fold a record stored under a DECLARED alias into the survivor's, in place; returns
+    the [(alias, survivor)] pairs it folded.
+
+    The survivor's own values always win and the alias fills only its EMPTIES, so the
+    direction is decided by the registry's ruling and never by `newer()` -- which would
+    have crowned `DT` over `Digital Turbine`, `Port.io`'s 200 employees over `Port`'s 508
+    and the empty Hebrew Menora record over the full Latin one (3 of 5 pairs backwards;
+    BACKLOG 242 is the measurement). `as_of` stays the survivor's, because a fold learns
+    nothing new about the company.
+
+    Two shapes it deliberately does NOT touch. A site form (`Intel Israel`) keeps its own
+    record, per `_SITE_FORM` above. And when only the ALIAS has a record, nothing is folded
+    and nothing is renamed: moving a record to the survivor's key is a key migration
+    (`459`), and `display_index` already answers for that group under either name.
+
+    `display_name` is skipped on purpose -- it is evidence-only with a single writer, and
+    `apply_display_names` re-derives it for the survivor from the alias's own verify row."""
+    folded = []
+    for alias, survivor in sorted(
+            (declared_aliases() if aliased is None else aliased).items()):
+        if alias == survivor or alias not in records:
+            continue
+        a, s = records.get(alias), records.get(survivor)
+        if not isinstance(a, dict) or not isinstance(s, dict):
+            continue
+        if _SITE_FORM.search(alias) and not _SITE_FORM.search(survivor):
+            continue
+        out = dict(s)
+        fresh = bool(out.get("employees_global"))
+        for k, v in a.items():
+            if (v in ("", None) or k in ("as_of", DISPLAY_NAME_KEY)
+                    or out.get(k) not in ("", None)):
+                continue
+            if fresh and k in _COUNT_COMPANIONS:
+                continue
+            out[k] = v
+        if out.get("employees_global"):
+            out["size_band"] = band_for(out["employees_global"])
+        records[survivor] = out
+        records.pop(alias, None)
+        folded.append((alias, survivor))
+    return folded
 
 
 def display_index(records):
@@ -1374,7 +1622,77 @@ def display_name_from_evidence(registry_name, employer_named):
     return "report", "different-name"
 
 
-def apply_display_names(records, verify):
+def latest_verify(verify):
+    """{name -> its NEWEST board_verify row}, whatever that row's verdict.
+
+    An `ok` a later refusal superseded is evidence WITHDRAWN, not evidence (wave 1b found
+    `Y-Axis` written off a page that now refuses the row). On an equal date a refusal
+    outranks an ok, never the URL's alphabet: a same-day disagreement is a reason to hold
+    back, not a coin toss."""
+    latest = {}
+    for key, row in (verify or {}).items():
+        if not isinstance(row, dict):
+            continue
+        name = str(key).split("|", 1)[0]
+        stamp = (str(row.get("date") or ""), row.get("verdict") != "ok", str(key))
+        if name not in latest or stamp > latest[name][0]:
+            latest[name] = (stamp, row)
+    return {n: row for n, (_s, row) in latest.items()}
+
+
+def display_plan(records, verify, aliased=None):
+    """ONE reading of the evidence -> ([(record key, named, verdict, payload)], hold,
+    unmatched). `apply_display_names` writes from it and `--display-report` prints it, so
+    the operator's review channel and the writer cannot disagree about a name (they were
+    two copies of this join until 2026-09-11, and only one of them knew about aliases).
+
+    `verdict` is `display_name_from_evidence`'s, with two answers this level adds:
+    `report / identity-collision(X)` for a derived name whose identity is ANOTHER company's
+    -- a record's or a registry row's -- which is the impersonation shape (wave 1a: 'Trigo
+    Retail' -> 'Trigo' beside the active row `Trigo`); and `absent / newest-verdict-X` for
+    a row whose newest word is a refusal. `hold` is the ambiguous case-twins, which are
+    neither written nor cleared.
+
+    A verify row keyed by a DECLARED alias vouches for its survivor when that survivor has
+    no row of its own: `autods - automatic dropshipping tools` is the page that names
+    `AutoDS`, and after the fold the record is `autods`, which no page names. Without this
+    the fold would delete the brand and the board would go back to rendering a lowercase
+    slug."""
+    index, plan, hold, unmatched = {}, [], set(), 0
+    for k in records:
+        index.setdefault(str(k).lower(), []).append(k)
+    latest = latest_verify(verify)
+    seen = {n.lower() for n in latest}
+    vouch = {}
+    for a, s in (declared_aliases() if aliased is None else aliased).items():
+        if s in records and str(a).lower() not in index and str(s).lower() not in seen:
+            vouch.setdefault(str(a).lower(), []).append(s)
+    idents = _identity_index(records)
+    for name, row in sorted(latest.items()):
+        keys = index.get(name.lower()) or vouch.get(name.lower(), [])
+        if not keys:
+            unmatched += 1              # no record yet -- self-heals as research grows
+            continue
+        if len(keys) > 1:
+            hold.update(keys)           # ambiguous case-twin: touch neither record
+            unmatched += 1
+            continue
+        named = str(row.get("employer_named") or "").strip()
+        if row.get("verdict") != "ok" or not named:
+            plan.append((keys[0], named, "absent",
+                         "newest-verdict-%s" % (row.get("verdict") or "?")))
+            continue
+        verdict, payload = display_name_from_evidence(keys[0], named)
+        if verdict == "write":
+            ik = identity_key(payload)
+            if ik != identity_key(keys[0]) and ik in idents:
+                verdict = "report"
+                payload = "identity-collision(%s)" % idents[ik][0]
+        plan.append((keys[0], named, verdict, payload))
+    return plan, hold, unmatched
+
+
+def apply_display_names(records, verify, aliased=None):
     """Set/clear `display_name` on `records` in place from board_verify evidence; the
     single authoritative writer (see the section comment). An unreadable verify ({} —
     `board_verify.load` returns that on any error) applies only the overrides and CLEARS
@@ -1394,48 +1712,12 @@ def apply_display_names(records, verify):
            "skipped": not verify}
     derived, hold = {}, set()
     if verify:
-        index = {}
-        for k in records:
-            index.setdefault(str(k).lower(), []).append(k)
-        idents = _identity_index(records)
-        latest = {}
-        for key, row in verify.items():
-            if not isinstance(row, dict):
-                continue
-            name = str(key).split("|", 1)[0]
-            # on an equal date a refusal outranks an ok (the middle term), never the URL's
-            # alphabet: same-day disagreement is a reason to hold back, not a coin toss
-            stamp = (str(row.get("date") or ""), row.get("verdict") != "ok", str(key))
-            if name not in latest or stamp > latest[name][0]:
-                latest[name] = (stamp, row)
-        for name, (_stamp, row) in sorted(latest.items()):
-            keys = index.get(name.lower(), [])
-            if not keys:
-                rep["unmatched"] += 1        # no record yet — self-heals as research grows
-                continue
-            if len(keys) > 1:
-                hold.update(keys)            # ambiguous case-twin: touch neither record
-                rep["unmatched"] += 1
-                continue
-            named = str(row.get("employer_named") or "").strip()
-            if row.get("verdict") != "ok" or not named:
-                continue                     # newest word is a refusal: nothing to claim
-            verdict, payload = display_name_from_evidence(keys[0], named)
+        plan, hold, rep["unmatched"] = display_plan(records, verify, aliased)
+        for key, named, verdict, payload in plan:
             if verdict == "write":
-                # a derived name whose identity is ANOTHER company's — a firmographics
-                # record's or a registry row's — is the impersonation shape (wave 1a:
-                # 'Trigo Retail' -> 'Trigo' beside the active row `Trigo`; wave 1b: Teva,
-                # whose row has no record). Refuse it here; the duplicate row itself is
-                # registry's to park (487's class). Overrides are exempt on purpose —
-                # hand-curated, and render's identity guard backstops.
-                ik = identity_key(payload)
-                if ik != identity_key(keys[0]) and ik in idents:
-                    rep["divergent"].append(
-                        (keys[0], named, "identity-collision(%s)" % idents[ik][0]))
-                    continue
-                derived[keys[0]] = payload
+                derived[key] = payload
             elif verdict == "report":
-                rep["divergent"].append((keys[0], named, payload))
+                rep["divergent"].append((key, named, payload))
     for name, val in DISPLAY_NAME_OVERRIDES.items():
         if name in records:
             derived[name] = val
@@ -1522,7 +1804,9 @@ def save_shared(records):
         verify = _board_verify.load(os.path.join(_ROOT, _board_verify.PATH))
     except Exception:  # noqa: BLE001 — an unreadable verify must never block a publish
         verify = {}
-    apply_display_names(records, verify)
+    _aliased = declared_aliases()
+    fold_aliases(records, _aliased)
+    apply_display_names(records, verify, aliased=_aliased)
     fold_sectors(records)    # the same one-writer symmetry: no publisher ships mixed case
     path = os.path.abspath(SHARED_EXPORT)
     os.makedirs(os.path.dirname(path), exist_ok=True)

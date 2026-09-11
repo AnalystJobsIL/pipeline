@@ -380,11 +380,11 @@
   {
     "id": "ci-export-drops-records",
     "file": "research_firmographics.py",
-    "find": "        lost = sorted(set(shared) - set(recs))\n",
+    "find": "        lost = sorted(n for n in set(shared) - set(recs) if _folds.get(n) not in recs)\n",
     "replace": "        lost = []\n",
     "class": "M1",
     "symbol": "export_drops_records",
-    "why": "company-intel guard 2026-08-28"
+    "why": "company-intel guard 2026-08-28; re-aimed 2026-09-11 when the guard learned what a DECLARED fold is (it subtracts `declared_aliases()` now). Removing the check is the same defeat: the union is a superset by construction and this file has lost records twice when the write looked fine."
   },
   {
     "id": "ci-ledger-pre-run-union",
@@ -772,5 +772,65 @@
     "class": "M6",
     "symbol": "_swap",
     "why": "company-intel guard: a reworded base prompt would make the disambiguation call a copy of the first, carrying the opposite instruction, with every prompt assertion still true"
+  },
+  {
+    "id": "ci-held-name-never-gets-the-name-only-ask",
+    "file": "pipeline/firmographics.py",
+    "symbol": "research_with_evidence",
+    "class": "M1-gate-removal",
+    "find": "    second_ask = _name_only if why.startswith(\"held: \") else _disambiguate\n",
+    "replace": "    second_ask = _disambiguate\n",
+    "why": "company-intel guard: a `held:` refusal means the page on the row belongs to ANOTHER company, so the posting-subject question buys that same wrong company twice and the name is struck for another week. Measured 2026-09-11: ten names in `firmo_failed.json`, every one of them a name the mail's `registry backlog` could never lose.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-loose-echo-accepts-containment-after-a-connective",
+    "file": "pipeline/firmographics.py",
+    "symbol": "_same_company_loose",
+    "class": "M2",
+    "find": "    ca = _stem(_ECHO_CONNECTIVE.sub(\" \", a))\n    return bool(ca and ca == _stem(_ECHO_CONNECTIVE.sub(\" \", e)))",
+    "replace": "    ca = _stem(_ECHO_CONNECTIVE.sub(\" \", a))\n    return bool(ca and _edge_related(ca, _stem(_ECHO_CONNECTIVE.sub(\" \", e))))",
+    "why": "company-intel guard: the connective arm licenses EQUALITY ONLY. Widen it to containment and `The Regatta Group` stems to `regatta`, which edge-contains `regattadata` -- a UK clothing retailer cached onto an Israeli database startup until 2027-02, which is BACKLOG 525's exact failure.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-annotation-strip-ignores-a-division",
+    "file": "pipeline/firmographics.py",
+    "symbol": "_same_company_loose",
+    "class": "M2",
+    "find": "    if not is_division_name(a):\n        bare = _ECHO_ANNOTATION.sub(\" \", e)",
+    "replace": "    if True:\n        bare = _ECHO_ANNOTATION.sub(\" \", e)",
+    "why": "company-intel guard: a distinguishing parenthetical is the only thing telling two division records apart, which is why `identity_key` keeps it. Strip it unconditionally and `Sony (Semiconductor)` accepts an echo of `Sony (PlayStation)`.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-fold-crowns-the-alias",
+    "file": "pipeline/firmographics.py",
+    "symbol": "fold_aliases",
+    "class": "M2",
+    "find": "        out = dict(s)\n        fresh = bool(out.get(\"employees_global\"))",
+    "replace": "        out = dict(a)\n        fresh = bool(out.get(\"employees_global\"))",
+    "why": "company-intel guard: the SURVIVOR's facts win and the alias fills only its empties. Reverse it and the fold reproduces `newer()`, which crowns the wrong record in 3 of the 5 pairs BACKLOG 579 names -- `Port.io`'s 200 employees over `Port`'s 508, and the empty Hebrew Menora record over the full Latin one (242's measurement).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-fold-takes-a-site-record",
+    "file": "pipeline/firmographics.py",
+    "symbol": "fold_aliases",
+    "class": "M1-gate-removal",
+    "find": "        if _SITE_FORM.search(alias) and not _SITE_FORM.search(survivor):\n            continue",
+    "replace": "        if False:\n            continue",
+    "why": "company-intel guard: a site record carries the SITE's facts, so folding `Intel Israel` into `Intel` dates Intel's founding to the year its Haifa centre opened -- the measured reason 98/242 are WON'T FIX. 23 of the 40 declared pairs are site forms (2026-09-11).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-declared-alias-takes-an-active-row",
+    "file": "pipeline/firmographics.py",
+    "symbol": "_declared",
+    "class": "M1-gate-removal",
+    "find": "        if not name or str(r.get(\"active\") or \"\").strip().lower() == \"true\":\n            continue",
+    "replace": "        if not name:\n            continue",
+    "why": "company-intel guard: an ACTIVE row is never an alias of anything. `AWS` and `JPMorganChase` are separate scanner rows with their own boards, and a rule that read only the alias map would fold both away.",
+    "must_be_killed_by_behavioural": true
   }
 ]

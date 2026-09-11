@@ -702,7 +702,13 @@ def _direction(rep, scoped):
             rep["cron"] = {"age": _stages.age_days("firmo"), "date": str(f.get("date") or ""),
                            "todo": _int(f.get("todo")), "attempted": _int(f.get("attempted")),
                            "left": _int(f.get("left")), "researched": _int(f.get("researched"), 0),
-                           "failed": _int(f.get("failed"), 0), "alarm": str(f.get("alarm") or "")}
+                           "failed": _int(f.get("failed"), 0), "alarm": str(f.get("alarm") or ""),
+                           # WHICH drain wrote this stamp, and the two classes only a
+                           # registry cell can fix (2026-09-11)
+                           "budget_min": f.get("budget_min"),
+                           "held": _int(f.get("held"), 0),
+                           "board_other": _int(f.get("board_other"), 0),
+                           "held_names": str(f.get("held_names") or "")}
     except Exception as e:  # noqa: BLE001
         print(f"  [company-intel] gap direction not stamped: {e!r}", file=sys.stderr, flush=True)
         # `stages.stamp` writes PATH + ".tmp" then `os.replace`s it; a replace that fails
@@ -712,6 +718,24 @@ def _direction(rep, scoped):
                 os.remove(_stages.PATH + ".tmp")
         except OSError:
             pass
+
+
+# The digest runs its own bounded drain (`daily-digest.yml`, step `firmo_drain`,
+# `--budget-min 20`) minutes before this line is composed, and `research_firmographics`
+# stamps `firmo` on every exit -- so on a healthy morning the stamp this line reads is the
+# DIGEST's, not the 10:17 cron's, and calling it "bulk cron" told the reader the cron had
+# researched 13 of 15 with 2 failures on days the cron researched 2 of 2 with none (BACKLOG
+# 474, measured 09-08..09-11). The stamp already says which: only the digest passes 20
+# minutes. Whether the 10:17 cron FIRED is the `cron` watch's question, not this line's.
+DRAIN_BUDGET_MAX = 30
+
+
+def _drain_label(cron):
+    try:
+        bm = float(cron.get("budget_min"))
+    except (TypeError, ValueError):
+        return "bulk cron"          # an old-shape stamp says nothing about who wrote it
+    return f"digest drain ({bm:g}m)" if bm <= DRAIN_BUDGET_MAX else f"bulk cron ({bm:g}m)"
 
 
 def _ascii(s, n=80):
@@ -921,9 +945,16 @@ def _audit_lines(rep):
                 bits.append(f"{cron['left']} left")
         if cron.get("failed"):
             bits.append(f"{cron['failed']} failed")
+        if cron.get("held"):
+            # the names no retry can answer: the board on the row belongs to another
+            # company, so every ask -- including the name-only one -- came back about them
+            bits.append(f"{cron['held']} held"
+                        + (f" ({cron['held_names']})" if cron.get("held_names") else ""))
+        if cron.get("board_other"):
+            bits.append(f"{cron['board_other']} board-names-other")
         if cron.get("alarm"):
             bits.append(f"alarm {cron['alarm']}")
-        parts.append(f"bulk cron: last ran {when}, " + ", ".join(bits))
+        parts.append(f"{_drain_label(cron)}: last ran {when}, " + ", ".join(bits))
     # The one warning this direction earns -- OUTSIDE the `export ok` branch: a corrupt
     # export is a bad morning, and a bad morning is when the cron is likeliest to be dead
     # too; wave 2 found the warning silenced by exactly that. The gap GREW and the only
@@ -936,6 +967,16 @@ def _audit_lines(rep):
     # means: the freshest healthy stamp at 05:00 is yesterday's (age 1), one dropped
     # slot is age 2 and routine, two is age 3. An unknown age (a stamp with no date) is
     # not evidence of anything and warns nothing; the sentence above says "age unknown".
+    # ...and the OTHER way this gap stops draining, which the age rule above cannot see
+    # because the digest's own drain stamps `firmo` every morning (474): the drain ran, and
+    # the names it attempted are ones no ask of ours can answer. Two dated halves again --
+    # the gap GREW and at least one name is held -- so a single stuck name on a falling gap
+    # says nothing and prints nothing.
+    if isinstance(delta, int) and delta > 0 and (cron or {}).get("held"):
+        warn.append(f"registry backlog grew {delta:+d} to {_rb} and {cron['held']} name(s) "
+                    f"are HELD: the board on the row belongs to another company, so no "
+                    f"retry can profile them — the url is a registry cell"
+                    + (f" ({cron['held_names']})" if cron.get("held_names") else ""))
     _age = cron.get("age") if cron else None
     if isinstance(delta, int) and delta > 0 and (not cron or (isinstance(_age, int) and _age >= 3)):
         warn.append(f"registry backlog grew {delta:+d} to {_rb} since "

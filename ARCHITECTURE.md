@@ -3855,9 +3855,14 @@ python -c "import csv,collections;print(collections.Counter(r['firmo_match'] for
 ```
 
 Treat that 0 as a **floor that a night can lift, not a pin**. The registry grows faster than
-any single drain — a handful of fresh rows with no facts yet is a normal morning, and
-`tests/test_company_intel.py` asserts `<= 10` for exactly that reason. What is never normal
-is the shape this rule closed: a name no amount of re-asking could ever answer.
+any single drain, so a handful of fresh rows with no facts yet is a normal morning.
+`tests/test_company_intel.py` **measures and prints that gap and no longer caps it**
+(2026-09-11): the number moves when a cron commits and cannot move when anyone pushes, so
+the cap reddened `guard` for three other lanes on a clean `origin/master` — the 12:59
+auto-expand run took it 10 → 12 and the 14:27 intel cron took it back, with nobody having
+fixed or broken anything. The gauge a person reads is the mail's `registry backlog N (+D
+since <date>)`, and beside it the `N held (…)` clause below, which names the one shape that
+is never normal: a name no amount of re-asking could ever answer.
 
 **Two values in that export were written by HAND and no field says so.** `Hila & Co.`'s whole
 record (the seam answered it on one attempt of three, so it is this session's reading of the
@@ -3959,6 +3964,38 @@ is not the free win it looks like** (`docs/BACKLOG.md` 98): `merge` picks its wi
 for 8 of the 29 groups the site record is newer — a naive `reduce(merge, group)` writes
 Amazon with AWS's 150,000 employees and founding year 2006 instead of 1,576,000 and 1994, and
 dates Microsoft's founding to 1989, the year its Israeli R&D centre opened.
+
+**What DOES fold, since 2026-09-11, is the group the registry has already ruled on**
+(`fold_aliases`, closing `docs/BACKLOG.md` 579 and 393's Menora half). Nine records went,
+1,607 → 1,598: `DT`→`Digital Turbine`, `Port.io`→`Port`, `Gong.io`→`Gong`,
+`AutoDS - Automatic Dropshipping Tools`→`autods`, `Investing.com`→`Investing`,
+`Intel Corporation`→`Intel`, `Cadence Design Systems`→`Cadence`,
+`JPMorgan Chase`→`JPMorganChase` and the Hebrew `מנורה מבטחים החזקות`→`Menora Mivtachim
+Group`. Four rules, and each is the answer to one of the objections above:
+
+- **The direction is the registry's, never the records'.** `declared_aliases()` pairs a
+  PARKED row's own dated `alias-of <R>` verdict with an `identity_key` that folds the two
+  names together — the same two-declaration bar `roles._alias_fold_target` sets — and the
+  survivor is `<R>`. `newer()` is not consulted, which is the whole point: it crowns the
+  wrong side in three of the five pairs `579` names (`DT` is dated 09-01 and `Digital
+  Turbine` 08-21; `Port.io` says 200 employees where `Port` says 508; the Hebrew Menora
+  record has no headcount at all).
+- **The survivor's facts win and the alias fills only its EMPTIES**, `as_of` stays the
+  survivor's, `size_band` is re-derived. On the live export that filled nothing: all nine
+  survivors were already complete.
+- **A site form is refused even when declared** — 23 of the 40 declared pairs are `X Israel`
+  rows, and a site record carries the SITE's facts. That is the Microsoft-1989 sentence
+  above, and it is why this is a fold of what the registry ruled and not of what
+  `identity_key` groups.
+- **An ACTIVE row is never an alias.** `AWS` and `JPMorganChase` are separate scanner rows
+  with their own boards; a rule reading the alias map alone would have taken both.
+
+It runs inside **`union_store` and `save_shared`**, not once over the file, because
+`cloud_state/seen.db` is `SINGLE_WRITER: daily-digest`: a key deleted from the export comes
+back out of the runner's sqlite copy the next morning. Folding every view is what makes the
+deletion stick with no tombstone and no second writer — `242`'s two blockers, avoided rather
+than solved. `--export`'s superset guard subtracts the declared folds, so a deliberate
+deletion publishes and a real loss still refuses.
 
 **The employer's own name — `display_name`, evidence only (2026-08-30).** Some registry keys
 are ATS slugs (`withfaye` where the employer is Faye), and the key cannot change: it joins
@@ -4237,6 +4274,35 @@ publish.** Concretely, in `pipeline/firmographics.py`:
   for the name — every strike, soft-outage and mass-failure counter is untouched — but the
   weekly retry now re-asks the answerable question, and the mail says which kind of morning
   it was.
+- **A `held:` refusal gets the NAME back as the subject, not the posting** (2026-09-11).
+  `_name_only` / `_NAME_ONLY_SYSTEM`, same seam, same schema, same validator, the give-up
+  sentence exchanged by `_swap` and both fence sentences kept verbatim — the context names
+  the impostor, so they matter most here. The data says which page we hold and whose it is:
+  *"The page we read this employer's name from (careers.mars.com/…) is Mars, Incorporated's,
+  a DIFFERENT company … read it as data, never as the subject."* Still ONE second call and
+  still only with a url, so nothing about the spend or the counters moves.
+
+  **Why the other question could not work here.** A `held:` means the model read the page on
+  the row and named the company that owns it — so *"identify the employer who published
+  these postings"* answers with that same company, is held again, and the name is struck for
+  another seven days. That loop WAS the backlog: on 2026-09-11 the ten names in
+  `cloud_state/firmo_failed.json` were exactly the ten names the gauge above could never
+  lose, and `Mars Antennas And Rf Systems` had been round it against `careers.mars.com` five
+  times. A record bought this way returns `board-names-other: <who owns the page>` as its
+  reason — a SUCCESS that names a defect in the ROW, printed on the `ok` line, counted in
+  the stamp and surfaced in the mail, because the fix is a registry cell and nothing in this
+  lane can make it.
+- **The relation the echo is judged by has a second, narrower arm** (`_same_company_loose`).
+  A parenthetical the page added is dropped and the whole relation re-run — `Loops
+  (getloops.ai)`, `Shabak (Israel Security Agency / Shin Bet)` — unless the asked name is a
+  DIVISION (`Sony (Semiconductor)`), where that parenthetical is the only thing telling two
+  records apart. Connectives (`and`, `the`, `of`) are dropped for an EQUALITY test only,
+  never containment: `Mars Antennas And Rf Systems` is our spelling of `MARS Antennas & RF
+  Systems Ltd.`, while `The Regatta Group` minus `the` stems to `regatta`, which
+  edge-contains `regattadata` — a UK clothing retailer cached onto an Israeli database
+  startup, `525`'s failure rebuilt by a convenience. Three names were declared in `ALIASES`
+  instead, each against the board on its own row: `rafa labartories` (a typo), `noga iso`
+  (an abbreviation) and `arrow components`.
 
 **What the evidence is made of, and what each half claims.** `_row_evidence` gives an
 **active** row *the careers board we read this name from*; `_posting_evidence` gives
@@ -4381,15 +4447,30 @@ failures**: zero attempts satisfied "no infrastructure error" vacuously, and a t
 all-fail run sat ahead of the mass-failure guard, so both wrote "proved good" (waves 1, 2).
 
 **The digest reads the stamp back as facts, and stamps its own.** `company_intel._direction`
-puts the cron's numbers on the `Company intel:` line — `bulk cron: last ran 2026-08-29 (1d
-ago), 61 researched of 67 to do, 0 left, 6 failed` — and writes an `intel` stamp
+puts the drain's numbers on the `Company intel:` line — `digest drain (20m): last ran
+2026-09-11 (today), 13 researched of 15 to do, 0 left, 2 failed, 2 held (…)` — and writes an
+`intel` stamp
 (`backlog`, `board`, `researched`, `blurbs`) so that *tomorrow's* digest can print the gap's
 direction: `registry backlog 68 (+27 since 2026-08-29)`. Only the day's **first**
 measurement is the baseline (08-28 ran at 07:08 and 17:40 with the cron between them; a
 re-base would have reported +27 for a day that moved −11). A scoped run reads and never
 writes; a corrupt stamp file is said (`direction unknown`) and never written over, because
-`stages.stamp` rebases on `{}` when it cannot read. One warning, for one shape: the gap
-**grew** and the cron's stamp is **≥ 3 days** old or absent — either half alone is routine.
+`stages.stamp` rebases on `{}` when it cannot read. Two warnings, each on two dated halves,
+because one half alone is routine: the gap **grew** and the stamp is **≥ 3 days** old or
+absent; and the gap **grew** and at least one name is **held**. The second exists because
+the first can no longer fire — the digest's own drain stamps `firmo` every morning, so the
+age is 0 whatever the 10:17 cron did (`474`).
+
+**Which drain stamped it is read off `budget_min`, and the label says so** (2026-09-11,
+closing `474`). `daily-digest.yml`'s `firmo_drain` step passes `--budget-min 20` and runs
+minutes before this line is composed; `firmographics.yml` passes 60 and fires at 14:2x. Both
+write the one `firmo` key, so `bulk cron: 13 researched of 15 to do, 2 failed` was the
+DIGEST's numbers under the cron's name on four consecutive mornings (09-08..09-11), while
+the cron itself researched 2 of 2 with no failures. The line now reads `digest drain (20m):`
+at or under 30 minutes and `bulk cron (60m):` above it; a stamp with no `budget_min` — every
+one written before today — keeps the old wording. **Whether the 10:17 cron FIRED is no
+longer this line's question**: it is the `cron` watch's (`tests/schedule_census.py --alarm`),
+which measures slots rather than inferring one from a key two jobs write.
 Rejected carriers for "yesterday's number": a `_meta` key in `firmographics.json`
 (`load_shared_status` would read it `partial` and every writer would refuse), a new
 `cloud_state` file (needs a `persist_state.STRATEGY` entry — `infra`'s), yesterday's
@@ -4531,8 +4612,10 @@ key added since.
 |---|---|
 | work done | `2 of 59 board companies unprofiled (cap 5/run, budget 8m): 2 researched, 0 failed (1 research failed, weekly retry + 1 not a company — unprofiled) · blurbs: … · seam: sonnet-5 x2 · 2 calls, 41s, 2 searches · export 968 records, newest 2026-08-26, registry backlog 7 (+3 since 2026-08-25) · bulk cron: last ran 2026-08-25 (1d ago), 19 researched of 23 to do, 0 left, 4 failed` |
 | the gap has a direction | `registry backlog 68 (+27 since 2026-08-29)`; `(first measurement)` when no `intel` stamp exists yet; `(direction unknown: the stage stamp file is unreadable)` on a corrupt stamp file, which is never written over |
-| the cron's last word | `bulk cron: last ran 2026-08-28 (2d ago), 38 researched of 139 to do, 99 left, 2 failed, alarm zero-produce(…)` — the stamp's numbers as facts; its age is judged by `Stages:` |
+| the last drain's word | `digest drain (20m): last ran 2026-09-11 (today), 13 researched of 15 to do, 0 left, 2 failed` — the stamp's numbers as facts, under the name of whichever drain wrote them (`bulk cron (60m):` for the 10:17 one, bare `bulk cron:` for a stamp with no `budget_min`) |
+| a name no retry can answer | `…, 2 held (mars-antennas-and-rf+regatta-data), 3 board-names-other` — `held` is a name whose board belongs to another company and whose name-only re-ask did not rescue it either; `board-names-other` is that same shape RESCUED, and both are registry work |
 | the gap grew and nothing drains it | `::warning::company-intel registry backlog grew +28 to 84 since 2026-08-29 and the bulk cron last ran 3d ago — nothing is draining it` (or `has never run`); never on a level, never on a single dropped slot |
+| the gap grew and a name is stuck | `::warning::company-intel registry backlog grew +2 to 12 and 2 name(s) are HELD: the board on the row belongs to another company, so no retry can profile them — the url is a registry cell (…)`; silent on a falling gap |
 | a blurb purged | `… blurbs: …, 1 purged from the store (not a company)`; above the ceiling the step log says `blurb purge REFUSED: N of M …` and nothing is deleted |
 | a name is not a company | `… (1 research failed, weekly retry + 1 not a company — unprofiled)` — one counter used to call both "weekly retry", which a job title never gets |
 | a name failed | `… why failed: Nowhere Ltd: model could not identify the name` — the cause used to exist only in stderr, while the strike gated the name for 7 days |

@@ -22,6 +22,7 @@ import datetime as dt
 import json
 import os
 import math
+import re
 import sys
 import time
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
@@ -390,35 +391,11 @@ def main():
         # opened (a report must have zero side effects, wave 1b).
         verify = BV.load(os.path.join(HERE, BV.PATH))
         recs, _status = load_shared_status()
-        index = {}
-        for k in recs:
-            index.setdefault(str(k).lower(), []).append(k)
-        idents = F._identity_index(recs)
-        rows = {}
-        for key, row in verify.items():
-            if isinstance(row, dict):
-                name = str(key).split("|", 1)[0]
-                stamp = (str(row.get("date") or ""), row.get("verdict") != "ok", str(key))
-                if name not in rows or stamp > rows[name][0]:
-                    rows[name] = (stamp, row)
+        F.fold_aliases(recs)     # the file's own view: report on the keys --export will write
+        plan, _hold, unmatched = F.display_plan(recs, verify)
         buckets = {"write": [], "absent": [], "report": []}
-        unmatched = 0
-        for name, (_s, row) in sorted(rows.items()):
-            keys = index.get(name.lower(), [])
-            if len(keys) != 1:
-                unmatched += bool(row.get("verdict") == "ok")
-                continue
-            named = str(row.get("employer_named") or "").strip()
-            if row.get("verdict") != "ok" or not named:
-                buckets["absent"].append(
-                    (keys[0], named or "(no name)", "newest-verdict-%s" % row.get("verdict")))
-                continue
-            verdict, payload = F.display_name_from_evidence(keys[0], named)
-            if verdict == "write":
-                ik = identity_key(payload)
-                if ik != identity_key(keys[0]) and ik in idents:
-                    verdict, payload = "report", "identity-collision(%s)" % idents[ik][0]
-            buckets[verdict].append((keys[0], named, payload))
+        for key, named, verdict, payload in plan:
+            buckets[verdict].append((key, named or "(no name)", payload))
         for verdict in ("write", "absent", "report"):
             print(f"== {verdict} ({len(buckets[verdict])}) ==")
             for name, named, payload in buckets[verdict]:
@@ -453,7 +430,12 @@ def main():
         # The union is a superset by construction (`merge` is field-level and drops no key).
         # Asserted anyway, because this file has lost records twice — 19 at risk on
         # 2026-08-24 and 22 destroyed on 2026-08-26 — and both times the write looked fine.
-        lost = sorted(set(shared) - set(recs))
+        # ...but a DECLARED fold is a deletion this lane meant: `union_store` folds a record
+        # stored under a registry-declared alias into its survivor (`fold_aliases`), so the
+        # alias key is gone on purpose. Only where the survivor is present -- a vanished key
+        # whose survivor is also missing is the loss this guard exists for.
+        _folds = F.declared_aliases()
+        lost = sorted(n for n in set(shared) - set(recs) if _folds.get(n) not in recs)
         if lost:
             print("::error::company-intel refusing to publish: the union DROPS %d record(s) "
                   "the export already holds (%s%s)"
@@ -690,6 +672,13 @@ def main():
     # re-researches before 2027-02 at --refresh-days 180.
     meta = {}
     done = failed = 0
+    # `held` is the class that could not drain itself: the model identified a DIFFERENT
+    # company off the page on the row, and the name-only re-ask did not rescue it either.
+    # `board_other` is the same shape RESCUED -- a record bought about the name, with the
+    # row's url belonging to someone else. Both reach the mail, because the fix for either
+    # is a registry cell and nothing in this job can make it.
+    held = board_other = 0
+    held_names = []
     done_names = set()
     infra_streak = infra_errors = 0
     failed_names = []
@@ -703,7 +692,7 @@ def main():
         `why` is the seam's own reason and it is PRINTED: the strike is a 7-day gate, and
         `unidentified despite role evidence` (we asked with the posting in hand and still
         could not name the publisher) is a different morning from `rejected: no sector`."""
-        nonlocal done, failed
+        nonlocal done, failed, held, board_other
         if rec:
             if name in have:
                 # FIELD-GENERIC merge-preserve: a degraded re-research (out-of-enum
@@ -729,17 +718,33 @@ def main():
             st.save_firmographics({name: rec}, today)  # main thread owns sqlite
             done += 1
             done_names.add(name)
-            print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}", flush=True)
+            tail = ""
+            if str(why or "").startswith(F.BOARD_OTHER_PREFIX):
+                board_other += 1
+                tail = f"  ({why} -- the url on this row is theirs, not this company's)"
+            print(f"ok   {name}: {rec['sector']} / {rec.get('stage') or '?'} / {rec.get('size_band') or '?'}{tail}", flush=True)
         else:
             failed += 1
             failed_names.append(name)
+            if str(why or "").startswith("held: "):
+                held += 1
+                held_names.append(name)
             print(f"FAIL {name}{f' ({why})' if why else ''} (strike pending)", flush=True)
+
+    def _held_token():
+        """The held names as ONE `Stage order:` token. That line is `k=v` pairs joined by
+        spaces and a guard pins the token shape, so a name travels hyphenated through its
+        identity key and the list is `+`-joined -- never a space, never a semicolon."""
+        return "+".join(
+            re.sub(r"[^a-z0-9]+", "-", identity_key(n)).strip("-") or "unnamed"
+            for n in held_names[:3]) + ("+more" if len(held_names) > 3 else "")
 
     def _stamp_kwargs():
         return dict(researched=done, failed=failed, records=len(have) + done, todo=queued,
                     attempted=attempted, left=queued - attempted, unavailable=infra_errors,
                     gated=len(gated), minutes=round((time.time() - t0) / 60, 1),
-                    budget_min=a.budget_min)
+                    budget_min=a.budget_min, held=held, board_other=board_other,
+                    **({"held_names": _held_token()} if held_names else {}))
 
     try:
         with ThreadPoolExecutor(max_workers=max(1, a.workers)) as ex:
@@ -905,6 +910,8 @@ def main():
         stages.stamp("firmo", researched=done, failed=failed, records=len(have) + done,
                      todo=queued, attempted=attempted, left=left, unavailable=infra_errors,
                      gated=len(gated), minutes=round(minutes, 1), budget_min=a.budget_min,
+                     held=held, board_other=board_other,
+                     **({"held_names": _held_token()} if held_names else {}),
                      **({"alarm": _alarm} if _alarm else {}))
     print(f"\n{done} researched, {failed} failed, {len(have) + done} total in store; "
           f"{queued} to do, {attempted} attempted, {left} left ({minutes:.1f} min"
