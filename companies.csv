@@ -1680,7 +1680,7 @@ Lynxight,scrape,,https://lynxight.com/careers,true,queue-drain 2026-08-29 hunt; 
 Medasense Biometrics Ltd,scrape,,https://medasense.com/careers/,true,queue-drain 2026-08-29 hunt; 3/3 IL
 Monogoto,scrape,,https://monogoto.io/careers-2/,true,queue-drain 2026-08-29 hunt; 5/5 IL
 John Bryce Solutions,scrape,,,false,wrong-url 2026-09-01: board names Bryce Corporation; needs re-resolution | dark-triage 2026-09-01: no-url (no url on the row) | listing-hunt 2026-09-04: no pages reachable
-Kamada,scrape,,https://career.kamada.com/Positions,true,queue-drain 2026-08-29 hunt; 3/3 IL
+Kamada,scrape,,https://career.kamada.com/Positions,false,queue-drain 2026-08-29 hunt; 3/3 IL | scrape rotted (error 6d) 2026-09-11: extraction yields 0 — no ATS detected; parked for re-hunt
 Ledico,scrape,,https://www.ledico.com/careers/,true,queue-drain 2026-08-29 hunt; 10/10 IL
 Leumit Health,scrape,,https://www.leumit.co.il/en/jobs/,true,queue-drain 2026-08-29 hunt; 2/2 IL
 X Trodes,scrape,,https://xtrodes.applytojob.com/apply,true,queue-drain 2026-08-29 hunt; 2/2 IL
