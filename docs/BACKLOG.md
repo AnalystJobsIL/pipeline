@@ -359,7 +359,7 @@ closure convention in the header.
 - **589** `589@infra` **A cheap model could pick the one right SERP result instead of fetching four**
 - **590** `590@infra` **`cloud_state/queue_state.json` has no trim, and three row rungs now append to it** —
 - **591** `591@infra` **A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
-- **592** `592@infra` **A mutation shard's red surfaces on whatever sha is at the head of the queue, not on
+- **592** `592@infra` **DUPLICATE OF `591`
 
 ### discovery — 30 open
 
@@ -11967,31 +11967,21 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      Related but distinct from `442` (the shard budget) and from `386` (a guard that cannot
      fail): this is about ATTRIBUTION, not about coverage or runtime.
 
-592. **A mutation shard's red surfaces on whatever sha is at the head of the queue, not on
-     the sha that introduced it** — lane: `infra` (`tools/mutate.py`, `.github/workflows/tests.yml`).
-     Filed 2026-09-11 by `infra` on a measurement handed over by the `registry` session, which
-     found it the way this repo usually finds things: by being blamed for someone else's red.
+     **A fourth instance, measured after this item was filed** (`infra`, 2026-09-11):
+     `mutation-gate (6)` of run `34622790874` failed on a SURVIVING mutant,
+     `page-closed-row-is-upserted-anyway` — a record `roles` added in `f88f783` against
+     `pipeline/run.py::main`, carrying no `killers` field and killed by no test. The run was
+     `infra`'s; the record and the code are `roles`'. Four reds in one day, on four
+     different lanes' runs, none belonging to the lane that read them — and the `git log -S`
+     line above would have routed every one of them in a single command.
 
-     `tools/mutate.py` runs its catalogue against the working tree and reports a surviving
-     mutant as a failure of THIS run. The catalogue is `tests/mutations.json`, which every
-     lane appends to, so a record that stops matching its anchor — or a test that stops
-     killing it — becomes visible on the next lane to push, not on the lane that moved the
-     line. On 2026-09-11 `jd-text`'s second broken record was invisible on `jd-text`'s own run
-     and visible on `registry`'s; on the same day this lane re-aimed two records
-     (`bd-policy-retry`, `hunt-suspect-drop`) whose anchors its own change had moved, and
-     nothing would have said so if it had not checked all 312 by hand.
-
-     Why it matters more than it sounds: the reader of a red mutation shard has no reason to
-     look at another lane's commit, so the diagnosis starts in the wrong file every time. The
-     cheap half of the fix is a report, not a gate — `tools/mutate.py` already knows which
-     record failed, and `git log -1 --format=%h -- <record's file>` names the commit that last
-     touched the line it anchors on. Printing that beside the failure turns "your shard is
-     red" into "this record's anchor was last moved by `<sha>` (`<lane>`)". The expensive half
-     — running the catalogue against the merge-base as well, to attribute the red — is a
-     doubling of the gate's cost and is NOT proposed.
-
-     A guard already exists for the adjacent half of this class and is worth citing rather
-     than rebuilding: `test_the_mutation_selector_keeps_every_documented_killer`
-     (`tests/test_registry.py`) and the stale-anchor check every session should run before a
-     push — `for r in mutations: src.count(r["find"]) == 1`. Neither attributes a red; both
-     stop one being introduced.
+592. **DUPLICATE OF `591` — do not cite.** — lane: `infra`. Filed 2026-09-11 by `infra`,
+     71 minutes
+     after `jd-text` filed the same finding as `591` at `registry`'s request, and folded
+     back into it the same evening. `docs/backlog.py next` returned 592 because 591 was
+     already taken — the tool working exactly as designed — and a free number was taken
+     as the only check that mattered. `next` answers *is this number free*; nothing but
+     reading the neighbouring item answers *has this already been filed*. The number is
+     kept as a pointer rather than deleted, so an existing citation resolves to text and
+     not to a gap. Everything it said is in `591`, which states the attribution command
+     better: `git log -S '<record id>' -- tests/mutations.json`.
