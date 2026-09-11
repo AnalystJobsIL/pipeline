@@ -79,7 +79,7 @@ def sample(root, tier):
             continue
         title_l = (j.get("title") or "").lower()
         company_l = (j.get("company") or "").lower()
-        rel = seniority._relevance(title_l, company_l)
+        rel = seniority._relevance(title_l, company_l, j.get("description") or "")
         if rel in ("excluded", "none") or seniority._NOT_A_JOB.search(title_l):
             continue
         sen = seniority._seniority(title_l)
@@ -175,7 +175,7 @@ def sample_ledger(root, only):
         job = {"company": rec.get("company"), "title": rec.get("title"),
                "location": rec.get("location"), "url": rec.get("url"), "description": desc}
         title_l = (job["title"] or "").lower()
-        rel = seniority._relevance(title_l, (job["company"] or "").lower())
+        rel = seniority._relevance(title_l, (job["company"] or "").lower(), desc)
         sen = seniority._seniority(title_l)
         tier = "keyword" if (rel == "strong" and sen == "senior") else "llm"
         key = (seniority._norm_company(job["company"]), seniority._norm(job["title"]))

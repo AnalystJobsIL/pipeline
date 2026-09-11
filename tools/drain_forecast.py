@@ -97,7 +97,7 @@ def main():
             continue
         title_l = (j.get("title") or "").lower()
         company_l = (j.get("company") or "").lower()
-        rel = seniority._relevance(title_l, company_l)
+        rel = seniority._relevance(title_l, company_l, j.get("description") or "")
         if rel in ("excluded", "none") or seniority._NOT_A_JOB.search(title_l):
             continue
         sen = seniority._seniority(title_l)

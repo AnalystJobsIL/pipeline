@@ -103,3 +103,25 @@ closed on the verdict; the remark is noted where the next reader will find it.
 * `NoTraffic | Global Compensation & People Analytics Manager` **stays withdrawn** on the
   same axis as Alma Lasers: "own commission administration, calculations and payout
   validation" and HRIS ownership are policy and execution. The HR domain is not the ground.
+
+
+## 2026-09-11 addendum — the weekly delta audit's rows, judged on this boundary
+
+*lane: `classifier`. Five of the 25 rows adjudicated on 2026-09-11 turned on this record; the
+seam (`v3.0f84ab84`) read each once, and three times where it and this lane disagreed.
+Artifact: `tests/fixtures/classifier/2026-09-11-delta-audit.json`.*
+
+| posting | what the person produces | verdict |
+|---|---|---|
+| `Edikted \| Retail Data Analyst` | three analysis bullets open a nine-bullet list of which six are the analyst's own replenishment execution: "Place replenishment orders in the warehouse system based on data insights", "Coordinate shipments between the warehouse and retail locations", "Maintain and update replenishment files"; requirements ask only Excel / Google Sheets. Seam NO on three of three passes | **OUT** — the LTX shape; this lane's first read was IN on the opening bullets and the stable verdict plus the record's own test ("judge which the posting leads with") settled it |
+| `Flex \| Material Planning Analyst` | "Create weekly purchase orders", "Daily review of RMA transactions", packing lists, item master; the reporting is "Assists in" and "May assist" | **OUT** (carried from the 09-04 audit, unactioned for a week) |
+| `Qlik Israel \| BI Developer (Qlik Specialist)` | "מפתח BI ומנהל פרויקטים": planning, backend/frontend development and implementation of the project through every phase at the client's site, two years of technology project management mandatory; the one analysis phrase is a skills line | **OUT** — configuring a system and delivering it. The contrast kept IN the same day is `Experda \| BI Consultant & Data Developer`, whose stated output is dashboards and "proactively suggest metrics and insights" for its clients |
+| `Bank Leumi \| Business Analyst, Corporate Banking HQ` | "אנליסט/ית מטה ופרויקטים": coordinating and tracking tasks and decisions, preparing management-meeting materials, producing conferences and welfare events; two analysis bullets ("תנתחו ותטייבו מידע", "תפתחו דוחות ניהוליים") serve that staff work; requirements are Excel and PowerPoint | **OUT** — the Migdal-precedent half the 09-04 audit named is outweighed by what the posting leads with |
+| `Ferrero \| Business Analyst` (the body says Trade Marketing Analyst) | leads with "Manage and oversee the company's external merchandising operations" and "Maintain and monitor sales targets within commercial systems", then "Prepare analytical materials for recurring commercial meetings" | **IN, kept** — this lane read the merchandising-operations lead as execution; the seam answered YES on three of three passes ("analyzing sales/market data, tracking performance, preparing analytical materials") and a stable verdict is not overridden on a mixed posting |
+| `ICE \| Analyst, Index Operations` | four of six bullets are index production (corporate-action validation, pricing verification, rebalancing checks); "Prepare report templates, with standard charts and data tables" and "prepare analyses in support of ad-hoc client requests" are named deliverables | **IN, kept** — the withfaye / CloudHiro line: a named report deliverable keeps a mixed operations role in; seam YES on two of three |
+
+The rule the two kept rows add: **a stable seam verdict on readable text is not overridden by
+one reader's weighting of a mixed posting.** Where this lane and the seam disagree, the seam
+is asked twice more; a 3-of-3 answer stands, a 2-of-3 or a flap is resolved in the
+conservative direction (a retraction is permanent), and the disagreement is recorded here
+rather than settled by whichever read came last.

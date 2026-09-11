@@ -14081,8 +14081,7 @@ def test_a_committed_conflict_marker_is_an_error(tmp_path):
     # a document that merely TALKS about markers, indented or inline, is not one
     cd2 = _cd()
     (tmp_path / "README.md").write_text(
-        "a hunk opens with `<<<<<<< HEAD` and ends with a marker line." + chr(10)
-        + "    >>>>>>> in an indented example" + chr(10), encoding="utf-8")
+        "a hunk opens with `        + "    >>>>>>> in an indented example" + chr(10), encoding="utf-8")
     cd2.ROOT = str(tmp_path)
     cd2.check_no_conflict_markers()
     assert cd2.ERRORS == [], cd2.ERRORS
@@ -14712,8 +14711,7 @@ def test_fix_refuses_to_edit_a_file_that_is_already_dirty():
     body = body.split("def fix_facts(")[1].split("\ndef ")[0]
     assert '"git", "status", "--porcelain"' in body
     assert 'print("REFUSED: --fix will not edit a file that is already modified' in body
-# ======================================================================================
-# lane: infra (2026-08-27) — delivery, and the difference between "nothing happened" and
+# ===============================================================================# lane: infra (2026-08-27) — delivery, and the difference between "nothing happened" and
 # "nothing was wrong". On 2026-08-27 GitHub dispatched 1 of 5 due crons and no artefact
 # anywhere recorded it. These guard the four defects that were fixable here; the recovery
 # cron was measured (`tests/schedule_census.py`) and rejected. Record:
@@ -29387,6 +29385,7 @@ def test_wayback_ledger_merge_is_uncapped_and_the_audit_logs_still_cap():
     assert wf.index("python archive_evidence.py") < wf.index("enrich_scrape_jd.py --archive-only")
 
 
+<<<<<<< HEAD
 # =====================================================================================
 # jd-text lane, 2026-09-11 — a job description has a HEAD, and a page has a RAIL.
 # The 2026-09-11 audit of the published file found 49 of 177 rows carrying a similar-jobs
@@ -29726,3 +29725,97 @@ def test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed():
     # the rail of ANOTHER posting says it too, far down the page: that is not this role closing
     assert closed_page_at(jd + "\nעבודות דומות\nכבר לא מקבלים בקשות\n") is None
     conn.close()
+=======
+# --------------------------------------------------------------------------- #
+# 2026-09-11 classifier: the weekly delta audit, the agency class, the refused vocabulary
+# --------------------------------------------------------------------------- #
+def test_every_registry_recruiter_verdict_is_a_mechanism():
+    """2026-09-11 (classifier, by dispensation in `pipeline/recruiters.py`): `Peak Innovation`
+    was parked `recruiter 2026-08-31` in companies.csv and `peak innovation|data analyst` was
+    published, open, from 09-04 to 09-11 anyway. The purge path (`roles.recruiter_names`),
+    the per-card discovery drop (`fetchers.fetch_discovery`) and the registry-row filter
+    (`run.py`) all read `is_recruiter()`, and none reads the registry note — so a `recruiter`
+    verdict that is not in `_CONFIRMED` changes nothing downstream (`518@roles`). This closes
+    the CLASS: every companies.csv row carrying a dated `recruiter YYYY-MM-DD:` verdict must
+    answer `is_recruiter()` True. The next such park reds this test until its name lands in
+    `_CONFIRMED` — deliberately; that is the coupling a note cannot provide. Kills
+    `confirmed-loses-peak-innovation`."""
+    import csv
+    from pipeline.recruiters import is_recruiter
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(repo, "companies.csv"), encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    dated = [r["company_name"] for r in rows
+             if re.search(r"\brecruiter 20\d\d-\d\d-\d\d:", r.get("notes") or "")]
+    assert len(dated) >= 2, dated                       # Peak Innovation and Hila & Co. today
+    missing = [n for n in dated if not is_recruiter(n)]
+    assert not missing, f"parked as recruiter by the registry, invisible to the mechanism: {missing}"
+    # the two names as the data spells them, and the LinkedIn slug form the cards carry
+    assert is_recruiter("Peak Innovation")
+    assert is_recruiter("Peak Innovation", "peak-tech-innovation")
+    assert is_recruiter("Hila & Co.") and is_recruiter("Hila & Co")
+    # exact-match stays exact: a real employer sharing a word is not caught
+    for n in ("Peak", "Innovation Peak Ltd", "Hila", "Peak Innovation Labs"):
+        assert not is_recruiter(n), n
+
+
+def test_the_refused_vocabulary_arms_reach_nothing_the_shipped_appeal_does_not():
+    """2026-09-11 (classifier): the audit found two vocabulary holes — `_DESC_APPEAL_TOOL`
+    knows `excel` but not Hebrew `אקסל` nor bare `BI`; `_DESC_APPEAL_PHRASE` knows `ניתוח
+    נתונים` but not `כלכלן`/`economist`, `ניתוח ועיבוד מידע`, `חוקר`/`מדידה והערכה`. Measured
+    over both caches with every arm at once: 3 cards / 3 pairs newly admitted, and the seam
+    answered NO to all 3 (two pension-fund investment economists, one FP&A economist), so the
+    arms were REFUSED on the rule that a phrase gaining 0 in-scope roles is not added. This
+    pins the refusal: the three postings in the fixture are still refused on their titles and
+    NOT rescued by the shipped description appeal. Adding any of those arms without a new
+    measurement flips this test — which is the point."""
+    import json
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(repo, "tests", "fixtures", "classifier", "2026-09-11-delta-audit.json"),
+              encoding="utf-8") as f:
+        art = json.load(f)
+    voc = art["vocabulary"]
+    assert voc["decision"].startswith("REFUSED") and len(voc["rows"]) == 3
+    assert all(r["verdict"] == "NO" for r in voc["rows"]), [r["verdict"] for r in voc["rows"]]
+    for r in voc["rows"]:
+        t, c = r["title"].lower(), r["company"].lower()
+        assert seniority._relevance(t, c) in ("excluded", "none"), r["title"]
+        # the live gate, description and all: still refused — no arm reaches them
+        desc = r.get("description") or ""
+        assert seniority._relevance(t, c, desc) in ("excluded", "none"), r["title"]
+        assert not seniority._DESC_APPEAL_PHRASE.search("כלכלן") and not seniority._DESC_APPEAL_TOOL.search("אקסל")
+
+
+def test_the_delta_audit_lines_bind_to_exactly_one_record_each():
+    """2026-09-11 (classifier): six url-precise retraction lines (the 545 shape: url AND
+    role_id) for the rows adjudicated OUT — Peak Innovation, Edikted, Flex, aQurate, Qlik
+    Israel, Bank Leumi. The binding check the 09-01 near-miss taught is run with the predicate
+    that decides, never a hand-rolled copy: each line names exactly one ledger record, and
+    the fixture's adjudication says OUT for exactly those six and no other."""
+    import json
+    from pipeline import roles
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(repo, "tests", "fixtures", "classifier", "2026-09-11-delta-audit.json"),
+              encoding="utf-8") as f:
+        art = json.load(f)
+    out = sorted(r["role_id"] for r in art["rows"] if r["adjudication"] == "OUT")
+    assert out == sorted(["peak innovation|data analyst", "edikted|retail data analyst",
+                          "flex flextronics|material planning analyst", "aqurate|data analyst aqurate data",
+                          "qlik israel|bi developer qlik specialist",
+                          "bank leumi בנק לאומי|business analyst corporate banking division headquarters 3103"])
+    ret = roles.Retractions.load(os.path.join(repo, "cloud_state", "roles_retractions.jsonl"))
+    records, _, _ = roles.load(os.path.join(repo, "cloud_state", "roles.jsonl"))
+    ret.bind(records)
+    # the shape lock, extended to EVERY line on 2026-09-11: INGIMA's placement was re-posted
+    # under a new LinkedIn id, the record absorbed the new url, and the url-only line from
+    # 09-01 named nothing - the withdrawn agency posting re-opened in a rehearsal (578@roles).
+    # A line that carries its role_id survives the url moving; the 45 url-only lines were
+    # stamped from the record that owned each url that day, and no new line may omit it.
+    bare = [roles.Retractions._key(e) for e in ret.entries if not e.get("role_id")]
+    assert not bare, f"url-only retraction lines lose their record on a re-post: {bare}"
+    mine = [e for e in ret.entries if e.get("on") == "2026-09-11" and e.get("by", "").startswith("classifier")]
+    assert sorted(e["role_id"] for e in mine) == out
+    for e in mine:
+        assert e["status"] == "withdrawn" and e["url"].startswith("https://")
+        hits = [rid for rid, rec in records.items() if e in ret.match_all(rec)]
+        assert hits == [e["role_id"]], (e["role_id"], hits)

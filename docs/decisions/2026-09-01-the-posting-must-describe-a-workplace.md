@@ -115,3 +115,28 @@ hardest, and an adversarial read caught exactly that sentence here.
 | "The burden flips at a consultancy" (the draft) | The seam is never told what the employer is. An adversarial read killed this before it shipped; the rule is now written on text the model receives. |
 | Reject any posting carrying a requisition number | Real employers number requisitions too — `Central Bottling \| BI Developer 17621` is IN, and its number is in the title. The tells are load-bearing only together, and only against a posting that describes no workplace of its own. |
 | Decide the row instead of the posting (park the companies) | That is `321@registry`, deliberately not taken here: the 08-27 record measured that the class has to be decided for all thirteen rows at once, and it needs `registry`. |
+
+
+## 2026-09-11 addendum — condition (4) on the weekly delta audit, and the seam's own miss
+
+*lane: `classifier`. Artifact: `tests/fixtures/classifier/2026-09-11-delta-audit.json`.*
+
+| posting | tells | own workplace described? | verdict |
+|---|---|---|---|
+| `Peak Innovation \| Data Analyst` | "Please send your CV to: ahinoam@pickpeak.co"; "Central Israel (Hybrid)"; LinkedIn files the advertiser under *Outsourcing and Offshoring Consulting* | no | **OUT** — the third Peak Innovation posting this record has named |
+| `aQurate \| DATA analyst` | requisition number and a region as the whole workplace ("DATA analyst צפון 5318"); "השתלבות בפרויקטים ארציים בתחום שרותי המידע"; client systems (SAP, AS400) as the advantage | no | **OUT** (carried from the 09-04 audit); the row's `active` state is `321@registry` |
+| `Intelligent Business \| Power BI Developer / Data and Business Analyst` | "Background in telecom, financial services, retail, or another environment with complex operational and customer data"; "Experience working in a large, data-intensive organization" | a BI team, generically; no product | **IN, kept** — one weak tell, no requisition number, no unnamed client; seam YES on three of three. The row is `321@registry` |
+| `ONE datAI \| Business Data Analyst` | the workplace is "גורמים עסקיים ומנהלים בארגון"; industry *IT Services and IT Consulting* | no product, but no tell beyond the unnamed organisation | **IN, kept** — the TLVTech shape: under this rule alone it stays in |
+| `Experda \| BI Consultant & Data Developer` | "on-site at the client or remotely"; clients named as coverage | yes — its own consulting practice and deliverable | **IN, kept** on (4), and on (1)/(2) as the analytics-engineer record reads it |
+
+**The seam misses the agency-mailbox tell, and it is measured.** `Peak Innovation \| Data
+Analyst` was published `accept` from 2026-09-04 to 2026-09-11 on a cached YES. Judged again
+on 2026-09-11: YES, NO, NO over three passes on the stored text, and **YES on the JD alone**
+with the LinkedIn chrome stripped — `ahinoam@pickpeak.co` sat inside the 1,400-character
+window every time. A model that is told the company is "Peak Innovation" has no way to know
+`pickpeak.co` is a recruiter's domain; the tell this record's first table relied on is one the
+seam cannot reliably apply. The mechanism that closes it is not a rule: `peak innovation` is
+in `pipeline/recruiters._CONFIRMED` from this commit, so the card is dropped at intake and the
+store record purged — and the class is held by a test, `test_every_registry_recruiter_verdict_is_a_mechanism`:
+every `companies.csv` row the registry parks with a dated `recruiter` verdict must answer
+`is_recruiter()` True.

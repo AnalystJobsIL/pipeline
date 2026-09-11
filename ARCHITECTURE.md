@@ -5792,6 +5792,43 @@ adjudication against a seam verdict on readable text: its capture ends exactly a
 posting — though the seam's reason names a second ground that IS in the role's own block, so
 the contamination is demonstrated and its effect on the verdict is not.
 
+**2026-09-11 — the weekly delta audit adjudicated, and what the seam cannot see.** The
+2026-09-11 audit read 55 of the 177 published rows and returned 3 OUT and 15 BORDERLINE claims,
+plus 6 carried unactioned from 09-04. All 25 were judged on their published text against the
+live contract and the three 09-01 records, the seam read each once and three times where it
+and this lane disagreed (43 calls; `tests/fixtures/classifier/2026-09-11-delta-audit.json`):
+**6 withdrawn** (Peak Innovation, Edikted, Flex, aQurate, Qlik Israel, Bank Leumi — six
+url-precise lines, the `543` hand-drain), **18 kept**, 1 deferred (Ballerine, until `567`/`572`).
+The rule the kept rows added, now in the execution record: a stable 3-of-3 seam verdict on
+readable text is not overridden by one reader's weighting of a mixed posting; a flap is
+resolved in the conservative direction. Two mechanisms came out of it. (1) **The seam cannot
+apply the agency-mailbox tell**: `Peak Innovation | Data Analyst` answered YES on its own JD
+with `ahinoam@pickpeak.co` inside the window, chrome or no chrome — a model told the company
+is "Peak Innovation" cannot know `pickpeak.co` is a recruiter — so the name went into
+`pipeline/recruiters._CONFIRMED` (with `Hila & Co.`, the other dated `recruiter` park the
+mechanism could not see) and the CLASS is a test: every `companies.csv` row the registry
+parks with a dated `recruiter` verdict must answer `is_recruiter()` True. (2) **A url-only
+retraction line loses its record when LinkedIn re-posts under a new id**: INGIMA's placement,
+withdrawn 09-01, was re-posted on 09-03 with a new job id, the record absorbed the new url,
+and a rehearsal on the 09-11 state re-opened it (`roles retraction lifted … unmatched`);
+every line in `roles_retractions.jsonl` now carries its `role_id` and a test refuses a bare
+one (`578@roles` carries the durable fix). Measured and REFUSED, with the numbers: the
+audit's two vocabulary holes (Hebrew `אקסל`, bare `BI`; `כלכלן`/`economist`, `ניתוח ועיבוד
+מידע`, `חוקר`/`מדידה והערכה`) admit **3 cards / 3 pairs** with every arm at once over 6,368
+Israel cards, and the seam says NO to all three — two pension-fund investment economists and
+one FP&A economist — so nothing was added; and stripping the Logica-IT board's category/region
+suffix moves 11 of 94 titles, 10 refusal-to-refusal and 1 hearing lost, so that is `579@scraper`
+and not a gate change. **LinkedIn chrome inside `prompt_slice`, measured on the 32
+LinkedIn-hosted audited rows: the 1,400-character window reaches chrome on 14 and carries
+other employers' listings on 9; re-judged on the JD alone, 0 of 14 verdicts moved.** No
+re-judge pass is owed when jd-text strips the class — and the key could not have triggered
+one anyway (`cache_keys` has no text hash, `551`); the targeted tool, if ever needed, is the
+`551` precedent of deleting the row's `llm_cache` keys under every prefix. Every verdict dict
+now carries `contract` — the live one for anything decided this run, the prefix that answered
+for a cache hit (`_lookup` returns it fifth) — so the dataset can say which rules judged a
+cell (`544@roles`), and the superseded verdicts the mail counts as unreachable are printed one
+key per line.
+
 **The scope those gates enforce is now a decision, not a phrase**:
 `docs/decisions/2026-08-28-analyst-scope.md`. Two of its five boundaries changed that day and
 both are one named flag rather than scattered conditionals. (1) **The experience bar is

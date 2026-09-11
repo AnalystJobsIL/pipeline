@@ -1,0 +1,981 @@
+{
+ "contract": "v3.0f84ab84",
+ "model": "sonnet",
+ "on": "2026-09-11",
+ "what": "the 2026-09-11 weekly delta audit adjudicated: 25 published rows (18 non-IN claims, 6 carried from 09-04, and Cal), seam pass 1 over all 25 and passes 2-3 over the nine rows that disagreed with this lane's reading; the LinkedIn-chrome slice measurement over the 32 LinkedIn-hosted audited rows; and the three cards the refused vocabulary arms would have admitted",
+ "rows": [
+  {
+   "role_id": "check point|total rewards analyst temporary position 3 months",
+   "company": "Check Point Software",
+   "title": "Total Rewards Analyst - Temporary Position (3 months)",
+   "url": "https://jobs.smartrecruiters.com/CheckPointSoftwareTechnologies2/744000148305224",
+   "desc_len": 5629,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is a quantitative compensation/benefits analyst role focused on analyzing pay and HR data (not ML/engineering, not an internship despite being temporary, a"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "analysis leads; temporary and early-career are not grounds (531); the HR domain is not the ground"
+  },
+  {
+   "role_id": "edikted|retail data analyst",
+   "company": "Edikted",
+   "title": "Retail Data Analyst",
+   "url": "https://il.linkedin.com/jobs/view/retail-data-analyst-at-edikted-4464470745",
+   "desc_len": 3635,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "NO",
+     "reason": "The role leads with executing replenishment orders, coordinating shipments, and managing inventory operations, with analysis serving that execution rather than "
+    },
+    {
+     "pass": 2,
+     "verdict": "NO",
+     "reason": "The role leads with operational execution-placing replenishment orders, coordinating shipments, maintaining inventory files-with data analysis serving that exec"
+    },
+    {
+     "pass": 3,
+     "verdict": "NO",
+     "reason": "The role leads with execution tasks (placing replenishment orders, coordinating shipments, updating replenishment files) with analysis serving to steer that sam"
+    }
+   ],
+   "adjudication": "OUT",
+   "ground": "execution record: leads with the analyst's own replenishment execution; seam NO 3/3"
+  },
+  {
+   "role_id": "ey|מנתח ת נתונים סניור",
+   "company": "EY",
+   "title": "מנתח-ת נתונים סניור",
+   "url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%A0%D7%AA%D7%97-%D7%AA-%D7%A0%D7%AA%D7%95%D7%A0%D7%99%D7%9D-%D7%A1%D7%A0%D7%99%D7%95%D7%A8-at-ey-4385049360",
+   "desc_len": 3545,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "EY is hiring a senior data analyst for its own FSO team to perform data analysis, system audits, and reporting using Python/SQL/ETL for financial-sector clients"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "EY hiring for its own FSO analyst team; the requirements are a data analyst's (Python, SQL, ETL, BI); the 08-31 precedent"
+  },
+  {
+   "role_id": "jazz|senior bi developer",
+   "company": "Jazz",
+   "title": "Senior BI Developer",
+   "url": "https://il.linkedin.com/jobs/view/senior-bi-developer-at-jazz-4462687236",
+   "desc_len": 6000,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is a company building its own BI/data platform, and though it includes pipeline/warehouse work, the core deliverable is defining company KPIs and executive"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "analytics-engineer record: the executive metric set and C-level dashboards are the stated output; the platform is the means"
+  },
+  {
+   "role_id": "mccann digital|marketing analyst",
+   "company": "McCann Digital",
+   "title": "Marketing Analyst",
+   "url": "https://il.linkedin.com/jobs/view/marketing-analyst-at-mccann-digital-4461895096",
+   "desc_len": 3421,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is an agency hiring for itself (McCann Digital, an advertising agency) as a Marketing Analyst working with Google Analytics/GTM, Excel and analytics platfo"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "provisional: a requirements-only capture (the snippet rule); jd-text owns the responsibilities capture"
+  },
+  {
+   "role_id": "peak innovation|data analyst",
+   "company": "Peak Innovation",
+   "title": "Data Analyst",
+   "url": "https://il.linkedin.com/jobs/view/data-analyst-at-peak-innovation-4460700720",
+   "desc_len": 3816,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "OUT",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is a genuine analyst role (SQL, dashboards, metrics, insights) at a company describing its own work, meeting all criteria for a data analyst position."
+    },
+    {
+     "pass": 2,
+     "verdict": "NO",
+     "reason": "The posting is from an outsourcing/staffing firm (industry listed as Outsourcing and Offshoring Consulting, email domain \"pickpeak.co\") with no description of i"
+    },
+    {
+     "pass": 3,
+     "verdict": "NO",
+     "reason": "This appears to be a recruitment/staffing agency posting (Peak Innovation/pickpeak, tagged \"Outsourcing and Offshoring Consulting\" with no description of the ad"
+    }
+   ],
+   "adjudication": "OUT",
+   "ground": "condition (4), the workplace record; recruiters._CONFIRMED from this commit"
+  },
+  {
+   "role_id": "practical vision|we re hiring junior web analyst practical vision",
+   "company": "Practical Vision",
+   "title": "We're Hiring Junior Web Analyst - Practical Vision",
+   "url": "https://practicalvision.com/career/junior-web-analyst/",
+   "desc_len": 3687,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is a full-time web analytics job (GA4, Looker Studio, Tag Manager) at the hiring company itself, entry-level but a real job, with quantitative analytic out"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "web analytics (GTM, GA4, Looker Studio) at the hiring company itself; a thin but complete own page; no campaign or budget execution named"
+  },
+  {
+   "role_id": "experda com|experienced bi consultant data developer",
+   "company": "Experda.com",
+   "title": "Experienced BI Consultant & Data Developer",
+   "url": "https://il.linkedin.com/jobs/view/experienced-bi-consultant-data-developer-at-experda-com-4457758616",
+   "desc_len": 5665,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "NO",
+     "reason": "This is a BI/data warehouse development and consulting role (semantic models, DWH architecture, SQL/Power BI development) for a consulting firm's own client eng"
+    },
+    {
+     "pass": 2,
+     "verdict": "NO",
+     "reason": "This is a consulting firm hiring a BI Consultant/Data Developer to work directly with clients on their own consulting engagements; the role centers on DWH/seman"
+    },
+    {
+     "pass": 3,
+     "verdict": "YES",
+     "reason": "This is a BI consultancy hiring for its own client-facing team, and the core output is business requirements, semantic models, and Power BI dashboards/insights "
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "seam flaps NO/NO/YES; the stated output is dashboards and metrics for clients (the Central Bottling reading); the row is 321@registry"
+  },
+  {
+   "role_id": "ferrero|business analyst",
+   "company": "Ferrero",
+   "title": "Business Analyst",
+   "url": "https://il.indeed.com/viewjob?jk=8b2a0c6e2d923902",
+   "desc_len": 4366,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is an in-house Ferrero role focused on analyzing sales/market data, tracking performance, and preparing analytical materials for business decisions, which "
+    },
+    {
+     "pass": 2,
+     "verdict": "YES",
+     "reason": "This is an in-house Ferrero analyst role focused on analyzing sales/market data, tracking performance, and preparing analytical materials for commercial decisio"
+    },
+    {
+     "pass": 3,
+     "verdict": "YES",
+     "reason": "This is an in-house analytics role at Ferrero analyzing sales/market data, tracking performance, and preparing analytical materials for commercial decisions-cor"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "seam YES 3/3 on an in-house trade-marketing analytics role; this lane read the merchandising-operations lead as execution and defers to the stable verdict"
+  },
+  {
+   "role_id": "ice|analyst index operations",
+   "company": "ICE",
+   "title": "Analyst, Index Operations",
+   "url": "https://il.linkedin.com/jobs/view/analyst-index-operations-at-ice-4465305434",
+   "desc_len": 1751,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is an operational/analytical role at ICE itself (index validation, rebalancing support, report/chart prep, ad-hoc client analyses) built on measured financ"
+    },
+    {
+     "pass": 2,
+     "verdict": "YES",
+     "reason": "This is an index operations analyst role at ICE itself, doing quantitative validation, exception research, rebalancing analysis, and reporting on index/pricing "
+    },
+    {
+     "pass": 3,
+     "verdict": "NO",
+     "reason": "This is an index operations/production support role focused on data validation, corporate action research, and rebalancing execution rather than producing analy"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "seam YES 2/3; a named report deliverable keeps a mixed operations role IN (withfaye, CloudHiro); the closest call, kept"
+  },
+  {
+   "role_id": "jti|commercial planning data analysis manager",
+   "company": "JTI",
+   "title": "Commercial Planning & Data Analysis Manager",
+   "url": "https://il.linkedin.com/jobs/view/commercial-planning-data-analysis-manager-at-jti-4424203458",
+   "desc_len": 6000,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is an analytic role at JTI itself (not an agency) analyzing commercial/sales data using Power BI and CRM systems to produce insights and forecasts for deci"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "commercial performance analytics, dashboards and business reviews for leadership; forecasting is one output among several, not an FP&A close"
+  },
+  {
+   "role_id": "mobileye|algorithm data analyst",
+   "company": "Mobileye",
+   "title": "Algorithm Data Analyst",
+   "url": "https://jobs.eu.lever.co/mobileye/510d7b7d-4d58-4411-99c0-02a91022a7c6",
+   "desc_len": 2081,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "OUT",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is an analytic role producing performance/quality analysis reports on algorithm outputs using statistical methods, not building ML models itself; it's a re"
+    },
+    {
+     "pass": 2,
+     "verdict": "YES",
+     "reason": "This is an analytics role producing quality/performance analysis reports on algorithm outputs at Mobileye itself, not ML model building, engineering, or an agen"
+    },
+    {
+     "pass": 3,
+     "verdict": "YES",
+     "reason": "This role centers on analyzing algorithm performance data, producing quality/performance reports and regression analysis for AV development - an analytic role, "
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "the analytics-engineer record's OUT clause is conjunctive and this role has a reporting output of its own; seam YES 3/3; the claim is refuted on the record's wording"
+  },
+  {
+   "role_id": "practical vision|we re hiring web analyst practical vision",
+   "company": "Practical Vision",
+   "title": "We’re Hiring Web Analyst - Practical Vision",
+   "url": "https://practicalvision.com/career/web-analyst/",
+   "desc_len": 3831,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is a web analytics role (GA4, GTM, Looker Studio) for the company's own use, full-time, analyzing quantitative digital data to produce reports/dashboards, "
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "the same posting family as the junior row"
+  },
+  {
+   "role_id": "intelligent business|power bi developer data and business analyst",
+   "company": "Intelligent Business",
+   "title": "Power BI Developer / Data and Business Analyst",
+   "url": "https://il.linkedin.com/jobs/view/power-bi-developer-data-and-business-analyst-at-intelligent-business-4457242349",
+   "desc_len": 5431,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is an analytics role building Power BI dashboards/reports and SQL analysis for business stakeholders at the hiring company itself, meets all criteria."
+    },
+    {
+     "pass": 2,
+     "verdict": "YES",
+     "reason": "This is a genuine BI/data analyst role at Intelligent Business itself, building Power BI dashboards and SQL analysis for internal stakeholders, not ML/engineeri"
+    },
+    {
+     "pass": 3,
+     "verdict": "YES",
+     "reason": "This is a BI/data analyst role at the company itself, building Power BI dashboards and SQL-based analysis of business data for stakeholders, meeting all five cr"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "seam YES 3/3; the client-industry ask is one weak tell with no requisition number and no named client; the row is 321@registry"
+  },
+  {
+   "role_id": "keshet media|bi data developer long term maternity leave cover",
+   "company": "Keshet Media Group",
+   "title": "BI / Data Developer – Long-Term Maternity Leave Cover",
+   "url": "https://il.linkedin.com/jobs/view/bi-data-developer-%E2%80%93-long-term-maternity-leave-cover-at-keshet-media-group-4428565870",
+   "desc_len": 4715,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "NO",
+     "reason": "Core output is building ETL/ELT pipelines and data models (dbt, Airflow, Snowflake) consumed by other engineers/AI initiatives, with BI dashboards as a secondar"
+    },
+    {
+     "pass": 2,
+     "verdict": "NO",
+     "reason": "This is primarily a BI/Data Engineering role (ETL/ELT pipelines, dbt, Airflow, Snowflake, data modeling) with BI dashboard development in Domo, but core output "
+    },
+    {
+     "pass": 3,
+     "verdict": "YES",
+     "reason": "This is a direct hire at Keshet Media Group building dbt/Airflow pipelines that feed BI dashboards and analytics/reporting layer (Domo) consumed by business use"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "seam flaps NO/NO/YES; Domo dashboards for business users are in the own stated output; the pipelines-first ordering was weighed and the row kept"
+  },
+  {
+   "role_id": "one datai|business data analyst sql power bi",
+   "company": "ONE datAI",
+   "title": "Business Data Analyst | SQL & Power BI",
+   "url": "https://il.linkedin.com/jobs/view/business-data-analyst-sql-power-bi-at-one-datai-4463425241",
+   "desc_len": 4294,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is a genuine business data analyst role (SQL, Power BI, KPIs, dashboards, insights for decision-makers) at ONE datAI itself, not an agency placement, not M"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "workplace record: one weak tell (an unnamed organisation), no requisition number, no client-industry ask; the TLVTech shape stays IN on (4); the row is 321@registry"
+  },
+  {
+   "role_id": "qlik israel|bi developer qlik specialist",
+   "company": "Qlik Israel",
+   "title": "BI Developer (Qlik Specialist)",
+   "url": "https://il.linkedin.com/jobs/view/bi-developer-qlik-specialist-at-qlik-israel-4455084752",
+   "desc_len": 4674,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "OUT",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "NO",
+     "reason": "This is a hands-on BI developer/consultant role centered on building/implementing Qlik platforms (ETL development, data modeling, ERD, backend/frontend implemen"
+    }
+   ],
+   "adjudication": "OUT",
+   "ground": "execution record: an implemented project plus its management at client sites"
+  },
+  {
+   "role_id": "voyantis|data analyst",
+   "company": "Voyantis",
+   "title": "Data Analyst",
+   "url": "https://www.comeet.com/jobs/voyantis/86.00B/data-analyst/F5.27C",
+   "desc_len": 2554,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "NO",
+     "reason": "Core responsibilities include building data pipeline/infrastructure and taking a significant role in AI model design, which is data engineering/ML work, not pur"
+    },
+    {
+     "pass": 2,
+     "verdict": "NO",
+     "reason": "The role core includes improving data pipelines, building data analysis infrastructure, and taking a significant role in AI model design/creation, which is data"
+    },
+    {
+     "pass": 3,
+     "verdict": "YES",
+     "reason": "Core work is analyzing complex datasets, translating into insights, and data visualization for clients-an analytic role at Voyantis itself, not an agency; thoug"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "seam flaps NO/NO/YES; analysis and external visualization sit beside pipeline and AI-model bullets; kept, and junior is not a ground"
+  },
+  {
+   "role_id": "aqurate|data analyst aqurate data",
+   "company": "aQurate",
+   "title": "DATA analyst - Aqurate Data",
+   "url": "https://aqurate-data.com/jobs/data-analyst/",
+   "desc_len": 2545,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "OUT",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "NO",
+     "reason": "This looks like a staffing/consulting firm (aQurate) advertising a generic analyst placement (note the requisition number \"5318\") without describing its own pro"
+    }
+   ],
+   "adjudication": "OUT",
+   "ground": "condition (4), the workplace record (carried from 09-04); the row is 321@registry"
+  },
+  {
+   "role_id": "flex flextronics|material planning analyst",
+   "company": "Flex (Flextronics)",
+   "title": "Material Planning Analyst",
+   "url": "https://flextronics.wd1.myworkdayjobs.com/Careers/job/Israel-Modiin/Material-Planning-Analyst_WD224722",
+   "desc_len": 3821,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "OUT",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "NO",
+     "reason": "This is a materials/supply chain planning role (data collection and reporting to support material planning decisions in electronics manufacturing), not a core a"
+    }
+   ],
+   "adjudication": "OUT",
+   "ground": "execution record (carried from 09-04)"
+  },
+  {
+   "role_id": "ballerine|ai fraud data analyst senior",
+   "company": "Ballerine",
+   "title": "AI Fraud Data Analyst (Senior)",
+   "url": "https://www.ballerine.com/career/ai-fraud-data-analyst-senior",
+   "desc_len": 3998,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "NO",
+     "reason": "The posting is essentially company marketing copy with no real job description, and the role title suggests fraud/risk investigation (an excluded category simil"
+    }
+   ],
+   "adjudication": "DEFERRED",
+   "ground": "judged only after jd-text's 567/572 repair; the buried JD answered YES on 09-02"
+  },
+  {
+   "role_id": "bank leumi בנק לאומי|business analyst corporate banking division headquarters 3103",
+   "company": "Bank Leumi בנק לאומי",
+   "title": "Business Analyst | Corporate Banking Division Headquarters 3103",
+   "url": "https://il.linkedin.com/jobs/view/business-analyst-corporate-banking-division-headquarters-3103-at-bank-leumi-%D7%91%D7%A0%D7%A7-%D7%9C%D7%90%D7%95%D7%9E%D7%99-4456910788",
+   "desc_len": 5029,
+   "relevance": "strong",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "NO",
+     "reason": "This is a staff/project coordination role (tracking tasks, preparing management meeting materials, cross-functional liaison, event coordination) with report-bui"
+    }
+   ],
+   "adjudication": "OUT",
+   "ground": "execution record: staff coordination leads (carried from 09-04)"
+  },
+  {
+   "role_id": "commit|מפתח ת bi",
+   "company": "CommIT",
+   "title": "מפתח/ת BI",
+   "url": "https://www.comeet.com/jobs/comm-it/76.008/-bi/C6.B69",
+   "desc_len": 1014,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is a BI Developer role building reports and dashboards with SQL, where the reporting/analysis layer is the core deliverable (DWH/ETL are the means beneath "
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "closed row; its own BI team is described; the TLVTech shape (carried)"
+  },
+  {
+   "role_id": "parametrix|technical data analyst tel aviv",
+   "company": "Parametrix GmbH",
+   "title": "Technical Data Analyst (Tel Aviv)",
+   "url": "https://www.linkedin.com/jobs/view/technical-data-analyst-tel-aviv-at-parametrix-gmbh-4454220057?_l=en",
+   "desc_len": 1800,
+   "relevance": "strong",
+   "published_decision": "reject",
+   "audit_claim": "BORDERLINE",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "Despite ETL ownership, the role's output includes dashboards for Product/Sales and data validation for pricing analysis, it's a direct hire (own products, tech "
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "closed row, YES under the live contract on 09-02 and again today; no line"
+  },
+  {
+   "role_id": "cal israel credit cards|credit development analyst jb 26786",
+   "company": "Cal (Israel Credit Cards)",
+   "title": "Credit Development Analyst JB-26786",
+   "url": "https://il.linkedin.com/jobs/view/credit-development-analyst-jb-26786-at-cal-israel-credit-cards-4463470239",
+   "desc_len": 4151,
+   "relevance": "signal",
+   "published_decision": "accept",
+   "audit_claim": "IN",
+   "seam": [
+    {
+     "pass": 1,
+     "verdict": "YES",
+     "reason": "This is an analytic, quantitative role (SQL, Tableau dashboards, credit portfolio analysis, insights for management) at the hiring company itself (Cal), full-ti"
+    }
+   ],
+   "adjudication": "IN",
+   "ground": "Cal's own underwriting portfolio; a JB- requisition number alone is not a tell (Central Bottling 17621)"
+  }
+ ],
+ "chrome": {
+  "n": 32,
+  "il_linkedin": 30,
+  "slice_reaches_chrome": 14,
+  "slice_has_other_employers": 9,
+  "rejudged_on_stripped_text": 14,
+  "verdict_differs_on_stripped_text": [
+   "edikted|retail data analyst"
+  ],
+  "note": "Edikted differs because the ROW is NO (three full-text passes), not because of the chrome; 0 verdicts moved by stripping",
+  "rows": [
+   {
+    "role_id": "alma|head of data",
+    "host": "il.linkedin.com",
+    "len": 3592,
+    "chrome_at": 548,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": true,
+    "stripped_len": 547,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "This is an analytics leadership role at Alma Labs itself, focused on KPIs, data quality, insights, and client-facing dashboards, not ML/engineering, not an inte"
+   },
+   {
+    "role_id": "analytical factor|senior data analyst supply chain demand planning analytics full time on site rishon lezion",
+    "host": "il.linkedin.com",
+    "len": 5071,
+    "chrome_at": 2373,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 2372,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "cal israel credit cards|credit development analyst jb 26786",
+    "host": "il.linkedin.com",
+    "len": 4151,
+    "chrome_at": 1016,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": true,
+    "stripped_len": 1015,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "This is a genuine analyst role at Cal itself, analyzing credit portfolio data, building Tableau dashboards, and using SQL to generate business insights-quantita"
+   },
+   {
+    "role_id": "edikted|retail data analyst",
+    "host": "il.linkedin.com",
+    "len": 3635,
+    "chrome_at": 1151,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": true,
+    "stripped_len": 1150,
+    "published_decision": "accept",
+    "stripped_verdict": "NO",
+    "stripped_reason": "The role leads with analysis but heavily includes operational execution tasks (placing replenishment orders, coordinating warehouse shipments, updating replenis"
+   },
+   {
+    "role_id": "ey|מנתח ת נתונים סניור",
+    "host": "il.linkedin.com",
+    "len": 3545,
+    "chrome_at": 1110,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": true,
+    "stripped_len": 957,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "EY is hiring a senior data analyst for its own FSO team to perform data analysis, system audits and reporting for financial clients using Python/SQL/BI tools, w"
+   },
+   {
+    "role_id": "jazz|senior bi developer",
+    "host": "il.linkedin.com",
+    "len": 6000,
+    "chrome_at": 4220,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 4219,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "kimberly clark|sales analyst אנליסט ית מכירות צריפין",
+    "host": "il.linkedin.com",
+    "len": 6000,
+    "chrome_at": 2945,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 2792,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "mccann digital|marketing analyst",
+    "host": "il.linkedin.com",
+    "len": 3421,
+    "chrome_at": 786,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": true,
+    "stripped_len": 785,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "This is an analytics role at an agency using GA/GTM/SQL/BigQuery/Tableau to analyze marketing data, an actual job (not internship), the employer itself (McCann "
+   },
+   {
+    "role_id": "mylo ai|senior product analyst",
+    "host": "il.linkedin.com",
+    "len": 5587,
+    "chrome_at": 3076,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 3075,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "peak innovation|data analyst",
+    "host": "il.linkedin.com",
+    "len": 3816,
+    "chrome_at": 811,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": true,
+    "stripped_len": 810,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "The role is core analytics work (SQL querying, dashboards, metrics, business insights) at a company for itself, is a permanent job with 2+ years experience, and"
+   },
+   {
+    "role_id": "tailor brands|product data analyst",
+    "host": "il.linkedin.com",
+    "len": 4387,
+    "chrome_at": 1952,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": false,
+    "stripped_len": 1951,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "This is a genuine product analyst role at Tailor Brands itself, focused on analyzing user behavior with SQL/BI tools to inform product decisions-a full-time ana"
+   },
+   {
+    "role_id": "alma|senior data analyst",
+    "host": "il.linkedin.com",
+    "len": 3239,
+    "chrome_at": 577,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": true,
+    "stripped_len": 576,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "This is a genuine analytics role (KPIs, insights, dashboards) at the hiring company itself, not ML/engineering-core, not an internship, not a staffing agency, a"
+   },
+   {
+    "role_id": "autods automatic dropshipping tools|data analyst",
+    "host": "il.linkedin.com",
+    "len": 4033,
+    "chrome_at": 1710,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 1709,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "clalit health services|מנהל ת מרכז מידע ואנליטיקה למחוז דרום 49965",
+    "host": "il.linkedin.com",
+    "len": 5101,
+    "chrome_at": 1850,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 1697,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "experda com|experienced bi consultant data developer",
+    "host": "il.linkedin.com",
+    "len": 5665,
+    "chrome_at": 2686,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 2685,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "ice|analyst index operations",
+    "host": "il.linkedin.com",
+    "len": 1751,
+    "chrome_at": 1522,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 1521,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "jti|commercial planning data analysis manager",
+    "host": "il.linkedin.com",
+    "len": 6000,
+    "chrome_at": 3882,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 3881,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "letsgo|business analyst engineer",
+    "host": "il.linkedin.com",
+    "len": 4948,
+    "chrome_at": 1984,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 1983,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "navan|senior product analyst",
+    "host": "www.linkedin.com",
+    "len": 3208,
+    "chrome_at": 3189,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": false,
+    "stripped_len": 3188,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "This is a genuine product analytics role at Navan itself, focused on analyzing user behavior data, building reporting-grade data models, and producing insights "
+   },
+   {
+    "role_id": "plarium|product data analyst",
+    "host": "il.linkedin.com",
+    "len": 4429,
+    "chrome_at": 2003,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 2002,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "revolut|data analyst finance",
+    "host": "il.linkedin.com",
+    "len": 6000,
+    "chrome_at": 3869,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 3868,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "central bottling company israel|business intelligence developer 17621",
+    "host": "il.linkedin.com",
+    "len": 4171,
+    "chrome_at": 1092,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": false,
+    "stripped_len": 1091,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "Despite ETL/pipeline work, the role includes building Power BI dashboards, reports, semantic models for business stakeholders at the company itself (an FMCG emp"
+   },
+   {
+    "role_id": "ey|אנליסט ית מתחיל ה לתחום שכר והטבות",
+    "host": "il.linkedin.com",
+    "len": 4436,
+    "chrome_at": 1275,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": false,
+    "stripped_len": 1122,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "This is an entry-level compensation & benefits analyst role at EY itself, analyzing pay/benefits data, benchmarking, and building analytical models to produce r"
+   },
+   {
+    "role_id": "harel insurance finance|business analyst",
+    "host": "il.linkedin.com",
+    "len": 3936,
+    "chrome_at": 868,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": true,
+    "stripped_len": 709,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "Harel Insurance itself hires an analyst to analyze large operational databases, derive business insights, and build BI tools/reports, using SQL/Tableau/Python -"
+   },
+   {
+    "role_id": "intelligent business|power bi developer data and business analyst",
+    "host": "il.linkedin.com",
+    "len": 5431,
+    "chrome_at": 2667,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 2666,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "keshet media|bi data developer long term maternity leave cover",
+    "host": "il.linkedin.com",
+    "len": 4715,
+    "chrome_at": 1825,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 1824,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "migdal|business analyst",
+    "host": "il.linkedin.com",
+    "len": 4523,
+    "chrome_at": 1464,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 1166,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "one datai|business data analyst sql power bi",
+    "host": "il.linkedin.com",
+    "len": 4294,
+    "chrome_at": 1326,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": false,
+    "stripped_len": 916,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "This is a genuine business/data analyst role focused on SQL, Power BI dashboards, KPIs, and business insights for the hiring company itself, with no agency/clie"
+   },
+   {
+    "role_id": "points location intelligence|דרוש ה אנליסט ית עסקי ת bi data",
+    "host": "il.linkedin.com",
+    "len": 3693,
+    "chrome_at": 1017,
+    "slice_has_chrome": true,
+    "slice_has_other_employers": true,
+    "stripped_len": 643,
+    "published_decision": "accept",
+    "stripped_verdict": "YES",
+    "stripped_reason": "This is a full-time BI/data analyst role at Points Location Intelligence itself, involving data analysis, dashboard building, and delivering business insights t"
+   },
+   {
+    "role_id": "qlik israel|bi developer qlik specialist",
+    "host": "il.linkedin.com",
+    "len": 4674,
+    "chrome_at": 1650,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 1497,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "bank leumi בנק לאומי|business analyst corporate banking division headquarters 3103",
+    "host": "il.linkedin.com",
+    "len": 5029,
+    "chrome_at": 1955,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 1513,
+    "published_decision": "accept"
+   },
+   {
+    "role_id": "parametrix|technical data analyst tel aviv",
+    "host": "www.linkedin.com",
+    "len": 1800,
+    "chrome_at": -1,
+    "slice_has_chrome": false,
+    "slice_has_other_employers": false,
+    "stripped_len": 1800,
+    "published_decision": "reject"
+   }
+  ]
+ },
+ "vocabulary": {
+  "arms": "phrase+כלכלן|economist|ניתוח ועיבוד מידע|חוקר|מדידה והערכה; tool+אקסל|\bbi\b",
+  "admitted_cards": 3,
+  "admitted_pairs": 3,
+  "per_arm": {
+   "tool+אקסל": 0,
+   "tool+bare-BI": 0,
+   "phrase+ניתוח ועיבוד מידע": 0,
+   "phrase+כלכלן/economist": 1,
+   "phrase+חוקר/מדידה והערכה": 0,
+   "all-combined": 3
+  },
+  "corpus": "6,368 Israel cards in both caches; 5,832 cards / 5,572 pairs refused on the title; the shipped appeal admits 29 cards / 29 pairs today",
+  "rows": [
+   {
+    "company": "Amitim Pension Funds",
+    "title": "כלכלן/ית בקרה וניתוח השקעות",
+    "location": "אזור",
+    "url": "https://amitim.com/job/%d7%9b%d7%9c%d7%9b%d7%9c%d7%9f-%d7%99%d7%aa-%d7%91%d7%a7%d7%a8%d7%94-%d7%95%d7%a0%d7%99%d7%aa%d7%95%d7%97-%d7%94%d7%a9%d7%a7%d7%a2%d7%95%d7%aa-jb-55/",
+    "verdict": "NO",
+    "reason": "This is an investment control/analysis economist role focused on monitoring investments and financial control at a pension fund, not a data analyst role centere",
+    "desc_len": 4000,
+    "contract": "v3.0f84ab84"
+   },
+   {
+    "company": "Amitim Pension Funds",
+    "title": "כלכלן.ית קרנות השקעה",
+    "location": "אזור",
+    "url": "https://amitim.com/job/%d7%a2%d7%95%d7%93-%d7%91%d7%9e%d7%96%d7%9b%d7%99%d7%a8%d7%95%d7%aa-%d7%97%d7%91%d7%a8%d7%94-%d7%95%d7%91%d7%9c%d7%a9%d7%9b%d7%94-%d7%94%d7%9e%d7%a9%d7%a4%d7%98%d7%99%d7%aa-%d7%91%d7%aa%d7%97%d7%95/",
+    "verdict": "NO",
+    "reason": "This is an investment fund economist role focused on financial/investment analysis of pension fund assets, not a data/product/business analytics role.",
+    "desc_len": 4000,
+    "contract": "v3.0f84ab84"
+   },
+   {
+    "company": "Leiman Schlussel",
+    "title": "כלכלן/ית מנוסה",
+    "location": "יבנה",
+    "url": "https://www.l-s.co.il/job/%d7%9b%d7%9c%d7%9b%d7%9c%d7%9f-%d7%99%d7%aa-%d7%9e%d7%a0%d7%95%d7%a1%d7%94/",
+    "verdict": "NO",
+    "reason": "This is an FP&A-type economist role focused on budgets, forecasts, and quarterly management reports, which is an explicit exclusion even though it involves quan",
+    "desc_len": 1364,
+    "contract": "v3.0f84ab84"
+   }
+  ],
+  "decision": "REFUSED: 3 of 3 NO (two pension-fund investment economists, one FP&A economist); an arm that gains 0 in-scope roles is not added"
+ }
+}

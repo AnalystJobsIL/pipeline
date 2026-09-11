@@ -76,6 +76,29 @@ _CONFIRMED = {
     # Researched and KEPT OUT the same day, same firmographics scan: Genpact ("IT services /
     # business process outsourcing", 40/40 IL on its own board) and appsforce ("software
     # outsourcing", an active deep-validated row) both hire directly — the Matrix case.
+    # Added 2026-09-11 (classifier, by dispensation). Both rows were parked by the registry
+    # with a dated `recruiter YYYY-MM-DD:` verdict in companies.csv and neither name reached
+    # this list, so the park changed nothing downstream (`518@roles`): the roles purge, the
+    # per-card discovery drop and the registry-row filter all read is_recruiter(), and a
+    # note is not a mechanism. `peak innovation|data analyst` was published, open, from
+    # 2026-09-04 to 2026-09-11 on that gap — and the seam said YES to it on its own JD
+    # twice, with the agency mailbox in its window (docs/sessions/2026-09-11-classifier.md).
+    #   peak innovation - pickpeak.co; its own careers page says outsourcing (מיקור חוץ),
+    #                     numbers client roles JB-####, "places talent at other companies"
+    #                     (companies.csv `recruiter 2026-08-31`; docs/decisions/
+    #                     2026-08-28-analyst-scope.md; the 09-01 workplace record). The
+    #                     LinkedIn slug is `peak-tech-innovation`, hence the second form:
+    #                     is_recruiter(name, slug) reads the slug with hyphens as spaces.
+    #   hila & co.      - a boutique headhunting practice (Hila Malka, "Headhunter & Talent
+    #                     Acquisition"); its CMI posting placed for an unnamed FMCG firm
+    #                     (companies.csv `recruiter 2026-09-01`; the 08-30 quantitative
+    #                     record). `&` survives normalisation, so both spellings are listed.
+    # The class is closed by a test, not by these two names: every companies.csv row whose
+    # notes carry a dated `recruiter` verdict must answer is_recruiter() True
+    # (test_every_registry_recruiter_verdict_is_a_mechanism). The next such park reds the
+    # suite until its name lands here — deliberately.
+    "peak innovation", "peak tech innovation",
+    "hila & co.", "hila & co",
 }
 
 # Some agencies are only ever written in Hebrew, and some carry the parent group in the

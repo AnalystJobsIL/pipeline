@@ -3177,5 +3177,18 @@
   "killers": [
    "tests/test_units.py::test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed"
   ]
+ },
+ {
+  "id": "confirmed-loses-peak-innovation",
+  "file": "pipeline/recruiters.py",
+  "symbol": "_CONFIRMED",
+  "class": "M7-constant-drift",
+  "find": "    \"peak innovation\", \"peak tech innovation\",\n",
+  "replace": "    \"peak tech innovation\",\n",
+  "why": "classifier 2026-09-11: the registry parked Peak Innovation `recruiter 2026-08-31` and the name was not in _CONFIRMED, so the purge, the discovery drop and the row filter all let `peak innovation|data analyst` publish for a week (518@roles). Dropping the entry re-opens exactly that gap; the class test reads companies.csv's dated recruiter verdicts and demands is_recruiter() True for each. Killed by test_every_registry_recruiter_verdict_is_a_mechanism.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_every_registry_recruiter_verdict_is_a_mechanism"
+  ]
  }
 ]

@@ -391,7 +391,7 @@ closure convention in the header.
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
 - **569** `569@discovery` **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
 
-### scraper — 29 open
+### scraper — 30 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -422,6 +422,7 @@ closure convention in the header.
 - **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
 - **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
 - **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
+- **579** `579@scraper` **The Logica-IT board's category-and-region suffix is read as title words**
 
 ### docs — 25 open
 
@@ -478,6 +479,7 @@ closure convention in the header.
 - **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
 - **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
 - **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
+- **578** `578@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
 
 ### company-intel — 23 open
 
@@ -528,7 +530,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
-### classifier — 19 open
+### classifier — 18 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -548,7 +550,6 @@ closure convention in the header.
 - **557** `557@classifier` **LTX has not flipped to its own board
 - **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
-- **574** `574@classifier` **The classifier lane's own two measurement tools no longer walk the gate they claim to
 
 ### jd-text — 17 open
 
@@ -5890,6 +5891,17 @@ never struck through). Numbers below came from `python docs/backlog.py next`.
      python -c "from pipeline.recruiters import is_recruiter; print(is_recruiter('TLVTech',''), is_recruiter('Matrix',''))"
      # False False
      ```
+
+     **2026-09-11 (`classifier`): the class as the enrichment layer sees it is larger — 20 ACTIVE
+     rows whose `cloud_state/firmographics.json` names staffing, placement, outstaffing or
+     recruitment and whose name `is_recruiter()` does not catch: AGILINA, Allstarsit, Extreme,
+     Galil Systems, Gav Systems, Gini Apps, Gramian Consulting, HR Home, InfinityLabs R&D,
+     Integress, Logica-IT, Matrix IT, Ngsoft, OnTarget Communications, Prologic, RNR SYS, TLVTech,
+     appsforce, entrypoint, `one פתרונות טכנולוגיים`. Four of the 09-11 audit's kept rows sit in
+     this class (Experda, Intelligent Business, ONE datAI, Commit) and were kept on the POSTING
+     (the workplace record); the row half is still here. A park now needs the name in
+     `recruiters._CONFIRMED` in the same push — `test_every_registry_recruiter_verdict_is_a_mechanism`.**
+
 322. ~~**`il >= 1` counts a placeholder posting, and the name then leaves the queue forever** —
      **HALF-CLOSED 2026-08-27 (`registry`)**: `_probe_resolve` returns `probe-placeholder`
      when every Israel posting on a candidate board is placeholder-like -- a refusal in the
@@ -9783,7 +9795,13 @@ Record: `docs/sessions/2026-08-31-registry.md`.
      while `pipeline/roles.py` reserves `purged` for "a row that was never ours", which is
      exactly what an outsourcing agency's posting is. No live exposure today (`last_seen`
      2026-08-29, so `_alive` is already False and the board carries 0), which is why this is
-     filed rather than hot-fixed. Proposal: give `_never_ours` a fourth source — the registry
+     filed rather than hot-fixed. **2026-09-11 (`classifier`): that sentence stopped being true on
+     2026-09-04 — `peak innovation|data analyst` was created by LinkedIn intake and published,
+     open, for eight days on exactly this gap. The NAME is closed (`peak innovation` and
+     `hila & co.` in `recruiters._CONFIRMED`, and `test_every_registry_recruiter_verdict_is_a_mechanism`
+     reds the suite the next time the registry parks a `recruiter` the mechanism cannot see);
+     the CLASS — the registry's terminal token as a fourth `_never_ours` source — is still this
+     item, and still `roles`'.** Proposal: give `_never_ours` a fourth source — the registry
      row's terminal token — so a `recruiter`/`redundant` park is a purge predicate the same
      night, instead of the name test being the only door.
 519. **`is_aggregator` does not know `ecommerceguide.com`, a site that says it is one** —
@@ -10416,6 +10434,14 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      deleted the three keys it had evidence for (below) and did not touch the mechanism -
      the table and the re-judge policy are `classifier`'s. Re-derive:
      `select title_key,verdict from llm_cache where title_key like '%techbiz global%'`.
+     **2026-09-11 (`classifier`), the number for half (b):** on the 32 LinkedIn-hosted rows
+     the weekly audit read, `prompt_slice` reaches LinkedIn chrome on 14 and carries other
+     employers' listings on 9 — and re-judged on the JD alone, **0 of 14 verdicts moved**
+     (`tests/fixtures/classifier/2026-09-11-delta-audit.json`). So when jd-text strips the
+     class no re-judge is owed; if one ever is, the tool is the one this item already used —
+     delete the row's `llm_cache` keys under EVERY prefix (`_versioned` suffix match) — never a
+     contract bump, which re-supersedes ~560 rows for a dozen. The verdict dict now carries
+     `contract`, so a future strip-and-rejudge can at least be told from a served cell.
 
 552. **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
      reproduces the splice** - lane: `scraper` (with `jd-text`). Filed by `jd-text` 2026-09-01.
@@ -11523,8 +11549,13 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      gone and the class is not. Cheapest check: the count of distinct `עבודות דומות` /
      `More jobs` markers in a stored body, over `matched`.
 
-574. **The classifier lane's own two measurement tools no longer walk the gate they claim to
-     mirror** — lane: `classifier`. Filed 2026-09-03 by the finisher session, found by an
+574. ~~**The classifier lane's own two measurement tools no longer walk the gate they claim to
+     mirror**~~ — **CLOSED 2026-09-11 (`classifier`)**: the three calls pass the description
+     (`tools/drain_forecast.py`, `tools/measure_scope_rule.py` ×2) and `tools/measure_title_gate.py`
+     buckets its corpus with it too — its `--dry-run` on the 09-11 cache reads `rejected: 2,815`
+     postings against 2,967 judged by the gate, and its tally now prints cards AND distinct
+     (company, title) pairs side by side (the 09-02 "label the unit" lesson folded into the tool
+     that measures). Original text: lane: `classifier`. Filed 2026-09-03 by the finisher session, found by an
      adversarial wave over its own diff.
      `_relevance` gained a third, defaulted `desc` parameter, and three tools still call it
      with two: `tools/drain_forecast.py:100`, `tools/measure_scope_rule.py:82` and `:178`. The
@@ -11669,3 +11700,43 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      day: three cards in this file carry a Bright Data CAPTCHA page as their description,
      and a pass that re-judges STORED cache text is where that class gets caught.
 
+## From the classifier lane, 2026-09-11 (the weekly delta audit)
+
+578. **A url-only retraction line loses its record the day LinkedIn re-posts the placement
+     under a new job id, and the withdrawn agency posting re-opens** — lane: `roles`. Found
+     2026-09-11 by the `classifier` session in a rehearsal of the digest on a copy of that
+     morning's state: `ingima|data analytics team lead 5485` (withdrawn 2026-09-01, condition
+     (4)) was re-posted on 2026-09-03 as LinkedIn id `4462787120`; the discovery card reached
+     `discovered_cache.json` in the 09-11 digest commit, the ledger absorbed it into the
+     existing record (same `merge_key`) and moved the record's `url` to the new id, and the
+     09-01 line — url-only, `…-ingima-4460874869` — then named nothing: `_owned` is False for
+     it, the record's own url no longer matches, and the `seen_id` arm needs an id half that IS
+     an http url (`discovery-linkedin:linkedin:4460874869` is not). The rehearsal logged
+     `roles retraction lifted for 1 role(s) … INGIMA` and `roles retraction unmatched (…4460874869)`
+     and the record returned to `open`. **Taken today, in the sanctioned channel:** every
+     url-only line was stamped with the `role_id` of the one record that owned its url on
+     2026-09-11 (45 lines; each still binds to exactly one record over both stores), and
+     `test_the_delta_audit_lines_bind_to_exactly_one_record_each` refuses a bare line from now
+     on — a `roles` session writing a url-only line will see it red. **Not taken, and this
+     lane's file:** the durable half is in `Retractions.bind` — a url-only line could be
+     stamped with the owning record's `role_id` at bind time and the stamp persisted, or the
+     `seen_id` arm could read the `linkedin:<id>` shape as well as an http url, so a re-post
+     under a new id (LinkedIn's normal behaviour for a 30-day relist) keeps its withdrawal
+     without anyone hand-editing 45 lines again. Check: `grep -c '"role_id"' cloud_state/roles_retractions.jsonl`
+     equals the line count.
+
+579. **The Logica-IT board's category-and-region suffix is read as title words** — lane:
+     `scraper`. Filed 2026-09-11 by `classifier`, measured and NOT taken as a gate change.
+     Every card on `https://www.logica-it.com/jobs/` (94 cached) ends in the board's own
+     filing labels — `Python Developer BACKEND גוש דן`, `Splunk Dashboard Developer BACKEND
+     גוש דן`, `Enterprise Data Lead BI השפלה`, `בודק/ת תוכנה QA ירושלים יו"ש` — and no title
+     normaliser strips them (`seniority._norm` keeps them, so the cache key forks whenever the
+     site re-labels a region). Measured on the gate with the suffix stripped: **11 of 94
+     titles change relevance — 10 `excluded→none` (a refusal to a refusal, 0 gained) and 1
+     `signal→none`** (`Enterprise Data Lead BI השפלה` loses the hearing the `BI` label bought
+     it), so a gate-side strip gains no role and costs one. It is a card-level defect: the
+     scraper's `_norm_title` / `_DECORATION` stop-words know apply-verbs and job-type furniture
+     and not a board's filing labels. Low value either way — Logica-IT is a tech-staffing house
+     (`_AGENCY_EMPLOYER` already names it; `cloud_state/firmographics.json` reads *Tech staffing
+     & outsourcing*), so every card there is condition-(4) OUT on the posting whatever the
+     title says — which is why this is filed and not fixed. Check: `python -c "import json;print([j['title'] for j in json.load(open('scraped_cache.json',encoding='utf-8'))['Logica-IT']][:5])"`.

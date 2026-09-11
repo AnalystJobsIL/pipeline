@@ -53,8 +53,11 @@ def corpus(cache, baseline=None, tier="rejected", israel_only=True):
             j = dict(j, company=j.get("company") or company)
             if israel_only and not israel.is_israel_job(j):
                 continue
+            # the description too (2026-09-11): `_desc_appealed` reads it on the live path,
+            # and a corpus bucketed on the title alone files an appealed card as `rejected`
             rel = seniority._relevance((j.get("title") or "").lower(),
-                                       (j.get("company") or "").lower())
+                                       (j.get("company") or "").lower(),
+                                       j.get("description") or "")
             want = rel in REJECTED if tier == "rejected" else rel not in REJECTED
             if want or tier == "all":
                 out.append((rel, j))
@@ -123,13 +126,20 @@ def main(argv=None):
     tally = Counter(r["verdict"] for r in rows)
     judged = tally["YES"] + tally["NO"]
     yes = tally["YES"]
+    # cards AND distinct (company, title) pairs, side by side: this lane has conflated the
+    # two units three times (docs/sessions/2026-09-02-classifier.md, "label the unit")
+    pairs = len({(seniority._norm_company(r["company"]), seniority._norm(r["title"])) for r in rows})
+    yes_pairs = len({(seniority._norm_company(r["company"]), seniority._norm(r["title"]))
+                     for r in rows if r["verdict"] == "YES"})
     with open(a.out, "w", encoding="utf-8") as fh:
         json.dump({"tier": a.tier, "model": a.model, "boards": len(boards),
-                   "contract": seniority.CONTRACT, "tally": dict(tally), "rows": rows},
+                   "contract": seniority.CONTRACT, "tally": dict(tally),
+                   "pairs": pairs, "yes_pairs": yes_pairs, "rows": rows},
                   fh, ensure_ascii=False, indent=1)
 
-    print(f"\n=== tier={a.tier} · {len(rows)} judged in {time.time() - t0:.0f}s ===")
-    print(f"verdicts: {dict(tally)}")
+    print(f"\n=== tier={a.tier} · {len(rows)} cards / {pairs} distinct (company, title) pairs "
+          f"judged in {time.time() - t0:.0f}s ===")
+    print(f"verdicts: {dict(tally)}  (YES: {yes} cards / {yes_pairs} pairs)")
     if judged:
         label = "FALSE-NEGATIVE rate" if a.tier == "rejected" else "accept rate"
         print(f"{label}: {yes}/{judged} = {100.0 * yes / judged:.1f}%  "

@@ -175,3 +175,15 @@ cache around 2026-09-06, which is the clock on re-deriving it.
 * **Guardio's two rows are one Comeet posting under two titles** (3,300 and 3,299 characters,
   byte-identical but for the title word), so both `role_id`s carry a withdrawal — the same
   duplicate-identity shape as `533@roles`.
+
+
+## 2026-09-11 addendum — the OUT clause is conjunctive, and three rows sat on it
+
+*lane: `classifier`. Artifact: `tests/fixtures/classifier/2026-09-11-delta-audit.json`.*
+
+| posting | the deliverable, and who consumes it | verdict |
+|---|---|---|
+| `Mobileye \| Algorithm Data Analyst` | "provide informative analysis on the quality of algorithmic developments and production versions, based on statistical methods", "Produce detailed and high-level reports", regressions communicated to the algorithmic and management teams | **IN, kept.** The audit read it OUT on the Similarweb / Aidoc examples (algorithm evaluation). This record's OUT clause is **conjunctive**: OUT when the deliverable ends at datasets, pipelines or model-training data *with no reporting or analysis output of the person's own* — and this role's stated output IS reports. Seam YES on three of three. Its sibling `Experienced Data Analyst` (withdrawn 09-02) built validation infrastructure and tooling, which is the other side of the same clause |
+| `Jazz \| Senior BI Developer` | stands up the platform end to end AND "Define the company's metrics", "Build dashboards that executives actually use", "Serve every BI consumer at Jazz" | **IN** — the executive metric set and the C-level dashboards are the stated output; the platform is the means |
+| `Keshet Media \| BI / Data Developer` | leads with dbt / Airflow pipelines and data models; "Develop BI applications and dashboards in Domo, delivering actionable insights to business users" is one bullet of eight; LinkedIn files it under *Data Engineer* | **IN, kept, the closest call** — seam NO, NO, YES. A reporting layer business users consume is in the own stated output, and the pipelines-first ordering was weighed rather than decisive |
+| `Voyantis \| Data Analyst` | "analyzing complex datasets and translating them into valuable insights", "Data visualization both for internal and external purposes", beside "improve our data pipeline", "a significant role in the AI model design and creation" | **IN, kept** — seam NO, NO, YES; junior is not a ground |

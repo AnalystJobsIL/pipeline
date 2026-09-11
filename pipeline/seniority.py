@@ -911,7 +911,10 @@ class Classifier:
         # the text turns out to be another posting's page.
         rel = _relevance(title_l, company_l, job.get("description") or "")
         sen = _seniority(title_l)
-        base = {"relevance": rel, "seniority": sen}
+        # `contract`: which rules judged this cell. The live contract for anything decided
+        # this run (keyword head included: it is the deterministic head under the live
+        # rules); a cache hit overrides it with the prefix that answered (544@roles).
+        base = {"relevance": rel, "seniority": sen, "contract": self.contract}
         if rel == "excluded":
             return {**base, "decision": "reject", "path": "keyword",
                     "reason": "engineering/ML/non-data-analyst title"}
@@ -960,7 +963,7 @@ class Classifier:
             bare = _relevance(title_l, company_l)
             if bare in ("excluded", "none"):
                 return {"relevance": bare, "seniority": sen, "decision": "reject",
-                        "path": "keyword",
+                        "path": "keyword", "contract": self.contract,
                         "reason": ("engineering/ML/non-data-analyst title" if bare == "excluded"
                                    else "no analytics signal in title")}
         # Does this role have a description of its own that is worth keying a verdict to?
@@ -1079,8 +1082,14 @@ class Classifier:
                 # not moving. It moves when jd-text delivers the description, not when the
                 # cap rises, and the alarm now says so.
                 self.stale_unreachable += stale and not drainable
+                if stale and not drainable:
+                    # the mail counts these ("N superseded verdicts CANNOT be re-judged")
+                    # and until 2026-09-11 nothing named them; one greppable line each
+                    why = "shared text" if shared else "no description this run"
+                    print(f"  [classify] superseded verdict cannot be re-judged ({why}): "
+                          f"{_ascii(jd_key, 120)} <- {prior[4]}", flush=True)
                 return {**base, "decision": "accept" if prior[0] else "reject",
-                        "path": "llm_cache",
+                        "path": "llm_cache", "contract": prior[4],
                         "reason": ("cached LLM verdict" if prior[3] else
                                    "cached LLM verdict (superseded contract)")}
             draining = True
@@ -1090,7 +1099,7 @@ class Classifier:
             if prior is not None:      # the bare verdict beats the keyword fallback
                 self.served_bare += 1
                 return {**base, "decision": "accept" if prior[0] else "reject",
-                        "path": "llm_cache",
+                        "path": "llm_cache", "contract": prior[4],
                         "reason": f"bare cached verdict kept; LLM {why_off}"}
             self.skipped += 1
             self.skipped_accept += fallback == "accept"
@@ -1106,7 +1115,7 @@ class Classifier:
                 # the queue is empty while 16% of it is still superseded.
                 self.stale_served += draining
                 return {**base, "decision": "accept" if prior[0] else "reject",
-                        "path": "llm_cache",
+                        "path": "llm_cache", "contract": prior[4],
                         "reason": f"bare cached verdict kept; LLM failed ({reason})"}
             return {**base, "decision": fallback, "path": "llm_failed_fallback",
                     "reason": f"LLM failed ({reason}); strong/data-anchored-senior-signal->accept else reject"}
@@ -1190,7 +1199,10 @@ class Classifier:
         company_l = (job.get("company") or "").lower()
         rel = _relevance(title_l, company_l, job.get("description") or "")
         sen = _seniority(title_l)
-        base = {"relevance": rel, "seniority": sen}
+        # `contract`: which rules judged this cell. The live contract for anything decided
+        # this run (keyword head included: it is the deterministic head under the live
+        # rules); a cache hit overrides it with the prefix that answered (544@roles).
+        base = {"relevance": rel, "seniority": sen, "contract": self.contract}
 
         def _reject(path, reason):
             self.backfill_no += bool(published)
@@ -1237,7 +1249,7 @@ class Classifier:
                 self.backfill_keyword += 1
                 self.backfill_no += bool(published)
                 return {"relevance": bare, "seniority": sen, "decision": "reject",
-                        "path": "keyword",
+                        "path": "keyword", "contract": self.contract,
                         "reason": ("engineering/ML/non-data-analyst title" if bare == "excluded"
                                    else "no analytics signal in title")}
         has_text = looks_like_jd(str(desc or "").strip())
@@ -1276,14 +1288,16 @@ class Classifier:
                 "reason": f"LLM verdict: {reason}"}
 
     def _lookup(self, jd_key, bare_key, legacy_key):
-        """(verdict, judged_with_text, made_by_this_seam, made_under_the_CURRENT_contract) or
-        None. Current contract first, then any superseded one -- found by the JOB the key
+        """(verdict, judged_with_text, made_by_this_seam, made_under_the_CURRENT_contract,
+        contract_that_answered) or None -- the fifth is the key prefix that held the
+        verdict (`""` for a legacy `company|title` row, which has none), so a served cell
+        can say which rules judged it (544@roles). Current contract first, then any superseded one -- found by the JOB the key
         names rather than by the key itself, so a rules or model change never orphans a
         verdict -- then the legacy `company|title` row."""
         for k in (jd_key, bare_key):
             for store in (self.staged, self.cache):
                 if k in store:
-                    return bool(store[k]), k.endswith("|jd"), True, True
+                    return bool(store[k]), k.endswith("|jd"), True, True, k.split("|", 1)[0]
         if self._by_suffix is None:
             # O(cache) once per Classifier, and only if a superseded lookup is actually
             # reached: `seniority.classify()` builds a throwaway Classifier per call and the
@@ -1314,10 +1328,10 @@ class Classifier:
                 # from the whole lineage to one day, not eliminated. A timestamp in `updated`,
                 # or an explicit lineage tuple, is what would close it.
                 best = max(older, key=lambda p: (older[p][1], p))
-                return older[best][0], suffix.endswith("|jd"), True, False
+                return older[best][0], suffix.endswith("|jd"), True, False, best
         for store in (self.staged, self.cache):
             if legacy_key in store:
-                return bool(store[legacy_key]), False, False, False
+                return bool(store[legacy_key]), False, False, False, ""
         return None
 
     # ---- the LLM tier, bounded ------------------------------------------------------------

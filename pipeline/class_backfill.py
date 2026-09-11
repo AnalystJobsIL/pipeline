@@ -99,7 +99,8 @@ def backfill_verdicts(ledger, clf, *, verbose=True):
                                published=(rec.get("status") or "open") in PUBLISHED)
         if not r:
             continue                       # capped, breaker open, or the call failed
-        out[rid] = {k: r[k] for k in ("decision", "path", "reason") if r.get(k) is not None}
+        out[rid] = {k: r[k] for k in ("decision", "path", "reason", "contract")
+                    if r.get(k) is not None}
         if verbose and r["path"] != "keyword":
             # `_ascii`, like every other print in this seam: two of the 42 records measured
             # on 2026-08-31 carry U+FFFD in the title, and a bare print of one of those on a
