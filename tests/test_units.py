@@ -26972,7 +26972,11 @@ def test_a_recruiter_verdict_without_a_mechanism_is_counted_not_assumed():
     answers on the NAME, and parking a row does not teach it one. The census counts that
     gap so it cannot sit unseen again."""
     import registry_health as H
-    rows = [["Peak Innovation", "scrape", "", "https://x.co/career/", "false",
+    # 2026-09-11 (classifier): `Peak Innovation` itself is COVERED since that evening -- it
+    # went into `recruiters._CONFIRMED` with the tripwire
+    # `test_every_registry_recruiter_verdict_is_a_mechanism` -- so the uncovered example here
+    # is a synthetic agency no list and no keyword catches.
+    rows = [["Northwind Outsourcing", "scrape", "", "https://x.co/career/", "false",
              "listing-hunt 2026-08-28: queue-hunt | recruiter 2026-08-31: staffing agency"],
             ["Experis", "scrape", "", "https://y.co/", "false",
              "recruiter 2026-08-24: agency"],                     # in _CONFIRMED -> covered
@@ -26980,7 +26984,9 @@ def test_a_recruiter_verdict_without_a_mechanism_is_counted_not_assumed():
              "deep-validated 2026-08-30: smartrecruiters board"],  # no recruiter VERDICT
             ["Acme", "scrape", "", "https://a.co/", "true",
              "recruiter 2026-09-01: agency"]]                      # active -> not this class
-    assert H.recruiter_verdicts_without_a_mechanism(rows) == ["Peak Innovation"]
+    assert H.recruiter_verdicts_without_a_mechanism(rows) == ["Northwind Outsourcing"]
+    from pipeline.recruiters import is_recruiter
+    assert is_recruiter("Peak Innovation"), "covered since 2026-09-11; the census must read 0 for it"
 
 
 def test_alias_fold_never_rewrites_a_registry_name():
