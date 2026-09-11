@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**640 filed · 455 open · 185 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**640 filed · 454 open · 186 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -550,7 +550,7 @@ closure convention in the header.
 - **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 
-### jd-text — 18 open
+### jd-text — 17 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -567,7 +567,6 @@ closure convention in the header.
 - **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
 - **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
 - **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
-- **578** `578@jd-text` **Three Menora cards carry a CAPTCHA page as their description**
 - **581** `581@jd-text` **The scrape cache keeps the page furniture this layer now cuts, and nothing re-cleans it**
 - **587** `587@jd-text` **When jd-text strips LinkedIn's page chrome, a closed posting silently reopens** —
 
@@ -11489,7 +11488,24 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      pair, `Aqurate Data`/`aQurate`, began folding the same day with no new declaration —
      it had carried both halves since 2026-08-23 and nothing had ever read them.
 
-578. **Three Menora cards carry a CAPTCHA page as their description** — lane: `jd-text`
+578. ~~**Three Menora cards carry a CAPTCHA page as their description**~~ — **CLOSED
+     2026-09-11 (`jd-text`): measured, and it is not a defect of the bar.** Over every
+     stored body this repo holds — 2,526 of them, `matched` + `scraped_cache` +
+     `discovered_cache` — `CAPTCHA to request unblock` fires on exactly **3** bodies, the
+     three named below, and **`looks_like_jd` already refuses all three**.
+     `Request Rejected`, `support ID is`, `Access Denied`, `Cloudflare Ray ID` and
+     `verify you are human` fire on **0**. So the block-page predicate this item asked for
+     would flip 0 rows, and an unfired marker carries no measurement — the rule the
+     furniture set's own comment block is written around. The generic form is worse than
+     useless: a bare `captcha` fires on **7** bodies and **3 of those PASS the bar**
+     (Enigmatos, Gamida Cell, Weebit Nano postings that mention a CAPTCHA in prose), so the
+     word a reader reaches for first is the one that cuts real text to catch pages the bar
+     already stops. **The real gap is `581` and it is one gap, not two**: nothing ever
+     re-judges a STORED card, so a block page captured once sits in the cache until
+     something refuses it, and `description_len` on the CARD stays a lie. Closed at the
+     request of the `registry` session that filed it. The original report follows.
+
+     **Original** — lane: `jd-text`
      (the text) / `scraper` (the fetch). Filed 2026-09-11 by `registry`.
      `scraped_cache.json` holds three `מנורה מבטחים החזקות` cards (around lines 38541,
      38554, 38567) whose description is the Radware interstitial — *"Please solve this
@@ -11744,9 +11760,14 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      the same floor (`looks_like_jd` after the cut) and the same share ceiling, in the 12:30
      `jd-archive` run rather than in the digest. Not done here because the cache is a 0.8 MB
      patch a day and this session's commit already carries the whole `matched` store.
-     `578@jd-text` is the second reason to build it, and it was filed by `registry` the same
-     day: three cards in this file carry a Bright Data CAPTCHA page as their description,
-     and a pass that re-judges STORED cache text is where that class gets caught.
+     It also carries `578`'s population, which is why that item closed into this one: the
+     three `מנורה מבטחים החזקות` cards (`scraped_cache.json` ~38541, 38554, 38567) hold
+     the Radware CAPTCHA interstitial as their description. `looks_like_jd` refuses all
+     three, so nothing publishes them — but nothing re-judges them either, the `cache`
+     donor rung can still offer one to a row whose own address gives nothing, and the
+     card's own `description_len` reads 4,000. The registry row is parked `alias-of
+     Menora Mivtachim Group` (`9d0dc00`), so no NEW card arrives under that name and
+     those three bodies are the whole remaining population.
 
 ## From the classifier lane, 2026-09-11 (the weekly delta audit)
 
