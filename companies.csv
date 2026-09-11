@@ -2324,3 +2324,7 @@ DSG.AI,scrape,,https://www.dsg.ai/careers,false,queue-hunt 2026-09-11: careers p
 INFINITY&CO Marketing solutions,scrape,,https://www.infinityltdonline.com/careers,false,queue-hunt 2026-09-11: careers page documented; monitored candidate
 Safebooks AI,scrape,,https://safebooks.ai/careers,false,queue-hunt 2026-09-11: careers page documented; monitored candidate
 Fiducial,ashby,fiducial,https://api.ashbyhq.com/posting-api/job-board/fiducial,true,auto-expand; 14/0 IL
+Sartorius,scrape,https://www.sartorius.com/en/company/careers,https://www.sartorius.com/en/company/careers,true,auto-expand scrape; 1 IL
+Scale Jet,scrape,https://www.scale-jet.com/,https://www.scale-jet.com/,false,scanned; no open Israel roles now | own-site 2026-09-11: www.scale-jet.com linkback
+Searchapi,scrape,https://www.searchapi.io/careers,https://www.searchapi.io/careers,true,auto-expand scrape; 12 IL
+Segmanta,scrape,https://segmanta.com,https://segmanta.com,false,scanned; no open Israel roles now | own-site 2026-09-11: segmanta.com linkback
