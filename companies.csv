@@ -2323,3 +2323,4 @@ Rws Group,scrape,,https://www.rws.com/careers,false,queue-hunt 2026-09-11: caree
 DSG.AI,scrape,,https://www.dsg.ai/careers,false,queue-hunt 2026-09-11: careers page documented; monitored candidate
 INFINITY&CO Marketing solutions,scrape,,https://www.infinityltdonline.com/careers,false,queue-hunt 2026-09-11: careers page documented; monitored candidate
 Safebooks AI,scrape,,https://safebooks.ai/careers,false,queue-hunt 2026-09-11: careers page documented; monitored candidate
+Fiducial,ashby,fiducial,https://api.ashbyhq.com/posting-api/job-board/fiducial,true,auto-expand; 14/0 IL
