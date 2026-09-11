@@ -11702,7 +11702,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
 ## From the classifier lane, 2026-09-11 (the weekly delta audit)
 
-578. **A url-only retraction line loses its record the day LinkedIn re-posts the placement
+580. **A url-only retraction line loses its record the day LinkedIn re-posts the placement
      under a new job id, and the withdrawn agency posting re-opens** — lane: `roles`. Found
      2026-09-11 by the `classifier` session in a rehearsal of the digest on a copy of that
      morning's state: `ingima|data analytics team lead 5485` (withdrawn 2026-09-01, condition
@@ -11725,7 +11725,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      without anyone hand-editing 45 lines again. Check: `grep -c '"role_id"' cloud_state/roles_retractions.jsonl`
      equals the line count.
 
-579. **The Logica-IT board's category-and-region suffix is read as title words** — lane:
+581. **The Logica-IT board's category-and-region suffix is read as title words** — lane:
      `scraper`. Filed 2026-09-11 by `classifier`, measured and NOT taken as a gate change.
      Every card on `https://www.logica-it.com/jobs/` (94 cached) ends in the board's own
      filing labels — `Python Developer BACKEND גוש דן`, `Splunk Dashboard Developer BACKEND

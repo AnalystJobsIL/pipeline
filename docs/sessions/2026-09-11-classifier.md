@@ -78,7 +78,7 @@ Taken, in the sanctioned channel: **every url-only line (45) was stamped with th
 of the one record that owned its url today** — re-checked, 54 lines still bind 1:1 — and a
 second rehearsal reads `roles withdrawn 6`, INGIMA `withdrawn`, no lifted, no unmatched.
 `test_the_delta_audit_lines_bind_to_exactly_one_record_each` refuses a bare line from now on.
-Not taken, `roles`' file: the durable fix in `Retractions.bind` (`578@roles`).
+Not taken, `roles`' file: the durable fix in `Retractions.bind` (`580@roles`).
 
 ## 3. Item B — the agency class, closed by a test and not by two names
 
@@ -115,7 +115,7 @@ in-scope roles is not added. Pinned by
 
 Logica-IT's suffix: stripping the board's category/region labels moves 11 of 94 titles — 10
 `excluded→none` and 1 `signal→none` (`Enterprise Data Lead BI השפלה` loses its hearing) —
-0 gained, so not a gate change; `579@scraper`. Every Logica card is condition-(4) OUT anyway.
+0 gained, so not a gate change; `581@scraper`. Every Logica card is condition-(4) OUT anyway.
 
 `574` closed: the three tool call sites pass the description, and `tools/measure_title_gate.py`
 prints cards AND pairs. Dry run on today's cache: `rejected: 2,815` of 2,967.
@@ -163,7 +163,7 @@ leave it tomorrow — and the mechanism under one class of them.
 `daily-digest.yml` at 05:00 UTC with nobody watching; the alarm is the mail's `cache: dropped`
 counter and, for the store record, the `roles withdrawn` clause; the 2026-09-12 morning-check
 row is the unattended proof. The six lines and the 45 re-keys are a hand-drain by
-construction (`543`, and `578` for the re-key), and the `roles` lane says its `543` map lands
+construction (`543`, and `580` for the re-key), and the `roles` lane says its `543` map lands
 tonight — which does NOT cover these six (their cached verdicts are live-contract YES, so the
 drain never re-judges them). The vocabulary and the chrome are measurements, not deliveries.
 

@@ -5812,12 +5812,12 @@ retraction line loses its record when LinkedIn re-posts under a new id**: INGIMA
 withdrawn 09-01, was re-posted on 09-03 with a new job id, the record absorbed the new url,
 and a rehearsal on the 09-11 state re-opened it (`roles retraction lifted … unmatched`);
 every line in `roles_retractions.jsonl` now carries its `role_id` and a test refuses a bare
-one (`578@roles` carries the durable fix). Measured and REFUSED, with the numbers: the
+one (`580@roles` carries the durable fix). Measured and REFUSED, with the numbers: the
 audit's two vocabulary holes (Hebrew `אקסל`, bare `BI`; `כלכלן`/`economist`, `ניתוח ועיבוד
 מידע`, `חוקר`/`מדידה והערכה`) admit **3 cards / 3 pairs** with every arm at once over 6,368
 Israel cards, and the seam says NO to all three — two pension-fund investment economists and
 one FP&A economist — so nothing was added; and stripping the Logica-IT board's category/region
-suffix moves 11 of 94 titles, 10 refusal-to-refusal and 1 hearing lost, so that is `579@scraper`
+suffix moves 11 of 94 titles, 10 refusal-to-refusal and 1 hearing lost, so that is `581@scraper`
 and not a gate change. **LinkedIn chrome inside `prompt_slice`, measured on the 32
 LinkedIn-hosted audited rows: the 1,400-character window reaches chrome on 14 and carries
 other employers' listings on 9; re-judged on the JD alone, 0 of 14 verdicts moved.** No
