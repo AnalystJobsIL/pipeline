@@ -313,6 +313,7 @@ def _li_guest(keyword, location, days, start):
 # that makes a silent parser regression visible. Keyed by keyword, drained by main().
 LI_CARDS_PRESENT = _collections.defaultdict(set)
 _li_last_present = [set()]
+_blocked_reask = {}          # one paced re-ask per (keyword, location), then pay
 
 
 # One bounded re-ask of a page that came back 200-EMPTY, and the budget that bounds it.
@@ -349,6 +350,15 @@ LINKEDIN_BLANK_RETRY_SECONDS = float(os.environ.get("LINKEDIN_BLANK_RETRY_SECOND
 # shows the re-ask provoking blocks.
 _BLANK_RETRY_PAUSE = float(os.environ.get("LINKEDIN_BLANK_RETRY_PAUSE", "0"))
 _blank_retry = {"left": LINKEDIN_BLANK_RETRIES, "misses": 0, "spent": 0.0}
+# Spacing for the guest WALK itself (2026-09-11, infra). Third-party guidance for this
+# endpoint from a datacenter IP is 2-3 s between requests; the runner is on Azure ranges,
+# which are among the most-blocked. A block here is not free: it is what routes the query to
+# the paid `jobs/search` render.
+LINKEDIN_GUEST_PAUSE_S = float(os.environ.get("LINKEDIN_GUEST_PAUSE_S", "2.5"))
+# ...and one paced RE-ASK of a hard block before paying, for the same reason. A 429 that
+# clears after twenty seconds costs twenty seconds; the paid page costs a credit and answers
+# with the same 60 cards the free rung would have.
+LINKEDIN_BLOCK_PAUSE_S = float(os.environ.get("LINKEDIN_BLOCK_PAUSE_S", "20"))
 
 
 def _guest_page(keyword, location, days, start):
@@ -397,6 +407,15 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     qkey = (keyword, location)
     qlabel = keyword if location == "Israel" else f"{keyword} @ {location}"
     seen, out = set(), []
+
+    def _absorb(cards):
+        """Keep the cards this page added; answer how many were new. One place, because the
+        recovered-from-a-block path below needs exactly what the main path does -- and a
+        second copy of it deduped on `url` where this one dedupes on `job_id`."""
+        fresh = [c for c in cards if c["job_id"] not in seen]
+        seen.update(c["job_id"] for c in cards)
+        out.extend(fresh)
+        return len(fresh)
     # guest pages hold 10, unlocked pages hold 60 — same 80-job pool, different step size
     paid_pages, blanks, repeats = 0, 0, 0
     # WHY the walk stopped, printed at the end when non-empty. One string, not a boolean:
@@ -407,6 +426,14 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     # had cited. Empty means drained: nothing to report. Same idiom as indeed_search.
     why = ""
     for i in range(LINKEDIN_GUEST_PAGES):
+        # SPACE THE WALK (2026-09-11). Up to 50 back-to-back requests per query with no delay
+        # is what earns the 429 that sends this query to the PAID render, so the free rung
+        # buys the paid one. The re-ask already had a pause knob and the comment beside it
+        # says a pause on the re-ask alone is theatre -- this is the walk itself. 2.5 s x 50
+        # pages x 9 keywords is inside the step's 25-minute budget, and the walk exits early
+        # on exhaustion long before 50 on nearly every keyword.
+        if i and LINKEDIN_GUEST_PAUSE_S:
+            time.sleep(LINKEDIN_GUEST_PAUSE_S)
         cards, ok = _guest_page(keyword, location, days, i * 10)
         # THREE states, and conflating any two loses jobs:
         #   ok + cards  -> the good case
@@ -439,6 +466,19 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             # log could not say whether Haifa was refused or empty.
             SOURCE_PATH["linkedin_blocked"] += 1
         if not ok or (blanks >= LINKEDIN_BLANK_TOLERANCE and not out):
+            if not ok and LINKEDIN_BLOCK_PAUSE_S and not _blocked_reask.get(qkey):
+                # ONE re-ask of a hard block, after a pause, before the credit. Once per
+                # query: a second is a block that is not going to clear.
+                _blocked_reask[qkey] = True
+                time.sleep(LINKEDIN_BLOCK_PAUSE_S)
+                cards, ok = _guest_page(keyword, location, days, i * 10)
+                if ok and cards:
+                    SOURCE_PATH["linkedin_free"] += 1
+                    SOURCE_PATH["linkedin_block_recovered"] += 1
+                    LI_CARDS_PRESENT[qkey] |= _li_last_present[0]
+                    blanks = 0
+                    repeats = 0 if _absorb(cards) else repeats
+                    continue
             if paid_pages >= pages or not os.environ.get("BRIGHTDATA_API_KEY"):
                 # paid budget spent, or there is no paid path at all — and the message
                 # says which: "no paid page left (paid 0/2)" was the wording when the real
@@ -473,9 +513,7 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
                 break
         # Deliberately NO `elif out: break` here — that limited a hard-blocked guest endpoint
         # to ONE paid page. The loop is bounded by `paid_pages >= pages` and by freshness.
-        fresh = [c for c in cards if c["job_id"] not in seen]
-        seen.update(c["job_id"] for c in cards)
-        out += fresh
+        fresh = _absorb(cards)
         if fresh:
             repeats = 0
             continue
@@ -805,7 +843,15 @@ def budget_per_day(today=None):
     if mtd is None:
         return None
     days_left = calendar.monthrange(today.year, today.month)[1] - today.day + 1
-    return max(0, BD_MONTHLY_BUDGET - mtd) / max(1, days_left)
+    # `pipeline.bd_budget.SOFT`, not this module's own 5,000 (infra, 2026-09-11): there were
+    # TWO numbers for the free tier and only one of them moved when the operator ruled, so a
+    # dial nobody edited could keep deriving a per-day budget from a retired constant.
+    # Falls back to the local default if the import is unavailable, which no runner is.
+    try:
+        from pipeline.bd_budget import SOFT as _pool
+    except Exception:  # noqa: BLE001
+        _pool = BD_MONTHLY_BUDGET
+    return max(0, _pool - mtd) / max(1, days_left)
 
 
 # Below this many rows, companies.csv is not trusted to say what the queue may drop.
@@ -1040,6 +1086,24 @@ def main():
     print(f"[budget] {how}")
     # AFTER the [budget] line, so the budget stays a truthful record of what plan_spend said.
     targeted_cap = _targeted_cap_or_zero(targeted_cap)
+    # THE DATASET TRIGGER IS OFF UNLESS ASKED FOR (infra, 2026-09-11). It bills 1 credit per
+    # RECORD where the Unlocker bills 1 per REQUEST -- one trigger once cost 391 -- and it
+    # armed ITSELF: `plan_spend` derives the cap from a month-to-date it reads off the live
+    # account, so it ran unattended on eight mornings of September (2026-09-01..08, caps 100
+    # down to 23) and stopped only when the account passed 96%. What those 118 dataset
+    # records bought: ONE new company, on 09-08; `0 NEW companies` on the other seven
+    # mornings. On the 1st the account resets and it would arm again.
+    #
+    # Not deleted, because the targeted sweep is the only path that can ask about a NAMED
+    # employer (the public search exposes the company filter as a numeric `f_C` id we do not
+    # have) -- so it stays one env var away for a session that wants it, and the zero is
+    # still recorded below so `last_run` does not read it as a dead source.
+    if (os.environ.get("LINKEDIN_TARGETED") or "").strip() != "1":
+        if targeted_cap:
+            print("[linkedin-targeted] SKIPPED: the per-RECORD dataset is off by default "
+                  "(LINKEDIN_TARGETED=1 to arm it) -- 118 records bought 1 new company in "
+                  "September", flush=True)
+        targeted_cap = 0
     runs = []
     targeted = _targeted_inputs(cap=targeted_cap) if targeted_cap else []
     if targeted:

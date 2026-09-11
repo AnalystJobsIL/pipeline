@@ -114,6 +114,17 @@ def _careers_url_via_serp(name):
                     return link
         except Exception:  # noqa: BLE001
             pass                                   # quota/network — fall through to the unlocker
+    # The FREE rung first (2026-09-11): this is the 06:00 self-heal, 9% of the month's
+    # credits, and it had no free rung at all. `ddg` is keyless, paced, and gives up for the
+    # whole run on a 202 -- so the paid rung below is reached exactly as often as it needs
+    # to be and never more.
+    try:
+        from deep_validate import ddg
+        for link in (ddg(f"{name} careers") or []):
+            if _ATS_LINK.search(link) and not is_aggregator(link):
+                return link
+    except Exception:  # noqa: BLE001
+        pass
     try:
         from deep_validate import google_via_unlocker
         for link in (google_via_unlocker(f"{name} careers israel") or []):

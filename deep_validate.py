@@ -25,6 +25,7 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import json
+import atexit
 import os
 import re
 import sys
@@ -77,11 +78,87 @@ _WD_CXS = re.compile(r"https://([a-z0-9]+)\.(wd\d+)\.myworkdayjobs\.com/wday/cxs
 TODAY = dt.date.today().isoformat()
 
 
+def _rank_hosts(urls, limit=4):
+    """The ranked, host-deduped candidate list BOTH search rungs answer with.
+
+    One host appears many times in a result page -- bare homepage, logo link, breadcrumb,
+    then the actual result -- and the bare form always comes FIRST, so first-per-host keeps
+    the least useful one. Measured on a live `Exodigo careers` response: Google returned
+    both the company's Comeet board and its real listings page, and first-per-host discarded
+    BOTH in favour of `comeet.com` and `exodigo.com`. Rank instead: a jobs-ish path beats any
+    other path beats a bare host, and among equals the SHORTEST path wins, because that is
+    the index (`/open-roles` is the listings page; `/open-positions/field-operator-d0d83` is
+    one posting on it). Dedupe is by HOST, so `limit` buys distinct candidates.
+
+    Shared by `ddg` and `google_via_unlocker` since 2026-09-11: a free rung that ranks
+    differently from the paid one is not a substitute for it, and the A/B below compares
+    their top hosts. It was `google_via_unlocker`'s alone; `ddg` returned raw document order.
+    """
+    order, best = [], {}
+    for u in urls:
+        parts = str(u).split("/", 3)
+        if len(parts) < 3:
+            continue
+        host = parts[2].lower()
+        path = parts[3] if len(parts) > 3 else ""
+        rank = (2 if _G_JOBS_PATH.search(path) else (1 if path.strip("/") else 0), -len(path))
+        if host not in best:
+            order.append(host)
+            best[host] = (rank, u)
+        elif rank > best[host][0]:
+            best[host] = (rank, u)
+    return [best[h][1] for h in order][:limit]
+
+
+# DuckDuckGo's HTML endpoint is keyless and free, and it is the rung that keeps a Google
+# credit unspent. Its soft block is an HTTP **202** carrying "Ratelimit" rather than a 4xx,
+# so it looks like a successful empty page to any fetcher that only reads the body -- which
+# is precisely what `audit_empty_rows.fetch` does. A 202 ends DDG for the rest of the run:
+# re-asking inside the same process is what earns a longer block, and the paid rung is right
+# there. Community guidance is under 30 requests a minute; 2 s between calls is half that.
+_DDG = {"blocked": False, "next": 0.0, "asked": 0, "answered": 0}
+DDG_PACE_S = float(os.environ.get("DDG_PACE_S", "2"))
+
+
+def _ddg_fetch(url, timeout=15):
+    """(status, html). A 202 is DuckDuckGo's rate limit, not an empty result."""
+    req = urllib.request.Request(url, headers={"User-Agent": _UA})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status, r.read(1_500_000).decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        return e.code, ""
+    except Exception:  # noqa: BLE001
+        return 0, ""
+
+
 def ddg(name, limit=4):
-    q = urllib.parse.quote_plus(f"{name} careers")
-    html = fetch(f"https://html.duckduckgo.com/html/?q={q}", timeout=15)
+    """The FREE search rung: DuckDuckGo's HTML endpoint, ranked like the paid one.
+
+    Israel is appended to the query for the reason `gl=il` is on the Google URL -- the
+    unlocker's exit node is wherever Bright Data puts it and DDG has no country parameter we
+    can trust, so the locale goes in the words. Returns [] when the rung is blocked for this
+    run, and `google_via_unlocker` is then the caller's fallback exactly as before.
+    """
+    if _DDG["blocked"]:
+        return []
+    wait = _DDG["next"] - time.monotonic()
+    if wait > 0:
+        time.sleep(wait)
+    _DDG["next"] = time.monotonic() + DDG_PACE_S
+    _DDG["asked"] += 1
+    q = urllib.parse.quote_plus(f"{name} careers Israel")
+    status, html = _ddg_fetch(f"https://html.duckduckgo.com/html/?q={q}")
+    if status == 202 or (status == 200 and "Ratelimit" in html[:4000]):
+        _DDG["blocked"] = True
+        print("  [ddg] rate-limited (HTTP %s) -- the free rung is done for this run; the "
+              "paid one answers from here" % status, flush=True)
+        return []
     if not html:
-        html = fetch(f"https://lite.duckduckgo.com/lite/?q={q}", timeout=15)
+        status2, html = _ddg_fetch(f"https://lite.duckduckgo.com/lite/?q={q}")
+        if status2 == 202:
+            _DDG["blocked"] = True
+            return []
     urls = []
     for m in re.finditer(r"uddg=([^&\"']+)", html):
         u = urllib.parse.unquote(m.group(1))
@@ -91,12 +168,53 @@ def ddg(name, limit=4):
         u = m.group(1)
         if "duckduckgo" not in u and not is_aggregator(u):
             urls.append(u)
-    seen, out = set(), []
-    for u in urls:
-        if u not in seen:
-            seen.add(u)
-            out.append(u)
-    return out[:limit]
+    out = _rank_hosts(urls, limit)
+    _DDG["answered"] += bool(out)
+    return out
+
+
+# THE A/B, and it is free: every paid search this process makes also asks the free rung and
+# compares the top HOST. Keep DuckDuckGo only if it agrees with the unlocker on >= 70% of the
+# names it answers -- otherwise it is a rung that returns a different company's careers page
+# and costs a Playwright render to find out. Bounded per process; `SEARCH_AB=0` turns it off.
+_AB = {"n": 0, "agree": 0, "answered": 0, "cap": int(os.environ.get("SEARCH_AB_CAP", "40"))}
+
+
+def _host(u):
+    p = str(u or "").split("/", 3)
+    return p[2].lower() if len(p) > 2 else ""
+
+
+def _search_ab(name, paid):
+    """Ask the free rung the same question and print what it would have answered."""
+    if (os.environ.get("SEARCH_AB", "1") or "").strip() == "0" or _DDG["blocked"]:
+        return
+    if _AB["n"] >= _AB["cap"]:
+        return
+    _AB["n"] += 1
+    free = ddg(name, limit=4)
+    if not free:
+        print(f"  [search-ab] {name[:38]:38s} ddg=-                  unlocker={_host(paid[0]) if paid else '-'}",
+              flush=True)
+        return
+    _AB["answered"] += 1
+    agree = bool(paid) and _host(free[0]) == _host(paid[0])
+    _AB["agree"] += agree
+    print(f"  [search-ab] {name[:38]:38s} ddg={_host(free[0])[:22]:22s} "
+          f"unlocker={_host(paid[0]) if paid else '-'} agree={'y' if agree else 'n'}",
+          flush=True)
+
+
+def _report_search_ab():
+    if not _AB["n"]:
+        return
+    pct = (100.0 * _AB["agree"] / _AB["answered"]) if _AB["answered"] else 0.0
+    print(f"[search-ab] duckduckgo answered {_AB['answered']} of {_AB['n']} names and agreed "
+          f"with the unlocker on {_AB['agree']} of those ({pct:.0f}%). Keep the free rung at "
+          f">= 70%.", flush=True)
+
+
+atexit.register(_report_search_ab)
 
 
 _BD = {"used": 0}
@@ -138,21 +256,18 @@ def google_via_unlocker(name, limit=4):
        The second row is the company's site, its ATS board and its careers page; the first is
        two of those plus noise.
 
-    3. **Which URL per host.** One host appears many times in a result page -- bare homepage,
-       logo link, breadcrumb, then the actual result -- and **the bare form always comes
-       first**, so keeping the first URL per host keeps the least useful one. Measured on a
-       live `Exodigo careers` response, Google returned BOTH
-       `https://www.comeet.com/jobs/exodigo/89.005` (the company's actual Comeet board, i.e. a
-       direct resolution) and `https://www.exodigo.com/open-roles` (its real listings page) --
-       and first-per-host discarded both in favour of `comeet.com` and `exodigo.com`. The
-       operator caught this: the hunt had settled on `exodigo.com/careers`, a real 200 page
-       that is not the listings page. Ranked per host now: a jobs-ish path beats any other
-       path beats a bare host.
+    3. **Which URL per host** -- `_rank_hosts` above, shared with the free rung, and its
+       docstring carries the Exodigo measurement that produced the rule.
 
     Dedupe is by HOST so `limit` buys distinct candidates instead of four pages of one site --
     the caller renders `cands[:2]`, so a duplicated host wastes the whole budget. This is
     cloud-portable by construction: the exit is Bright Data's, not the caller's, so a runner
     and a dev machine get the same answer.
+
+    Every call also runs the free rung on the same name and prints `[search-ab]` (bounded,
+    free, `SEARCH_AB=0` to silence): 76% of this project's Bright Data credits are this one
+    function, and the question "would DuckDuckGo have answered the same" cannot be settled by
+    reasoning about it.
     """
     cap = int(os.environ.get("DEEP_BD_SEARCH_CAP", "150"))
     if _BD["used"] >= cap or not os.environ.get("BRIGHTDATA_API_KEY"):
@@ -161,28 +276,21 @@ def google_via_unlocker(name, limit=4):
     q = urllib.parse.quote_plus(f"{name} careers")
     html = unlock(f"https://www.google.com/search?q={q}&num=20&gl=il&hl=en",
                   purpose="search") or ""
-    order, best = [], {}
+    urls = []
     for m in _G_URL.finditer(html):
         u = urllib.parse.unquote(m.group(0).rstrip(".,)&"))
         parts = u.split("/", 3)
         if len(parts) < 3:
             continue
-        host = parts[2].lower()
-        if any(b in host for b in _G_NOISE) or is_aggregator(u):
+        if any(b in parts[2].lower() for b in _G_NOISE) or is_aggregator(u):
             continue
-        path = parts[3] if len(parts) > 3 else ""
-        # rank: a jobs-ish path beats any other path, which beats a bare host -- and among
-        # equals the SHORTEST path wins, because that is the index. `/open-roles` is the
-        # listings page and `/open-positions/field-operator-d0d83` is one posting on it;
-        # `comeet.com/jobs/silk/F6.00C` is the board and `.../F6.00C/core-python-engineer`
-        # is one row of it. Preferring length picked the leaf every time.
-        rank = (2 if _G_JOBS_PATH.search(path) else (1 if path.strip("/") else 0), -len(path))
-        if host not in best:
-            order.append(host)
-            best[host] = (rank, u)
-        elif rank > best[host][0]:
-            best[host] = (rank, u)
-    return [best[h][1] for h in order][:limit]
+        urls.append(u)
+    # The ranking is `_rank_hosts` (above), shared with the free rung since 2026-09-11: a
+    # free rung that ranks differently is not a substitute, and the A/B below compares the
+    # two top hosts. Point 3 of this docstring is that function's docstring now.
+    out = _rank_hosts(urls, limit)
+    _search_ab(name, out)
+    return out
 
 
 def propose_from_text(text):

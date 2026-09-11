@@ -8631,7 +8631,10 @@ def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=
         os.environ["BRIGHTDATA_API_KEY"] = key
     try:
         dd._li_guest = _li_replay(script, calls)
-        bd_rescue.unlock = unlock or (lambda url, timeout=120: "")
+        # `**_k`: the seam gained a `purpose` kwarg on 2026-09-11 (the ledger records WHAT a
+        # credit was for). A stub that pins the old signature turns a widened seam into a
+        # TypeError inside the code under test, which reads as a walk that crashed.
+        bd_rescue.unlock = unlock or (lambda url, timeout=120, **_k: "")
         saved = dict(dd.SOURCE_PATH)
         for k in ("linkedin_free", "linkedin_blank", "linkedin_blocked", "linkedin_paid",
                   "linkedin_blank_recovered"):
@@ -10510,7 +10513,7 @@ def test_a_blocked_re_ask_never_buys_a_paid_page():
     may only ever help: its failure is reported as the original blank."""
     paid = []
     out, _ = _run_walk([(10, True), [(0, True), (0, False)]], pages=2, key="k",
-                       unlock=lambda url, timeout=120: paid.append(url) or "")
+                       unlock=lambda url, timeout=120, **_k: paid.append(url) or "")
     assert paid == [], "a blocked re-ask must not reach the paid path"
     assert _LAST_COUNTS["linkedin_paid"] == 0 and _LAST_COUNTS["linkedin_blocked"] == 0
     assert len(out) == 10
@@ -30949,3 +30952,115 @@ def test_an_allowance_refusal_is_never_read_as_an_empty_page(monkeypatch):
     from pipeline import jdfill
     monkeypatch.setattr(jdfill, "sys", jdfill.sys)          # keep the pytest short-circuit visible
     assert jdfill._monthly_ceiling_reached() == "", "under pytest the JD layer never asks"
+
+
+# ---- the search rung: 76% of the month, so the free one is tried first and MEASURED ----
+def test_duckduckgo_gives_up_for_the_run_on_its_soft_block(monkeypatch):
+    """DDG's rate limit is an HTTP **202** carrying "Ratelimit", not a 4xx and not an empty
+    page -- so a fetcher that only reads the body records it as "this company has no search
+    results", which is a claim about the company made by a throttle. One 202 ends the free
+    rung for the whole run: re-asking is what earns a longer block, and the paid rung is
+    right there."""
+    import deep_validate as D
+    D._DDG.update(blocked=False, next=0.0, asked=0, answered=0)
+    calls = []
+
+    def _f(url, timeout=15):
+        calls.append(url)
+        return 202, "<html>Ratelimit</html>"
+    monkeypatch.setattr(D, "_ddg_fetch", _f)
+    monkeypatch.setattr(D.time, "sleep", lambda *_a: None)
+    assert D.ddg("Wix") == []
+    assert D.ddg("Fiverr") == [] and len(calls) == 1, "no second ask after a 202"
+    assert D._DDG["blocked"] is True
+    # a 200 that carries the same banner is the same block
+    D._DDG.update(blocked=False)
+    monkeypatch.setattr(D, "_ddg_fetch", lambda url, timeout=15: (200, "Ratelimit, please"))
+    assert D.ddg("Wix") == [] and D._DDG["blocked"] is True
+
+
+def test_both_search_rungs_rank_candidates_the_same_way(monkeypatch):
+    """A free rung that ranks differently from the paid one is not a substitute for it: the
+    caller renders `cands[:2]`, so the ORDER is the answer. `ddg` used to return raw document
+    order while the unlocker ranked -- jobs-ish path > any path > bare host, shortest wins --
+    and the A/B that decides whether to keep the free rung compares their top hosts."""
+    import deep_validate as D
+    D._DDG.update(blocked=False, next=0.0)
+    monkeypatch.setattr(D.time, "sleep", lambda *_a: None)
+    page = ('<a href="https://exodigo.com">x</a>'
+            '<a href="https://www.comeet.com/jobs/exodigo/89.005/data-analyst">y</a>'
+            '<a href="https://www.comeet.com">z</a>'
+            '<a href="https://www.comeet.com/jobs/exodigo/89.005">w</a>'
+            '<a href="https://exodigo.com/open-roles">v</a>')
+    monkeypatch.setattr(D, "_ddg_fetch", lambda url, timeout=15: (200, page))
+    got = D.ddg("Exodigo")
+    assert got[:2] == ["https://exodigo.com/open-roles",
+                       "https://www.comeet.com/jobs/exodigo/89.005"], got
+    assert D._rank_hosts([u for u in
+                          ["https://exodigo.com", "https://exodigo.com/open-roles"]]) \
+        == ["https://exodigo.com/open-roles"], "one URL per host, and not the bare one"
+
+
+def test_the_free_rung_is_asked_before_the_paid_one_in_every_search_tool():
+    """`queue_resolve_search` (12% of the month) and `resolve_broken` (9%) were the only two
+    callers with NO free rung: they bought a Google page for every name, first attempt. Every
+    other search tool has tried DuckDuckGo first since long before this."""
+    import os as _os
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    for mod in ("queue_resolve_search.py", "resolve_broken.py", "listing_hunt.py",
+                "crack_walled.py", "audit_empty_rows.py", "repair_dead_urls.py",
+                "resolve_llm.py", "deep_validate.py"):
+        src = open(_os.path.join(root, mod), encoding="utf-8").read()
+        assert "ddg(" in src, f"{mod} pays for a search with no free rung ahead of it"
+        if "google_via_unlocker" in src and mod != "deep_validate.py":
+            assert src.index("ddg(") < src.index("google_via_unlocker("), \
+                f"{mod}: the free rung must be asked FIRST"
+
+
+def test_the_paid_search_measures_the_free_one_for_nothing(monkeypatch):
+    """76% of this project's credits are one function, and "would the free rung have said the
+    same?" cannot be settled by reasoning. Every paid search also asks DDG and prints the two
+    top hosts; the summary is the number that decides whether the rung stays (>= 70%)."""
+    import deep_validate as D
+    D._AB.update(n=0, agree=0, answered=0)
+    D._DDG.update(blocked=False, next=0.0)
+    monkeypatch.setattr(D.time, "sleep", lambda *_a: None)
+    monkeypatch.setattr(D, "_ddg_fetch",
+                        lambda url, timeout=15: (200, '<a href="https://wix.com/jobs">a</a>'))
+    D._search_ab("Wix", ["https://wix.com/careers"])
+    assert (D._AB["n"], D._AB["answered"], D._AB["agree"]) == (1, 1, 1)
+    D._search_ab("Fiverr", ["https://elsewhere.example/jobs"])
+    assert (D._AB["n"], D._AB["answered"], D._AB["agree"]) == (2, 2, 1), "a disagreement counts"
+    D._AB["cap"] = 2
+    D._search_ab("Third", ["https://x.io"])
+    assert D._AB["n"] == 2, "bounded per process: a free rung still costs seconds"
+    D._AB.update(n=0, agree=0, answered=0, cap=40)
+
+
+def test_the_per_record_linkedin_dataset_is_off_unless_a_session_arms_it(monkeypatch):
+    """It bills 1 credit per RECORD where the Unlocker bills 1 per REQUEST (one trigger once
+    cost 391), and it armed ITSELF: its cap is derived from the live account's month-to-date,
+    so it ran on eight mornings of September for 118 records and ONE new company, and it
+    would arm again when the account resets on the 1st."""
+    import discovery_daily as dd
+    monkeypatch.delenv("LINKEDIN_TARGETED", raising=False)
+    src = open(dd.__file__, encoding="utf-8").read()
+    i, j = src.index('LINKEDIN_TARGETED'), src.index("recs = run_query_raw(")
+    assert i < j, "the flag is checked before the trigger is reachable"
+    assert 'per_source["linkedin-targeted"] = 0' in src, \
+        "the zero is still recorded, or `last_run` reads a disarmed source as a dead one"
+    # the free tier is ONE number now: the per-day budget no longer reads this module's own
+    assert "from pipeline.bd_budget import SOFT" in src
+
+
+def test_the_linkedin_guest_walk_is_paced_and_re_asks_a_block_before_paying():
+    """Up to 50 back-to-back requests per query with no delay is what earns the 429 that
+    routes the query to the PAID render -- the free rung buying the paid one. The walk is
+    spaced and a hard block gets one paced re-ask, once per query."""
+    import discovery_daily as dd
+    src = open(dd.__file__, encoding="utf-8").read()
+    assert dd.LINKEDIN_GUEST_PAUSE_S >= 2.0 and dd.LINKEDIN_BLOCK_PAUSE_S >= 10
+    assert "time.sleep(LINKEDIN_GUEST_PAUSE_S)" in src
+    assert src.index("_blocked_reask[qkey] = True") < src.index("jobs/search?{q}"), \
+        "the re-ask must come BEFORE the paid render, or it is not a saving"
+    assert "linkedin_block_recovered" in src, "a recovered block is counted, like every path"
