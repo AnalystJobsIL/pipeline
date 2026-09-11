@@ -46,7 +46,9 @@ The per-run `BD_RUN_CAP` in `bd_rescue` is the bound that does NOT depend on the
 """
 from __future__ import annotations
 
+import calendar
 import datetime as dt
+import json
 import os
 import sys
 
@@ -116,8 +118,144 @@ def verdict(today=None):
     return True, f"Bright Data: {mtd:,} of {cap:,} credits month-to-date ({pct:.0f}%)."
 
 
+# ---------------------------------------------------------------- the gauge (infra, 2026-09-11)
+# "Optimize once, then let it drive itself" (operator, 2026-09-11). A run page nobody opens is
+# not an alarm and this repo has lost four crons to exactly that, so the meter goes where the
+# operator already looks every morning: `bd:` on the mail's `Stage order:` line, and a
+# `Stages:` clause when the month projects past the free tier.
+LEDGER = os.path.join("cloud_state", "bd_spend.jsonl")
+PAYG_PER_1K = 1.50          # brightdata.com/pricing/web-unlocker, read 2026-09-11
+PURPOSES = ("search", "unlock", "discovery", "jd-fill")
+
+# Ledger lines written before 2026-09-11 carry no `purpose`, so their tool name is the only
+# evidence of what they bought. A tool is mapped by what its credits ARE, not by where it
+# lives: everything that reaches `deep_validate.google_via_unlocker` is a Google SERP, and
+# `bd_rescue.py` (the 02:30 pass) is the one tool whose credits are all page unlocks.
+TOOL_PURPOSE = {
+    "listing_hunt.py": "search", "crack_walled.py": "search",
+    "queue_resolve_search.py": "search", "resolve_broken.py": "search",
+    "audit_empty_rows.py": "search", "queue_pipeline.py": "search",
+    "repair_dead_urls.py": "search", "repair_extract_gap.py": "search",
+    "triage_dark.py": "search", "deep_validate.py": "search", "auto_expand.py": "search",
+    "drain_queue.py": "search", "resolve_llm.py": "search", "registry_health.py": "search",
+    "bd_rescue.py": "unlock",
+    "discovery_daily.py": "discovery",
+    "run.py": "jd-fill", "enrich_scrape_jd.py": "jd-fill", "enrich_matched_jd.py": "jd-fill",
+}
+
+
+def _ledger_lines(root="", days=7, today=None):
+    """(date, purpose, credits) for the last `days` ending yesterday-inclusive of `today`."""
+    today = today or dt.date.today()
+    first = (today - dt.timedelta(days=days - 1)).isoformat()
+    out = []
+    try:
+        with open(os.path.join(root, LEDGER), encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue                      # a half-written line is not a reason to fail
+                day = str(rec.get("at") or "")[:10]
+                if not (first <= day <= today.isoformat()):
+                    continue
+                n = rec.get("credits") or 0
+                by = rec.get("purpose") or {}
+                if isinstance(by, dict) and by:
+                    for k, v in by.items():
+                        out.append((day, str(k), int(v or 0)))
+                    # a line whose purposes do not add up to its credits (an old spender that
+                    # books some calls and not others) keeps the remainder under its tool
+                    rest = int(n) - sum(int(v or 0) for v in by.values())
+                    if rest > 0:
+                        out.append((day, TOOL_PURPOSE.get(str(rec.get("tool")), "unlock"), rest))
+                elif n:
+                    out.append((day, TOOL_PURPOSE.get(str(rec.get("tool")), "unlock"), int(n)))
+    except OSError:
+        return []
+    return out
+
+
+def rates(root="", days=7, today=None):
+    """Credits per DAY per purpose over the last `days`, from the committed ledger.
+
+    The ledger is the only per-purpose evidence that exists: the live account totals by
+    PRODUCT (unlocker / SERP / dataset), which is a different question -- a search tool
+    spends one SERP credit and then unlocks the pages it found, so it lands in both columns.
+    The two are reported side by side and never added together."""
+    lines = _ledger_lines(root, days, today)
+    per = {p: 0 for p in PURPOSES}
+    for _day, purpose, n in lines:
+        per[purpose if purpose in per else "unlock"] += n
+    return {p: round(v / float(max(1, days)), 1) for p, v in per.items()}
+
+
+def gauge(root="", today=None, days=7):
+    """What the mail says about Bright Data this morning.
+
+    `mtd` is the LIVE account (None when it cannot be read -- reported as unknown, never as
+    zero, because a zero would read as "we stopped spending"). The projection is the
+    month-to-date plus the recent daily rate for the days that are left, and it is compared
+    against `SOFT`, which alarms and stops nothing."""
+    today = today or dt.date.today()
+    mtd, _ = spent_this_month(today)
+    per = rates(root, days, today)
+    rate = round(sum(per.values()), 1)
+    days_left = calendar.monthrange(today.year, today.month)[1] - today.day
+    base = mtd if mtd is not None else round(rate * today.day)
+    out = {"mtd": ("unknown" if mtd is None else int(mtd)),
+           "rate": rate, "projected": int(round(base + rate * days_left)),
+           "soft": SOFT, "days": days}
+    out.update({p.replace("-", ""): per[p] for p in PURPOSES})
+    if mtd is None:
+        out["from_ledger"] = 1        # the projection is the repo's own count, not the account's
+    return out
+
+
+def alarm_line(g):
+    """The `Stages:` clause, or "" when the month is inside the free tier."""
+    if g["projected"] <= g["soft"]:
+        return ""
+    over = g["projected"] - g["soft"]
+    return (f"bd projected {g['projected']:,} credits this month against a free tier of "
+            f"{g['soft']:,} -- {over:,} over, about ${over * PAYG_PER_1K / 1000:.0f} at PAYG. "
+            f"{g['days']}-day rate {g['rate']:.0f}/day: search {g['search']:.0f}, unlock "
+            f"{g['unlock']:.0f}, discovery {g['discovery']:.0f}, jd-fill {g['jdfill']:.0f}")
+
+
+def stamp(root="", today=None):
+    """Write the `bd` stage stamp. Never raises: a gauge that can fail a run is a gauge that
+    gets wrapped in `continue-on-error` and then believed when it says nothing."""
+    try:
+        g = gauge(root, today)
+        line = alarm_line(g)
+        from pipeline import stages
+        stages.stamp("bd", **(dict(g, alarm=line) if line else g))
+        print(f"[bd-gauge] mtd {g['mtd']} of a {g['soft']:,} free tier, {g['days']}-day rate "
+              f"{g['rate']:.0f}/day (search {g['search']:.0f} unlock {g['unlock']:.0f} "
+              f"discovery {g['discovery']:.0f} jd-fill {g['jdfill']:.0f}), projected "
+              f"{g['projected']:,}", flush=True)
+        if line:
+            print(f"::warning::{line}", flush=True)
+        return g
+    except Exception as e:  # noqa: BLE001
+        print(f"  [bd-gauge] not stamped ({e.__class__.__name__}: {str(e)[:80]})", flush=True)
+        return {}
+
+
 def main(argv=None):
-    """Report to stdout and to the run page. Exit 1 means the paid rungs must not run."""
+    """Report to stdout and to the run page. Exit 1 means the paid rungs must not run.
+
+    `python -m pipeline.bd_budget stamp` writes the daily gauge instead and always exits 0:
+    it is a METER, not a gate, and the two must not be confused by a workflow author. The
+    bare form stays exactly as the two preflights (`scrape-refresh`, `jd-archive`) read it."""
+    argv = sys.argv[1:] if argv is None else argv
+    if argv and argv[0] == "stamp":
+        stamp()
+        return 0
     may, line = verdict()
     print(f"[bd-budget] {line}", flush=True)
     path = os.environ.get("GITHUB_STEP_SUMMARY")

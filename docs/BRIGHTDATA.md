@@ -74,11 +74,18 @@ now (unlimited for the rest of August, 5,000 from 2026-09-01, unlimited again fr
 workflow ever set. That is the number to read; nothing else totals the pool.
 
 `cloud_state/bd_spend.jsonl` is the per-process audit line, so a run's spend outlives its
-deleted run record, and it is never written by a test process (BACKLOG 374). Since 2026-09-11
-it also carries a `purpose` map (`search` / `unlock` / `discovery` / `jd-fill`) and
-`pipeline/bd_budget.rates()` reads it back — that is the 7-day rate the `bd:` stamp reports.
-It is still not the month's TOTAL: the account is (the two disagree by the dataset records
-and any spender that does not go through `bd_rescue`).
+deleted run record. Since 2026-09-11 it also carries a `purpose` map (`search` / `unlock` /
+`discovery` / `jd-fill`) and `pipeline/bd_budget.rates()` reads it back — that is the 7-day
+rate the `bd:` stamp reports. It is still not the month's TOTAL: the account is (on
+2026-09-11 the account read 5,804 and the ledger 5,375 — the gap is the 118 LinkedIn dataset
+records plus every spender that does not go through `bd_rescue`; `pipeline/jdfill`'s own
+`Unlocker` was the largest of those and now books through `bd_rescue.book("jd-fill")`).
+
+**A process with no Bright Data credential writes no ledger line at all** (BACKLOG 374/381),
+because a credit cannot be bought without a key. That covers `python -m pytest`, and since
+2026-09-11 it also covers a session's own `python -c` — measured that day, on this lane:
+two calls to `book()` from a throwaway one-liner appended three credits nobody spent to the
+tracked ledger, which the mail's gauge now reads back.
 
 Per-consumer caps, all env vars, all re-derivable with
 `grep -rn "_BD_CAP\|BD_LIMIT\|UNLOCK_PAGES" --include=*.py --exclude-dir=.claude .`:

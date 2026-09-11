@@ -124,7 +124,7 @@ def indeed_search(query, days=INDEED_DAYS, limit=25, tries=2):
            + "&l=" + urllib.parse.quote_plus("Israel") + f"&fromage={days}")
     why = "no attempt made"          # tries=0 made the final print raise UnboundLocalError
     for attempt in range(tries):
-        html = unlock(url, timeout=100)
+        html = unlock(url, timeout=100, purpose="discovery")
         UNLOCKER_CALLS["indeed"] += 1
         if not html:
             why = "unlocker returned nothing"
@@ -459,7 +459,8 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
             # block only ever fetched start=0, silently dropping ~20 of ~80 cards a keyword.
             q = urllib.parse.urlencode({"keywords": keyword, "location": location,
                                         "f_TPR": f"r{days * 86400}", "start": paid_pages * 25})
-            html = unlock(f"https://www.linkedin.com/jobs/search?{q}", timeout=120)
+            html = unlock(f"https://www.linkedin.com/jobs/search?{q}", timeout=120,
+                          purpose="discovery")
             UNLOCKER_CALLS["linkedin"] += 1
             SOURCE_PATH["linkedin_paid"] += 1
             paid_pages += 1

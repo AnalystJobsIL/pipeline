@@ -19,6 +19,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from collections import Counter
 
 import queue_state as _QS
 
@@ -80,7 +81,26 @@ LAST = {"error": "", "status": None}
 # that `unlock()` throws the reason away and returns "", so a CALLER cannot tell a refusal
 # from a failure unless it reads `LAST["error"]`. `main()` below does; nothing else in the
 # repo does, which is why a capped pass must never be allowed to write a verdict.
-SPENT = {"n": 0, "capped": False}
+# `by` is what the credit was FOR, not which script spent it: the ledger's `tool` is
+# `os.path.basename(sys.argv[0])`, and twelve different scripts buy the same Google search
+# through `deep_validate.google_via_unlocker`. Without a purpose the mail's gauge can only
+# say "listing_hunt spent 137 a day", which is a fact about a file and not about the
+# product. Four classes, and they are the ones a budget would ever be split along:
+# `search` (a SERP through the unlocker), `unlock` (a page), `discovery` (LinkedIn/Indeed),
+# `jd-fill` (a posting's own description -- the dataset-critical one).
+SPENT = {"n": 0, "capped": False, "by": Counter()}
+
+
+def book(purpose="unlock", n=1):
+    """Count `n` credits this process has just spent, under `purpose`.
+
+    The seam for a spender that does NOT go through `unlock_status` -- today that is
+    `pipeline/jdfill.py`'s own `Unlocker`, which POSTs to `api.brightdata.com` itself and
+    was therefore invisible to this ledger entirely. On 2026-09-11 the account read 5,804
+    credits and the ledger 5,375; the digest's JD fill is a large part of that gap, and the
+    gap is the reason the mail could not say what the month was being spent on."""
+    SPENT["n"] += n
+    SPENT.setdefault("by", Counter())[purpose] += n
 
 # This pass's rung name in `cloud_state/queue_state.json`, and how long an answer holds.
 # Fourteen days is the registry's standing re-check cadence (`listing_hunt`, the intake
@@ -132,9 +152,12 @@ def _report_spend():
     if not SPENT["n"]:
         return
     cap = run_cap()
+    by = dict(SPENT.get("by") or {})
     print(f"[bd-spend] this step bought {SPENT['n']} Bright Data credit(s)"
           + (" (no cap set)" if cap is None else f" of a {cap} cap")
-          + (" -- CAP REACHED" if SPENT["capped"] else ""), flush=True)
+          + (" -- CAP REACHED" if SPENT["capped"] else "")
+          + (" -- " + ", ".join(f"{k} {v}" for k, v in sorted(by.items())) if by else ""),
+          flush=True)
     path = os.environ.get("GITHUB_STEP_SUMMARY")
     if path:
         try:
@@ -162,16 +185,35 @@ def _report_spend():
     # `isdir`: in a git worktree `.git` is a FILE (BACKLOG 4912), and an `isdir` test here
     # would let every worktree write. A tmp_path ROOT has no `.git` at all and still writes,
     # which is what keeps this scoped to a real checkout rather than a blanket refusal.
-    if "pytest" in sys.modules and os.path.exists(os.path.join(ROOT, ".git")):
+    in_checkout = os.path.exists(os.path.join(ROOT, ".git"))
+    if "pytest" in sys.modules and in_checkout:
         print(f"[bd-spend] under pytest in a checkout -- NOT writing cloud_state/"
               f"bd_spend.jsonl. The {SPENT['n']} credit(s) above are a test counter, not "
               f"spend (BACKLOG 374/381).", flush=True)
+        return
+    # ...and the same refusal for a session's own `python -c`, which `pytest in sys.modules`
+    # does not cover (measured 2026-09-11, by this lane, on itself: two calls to `book()`
+    # from a throwaway one-liner appended `{"credits":3,...,"tool":"-c"}` to the tracked
+    # ledger -- three credits nobody spent, in the one artefact whose entire purpose is to
+    # be believed by a later session, and the ledger is now READ BACK by the mail's gauge).
+    # A credit cannot have been bought without a key: every path into `SPENT` either POSTs
+    # to `api.brightdata.com` with one or is a test double. The `.git` condition is what
+    # keeps this scoped to a real checkout, exactly as above -- a tmp_path ROOT still
+    # writes, so the guards that exercise this function are untouched.
+    if in_checkout and not (os.environ.get("BRIGHTDATA_API_KEY") or "").strip():
+        print(f"[bd-spend] no Bright Data credential in this process -- NOT writing "
+              f"cloud_state/bd_spend.jsonl. The {SPENT['n']} credit(s) above cannot have "
+              f"been bought (BACKLOG 374/381).", flush=True)
         return
     try:
         import datetime as _dt
         rec = {"at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "tool": os.path.basename(sys.argv[0]) or "python", "pid": os.getpid(),
                "credits": SPENT["n"], "capped": SPENT["capped"], "cap": cap,
+               # WHAT the credits were for. Absent on every line written before 2026-09-11,
+               # so `bd_budget.TOOL_PURPOSE` maps those by tool name -- a reader of this
+               # file must handle both shapes, and the gauge's test pins that it does.
+               "purpose": dict(SPENT.get("by") or {}),
                # provenance, so a stray line is self-identifying the next morning. A BOOLEAN,
                # never the path: ROOT under the operator's home would put a personal username
                # into a PUBLIC repo (CLAUDE.local.md).
@@ -187,8 +229,11 @@ def _report_spend():
 atexit.register(_report_spend)
 
 
-def unlock_status(url, timeout=90):
-    """(html, error). `error` is "" on success; see LAST."""
+def unlock_status(url, timeout=90, purpose="unlock"):
+    """(html, error). `error` is "" on success; see LAST.
+
+    `purpose` is what this credit is FOR (see `SPENT`); it defaults to `unlock`, so every
+    caller that does not name one reads exactly as it did before."""
     cap = run_cap()
     if cap is not None and SPENT["n"] >= cap:
         if not SPENT["capped"]:
@@ -212,7 +257,7 @@ def unlock_status(url, timeout=90):
     # counter that reports spend nobody made is worse than no counter (BACKLOG 374/381).
     # It still counts a request that WAS issued and then failed or timed out -- that one was
     # paid for -- so `BD_RUN_CAP` still bounds a failing retry loop exactly as before.
-    SPENT["n"] += 1
+    book(purpose)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             text = r.read(2_000_000).decode("utf-8", "replace")
@@ -227,9 +272,9 @@ def unlock_status(url, timeout=90):
         return "", "timeout"
 
 
-def unlock(url, timeout=90):
+def unlock(url, timeout=90, purpose="unlock"):
     """Fetch url through Web Unlocker; returns HTML ('' on failure). `LAST["error"]` says why."""
-    return unlock_status(url, timeout)[0]
+    return unlock_status(url, timeout, purpose)[0]
 
 
 def _policy_closed(err):

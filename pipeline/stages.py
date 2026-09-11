@@ -43,7 +43,12 @@ PATH = os.path.join(os.path.dirname(__file__), "..", "cloud_state", "pipeline_st
 # `wayback` (infra, 2026-09-04): `archive_evidence.py` on jd-archive.yml at 12:30 -- what it
 # submitted to Save Page Now, what was refused, and the backlog. Its stamp is a day old at
 # every 05:00 digest by construction; `run.py` alarms at two.
-ORDER = ["repair", "collect", "expand", "firmo", "intel", "enrich", "wayback", "queue",
+# `bd` (infra, 2026-09-11): `pipeline/bd_budget.stamp()` from daily-digest.yml -- the live
+# account's month-to-date, the 7-day rate per PURPOSE off `cloud_state/bd_spend.jsonl`, and
+# the month's projection against the free tier. It exists because the operator's ruling that
+# day was "unlimited budget for now; optimize once, then let it drive itself", and driving
+# itself means the meter is in the mail rather than on a run page nobody opens.
+ORDER = ["repair", "collect", "expand", "firmo", "intel", "enrich", "bd", "wayback", "queue",
          "publish", "ci", "cron"]
 
 

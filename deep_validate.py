@@ -159,7 +159,8 @@ def google_via_unlocker(name, limit=4):
         return []
     _BD["used"] += 1
     q = urllib.parse.quote_plus(f"{name} careers")
-    html = unlock(f"https://www.google.com/search?q={q}&num=20&gl=il&hl=en") or ""
+    html = unlock(f"https://www.google.com/search?q={q}&num=20&gl=il&hl=en",
+                  purpose="search") or ""
     order, best = [], {}
     for m in _G_URL.finditer(html):
         u = urllib.parse.unquote(m.group(0).rstrip(".,)&"))

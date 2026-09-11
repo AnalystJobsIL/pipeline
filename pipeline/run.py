@@ -259,6 +259,12 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                      # is quiet on a healthy morning and reads `2d ago` after one dropped
                      # slot; its own `alarm=` key carries a zero-produce or daily-limit day.
                      + stages.alarms("wayback", 1)
+                     # `bd`: the Bright Data gauge, stamped by THIS run's own preflight step
+                     # (before the pipeline, like `ci` and `cron`), so 1 is quiet on a
+                     # healthy morning and `never ran` until the first digest carrying the
+                     # step. Its `alarm=` key is the month projecting past the free tier --
+                     # a sentence, never a refusal: nothing in this repo stops spending on it.
+                     + stages.alarms("bd", 1)
                      # `publish` is this run's own stage: a stamp older than yesterday means
                      # yesterday's digest never reached its stamp (a crash or a timeout)
                      + [a.replace("— the digest read stale input", "— yesterday's digest never completed")

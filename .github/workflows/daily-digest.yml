@@ -210,6 +210,24 @@ jobs:
             python -m pipeline.stages stamp ci red_streak=0
           fi
 
+      - name: Bright Data gauge (month-to-date, the 7-day rate per purpose, the projection)
+        id: bd_gauge
+        # The operator lifted the ceiling on 2026-09-11 ("unlimited budget for now; optimize
+        # once, then let it drive itself"), so nothing refuses a call on the 5,000 free tier
+        # any more and the only thing standing between a runaway rung and a surprise bill is
+        # a number somebody reads. This puts it where one is read every morning: `bd:` on the
+        # mail's `Stage order:` line, and a `Stages:` clause when the month projects past the
+        # tier. BEFORE the pipeline step, like `ci_health` and `cron_watch` -- the pipeline
+        # READS the stamps, so a gauge stamped after it would be a day late in the mail.
+        # It is a METER, never a gate: `continue-on-error`, and `stamp` always exits 0.
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 3
+        env:
+          BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
+          BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
+        run: python -m pipeline.bd_budget stamp
+
       - name: Cron watch (a slot that did not fire, or fired hours late, is a line in the mail)
         id: cron_watch
         # GitHub drops and delays scheduled slots (4 of 5 crons on 2026-08-27; firmographics

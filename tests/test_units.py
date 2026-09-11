@@ -30675,3 +30675,159 @@ def test_every_workflow_that_records_a_row_attempt_owns_the_file_it_records_into
     import persist_state as P
     assert P.strategy_for("cloud_state/queue_state.json")[0] is P.s_company_dict, \
         "two workflows write it on different schedules: the merge must be per NAME"
+
+
+# ---- the gauge: what "let it drive itself" means when nothing refuses a call any more ----
+def _bd_ledger(tmp_path, lines):
+    import json as _json
+    (tmp_path / "cloud_state").mkdir(parents=True, exist_ok=True)
+    with open(tmp_path / "cloud_state" / "bd_spend.jsonl", "w", encoding="utf-8") as f:
+        for rec in lines:
+            f.write(_json.dumps(rec) + "\n")
+    return str(tmp_path)
+
+
+def test_the_spend_ledger_reads_back_per_purpose_across_both_of_its_shapes(tmp_path):
+    """The mail cannot say "search is 76% of the month" from a ledger that records which
+    SCRIPT spent a credit: twelve scripts buy the same Google SERP. Lines written from
+    2026-09-11 carry a `purpose` map; every line before that carries only a tool name, and
+    `TOOL_PURPOSE` maps those -- so the reader must handle both, for ever."""
+    from pipeline import bd_budget as B
+    day = (dt.date.today() - dt.timedelta(days=1)).isoformat() + "T01:00:00Z"
+    root = _bd_ledger(tmp_path, [
+        {"at": day, "tool": "listing_hunt.py", "credits": 140},          # old shape -> search
+        {"at": day, "tool": "bd_rescue.py", "credits": 70},              # old shape -> unlock
+        {"at": day, "tool": "run.py", "credits": 7,
+         "purpose": {"jd-fill": 7}},                                     # new shape
+        {"at": day, "tool": "discovery_daily.py", "credits": 21,
+         "purpose": {"discovery": 14}},          # partial: the remainder rides the tool name
+        {"at": "2026-01-01T00:00:00Z", "tool": "listing_hunt.py", "credits": 9999},  # too old
+        {"at": day, "tool": "x.py", "credits": 3, "purpose": "not-a-map"},           # junk
+    ])
+    per = B.rates(root, days=7)
+    assert per["search"] == 20.0, "140 over 7 days"
+    assert per["jd-fill"] == 1.0
+    assert per["discovery"] == 3.0, "14 mapped + 7 remainder over 7 days"
+    assert per["unlock"] == round(73 / 7.0, 1), \
+        "70 unlocks + the 3 credits of the junk-`purpose` line, which falls back to its TOOL"
+    assert sum(per.values()) == round(20 + 1 + 3 + 73 / 7.0, 1), "the January line is outside the window"
+
+
+def test_the_gauge_alarms_on_the_free_tier_and_refuses_nothing(tmp_path, monkeypatch):
+    """The 5,000 is the free tier, not a wall: past it a credit is $1.50/1,000. So the gauge
+    is a SENTENCE in the mail and never a refusal -- `verdict()` still says spend, whatever
+    the projection. That is the operator's ruling of 2026-09-11 in one assertion."""
+    from pipeline import bd_budget as B
+    day = (dt.date.today() - dt.timedelta(days=1)).isoformat() + "T01:00:00Z"
+    root = _bd_ledger(tmp_path, [{"at": day, "tool": "listing_hunt.py", "credits": 700}])
+    monkeypatch.setattr(B, "spent_this_month", lambda today=None: (5804, {}))
+    today = dt.date(2026, 9, 11)
+    g = B.gauge(root, today)
+    assert g["mtd"] == 5804 and g["search"] == 100.0
+    assert g["projected"] == 5804 + 100 * 19, "19 days left in September after the 11th"
+    line = B.alarm_line(g)
+    assert line.startswith("bd projected") and "free tier" in line and "search 100" in line
+    assert "$" in line, "the operator's question is dollars, not credits"
+    assert B.verdict(today)[0] is True, "the gauge alarms; it never stops a run"
+    # ...and inside the tier it says nothing at all
+    quiet = B.gauge(_bd_ledger(tmp_path / "q", [{"at": day, "tool": "bd_rescue.py", "credits": 7}]),
+                    today)
+    monkeypatch.setattr(B, "spent_this_month", lambda today=None: (100, {}))
+    assert B.alarm_line(B.gauge(str(tmp_path / "q"), today)) == ""
+    assert quiet["soft"] == B.SOFT == 5000
+
+
+def test_an_unreadable_account_still_reports_a_gauge_from_the_repos_own_ledger(tmp_path, monkeypatch):
+    """`mtd` is UNKNOWN, never 0: a zero reads as "we stopped spending", which is the silent
+    failure this repo names in `pipeline/sources.py`. The projection falls back to the
+    committed ledger and says so, so a rotated token costs the alarm nothing."""
+    from pipeline import bd_budget as B
+    from pipeline import stages
+    day = (dt.date.today() - dt.timedelta(days=1)).isoformat() + "T01:00:00Z"
+    root = _bd_ledger(tmp_path, [{"at": day, "tool": "listing_hunt.py", "credits": 700}])
+    monkeypatch.setattr(B, "spent_this_month", lambda today=None: (None, None))
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "cloud_state" / "pipeline_stages.json"))
+    g = B.gauge(root, dt.date(2026, 9, 11))
+    assert g["mtd"] == "unknown" and g["from_ledger"] == 1 and g["projected"] > 0
+    assert B.stamp(root, dt.date(2026, 9, 11))["mtd"] == "unknown"
+    st = stages._load()["bd"]
+    assert st["rate"] == 100.0 and st["soft"] == 5000
+    assert "alarm" not in st, \
+        "100/day over a 30-day September is 3,000 -- inside the tier, so the mail says nothing"
+    assert "bd" in stages.ORDER, "a stage absent from ORDER is stamped and rendered NOWHERE"
+
+
+def test_the_jd_layers_own_unlocker_reaches_the_one_spend_ledger(monkeypatch):
+    """`jdfill.Unlocker` POSTs to `api.brightdata.com` itself, so until 2026-09-11 the
+    digest -- the process that spends on the dataset-critical rung -- wrote no ledger line
+    at all. On 2026-09-11 the account read 5,804 and the ledger 5,375, and this is a large
+    part of that gap."""
+    import bd_rescue as B
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setattr(jdfill, "_monthly_ceiling_reached", lambda: "")
+    B.SPENT.update(n=0, capped=False)
+    B.SPENT["by"].clear()
+
+    class _R:
+        status = 200
+        headers = {}
+
+        def read(self, *a):
+            return b"<html>a posting</html>"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen", lambda *a, **k: _R())
+    u = jdfill.Unlocker(cap=5)
+    u("https://example.com/job/1")
+    assert dict(B.SPENT["by"]) == {"jd-fill": 1} and B.SPENT["n"] == 1
+    B.SPENT.update(n=0, capped=False)
+    B.SPENT["by"].clear()
+
+
+def test_a_credit_nobody_could_have_bought_is_never_written_to_the_ledger(tmp_path, monkeypatch):
+    """MEASURED BY THIS LANE ON ITSELF, 2026-09-11: a throwaway `python -c` that called
+    `book()` twice appended `{"credits":3,...,"tool":"-c"}` to the TRACKED ledger -- spend
+    nobody made, in the one artefact whose purpose is to be believed later, and which the
+    mail's gauge now reads back. `pytest in sys.modules` did not cover it because it was not
+    pytest. A credit cannot be bought without a credential, so a checkout with no key writes
+    no line; a tmp_path root (no `.git`) still does, which is what keeps the guards that
+    exercise this function working."""
+    import bd_rescue as B
+    monkeypatch.setattr(B, "ROOT", str(tmp_path))
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    (tmp_path / ".git").write_text("gitdir: elsewhere", encoding="utf-8")   # a worktree's .git
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "")
+    B.SPENT.update(n=3, capped=False)
+    B._report_spend()
+    assert not (tmp_path / "cloud_state" / "bd_spend.jsonl").exists(), \
+        "no credential in this process: the 3 credits cannot have been bought"
+    # ...and a root that is NOT a checkout still writes, keyless, which is what keeps every
+    # guard over this function (and its own positive control) working
+    (tmp_path / ".git").unlink()
+    B.SPENT.update(n=3, capped=False)
+    B._report_spend()
+    assert (tmp_path / "cloud_state" / "bd_spend.jsonl").exists(), "a tmp root still records"
+    B.SPENT.update(n=0, capped=False)
+    B.SPENT["by"].clear()
+
+
+def test_the_digest_stamps_the_gauge_before_it_renders_the_mail():
+    """A stamp written AFTER the pipeline step is a stamp the mail carries a day late -- the
+    exact defect the `ci_health` step's own comment records. And the step must not be able to
+    fail the run: it is a meter, not the ceiling it replaced."""
+    import os as _os
+    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    wf = open(_os.path.join(root, ".github", "workflows", "daily-digest.yml"),
+              encoding="utf-8").read()
+    assert "python -m pipeline.bd_budget stamp" in wf
+    assert wf.index("python -m pipeline.bd_budget stamp") < wf.index("Run the pipeline")
+    step = wf[wf.index("- name: Bright Data gauge"):wf.index("- name: Cron watch")]
+    assert "continue-on-error: true" in step and "BRIGHTDATA_API_KEY" in step
+    from pipeline import stages
+    assert stages.ORDER.index("bd") < stages.ORDER.index("publish")

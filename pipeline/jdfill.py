@@ -1464,6 +1464,23 @@ def _monthly_ceiling_reached():
         return ""
 
 
+def _book_jd_fill():
+    """Tell the one spend ledger that the JD layer just bought a credit.
+
+    This class POSTs to `api.brightdata.com` itself rather than through
+    `bd_rescue.unlock_status`, so until 2026-09-11 nothing it spent appeared in
+    `cloud_state/bd_spend.jsonl` at all -- and the digest is the process that spends it, so
+    the mail's own gauge was blind to the one consumer the operator cares most about. The
+    import is lazy and inside the try: it also registers `bd_rescue`'s `atexit` writer, which
+    is what makes the digest process write a ledger line at all, and a reporting seam must
+    never be able to cost the run it reports on."""
+    try:
+        import bd_rescue
+        bd_rescue.book("jd-fill")
+    except Exception:  # noqa: BLE001
+        pass
+
+
 class Unlocker:
     """Web Unlocker, status-aware. `/request` answers HTTP 200 even when it failed and says so
     in `x-brd-error-code` (target 403 -> `reject_block`; Workday -> `policy_20140`, the host is
@@ -1568,6 +1585,7 @@ class Unlocker:
             self.capped = True                    # not `unavailable`: the account is fine and
             return None, "", "bd-capped"          # the reason string stays honest
         self.used += 1
+        _book_jd_fill()
         payload = {"zone": self.zone, "url": url, "format": "raw"}
         if render:
             payload["render"] = True

@@ -165,6 +165,12 @@ def _no_bright_data_state_survives_a_test(request):
     if mod.SPENT.get("n"):
         _leaked.append((request.node.nodeid, mod.SPENT["n"]))
         mod.SPENT.update(n=0, capped=False)
+    # ...and the per-PURPOSE counter beside it (2026-09-11). `update(n=0)` does not touch
+    # `by`, so a leaked purpose count would ride from test to test and the first assertion
+    # on `dict(SPENT["by"])` would depend on execution ORDER -- the shape this whole fixture
+    # exists to stop, one field later.
+    if mod.SPENT.get("by"):
+        mod.SPENT["by"].clear()
 
 
 def pytest_sessionfinish(session, exitstatus):
