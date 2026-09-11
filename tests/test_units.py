@@ -30862,7 +30862,11 @@ _BD_SPENDERS = [
 ]
 
 
-_BD_SEAM_WORDS = ("google_via_unlocker", "unlock_status", "unlock(", "may_spend", "_allowance")
+# The words that mean "this reaches the ALLOWANCE", and nothing weaker. `unlock(` was the
+# first draft and it is exactly what makes a guard vacuous: every spender reached `unlock(`
+# before the allowance existed too, so the test passed against a tree with no seam in it at
+# all (`tools/guard_kill.py` said CANNOT-FAIL, which is what that gate is for).
+_BD_SEAM_WORDS = ("may_spend", "_allowance")
 
 
 def _bd_reaches_seam(root, mod, seen=None):
