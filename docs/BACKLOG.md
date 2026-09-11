@@ -422,7 +422,7 @@ closure convention in the header.
 - **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
 - **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
 - **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
-- **579** `579@scraper` **The Logica-IT board's category-and-region suffix is read as title words**
+- **581** `581@scraper` **The Logica-IT board's category-and-region suffix is read as title words**
 
 ### docs — 25 open
 
@@ -480,6 +480,7 @@ closure convention in the header.
 - **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
 - **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
 - **578** `578@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
+- **580** `580@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
 
 ### company-intel — 23 open
 
