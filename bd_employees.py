@@ -39,12 +39,13 @@ RETRY_MISS_DAYS = 30  # a name both passes failed on is retried monthly, not eve
 
 
 def _load_secrets():
-    p = os.path.join(ROOT, "secrets.env")
-    if os.path.exists(p):
-        for line in open(p, encoding="utf-8"):
-            if "=" in line and not line.strip().startswith("#"):
-                k, v = line.strip().split("=", 1)
-                os.environ.setdefault(k, v)
+    """The one loader (`468`, applied 2026-09-11 by `infra` under the cross-lane debt rule --
+    this was the last of the four copies). `secretsenv.load` is byte-identical in behaviour
+    (`setdefault`, so `tests/conftest.py`'s disarm still holds) and adds the one thing the
+    copies could not: it SAYS SO when it is running in a git worktree with no `AJIL_SECRETS`,
+    where a paid rung returns a convincing mass-zero instead of an error."""
+    from pipeline import secretsenv
+    secretsenv.load(ROOT)
 
 
 def unlock(url, timeout=90):

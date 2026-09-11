@@ -70,9 +70,10 @@ def _no_paid_calls(req, *args, **kwargs):
 urllib.request.urlopen = _no_paid_calls
 
 # SET TO EMPTY, NEVER POPPED -- and that one word is the difference between working and not.
-# Four modules carry their own copy of `_load_secrets` (`bd_rescue`, `bd_employees`,
-# `pipeline/run`, `pipeline/jdfill`) and every one of them arms the environment from
-# `secrets.env` with `os.environ.setdefault`, which fills a name that is ABSENT. Popping the
+# Every arming path is now the ONE loader, `pipeline/secretsenv.load` (`438`/`468`: four
+# copies of `_load_secrets` existed, the last of them in `bd_employees.py` until 2026-09-11),
+# and it arms the environment with `os.environ.setdefault`, which fills a name that is
+# ABSENT. Popping the
 # names therefore hands the key straight back the first time any of them runs; an empty string
 # is present, so `setdefault` declines, and it is falsy everywhere the repo tests for a
 # credential (`identity_gate`'s paid rung, `bd_rescue.main`'s presence check).

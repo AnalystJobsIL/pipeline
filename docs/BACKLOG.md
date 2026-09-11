@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**637 filed · 454 open · 183 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
+**640 filed · 455 open · 185 closed · 8 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 588.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 582 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 591.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 150 open
+### registry — 149 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -215,7 +215,6 @@ closure convention in the header.
 - **459** `459@registry` **41-ish ACTIVE rows are named after a URL slug rather than an employer, and renaming
 - **461** `461@registry` **The `no-board` re-open cadence expires a verdict but nothing puts the name back, and
 - **462** `462@registry` **`--reopen` cannot reverse the two verdicts a human is most likely to disagree with** —
-- **468** `468@registry` **Two modules still carry their own `_load_secrets`, so a worktree session of those
 - **470** `470@registry` **Two mutation records were filed with no test that reaches the mutated line, and two more
 - **472** `472@registry` **`_load_secrets` callers in seven root tools still resolve through `bd_rescue`'s copy** —
 - **477** `477@registry` **386's diagnosis is wrong in one word, and the fix is in `infra`'s file**
@@ -245,7 +244,7 @@ closure convention in the header.
 - **559** `559@registry` **A row keeps ANOTHER company's board address after the note says it is another company's,
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
 
-### infra — 110 open
+### infra — 112 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -356,7 +355,9 @@ closure convention in the header.
 - **547** `547@infra` **The 06:00 self-heal reads a `stale.json` the digest has not written yet, so a board
 - **560** `560@infra` **`458`'s one line changed the deletion semantics of thirteen state files, not two —
 - **561** `561@infra` **A `.csv` passes `run_gates` unexamined, and the dataset trio is not `PAIRED`** —
-- **577** `577@infra` **`WAYBACK_DAY_CAP` 150 cannot be reached: `WAYBACK_REQ_CAP` 140 counts every send and
+- **582** `582@infra` **One throttle episode ends the archive day, and it is now the binding constraint, not
+- **589** `589@infra` **A cheap model could pick the one right SERP result instead of fetching four**
+- **590** `590@infra` **`cloud_state/queue_state.json` has no trim, and three row rungs now append to it** —
 
 ### discovery — 30 open
 
@@ -8961,8 +8962,8 @@ the rebase (a collision is what 241–246 are).
      `guard-kill` job only (`fetch-depth: 0`, `BEFORE=${{ github.event.before }}`); the
      `guard` job is still depth 1, so the hunk above still has nothing to read there.
 
-468. **Two modules still carry their own `_load_secrets`, so a worktree session of those
-     lanes is still silently disarmed** — lane: `registry` (`bd_employees.py:41`
+468. **CLOSED 2026-09-11 — Two modules still carry their own `_load_secrets`, so a worktree
+     session of those lanes is still silently disarmed** — lane: `registry` (`bd_employees.py:41`
      imports nobody's — treat as registry's). Was three: `bd_rescue.py`'s copy was replaced
      2026-08-30 (`scraper`) and `pipeline/jdfill.py`'s on 2026-08-31 (`jd-text`), both under
      the cross-lane debt rule — notes below. The exact diff, three lines,
@@ -8982,6 +8983,12 @@ the rebase (a collision is what 241–246 are).
      and the jdfill hunk was removed from the fence above on 2026-08-31 (evening) so the
      `--debt` gate stops charging this item against a file whose copy is already gone.
      `bd_employees.py:41` remains — `registry`'s three-line diff above still stands.
+     **Applied to `bd_employees.py` 2026-09-11 (`infra`, same rule) — the LAST copy.** The
+     item was filed 2026-08-29 as four copies (`438`), and it outlived every session that
+     opened one of those files until the rule changed to "the next lane to open the file
+     applies it". `tests/conftest.py`'s comment enumerating the four was trimmed in the same
+     commit, so nothing in the tree still describes a world with copies in it. `438` closes
+     with this.
 
 469. **The brief's lane table does not name the files the mutation gate failed on** — lane:
      `docs`. `confirm_zero.py`, `queue_disposition.py`, `queue_state.py`, `apply_proposals.py`,
@@ -11677,8 +11684,8 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      question under it is why `auto_expand` activated a second row on a board the registry
      already reads (the board is the identity, `registry` 08-30).
 
-577. **`WAYBACK_DAY_CAP` 150 cannot be reached: `WAYBACK_REQ_CAP` 140 counts every send and
-     stops the day first** — lane: `infra`. Filed 2026-09-04 by `registry`, which applied the
+577. **CLOSED 2026-09-11 — `WAYBACK_DAY_CAP` 150 cannot be reached: `WAYBACK_REQ_CAP` 140
+     counts every send and stops the day first** — lane: `infra`. Filed 2026-09-04 by `registry`, which applied the
      operator's one-token dispensation (100 → 150 in `.github/workflows/jd-archive.yml`) and
      read the step: `archive_evidence.py`'s `_exhausted()` is `rep.requests >= caps.requests`,
      and `requests` counts postings, boards AND the pending verifications (lines 572, 597,
@@ -11844,3 +11851,63 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      that row. `page_closed` already reads it (`str(row.get("jd_why") or
      "").startswith("closed-by-page")`), so this is a write on jd-text's side and no change
      on ours. Agreed with the 2026-09-11 `jd-text` session by SendMessage.
+
+
+     **CLOSED 2026-09-11 by `infra`**: `WAYBACK_REQ_CAP: "140"` → `"220"` in
+     `.github/workflows/jd-archive.yml`, exactly as filed, with `ARCHITECTURE.md` §4's two
+     statements of the number corrected. The proof is the 2026-09-12 morning-check row, not
+     this line: an unattended run whose `[wayback] submitted` passes 115 with `requests`
+     ≤ 220. The throttle half is `582`, filed today with the five nights that measured it.
+
+582. **One throttle episode ends the archive day, and it is now the binding constraint, not
+     the cap** — lane: `infra`. Filed 2026-09-11 by `infra` on the evidence of six unattended
+     runs, immediately after landing `577`'s token. `archive_evidence._throttled` allows the
+     day exactly ONE pause: a 429 to a request sent after that pause has elapsed sets
+     `self.stop = "throttled"` and `_exhausted()` ends the run. Measured:
+
+     ```
+     09-06  stopped: throttled   52 requests   submitted 5    throttled 2
+     09-07  (clean)             119 requests   submitted 70   throttled 0
+     09-08  cap reached         140 requests   submitted 25   throttled 0   failed 33
+     09-09  time budget         110 requests   submitted 47   throttled 1
+     09-10  stopped: throttled   69 requests   submitted 4    throttled 2   failed 13
+     ```
+
+     So on two of five nights the day ended at 52 and 69 requests — a third of the cap
+     `577` just raised — and the backlog rose on every one of them (4,835 → 5,613 over the
+     week, `boards 0 (of 605 due)` every single day because the boards queue behind the
+     postings and the day ends first). Raising the cap cannot help a night that stops at 69.
+
+     Two candidate fixes, neither built: (a) allow a SECOND episode, each with its own
+     `Retry-After` wait, and stop only on the third — the archive's limit is 15/min per IP
+     and `WAYBACK_PACE_S` 6 is already inside it, so a second block is more likely a burst
+     from a shared runner IP than a real ban; (b) interleave the boards 1-in-6 with the
+     postings so a short day still advances the 605-board lap it has never once started.
+     The reading that decides it is the stamp's `throttled` count against `submitted` over a
+     week, which is now in the mail every morning.
+
+589. **A cheap model could pick the one right SERP result instead of fetching four** — lane:
+     `infra`. Filed 2026-09-11 by `infra` from the alternatives research behind
+     `docs/decisions/2026-09-11-bd-unlimited-optimize-once.md`. A resolution today is 1 SERP
+     credit plus up to 4 candidate-page fetches; with the SERP's titles/URLs/snippets
+     (~2-3K tokens) sent to Haiku 4.5 and one URL returned it is 1 + 1, and the same call can
+     fail closed ("none of these is this employer's board") and skip all four. Cost ≈ $0.003
+     a company against 3 credits saved; at ~1,000 ambiguous resolutions a month that is
+     ~$3-5 of tokens. **NOT worth building while the credits are free**: the saving is
+     ceiling relief and there is no ceiling (operator ruling 2026-09-11). It becomes worth it
+     the month the projection on the mail's `bd:` line stops falling. `pipeline/llm.py` is
+     the seam; `queue_resolve_search.choose` already does exactly this shape with sonnet, so
+     the honest first step is measuring how often its pick differs from the first ranked URL.
+
+590. **`cloud_state/queue_state.json` has no trim, and three row rungs now append to it** —
+     lane: `infra` (the file is `registry`'s). Filed 2026-09-11 by `infra`, which put the
+     three paid row tools' 14-day cadence there. It is an append-log with no cap by design
+     ("unlike the notes column there is no 220-char cap, so no eviction rule is needed and
+     none is invented"), and that was written when only intake NAMES were recorded. The row
+     rungs add roughly **44 attempts a night** in steady state (619 + 74 + 17 rows over a
+     fortnight), on a file that is already **1.2 MB** and is committed by four workflows.
+     At that rate it passes 2 MB around 2026-11 and 3 MB in the new year, on every daily
+     state commit. No cadence needs more than the NEWEST attempt per (name, rung): a trim
+     that keeps the last two per rung would hold it flat and lose nothing any predicate
+     reads. Not done here because the file is another lane's and the fix is not urgent —
+     the number to watch is `ls -l cloud_state/queue_state.json`.
