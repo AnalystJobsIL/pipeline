@@ -14081,7 +14081,8 @@ def test_a_committed_conflict_marker_is_an_error(tmp_path):
     # a document that merely TALKS about markers, indented or inline, is not one
     cd2 = _cd()
     (tmp_path / "README.md").write_text(
-        "a hunk opens with `        + "    >>>>>>> in an indented example" + chr(10), encoding="utf-8")
+        "a hunk opens with `<<<<<<< HEAD` and ends with a marker line." + chr(10)
+        + "    >>>>>>> in an indented example" + chr(10), encoding="utf-8")
     cd2.ROOT = str(tmp_path)
     cd2.check_no_conflict_markers()
     assert cd2.ERRORS == [], cd2.ERRORS
@@ -14711,7 +14712,8 @@ def test_fix_refuses_to_edit_a_file_that_is_already_dirty():
     body = body.split("def fix_facts(")[1].split("\ndef ")[0]
     assert '"git", "status", "--porcelain"' in body
     assert 'print("REFUSED: --fix will not edit a file that is already modified' in body
-# ===============================================================================# lane: infra (2026-08-27) — delivery, and the difference between "nothing happened" and
+# ======================================================================================
+# lane: infra (2026-08-27) — delivery, and the difference between "nothing happened" and
 # "nothing was wrong". On 2026-08-27 GitHub dispatched 1 of 5 due crons and no artefact
 # anywhere recorded it. These guard the four defects that were fixable here; the recovery
 # cron was measured (`tests/schedule_census.py`) and rejected. Record:
@@ -29394,7 +29396,6 @@ def test_wayback_ledger_merge_is_uncapped_and_the_audit_logs_still_cap():
     assert wf.index("python archive_evidence.py") < wf.index("enrich_scrape_jd.py --archive-only")
 
 
-<<<<<<< HEAD
 # =====================================================================================
 # jd-text lane, 2026-09-11 — a job description has a HEAD, and a page has a RAIL.
 # The 2026-09-11 audit of the published file found 49 of 177 rows carrying a similar-jobs
@@ -29734,7 +29735,7 @@ def test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed():
     # the rail of ANOTHER posting says it too, far down the page: that is not this role closing
     assert closed_page_at(jd + "\nעבודות דומות\nכבר לא מקבלים בקשות\n") is None
     conn.close()
-=======
+
 # --------------------------------------------------------------------------- #
 # 2026-09-11 classifier: the weekly delta audit, the agency class, the refused vocabulary
 # --------------------------------------------------------------------------- #
