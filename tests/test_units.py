@@ -26473,6 +26473,68 @@ def test_the_capture_date_falls_back_to_the_text_ledger_then_to_today(tmp_path):
     st.close()
 
 
+def test_a_page_closed_role_is_not_upserted_so_the_cache_cannot_reopen_it_daily(monkeypatch, tmp_path):
+    """The whole run, not the ledger seam: `pipeline/run.py` must SKIP the upsert for a role
+    its own page closed (586).
+
+    LinkedIn cards are carried forward in `discovered_cache.json` for 21 days by
+    `posted_date`, so the card keeps arriving after the posting is closed. Upserting it puts
+    the key back through `closed_keys()`'s reappearance path — `keep_first` goes False,
+    `first_seen` resets to today and a fresh episode is minted — so the role reads as
+    REOPENED every morning for three weeks and re-enters the 48h email window each time.
+
+    This is the behavioural killer for the `page-closed-row-is-upserted-anyway` mutation:
+    the ledger-level tests cannot reach it, because the skip lives in run.py's upsert loop."""
+    from pipeline import run as run_mod, company_intel, roles, store
+    db = str(tmp_path / "t.db")
+    url = "https://il.linkedin.com/jobs/view/data-analyst-at-acme-4458736498"
+    rid = "acme|data analyst"
+    rec = _rec(rid, company="Acme", title="Data Analyst", url=url,
+               sources=["discovery-linkedin"],
+               seen_ids=["discovery-linkedin:linkedin:4458736498"],
+               first_seen="2026-08-20", last_seen="2026-08-28", status="closed",
+               closed_on="2026-08-28", closed_by="page", closed_page=url,
+               jd_attempted="2026-08-28",
+               description="Acme is hiring. " * 12 + "No longer accepting applications")
+    st = store.SeenStore(db)
+    st.insert_matched({**rec, "mkey": rid})
+    lg = roles.Ledger(st, "2026-09-12")
+    lg.records = {rid: rec}
+    roles.dump(lg.path, lg.records)
+    roles.dump(lg.text_path, {rid: {"role_id": rid, "sha1": "abc",
+                                    "len": len(rec["description"]),
+                                    "description": rec["description"],
+                                    "updated": "2026-08-28"}})
+    st.close()
+
+    # ...and the discovery cache serves the card again today, which is the whole problem
+    card = {"company": "Acme", "title": "Data Analyst", "location": "Tel Aviv, Israel",
+            "country_code": "", "url": url, "posted_date": "2026-08-25",
+            "job_id": "linkedin:4458736498", "ats_platform": "discovery-linkedin",
+            "description": rec["description"]}
+    row = {"company_name": "Acme", "ats_platform": "greenhouse", "token": "acme",
+           "api_url": "https://boards-api.greenhouse.io/v1/boards/acme/jobs",
+           "active": "true", "notes": ""}
+    monkeypatch.setattr(run_mod, "load_companies", lambda: [dict(row)])
+    monkeypatch.setattr(run_mod.fetchers, "fetch_company", lambda r: [dict(card)])
+    monkeypatch.setattr(company_intel, "enrich_for_run",
+                        lambda s, **kw: ({}, {}, {"researched": 0, "blurbs_written": 0}))
+    monkeypatch.setattr(company_intel, "audit_lines", lambda rep: ([], []))
+    run_mod.run(use_llm=False, only=["Acme"], out_dir=str(tmp_path / "out"),
+                db_path=db, run_date="2026-09-12")
+
+    st = store.SeenStore(db)
+    got = st.conn.execute("SELECT first_seen, last_seen FROM matched WHERE mkey=?",
+                          (rid,)).fetchone()
+    st.close()
+    assert got[0] == "2026-08-20", \
+        "the upsert was not skipped: first_seen reset, so the role reopens every morning"
+    assert got[1] == "2026-08-28", "last_seen must freeze at the day we last really saw it"
+    recs = roles.load(roles.ledger_paths(db)[0])[0]
+    assert recs[rid]["status"] == "closed", "a page-closed role stays closed while the card runs on"
+    assert len(recs[rid].get("episodes") or []) <= 1, "no fresh episode per morning"
+
+
 def test_a_scoped_run_never_closes_a_page_closed_role_it_did_not_look_at(tmp_path):
     """A role closes ONLY where the run actually looked — the rule every other arm of the
     ladder carries. The evidence for a page closure is text we already hold, which made the

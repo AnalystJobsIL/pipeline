@@ -3310,8 +3310,11 @@
   "class": "M4-guard-removal",
   "find": "        if store.merge_key(j) in _page_closed:\n            continue",
   "replace": "        if False:\n            continue",
-  "why": "the discovery cache re-serves the card for up to 21 days. Upserting it puts the key back in `closed_keys()`'s reappearance path, so first_seen resets to today and a fresh episode is minted EVERY morning - a daily `reopened 1` for a posting that is gone, and a role that keeps re-entering the 48h email window. Guarded by test_record_run_closes_a_page_closed_row_on_the_day_its_text_was_captured.",
-  "must_be_killed_by_behavioural": true
+  "why": "the discovery cache re-serves the card for up to 21 days. Upserting it puts the key back in `closed_keys()`'s reappearance path, so first_seen resets to today and a fresh episode is minted EVERY morning - a daily `reopened 1` for a posting that is gone, and a role that keeps re-entering the 48h email window. The skip lives in run.py's upsert loop, so no ledger-level test can reach it: the killer drives a whole `run.run` over a page-closed record whose card arrives again. SURVIVED on 2026-09-11 (infra's run 34622790874, shard 6) because this record shipped without one.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_page_closed_role_is_not_upserted_so_the_cache_cannot_reopen_it_daily"
+  ]
  },
  {
   "id": "page-closed-re-closes-a-purged-record",

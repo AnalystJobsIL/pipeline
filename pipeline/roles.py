@@ -508,7 +508,7 @@ _PLACE_WORDS = {"israel", "il", "remote", "hybrid", "office", "site", "on",
 # rather than guess. The measured population on 2026-09-11 is 5 records of 262.
 _HIRING_CALL = re.compile(r"^\s*(?:we.?re|we\s+are|now)\s+hiring\b[\s:!\-–—]*", re.I)
 # "דרוש/ה", "דרוש.ה", "דרושים" — the Hebrew "Wanted:" opener a board glues onto a title.
-_HEBREW_CALL = re.compile("^\s*דרוש(?:ים|ות)?(?:\s*[/.\-]\s*(?:ה|ים|ות|ת))?\s+")
+_HEBREW_CALL = re.compile(r"^\s*דרוש(?:ים|ות)?(?:\s*[/.\-]\s*(?:ה|ים|ות|ת))?\s+")
 # Schedule and place furniture. `_PLACE_WORDS` already carries israel/il/remote/hybrid/
 # office/site/on/full/part/time; a job card's employment terms add these.
 _TERMS_WORDS = _PLACE_WORDS | {"onsite", "temporary", "temp", "permanent", "shifts"}
