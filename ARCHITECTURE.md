@@ -4818,6 +4818,8 @@ lane can still read it, and only onto an EMPTY `jd_why` (a `structural:` value i
 dataset quotes verbatim). Four rows were stamped by the one-off; a fifth kept its sentence
 because the cut was refused by `_reclean`'s floor, so that lane's text arm still sees it.
 
+**A mass text repair is a FIXED POINT, not two steps — and this was found by checking the morning-check prediction instead of trusting it.** The obvious shape is "re-clean sqlite, then `open_sync`", and it is wrong: `better_description` returns `jd_body(...)`, so it reproduces the TAIL cut — which is why the chrome count read 0 straight away — but it knows nothing about `strip_head`, so for every row whose ledger line was not retracted the ledger's copy is longer by exactly the header and wins. Both stores then agree, on the text the cut had just removed, and the nightly cuts it again tomorrow: an oscillation every morning, which is worse than never having cut it. Measured here: after the first pass the chrome count was 0 and `_reclean` STILL found 20 rows and 6,900 characters. The repair is therefore: re-clean, retract the ledger line of every row the cut shortened or the two stores disagree about, sync, and repeat until a pass changes nothing. Three things must hold at the end and all three are cheap to assert — the re-clean finds 0, `open_sync` merges 0, and a further `open_sync` leaves both files byte-identical. Reached in two rounds.
+
 **What the one-off did, and why it was a session and not a cron.** 96 rows re-cleaned in
 sqlite (185,872 characters of page furniture), 11 re-captured from their own addresses on free
 rungs, both stores written in the same pass and proved stable across three further

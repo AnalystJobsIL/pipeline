@@ -30302,6 +30302,47 @@ def test_the_reclean_cuts_the_head_too_and_keeps_its_floor_and_its_ceiling():
     conn.close()
 
 
+def test_a_head_repair_is_handed_back_unless_the_ledger_line_is_retracted():
+    """The trap that cost this session a second round, and it is `572` in its other half.
+
+    `better_description` RETURNS `jd_body(...)`, so a TAIL repair survives a sync: it
+    reproduces the cut on whichever side wins. It knows nothing about `strip_head`, so a HEAD
+    repair does not — the ledger's un-repaired copy is longer by exactly the header, wins on
+    length, and `open_sync` writes it back into sqlite. Both stores then agree on the text the
+    cut removed, and the nightly `_reclean` cuts it again the next morning, for ever.
+
+    Measured 2026-09-11: after a pass that re-cleaned 96 rows and synced clean three times,
+    `_reclean` still found 20 rows and 6,900 characters. So a mass text repair is a FIXED
+    POINT -- re-clean, retract the ledger line of every row the cut shortened, sync, repeat --
+    and this is the assertion that says why the retraction step is not optional.
+
+    Kills: teaching `better_description` the head cut (that is
+    `test_the_page_header_is_cut_at_fetch_and_never_inside_jd_body`, from the other side);
+    and any belief that writing sqlite alone is a repair."""
+    from pipeline.roles import reconcile
+    from pipeline.jdfill import strip_head, jd_body
+    head = ("Senior Data Analyst at ACME | LinkedIn Jobs\nSkip to main content\n"
+            "Senior Data Analyst\nACME\nTel Aviv\nReport this job\n")
+    jd = _j7_jd(1400)
+    repaired, stale = jd, head + jd
+    assert strip_head(stale) == repaired and len(stale) > len(repaired)
+
+    row = {"description": repaired, "last_seen": "2026-09-11"}          # sqlite, repaired
+    rec = {"description": stale, "last_seen": "2026-09-11"}             # the ledger, stale
+    assert reconcile(row, rec)["description"] == stale, (
+        "the sync is supposed to hand the header back -- if this ever stops being true, the "
+        "retraction step in a repair can go, and so can this test")
+
+    # ...and with the ledger line retracted, the repair is what survives
+    assert reconcile(row, {"description": "", "last_seen": "2026-09-11"})["description"] == repaired
+
+    # the TAIL half, for contrast: it needs no retraction, because `better_description` cuts it
+    tail = jd + "\nShow more\nShow less\nSeniority level\nAssociate\n"
+    assert jd_body(tail) == jd
+    assert reconcile({"description": jd, "last_seen": "2026-09-11"},
+                     {"description": tail, "last_seen": "2026-09-11"})["description"] == jd
+
+
 def test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed():
     """The contract agreed live with the `roles` session on 2026-09-11. `roles.page_closed`
     closes a LinkedIn-only row on `No longer accepting applications`, and that sentence sits

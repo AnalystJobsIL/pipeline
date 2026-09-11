@@ -11714,6 +11714,12 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
        `store._matched_cols_live` beside `jd_why`, generalising the two `jd_why` special cases
        in `_absorb` and `_open_sync` to a `_CARRIED` tuple.
 
+     **The trigger, agreed with that lane's session on 2026-09-11: apply this the first time
+     a LIVE row carries a refutation.** It is a query, not a judgement —
+     `select count(*) from matched where coalesce(jd_refuted,'') != '' and coalesce(status,'') != 'superseded'`,
+     read against the ledger's `status` for openness. Until it is non-zero for an OPEN row,
+     `_store_text` alone holds the line.
+
      **Live exposure today is 0 rows**, which is why this is filed rather than urgent: both
      refuted rows are `closed`, their own cache cards share the refuted key, and both stores
      already hold the repaired text. The class returns the moment a LIVE row is refuted — that
