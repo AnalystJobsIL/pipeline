@@ -434,8 +434,12 @@ def main():
         # stored under a registry-declared alias into its survivor (`fold_aliases`), so the
         # alias key is gone on purpose. Only where the survivor is present -- a vanished key
         # whose survivor is also missing is the loss this guard exists for.
-        _folds = F.declared_aliases()
-        lost = sorted(n for n in set(shared) - set(recs) if _folds.get(n) not in recs)
+        # ...and the fold has to be the one that ACTUALLY happened, not the one declared:
+        # `fold_aliases` refuses a site form and refuses a survivor with no record, so
+        # excusing every declared alias excused 20 keys nothing folds (`Intel Israel` and
+        # its 19 siblings could all vanish and this guard would print nothing).
+        _folded = {a for a, _s in F.fold_aliases(dict(shared), F.declared_aliases())}
+        lost = sorted(set(shared) - set(recs) - _folded)
         if lost:
             print("::error::company-intel refusing to publish: the union DROPS %d record(s) "
                   "the export already holds (%s%s)"
@@ -646,9 +650,14 @@ def main():
             # both unreadable -- which is the worst morning, not the exempt one (wave-2)
             _empty = ({"alarm": f"empty-registry(0 names read, {len(have)} records held)"}
                       if not names else {})
+            # `budget_min` travels on THIS stamp too, or the morning the queue is
+            # drained -- the outcome this lane is working toward -- the mail labels the
+            # digest's own 20-minute drain `bulk cron:` and BACKLOG 474 is back on the
+            # healthy path (`_drain_label` reads this key and nothing else)
             stages.stamp("firmo", researched=0, failed=0, records=len(have),
                          todo=0, attempted=0, left=0, gated=len(gated), names=len(names),
-                         minutes=round((time.time() - t0) / 60, 1), **_empty)
+                         minutes=round((time.time() - t0) / 60, 1),
+                         budget_min=a.budget_min, held=0, board_other=0, **_empty)
         return
     queued = len(todo)          # the whole queue this run set out to clear, BEFORE any cap
     if a.limit:
@@ -726,7 +735,7 @@ def main():
         else:
             failed += 1
             failed_names.append(name)
-            if str(why or "").startswith("held: "):
+            if str(why or "").startswith("held-twice: "):
                 held += 1
                 held_names.append(name)
             print(f"FAIL {name}{f' ({why})' if why else ''} (strike pending)", flush=True)

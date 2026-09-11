@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**647 filed · 457 open · 190 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**649 filed · 459 open · 190 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 598.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 600.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -246,7 +246,7 @@ closure convention in the header.
 - **593** `593@registry` **An abandoned board is refused, alarmed and re-resolved
 - **596** `596@registry` **Five active rows publish another company's careers board, and the intel that names
 
-### infra — 114 open
+### infra — 115 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -362,6 +362,7 @@ closure convention in the header.
 - **591** `591@infra` **A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
 - **592** `592@infra` **DUPLICATE OF `591`
 - **595** `595@infra` **A killed `firmo_drain` stamps no `budget_min`, so the mail calls it the bulk cron** —
+- **599** `599@infra` **A fourth calendar-rot test, and the class has no owner**
 
 ### scraper — 31 open
 
@@ -573,7 +574,7 @@ closure convention in the header.
 - **581** `581@jd-text` **The scrape cache keeps the page furniture this layer now cuts, and nothing re-cleans it**
 - **587** `587@jd-text` **When jd-text strips LinkedIn's page chrome, a closed posting silently reopens** —
 
-### render — 6 open
+### render — 7 open
 
 - **4** `4@render` **`pipeline/jdtext.py`**
 - **119** `119@render` **`digest._LOC_CANON` and the four seniority vocabularies are copies** *(half closed)*
@@ -581,6 +582,7 @@ closure convention in the header.
 - **149** `149@render` **`same_employer` and `blurb-names-other` are heuristics with a known false-positive
 - **150** `150@render` **A failed email stub replaces yesterday's `digests/latest.md`**
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
+- **598** `598@render` **After a fold, a role filed under the ALIAS name loses its brand and its `firmo_match`
 
 <!-- BACKLOG-INDEX:END -->
 
@@ -4478,11 +4480,15 @@ here — each is another lane's file or a behaviour change this session could no
 
 393. **HALF CLOSED 2026-09-11 (`company-intel`)**: the Menora pair is folded —
      `registry` parked `מנורה מבטחים החזקות` `alias-of Menora Mivtachim Group` and declared
-     the identity, so `fold_aliases` deletes the null-headcount Hebrew record and the Latin
-     one (1,335 employees) survives. **`הפניקס` / `Phoenix Financial` is still open and
-     needs the registry half first**: no parked row, no `alias-of` verdict, so the fold has
-     one declaration and refuses — correctly. The `mećkano` diacritic case below is
-     untouched. Original report:
+     `ALIASES["מנורה מבטחים החזקות"]`, so `fold_aliases` deletes the null-headcount Hebrew
+     record and the Latin one (1,335 employees) survives. **`הפניקס` / `Phoenix Financial`
+     is still open and needs BOTH halves.** `Phoenix Financial` IS already a parked row, so
+     "park it" is not the missing step: what is missing is any declaration at all — its note
+     carries no `alias-of` verdict, and `identity_key('הפניקס')` is `הפניקס` against
+     `phoenix financial`, which no suffix rule can bridge. It needs a dated `alias-of` note
+     from `registry` AND a Hebrew→Latin `ALIASES` entry, exactly as the Menora comment in
+     `pipeline/firmographics.py` explains — one of them alone folds nothing, by design. The
+     `mećkano` diacritic case below is untouched. Original report:
      **Two Hebrew-named companies are profiled twice, under contradicting facts** — lane:
     `company-intel`, filed 2026-08-28 by wave 1. `identity_key` keeps Hebrew letters but has
     no Hebrew↔Latin arm, so `display_index` never groups these and both were paid for:
@@ -9066,7 +9072,11 @@ the rebase (a collision is what 241–246 are).
      exactly as four tests wrote it**, and the question it was a proxy for ("did the 10:17
      cron fire?") belongs to the `cron` watch, which measures slots. A `FIRMO_STAGE` split
      was rejected: it needs `infra`'s workflow line and a re-pin of those four tests, and a
-     label costs one branch. **One-token diff left for `infra`: `595`.** Original report:
+     label costs one branch. Two edges the first version got wrong and a wave caught:
+     `--budget-min 0` is the DEFAULT and means unbounded, so `bm > 0` is load-bearing or a
+     session's own run reads `digest drain (0m)`; and the drained-queue early return stamps
+     `budget_min` too, or the morning the queue is finally empty is the morning the label
+     goes wrong. **One-token diff left for `infra`: `595`.** Original report:
      lane: `company-intel`. Since 2026-08-30 the
      digest runs a 20-minute drain (`daily-digest.yml` `firmo_drain`) before the measurement,
      and `research_firmographics.py` stamps `firmo` on every exit, so
@@ -11562,18 +11572,23 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 579. ~~**Four firmographics record pairs describe one employer each**~~ — **CLOSED
      2026-09-11 (`company-intel`)**: `firmographics.fold_aliases`, run inside `union_store`
      AND `save_shared`, folds a record stored under a registry-DECLARED alias into its
-     survivor's. Nine went, 1,607 → 1,598 — the four pairs below plus `Investing.com`,
-     `Intel Corporation`, `Cadence Design Systems`, `JPMorgan Chase` and 393's Menora pair.
-     The direction is `declared_aliases()`' — the parked row's own dated `alias-of <R>`
-     verdict AND an `identity_key` that agrees, the same two-declaration bar
-     `roles._alias_fold_target` sets — and never `newer()`, which crowns the wrong side in
-     three of these five (`242`). The survivor keeps its own facts and the alias fills only
-     its empties; on the live export that filled nothing, all nine survivors being complete.
-     Refused even when declared: a site form (`Intel Israel`, 23 of the 40 declared pairs —
-     a site record carries the SITE's facts) and any ACTIVE row (`AWS`, `JPMorganChase` are
-     separate scanner rows). It folds at every VIEW because `cloud_state/seen.db` is
-     `SINGLE_WRITER: daily-digest` and would otherwise resurrect the key every morning —
-     `242`'s blocker avoided rather than solved. `ARCHITECTURE.md` §7 carries the rules.
+     survivor's. **Six** went — the four pairs below plus `Investing.com` and 393's Menora
+     pair — and the export reads 1,610 (1,607 that morning, minus six, plus nine researched).
+     The direction is `declared_aliases()`': the parked row's own dated `alias-of <R>`
+     verdict AND an `ALIASES` entry naming that spelling, the same two-declaration bar
+     `roles._alias_fold_target` sets — never `newer()`, which crowns the wrong side in three
+     of these five (`242`). **The second declaration has to BE one:** `identity_key`
+     agreement alone is the generic suffix stripper, and for one evening it also folded
+     `Intel Corporation`, `Cadence Design Systems` and `JPMorgan Chase` — the
+     `AppSec Labs`/`AppSec` shape, and the JPMorgan fold moved a rendered `founded` chip from
+     1799 to 2000. All three came back out of sqlite the same evening, which is what folding
+     at every VIEW buys: `cloud_state/seen.db` is `SINGLE_WRITER: daily-digest` and would
+     otherwise resurrect any deleted key every morning (`242`'s blocker avoided rather than
+     solved). The survivor keeps its own facts and the alias fills only its empties; on the
+     live export that filled nothing. Also refused, both prophylactic today: a site form (a
+     site record carries the SITE's facts) and any ACTIVE row (0 of the 69 `alias-of` rows
+     are active; the rule is against a fold keyed on `identity_key` groups, which would take
+     `AWS`). `ARCHITECTURE.md` §7 carries the rules.
      Original report:
      `company-intel`. Filed 2026-09-11 by `registry`.
      `cloud_state/firmographics.json` holds `DT` beside `Digital Turbine`, `autods` beside
@@ -12176,3 +12191,46 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      the names, as `failed_reasons` already does — `pipeline/llm.py` itself need not change,
      which matters because it is shared plumbing. Measured 2026-09-11: 1 of 12 calls, on a
      run whose nine records are otherwise all search-backed.
+
+598. **After a fold, a role filed under the ALIAS name loses its brand and its `firmo_match`
+     — lanes: `render` + `roles`, filed 2026-09-11 by `company-intel`.**
+     `rolecard._fill` and `roles.build_rows` look the record up on the EXACT company string
+     and never fall back to the identity index (deliberate: the brand is shown only on an
+     exact match, `docs/decisions/2026-08-31-company-column-shows-the-brand.md`).
+     `firmographics.fold_aliases` deletes that exact key, so a role whose `company` IS the
+     alias renders the raw registry string and drops from `firmo:exact` to `firmo:identity`.
+     The facts chips are unaffected everywhere (`firmo_display`, `company_type_analysis`,
+     `firmo_death_watch` are all identity-keyed).
+
+     Measured 2026-09-11: **one live row**, the Menora role
+     `מנורה מבטחים החזקות|אנליסט ית סיכונים פיננסיים`, which the roles alias fold leaves in
+     place because it has no twin under the crowned name. The other five folded names carry
+     no role record under the alias string. Benign direction and one row today — filed
+     because the coupling is real and the next fold may not be benign:
+
+     ```python
+     # pipeline/rolecard.py::_fill and pipeline/roles.py::build_rows
+     -    fm = firmographics.get(company)
+     +    fm = firmographics.get(company) or firmographics.get(
+     +        firmographics_aliases.get(company, ""))    # a DECLARED alias inherits its
+     +                                                   # survivor's record and its brand
+     ```
+
+     with `firmographics.declared_aliases()` as the map. Until it lands the cell is honest
+     (it shows the registry name) and the dataset says `identity`, which is true.
+
+599. **A fourth calendar-rot test, and the class has no owner** — lane: `infra`, filed
+     2026-09-12 by `company-intel`. `tests/test_registry.py::
+     test_a_hunted_queue_name_stops_being_a_hunt_target` builds a fixture dated
+     `2026-08-29` and asserts `queue_state.tried_within(state, "Alpha", "hunt", 14)`. On
+     2026-09-12 that is exactly 14 days, the window closes, and the test goes red on a tree
+     nobody touched — measured red at `9c1f86c`, at `origin/master` and in a clean worktree,
+     so it is inherited by whoever pushes next. It is the same shape as the three
+     `infra` was fixing on 2026-09-11 (`test_a_junior_posting_still_contributes_its_employer`,
+     `test_workable_reads_the_field_names_the_api_actually_sends`,
+     `test_wayback_run_writes_one_line_per_attempt_and_verifies_yesterdays_pending`) and the
+     same shape as the census assertion this lane removed the same day: **a number the
+     calendar moves and no push can.** Four instances is a class, not four bugs. The fix is
+     a fixture date relative to `date.today()` (or a frozen clock), and the class deserves
+     one guard that fails when a NEW absolute date appears in a window assertion — otherwise
+     the fifth is written next week and reds someone else's push.

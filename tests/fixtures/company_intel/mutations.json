@@ -380,7 +380,7 @@
   {
     "id": "ci-export-drops-records",
     "file": "research_firmographics.py",
-    "find": "        lost = sorted(n for n in set(shared) - set(recs) if _folds.get(n) not in recs)\n",
+    "find": "        lost = sorted(set(shared) - set(recs) - _folded)\n",
     "replace": "        lost = []\n",
     "class": "M1",
     "symbol": "export_drops_records",
@@ -788,19 +788,19 @@
     "file": "pipeline/firmographics.py",
     "symbol": "_same_company_loose",
     "class": "M2",
-    "find": "    ca = _stem(_ECHO_CONNECTIVE.sub(\" \", a))\n    return bool(ca and ca == _stem(_ECHO_CONNECTIVE.sub(\" \", e)))",
-    "replace": "    ca = _stem(_ECHO_CONNECTIVE.sub(\" \", a))\n    return bool(ca and _edge_related(ca, _stem(_ECHO_CONNECTIVE.sub(\" \", e))))",
+    "find": "    ca = _stem(_ECHO_CONNECTIVE.sub(\" \", str(asked or \"\")))\n    return bool(ca and ca == _stem(_ECHO_CONNECTIVE.sub(\" \", str(echo or \"\"))))",
+    "replace": "    ca = _stem(_ECHO_CONNECTIVE.sub(\" \", str(asked or \"\")))\n    return bool(ca and _edge_related(ca, _stem(_ECHO_CONNECTIVE.sub(\" \", str(echo or \"\")))))",
     "why": "company-intel guard: the connective arm licenses EQUALITY ONLY. Widen it to containment and `The Regatta Group` stems to `regatta`, which edge-contains `regattadata` -- a UK clothing retailer cached onto an Israeli database startup until 2027-02, which is BACKLOG 525's exact failure.",
     "must_be_killed_by_behavioural": true
   },
   {
-    "id": "ci-annotation-strip-ignores-a-division",
+    "id": "ci-echo-parenthetical-strip-comes-back",
     "file": "pipeline/firmographics.py",
     "symbol": "_same_company_loose",
     "class": "M2",
-    "find": "    if not is_division_name(a):\n        bare = _ECHO_ANNOTATION.sub(\" \", e)",
-    "replace": "    if True:\n        bare = _ECHO_ANNOTATION.sub(\" \", e)",
-    "why": "company-intel guard: a distinguishing parenthetical is the only thing telling two division records apart, which is why `identity_key` keeps it. Strip it unconditionally and `Sony (Semiconductor)` accepts an echo of `Sony (PlayStation)`.",
+    "find": "    ca = _stem(_ECHO_CONNECTIVE.sub(\" \", str(asked or \"\")))\n",
+    "replace": "    import re as _re\n    if _edge_related(_stem(str(asked or \"\")), _stem(_re.sub(r\"\\([^)]*\\)\", \" \", str(echo or \"\")))):\n        return True\n    ca = _stem(_ECHO_CONNECTIVE.sub(\" \", str(asked or \"\")))\n",
+    "why": "company-intel guard, 2026-09-11: this IS the arm that shipped and was taken back the same evening. Stripping the echo's parenthetical and allowing edge containment changed 38 verdicts over board_verify and 13 of them were pairs this repo had already ruled were different companies -- `Aquarius Spectrum` accepting `Spectrum (Charter Communications)`. The parenthetical IS the disambiguator, and this gate is the last thing before a cache entry that lives to 2027-03.",
     "must_be_killed_by_behavioural": true
   },
   {
@@ -831,6 +831,16 @@
     "find": "        if not name or str(r.get(\"active\") or \"\").strip().lower() == \"true\":\n            continue",
     "replace": "        if not name:\n            continue",
     "why": "company-intel guard: an ACTIVE row is never an alias of anything. `AWS` and `JPMorganChase` are separate scanner rows with their own boards, and a rule that read only the alias map would fold both away.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-declared-alias-needs-only-one-declaration",
+    "file": "pipeline/firmographics.py",
+    "symbol": "_declared",
+    "class": "M2",
+    "find": "        if ALIASES.get(plain) == identity_key(target):\n            out[name] = target",
+    "replace": "        if identity_key(name) == identity_key(target):\n            out[name] = target",
+    "why": "company-intel guard: TWO declarations, and the second has to BE one. `identity_key` agreement alone is satisfied by the generic suffix stripper, which folded `Intel Corporation`, `JPMorgan Chase` and `Cadence Design Systems` on one declaration plus a rule for one evening -- the `AppSec Labs`/`AppSec` shape `roles._alias_fold_target` refuses by name, and the JPMorgan fold moved a rendered `founded` chip 1799 -> 2000.",
     "must_be_killed_by_behavioural": true
   }
 ]

@@ -306,6 +306,18 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     #   state electricity-market operator; its board is `noga-iso.co.il/jobs/` (the row's
     #   own url) and the echo names the company in full, in both languages.
     "noga iso": "noga israel independent system operator",
+    #   `Loops Lab` is Loops, the product-analytics company: the row's board is
+    #   `www.getloops.ai/careers` and the research echo is `Loops (getloops.ai)` -- the
+    #   board's own domain, inside the name. No other row or record answers to `loops`
+    #   (`Finaloop` is a different stem).
+    "loops lab": "loops",
+    #   `Shabak - Israeli Security Agency - Career` is the Shin Bet; the ` - Career` tail is
+    #   the aggregator seed the row was created from (`url-cleared 2026-08-25:
+    #   secrethunter.io aggregator seed`), its board is `www.shabak.gov.il/career/`, and the
+    #   echo is `Shabak (Israel Security Agency / Shin Bet)`. No other row answers to
+    #   `shabak`. A rename would orphan the row's history (459), so the two forms become one
+    #   identity instead.
+    "shabak israeli security agency career": "shabak",
     #   `Arrow Components` is Arrow Electronics' components business; the row's board is
     #   `careers.arrow.com` (Arrow Electronics') and the echo is `Arrow Electronics, Inc.`.
     #   Checked before declaring, the Oak lesson (522): `Arrow Electronics` IS a separate
@@ -498,41 +510,37 @@ def _same_company(asked, echo):
     return _same_company_loose(asked, echo)
 
 
-# The echo is the page's own spelling of its name, and two of its habits are not
-# disagreements about WHICH company. Measured on the ten names that were stuck in the
-# weekly retry on 2026-09-11: every one of them had been asked, held and struck five times
-# over, and the hold was right about two of them and wrong about the rest.
-_ECHO_ANNOTATION = re.compile(r"\([^)]*\)")
+# The echo is the page's own spelling of its name, and ONE of its habits is not a
+# disagreement about which company: the connectives our registry name happens to spell out.
+# Measured on the ten names stuck in the weekly retry on 2026-09-11.
 _ECHO_CONNECTIVE = re.compile(r"(?i)(?:^|\s)(?:and|the|of)(?=\s|$)")
 
 
 def _same_company_loose(asked, echo):
-    """The second chance -- and the two arms are deliberately NOT equally trusting.
+    """The second chance, and it licenses EQUALITY ONLY -- never containment. That
+    asymmetry is the whole of its safety, and it was learned the expensive way.
 
-    Arm 1, the ANNOTATION: a parenthetical the page added is dropped and the whole relation
-    re-run. `Loops (getloops.ai)` is Loops Lab's own page naming its domain, and
-    `Shabak (Israel Security Agency / Shin Bet)` is a gloss. It is skipped when the ASKED
-    name is a division (`Sony (Semiconductor)`), where the parenthetical is the only thing
-    telling two records apart and dropping it would accept `Sony (PlayStation)` -- the same
-    reason `identity_key` keeps a distinguishing parenthetical.
+    **An earlier version of this function also dropped the echo's PARENTHETICAL and re-ran
+    the full relation, containment included. Do not re-add it.** Measured over all 1,450
+    `(registry name, employer_named)` pairs in `cloud_state/board_verify.json`, that arm
+    changed 38 verdicts and **13 of them were pairs this repo had already ruled were
+    different companies** -- `Aquarius Spectrum` accepting `Spectrum (Charter
+    Communications)`, `Hillcrest Labs` accepting `Hill Labs (Hill Laboratories)`,
+    `Kai Capital` accepting `Kai (Kaiizen, Inc)`, each of them a `NOT-THEIRS` verdict in
+    board_verify. In every one the parenthetical IS the disambiguator -- the other legal
+    entity the model actually profiled -- and stripping it before comparing deletes the
+    evidence. `_same_company` has exactly one production caller, the echo gate, which is the
+    last thing between a wrong company's record and a cache entry that lives until 2027-03.
+    A name that needs that rescue gets an `ALIASES` declaration instead, checked against the
+    board on its own row, which is the verification the strip skipped.
 
-    Arm 2, the CONNECTIVES, licenses EQUALITY ONLY -- never containment, and that asymmetry
-    is the whole of its safety. `Regatta Data` vs the echo `The Regatta Group` differs by
-    one word; drop `the` and the echo stems to `regatta`, which edge-contains `regattadata`,
-    and a UK clothing retailer is cached onto an Israeli database startup until 2027-02 --
-    BACKLOG 525's exact failure, rebuilt by a convenience. Equality after the drop is a
-    different claim, and it is the one `Mars Antennas And Rf Systems` needs to accept
-    `MARS Antennas & RF Systems Ltd.`"""
-    a, e = str(asked or ""), str(echo or "")
-    if not is_division_name(a):
-        bare = _ECHO_ANNOTATION.sub(" ", e)
-        if bare.strip() and bare != e:
-            sa, sb = _stem(a), _stem(bare)
-            if sa and sb and (sa == sb or _edge_related(sa, sb)
-                              or _acronym(bare) == sa or _acronym(a) == sb):
-                return True
-    ca = _stem(_ECHO_CONNECTIVE.sub(" ", a))
-    return bool(ca and ca == _stem(_ECHO_CONNECTIVE.sub(" ", e)))
+    What is left: `and`, `the` and `of` are dropped from both sides and the stems must be
+    EQUAL. `Mars Antennas And Rf Systems` is our spelling of `MARS Antennas & RF Systems
+    Ltd.` Containment even here would be the 525 failure again: `The Regatta Group` minus
+    `the` stems to `regatta`, which edge-contains `regattadata`, and a UK clothing retailer
+    would be cached onto an Israeli database startup."""
+    ca = _stem(_ECHO_CONNECTIVE.sub(" ", str(asked or "")))
+    return bool(ca and ca == _stem(_ECHO_CONNECTIVE.sub(" ", str(echo or ""))))
 
 
 # ---- the seam: this lane's calls into pipeline/llm.py ------------------------------ #
@@ -940,7 +948,7 @@ def _disambiguate(company, ev, *, timeout=240, meta=None):
     return rec, why
 
 
-_HELD_ECHO = re.compile(r"^held: research profiled (.+), not this name$")
+_HELD_ECHO = re.compile(r"^held(?:-twice)?: research profiled (.+), not this name$")
 
 
 def held_other(why):
@@ -1001,7 +1009,12 @@ def _name_only(company, ev, *, timeout=240, meta=None, held=""):
     rec, why = research_company_detail(company, "", timeout=timeout, meta=meta,
                                        data=data, system=_NAME_ONLY_SYSTEM)
     if rec is None:
-        return None, held or why
+        # `held-twice`, not `held`: the counter and the mail's sentence are about names
+        # that were RE-ASKED and still came back as somebody else. A name whose second ask
+        # never ran -- no url, or a budget under DISAMBIG_MIN_S at the tail of the digest's
+        # 20-minute drain -- keeps the plain `held:` reason and is not counted, or the mail
+        # would say "every ask came back about them" about a name nothing retried.
+        return None, (("held-twice: " + held[len("held: "):]) if held else why)
     return rec, REASON_BOARD_OTHER % (other or "another company")
 
 
@@ -1360,7 +1373,17 @@ def _declared(rows):
         if not name or str(r.get("active") or "").strip().lower() == "true":
             continue
         target = str(_verdicts.alias_target(r.get("notes") or "") or "").strip()
-        if target and target != name and identity_key(name) == identity_key(target):
+        if not target or target == name:
+            continue
+        # TWO declarations, and the second one has to be a DECLARATION -- an `ALIASES` entry
+        # naming this spelling -- not a derivation. `identity_key` agreement alone is
+        # satisfied by the generic suffix stripper, which is how `Intel Corporation`,
+        # `JPMorgan Chase` and `Cadence Design Systems` folded on one declaration and a
+        # rule; that is the `AppSec Labs` / `AppSec` shape `roles._alias_fold_target`
+        # refuses by name, and it demoted JPMorgan's founding from 1799 to 2000. Same bar as
+        # the roles fold, and now the sentence in §7 saying so is true.
+        plain = " ".join(re.sub(r"[^0-9a-z\u05d0-\u05ff]+", " ", name.lower()).split())
+        if ALIASES.get(plain) == identity_key(target):
             out[name] = target
     return out
 
@@ -1436,6 +1459,9 @@ def fold_aliases(records, aliased=None):
             out[k] = v
         if out.get("employees_global"):
             out["size_band"] = band_for(out["employees_global"])
+        # a survivor that is a stub inherits the alias's date: `is_stale` raises on "" and
+        # returns True, so a dateless record is re-bought every run, for ever
+        out.setdefault("as_of", a.get("as_of"))
         records[survivor] = out
         records.pop(alias, None)
         folded.append((alias, survivor))
@@ -1669,13 +1695,19 @@ def display_plan(records, verify, aliased=None):
             vouch.setdefault(str(a).lower(), []).append(s)
     idents = _identity_index(records)
     for name, row in sorted(latest.items()):
+        # `unmatched` counts what a REVIEWER can act on: a page that claims a name for a
+        # record we do not hold. A row whose newest verdict is a refusal claims nothing, so
+        # it is not a gap -- the report has always counted it that way and the writer had
+        # not, and one shared reading cannot have it both ways (the report's `unmatched`
+        # would have gone 383 -> 821 on a change that touched no evidence).
         keys = index.get(name.lower()) or vouch.get(name.lower(), [])
+        claims = row.get("verdict") == "ok" and bool(str(row.get("employer_named") or "").strip())
         if not keys:
-            unmatched += 1              # no record yet -- self-heals as research grows
+            unmatched += claims         # no record yet -- self-heals as research grows
             continue
         if len(keys) > 1:
             hold.update(keys)           # ambiguous case-twin: touch neither record
-            unmatched += 1
+            unmatched += claims
             continue
         named = str(row.get("employer_named") or "").strip()
         if row.get("verdict") != "ok" or not named:

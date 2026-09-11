@@ -3966,36 +3966,56 @@ Amazon with AWS's 150,000 employees and founding year 2006 instead of 1,576,000 
 dates Microsoft's founding to 1989, the year its Israeli R&D centre opened.
 
 **What DOES fold, since 2026-09-11, is the group the registry has already ruled on**
-(`fold_aliases`, closing `docs/BACKLOG.md` 579 and 393's Menora half). Nine records went,
-1,607 → 1,598: `DT`→`Digital Turbine`, `Port.io`→`Port`, `Gong.io`→`Gong`,
-`AutoDS - Automatic Dropshipping Tools`→`autods`, `Investing.com`→`Investing`,
-`Intel Corporation`→`Intel`, `Cadence Design Systems`→`Cadence`,
-`JPMorgan Chase`→`JPMorganChase` and the Hebrew `מנורה מבטחים החזקות`→`Menora Mivtachim
-Group`. Four rules, and each is the answer to one of the objections above:
+(`fold_aliases`, closing `docs/BACKLOG.md` 579 and 393's Menora half). **Six** records
+went: `DT`→`Digital Turbine`, `Port.io`→`Port`, `Gong.io`→`Gong`,
+`AutoDS - Automatic Dropshipping Tools`→`autods`, `Investing.com`→`Investing` and the
+Hebrew `מנורה מבטחים החזקות`→`Menora Mivtachim Group`. The export reads **1,610**: 1,607
+that morning, minus those six, plus the nine names §7's gauge paragraph describes.
+Four rules, and each is the answer to one of the objections above:
 
 - **The direction is the registry's, never the records'.** `declared_aliases()` pairs a
-  PARKED row's own dated `alias-of <R>` verdict with an `identity_key` that folds the two
-  names together — the same two-declaration bar `roles._alias_fold_target` sets — and the
+  PARKED row's own dated `alias-of <R>` verdict with an `ALIASES` entry naming that same
+  spelling — the same two-declaration bar `roles._alias_fold_target` sets — and the
   survivor is `<R>`. `newer()` is not consulted, which is the whole point: it crowns the
   wrong side in three of the five pairs `579` names (`DT` is dated 09-01 and `Digital
   Turbine` 08-21; `Port.io` says 200 employees where `Port` says 508; the Hebrew Menora
   record has no headcount at all).
+- **The second declaration has to BE a declaration, not a derivation.** `identity_key`
+  agreement alone is satisfied by the generic suffix stripper, and for one evening that let
+  three more records fold on one declaration and a rule: `Intel Corporation`→`Intel`,
+  `Cadence Design Systems`→`Cadence`, `JPMorgan Chase`→`JPMorganChase`. That is the
+  `AppSec Labs`/`AppSec` shape `roles._alias_fold_target` refuses by name, and the JPMorgan
+  fold moved a rendered `founded` chip from **1799 to 2000**. The three came back the same
+  evening, out of the runner's sqlite copy, which is what folding at every view buys.
+  `declared_aliases()` reads **7** pairs today of the 69 `alias-of` rows in the registry.
 - **The survivor's facts win and the alias fills only its EMPTIES**, `as_of` stays the
-  survivor's, `size_band` is re-derived. On the live export that filled nothing: all nine
-  survivors were already complete.
-- **A site form is refused even when declared** — 23 of the 40 declared pairs are `X Israel`
-  rows, and a site record carries the SITE's facts. That is the Microsoft-1989 sentence
-  above, and it is why this is a fold of what the registry ruled and not of what
-  `identity_key` groups.
-- **An ACTIVE row is never an alias.** `AWS` and `JPMorganChase` are separate scanner rows
-  with their own boards; a rule reading the alias map alone would have taken both.
+  survivor's (a stub survivor inherits the alias's date, or `is_stale` re-buys it for ever),
+  `size_band` is re-derived. On the live export that filled nothing: all six survivors were
+  already complete.
+- **A site form is refused even when declared both ways**, because a site record carries the
+  SITE's facts — the Microsoft-1989 sentence above. No declared pair is a site form today
+  (the `ALIASES` requirement excludes them all), so this guard is prophylactic, and so is
+  the one below it: **an ACTIVE row is never an alias.** 0 of the 69 `alias-of` rows are
+  active; the rule exists because a fold keyed on `identity_key` groups instead of the
+  registry's rulings would take the ACTIVE `AWS` row into `Amazon`.
 
 It runs inside **`union_store` and `save_shared`**, not once over the file, because
 `cloud_state/seen.db` is `SINGLE_WRITER: daily-digest`: a key deleted from the export comes
 back out of the runner's sqlite copy the next morning. Folding every view is what makes the
 deletion stick with no tombstone and no second writer — `242`'s two blockers, avoided rather
-than solved. `--export`'s superset guard subtracts the declared folds, so a deliberate
-deletion publishes and a real loss still refuses.
+than solved. `--export`'s superset guard subtracts **the folds that actually happened**
+(`fold_aliases` over a copy of the file), not the ones declared: the first version excused
+every declared alias, which excused 20 keys the fold refuses to touch — `Intel Israel` and
+its 19 site-form siblings could all have vanished and the guard would have printed nothing.
+
+**The fold also makes an alias's page vouch for the survivor**, because it would otherwise
+delete a brand with the duplicate. `display_plan` (the ONE reading of `board_verify` that
+`apply_display_names` writes from and `--display-report` prints, unified 2026-09-11) lets a
+verify row keyed by a declared alias answer for its survivor when the survivor has no row of
+its own: `autods - automatic dropshipping tools|autods.com/jobs/` is the page that names
+`AutoDS`, and after the fold the record is `autods`, which no page names. Measured: it
+writes exactly one name that was not written before. The survivor's own page always wins,
+and a case-twin is still held.
 
 **The employer's own name — `display_name`, evidence only (2026-08-30).** Some registry keys
 are ATS slugs (`withfaye` where the employer is Faye), and the key cannot change: it joins
@@ -4287,22 +4307,45 @@ publish.** Concretely, in `pipeline/firmographics.py`:
   these postings"* answers with that same company, is held again, and the name is struck for
   another seven days. That loop WAS the backlog: on 2026-09-11 the ten names in
   `cloud_state/firmo_failed.json` were exactly the ten names the gauge above could never
-  lose, and `Mars Antennas And Rf Systems` had been round it against `careers.mars.com` five
-  times. A record bought this way returns `board-names-other: <who owns the page>` as its
-  reason — a SUCCESS that names a defect in the ROW, printed on the `ok` line, counted in
-  the stamp and surfaced in the mail, because the fix is a registry cell and nothing in this
-  lane can make it.
-- **The relation the echo is judged by has a second, narrower arm** (`_same_company_loose`).
-  A parenthetical the page added is dropped and the whole relation re-run — `Loops
-  (getloops.ai)`, `Shabak (Israel Security Agency / Shin Bet)` — unless the asked name is a
-  DIVISION (`Sony (Semiconductor)`), where that parenthetical is the only thing telling two
-  records apart. Connectives (`and`, `the`, `of`) are dropped for an EQUALITY test only,
-  never containment: `Mars Antennas And Rf Systems` is our spelling of `MARS Antennas & RF
-  Systems Ltd.`, while `The Regatta Group` minus `the` stems to `regatta`, which
-  edge-contains `regattadata` — a UK clothing retailer cached onto an Israeli database
-  startup, `525`'s failure rebuilt by a convenience. Three names were declared in `ALIASES`
-  instead, each against the board on its own row: `rafa labartories` (a typo), `noga iso`
-  (an abbreviation) and `arrow components`.
+  lose, and `Mars Antennas And Rf Systems` had been round it twice (`attempts: 2`), each
+  strike gating it for a week. A record bought this way returns `board-names-other: <who
+  owns the page>` as its reason — a SUCCESS that names a defect in the ROW, printed on the
+  `ok` line, counted in the stamp and surfaced in the mail, because the fix is a registry
+  cell and nothing in this lane can make it.
+
+  **A second refusal is `held-twice:`, and the distinction is the whole of the mail's
+  sentence.** `held` counts only names that were RE-ASKED and still came back as somebody
+  else; a name whose second ask never ran — no url, or a budget under `DISAMBIG_MIN_S` at
+  the tail of the digest's 20-minute drain — keeps the plain `held:` and is not counted, or
+  the line would say *"every ask came back about them"* about a name nothing retried.
+  **And a struck name is gated for 7 days, so this clause appears at most one morning in
+  seven per name, not every morning.**
+- **The relation the echo is judged by has a second, narrower arm** (`_same_company_loose`),
+  and the shape of it is a lesson rather than a feature. Connectives (`and`, `the`, `of`)
+  are dropped from both sides and the stems must be **EQUAL** — never containment:
+  `Mars Antennas And Rf Systems` is our spelling of `MARS Antennas & RF Systems Ltd.`, while
+  `The Regatta Group` minus `the` stems to `regatta`, which edge-contains `regattadata` — a
+  UK clothing retailer cached onto an Israeli database startup, `525`'s failure rebuilt by a
+  convenience.
+
+  **A second arm shipped that morning and was taken back the same evening: do not re-add
+  it.** It dropped the echo's PARENTHETICAL and re-ran the whole relation, containment
+  included, so that `Loops (getloops.ai)` would answer for `Loops Lab`. Swept over all 1,450
+  `(registry name, employer_named)` pairs in `cloud_state/board_verify.json` it changed 38
+  verdicts and **13 of them were pairs this repo had already ruled were different
+  companies** — `Aquarius Spectrum` accepting `Spectrum (Charter Communications)`,
+  `Hillcrest Labs` accepting `Hill Labs (Hill Laboratories)`, `Kai Capital` accepting
+  `Kai (Kaiizen, Inc)`, each a `NOT-THEIRS` verdict already on file. In every one the
+  parenthetical IS the disambiguator — the other legal entity the model profiled — and
+  `_same_company` has exactly one production caller: the gate before a cache entry that
+  lives to 2027-03. The thirteen are pinned by name in
+  `tests/test_company_intel.py::test_the_echo_relation_refuses_a_parenthetical_that_names_another_company`.
+
+  A name that needs that rescue gets an `ALIASES` declaration instead, checked against the
+  board on its own row — the verification the strip skipped. Five were written:
+  `rafa labartories` (a typo), `noga iso` (an abbreviation), `arrow components` (a trading
+  name), `loops lab` (the board is `getloops.ai`) and `shabak israeli security agency
+  career` (an aggregator seed's tail).
 
 **What the evidence is made of, and what each half claims.** `_row_evidence` gives an
 **active** row *the careers board we read this name from*; `_posting_evidence` gives
@@ -4464,9 +4507,13 @@ age is 0 whatever the 10:17 cron did (`474`).
 **Which drain stamped it is read off `budget_min`, and the label says so** (2026-09-11,
 closing `474`). `daily-digest.yml`'s `firmo_drain` step passes `--budget-min 20` and runs
 minutes before this line is composed; `firmographics.yml` passes 60 and fires at 14:2x. Both
-write the one `firmo` key, so `bulk cron: 13 researched of 15 to do, 2 failed` was the
-DIGEST's numbers under the cron's name on four consecutive mornings (09-08..09-11), while
-the cron itself researched 2 of 2 with no failures. The line now reads `digest drain (20m):`
+write the one `firmo` key, so the mail reported the DIGEST's numbers under the cron's name
+on four consecutive mornings — 09-08 `14 of 16, 2 failed`, 09-09 `12 of 15, 3 failed`,
+09-10 `9 of 10, 1 failed`, 09-11 `13 of 15, 2 failed` — while the 10:17 cron researched
+3, 2, 3 and 2 names those days with **no failures at all**. `--budget-min 0` is the
+default and means UNBOUNDED, so a session's own run is `bulk cron`, never `digest drain
+(0m)`; the drained-queue early return stamps `budget_min` too, or the morning the queue is
+finally empty is the morning the label goes wrong. The line now reads `digest drain (20m):`
 at or under 30 minutes and `bulk cron (60m):` above it; a stamp with no `budget_min` — every
 one written before today — keeps the old wording. **Whether the 10:17 cron FIRED is no
 longer this line's question**: it is the `cron` watch's (`tests/schedule_census.py --alarm`),

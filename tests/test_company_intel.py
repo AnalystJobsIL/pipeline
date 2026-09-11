@@ -901,6 +901,13 @@ def test_audit_lines_never_raises_on_a_legacy_report(env):
               "scoped": False, "error": "", "gated": 0}
     lines, warn = CI.audit_lines(legacy)      # every new key must be read with .get
     assert lines and isinstance(warn, list)
+    # ...and the same for a legacy CRON stamp, which is the branch the 2026-09-11 drain
+    # label lives in: with no `cron` key at all the whole block is skipped, so this test
+    # covered none of it (a raiser in `_drain_label` left it passing)
+    old_shape = {**legacy, "cron": {"age": 1, "date": "2026-09-10", "researched": 19}}
+    lines, warn = CI.audit_lines(old_shape)
+    assert "bulk cron: last ran 2026-09-10 (1d ago), 19 researched" in lines[0]
+    assert "held" not in lines[0] and isinstance(warn, list)
 
 
 def test_the_budget_knobs_are_read_at_call_time_not_at_import(monkeypatch):
@@ -3180,23 +3187,52 @@ def _held_seam(monkeypatch, *answers):
     return seam
 
 
-def test_the_echo_may_wear_the_pages_own_annotation_but_never_another_companys_name():
-    """`_same_company` compares the name we asked about with the name the model says it
-    profiled, and five of the ten stuck names differed only in how the PAGE spells itself.
-    The two arms are not equally trusting, and the pairs that must still be REFUSED are the
-    point of the test -- a false accept caches another company's facts until 2027-02."""
-    same = F._same_company
-    # the annotation: a gloss, a domain, a bilingual tail. Live echoes, 2026-09-08..09-11
-    assert same("Loops Lab", "Loops (getloops.ai)")
-    assert same("Shabak - Israeli Security Agency - Career",
-                "Shabak (Israel Security Agency / Shin Bet)")
-    assert same("Noga Iso", 'Noga - Israel Independent System Operator (נגה)')
-    # ...and NOT for a division, where the parenthetical is the whole identity
-    assert not same("Sony (Semiconductor)", "Sony (PlayStation)")
+# The thirteen pairs an ECHO-SIDE PARENTHETICAL STRIP accepted, with the board_verify
+# verdict this repo had already recorded about each. They are here as a list rather than a
+# sentence because the arm that accepted them looked obviously safe: drop what the page put
+# in brackets, then compare. In every one of these the bracket IS the disagreement -- the
+# other legal entity the model profiled -- and `_same_company` has exactly one production
+# caller, the gate between a wrong company's record and a cache entry that lives to 2027-03.
+_ECHO_MUST_REFUSE = [
+    ("Aquarius Spectrum", "Spectrum (Charter Communications)", "NOT-THEIRS"),
+    ("Canopy Care", "Canopy (Canopy Oncology)", "NOT-THEIRS"),
+    ("Hillcrest Labs", "Hill Labs (Hill Laboratories)", "NOT-THEIRS"),
+    ("Kai Capital", "Kai (Kaiizen, Inc)", "NOT-THEIRS"),
+    ("kai.ai", "Kai (Kaiizen, Inc)", "UNVERIFIABLE"),
+    ("T-Bud", "Bud (Bud Systems)", "NOT-THEIRS"),
+    ("Sales Career Hub", "CareerHub (JAO Works Inc.)", "NOT-THEIRS"),
+    ("Global Dev Experts", "Devexperts (Devexperts Solutions IE Limited)", "NOT-THEIRS"),
+    ("Rewire Solutions - Business Automation",
+     "Rewire (trade name of MI Company Holding B.V.)", "NOT-THEIRS"),
+    ("Yamo Overseas Recruiters Limited", "Yamo Ltd (jobs listed by Yamo Recruiters)",
+     "NOT-THEIRS"),
+    ("Human Capital Recruitment1", "Human Capital Recruitment (HCR)", "NOT-THEIRS"),
+    ("Sysnet part of Amanet TEC", "Sysnet Group (קבוצת סיסנת)", "not-a-board"),
+    ("Hillcrest Labs", "Hill Labs (Hill Laboratories) Ltd", "NOT-THEIRS"),
+]
+
+
+def test_the_echo_relation_refuses_a_parenthetical_that_names_another_company():
+    """WAVE FINDING, 2026-09-11, and the arm it killed had shipped: `_same_company_loose`
+    also dropped the echo's PARENTHETICAL and re-ran the whole relation, containment
+    included. Swept over all 1,450 `(registry name, employer_named)` pairs in
+    `cloud_state/board_verify.json` it changed 38 verdicts, and THIRTEEN of them were pairs
+    this repo had already ruled were different companies. Every one is below. The arm is
+    gone; a name that needs that rescue gets an `ALIASES` declaration checked against the
+    board on its own row, which is the verification the strip skipped."""
+    for asked, echo, verdict in _ECHO_MUST_REFUSE:
+        assert not F._same_company(asked, echo), f"{asked} <- {echo} ({verdict})"
+    # ...and the division case the strip would also have taken
     assert F.is_division_name("Sony (Semiconductor)")
-    # the connectives, EQUALITY ONLY. `Mars Antennas And Rf Systems` is our spelling of
-    # `MARS Antennas & RF Systems Ltd.`; `The Regatta Group` is a UK clothing retailer and
-    # `Regatta Data` is an Israeli database startup, and containment would have joined them
+    assert not F._same_company("Sony (Semiconductor)", "Sony (PlayStation)")
+
+
+def test_the_echo_may_spell_a_connective_its_own_way_but_never_contain_another_name():
+    """What is LEFT of the loose relation: `and`/`the`/`of` dropped from both sides and the
+    stems must be EQUAL. Containment even here is BACKLOG 525 again -- `The Regatta Group`
+    minus `the` stems to `regatta`, which edge-contains `regattadata`, and a UK clothing
+    retailer would be cached onto an Israeli database startup."""
+    same = F._same_company
     assert same("Mars Antennas And Rf Systems", "MARS Antennas & RF Systems Ltd.")
     assert not same("Regatta Data", "The Regatta Group")
     assert not same("Mars Antennas And Rf Systems", "Mars, Incorporated")
@@ -3204,11 +3240,18 @@ def test_the_echo_may_wear_the_pages_own_annotation_but_never_another_companys_n
     # the strict relation is untouched: slug, suffix, acronym, empty echo
     assert same("withfaye", "Faye") and same("SolarEdge", "SolarEdge Technologies")
     assert same("X", "") and not same("Kidum Rehab Projects", "Kidum Advancement Group")
-    # and the three declarations that carry a board as their evidence
-    for asked, echo in (("Rafa Labartories", "Rafa Laboratories Ltd."),
+    # The five names rescued by a DECLARATION, each checked against its own row's board
+    # before it was written. `Loops Lab` and `Shabak` need the declaration precisely because
+    # the strip is gone; the other three needed one anyway.
+    for asked, echo in (("Loops Lab", "Loops (getloops.ai)"),
+                        ("Shabak - Israeli Security Agency - Career",
+                         "Shabak (Israel Security Agency / Shin Bet)"),
+                        ("Noga Iso", "Noga - Israel Independent System Operator (נגה)"),
+                        ("Rafa Labartories", "Rafa Laboratories Ltd."),
                         ("Arrow Components", "Arrow Electronics, Inc.")):
         assert same(asked, echo), asked
-        assert F.identity_key(asked) == F.identity_key(echo.rsplit(",", 1)[0])
+        assert F.identity_key(asked) != " ".join(asked.lower().split()), \
+            f"{asked} is rescued by a declaration, not by the relation"
 
 
 def test_a_held_name_is_re_asked_about_the_NAME_and_the_answer_says_whose_board_it_is(monkeypatch):
@@ -3240,7 +3283,10 @@ def test_a_held_name_is_re_asked_about_the_NAME_and_the_answer_says_whose_board_
     seam = _held_seam(monkeypatch, _rec(employer_name="The Regatta Group"), {"known": False})
     rec, why = F.research_with_evidence(
         "Regatta Data", {"board_url": "https://www.regattagroupcareers.com/vacancies/"})
-    assert rec is None and why == "held: research profiled 'The Regatta Group', not this name"
+    # `held-twice`, and the distinction is the whole of the mail's sentence: the counter
+    # this feeds says "every ask, including the name-only one, came back about them". A
+    # name whose second ask never RAN keeps the plain `held:` and is not counted.
+    assert rec is None and why == "held-twice: research profiled 'The Regatta Group', not this name"
     assert len(seam.prompts) == 2
     assert F.held_other(why) == "The Regatta Group"
     # ...and a name the model could not place at all keeps the POSTING as its second
@@ -3254,9 +3300,11 @@ def test_a_held_name_is_re_asked_about_the_NAME_and_the_answer_says_whose_board_
     assert F.research_with_evidence("Landacorp", {})[1].startswith("held: ")
     assert len(seam.prompts) == 1
     seam = _held_seam(monkeypatch, _rec(employer_name="Totally Other Ltd"), _rec())
-    assert F.research_with_evidence("Landacorp", {"board_url": "https://c.co/j"},
-                                    budget=lambda: 30)[0] is None
-    assert len(seam.prompts) == 1
+    rec, why = F.research_with_evidence("Landacorp", {"board_url": "https://c.co/j"},
+                                        budget=lambda: 30)
+    assert rec is None and len(seam.prompts) == 1
+    assert why.startswith("held: ") and not why.startswith("held-twice: "), \
+        "a second ask that never ran must not be counted as one that came back"
 
 
 def test_a_declared_alias_record_folds_onto_the_survivor_the_registry_named():
@@ -3268,19 +3316,26 @@ def test_a_declared_alias_record_folds_onto_the_survivor_the_registry_named():
     rows = [{"company_name": "Port", "active": "true", "notes": ""},
             {"company_name": "Port.io", "active": "false",
              "notes": "alias-of Port 2026-09-11: its 9 cards are comeet port/59.004"},
-            # an ACTIVE row is never an alias: AWS and Amazon are two scanner rows
+            # an ACTIVE row is never an alias of anything (prophylactic: no declared alias
+            # is active today, and a rule reading only the alias map would take `AWS`)
             {"company_name": "AWS", "active": "true",
              "notes": "alias-of Amazon 2026-01-01: never read, the row is active"},
             {"company_name": "Amazon", "active": "true", "notes": ""},
             # the note names a company `identity_key` does not agree with: one declaration
             {"company_name": "OTORIO", "active": "false", "notes": "alias-of Armis 2026-09-01: x"},
             {"company_name": "Armis", "active": "true", "notes": ""},
-            # a site form: declared, and still not folded (its record is the SITE's facts)
+            # THE SECOND DECLARATION HAS TO BE A DECLARATION. `identity_key` agreement alone
+            # is satisfied by the generic suffix stripper, so this row -- parked, dated,
+            # and folding onto `Intel` for free -- is refused. Three records folded on that
+            # derivation for one evening (`Intel Corporation`, `JPMorgan Chase`,
+            # `Cadence Design Systems`) and the JPMorgan fold moved a rendered `founded`
+            # chip from 1799 to 2000. Same bar as `roles._alias_fold_target`.
             {"company_name": "Intel Israel", "active": "false",
              "notes": "alias-of Intel 2026-08-20: one company, two rows"},
             {"company_name": "Intel", "active": "true", "notes": ""}]
     declared = F.declared_aliases(rows)
-    assert declared == {"Port.io": "Port", "Intel Israel": "Intel"}, declared
+    assert declared == {"Port.io": "Port"}, declared
+    assert "Intel Israel" not in declared, "a derivation is not a second declaration"
     recs = {"Port": {**REC, "employees_global": 508, "founded": 2022, "as_of": "2026-08-21",
                      "il_center": ""},
             "Port.io": {**REC, "employees_global": 200, "as_of": "2026-08-22",
@@ -3291,6 +3346,12 @@ def test_a_declared_alias_record_folds_onto_the_survivor_the_registry_named():
     folded = F.fold_aliases(recs, declared)
     assert folded == [("Port.io", "Port")], folded
     assert "Port.io" not in recs and "AWS" in recs and "Intel Israel" in recs
+    # ...and a site form is refused even when it IS declared both ways, because a site
+    # record carries the SITE's facts -- folding `Intel Israel` into `Intel` would date
+    # Intel's founding to the year its Haifa centre opened (the 98/242 measurement)
+    site = {"Intel": {**REC, "founded": 1968}, "Intel Israel": {**REC, "founded": 1974}}
+    assert F.fold_aliases(site, {"Intel Israel": "Intel"}) == []
+    assert site["Intel Israel"]["founded"] == 1974
     assert recs["Port"]["employees_global"] == 508, "the survivor's own count survives"
     assert recs["Port"]["as_of"] == "2026-08-21", "a fold learns nothing new"
     assert recs["Port"]["il_center"] == "Tel Aviv (HQ)", "the alias fills only EMPTIES"
@@ -3379,6 +3440,10 @@ def test_the_mail_says_which_drain_stamped_the_line_and_names_what_is_held():
     # pin that wording -- so the fallback stays `bulk cron`
     assert "bulk cron: last ran 2026-09-10 (1d ago), 19 researched" in \
         line(age=1, date="2026-09-10", researched=19)[0][0]
+    # ...and `--budget-min 0` is the DEFAULT and means UNBOUNDED, so it is not the digest's
+    # 20-minute drain. `digest drain (0m)` would invert the one thing this label says.
+    assert "bulk cron: last ran 2026-09-10 (1d ago), 3 researched" in \
+        line(age=1, date="2026-09-10", researched=3, budget_min=0.0)[0][0]
     # the warning the age rule can no longer raise (the drain stamps every morning): the
     # gap GREW and a name is held, which no retry of ours can answer
     grew = {**CI._report(), "registry_backlog": 12, "backlog_delta": 2, "published": True,
@@ -3401,10 +3466,10 @@ def test_the_stamp_counts_held_and_borrowed_boards_in_one_token_per_key(tmp_path
              "api_url": "https://x.example/jobs"} for n in ("Mars Antennas And Rf Systems",
                                                             "Regatta Data", "Wix")]
     monkeypatch.setattr(R, "load_companies", lambda **kw: rows)
-    answers = {"Mars Antennas And Rf Systems": (None, "held: research profiled 'Mars, "
+    answers = {"Mars Antennas And Rf Systems": (None, "held-twice: research profiled 'Mars, "
                                                 "Incorporated', not this name"),
-               "Regatta Data": (None, "held: research profiled 'The Regatta Group', not "
-                                "this name"),
+               "Regatta Data": (None, "held-twice: research profiled 'The Regatta Group', "
+                                "not this name"),
                "Wix": ({**REC}, F.REASON_BOARD_OTHER % "Somebody Else")}
     monkeypatch.setattr(R, "research_with_evidence",
                         lambda name, *a, **k: answers[name])

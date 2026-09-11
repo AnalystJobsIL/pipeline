@@ -735,7 +735,12 @@ def _drain_label(cron):
         bm = float(cron.get("budget_min"))
     except (TypeError, ValueError):
         return "bulk cron"          # an old-shape stamp says nothing about who wrote it
-    return f"digest drain ({bm:g}m)" if bm <= DRAIN_BUDGET_MAX else f"bulk cron ({bm:g}m)"
+    # `--budget-min 0` is the DEFAULT and means unbounded, so `bm > 0` is load-bearing: a
+    # session's own unbounded run would otherwise be labelled `digest drain (0m)`, which
+    # inverts the one thing this label exists to say.
+    if 0 < bm <= DRAIN_BUDGET_MAX:
+        return f"digest drain ({bm:g}m)"
+    return f"bulk cron ({bm:g}m)" if bm > 0 else "bulk cron"
 
 
 def _ascii(s, n=80):
@@ -932,6 +937,7 @@ def _audit_lines(rep):
     delta = rep.get("backlog_delta")
     _rb = rep.get("registry_backlog", 0)
     cron = rep.get("cron") or {}
+    _age = cron.get("age") if cron else None
     if cron:
         # the bulk cron's last stamp, as FACTS: its age is `stages.alarms("firmo", 2)`'s
         # to judge, but "61 researched of 67 to do, 6 left" is what tells a drained
@@ -977,8 +983,9 @@ def _audit_lines(rep):
                     f"are HELD: the board on the row belongs to another company, so no "
                     f"retry can profile them — the url is a registry cell"
                     + (f" ({cron['held_names']})" if cron.get("held_names") else ""))
-    _age = cron.get("age") if cron else None
-    if isinstance(delta, int) and delta > 0 and (not cron or (isinstance(_age, int) and _age >= 3)):
+    # `elif`: both arms open with the same "registry backlog grew +N to M" clause, and a
+    # reader who meets it twice in one warning block learns to skim the block
+    elif isinstance(delta, int) and delta > 0 and (not cron or (isinstance(_age, int) and _age >= 3)):
         warn.append(f"registry backlog grew {delta:+d} to {_rb} since "
                     f"{rep.get('backlog_prev_date') or '?'} and the bulk cron "
                     + ("has never run" if not cron else f"last ran {_age}d ago")

@@ -3235,6 +3235,19 @@
     "stage_note": "NASDAQ: CDNS, ~$90B market cap; ~13,800 employees as of Dec 2025",
     "sub_sector": "Electronic design automation software and IP for chip and system design"
   },
+  "Cadence Design Systems": {
+    "as_of": "2026-08-21",
+    "business_model": "Licenses EDA software and semiconductor IP plus sells emulation/prototyping hardware, largely via recurring subscription/term licenses",
+    "customer_type": "semiconductor and electronics-systems companies",
+    "employees_global": 14049,
+    "founded": 1988,
+    "il_center": "Petah Tikva (R&D + sales) and Haifa (R&D, ex-Jasper); HQ in San Jose, US",
+    "sector": "semiconductors / eda",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NASDAQ: CDNS, S&P 500 component",
+    "sub_sector": "Electronic design automation software, IP, and hardware for chip and system design"
+  },
   "Cadence Israel": {
     "as_of": "2026-08-21",
     "business_model": "Licenses EDA software, sells design IP and hardware emulation systems to chip makers",
@@ -8842,6 +8855,19 @@
     "stage_note": "Nasdaq: INTC, listed since 1971",
     "sub_sector": "CPU/GPU design and chip manufacturing (foundry), plus data-center and AI silicon"
   },
+  "Intel Corporation": {
+    "as_of": "2026-08-22",
+    "business_model": "Designs, manufactures and sells microprocessors and related silicon/platform products, plus contract foundry manufacturing",
+    "customer_type": "OEMs, cloud/data-center operators, enterprises",
+    "employees_global": 85000,
+    "founded": 1968,
+    "il_center": "Haifa (chip design & AI R&D), Petah Tikva, Jerusalem (R&D); Kiryat Gat (Fab 28 manufacturing); HQ in US",
+    "sector": "semiconductors",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NASDAQ: INTC, listed since 1971",
+    "sub_sector": "CPUs, chipsets, foundry services and AI/data-center silicon design and manufacturing"
+  },
   "Intel Israel": {
     "as_of": "2026-08-21",
     "business_model": "sells processors and chip platforms to OEMs/cloud providers plus contract foundry manufacturing",
@@ -9132,6 +9158,19 @@
     "stage": "public",
     "stage_note": "NYSE: JLL, global commercial real estate services firm",
     "sub_sector": "Commercial real estate, facilities management, investment management"
+  },
+  "JPMorgan Chase": {
+    "as_of": "2026-08-22",
+    "business_model": "Interest income on loans/deposits plus fees from investment banking, trading, asset management and payments",
+    "customer_type": "consumers, SMBs, enterprises, institutional investors",
+    "employees_global": 318512,
+    "founded": 1799,
+    "il_center": "Herzliya (Israel Tech Center R&D) + Tel Aviv (banking office); HQ in New York, US",
+    "sector": "fintech / banking",
+    "size_band": "XL",
+    "stage": "public",
+    "stage_note": "NYSE: JPM; ~318,512 employees per FY2025 10-K",
+    "sub_sector": "Global bank; Israel Tech Center builds trading (Athena), AI, fraud-detection and blockchain systems"
   },
   "JPMorganChase": {
     "as_of": "2026-08-22",
