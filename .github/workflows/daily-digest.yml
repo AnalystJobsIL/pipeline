@@ -59,6 +59,18 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  # A KILLED STEP MUST STILL HAVE A LOG (infra, 2026-09-12). Python block-buffers stdout
+  # when it is not a terminal, so a step killed by its own `timeout-minutes` takes the whole
+  # buffer with it. That is exactly what the `discovery` step below did: killed at 25 minutes
+  # having printed NOTHING, while the run had in fact read 4,888 LinkedIn postings and
+  # committed them (`cloud_state/source_health.json`) -- the work survived and only the
+  # evidence died. On 2026-09-11 all 52 of that script's lines carry ONE timestamp,
+  # 09:31:33: a single flush, at exit. 16 of those 52 prints pass `flush=True`, which is
+  # why per-call flushing is not the fix. Set at the workflow ROOT, so no step in this file
+  # can be buffered by accident, and pinned for all eleven workflows by
+  # `test_every_workflow_unbuffers_python_so_a_killed_step_still_has_a_log`.
+  # ARCHITECTURE.md section 8.
+  PYTHONUNBUFFERED: "1"
   # BLAST RADIUS, not a budget (lane: infra, 2026-08-28). The month's ceiling is
   # `pipeline/bd_budget.py`; this stops ONE job's loop running away, which nothing did
   # before -- retry-unreachable could buy 600 credits a night and crack_walled ~2,000,

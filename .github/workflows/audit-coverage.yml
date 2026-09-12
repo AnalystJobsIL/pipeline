@@ -18,6 +18,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  # A killed step must still have a log: python block-buffers stdout when it is not a
+  # terminal, so a step killed by `timeout-minutes` dies holding its output (infra,
+  # 2026-09-12; the story is in daily-digest.yml and ARCHITECTURE.md section 8).
+  PYTHONUNBUFFERED: "1"
   # BLAST RADIUS, not a budget (lane: infra, 2026-08-28). The month's ceiling is
   # `pipeline/bd_budget.py`; this stops ONE job's loop running away, which nothing did
   # before -- retry-unreachable could buy 600 credits a night and crack_walled ~2,000,

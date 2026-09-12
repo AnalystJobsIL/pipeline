@@ -8009,6 +8009,21 @@ is the most reusable page in the repo: **a green workflow means nothing here.**
 7. `python -m pipeline.run` with `--only`/`--limit` now writes `out/docs-preview/`, not the
    published board. Several root scripts have **no `__main__` guard** — importing them runs
    them (`merge_research.py` rewrites state on import).
+8. **A step killed by a timeout prints NOTHING, because python block-buffers stdout**
+   (`infra`, 2026-09-12). The digest's `discovery` step was killed at `timeout-minutes: 25`
+   and its log held one line — the timeout error. The work had in fact happened: that run's
+   commit carries `discovered_cache.json` **+5,398/−1,021** and
+   `cloud_state/source_health.json` `linkedin: {last_run: "2026-09-12", last_count: 4888}`,
+   the highest reading in the series. **The evidence died and the data did not**, which is
+   the worst possible ordering: a capability that produced cannot be verified by what it
+   produced (rule 1), and the step's own budget is what deleted the proof. The mechanism is
+   visible the day before: all 52 lines of the same script's 2026-09-11 log carry ONE
+   timestamp, 09:31:33 — a single flush, at exit. `flush=True` per print does not fix the
+   class (that script passes it on 16 of 52, and not on the line that mattered), and `-u`
+   per command fixes only today's commands — 107 of the 113 python invocations across the
+   eleven workflows had none. **Every workflow sets `PYTHONUNBUFFERED: "1"` at its ROOT**,
+   pinned by `test_every_workflow_unbuffers_python_so_a_killed_step_still_has_a_log`, which
+   demands the root scope so a step added later cannot be buffered by accident.
 
 ### The guard rails, and what each one is for
 

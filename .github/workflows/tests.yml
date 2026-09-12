@@ -34,6 +34,12 @@ on:
 permissions:
   contents: read
 
+env:
+  # A killed step must still have a log: python block-buffers stdout when it is not a
+  # terminal, so a step killed by `timeout-minutes` dies holding its output (infra,
+  # 2026-09-12; the story is in daily-digest.yml and ARCHITECTURE.md section 8).
+  PYTHONUNBUFFERED: "1"
+
 jobs:
   guard:
     runs-on: ubuntu-latest

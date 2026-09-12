@@ -8017,6 +8017,45 @@ def test_every_writer_workflow_commits_through_persist_state_and_always():
         assert "if: always()" in step, f"{os.path.basename(wf)}: the persist step must run after a failed step or a timeout"
 
 
+def test_every_workflow_unbuffers_python_so_a_killed_step_still_has_a_log():
+    """2026-09-12: the `discovery` step was killed at `timeout-minutes: 25` and its log held
+    exactly ONE line, the timeout error -- yet that run's own commit (`71aff56`) carries
+    `discovered_cache.json` +5,398/-1,021 and `cloud_state/source_health.json`
+    `linkedin: {last_run: "2026-09-12", last_count: 4888}`. The work survived; only the
+    evidence died, in python's stdio buffer. The 2026-09-11 log is the proof of mechanism:
+    all 52 of that script's lines carry one timestamp, 09:31:33 -- a single flush, at exit.
+
+    Per-`print` flushing is not the fix and the numbers say why: `discovery_daily.py` passes
+    `flush=True` on 16 of its 52 prints, and the per-query LinkedIn line is not one of them.
+    Nor is `-u` on each command: 107 of the 113 python invocations in these eleven files had
+    none, and the six that did prove the habit does not spread. So it is one variable at the
+    workflow ROOT -- which is what this guard demands. A job- or step-level `env:` would let
+    the next step added to a file be buffered by accident, and the whole point is that it
+    cannot be.
+    """
+    import glob
+    import re
+    wfs = sorted(glob.glob(os.path.join(_REPO, ".github", "workflows", "*.yml")))
+    assert len(wfs) == 11, ("a workflow was added or removed; name it here and give it the "
+                            "root env: too: %s" % [os.path.basename(w) for w in wfs])
+    # a command, not `setup-python@v6`, not `python-version:` (both are followed by @ or -)
+    cmd = re.compile(r"\bpython3?(?=\s|$)")
+    for wf in wfs:
+        raw = open(wf, encoding="utf-8").read()
+        live = "\n".join(re.sub(r"(?<!\S)#.*$", "", ln) for ln in raw.split("\n"))
+        root = live.split("\njobs:\n")[0]
+        if 'PYTHONUNBUFFERED: "1"' in root:
+            continue
+        bare = [ln.strip() for ln in live.split("\n")
+                if cmd.search(ln) and not re.search(r"\bpython3?\s+-u\b", ln)]
+        assert not bare, (
+            "%s sets no root PYTHONUNBUFFERED and has %d python invocation(s) with no -u: a "
+            "step killed by its own timeout-minutes will print NOTHING, exactly as the "
+            "2026-09-12 discovery step did. Add `PYTHONUNBUFFERED: \"1\"` to the "
+            "workflow-root env: (above `jobs:`), not to a job or a step. First: %s"
+            % (os.path.basename(wf), len(bare), bare[0][:90]))
+
+
 def test_failed_pre_steps_reach_the_stages_line(monkeypatch, tmp_path):
     """`toJSON(steps)` -> WORKFLOW_STEP_OUTCOMES -> one bold line per failed step. Before
     2026-08-25 a crashed liveness scan was `|| echo "liveness scan skipped"` and green."""
