@@ -30895,7 +30895,14 @@ def test_the_delta_audit_lines_bind_to_exactly_one_record_each():
     for e in mine:
         assert e["status"] == "withdrawn" and e["url"].startswith("https://")
         hits = [rid for rid, rec in records.items() if e in ret.match_all(rec)]
-        assert hits == [e["role_id"]], (e["role_id"], hits)
+        # ONE record, by its CURRENT id: roles' title canon (585, 2026-09-12) renamed
+        # `aqurate|data analyst aqurate data` to `aqurate|data analyst` and kept the old id in
+        # `renamed_from`; the line still binds (that is the whole point of 583) and the
+        # record is `withdrawn`. Insisting on the line's own id re-declared a working
+        # binding a defect the morning the rename ran (orchestrator, 2026-09-12).
+        want = [rid for rid, rec in records.items()
+                if rid == e["role_id"] or e["role_id"] in (rec.get("renamed_from") or [])]
+        assert hits == want and len(want) == 1, (e["role_id"], hits, want)
 
 # ------------------------------------------------------------------ lane: infra, 2026-09-11
 # A parked row's re-check CADENCE moved out of the 220-char notes cell and into
