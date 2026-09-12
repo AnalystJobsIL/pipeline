@@ -350,16 +350,23 @@
   "verdict": "nolisting"
  },
  "3D Signals": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "https://3dsignals.com/careers/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "unreachable",
+    "date": "2026-09-12",
+    "url": "https://3dsignals.com/careers/",
+    "tries": 1
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "unreachable"
  },
  "44 Ventures": {
   "last": "2026-08-29",
@@ -7441,7 +7448,7 @@
   "verdict": "note-migrated"
  },
  "Blender": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
@@ -7455,9 +7462,15 @@
     "rung": "listing-hunt",
     "url": "https://www.blender.org/jobs/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "validated",
+    "date": "2026-09-12",
+    "url": "https://www.blender.org/careers/"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "validated"
  },
  "Blender Loans": {
   "last": "2026-08-30",
@@ -28487,7 +28500,7 @@
   "verdict": "nolisting"
  },
  "Kamada": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -28525,9 +28538,16 @@
     "rung": "listing-hunt",
     "url": "https://career.kamada.com/Positions",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "unreachable",
+    "date": "2026-09-12",
+    "url": "https://career.kamada.com/Positions",
+    "tries": 1
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "unreachable"
  },
  "Kan Israeli Publish Broadcasting Corporation": {
   "last": "2026-08-30",
