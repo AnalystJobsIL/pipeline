@@ -2344,3 +2344,11 @@ Seetrue AI,scrape,,https://seetrue.ai/careers,false,queue-hunt 2026-09-12: caree
 Be2See.,scrape,,https://www.be2see.co.il/jobs,false,queue-hunt 2026-09-12: careers page documented; monitored candidate
 EasySend,scrape,,https://www.easysend.io/careers,false,queue-hunt 2026-09-12: careers page documented; monitored candidate
 Corephotonics Ltd,scrape,,https://corephotonics.com/careers,false,queue-hunt 2026-09-12: careers page documented; monitored candidate
+Act,ashby,act,https://api.ashbyhq.com/posting-api/job-board/act,true,auto-expand slug-probe; 4/4 IL
+GE Vernova,scrape,https://www.gevernova.com/,https://www.gevernova.com/,false,scanned; no open Israel roles now | own-site 2026-09-12: www.gevernova.com linkback
+Glassix,scrape,https://www.glassix.com/,https://www.glassix.com/,false,scraped page is not this company's; no listing found | own-site 2026-09-12: www.glassix.com linkback
+Telnyx,greenhouse,telnyx54,https://boards-api.greenhouse.io/v1/boards/telnyx54/jobs,true,auto-expand; 54/2 IL
+TransPerfect,scrape,https://www.transperfect.com/about/careers,https://www.transperfect.com/about/careers,true,auto-expand scrape; 3 IL
+EisnerAmper,scrape,https://www.eisneramper.com/,https://www.eisneramper.com/,false,scanned; no open Israel roles now | own-site 2026-09-12: www.eisneramper.com linkback
+Clariness,greenhouse,clariness,https://boards-api.greenhouse.io/v1/boards/clariness/jobs,true,auto-expand slug-probe; 37/1 IL
+Genius Sports,scrape,https://www.geniussports.com/,https://www.geniussports.com/,false,scanned; no open Israel roles now | own-site 2026-09-12: www.geniussports.com linkback
