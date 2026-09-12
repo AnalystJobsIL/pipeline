@@ -22380,6 +22380,81 @@ def test_every_long_tests_step_has_a_named_budget_below_its_job_timeout():
         "a full-history guard checkout makes test_ci_itself_confirms_why_the_tree_check_cannot_run_there red on a non-master ref (wave 1); 439 lands with its docs half or not at all"
 
 
+def _digest_steps():
+    """[(id or name, timeout-minutes or None, step text)] for daily-digest.yml's one job,
+    plus the job's own timeout. The same split-by-indentation shape as `_tests_yml_jobs`,
+    pointed at the file that actually mails the product."""
+    wf = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"),
+              encoding="utf-8").read()
+    body = wf.split("\njobs:\n", 1)[1]
+    job_timeout = int(re.search(r"^    timeout-minutes:\s*(\d+)", body, re.M).group(1))
+    steps = []
+    for step in re.split(r"^      - (?=name:|uses:)", body.split("\n    steps:\n", 1)[1],
+                         flags=re.M)[1:]:
+        t = re.search(r"^        timeout-minutes:\s*(\d+)", step, re.M)
+        i = re.search(r"^        id:\s*(\S+)", step, re.M)
+        n = re.search(r"^name: (.*)", step)
+        steps.append((i.group(1) if i else (n.group(1).strip() if n else "?"),
+                      int(t.group(1)) if t else None, step))
+    return steps, job_timeout
+
+
+def test_the_digest_step_budgets_fit_inside_the_job_that_runs_them():
+    """`daily-digest.yml`'s own comment claimed the step timeouts summed to 270 and that the
+    job cap sat above that sum "so the persist/outcome steps are reached by a step failing,
+    never by the job being cancelled from under them (BACKLOG 128)". Both halves were false:
+    the real sum was 313 against a job cap of 285, so on a night where every step took its
+    whole budget the job died and `persist` -- the step that commits the LLM verdicts and the
+    caches the run paid for -- never ran. Nothing guarded it: the only budget guard in the
+    repo read `tests.yml`, which is not the file that mails anything.
+
+    Latent rather than live (the job measured 32 min on 2026-08-25 and 67 on 2026-09-12), and
+    latent is exactly what a guard is for."""
+    steps, job_timeout = _digest_steps()
+    total = sum(t for _, t, _ in steps if t)
+    assert total <= job_timeout, (
+        "the digest's step timeouts sum to %d against a job cap of %d: a run that used every "
+        "budget would be cancelled from under `persist`/`outcome` (BACKLOG 128). Raise the "
+        "job cap or lower a step." % (total, job_timeout))
+    # ...and the sum must stay MEANINGFUL: a step with no timeout contributes nothing here
+    # and can overrun to the job cap on its own, which is the other way to defeat this.
+    naked = [i for i, t, _ in steps if t is None and "uses:" not in _.split("\n")[0]]
+    assert not naked, ("every step of the digest carries its own timeout-minutes, or the sum "
+                       "above is not a bound: %s" % naked)
+
+
+def test_the_discovery_step_dies_instead_of_being_abandoned():
+    """`timeout-minutes` does not kill the process. Measured 2026-09-12: the `discovery` step
+    was cancelled at 09:34:06 and `discovery_daily.py`'s atexit Bright Data ledger line is
+    stamped 09:37:46 -- 3m40s of life past its own cancellation, during which it wrote
+    `research_companies.json`, while the telegram step (started 09:34:06) wrote the SAME file
+    at 09:34:10. Two writers on the intake queue in two different steps: `CLAUDE.md` rule 4
+    in a place the rule cannot reach, and a failure class that only exists once a step
+    overruns. GNU `timeout` ends the process for real; rc 124/137 keeps the step's `failure`
+    outcome reaching the mail through `WORKFLOW_STEP_OUTCOMES`, which is how the operator
+    learned about it at all.
+
+    `continue-on-error` must SURVIVE: an overrun must not skip the pipeline step, which is
+    the only thing that mails anything."""
+    steps, _ = _digest_steps()
+    found = [s for s in steps if s[0] == "discovery"]
+    assert len(found) == 1, [s[0] for s in steps]
+    _, step_timeout, text = found[0]
+    code = "\n".join(l.split("#", 1)[0] for l in text.splitlines())
+    m = re.search(r"^\s*timeout --signal=INT --kill-after=\d+ (\d+)m python3? "
+                  r"discovery_daily\.py", code, re.M)
+    assert m, ("the discovery step must run `discovery_daily.py` under a named GNU `timeout` "
+               "budget, or `timeout-minutes` abandons it instead of killing it:\n%s"
+               % code.strip()[:400])
+    assert int(m.group(1)) < step_timeout, (
+        "the GNU budget %sm must be BELOW the step's timeout-minutes %s, or the step cap "
+        "fires first and we are back to an abandoned process" % (m.group(1), step_timeout))
+    assert "continue-on-error: true" in text, \
+        "an overrun of discovery must not skip the pipeline step that mails the digest"
+    assert "::error::discovery exited" in text, \
+        "a non-zero rc must name itself in the log, not just set the step's outcome"
+
+
 def test_persist_run_provenance_names_the_run_in_the_subject():
     """`cloud run: state + digest for <date> [skip ci]` said nothing about WHICH run made it,
     so "unattended" was provable only by `gh run view` against a run record that is sometimes

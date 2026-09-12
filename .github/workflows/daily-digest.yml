@@ -86,11 +86,15 @@ env:
 jobs:
   digest:
     runs-on: ubuntu-latest
-    # per-step timeouts sum to 270 min (each is its script's own budget + headroom); the job
-    # cap sits above that sum so the persist/outcome steps are reached by a step failing,
-    # never by the job being cancelled from under them (BACKLOG 128). Measured: the whole
-    # job ran 32 min on 2026-08-25.
-    timeout-minutes: 285
+    # The per-step timeouts sum to 313 min, and the job cap must sit ABOVE that sum so the
+    # persist/outcome steps are reached by a step failing, never by the job being cancelled
+    # from under them (BACKLOG 128). This comment said 270 and 285 until 2026-09-12, so it
+    # asserted an invariant the file did not have: on a night where every step took its
+    # whole budget the job died at 285 and persist never ran. Latent, not live -- the whole
+    # job measured 32 min on 2026-08-25 and 67 min on 2026-09-12 -- and now guarded, by
+    # `test_the_digest_step_budgets_fit_inside_the_job_that_runs_them`. Actions minutes are
+    # free on a public repo, so the honest fix is the cap, not a tighter step.
+    timeout-minutes: 340
     steps:
       - uses: actions/checkout@v5
         with:
@@ -129,7 +133,26 @@ jobs:
           # loads the queue, and new names sort to the FRONT of that rung's batch, so it also
           # displaces older job-backed leads. docs/BACKLOG.md 339.
           SECRETHUNTER_QUEUE_CAP: "150"
-        run: python discovery_daily.py
+        # `timeout-minutes` DOES NOT KILL THE PROCESS -- it abandons it (infra,
+        # 2026-09-12). Measured on that morning: this step was cancelled at 09:34:06 and
+        # `discovery_daily.py`'s atexit ledger line is stamped 09:37:46, so it ran 3m40s
+        # PAST its own cancellation -- while the telegram step below, started at 09:34:06,
+        # wrote research_companies.json at 09:34:10. Two writers on the intake queue, in
+        # two different steps: CLAUDE.md rule 4 happening somewhere the rule cannot reach,
+        # and a failure class that only exists once a step overruns. GNU `timeout` is the
+        # shape this repo already uses (tests.yml, and the firmo drain below): the process
+        # dies for real, rc 124/137 keeps `steps.discovery.outcome == 'failure'` reaching
+        # the mail exactly as it did, and the log names the command instead of the action.
+        # 22m, not 25: the walk's own budget is LINKEDIN_TIME_BUDGET_MIN and the step cap
+        # stays the outer backstop. continue-on-error STAYS -- an overrun must not skip the
+        # pipeline, which is the only thing that mails anything.
+        run: |
+          rc=0
+          timeout --signal=INT --kill-after=30 22m python discovery_daily.py || rc=$?
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::discovery exited $rc (124/137 = its 22-minute budget)"
+          fi
+          exit "$rc"
         continue-on-error: true
 
       - name: Telegram-channel discovery (keyless t.me/s preview)
@@ -181,6 +204,8 @@ jobs:
 
       - name: Stamp the 'enrich' stage (gap-filler only — never erases the scripts' counts)
         id: stamp_enrich
+        # seconds of work; a bound so the step sum stays a bound (infra, 2026-09-12)
+        timeout-minutes: 5
         if: always()
         run: python -c "from pipeline.jdfill import record_enrich; print(record_enrich())"
         continue-on-error: true
@@ -359,6 +384,8 @@ jobs:
       # its failure reaches tomorrow's mail through cloud_state/last_run.json.
       - name: Mark digested roles as sent
         id: mark_sent
+        # seconds of work; a bound so the step sum stays a bound (infra, 2026-09-12)
+        timeout-minutes: 5
         run: |
           if [ "$DRY_RUN" = 1 ]; then
             echo "dry run: WOULD mark sent from '${DIGEST_JSON:-<no payload: deliver was a dry run>}' -- nothing marked"
@@ -371,10 +398,14 @@ jobs:
 
       - name: Invariant guard (blocks a corrupted registry from being committed)
         id: gate
+        # seconds of work; a bound so the step sum stays a bound (infra, 2026-09-12)
+        timeout-minutes: 5
         run: python check_invariants.py
 
       - name: Re-baseline the registry census (only a registry that passed the gate)
         id: census
+        # seconds of work; a bound so the step sum stays a bound (infra, 2026-09-12)
+        timeout-minutes: 5
         # AFTER the hard invariant guard on purpose: a census taken before it would bless a
         # corrupted registry as the new baseline, and the deletion registry_health exists
         # to report would be invisible from then on. The alarms the pipeline mailed this

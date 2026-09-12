@@ -8024,6 +8024,26 @@ is the most reusable page in the repo: **a green workflow means nothing here.**
    eleven workflows had none. **Every workflow sets `PYTHONUNBUFFERED: "1"` at its ROOT**,
    pinned by `test_every_workflow_unbuffers_python_so_a_killed_step_still_has_a_log`, which
    demands the root scope so a step added later cannot be buffered by accident.
+8b. **`timeout-minutes` does not kill the process — it abandons it, and the orphan writes
+   state.** Same morning, same step, and the more expensive half. The `discovery` step was
+   cancelled at **09:34:06**; `discovery_daily.py`'s `atexit` Bright Data ledger line is
+   stamped **09:37:46**. It lived 3 m 40 s past its own cancellation and wrote
+   `research_companies.json` in that window — while the *telegram* step, which GitHub started
+   at 09:34:06, wrote the **same file** at 09:34:10. Two writers on the intake queue, in two
+   different workflow steps: §2's single-writer rule and `CLAUDE.md` rule 4 both hold *inside*
+   a process and neither reaches *across* steps, so this failure class cannot exist until a
+   step overruns — and then it is invisible, because the step that lost the race reports
+   success. **Every long command runs under GNU `timeout` with a budget below its step's
+   `timeout-minutes`** (`timeout --signal=INT --kill-after=30 Nm python …`, the shape
+   `tests.yml` has used since 2026-08-30): the process dies for real, the rc names itself in
+   the log, and `rc 124/137` still reaches the mail through `WORKFLOW_STEP_OUTCOMES`.
+   `test_the_discovery_step_dies_instead_of_being_abandoned` pins it. The neighbouring
+   invariant was false too and is now guarded: the digest's step budgets summed to **313**
+   against a job cap of **285** while the comment claimed 270 and that the cap sat above the
+   sum, so a run that used every budget would have been cancelled from under `persist`
+   (BACKLOG 128) — and four steps carried no `timeout-minutes` at all, which is the other way
+   a sum stops being a bound
+   (`test_the_digest_step_budgets_fit_inside_the_job_that_runs_them`).
 
 ### The guard rails, and what each one is for
 
