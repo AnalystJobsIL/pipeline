@@ -31605,6 +31605,7 @@ def test_intake_stamps_what_it_read_so_the_mail_can_say_it(monkeypatch, tmp_path
     `pipeline/stages.py` already records (`queue` and `intel` were stamped nightly and read by
     nobody for ten days): it must be IN `ORDER`, and a zero-card night must ALARM."""
     import json as _json
+    import re
     from pipeline import stages
     monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
     assert "discovery" in stages.ORDER, (
@@ -31629,38 +31630,33 @@ def test_intake_stamps_what_it_read_so_the_mail_can_say_it(monkeypatch, tmp_path
     assert 'stages.alarms("discovery")' in src, \
         "run.py must put it on the Stages: line, or nobody reads it"
 
-
-def test_no_test_that_runs_a_stamping_entry_point_writes_the_tracked_stamp_file():
-    """A test that mutates the state file it asserts about is this lane's own 2026-09-11
-    defect, and adding the `discovery` stamp reproduced it one file over: the four tests that
-    call `discovery_daily.main()` wrote `cloud_state/pipeline_stages.json` IN THE TRACKED TREE
-    -- caught by running the scoped local pipeline afterwards and finding a `discovery` stamp
-    reading `"queries": 1`, which no production sweep can produce.
-
-    Three of the four already `monkeypatch.chdir(tmp_path)`, and that protects every other
-    file `discovery_daily` writes. It does not protect this one: `stages.PATH` is resolved from
-    `pipeline/`'s own directory, so chdir cannot reach it. Which is exactly why a comment in
-    those four tests is not enough and the FIFTH caller needs a gate."""
-    import re
-    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_units.py"),
-               encoding="utf-8").read()
-    lines = src.split("\n")
-    # entry points that stamp a stage as a side effect of being called at all
+    # ...and the OTHER half of the same fact, folded in here rather than standing alone:
+    # `tools/guard_kill.py` reverts non-test files, so a case whose only subject is a test
+    # file can only pass, and it reports that as CANNOT-FAIL. The scan below is real work
+    # -- adding this stamp made the four `dd.main()` callers write
+    # cloud_state/pipeline_stages.json IN THE TRACKED TREE, because `monkeypatch.chdir`
+    # cannot reach `stages.PATH` (it resolves from pipeline/'s own directory). Three of the
+    # four already chdir'd, which is why a comment in them would not have been enough and
+    # the FIFTH caller needs a gate.
     stamping = re.compile(r"\b(dd|discovery_daily)\.main\(\)")
+    tsrc = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_units.py"),
+                encoding="utf-8").read()
+    tlines = tsrc.split("\n")
     offenders = []
-    for m in re.finditer(r"^def (test_\w+)\(", src, re.M):
-        start = src[:m.start()].count("\n")
-        end = start + 1
-        while end < len(lines) and not lines[end].startswith(("def ", "@", "# ----")):
-            end += 1
-        body = "\n".join(lines[start:end])
-        if stamping.search(body) and 'stages, "PATH"' not in body and '_stages, "PATH"' not in body:
-            offenders.append(m.group(1))
+    for fm in re.finditer(r"^def (test_\w+)\(", tsrc, re.M):
+        s0 = tsrc[:fm.start()].count("\n")
+        e0 = s0 + 1
+        while e0 < len(tlines) and not tlines[e0].startswith(("def ", "@", "# ----")):
+            e0 += 1
+        fbody = "\n".join(tlines[s0:e0])
+        if (stamping.search(fbody) and 'stages, "PATH"' not in fbody
+                and '_stages, "PATH"' not in fbody):
+            offenders.append(fm.group(1))
     assert not offenders, (
         "these tests call a stamping entry point without redirecting `stages.PATH`, so they "
-        "write cloud_state/pipeline_stages.json in the TRACKED tree -- monkeypatch.chdir does "
-        "not reach it, because stages.PATH is resolved from pipeline/'s own directory: %s"
-        % offenders)
+        "write cloud_state/pipeline_stages.json in the TRACKED tree: %s" % offenders)
+
+
 @pytest.mark.parametrize("fn,rec,datekey", [
     ("linkedin_normalize", {"job_id": "1", "title": "Data Analyst", "company": "New Co",
                             "location": "Haifa, Israel", "url": "u",
