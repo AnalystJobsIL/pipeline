@@ -2761,8 +2761,14 @@ def test_refresh_stamps_collect_with_counts_the_digest_renders(tmp_path, monkeyp
         assert _re.fullmatch(r"[A-Za-z0-9_.%+:-]+", str(v)), (k, v)
     line = P.stages_mod.summary()
     assert f"collect: {_TODAY} (TODAY)" in line          # keys render alphabetically (stamp sorts)
+    # the `collect` SEGMENT, found by name and not by position: this read
+    # `line.split(" | ")[1]`, which silently assumed `collect` was the second entry of
+    # `stages.ORDER`, and broke the day `discovery` was added in front of it (infra,
+    # 2026-09-12). The assertion is about collect's counters, not about where it sorts.
+    seg = [s for s in line.split(" | ") if s.strip().startswith("collect:")]
+    assert len(seg) == 1, line
     for tok in ("scraped=6", "with_jobs=4", "empty=1", "errors=1", "unprocessed=0"):
-        assert f" {tok}" in line.split(" | ")[1], tok
+        assert f" {tok}" in seg[0], tok
     from pipeline import digest as D
     stats = {"stages": line, "paths": {}}
     _, md = D.build_markdown([], _TODAY, stats)
@@ -26665,6 +26671,13 @@ def test_a_page_closed_role_is_not_upserted_so_the_cache_cannot_reopen_it_daily(
     monkeypatch.setattr(company_intel, "enrich_for_run",
                         lambda s, **kw: ({}, {}, {"researched": 0, "blurbs_written": 0}))
     monkeypatch.setattr(company_intel, "audit_lines", lambda rep: ([], []))
+    # THE INLINE FILLER OFF, and it is not tidiness: this card's 223-character description
+    # fails `looks_like_jd`, so `JDFiller` made a plain GET to the real
+    # `il.linkedin.com/jobs/view/...` above on every CI run of this test. Invisible until
+    # 2026-09-12, when `infra` added linkedin.com to `FREE_BUT_LIVE_HOSTS` (it bills nothing,
+    # so `PAID_HOSTS` never covered it) and the ban named it immediately. Nothing here asserts
+    # about jd-fill; the assertions are about the upsert skip and the episode count.
+    monkeypatch.setenv("JDFILL", "0")
     run_mod.run(use_llm=False, only=["Acme"], out_dir=str(tmp_path / "out"),
                 db_path=db, run_date="2026-09-12")
 
