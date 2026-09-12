@@ -268,3 +268,4 @@
 {"at":"2026-09-12T00:17:48Z","cap":250,"capped":false,"ci":true,"credits":23,"pid":61367,"purpose":{"unlock":23},"tool":"queue_pipeline.py"}
 {"at":"2026-09-12T00:23:15Z","cap":250,"capped":false,"ci":true,"credits":26,"pid":64061,"purpose":{"search":11,"unlock":15},"tool":"crack_walled.py"}
 {"at":"2026-09-12T07:18:37Z","cap":250,"capped":false,"ci":true,"credits":15,"pid":2950,"purpose":{"unlock":15},"tool":"bd_rescue.py"}
+{"at":"2026-09-12T09:45:23Z","cap":250,"capped":false,"ci":true,"credits":21,"pid":3043,"purpose":{"unlock":21},"tool":"resolve_broken.py"}

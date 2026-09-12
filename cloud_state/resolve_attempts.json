@@ -687,10 +687,6 @@
   "fails": 3,
   "last": "2026-09-09"
  },
- "Lightricks": {
-  "fails": 1,
-  "last": "2026-08-27"
- },
  "Netafim": {
   "fails": 3,
   "last": "2026-09-10"
@@ -724,16 +720,16 @@
   "last": "2026-08-28"
  },
  "Sternum": {
-  "fails": 2,
-  "last": "2026-09-04"
+  "fails": 3,
+  "last": "2026-09-12"
  },
  "Sunbit": {
   "fails": 1,
   "last": "2026-08-28"
  },
  "Hailo": {
-  "fails": 2,
-  "last": "2026-09-05"
+  "fails": 3,
+  "last": "2026-09-12"
  },
  "4M Analytics": {
   "fails": 3,
@@ -924,44 +920,44 @@
   "last": "2026-09-10"
  },
  "Voyage81": {
-  "fails": 1,
-  "last": "2026-09-04"
+  "fails": 2,
+  "last": "2026-09-12"
  },
  "A.P. Moller - Maersk": {
-  "fails": 1,
-  "last": "2026-09-05"
+  "fails": 2,
+  "last": "2026-09-12"
  },
  "Axioma System Engineering and Integration": {
   "fails": 1,
   "last": "2026-09-05"
  },
  "OurCrowd": {
-  "fails": 1,
-  "last": "2026-09-05"
+  "fails": 2,
+  "last": "2026-09-12"
  },
  "Regulus": {
-  "fails": 1,
-  "last": "2026-09-05"
+  "fails": 2,
+  "last": "2026-09-12"
  },
  "Siemens Digital Industries Software": {
   "fails": 1,
   "last": "2026-09-05"
  },
  "Xtend": {
-  "fails": 1,
-  "last": "2026-09-05"
+  "fails": 2,
+  "last": "2026-09-12"
  },
  "aiOla": {
-  "fails": 1,
-  "last": "2026-09-05"
+  "fails": 2,
+  "last": "2026-09-12"
  },
  "airHaifa": {
   "fails": 1,
   "last": "2026-09-05"
  },
  "entrypoint": {
-  "fails": 1,
-  "last": "2026-09-05"
+  "fails": 2,
+  "last": "2026-09-12"
  },
  "Zesty": {
   "fails": 1,
@@ -1154,5 +1150,21 @@
  "הפניקס": {
   "fails": 1,
   "last": "2026-09-11"
+ },
+ "Castro Hoodies Group": {
+  "fails": 1,
+  "last": "2026-09-12"
+ },
+ "NSO Group": {
+  "fails": 1,
+  "last": "2026-09-12"
+ },
+ "PAPAYA": {
+  "fails": 1,
+  "last": "2026-09-12"
+ },
+ "Weizmann Institute of Science": {
+  "fails": 1,
+  "last": "2026-09-12"
  }
 }
