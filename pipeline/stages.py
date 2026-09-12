@@ -43,12 +43,20 @@ PATH = os.path.join(os.path.dirname(__file__), "..", "cloud_state", "pipeline_st
 # `wayback` (infra, 2026-09-04): `archive_evidence.py` on jd-archive.yml at 12:30 -- what it
 # submitted to Save Page Now, what was refused, and the backlog. Its stamp is a day old at
 # every 05:00 digest by construction; `run.py` alarms at two.
+# `discovery` (infra, 2026-09-12): `discovery_daily.py`, the FIRST step of the digest and
+# the only step in the whole flow that had no stamp -- which is why a 25-minute silent
+# timeout reached the operator as a bare `workflow step 'discovery' failure` and nothing
+# about what the sweep had or had not read. It had in fact read 4,888 LinkedIn postings
+# and committed them; the step log that said so died in a stdio buffer, and a run log
+# expires. A stamp does not: it is committed state, so tomorrow's morning check is
+# answerable from the repo. `run.py` alarms on a missing stamp and on zero cards.
 # `bd` (infra, 2026-09-11): `pipeline/bd_budget.stamp()` from daily-digest.yml -- the live
 # account's month-to-date, the 7-day rate per PURPOSE off `cloud_state/bd_spend.jsonl`, and
 # the month's projection against the free tier. It exists because the operator's ruling that
 # day was "unlimited budget for now; optimize once, then let it drive itself", and driving
 # itself means the meter is in the mail rather than on a run page nobody opens.
-ORDER = ["repair", "collect", "expand", "firmo", "intel", "enrich", "bd", "wayback", "queue",
+ORDER = ["discovery", "repair", "collect", "expand", "firmo", "intel", "enrich", "bd",
+         "wayback", "queue",
          "publish", "ci", "cron"]
 
 

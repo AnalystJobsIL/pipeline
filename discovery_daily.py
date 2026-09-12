@@ -332,6 +332,18 @@ _li_last_present = [set()]
 _blocked_reask = {}          # one paced re-ask per (keyword, location), then pay
 
 
+def _li_requests():
+    """Guest pages we actually ASKED for, as the denominator of the blocked rate.
+
+    The sweep line printed `blocked=35` with nothing to divide it by, so five nights of
+    logs could say the count was flat (34-36) and not that the RATE moved 9.6-14.4%.
+    `linkedin_budget_spent` / `_cut` are per QUERY and are deliberately NOT in here:
+    two units in one Counter, and only the three request paths belong in a rate.
+    """
+    return (SOURCE_PATH["linkedin_free"] + SOURCE_PATH["linkedin_blank"]
+            + SOURCE_PATH["linkedin_blocked"])
+
+
 # One bounded re-ask of a page that came back 200-EMPTY, and the budget that bounds it.
 # A blank is ambiguous — a hole inside the pool, or LinkedIn's soft rate-limit — and the walk
 # used to step over it and never look again. Measured on the 2026-08-26 sweep: of 58 blank
@@ -357,6 +369,12 @@ LINKEDIN_BLANK_GIVE_UP = int(os.environ.get("LINKEDIN_BLANK_GIVE_UP", "5"))
 # on 2026-08-26 and is killed at 25 (`daily-digest.yml`), with `continue-on-error: true`, so a
 # timeout costs the whole day's cache AND queue write in silence. The count bounds how many
 # re-asks are worth making; this bounds what they can cost when the network misbehaves.
+# It is NOT superseded by `LINKEDIN_TIME_BUDGET_MIN` (2026-09-12): that bound is tested
+# between pages, so it cannot see time spent INSIDE one `_guest_page`, and it is per RUN
+# where this is per SWEEP. This is the reserve that stops one pathological query eating
+# the walk and starving the other 26 -- the same relationship as `Deadline.reserve` in
+# scrape_universal. A budget with no stated relationship to the budget above it is the
+# thing that rots.
 LINKEDIN_BLANK_RETRY_SECONDS = float(os.environ.get("LINKEDIN_BLANK_RETRY_SECONDS", "90"))
 # Zero by default, and that is deliberate rather than lazy: the walk already fires up to
 # LINKEDIN_GUEST_PAGES back-to-back requests per query with no delay between them, so a pause
@@ -375,6 +393,28 @@ LINKEDIN_GUEST_PAUSE_S = float(os.environ.get("LINKEDIN_GUEST_PAUSE_S", "2.5"))
 # clears after twenty seconds costs twenty seconds; the paid page costs a credit and answers
 # with the same 60 cards the free rung would have.
 LINKEDIN_BLOCK_PAUSE_S = float(os.environ.get("LINKEDIN_BLOCK_PAUSE_S", "20"))
+# ...and the bound that makes both pauses SAFE rather than fatal (infra, 2026-09-12).
+# The pauses above are measured to work: the first paced sweep read 4,888 distinct
+# postings on the free rung for SIX Bright Data credits, against 1,400-3,016 for 17-23
+# on each of the sixteen unpaced nights before it. What they are not is BOUNDED -- a
+# page count is not a bound on a walk whose per-page cost is a sleep. 2.5 s x 338 paced
+# pages + 20 s x 18-27 blocked queries is 1,205-1,385 s on top of a 252 s sweep, which
+# is 24.3-27.4 minutes against a 25-minute step: the 2026-09-12 overrun was arithmetic,
+# not weather. So the walk carries a WALL CLOCK, read in main() (never at module scope --
+# auto_expand.py:103 records a module-scope budget defeating the two guards written to
+# prove it worked) and anchored at main() ENTRY, so Indeed and Workable COMPOSE with it
+# instead of adding to it. `0` disables the bound.
+LINKEDIN_TIME_BUDGET_MIN_DEFAULT = 18
+
+
+def _now():
+    """The walk's clock, as a seam, so a guard can move it instead of sleeping.
+
+    `time.monotonic()` and not `time.time()`: `_guest_page` already runs the blank-retry
+    budget on monotonic, and two clocks inside one walk is worse than one clock that
+    differs from `listing_hunt`'s idiom. Do not "fix" it towards the majority.
+    """
+    return time.monotonic()
 
 
 def _guest_page(keyword, location, days, start):
@@ -407,7 +447,7 @@ def _guest_page(keyword, location, days, start):
     return [], True                           # still blank — and NEVER reported as blocked
 
 
-def linkedin_search(keyword, pages=None, days=7, location="Israel"):
+def linkedin_search(keyword, pages=None, days=7, location="Israel", deadline=None):
     """LinkedIn job search: KEYLESS guest endpoint first, Web Unlocker only where blocked.
 
     LinkedIn does not talk to every machine (GitHub's Azure ranges are among the
@@ -415,6 +455,8 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     served — without that record a free path silently returning nothing looks exactly like
     a dead source. Walks until the pool is exhausted or the page cap trips (and says which).
     `pages` is the PAID budget; 0 makes the query free-only (the city windows rely on it).
+    `deadline` is the sweep-wide free-walk clock (`_now()` units, None = unbounded): past
+    it this query makes no guest request at all and goes straight to the paid render.
     """
     from bd_rescue import unlock
     pages = LINKEDIN_PAGES if pages is None else pages
@@ -441,16 +483,42 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
     # LINKEDIN_GUEST_PAGES, the pool was not exhausted", the very evidence the 30->50 bump
     # had cited. Empty means drained: nothing to report. Same idiom as indeed_search.
     why = ""
+    # The free walk's clock ran out. STICKY, and the `i` test is what makes it correct:
+    # `i == 0` is exactly "this query has made no request yet", because this is the first
+    # statement of the iteration. The two cases are NOT the same thing:
+    #   i == 0  -> no request, no pause, ok=False, and the `not ok` branch below routes
+    #              the query to the PAID render (national) or ends it (city, pages=0).
+    #   i  > 0  -> STOP and buy nothing. This query's pool is already in `out`, and there
+    #              is deliberately no `elif out: break` below, so falling through would
+    #              spend `pages` credits re-reading what the free rung had just read.
+    # A clock must never convert a productive free walk into spend.
+    starved = False
     for i in range(LINKEDIN_GUEST_PAGES):
-        # SPACE THE WALK (2026-09-11). Up to 50 back-to-back requests per query with no delay
-        # is what earns the 429 that sends this query to the PAID render, so the free rung
-        # buys the paid one. The re-ask already had a pause knob and the comment beside it
-        # says a pause on the re-ask alone is theatre -- this is the walk itself. 2.5 s x 50
-        # pages x 9 keywords is inside the step's 25-minute budget, and the walk exits early
-        # on exhaustion long before 50 on nearly every keyword.
-        if i and LINKEDIN_GUEST_PAUSE_S:
-            time.sleep(LINKEDIN_GUEST_PAUSE_S)
-        cards, ok = _guest_page(keyword, location, days, i * 10)
+        if starved or (deadline is not None and _now() >= deadline):
+            if not starved:
+                if i:
+                    SOURCE_PATH["linkedin_budget_cut"] += 1
+                    why = ("the free-walk time budget ran out on guest page "
+                           f"{i} (kept what the free rung had; bought nothing)")
+                    break
+                # per QUERY, not per request: this is a fact about the query
+                SOURCE_PATH["linkedin_budget_spent"] += 1
+            starved, cards, ok = True, [], False
+        else:
+            # SPACE THE WALK (2026-09-11), and it is MEASURED: the first paced sweep read
+            # 4,888 distinct postings free for 6 credits, against 1,400-3,016 for 17-23 on
+            # each of the sixteen unpaced nights. Up to 50 back-to-back requests per query
+            # earns the 200-empty soft limit, the walk then breaks on `blanks >=
+            # LINKEDIN_BLANK_TOLERANCE` and BUYS a page to tell an empty keyword from a
+            # rate limit -- the free rung buying the paid one, twice over.
+            # The arithmetic this comment used to carry was wrong in both terms: it said
+            # "2.5 s x 50 pages x 9 keywords is inside the step's 25-minute budget", and
+            # `_li_queries()` produces 27 queries, not 9, and 9 x 49 x 2.5 = 18.4 min is
+            # not inside a 25-minute step that already works for 4. The bound is now a
+            # clock (`deadline`), which is the thing a page count could never be.
+            if i and LINKEDIN_GUEST_PAUSE_S:
+                time.sleep(LINKEDIN_GUEST_PAUSE_S)
+            cards, ok = _guest_page(keyword, location, days, i * 10)
         # THREE states, and conflating any two loses jobs:
         #   ok + cards  -> the good case
         #   ok + blank  -> AMBIGUOUS: the endpoint emits intermittent 200-empty pages INSIDE
@@ -476,15 +544,18 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
                 break                 # cards already collected and the tail is quiet: done
             # Nothing at all after the tolerance: a working-but-empty keyword and a soft
             # rate-limit are indistinguishable — buy ONE paid page to tell them apart.
-        else:
+        elif not starved:
             # A blocked request is a request MADE on a path of its own. Counted nowhere
             # before 2026-08-25, 13 of 18 city queries printed "0 cards" that day and the
             # log could not say whether Haifa was refused or empty.
             SOURCE_PATH["linkedin_blocked"] += 1
         if not ok or (blanks >= LINKEDIN_BLANK_TOLERANCE and not out):
-            if not ok and LINKEDIN_BLOCK_PAUSE_S and not _blocked_reask.get(qkey):
+            if (not ok and not starved and LINKEDIN_BLOCK_PAUSE_S
+                    and not _blocked_reask.get(qkey)):
                 # ONE re-ask of a hard block, after a pause, before the credit. Once per
-                # query: a second is a block that is not going to clear.
+                # query: a second is a block that is not going to clear. `not starved`:
+                # never START a wait that overruns the budget (the rule
+                # `archive_evidence._Pool.slot` applies to its own pace gate).
                 _blocked_reask[qkey] = True
                 time.sleep(LINKEDIN_BLOCK_PAUSE_S)
                 cards, ok = _guest_page(keyword, location, days, i * 10)
@@ -502,7 +573,14 @@ def linkedin_search(keyword, pages=None, days=7, location="Israel"):
                 no_paid = (f"no paid path (BRIGHTDATA_API_KEY unset)"
                            if not os.environ.get("BRIGHTDATA_API_KEY") else
                            f"no paid page left (paid {paid_pages}/{pages})")
-                if not ok:
+                if starved:
+                    # NOT "BLOCKED": nothing blocked us, our own clock ran out. Five
+                    # queries printed "raise LINKEDIN_GUEST_PAGES" on 2026-08-25 for walks
+                    # LinkedIn had blocked, and that false line was the evidence the 30->50
+                    # bump cited. A fabricated block is the same defect pointing the other
+                    # way, and `linkedin_blocked` is the rate that decides the pause's fate.
+                    why = f"the free-walk time budget was already spent and {no_paid}"
+                elif not ok:
                     why = f"BLOCKED by LinkedIn on guest page {i} and {no_paid}"
                 elif pages:
                     why = (f"{blanks} blank guest pages in a row and {no_paid} to tell an "
@@ -989,6 +1067,11 @@ def secrethunter_catalog():
 
 
 def main():
+    # The free walk's clock starts HERE, not at the sweep: the Indeed and Workable rungs
+    # run first, so anchoring later would ADD their time to the walk's instead of
+    # composing with it (auto_expand.py:670 names the shape -- four rungs that "could
+    # overrun by a full name and none of them composed").
+    _t_run = _now()
     _load_secrets()
     os.makedirs("out", exist_ok=True)      # gitignored — absent on cloud runners
     # NOT an early return. Workable and the LinkedIn guest endpoint need no key, and this
@@ -1055,11 +1138,23 @@ def main():
     # first, then the free-only city windows (see _li_queries).
     n_li_raw = n_li_present = 0
     _blank_retry.update(left=LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)  # one per SWEEP
+    # ...and this one was never reset at all, so the re-ask was once per PROCESS and test
+    # order leaked between sweeps (infra, 2026-09-12).
+    _blocked_reask.clear()
+    # ONE deadline for the WHOLE free walk, built HERE and never at module scope, and
+    # anchored at main() entry so the Indeed and Workable rungs above COMPOSE with it: a
+    # pathological head starves the walk instead of adding to it, which is the safe
+    # direction. On a normal night it does not bind -- the whole 2026-09-11 sweep was
+    # ~3 of its 4m12s -- and when it does it lands in the CITY tail, which _li_queries()
+    # runs last and which was worth 1 new card of 990 on 2026-09-11.
+    li_budget_min = float(os.environ.get("LINKEDIN_TIME_BUDGET_MIN")
+                          or LINKEDIN_TIME_BUDGET_MIN_DEFAULT)
+    li_deadline = (_t_run + li_budget_min * 60) if li_budget_min else None
     queries = _li_queries()
     for kw, loc, pg in queries:
         label = kw if loc == "Israel" else f"{kw} @ {loc}"
         try:
-            cards = linkedin_search(kw, pages=pg, location=loc)
+            cards = linkedin_search(kw, pages=pg, location=loc, deadline=li_deadline)
             n_li_present += len(LI_CARDS_PRESENT.pop((kw, loc), set()))
         except Exception as e:  # noqa: BLE001
             print(f"[linkedin:{label}] ERR {type(e).__name__}: {str(e)[:120]}")
@@ -1090,7 +1185,13 @@ def main():
           f"path free={SOURCE_PATH['linkedin_free']} blank={SOURCE_PATH['linkedin_blank']} "
           f"recovered={SOURCE_PATH['linkedin_blank_recovered']} "
           f"blocked={SOURCE_PATH['linkedin_blocked']} paid={SOURCE_PATH['linkedin_paid']} "
-          f"({UNLOCKER_CALLS['linkedin']} Unlocker credits)")
+          f"({UNLOCKER_CALLS['linkedin']} Unlocker credits)"
+          f" · blocked {SOURCE_PATH['linkedin_blocked']}/{_li_requests()} guest requests "
+          f"({100.0 * SOURCE_PATH['linkedin_blocked'] / (_li_requests() or 1):.0f}%)"
+          f" · free walk served {len(queries) - SOURCE_PATH['linkedin_budget_spent'] - SOURCE_PATH['linkedin_budget_cut']}"
+          f" of {len(queries)} queries, {SOURCE_PATH['linkedin_budget_cut']} cut mid-walk, "
+          f"{SOURCE_PATH['linkedin_budget_spent']} straight to paid"
+          f" on the {li_budget_min:g}-min budget", flush=True)
     if SOURCE_PATH["linkedin_paid"] and not SOURCE_PATH["linkedin_free"]:
         print("::warning::LinkedIn free guest endpoint is refusing every request; the whole "
               "breadth sweep is now billed to Bright Data. See ARCHITECTURE.md 1a.",
@@ -1492,6 +1593,30 @@ def main():
             print(f"::warning::discovery source {line}", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"[source-health] skipped: {e}")
+    # The stamp the mail reads (infra, 2026-09-12). Beside `sources.record` because it is
+    # the same question asked of a different reader: `source_health.json` answers "is this
+    # source alive" for the next RUN, this answers "what did intake do last night" for the
+    # next PERSON. Wrapped, because a stamp must never be the thing that loses a sweep.
+    try:
+        from pipeline import stages as _stages
+        _alarm = ""
+        if not n_li_raw:
+            _alarm = "linkedin read 0 cards across %d queries" % len(queries)
+        elif not n_indeed_raw and have_bd:
+            _alarm = "indeed read 0 cards with a Bright Data key present"
+        _stages.stamp("discovery",
+                      linkedin_cards=n_li_raw, linkedin_urns=n_li_present,
+                      indeed_cards=n_indeed_raw, queries=len(queries),
+                      requests=_li_requests(),
+                      blocked=SOURCE_PATH["linkedin_blocked"],
+                      paid=SOURCE_PATH["linkedin_paid"],
+                      budget_min=li_budget_min,
+                      budget_spent=SOURCE_PATH["linkedin_budget_spent"],
+                      budget_cut=SOURCE_PATH["linkedin_budget_cut"],
+                      cached=len(cacheable), queued=len(new_cos),
+                      **({"alarm": _alarm} if _alarm else {}))
+    except Exception as e:  # noqa: BLE001
+        print(f"[discovery-stamp] skipped: {e}", flush=True)
     report_bd_spend(targeted_cap if have_bd else None)
     # The line an operator reads. It printed len(jobs) and len(new_cos) — 634 cached and
     # 179 for migration on 2026-08-25, when 621 were cached (13 junior kept for the name

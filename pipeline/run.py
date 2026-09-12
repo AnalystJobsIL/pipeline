@@ -227,7 +227,11 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # a bold line above the fold and a workflow warning, not a token in a collapsed block.
     # Then the workflow's: a pre-step that failed, and a step after yesterday's pipeline
     # that failed (mark_sent / gate / persist / publish reach the mail only the next day).
-    _stage_alarms = (stages.alarms("collect") + stages.alarms("repair", 1)
+    # `discovery` is the intake step of THIS run, so a stamp older than today means the
+    # step did not finish -- which on 2026-09-12 was a 25-minute silent timeout that the
+    # mail could only describe as a failed step.
+    _stage_alarms = (stages.alarms("discovery")
+                     + stages.alarms("collect") + stages.alarms("repair", 1)
                      + stages.alarms("expand", 1)
                      # `firmo` is the 10:00 bulk research cron. It is the only thing that
                      # drains the registry backlog, it has fired ONCE ever (2026-08-27T20:05Z,

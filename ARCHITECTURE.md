@@ -698,8 +698,14 @@ this machine: 18 blocked, 41 blank). The value half is proven only by a scripted
 where a real mid-pool hole IS recovered and its cards reach the cache. **So the re-ask is
 safe by measurement and useful only by construction.** If `recovered=` reads ~0 on the runner
 too, the blanks are soft-limiting rather than holes and the re-ask should be REMOVED, not
-tuned. The counter prints in the step log only — intake has no line in the mail (BACKLOG 180),
-so the check is:
+tuned. The counter prints in the step log only. **Intake DOES have a line in the mail since
+2026-09-12** (`infra`; `BACKLOG 180` closed): `discovery` is the first entry of
+`pipeline/stages.ORDER`, so `Stage order:` carries `linkedin_cards`, `indeed_cards`,
+`requests`, `blocked`, `paid`, `budget_min`, `budget_spent`, `budget_cut`, `cached` and
+`queued`, and a sweep that read zero LinkedIn cards is a `Stages:` clause. It exists
+because a run log EXPIRES and a stamp is committed state: on 2026-09-12 the step was
+killed at 25 minutes having read 4,888 postings, and the only thing the mail could say
+was that a step had failed. For the per-query detail the log is still the place:
 
 ```bash
 gh run view <daily-digest run id> --repo AnalystJobsIL/pipeline --log \
@@ -711,6 +717,31 @@ Every query that stops for any reason other than a drained pool prints
 drained (an empty Be'er Sheva keyword is ordinary; a soft-limit spike shows in `blank=`); the old boolean printed "raise LINKEDIN_GUEST_PAGES" for five
 queries LinkedIn had blocked (guarded by
 `test_a_blocked_guest_walk_does_not_print_the_raise_the_cap_tripwire`).
+
+**The free walk is paced, and the pacing is bounded by a CLOCK** (`infra`, 2026-09-11
+and 2026-09-12). `LINKEDIN_GUEST_PAUSE_S` (2.5 s between guest pages) and
+`LINKEDIN_BLOCK_PAUSE_S` (20 s before one re-ask of a hard block) are measured to pay
+for themselves: the first paced sweep read **4,888** distinct postings on the free rung
+for **6** Bright Data credits, against **1,400–3,016** for **17–23** on each of the
+sixteen unpaced nights before it — and since Indeed buys 5 of those credits nightly,
+LinkedIn's paid pages fell from ~12–18 to ~1. Read from the five unpaced nights alone the
+opposite conclusion is available and wrong: the blocked COUNT is a flat 34–36 across a
+1.46× swing in request volume, which looks like a function of the query count rather than
+the request rate. The sixth night is the one that decides it.
+
+What a pause cannot be is a bound. 2.5 s × 338 paced pages + 20 s × 18–27 blocked
+queries is 1,205–1,385 s on top of a 252 s sweep — 24.3–27.4 minutes against a 25-minute
+step, which is why the 2026-09-12 step was killed and why that was arithmetic rather than
+weather. So the whole free walk carries `LINKEDIN_TIME_BUDGET_MIN` (**18**), read in
+`main()` and anchored at `main()` ENTRY so the Indeed and Workable rungs COMPOSE with it
+instead of adding to it. Past the deadline a query makes **no guest request at all** and
+goes straight to the paid render; a query already walking **stops and buys nothing**,
+because its pool is already collected and there is deliberately no `elif out: break` in
+the loop. `0` disables the bound. It is not expected to bind: the whole 2026-09-11 sweep
+was ~3 of its 4 min 12 s, and when it does bind it lands in the CITY tail, which
+`_li_queries()` runs last and which was worth **1 new card of 990** on 2026-09-11.
+Two nested sub-budgets stay: `LINKEDIN_BLANK_RETRY_SECONDS` (90 s per sweep, charged
+INSIDE `_guest_page` where the outer clock cannot see) and the per-query re-ask.
 
 **Five things about this table cost real coverage to learn**, and the workings are in
 `docs/sessions/2026-08-24-discovery.md`:

@@ -8524,6 +8524,11 @@ def test_the_cache_write_drops_agency_cards_including_carried_ones_and_the_junio
     cache write is the lane's chokepoint: this run's cards and every carried one are
     judged by name + slug, and the private _junior flag is stripped from carried records
     too (912 of 1,202 committed records carried it)."""
+    # `dd.main()` stamps the `discovery` stage since 2026-09-12, and `stages.PATH` is
+    # resolved from the module's own directory, so `monkeypatch.chdir` does NOT reach it:
+    # without this the suite writes `cloud_state/pipeline_stages.json` in the tracked tree.
+    from pipeline import stages as _stages
+    monkeypatch.setattr(_stages, "PATH", str(tmp_path / "stages.json"))
     import json as _j
 
     import discovery_daily as dd
@@ -8550,7 +8555,7 @@ def test_the_cache_write_drops_agency_cards_including_carried_ones_and_the_junio
     monkeypatch.setattr(_led, "PATH", str(tmp_path / "cloud_state" / "intake_rejects.json"))
     monkeypatch.setattr(dd, "indeed_search", lambda q: [])
     monkeypatch.setattr(dd, "workable_search", lambda: [])
-    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": list(fresh))
+    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel", **_k: list(fresh))
     monkeypatch.setattr(dd, "linkedin_normalize", lambda c: c)
     monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
     monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
@@ -8580,6 +8585,11 @@ def test_the_queue_is_pruned_even_on_a_morning_with_nothing_new(tmp_path, monkey
     it stopped surviving. The subject of this test is the prune running on a quiet morning,
     not that any particular name lives, so the survivor is now a name the registry does not
     hold. `test_the_queue_drain_removes_what_the_registry_already_holds` covers the drain."""
+    # `dd.main()` stamps the `discovery` stage since 2026-09-12, and `stages.PATH` is
+    # resolved from the module's own directory, so `monkeypatch.chdir` does NOT reach it:
+    # without this the suite writes `cloud_state/pipeline_stages.json` in the tracked tree.
+    from pipeline import stages as _stages
+    monkeypatch.setattr(_stages, "PATH", str(tmp_path / "stages.json"))
     import json as _j
 
     import discovery_daily as dd
@@ -8606,7 +8616,7 @@ def test_the_queue_is_pruned_even_on_a_morning_with_nothing_new(tmp_path, monkey
     (tmp_path / "research_companies.json").write_text(_j.dumps(q[:1] + q[2:]), encoding="utf-8")
     for fn in ("indeed_search", "workable_search"):
         monkeypatch.setattr(dd, fn, lambda *a, **k: [])
-    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": [])
+    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel", **_k: [])
     monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
     monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
     monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
@@ -8666,7 +8676,7 @@ _LAST_COUNTS = {}          # SOURCE_PATH as it stood after the last _run_walk (r
 
 
 def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=None,
-              calls=None):
+              calls=None, deadline=None, clock=None):
     import discovery_daily as dd
     import bd_rescue
     real_guest, real_unlock = dd._li_guest, bd_rescue.unlock
@@ -8682,17 +8692,35 @@ def _run_walk(script, pages, location="Israel", key="test", unlock=None, capsys=
         # TypeError inside the code under test, which reads as a walk that crashed.
         bd_rescue.unlock = unlock or (lambda url, timeout=120, **_k: "")
         saved = dict(dd.SOURCE_PATH)
+        # NOTE the unit split: the first five are per REQUEST, the last two per QUERY.
+        # Two units in one Counter, so never sum across the groups.
         for k in ("linkedin_free", "linkedin_blank", "linkedin_blocked", "linkedin_paid",
-                  "linkedin_blank_recovered"):
+                  "linkedin_blank_recovered",
+                  "linkedin_budget_spent", "linkedin_budget_cut"):
             dd.SOURCE_PATH[k] = 0
         dd._blank_retry.update(left=dd.LINKEDIN_BLANK_RETRIES, misses=0, spent=0.0)
+        # ...and this one was never reset anywhere before 2026-09-12, so the block re-ask
+        # was once per PROCESS and any guard over it depended on test ORDER.
+        dd._blocked_reask.clear()
+        # ONLY when a guard asks for it. `saved_now = dd._now` unconditionally made all
+        # twelve existing callers depend on the new seam, so every mutant that removed
+        # `_now` read as killed by eleven tests instead of by the four that test it.
+        if clock is not None:
+            saved_now, dd._now = dd._now, clock
         saved_pause, dd._BLANK_RETRY_PAUSE = dd._BLANK_RETRY_PAUSE, 0.0
-        out = dd.linkedin_search("business intelligence", pages=pages, location=location)
+        # `deadline=` only when asked, so a reverted tree (no such kwarg) still runs the
+        # twelve callers that do not use it -- `tools/guard_kill.py` needs the OTHER tests
+        # to keep passing, or every mutant looks killed.
+        kw = {"deadline": deadline} if deadline is not None else {}
+        out = dd.linkedin_search("business intelligence", pages=pages, location=location,
+                                 **kw)
         _LAST_COUNTS.clear()
         _LAST_COUNTS.update(dd.SOURCE_PATH)
         return out, (capsys.readouterr().out if capsys else "")
     finally:
         dd._li_guest, bd_rescue.unlock = real_guest, real_unlock
+        if clock is not None and "saved_now" in locals():
+            dd._now = saved_now
         if "saved_pause" in locals():
             dd._BLANK_RETRY_PAUSE = saved_pause
         if "saved" in locals():
@@ -10623,13 +10651,18 @@ def test_an_unreadable_queue_is_never_overwritten_by_discovery_daily(tmp_path, m
     isinstance-based, not exception-based: `{"Wix": {...}}` PARSES, so the old code sailed
     past it and died one line later on `e.get(...)` over a dict's keys — killing main() before
     `sources.record()`, so the day's source liveness went unrecorded too."""
+    # `dd.main()` stamps the `discovery` stage since 2026-09-12, and `stages.PATH` is
+    # resolved from the module's own directory, so `monkeypatch.chdir` does NOT reach it:
+    # without this the suite writes `cloud_state/pipeline_stages.json` in the tracked tree.
+    from pipeline import stages as _stages
+    monkeypatch.setattr(_stages, "PATH", str(tmp_path / "stages.json"))
     import discovery_daily as dd
     _queue_fixture(tmp_path, monkeypatch, queue_bytes)
     fresh = [{"company": "Newco", "company_slug": "newco", "title": "Data Analyst",
               "url": "u3", "posted_date": _days_ago(2), "ats_platform": "discovery-linkedin"}]
     monkeypatch.setattr(dd, "indeed_search", lambda q: [])
     monkeypatch.setattr(dd, "workable_search", lambda: [])
-    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": list(fresh))
+    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel", **_k: list(fresh))
     monkeypatch.setattr(dd, "linkedin_normalize", lambda c: c)
     monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
     monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
@@ -17299,6 +17332,11 @@ def test_a_catalog_name_actually_lands_in_the_queue_file_with_a_seed(tmp_path, m
     through `new_cos`, which stamps a private `_real_lead` on job-derived entries and pops it
     again. Every other end-to-end test stubs the catalog to `[]`, so this path was covered
     nowhere."""
+    # `dd.main()` stamps the `discovery` stage since 2026-09-12, and `stages.PATH` is
+    # resolved from the module's own directory, so `monkeypatch.chdir` does NOT reach it:
+    # without this the suite writes `cloud_state/pipeline_stages.json` in the tracked tree.
+    from pipeline import stages as _stages
+    monkeypatch.setattr(_stages, "PATH", str(tmp_path / "stages.json"))
     import json as _j
     import discovery_daily as dd
     from pipeline import aggregators, sources as _src
@@ -17311,7 +17349,7 @@ def test_a_catalog_name_actually_lands_in_the_queue_file_with_a_seed(tmp_path, m
     monkeypatch.setattr(_led, "PATH", str(tmp_path / "cloud_state" / "intake_rejects.json"))
     for fn in ("indeed_search", "workable_search"):
         monkeypatch.setattr(dd, fn, lambda *a, **k: [])
-    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel": [])
+    monkeypatch.setattr(dd, "linkedin_search", lambda kw, pages=None, location="Israel", **_k: [])
     monkeypatch.setattr(dd, "_li_queries", lambda: [("x", "Israel", 0)])
     monkeypatch.setattr(dd, "plan_spend", lambda today=None: (100, 0, "test"))
     monkeypatch.setattr(dd, "report_bd_spend", lambda targeted_cap=None: None)
@@ -31272,9 +31310,218 @@ def test_the_linkedin_guest_walk_is_paced_and_re_asks_a_block_before_paying():
     assert src.index("_blocked_reask[qkey] = True") < src.index("jobs/search?{q}"), \
         "the re-ask must come BEFORE the paid render, or it is not a saving"
     assert "linkedin_block_recovered" in src, "a recovered block is counted, like every path"
-
-
+    # 2026-09-12: 2.5 STAYS, and the reason is a measurement, not caution. The first paced
+    # sweep read 4,888 distinct postings on the free rung for SIX Bright Data credits; the
+    # sixteen unpaced nights before it read 1,400-3,016 for 17-23, of which Indeed buys 5, so
+    # LinkedIn's paid pages went from ~12-18 to ~1. A reading of the five unpaced nights alone
+    # says the opposite (the blocked COUNT is a flat 34-36 across a 1.46x swing in request
+    # volume, so it looks like it tracks the query count) and the sixth night refutes it.
+    # THIS NUMBER MAY ONLY MOVE WITH A NUMBER BESIDE IT.
+    #
+    # What was wrong was never the pause; it was that a page cap cannot bound a walk whose
+    # per-page cost is a sleep. So the bound is a clock, and it is read where a clock must be:
+    assert ('os.environ.get("LINKEDIN_TIME_BUDGET_MIN")'
+            not in src.split("\ndef main(")[0]), (
+        "the ENV READ must be in main(), never at module scope (a bare default may be a "
+        "module constant -- a literal cannot go stale) -- auto_expand.py:103 "
+        "records a module-scope budget defeating the two guards written to prove it worked, "
+        "against a ceiling the test had just set to 0")
+    assert 'os.environ.get("LINKEDIN_TIME_BUDGET_MIN")' in src.split("\ndef main(")[1]
+    assert "_t_run = _now()" in src.split("\ndef main(")[1].split("_load_secrets()")[0], (
+        "the clock is anchored at main() ENTRY so Indeed and Workable COMPOSE with the walk's "
+        "budget instead of adding to it")
 # ---- tests that rot on the calendar: one window, and no fixture sitting inside it ----
+
+
+def _li_clock(start=1000.0, step=1.0):
+    """A stubbed `discovery_daily._now`, advanced `step` per read. A guard that proves a
+    WALL-CLOCK bound works must be able to move the clock: sleeping for real is the ~197 s
+    of dead time `tests/conftest.py` was written to delete, and asserting only that the
+    kwarg exists is what `tools/guard_kill.py` calls CANNOT-FAIL."""
+    t = [start]
+
+    def now():
+        t[0] += step
+        return t[0]
+    now.t = t
+    return now
+
+
+def test_the_free_linkedin_walk_stops_at_its_deadline_and_buys_nothing_on_the_way_out(capsys):
+    """2026-09-12: the paced walk ran 28m53s inside a step killed at 25, and a PAGE COUNT is
+    not a bound on a walk whose per-page cost is a sleep (2.5 s x 338 pages + 20 s x 18-27
+    blocked queries = 1,205-1,385 s on a 252 s sweep).
+
+    The second half is the one that costs money if it is wrong. This query's pool is already
+    in `out` when the clock runs out, and there is deliberately no `elif out: break` in the
+    walk, so falling through to the `not ok` branch would spend `pages` Unlocker renders
+    re-reading what the free rung had just read. A clock must never convert a productive free
+    walk into spend."""
+    calls, paid = [], []
+    clock = _li_clock(step=1.0)
+    out, log = _run_walk([(10, True)], pages=2, calls=calls, capsys=capsys, clock=clock,
+                         deadline=clock.t[0] + 5.5,
+                         unlock=lambda url, timeout=120, **_k: paid.append(url) or "")
+    assert calls == [0, 10, 20, 30, 40], (
+        "the walk must stop at the deadline, not at LINKEDIN_GUEST_PAGES: %s" % calls)
+    assert len(out) == 50, len(out)
+    assert paid == [], "a mid-walk time cut must buy NOTHING -- it already has the cards"
+    assert "time budget ran out on guest page 5" in log, log
+    assert _LAST_COUNTS["linkedin_budget_cut"] == 1, dict(_LAST_COUNTS)
+    assert _LAST_COUNTS["linkedin_budget_spent"] == 0, dict(_LAST_COUNTS)
+
+
+def test_a_query_whose_budget_is_already_spent_goes_straight_to_the_paid_render(capsys):
+    """The bound must not become an outage. The 9 NATIONAL queries returned 989 of the 990 new
+    cards on 2026-09-11, so a clock that answers `return []` for them is a nine-keyword
+    blackout wearing a green step. They keep their paid budget, and only it: two pages, the
+    18-credit worst case `plan_spend` already advertises.
+
+    And `linkedin_blocked` must stay 0. Nothing blocked us -- our own clock ran out -- and
+    that counter is the numerator of the rate that decides whether the pause stays."""
+    calls, paid = [], []
+    clock = _li_clock(step=0.0)
+
+    def _paid(url, timeout=120, **_k):
+        # the paid page must ANSWER, or the walk ends on "no cards from EITHER path" after
+        # one render and this guard silently stops testing the second page of the budget
+        paid.append(url)
+        return "".join(_LI_CARD_HTML % (900 + len(paid) * 10 + k, 900 + len(paid) * 10 + k)
+                       for k in range(60))
+
+    out, log = _run_walk([(10, True)], pages=2, calls=calls, capsys=capsys, clock=clock,
+                         deadline=clock.t[0] - 1, unlock=_paid)
+    assert calls == [], "not one guest request may be made past the deadline: %s" % calls
+    assert len(paid) == 2, paid
+    assert "start=0" in paid[0] and "start=25" in paid[1], (
+        "the paid page index is its OWN counter -- reusing the guest index only ever fetched "
+        "start=0 and silently dropped ~20 of ~80 cards a keyword: %s" % paid)
+    assert _LAST_COUNTS["linkedin_blocked"] == 0, dict(_LAST_COUNTS)
+    assert _LAST_COUNTS["linkedin_budget_spent"] == 1, dict(_LAST_COUNTS)
+    assert "no paid page left (paid 2/2)" in log, log
+
+
+def test_a_budget_spent_city_query_pays_nothing_and_never_claims_it_was_blocked(capsys):
+    """`pages=0` is free-only BY CONSTRUCTION and a spent clock must not change that: the 18
+    city queries are why a blocked runner can never make the city product bill.
+
+    And the message must be TRUE. Five queries printed `raise LINKEDIN_GUEST_PAGES` on
+    2026-08-25 for walks LinkedIn had blocked, and that false line was the evidence the 30->50
+    bump cited. A fabricated BLOCK is the same defect pointing the other way."""
+    calls, paid = [], []
+    clock = _li_clock(step=0.0)
+    out, log = _run_walk([(10, True)], pages=0, location="Haifa, Israel", calls=calls,
+                         capsys=capsys, clock=clock, deadline=clock.t[0] - 1,
+                         unlock=lambda url, timeout=120, **_k: paid.append(url) or "")
+    assert out == [] and paid == [] and calls == [], (out, paid, calls)
+    assert "time budget was already spent and no paid page left (paid 0/0)" in log, log
+    assert "BLOCKED by LinkedIn" not in log, log
+    assert "raise LINKEDIN_GUEST_PAGES" not in log, log
+    assert _LAST_COUNTS["linkedin_blocked"] == 0, dict(_LAST_COUNTS)
+
+
+def test_no_linkedin_pause_ever_runs_past_the_free_walk_deadline(monkeypatch, capsys):
+    """`LINKEDIN_GUEST_PAUSE_S` sleeps before every page after the first and
+    `LINKEDIN_BLOCK_PAUSE_S` 20 s before paying for a blocked one. A deadline that still
+    permits the sleep bounds nothing -- `archive_evidence._Pool.slot` refuses a wait that
+    would overrun its budget, and this is the same rule.
+
+    `tests/conftest.py` zeroes both pauses for the suite, so a guard ABOUT the pause has to
+    put them back or it can only pass."""
+    import discovery_daily as dd
+    slept = []
+    monkeypatch.setattr(dd.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(dd, "LINKEDIN_GUEST_PAUSE_S", 2.5)
+    monkeypatch.setattr(dd, "LINKEDIN_BLOCK_PAUSE_S", 20.0)
+
+    # (a) a blocked query INSIDE the budget re-asks once, and pays the 20 s for it
+    clock = _li_clock(step=0.0)
+    _run_walk([(0, False)], pages=0, capsys=capsys, clock=clock, deadline=clock.t[0] + 600)
+    assert 20.0 in slept, ("inside the budget the block re-ask must still happen -- it is "
+                           "what buys 4,888 free postings for 6 credits: %s" % slept)
+
+    # (b) the same script past the deadline sleeps NOTHING at all
+    slept.clear()
+    clock = _li_clock(step=0.0)
+    _run_walk([(0, False)], pages=0, capsys=capsys, clock=clock, deadline=clock.t[0] - 1)
+    assert slept == [], "no pause of any kind may run past the deadline: %s" % slept
+
+    # (c) and a walk that crosses the deadline mid-flight stops paying pauses at that point
+    slept.clear()
+    clock = _li_clock(step=1.0)
+    _run_walk([(10, True)], pages=0, capsys=capsys, clock=clock, deadline=clock.t[0] + 5.5)
+    assert slept == [2.5, 2.5, 2.5, 2.5], (
+        "four pauses for pages 1-4, then the clock ends the walk: %s" % slept)
+
+
+def test_intake_stamps_what_it_read_so_the_mail_can_say_it(monkeypatch, tmp_path, capsys):
+    """`discovery` was the only step in the eight-step flow with NO stamp, and 2026-09-12 is
+    what that costs: the step was killed at 25 minutes and the operator's mail could say only
+    `workflow step 'discovery' failure`. It could not say that the sweep had in fact read
+    4,888 LinkedIn postings and committed them, because the line that said so died in a stdio
+    buffer -- and a run log expires, while `cloud_state/pipeline_stages.json` is committed
+    state that tomorrow's morning check can be answered from.
+
+    Two assertions, because a stamp that is written and rendered nowhere is the defect
+    `pipeline/stages.py` already records (`queue` and `intel` were stamped nightly and read by
+    nobody for ten days): it must be IN `ORDER`, and a zero-card night must ALARM."""
+    import json as _json
+    from pipeline import stages
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    assert "discovery" in stages.ORDER, (
+        "a stage absent from ORDER is stamped to disk and read by nobody")
+    assert stages.ORDER[0] == "discovery", "intake is the first step of the flow"
+
+    stages.stamp("discovery", linkedin_cards=3011, indeed_cards=65, queries=27,
+                 requests=365, blocked=35, paid=17, budget_min=18.0,
+                 budget_spent=0, budget_cut=0, cached=1037, queued=76)
+    e = _json.load(open(str(tmp_path / "stages.json"), encoding="utf-8"))["discovery"]
+    assert e["linkedin_cards"] == 3011 and e["requests"] == 365 and e["blocked"] == 35
+    assert "discovery: " in stages.summary() and "linkedin_cards=3011" in stages.summary()
+    assert stages.alarms("discovery") == [], "a good night says nothing extra"
+
+    stages.stamp("discovery", linkedin_cards=0, queries=27,
+                 alarm="linkedin read 0 cards across 27 queries")
+    assert any("linkedin read 0 cards" in a for a in stages.alarms("discovery")), \
+        "a zero-card sweep must reach the mail; that is what the stamp is FOR"
+
+    # ...and the alarm must be wired into the digest's own list, not merely available
+    src = open(os.path.join(_REPO, "pipeline", "run.py"), encoding="utf-8").read()
+    assert 'stages.alarms("discovery")' in src, \
+        "run.py must put it on the Stages: line, or nobody reads it"
+
+
+def test_no_test_that_runs_a_stamping_entry_point_writes_the_tracked_stamp_file():
+    """A test that mutates the state file it asserts about is this lane's own 2026-09-11
+    defect, and adding the `discovery` stamp reproduced it one file over: the four tests that
+    call `discovery_daily.main()` wrote `cloud_state/pipeline_stages.json` IN THE TRACKED TREE
+    -- caught by running the scoped local pipeline afterwards and finding a `discovery` stamp
+    reading `"queries": 1`, which no production sweep can produce.
+
+    Three of the four already `monkeypatch.chdir(tmp_path)`, and that protects every other
+    file `discovery_daily` writes. It does not protect this one: `stages.PATH` is resolved from
+    `pipeline/`'s own directory, so chdir cannot reach it. Which is exactly why a comment in
+    those four tests is not enough and the FIFTH caller needs a gate."""
+    import re
+    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_units.py"),
+               encoding="utf-8").read()
+    lines = src.split("\n")
+    # entry points that stamp a stage as a side effect of being called at all
+    stamping = re.compile(r"\b(dd|discovery_daily)\.main\(\)")
+    offenders = []
+    for m in re.finditer(r"^def (test_\w+)\(", src, re.M):
+        start = src[:m.start()].count("\n")
+        end = start + 1
+        while end < len(lines) and not lines[end].startswith(("def ", "@", "# ----")):
+            end += 1
+        body = "\n".join(lines[start:end])
+        if stamping.search(body) and 'stages, "PATH"' not in body and '_stages, "PATH"' not in body:
+            offenders.append(m.group(1))
+    assert not offenders, (
+        "these tests call a stamping entry point without redirecting `stages.PATH`, so they "
+        "write cloud_state/pipeline_stages.json in the TRACKED tree -- monkeypatch.chdir does "
+        "not reach it, because stages.PATH is resolved from pipeline/'s own directory: %s"
+        % offenders)
 @pytest.mark.parametrize("fn,rec,datekey", [
     ("linkedin_normalize", {"job_id": "1", "title": "Data Analyst", "company": "New Co",
                             "location": "Haifa, Israel", "url": "u",

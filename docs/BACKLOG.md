@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**649 filed · 459 open · 190 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**649 filed · 458 open · 191 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -246,7 +246,7 @@ closure convention in the header.
 - **593** `593@registry` **An abandoned board is refused, alarmed and re-resolved
 - **596** `596@registry` **Five active rows publish another company's careers board, and the intel that names
 
-### infra — 115 open
+### infra — 114 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -300,7 +300,6 @@ closure convention in the header.
 - **167** `167@infra` **A company named "Tel Aviv" in the mail**
 - **178** `178@infra` **`auto_expand` ignores the `slug` the LinkedIn bridge already writes**
 - **179** `179@infra` **A deliberately skipped source reads as a dead one**
-- **180** `180@infra` **Intake has no line of its own in the mail**
 - **182** `182@infra` **Two mutation cells for the 2026-08-25 discovery guards**
 - **191** `191@infra` **`no-url` is a triage mode `check_invariants.TRIAGE_MODES` does not know**
 - **195** `195@infra` **`tests.yml`'s `mutation-gate` comment still says "~15 minutes" and the `guard` job
@@ -3036,12 +3035,24 @@ half), 114, 115, 125 (mechanism gone), 128, 134. Open, with owners:
     `linkedin-targeted: nothing for 3d` and counts up daily until the pool resets on
     2026-09-01. Proposed: `record()` accepts a per-key reason (`{"linkedin-targeted":
     {"count": 0, "skipped": "budget"}}`) and `stale()` prints it instead. Same family as 3.
-180. **Intake has no line of its own in the mail** — lane: `infra` (+ `render` for the
-    line). `pipeline/stages.ORDER` has no `discover` stamp, so the mail shows source deaths
-    and nothing else: the per-source yield, `blocked=`, the queue depth (170) and the BD
-    pool percentage live in the step log only. Proposed: a `discover` stage stamped by
-    `discovery_daily.main()` with `new_companies`, `queued`, `queue_depth`, `bd_pct`,
-    `blocked`, and one `- **Intake:**` line rendered from it.
+180. ~~**Intake has no line of its own in the mail**~~ — **CLOSED 2026-09-12 (`infra`)**:
+    `discovery` is now the FIRST entry of `pipeline/stages.ORDER`, stamped by
+    `discovery_daily.main()` beside `sources.record` with `linkedin_cards`,
+    `linkedin_urns`, `indeed_cards`, `queries`, `requests`, `blocked`, `paid`,
+    `budget_min`, `budget_spent`, `budget_cut`, `cached` and `queued`; `run.py` adds
+    `stages.alarms("discovery")`, so a sweep that read zero LinkedIn cards — or a step
+    that did not finish — is a `Stages:` clause. What finally paid for it was 2026-09-12:
+    the step was killed at `timeout-minutes: 25` having read **4,888** LinkedIn postings
+    and committed them, and the mail could say only `workflow step 'discovery' failure`
+    because the lines that said otherwise died in a stdio buffer. A run log expires; a
+    stamp is committed state, which is what makes a morning check answerable from the
+    repo. Not done as proposed: no separate `- **Intake:**` line (that is `render`'s
+    surface and `Stage order:` already renders every key), and `queue_depth`/`bd_pct`
+    are omitted because `queue` and `bd` are stages of their own — a second copy is a
+    second thing to keep true. `test_intake_stamps_what_it_read_so_the_mail_can_say_it`.
+    Original text: `pipeline/stages.ORDER` has no `discover` stamp, so the mail shows
+    source deaths and nothing else: the per-source yield, `blocked=`, the queue depth
+    (170) and the BD pool percentage live in the step log only.
 181. ~~**`discovery-indeed` descriptions can never be fetched inline**~~ — **CLOSED 2026-08-26 (`jd-text`)**: `jdfill.unfillable()` names the host families no rung we own can read (indeed.com WAS one: 401/403 on 22 of 22 sampled, `reject_authwall` to the Unlocker — falsified 2026-08-31, when the host moved to `paid_only` and a rung of ours started reading it; the closure's mechanism stands for `secrethunter.io`) and is consulted BEFORE the plain GET by all three callers, so those 17 daily fetches and the weekly credit are gone and the residue is counted, not booked as failure. One canary per process per host family keeps the refusal falsifiable. `test_unfillable_names_only_hosts_no_rung_of_ours_can_read`. Original text: **`discovery-indeed` descriptions can never be fetched inline** — lane: `jd-text`.
     `jd-fill … discovery-indeed http-401 17` on 2026-08-25: `il.indeed.com/viewjob?jk=…`
     answers 401/403 to any non-browser client (verified on two cache URLs). Meanwhile

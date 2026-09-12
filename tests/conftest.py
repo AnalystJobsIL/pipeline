@@ -49,7 +49,14 @@ PAID_HOSTS = {"api.brightdata.com"}
 # genuine careers URLs for a company called Acme. The same run was killed at its 7-minute
 # budget inside `ssl.py`. A free rung is not a harmless one: it makes the suite
 # non-hermetic, slow, and dependent on somebody else's rate limiter.
-FREE_BUT_LIVE_HOSTS = {"html.duckduckgo.com", "lite.duckduckgo.com"}
+# `linkedin.com` joined the set on 2026-09-12 -- the same defect one host over. The guest
+# endpoint `linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search` is keyless and bills
+# nothing, so `PAID_HOSTS` never covered it, and it was not added with DuckDuckGo the day
+# before. Every existing walk test stubs `discovery_daily._li_guest`, so nothing depended on
+# reaching it -- which is exactly when to close a hole, rather than after the wall-clock
+# guards added here gave a future test a reason to.
+FREE_BUT_LIVE_HOSTS = {"html.duckduckgo.com", "lite.duckduckgo.com",
+                       "linkedin.com", "www.linkedin.com", "il.linkedin.com"}
 
 
 class PaidCallInTests(BaseException):
@@ -77,8 +84,10 @@ def _no_paid_calls(req, *args, **kwargs):
     if host in FREE_BUT_LIVE_HOSTS:
         raise PaidCallInTests(
             f"a test reached {url} -- free, but the LIVE INTERNET. Stub the rung this test "
-            f"exercises (`deep_validate._ddg_fetch` is the seam) rather than letting the "
-            f"suite depend on somebody else's rate limiter; see tests/conftest.py."
+            f"exercises (`deep_validate._ddg_fetch` for DuckDuckGo, "
+            f"`discovery_daily._li_guest` for the LinkedIn guest endpoint -- `_li_replay` in "
+            f"tests/test_units.py is the ready-made one) rather than letting the suite depend "
+            f"on somebody else's rate limiter; see tests/conftest.py."
         )
     return _real_urlopen(req, *args, **kwargs)
 
