@@ -102,3 +102,26 @@ Also rejected, from the first draft's sweep: bare `דרושים` (the Israeli na
 landing pages), `you will` (26 flips, 9 junk). Lost against the draft: Teads (its one
 flip), Cognyte's marketing-prose flip ("they are taking advantage") — a flip supplied by
 the wrong mechanism, correctly surrendered.
+
+---
+
+## Addendum, 2026-09-12 (`infra`) — the NUMBER is superseded, the mechanism is not
+
+`JDFILL_INDEED_CAP` is **60**, set explicitly in `daily-digest.yml` rather than left to a
+default. The per-host sub-cap, the reason it exists (the inline layer stamps nothing, so an
+unfilled discovery card is re-offered nightly until it ages out at 21 days) and the `0`-closes
+switch are all unchanged.
+
+What this record got wrong was the direction of the demand. It said 25 was a ceiling on waste
+against "the observed demand (28) **falls** as the matched driver's stamps absorb the rows that
+carry a role". It did not fall. Measured on the two nights the monthly ceiling switched the paid
+rung fully off, so the whole demand printed instead of the part that fitted: **44** Indeed
+postings could not be read on 2026-09-10 and **41** on 09-11, against 15 reported on 09-12 with
+the cap at 25 — the reported number was the OVERFLOW, and reading it as the demand understated
+it by two thirds. So 25 bound on every morning it ran, `oak|product analyst`-shaped rows kept
+being judged on a 172-character SERP snippet, and this record's own arithmetic
+(25 × 30 = 750/month, 15 % of the pool) was answering a question the 2026-09-11 ruling deleted:
+there is no ceiling to take 15 % of.
+
+`docs/decisions/2026-09-12-jd-fill-caps-unbound.md` has the new numbers, the three bounds in
+series behind them, and why the `ALLOWANCES` table was left knowingly short rather than re-cut.

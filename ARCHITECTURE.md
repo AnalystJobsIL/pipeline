@@ -5519,16 +5519,18 @@ a day go through that path.
 
 | caller | when | what it walks | Bright Data |
 |---|---|---|---|
-| `JDFiller` (`pipeline/run.py`, before `seniority.classify`) | 05:00, in the digest | every Israel-matched role whose title the classifier could accept, `JDFILL_TIME_BUDGET_MIN` (25) | **`JDFILL_BD_CAP` 25**, after the free rungs fail (2026-08-30; it never bought before) |
+| `JDFiller` (`pipeline/run.py`, before `seniority.classify`) | 05:00, in the digest | every Israel-matched role whose title the classifier could accept, `JDFILL_TIME_BUDGET_MIN` (**35**) | **`JDFILL_BD_CAP` 150**, after the free rungs fail. This row read **25** from 2026-08-30 to 2026-09-12 while the workflow pinned 30, which is why both caps are registered facts now (`docs/check_docs.py`) |
 | `enrich_scrape_jd.py` — **title pool** | 05:00, before the pipeline | cards failing `looks_like_jd`, relevance-gated, non-chrome, Israel-passing, at a job address, in `scraped_cache.json`, deduped by url | `JD_ENRICH_BD_CAP` **1000**, `JD_ENRICH_TIME_BUDGET_MIN` 25 |
 | `enrich_scrape_jd.py --archive-only` — **archive pool** | `jd-archive.yml`, 12:30 (§4) | every OTHER Israel-passing card: the ones the title gate drops. Oldest attempt first, round-robin over companies | the same caps; `JD_ENRICH_TIME_BUDGET_MIN` **90** in that workflow |
 | `enrich_matched_jd.py` | 05:00, before the pipeline | every LIVE `matched` row failing `looks_like_jd`, any age, any source | `MATCHED_JD_BD_CAP` **25**, `MATCHED_JD_TIME_BUDGET_MIN` 20 (yml) |
 
-**Indeed has its own bound inside the inline cap: `JDFILL_INDEED_CAP` (25, `0` closes the
-rung inline).** It exists because the inline layer stamps nothing — an unfilled discovery
+**Indeed has its own bound inside the inline cap: `JDFILL_INDEED_CAP` (**60**, set
+explicitly in `daily-digest.yml` since 2026-09-12; `0` closes the rung inline).** It exists because the inline layer stamps nothing — an unfilled discovery
 card is re-offered every night until it ages out of `discovered_cache.json` at 21 days — so
 without a per-run bound a 92-card backlog would spend the whole `JDFILL_BD_CAP` on one host
-nightly. **It was 8 for exactly one night, and that night measured it undersized**: the
+nightly. **It was 8 for one night and 25 for twelve days, and both were measured
+undersized on the first morning they ran** (8 on 2026-08-31, 25 on every morning from
+2026-09-01 to 2026-09-12): the
 2026-08-31 digest logged `the Indeed cap bound at 8 — 20 Indeed postings judged on their
 snippet tonight`, so 28 wanted the rung and 8 got it — and a posting judged on a 172-character
 SERP snippet is a verdict reached with no description at all. Two of those 20 (`oak|product
@@ -5536,10 +5538,16 @@ analyst`, `diageo|performance analytics analyst`) were EMAILED that morning carr
 snippet as their text. The arithmetic against the 5,000/month free tier (a ceiling from
 2026-09-01, a soft line again from 2026-09-11):
 inline ceiling 25 × 30 = **750/month (15 %)**, worst case and never expected, against a
-measured demand of 28 that falls as the matched driver's stamps absorb the rows that carry a
-role. It stays INSIDE the shared `JDFILL_BD_CAP`, which `daily-digest.yml` pins at 30 and
-which the whole inline layer spent 12 of that night, so the night's ceiling is unchanged and a
-collision with the LinkedIn class is alarmed (`bd-capped`) rather than silent. The matched
+measured demand of 28. **Superseded on 2026-09-12** (`infra`,
+`docs/decisions/2026-09-12-jd-fill-caps-unbound.md`): the demand did NOT fall — measured
+with the paid rung switched fully off by the monthly ceiling, **44** Indeed postings a
+night could not be read (2026-09-10) and **41** the next, against a total inline demand of
+**53** and **49**. So `JDFILL_INDEED_CAP` is **60** (1,800/month worst case, 1,320
+expected) inside a `JDFILL_BD_CAP` of **150** (2.5× a p95 of 59, a circuit breaker that
+is meant never to bind), with `JDFILL_TIME_BUDGET_MIN` at **35** because the
+failing-streak tail is 20 calls × 90 s = 30 min for any cap ≥ 40. The Indeed cards are a
+SUBSET of the inline total, never an addend. A collision between the two classes is still
+alarmed (`bd-capped`) rather than silent. The matched
 driver needs no twin because its failures stamp `jd_attempted` and ride the 7/14/28 ladder
 (~13/month steady drip on today's 6 rows). Be honest about what the inline ceiling buys: the
 cache is order-stable (a still-listed posting keeps its rank), so the cap's cards are largely
@@ -5712,7 +5720,7 @@ morning where a Bright Data state also fired, which is exactly the mornings with
 | `- **Stages:** enrich crash:DatabaseError` | a driver raised; the day's counts are KEPT and the step log has the traceback |
 | `- **Stages:** enrich no-report(scrape,matched)` | the named driver(s) never reached their stamp today (import death, kill, timeout); the stamp's `date` is left where it was |
 | `- **Stages:** inline jd-fill budget spent (25m) — 400 roles judged with no text` | the inline budget bound, which used to be visible in the step log only |
-| `jd-fill: 110/121 … ; N unfillable (discovery-telegram js-shell 4, …)` | step log only (`run.py`); the residue is named rather than counted as failure. Until 2026-08-31 `discovery-indeed auth-walled` was its biggest term (~17); those rows are the paid rung's now, and reappear here only when it is off (`JDFILL_INDEED_CAP=0`), unavailable, or cap-bound |
+| `jd-fill: 110/121 … ; N unfillable (discovery-telegram js-shell 4, …)` | step log only (`run.py`); the residue is named rather than counted as failure. `discovery-indeed auth-walled` is the term to watch: it read **15** on 2026-09-12 with the cap at 25 and **44** on 09-10 with the paid rung off entirely, so it measures DEMAND the rung did not meet. It should read 0 from 2026-09-13 (cap 60) — a non-zero value means the rung is off (`JDFILL_INDEED_CAP=0`), unavailable, or cap-bound again |
 
 **Cooldown.** A stamp is `YYYY-MM-DD` (page read, no JD: retry after 7 days) or
 `YYYY-MM-DD transient` (retry after 1 day: timeout, 5xx, Unlocker unavailable/capped/gateway

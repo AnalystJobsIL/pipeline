@@ -27045,24 +27045,150 @@ def test_the_wall_sentence_is_not_kept_as_the_first_line_of_the_description():
     assert "Cookie Policy" not in seg
 
 
-def test_the_inline_indeed_cap_ships_the_arithmetic_it_claims(monkeypatch):
-    """The cap was measured undersized on its first night: `the Indeed cap bound at 8 — 20
-    Indeed postings judged on their snippet tonight`, i.e. 28 wanted the rung and 8 got it,
-    and two of the 20 were emailed with a 172-character SERP snippet as their description.
-    25 x 30 nights = 750/month, 15 % of the 5,000 pool, and it still nests inside the shared
-    `JDFILL_BD_CAP` the workflow pins at 30.
+def _pipeline_step_env():
+    """{name: value} from the `Run the pipeline` step's OWN env: block in daily-digest.yml.
 
-    Asserted against the SHIPPED DEFAULT with the environment cleared, so the number comes
-    from the code and not from whatever this process inherited; the arithmetic is derived
-    from that same value rather than from two literals a reverted cap would not touch
-    (wave B: `assert 25 * 30 == 750` passes with the default back at 8).
-    Kills: reverting the default to 8."""
+    Sliced by step name, not read from the whole file: the same workflow carries
+    `JD_ENRICH_*` (the scrape enricher) and `MATCHED_JD_*` (the matched backfill), and a
+    future author will add a third. The idiom is `_digest_steps`'s and
+    `test_the_drain_capacity_constants_match_the_workflow`'s -- regex on a named slice; there
+    is no `yaml` import anywhere under tests/, and this is not the place to add a dependency.
+    """
+    import re
+    wf = open(os.path.join(_REPO, ".github", "workflows", "daily-digest.yml"),
+              encoding="utf-8").read()
+    a = wf.index("- name: Run the pipeline")
+    b = wf.index("- name: Mark digested roles as sent")
+    return {m.group(1): m.group(2).strip().strip('"')
+            for m in re.finditer(r"^\s{10}([A-Z][A-Z0-9_]+):\s*(\S+)\s*$", wf[a:b], re.M)}
+
+
+def test_the_inline_indeed_cap_nests_inside_the_bd_cap_the_workflow_actually_SETS(monkeypatch):
+    """This assertion used to read `cap <= 30` with the 30 written in by hand and the message
+    "(30 in the yml)". It was true when it was written and it was never a bound: the number it
+    checked lived in a file it did not read, so the day `JDFILL_BD_CAP` moved, the guard was
+    asserting against a literal about nothing. The nesting is a real invariant -- Indeed's cap
+    is a SUB-cap, so raising Indeed alone moves the refusal from `indeed-capped` to `bd-capped`
+    and the mail still says `cap bound` -- so it is now read from the workflow.
+
+    Both caps must be SET in the step, not left to a default nobody can see: the Indeed cap was
+    an invisible 25 for twelve days while the mail reported it binding every night.
+
+    The shipped DEFAULTS are asserted separately and for a different reason: a local run must
+    not inherit the cloud's 150, the same reason `JD_BD` defaults matter.
+    Kills: reverting either value in the yml; dropping the Indeed line; moving a default."""
     from pipeline import jdfill
+    env = _pipeline_step_env()
+    assert "JDFILL_BD_CAP" in env and "JDFILL_INDEED_CAP" in env, sorted(env)
+    bd_live, indeed_live = int(env["JDFILL_BD_CAP"]), int(env["JDFILL_INDEED_CAP"])
+    assert indeed_live <= bd_live, (
+        "the inline Indeed bound must nest inside JDFILL_BD_CAP: the yml says Indeed %d "
+        "against a shared %d, so the refusal only moves from `indeed-capped` to `bd-capped`"
+        % (indeed_live, bd_live))
+    # the measured demand these two were sized against, so a future cut has the number:
+    # 09-10 53 postings the free rungs could not read (44 Indeed), 09-11 49 (41), 09-12 55 (40)
+    assert indeed_live >= 44, ("Indeed's p95 demand is 44 a night (2026-09-10, measured with "
+                               "the paid rung fully OFF): %d refuses real coverage" % indeed_live)
+    assert bd_live >= 59, ("the BD rung's p95 demand is 59 a night: %d binds" % bd_live)
+
     monkeypatch.delenv("JDFILL_INDEED_CAP", raising=False)
-    cap = jdfill.JDFiller(budget_min=1, bd=None).indeed_cap
-    assert cap == 25
-    assert cap * 30 == 750 and round(cap * 30 / 5000 * 100) == 15
-    assert cap <= 30, "the inline Indeed bound must nest inside JDFILL_BD_CAP (30 in the yml)"
+    monkeypatch.delenv("JDFILL_BD_CAP", raising=False)
+    f = jdfill.JDFiller(budget_min=1, bd=None)
+    assert f.indeed_cap == 25 and jdfill.INLINE_BD_CAP == 25, (
+        "the shipped defaults stay 25/25 -- a local run must not inherit the cloud's cap")
+
+
+def test_the_inline_jd_caps_bind_before_the_clock_and_the_clock_before_the_kill():
+    """THE 2026-09-04 LESSON, MECHANISED. `WAYBACK_REQ_CAP` 140 bound before
+    `WAYBACK_DAY_CAP` 150, so a session raised one cap and moved the bind instead of lifting
+    it. The digest's JD fill has four bounds in series -- `JDFILL_BD_CAP`, then
+    `JDFILL_TIME_BUDGET_MIN`, then the step's `timeout-minutes`, then the job's -- and until
+    today only the first was ever looked at.
+
+    Three arithmetics, all from numbers the code or the run logs carry:
+
+    * cap x 6.0 s, the documented max for a raw residential fetch (`pipeline/jdfill.py`), is
+      the cap-saturated cost and must fit the clock.
+    * `_failing_at` x 90 s is the TAIL, and it is the one that bites: `Unlocker.__call__`
+      defaults to `timeout=90`, and `_failing_at` is 15 at cap 30 but saturates at 20 for any
+      cap >= 40. 20 x 90 s = 30 min, which was already 90 % of a 25-minute budget before
+      anything was raised. Derived from the real object, which costs no network: the ceiling
+      read is lazy (first spend) and `tests/conftest.py` bans the transport regardless.
+    * the step's budgets are ADDITIVE, because `JDFiller` and `seniority.Classifier`
+      interleave in one loop in `pipeline/run.py`. `CLASSIFY_TIME_BUDGET_MIN` defaults to 60
+      and is set in no workflow, so it is a real term.
+
+    Kills: raising the cap without the clock; raising the clock without the step."""
+    from pipeline import jdfill
+    from pipeline import seniority
+    env = _pipeline_step_env()
+    steps, job_timeout = _digest_steps()
+    step_timeout = [t for i, t, _ in steps if i == "pipeline"][0]
+    cap = int(env["JDFILL_BD_CAP"])
+    budget = float(env["JDFILL_TIME_BUDGET_MIN"])
+
+    assert int(env.get("JDFILL_RENDER_CAP", "0")) == 0, (
+        "a render is 5.8-27.8 s against a raw fetch's 4.3 s median, so %d renders is %.0f "
+        "minutes and every number below stops holding" % (cap, cap * 27.8 / 60))
+    assert cap * 6.0 / 60 <= budget, (
+        "cap-saturated the raw calls cost %.1f min against a %g-min fetch budget"
+        % (cap * 6.0 / 60, budget))
+
+    u = jdfill.Unlocker(cap=cap)
+    paid_timeout = 90            # Unlocker.__call__'s default; _bd_call passes none
+    assert u._failing_at * paid_timeout / 60 <= budget, (
+        "the failing-streak tail is %d calls x %d s = %.0f min against a %g-min budget: the "
+        "roles past it are judged with NO DESCRIPTION, which is the defect the cap raise "
+        "exists to remove" % (u._failing_at, paid_timeout,
+                              u._failing_at * paid_timeout / 60, budget))
+
+    # the workflow may pin it; when it does not, the default in the code is the real term
+    classify = float(env.get("CLASSIFY_TIME_BUDGET_MIN") or 60)
+    fetch_min, intel_min, render_min = 8, 15, 2             # the step's own comment
+    total = fetch_min + budget + classify + intel_min + render_min
+    assert total < step_timeout, (
+        "the pipeline step's budgets are additive and sum to %g against timeout-minutes %d: "
+        "fetch %d + jd-fill %g + classify %g + intel %d + render %d"
+        % (total, step_timeout, fetch_min, budget, classify, intel_min, render_min))
+    assert sum(t for _, t, _ in steps if t) <= job_timeout, "see the step-sum guard"
+    # ...and the classifier default this arithmetic rests on is really the default
+    assert 'os.environ.get("CLASSIFY_TIME_BUDGET_MIN", 60)' in \
+        open(seniority.__file__, encoding="utf-8").read(), \
+        "the 60 above is read from pipeline/seniority.py; if that moved, this sum is wrong"
+
+
+def test_the_jd_fill_allowance_is_knowingly_short_of_its_cap_and_the_number_is_written_down():
+    """`ALLOWANCES["jd-fill"]` = 1,500/month was sized against a nightly cap of 30
+    (= 900/month). The cap is 150 now, so the ceiling is 4,500/month and the measured
+    expectation is ~1,770 -- the allowance is knowingly 2-3x short, and that is a DECISION,
+    not an oversight, so it is asserted rather than left to be rediscovered.
+
+    Why it was not re-cut (operator's call, 2026-09-12): the table is a 5,000 split of a
+    13,560/month measured demand -- `search` alone runs at 339/day = 10,173 against an
+    allowance of 2,000 -- so no re-cut inside `SOFT` can cover 4,500, and any that tried would
+    take credits from the registry drain that is already reporting itself behind. It enforces
+    nothing today (`BD_ALLOWANCES` is set in no workflow), and `pipeline/bd_budget.py` states
+    its own precondition for turning it on: "a second consecutive month projecting past `SOFT`
+    with the operator UNWILLING to pay it" -- and the 2026-09-11 ruling is the operator
+    willing, at about $14.
+
+    THIS GUARD GOES RED BY DESIGN the day someone re-cuts the table, and that is the point:
+    the re-cut and its filing move together. `docs/BACKLOG.md` carries the design."""
+    from pipeline import bd_budget as B
+    env = _pipeline_step_env()
+    cap = int(env["JDFILL_BD_CAP"])
+    assert B.ALLOWANCES["jd-fill"] < cap * 30, (
+        "the mismatch is the documented state: allowance %d/month against a nightly cap of "
+        "%d (= %d/month). If you have re-cut the table, update the decision record and the "
+        "BACKLOG item this guard points at, then change this assertion."
+        % (B.ALLOWANCES["jd-fill"], cap, cap * 30))
+    assert sum(B.ALLOWANCES.values()) == B.SOFT, \
+        "nobody re-cut the table quietly; the split is still of the free tier"
+    rec = open(os.path.join(_REPO, "docs", "decisions",
+                            "2026-09-12-jd-fill-caps-unbound.md"), encoding="utf-8").read()
+    for n in ("4,500", "1,500", "13,560"):
+        assert n in rec, ("the decision record must carry %s -- a mismatch nobody wrote down "
+                          "is the same as a mismatch nobody knows about" % n)
 
 
 def test_a_donor_that_does_not_name_the_role_is_refused_and_the_row_says_so(monkeypatch, tmp_path):

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**649 filed · 458 open · 191 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**653 filed · 462 open · 191 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 600.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 604.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -246,7 +246,7 @@ closure convention in the header.
 - **593** `593@registry` **An abandoned board is refused, alarmed and re-resolved
 - **596** `596@registry` **Five active rows publish another company's careers board, and the intel that names
 
-### infra — 114 open
+### infra — 115 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -362,6 +362,7 @@ closure convention in the header.
 - **592** `592@infra` **DUPLICATE OF `591`
 - **595** `595@infra` **A killed `firmo_drain` stamps no `budget_min`, so the mail calls it the bulk cron** —
 - **599** `599@infra` **A fourth calendar-rot test, and the class has no owner**
+- **603** `603@infra` **The `ALLOWANCES` table is a 5,000 split of a 13,560/month demand, and `SOFT` is a price
 
 ### scraper — 31 open
 
@@ -510,6 +511,29 @@ closure convention in the header.
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 - **597** `597@company-intel` **A searchless research answer is counted and never named**
 
+### jd-text — 20 open
+
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
+- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
+- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
+- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
+- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
+- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
+- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
+- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
+- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
+- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
+- **581** `581@jd-text` **The scrape cache keeps the page furniture this layer now cuts, and nothing re-cleans it**
+- **587** `587@jd-text` **When jd-text strips LinkedIn's page chrome, a closed posting silently reopens** —
+- **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
+- **601** `601@jd-text` **Two comment blocks in `pipeline/jdfill.py` now contradict the shipped workflow** —
+- **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
+
 ### ats-fetch — 19 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
@@ -552,26 +576,6 @@ closure convention in the header.
 - **557** `557@classifier` **LTX has not flipped to its own board
 - **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
-
-### jd-text — 17 open
-
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
-- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
-- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
-- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
-- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
-- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
-- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
-- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
-- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
-- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
-- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
-- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
-- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
-- **581** `581@jd-text` **The scrape cache keeps the page furniture this layer now cuts, and nothing re-cleans it**
-- **587** `587@jd-text` **When jd-text strips LinkedIn's page chrome, a closed posting silently reopens** —
 
 ### render — 7 open
 
@@ -12245,3 +12249,91 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      a fixture date relative to `date.today()` (or a frozen clock), and the class deserves
      one guard that fails when a NEW absolute date appears in a window assertion — otherwise
      the fifth is written next week and reds someone else's push.
+
+     **Re-measured 2026-09-12 (`infra`, this lane): the one line offered as the next
+     instance is NOT one.** `tests/test_registry.py:6489` `Z._write(res, "2026-08-29", {})`
+     cannot rot: the only window-ish assertion in that test is `L.in_hunt_pool(off)`, and
+     `listing_hunt.in_hunt_pool` is explicitly DATELESS (its own docstring says so; `main()`
+     composes it with `queue_state.row_due`, which that test never calls). The literal only
+     lands inside a `zero-confirm 2026-08-29:` note string, which no predicate dates. So
+     **there is no instance left — what is open is the CLASS GUARD**, and it is not an hour:
+     the existing scan (`tests/test_units.py`, inside
+     `test_the_freshness_window_is_one_constant_and_no_fixture_sits_inside_it`) keys on JSON
+     date KEYS inside test bodies naming one of ~7 judged functions, in ONE file, while the
+     599 shape is a POSITIONAL date argument judged by a windowed predicate (`tried_within`,
+     `row_due`). It needs a different detector, a whitelist (`tests/test_registry.py` alone
+     carries 28 post-2021 date literals) and a seeded-instance verification, or the fix is
+     itself a source of reds on other lanes' pushes — which is what this item describes.
+600. **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout** — lane:
+     `jd-text` (its file), filed 2026-09-12 by `infra` while raising the caps above it. Two
+     halves, and the second is the one that costs a morning.
+     (a) `pipeline/jdfill.py`'s `Unlocker` POSTs `api.brightdata.com` itself rather than
+     through `bd_rescue.unlock_status`, and says so at its own definition: *"neither
+     `BD_RUN_CAP` nor `BD_PAID_RUNGS` nor the ceiling reached this layer"*. 2026-09-11 closed
+     the CEILING half (`_monthly_ceiling_reached` → `bd_budget.may_spend`); the `BD_RUN_CAP`
+     half is still open, so an operator who sets `BD_RUN_CAP=0` to stop spending **does not
+     stop the digest's JD fill**, and the workflow-root `BD_RUN_CAP: "250"` is inert on this
+     rung. The `[bd-spend] … of a 250 cap` line it prints is the ledger reporting a cap that
+     did not apply to it.
+     (b) `Unlocker.__call__(url, timeout=90)` and `_bd_call` passes no timeout, so 90 s per
+     call stands. The failing-streak breaker opens at `_failing_at = max(breaker*2,
+     min(breaker*4, max(3, cap//2)))` — 15 at cap 30 and **20 for any cap ≥ 40** — so a night
+     where every paid call times out is 20 × 90 s = **30 min**. That already exceeded
+     `JDFILL_TIME_BUDGET_MIN` 25 before the cap moved, and the roles past the clock are judged
+     with no description, which is the defect the cap raise exists to remove.
+     The fix is one variable and it would make today's `JDFILL_TIME_BUDGET_MIN: "35"`
+     unnecessary: a `JDFILL_BD_TIMEOUT_S` default 30 in `__init__`, passed by `_bd_call`. 30 s
+     is 5× the documented raw max of 6.0 s (median 4.3 s), and the tail becomes 10 min.
+     ```python
+     # pipeline/jdfill.py, Unlocker.__init__
+     +        self.timeout_s = float(os.environ.get("JDFILL_BD_TIMEOUT_S", "30"))
+     # ...and in _bd_call, where bd(url) is called with no timeout today
+     -            body = bd(url)
+     +            body = bd(url, timeout=bd.timeout_s)
+     ```
+     Cost of not doing it: the 35-minute budget carries the tail instead, which is 35 minutes
+     of the mail's critical path reserved for a failure mode.
+601. **Two comment blocks in `pipeline/jdfill.py` now contradict the shipped workflow** —
+     lane: `jd-text` (its file), filed 2026-09-12 by `infra`. `:2842-2862` (the Indeed cap's
+     rationale) still says *"25 × 30 nights = **750/month, 15 %** of the 5,000-credit pool"*,
+     *"It stays inside the shared `JDFILL_BD_CAP`, which `daily-digest.yml` pins at 30"* and
+     *"the observed demand (28) falls as the matched driver's stamps absorb the rows"*; the
+     `JDFiller` docstring at `:2803` says the cap's default is what bounds the rung. The yml
+     now sets 150 and 60, the demand did NOT fall (44 Indeed postings unreadable on 09-10, 41
+     on 09-11, measured with the paid rung off), and there is no pool to take 15 % of since the
+     2026-09-11 ruling. `docs/decisions/2026-09-12-jd-fill-caps-unbound.md` has the numbers to
+     paste. Filed rather than written because this lane may not edit that file, and a code
+     comment that contradicts the workflow it describes is the exact failure
+     `pipeline/bd_budget.py:12` was written against.
+602. **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
+     lane: `jd-text` (`pipeline/jdfill.py`), filed 2026-09-12 by `infra`. `JDFiller.summary()`
+     prints `Bright Data {bd_filled}/{bd_tried} filled ({used} credits)` with no per-host
+     split, and `alarms()` names Indeed only when its cap BINDS — which the 2026-09-12 raise
+     to 60 is specifically intended to stop happening. So the Indeed share becomes invisible at
+     the moment it becomes ~44 of ~59 credits a night, and it is also the number that decides
+     whether `537@discovery` (the nightly re-buy of the same front-ranked `jk`s until they age
+     out at 21 days) is worth building: 25 → 44 cards a night moves that waste from ~750 to
+     ~1,320 credits a month. One clause in `summary()`; the counters (`indeed_tried`,
+     `indeed_capped`) already exist and are public.
+603. **The `ALLOWANCES` table is a 5,000 split of a 13,560/month demand, and `SOFT` is a price
+     line rather than a capacity** — lane: `infra`, filed 2026-09-12 by this lane against its
+     own mechanism, with the operator's ruling that it not be re-cut today.
+     `pipeline/bd_budget.ALLOWANCES` = search 2,000 · jd-fill 1,500 · discovery 800 · unlock
+     700, pinned to sum to `SOFT` = 5,000 by
+     `test_the_allowance_split_is_off_by_default_and_privileges_the_jd_rungs`. Measured 7-day
+     rates × 30: search **10,173** · unlock **2,697** · discovery 549 · jd-fill ~1,770 after
+     today's cap raise = **13,560**, so every class but `discovery` is provisioned at 20-26 %
+     of its real demand and `jd-fill`'s ceiling is now 4,500 against an allowance of 1,500.
+     **No re-cut inside `SOFT` can cover it**, and one that tried would take credits from
+     `search` — `listing_hunt` (1,741 credits 09-01..09-11), `queue_resolve_search` (658) and
+     `resolve_broken` (463), i.e. the registry drain that is already behind its own intake.
+     The conceptual error is the invariant, not the split: 5,000 is the FREE TIER, past which
+     a credit is $1.50/1,000 and this September costs about $14. Splitting it is splitting the
+     wrong number. Proposed: a dated `POOL` constant with `sum(ALLOWANCES.values()) == POOL`
+     and `POOL >= SOFT`, the classes set from `rates() × 30 × a headroom factor`, and the
+     comment saying what `POOL` was measured against. **Not urgent by construction**:
+     `BD_ALLOWANCES` is set in no workflow, and `bd_budget.py:259` states the precondition for
+     enabling it — "a second consecutive month projecting past `SOFT` with the operator
+     unwilling to pay it" — which the 2026-09-11 ruling is the negation of.
+     `test_the_jd_fill_allowance_is_knowingly_short_of_its_cap_and_the_number_is_written_down`
+     goes red the day the table is re-cut, which is how this item gets re-read.

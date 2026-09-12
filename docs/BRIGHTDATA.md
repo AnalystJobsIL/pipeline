@@ -94,7 +94,10 @@ Per-consumer caps, all env vars, all re-derivable with
 |---|---|---|
 | `BD_RUN_CAP` | **unset = no cap**; `0` = buy nothing | every caller of `bd_rescue.unlock_status` — ten of the ~thirteen spend paths. Per PROCESS, so a pooled job's real ceiling is the cap × the workers |
 | `BD_LIMIT` | 120/day in CI (`bd_rescue`), 60 (`bd_employees`) | `bd_rescue.py`, `bd_employees.py` — a row-count bound on the main loop, not on the request |
-| `JD_ENRICH_BD_CAP` | 40 | `enrich_scrape_jd.py` |
+| `JDFILL_BD_CAP` | **25** in code, **150** in `daily-digest.yml` | `pipeline/jdfill.py`'s inline rung, the DATASET-CRITICAL one: it is the difference between a published row carrying its own description and one judged on a title. A circuit breaker, not a budget — p95 demand is 59/night. Note it is the one cap `BD_RUN_CAP` does NOT reach, because `Unlocker` POSTs `api.brightdata.com` itself |
+| `JDFILL_INDEED_CAP` | **25** in code, **60** in `daily-digest.yml` | the same rung's per-host SUB-cap. Raising it alone only moves the refusal to `bd-capped` |
+| `JDFILL_RENDER_CAP` | **0**, and it is load-bearing | a render is 5.8–27.8 s against a raw fetch's 4.3 s median, so opening it makes `JDFILL_BD_CAP` × 27.8 s the real bound |
+| `JD_ENRICH_BD_CAP` | 40, and `1000` in `jd-archive.yml` | `enrich_scrape_jd.py` |
 | `MATCHED_JD_BD_CAP` | 25 | `enrich_matched_jd.py` |
 | `DEEP_BD_SEARCH_CAP` / `LLM_BD_SEARCH_CAP` / `AUDIT_BD_SEARCH_CAP` | 5 | `deep_validate.py`, `resolve_llm.py`, the Sunday audit |
 | `SCRAPE_UNLOCK_PAGES` | 5 | `scrape_universal.py`, per company |

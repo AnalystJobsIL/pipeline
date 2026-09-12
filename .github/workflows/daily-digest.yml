@@ -86,7 +86,7 @@ env:
 jobs:
   digest:
     runs-on: ubuntu-latest
-    # The per-step timeouts sum to 313 min, and the job cap must sit ABOVE that sum so the
+    # The per-step timeouts sum to 353 min, and the job cap must sit ABOVE that sum so the
     # persist/outcome steps are reached by a step failing, never by the job being cancelled
     # from under them (BACKLOG 128). This comment said 270 and 285 until 2026-09-12, so it
     # asserted an invariant the file did not have: on a night where every step took its
@@ -94,7 +94,7 @@ jobs:
     # job measured 32 min on 2026-08-25 and 67 min on 2026-09-12 -- and now guarded, by
     # `test_the_digest_step_budgets_fit_inside_the_job_that_runs_them`. Actions minutes are
     # free on a public repo, so the honest fix is the cap, not a tighter step.
-    timeout-minutes: 340
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v5
         with:
@@ -315,20 +315,49 @@ jobs:
 
       - name: Run the pipeline (Claude classification via subscription token)
         id: pipeline
-        # fetch ~880 boards (~8 min) + classify (60 min budget) + company intel (15) + render
-        timeout-minutes: 110
+        # THE THIRD BOUND, and the budgets inside it are ADDITIVE because the JD filler and the
+    # classifier interleave in one loop: fetch ~880 boards (~8 min) + inline jd-fill
+    # (JDFILL_TIME_BUDGET_MIN, 35) + classify (CLASSIFY_TIME_BUDGET_MIN, default 60 and set
+    # in no workflow) + company intel (15) + board health/roles/render (~2) = 120. At 110
+    # with jd-fill at 25 that sum was 110 exactly -- zero margin, and this comment used to
+    # omit the jd-fill budget from its own arithmetic. Measured: 17.4 min on 2026-09-12.
+        timeout-minutes: 130
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # the inline JD filler's last rung (BACKLOG 448, jd-text): a LinkedIn guest page is a
-          # sign-in wall to a datacenter IP (1 of 14 carried a posting) and the posting to a
-          # residential one (5 of 5). Spent only after the free rungs fail. THE CAP IS 30, NOT
-          # THE DEFAULT 25: the measured nightly need is 34 minus the shell class (jd-text,
-          # 2026-08-30), so 30 leaves the cap non-binding on a normal night -- ~900/month of
-          # the 5,000 that begins 2026-09-01. `0` disables the rung. Operator-approved
-          # 2026-08-30, held until jd-text named the number.
+          # THE INLINE JD RUNGS, AND THEY ARE THE DATASET-CRITICAL ONES (infra, 2026-09-12).
+          # A LinkedIn guest page is a sign-in wall to a datacenter IP (1 of 14 carried a
+          # posting) and the posting to a residential one (5 of 5), so this rung is the
+          # difference between a published row carrying its own description and one judged on
+          # a title. Spent only after the free rungs fail.
+          #
+          # A CIRCUIT BREAKER, NOT A BUDGET -- the wording jd-archive.yml already uses for
+          # the same library's other pool, which gets `JD_ENRICH_BD_CAP=1000` per run for
+          # text nobody publishes tonight while this one got 30. Bright Data is unlimited by
+          # operator ruling 2026-09-11 ("unlimited budget for now; optimize once, then let it
+          # drive itself") and 5,000 is the free tier, so the only thing 30 was still doing
+          # was binding: it bound on 6 of the last 8 nights, and on the two it did not the
+          # monthly ceiling had switched the rung off entirely.
+          #
+          # MEASURED DEMAND, from the `jd-fill:` line of each digest's pipeline step. The two
+          # clean readings are the nights the ceiling turned the rung fully off, so the whole
+          # demand printed: 09-10 `53 postings the free rungs could not read` (44 of them
+          # Indeed), 09-11 `49` (41), and 09-12 `23/40 filled (30 credits)` + 15 Indeed
+          # auth-walled = 55. So p95 is 59 total and 44 Indeed. 150 is 2.5x that: it is meant
+          # never to bind, and `0` still disables the rung.
+          #
+          # JDFILL_INDEED_CAP IS SET HERE RATHER THAN LEFT TO ITS DEFAULT, which was an
+          # invisible 25 for twelve days while the mail reported it binding every night. It
+          # is a SUB-cap of the one above -- raising it alone would only move the refusal
+          # from `indeed-capped` to `bd-capped` and the mail would still say `cap bound`.
+          # 60 x 30 = 1,800/month worst case; the expectation is 44 x 30 = 1,320.
+          #
+          # PRECONDITION, stated because it is load-bearing: JDFILL_RENDER_CAP stays 0. A
+          # render costs 5.8-27.8 s against a raw fetch's 4.3 s median, so 150 renders is
+          # 69 minutes and this arithmetic stops holding.
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
-          JDFILL_BD_CAP: "30"
+          JDFILL_BD_CAP: "150"
+          JDFILL_INDEED_CAP: "60"
           # NOTE: SerpApi & JSearch both verified to NOT cover Israel (google_jobs rejects
           # gl=il, location=Israel returns 0). Aggregator left OFF (AGGREGATOR_ENABLED unset).
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
@@ -343,7 +372,20 @@ jobs:
           # inline JD fetch for roles whose ATS list response carries no description —
           # the LLM tier reads the description, so this happens BEFORE classification
           JDFILL: "1"
-          JDFILL_TIME_BUDGET_MIN: "25"
+          # THE SECOND BOUND IN THE SERIES, raised WITH the cap (infra, 2026-09-12). This is
+          # the 2026-09-04 lesson: `WAYBACK_REQ_CAP` 140 bound before `WAYBACK_DAY_CAP` 150,
+          # so raising one cap moved the bind rather than lifting it. Here the next bound is
+          # a clock, and it counts SECONDS SPENT FETCHING (not wall clock -- see JDFiller).
+          # Measured on the 09-12 run: 295 attempts including 30 paid calls cost <= 7.8 min
+          # of the 25, and no `skipped (budget)` fired. Cap-saturated at 150 the raw calls
+          # are 150 x 6.0 s (the documented max) = 15 min, which fits 25. What does NOT fit
+          # is the tail: `Unlocker.__call__` defaults to `timeout=90` and the failing-streak
+          # breaker opens at `_failing_at`, which is 15 at cap 30 and saturates at 20 for any
+          # cap >= 40 -- so a night where every paid call times out is 20 x 90 s = 30 min,
+          # already 90% of the old budget and past it at any raised cap. 35 covers it.
+          # The one-variable alternative is a per-call timeout of 30 s in pipeline/jdfill.py,
+          # which is `jd-text`'s file; filed rather than written.
+          JDFILL_TIME_BUDGET_MIN: "35"
           GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
           # the receipt `deliver` writes records which run put today's digest in the mail
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

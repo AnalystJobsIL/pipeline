@@ -201,3 +201,12 @@ month projecting past `SOFT` with the operator unwilling to pay it.
 Credits spent producing it: **zero**. Every number is from committed state
 (`cloud_state/bd_spend.jsonl`, `companies.csv`, `cloud_state/persist_log.jsonl`), from
 `gh run view --log`, or from the account's own metadata endpoints, which bill nothing.
+
+---
+
+**The "optimize once" this ruling asked for landed on 2026-09-12**: the digest's
+two JD caps were the last consumers this repo still bound, and they were the
+dataset-critical ones -- `docs/decisions/2026-09-12-jd-fill-caps-unbound.md`. It also
+records why the `ALLOWANCES` table built here was left knowingly short of the new cap
+rather than re-cut: the table is a 5,000 split of a 13,560/month measured demand, so no
+re-cut inside `SOFT` can cover it, and `SOFT` is a PRICE line rather than a capacity.

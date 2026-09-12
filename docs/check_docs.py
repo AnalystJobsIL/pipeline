@@ -508,7 +508,35 @@ def _coe_ratio() -> tuple:
 # of reporting the far more confusing "this site matches nothing any more".
 _CENSUS = r"(?<![\d,\+\-–])(~?\d[\d,]*(?:[-–]\d[\d,]*)?\+?)(?![\d\-–+])"
 
+def _digest_cap(name):
+    """A cap set in `daily-digest.yml`'s `Run the pipeline` step.
+
+    Sliced by step name: the same workflow carries `JD_ENRICH_*` and `MATCHED_JD_*` for
+    two other pools, and a whole-file grep would answer about whichever came first.
+    """
+    wf = read(os.path.join(ROOT, ".github", "workflows", "daily-digest.yml"))
+    a = wf.find("- name: Run the pipeline")
+    b = wf.find("- name: Mark digested roles as sent")
+    if a < 0 or b < a:
+        return 0
+    m = re.search(r"^\s+%s:\s*\"?(\d+)" % re.escape(name), wf[a:b], re.M)
+    return int(m.group(1)) if m else 0
+
+
 FACTS = [
+    # THE 12-DAY DRIFT THIS EXISTS FOR: `ARCHITECTURE.md` said `JDFILL_BD_CAP` 25 from
+    # 2026-08-30 to 2026-09-12 while the workflow pinned 30, and nothing noticed, because
+    # no fact read a workflow. EXACT, not census: only a push moves a value in a yml.
+    Fact("jdfill_bd_cap", "exact", lambda: (_digest_cap("JDFILL_BD_CAP"),),
+         "JDFILL_BD_CAP in daily-digest.yml's pipeline step",
+         [("ARCHITECTURE.md", r"\*\*`JDFILL_BD_CAP` (\d+)\*\*"),
+          ("docs/BRIGHTDATA.md", r"\*\*(\d+)\*\* in `daily-digest\.yml` \| `pipeline/jdfill\.py`")],
+         "the cap that decides whether a published row carries its own description"),
+
+    Fact("jdfill_indeed_cap", "exact", lambda: (_digest_cap("JDFILL_INDEED_CAP"),),
+         "JDFILL_INDEED_CAP in daily-digest.yml's pipeline step",
+         [("ARCHITECTURE.md", r"`JDFILL_INDEED_CAP` \(\*\*(\d+)\*\*")],
+         "a SUB-cap of the one above; raising it alone only moves the refusal"),
     # A FLOOR, not a pin: every lane that adds a workflow step moves this, and when it
     # broke it took `Registry invariants` and the fourteen rehearsed nights down with it
     # (they are steps below `Unit guards` in the same job, so a red suite SKIPS them).
