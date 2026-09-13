@@ -32236,7 +32236,7 @@ def test_no_test_carries_a_date_the_calendar_can_turn_red(seed):
     with open(os.path.join(here, "fixtures", "calendar_rot", "seeds.json"), encoding="utf-8") as f:
         meta = {s["test"]: s for s in json.load(f)}[seed]
     written = _d.date.fromisoformat(meta["written"])
-    base = os.path.join(here, "fixtures", "calendar_rot", seed)
+    base = os.path.join(here, "fixtures", "calendar_rot", meta["key"])   # short: MAX_PATH
     pre = CR.scan(open(base + ".pre.txt", encoding="utf-8").read(), written)
     post = CR.scan(open(base + ".post.txt", encoding="utf-8").read(), written)
     assert [(n, s) for n, s, _ in pre] == [(seed, meta["shape"])], \

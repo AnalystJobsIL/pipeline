@@ -4,34 +4,39 @@
   "file": "tests/test_units.py",
   "fixed_in": "cc4a493",
   "written": "2026-08-23",
-  "shape": "i"
+  "shape": "i",
+  "key": "junior"
  },
  {
   "test": "test_workable_reads_the_field_names_the_api_actually_sends",
   "file": "tests/test_units.py",
   "fixed_in": "cc4a493",
   "written": "2026-08-23",
-  "shape": "i"
+  "shape": "i",
+  "key": "workable"
  },
  {
   "test": "test_a_hunted_queue_name_stops_being_a_hunt_target",
   "file": "tests/test_registry.py",
   "fixed_in": "8e9af0c",
   "written": "2026-08-29",
-  "shape": "i"
+  "shape": "i",
+  "key": "hunted"
  },
  {
   "test": "test_the_gauge_alarms_on_the_free_tier_and_refuses_nothing",
   "file": "tests/test_units.py",
   "fixed_in": "5b59ff4",
   "written": "2026-09-11",
-  "shape": "ii"
+  "shape": "ii",
+  "key": "gauge-alarm"
  },
  {
   "test": "test_an_unreadable_account_still_reports_a_gauge_from_the_repos_own_ledger",
   "file": "tests/test_units.py",
   "fixed_in": "5b59ff4",
   "written": "2026-09-11",
-  "shape": "ii"
+  "shape": "ii",
+  "key": "gauge-unread"
  }
 ]
