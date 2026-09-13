@@ -114,9 +114,14 @@ def attempts(state, name, rung=None):
     return [a for a in got if rung is None or a.get("rung") == rung]
 
 
-def tried_within(state, name, rung, days):
-    """Has `rung` answered this name inside `days`? The cadence question, per rung."""
-    today = dt.date.today()
+def tried_within(state, name, rung, days, today=None):
+    """Has `rung` answered this name inside `days`? The cadence question, per rung.
+
+    `today` is the wall clock unless a caller gives one. A test that dates its fixture by hand
+    must hand the same day in here -- the other way round is the 599 shape, which went red on
+    a tree nobody touched when a fixture dated 2026-08-29 left this 14-day window
+    (`tests/calendar_rot.py` scans for both shapes)."""
+    today = today or dt.date.today()
     for a in attempts(state, name, rung):
         try:
             if (today - dt.date.fromisoformat(a["date"])).days < days:
@@ -176,7 +181,7 @@ def registry_names():
 ROW_RUNGS = ("bd-rescue", "listing-hunt", "crack-walled")
 
 
-def row_due(state, name, rung, days=14, url=""):
+def row_due(state, name, rung, days=14, url="", today=None):
     """Is a parked ROW owed a paid attempt by `rung` tonight?
 
     Due when this rung has never tried it, when its last attempt is older than `days`, or
@@ -199,7 +204,7 @@ def row_due(state, name, rung, days=14, url=""):
         last = max(tried, key=lambda a: str(a.get("date") or ""))
         if str(last.get("url") or "") and str(last.get("url") or "") != str(url):
             return True                    # the address moved; that is new evidence
-    return not tried_within(state, name, rung, days)
+    return not tried_within(state, name, rung, days, today=today)
 
 
 def in_queue_pool(entry, state, rung, days=14, have=None):

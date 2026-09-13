@@ -1,0 +1,22 @@
+def test_the_gauge_alarms_on_the_free_tier_and_refuses_nothing(tmp_path, monkeypatch):
+    """The 5,000 is the free tier, not a wall: past it a credit is $1.50/1,000. So the gauge
+    is a SENTENCE in the mail and never a refusal -- `verdict()` still says spend, whatever
+    the projection. That is the operator's ruling of 2026-09-11 in one assertion."""
+    from pipeline import bd_budget as B
+    day = (dt.date.today() - dt.timedelta(days=1)).isoformat() + "T01:00:00Z"
+    root = _bd_ledger(tmp_path, [{"at": day, "tool": "listing_hunt.py", "credits": 700}])
+    monkeypatch.setattr(B, "spent_this_month", lambda today=None: (5804, {}))
+    today = dt.date(2026, 9, 11)
+    g = B.gauge(root, today)
+    assert g["mtd"] == 5804 and g["search"] == 100.0
+    assert g["projected"] == 5804 + 100 * 19, "19 days left in September after the 11th"
+    line = B.alarm_line(g)
+    assert line.startswith("bd projected") and "free tier" in line and "search 100" in line
+    assert "$" in line, "the operator's question is dollars, not credits"
+    assert B.verdict(today)[0] is True, "the gauge alarms; it never stops a run"
+    # ...and inside the tier it says nothing at all
+    quiet = B.gauge(_bd_ledger(tmp_path / "q", [{"at": day, "tool": "bd_rescue.py", "credits": 7}]),
+                    today)
+    monkeypatch.setattr(B, "spent_this_month", lambda today=None: (100, {}))
+    assert B.alarm_line(B.gauge(str(tmp_path / "q"), today)) == ""
+    assert quiet["soft"] == B.SOFT == 5000

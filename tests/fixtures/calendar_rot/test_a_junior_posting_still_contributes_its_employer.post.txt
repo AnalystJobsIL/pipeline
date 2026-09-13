@@ -1,0 +1,13 @@
+def test_a_junior_posting_still_contributes_its_employer():
+    """The junior cut ran inside normalize(), so the job never entered `jobs` and its
+    EMPLOYER never reached the names harvest. ARCHITECTURE 1a states the opposite intent —
+    the breadth sweep's product is employer names — so an unknown Israeli company whose only
+    past-week analyst ad says "Junior" was invisible to discovery forever."""
+    from discovery_daily import linkedin_normalize
+    # RELATIVE to the clock the code reads, never a literal: `posted_date: "2026-08-20"` was
+    # inside the 21-day window when this was written and outside it from 2026-09-10, so the
+    # guard went red on a date rather than on a defect and told nobody anything for a day.
+    j = linkedin_normalize({"job_id": "1", "title": "Junior Data Analyst", "company": "New Co",
+                            "location": "Haifa, Israel", "posted_date": _days_ago(3),
+                            "url": "u", "company_slug": "new-co"})
+    assert j is not None and j["_junior"] is True and j["company"] == "New Co"

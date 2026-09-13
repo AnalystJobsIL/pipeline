@@ -1,0 +1,13 @@
+def test_workable_reads_the_field_names_the_api_actually_sends():
+    """`published` and `created_at` are not keys in the payload — the date is `created`, and
+    the location sub-key is `subregion`, not `region`. Live keys 2026-08-23: benefitsSection
+    company created department description employmentType id isFeatured language location
+    locations requirementsSection socialSharingDescription state title updated url workplace;
+    location: city countryName subregion."""
+    from discovery_daily import workable_normalize
+    j = workable_normalize({"id": "7", "title": "BI Developer", "created": "2026-08-19T09:00:00Z",
+                            "company": {"title": "A Co", "website": "https://a.co"},
+                            "location": {"subregion": "Northern District"}, "url": "https://u"})
+    assert j["posted_date"] == "2026-08-19"
+    assert j["location"] == "Northern District, Israel"
+    assert j["careers_hint"] == "https://a.co", "the employer's own site is why this source exists"

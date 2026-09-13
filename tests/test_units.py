@@ -32162,27 +32162,11 @@ def test_the_freshness_window_is_one_constant_and_no_fixture_sits_inside_it(fn, 
     assert drop is None, f"{fn}: a card older than FRESH_DAYS is dropped, in every normalizer"
 
     # ...and the class itself: a literal date in a fixture that one of these functions judges
-    # is a countdown, not a test. `_days_ago(n)` is how to write one; a date before 2021 is
-    # allowed because nothing can make it fresh again.
+    # is a countdown, not a test. The scan that stood here (a JSON-key regex over this one
+    # file) is `tests/calendar_rot.py` since 2026-09-13 (599): one detector, both shapes, every
+    # test file -- `test_no_test_carries_a_date_the_calendar_can_turn_red` is the guard.
     src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_units.py"),
                encoding="utf-8").read()
-    lines = src.split("\n")
-    # ...and the board-freshness verdict, whose window is a YEAR rather than 21 days but
-    # rots the same way: a fixture dated by hand drifts past `STALE_BOARD_DAYS` and then
-    # flips on a date instead of on a defect (`ats-fetch` 2026-09-11; its own 14 tests
-    # pin `today=` and carry no literal, which is what this arm keeps true).
-    judged = _re.compile(r"\b(linkedin_normalize|workable_normalize|indeed_normalize|"
-                         r"fetch_discovery|dd\.main|health\.abandoned|board_freshness)\b")
-    dated = _re.compile(r'"(?:posted_date|created|created_at|published)":\s*"(20\d\d-\d\d-\d\d)')
-    rotting = []
-    for node in _ast.walk(_ast.parse(src)):
-        if isinstance(node, _ast.FunctionDef) and node.name.startswith("test"):
-            body = "\n".join(lines[node.lineno - 1:node.end_lineno])
-            if judged.search(body):
-                rotting += [(node.name, m.group(1)) for m in dated.finditer(body)
-                            if m.group(1) >= "2021-01-01"]
-    assert not rotting, ("a literal date inside the freshness window of the code under test "
-                         "-- use _days_ago(n): %r" % rotting)
     # ...and, on the same read of this file, the other way a test silently stops being one:
     # a module-level name defined twice. Python resolves it at CALL time, so the second
     # definition is a SILENT THEFT of every earlier caller across 31,000 lines. Measured
@@ -32203,6 +32187,61 @@ def test_the_freshness_window_is_one_constant_and_no_fixture_sits_inside_it(fn, 
             seen[name] = node.lineno
     assert not dupes, ("a module-level name defined twice — the second silently replaces the "
                        "first for every caller in the file: %r" % dupes)
+
+
+def _calendar_rot_seeds():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "calendar_rot",
+                        "seeds.json")
+    with open(path, encoding="utf-8") as f:
+        return [s["test"] for s in json.load(f)] + ["<the tree>"]
+
+
+@pytest.mark.parametrize("seed", _calendar_rot_seeds())
+def test_no_test_carries_a_date_the_calendar_can_turn_red(seed):
+    """BACKLOG 599. Six tests went red on trees nobody touched between 2026-09-10 and 09-13 and
+    every lane that pushed next inherited them. Two shapes (`tests/calendar_rot.py` has both,
+    with every instance): a LITERAL fixture date judged by a predicate reading the wall clock
+    (the 09-11 normalizers, the 09-12 hunt fixture under `tried_within`), and a LIVE fixture
+    judged on a FROZEN `today` (the 09-13 Bright Data gauge pair).
+
+    Each seeded case is the instance's own text at the commit before its fix: the detector
+    must name its shape there, on the day it was written, and name nothing in the fixed text.
+    The last case scans every `tests/test_*.py` on today's clock and must find nothing; a
+    finding can only disappear as the calendar moves, so this case cannot itself rot.
+
+    The behavioural arm is the seam the hunt fixture lacked: `queue_state.tried_within` takes
+    the day, so a fixture dated by hand is judged on that day and never on the wall clock."""
+    import datetime as _d
+    import glob as _glob
+    import calendar_rot as CR
+    import queue_state as QS
+    here = os.path.dirname(os.path.abspath(__file__))
+    # the frozen pair the detector recommends, through the real predicate
+    state = {}
+    QS.record(state, "Alpha", "hunt", "found", day="2026-08-29")
+    assert QS.tried_within(state, "Alpha", "hunt", 14, today=_d.date(2026, 9, 11))
+    assert not QS.tried_within(state, "Alpha", "hunt", 14, today=_d.date(2026, 9, 12))
+    assert not QS.row_due(state, "Alpha", "hunt", 14, today=_d.date(2026, 9, 11))
+    assert QS.row_due(state, "Alpha", "hunt", 14, today=_d.date(2026, 9, 12))
+    if seed == "<the tree>":
+        found = []
+        for f in sorted(_glob.glob(os.path.join(here, "test_*.py"))):
+            found += [(os.path.basename(f),) + x for x in CR.scan(open(f, encoding="utf-8").read())]
+        print(f"calendar rot: {len(found)} finding(s) over the tree")
+        assert not found, ("a test whose verdict the calendar will move. Date the fixture "
+                           "from the SAME clock the predicate reads: `_days_ago(n)` against the "
+                           "wall clock, or a literal `today` handed in AND the fixture dated "
+                           "from it: %r" % found)
+        return
+    with open(os.path.join(here, "fixtures", "calendar_rot", "seeds.json"), encoding="utf-8") as f:
+        meta = {s["test"]: s for s in json.load(f)}[seed]
+    written = _d.date.fromisoformat(meta["written"])
+    base = os.path.join(here, "fixtures", "calendar_rot", seed)
+    pre = CR.scan(open(base + ".pre.txt", encoding="utf-8").read(), written)
+    post = CR.scan(open(base + ".post.txt", encoding="utf-8").read(), written)
+    assert [(n, s) for n, s, _ in pre] == [(seed, meta["shape"])], \
+        "the detector missed the instance fixed in %s: %r" % (meta["fixed_in"], pre)
+    assert post == [], "the fixed text still reads as calendar rot: %r" % post
 
 
 def test_the_cache_shrink_alarm_keeps_its_bars_and_exempts_the_list_that_should_shrink(capsys, tmp_path):

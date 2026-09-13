@@ -1,0 +1,34 @@
+def test_a_hunted_queue_name_stops_being_a_hunt_target(tmp_path):
+    """The fold from proposal file to attempt log, which was an ad-hoc script and was
+    forgotten once (2026-08-29: 57 names hunted twice, because nothing recorded the first
+    pass). The shards write proposal files; `queue_state.ingest` is what makes those
+    attempts real to `tried_within`, and therefore what removes the name from
+    `listing_hunt.queue_targets` tomorrow."""
+    import json
+    import queue_state as QS
+
+    doc = {"generated": "2026-08-29", "proposals": [
+        {"name": "Alpha", "kind": "scrape", "rung": "hunt",
+         "evidence": {"candidate_url": "https://alpha.example/careers"}},
+        {"name": "Beta", "kind": "monitor", "rung": "hunt",
+         "evidence": {"candidate_url": "https://beta.example/jobs"}},
+        {"name": "Gamma", "kind": "refused", "rung": "hunt", "why": "no-listing",
+         "evidence": {"url": ""}},
+    ]}
+    fn = tmp_path / "hunt_x.json"
+    fn.write_text(json.dumps(doc), encoding="utf-8")
+
+    state = {}
+    n = QS.ingest(state, [str(fn)])
+    assert n == 3, "every proposal is an attempt, refusals included"
+    for nm, want in (("Alpha", "found"), ("Beta", "documented"), ("Gamma", "no-listing")):
+        tried = state[nm]["tried"]
+        assert [a["rung"] for a in tried] == ["hunt"]
+        assert tried[0]["verdict"] == want, nm
+        # the whole point: the name is no longer a target for the 14-day cadence
+        assert QS.tried_within(state, nm, "hunt", 14), nm
+
+    # ...and folding the same file again is free, so a re-run after a kill cannot
+    # double-count an attempt or move a name's cadence forward twice.
+    assert QS.ingest(state, [str(fn)]) == 0
+    assert sum(len(e["tried"]) for e in state.values()) == 3
