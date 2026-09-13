@@ -126,6 +126,33 @@ def _load(paths=None):
     return out
 
 
+def _introduced_by(rid, root=ROOT):
+    """`<sha> <date> <subject>` of the commit that ADDED record `rid` to the catalogue, or a
+    `?` that says why it cannot be named. BACKLOG 591 (2026-09-11: four shard reds on four
+    lanes' runs, none belonging to the lane that read them).
+
+    A shard mutates `git archive HEAD` of whatever sha heads the queue, so a record one lane
+    broke fails on the NEXT lane's run. The failure line named the record and not its author,
+    and three lanes re-derived the same attribution by hand. `git log -S` finds the commit
+    whose diff changed the count of the record's own `"id": "<rid>"` line, oldest first.
+
+    A shallow clone answers `-S` with its graft, which is a confident wrong sha, so a shallow
+    repository says so instead of naming one (`tests.yml`'s `mutation-gate` checks out full
+    history for this reason)."""
+    def _git(*args):
+        return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", timeout=60)
+    try:
+        if _git("rev-parse", "--is-shallow-repository").stdout.strip() == "true":
+            return "? (shallow clone)"
+        out = _git("log", "--reverse", "--date=short", "--format=%h %ad %s",
+                   "-S", '"id": "%s"' % rid, "--", "tests/mutations.json").stdout
+    except Exception:  # noqa: BLE001 - attribution never costs the verdict it annotates
+        return "? (no git)"
+    first = out.strip().splitlines()[:1]
+    return first[0][:72] if first else "? (not in history)"
+
+
 def _archive(dest):
     """git archive HEAD -> dest. Never touches the working tree."""
     os.makedirs(dest, exist_ok=True)
@@ -874,6 +901,9 @@ def main():
                 print("%-30s %-22s %-11s %-42s %-16s %.0f" % (
                     m["id"], m["class"], "** FAIL **", r["detail"][:42], mode, r["secs"]),
                     flush=True)
+                # WHOSE record, on the line itself (591): the run that reads this red is
+                # usually not the commit that wrote the record
+                print("%-30s introduced by %s" % ("", _introduced_by(m["id"])), flush=True)
             else:
                 print("%-30s %-22s %-11s %-42s %-16s %.0f" % (
                     m["id"], m["class"], "killed",

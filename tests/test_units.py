@@ -15244,6 +15244,44 @@ def test_no_workflow_run_block_fakes_a_line_continuation():
     assert checked > 500, "only %d workflow lines scanned; the reader stopped early" % checked
 
 
+def test_a_failing_mutation_record_names_the_commit_that_added_it(tmp_path):
+    """BACKLOG 591. A shard mutates `git archive HEAD` of whatever sha heads the queue, so on
+    2026-09-11 four reds landed on four lanes' runs and none belonged to the lane that read
+    it (`page-closed-row-is-upserted-anyway` was `roles`' record, read on `infra`'s run). The
+    FAIL line now carries the commit that ADDED the record -- the first, not the last to
+    touch it, and never a guess from a shallow clone."""
+    import subprocess as _sp
+    sys.path.insert(0, os.path.join(_REPO, "tools"))
+    import mutate
+
+    def git(*a):
+        return _sp.run(["git", *a], cwd=tmp_path, capture_output=True, text=True, check=True)
+
+    git("init", "-q")
+    git("config", "user.email", "t@example.invalid")
+    git("config", "user.name", "t")
+    (tmp_path / "tests").mkdir()
+    cat = tmp_path / "tests" / "mutations.json"
+
+    def commit(ids, msg):
+        cat.write_text(json.dumps([{"id": i, "why": "x"} for i in ids], indent=1),
+                       encoding="utf-8")
+        git("add", "tests/mutations.json")
+        git("commit", "-q", "-m", msg)
+
+    commit(["alpha-record"], "lane A adds alpha")
+    commit(["alpha-record", "beta-record"], "lane B adds beta")
+    # a third commit that REWRITES alpha's neighbours must not steal its attribution
+    commit(["beta-record", "alpha-record"], "lane C reorders")
+    assert mutate._introduced_by("alpha-record", str(tmp_path)).endswith("lane A adds alpha")
+    assert mutate._introduced_by("beta-record", str(tmp_path)).endswith("lane B adds beta")
+    assert mutate._introduced_by("never-filed", str(tmp_path)) == "? (not in history)"
+    shallow = tmp_path / "shallow"
+    _sp.run(["git", "clone", "-q", "--depth", "1", "file://" + str(tmp_path).replace(os.sep, "/"),
+             str(shallow)], capture_output=True, check=True)
+    assert mutate._introduced_by("alpha-record", str(shallow)) == "? (shallow clone)"
+
+
 def test_no_workflow_echo_line_writes_only_to_the_step_summary():
     """BACKLOG 605 (ats-fetch, 2026-09-13). `scrape-refresh.yml` decided whether the night may
     buy the residential rung and wrote the answer ONLY to `$GITHUB_STEP_SUMMARY`, which

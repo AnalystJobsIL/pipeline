@@ -186,6 +186,11 @@ jobs:
         shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v5
+        # FULL history (591): a failing record's line names the commit that added it
+        # (`git log -S`), and a depth-1 clone answers that with its graft -- a confident
+        # wrong sha. The pack is ~41 MiB; the `guard` job already clones it whole.
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
