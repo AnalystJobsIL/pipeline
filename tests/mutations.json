@@ -3783,5 +3783,18 @@
   "replace": "    return not cls.get(\"decision\")\n",
   "why": "30 of 170 published rows carried a decision no contract stood behind (`rows_unknown`, 2026-09-12), every one closed, and the backfill - the only writer that reaches a closed record - read any decision as judged. Re-judged on 2026-09-13: 8 of 31 verdicts moved. Killed by test_a_decision_no_contract_stands_behind_is_owed_a_verdict.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "jdfill-unlocker-ignores-run-cap",
+  "file": "pipeline/jdfill.py",
+  "symbol": "Unlocker.__call__",
+  "class": "M1-gate-removal",
+  "find": "        if _run_cap_reached() is not None:        # the PROCESS cap, shared with bd_rescue (600a)",
+  "replace": "        if False:",
+  "why": "BACKLOG 600(a): the JD layer's Unlocker POSTs to api.brightdata.com itself, so BD_RUN_CAP=0 did not stop the digest's JD fill and the [bd-spend] line reported a cap that never applied to it (infra, 2026-09-13).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_shared_run_cap_binds_the_jd_layers_own_unlocker"
+  ]
  }
 ]

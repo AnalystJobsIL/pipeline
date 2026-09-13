@@ -71,7 +71,9 @@ jobs:
           # empty, never "0" — every reader is os.environ.get(), which arms on any non-empty
           # value, so a flag that reads 0 and means ON is the trap this control removes
           echo "SCRAPE_VIA_UNLOCKER=$ON" >> "$GITHUB_ENV"
-          echo "paid residential rung: ${ON:+ON}${ON:-OFF}" >> "$GITHUB_STEP_SUMMARY"
+          # tee, not >>: the step summary is not in `gh run view --log`, and a morning check
+          # that greps the log for this line found nothing on two nights it was ON (605)
+          echo "paid residential rung: ${ON:+ON}${ON:-OFF}" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Refresh the scrape cache
         env:

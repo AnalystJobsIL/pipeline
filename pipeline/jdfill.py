@@ -1574,6 +1574,33 @@ def _monthly_ceiling_reached():
         return ""
 
 
+def _run_cap_reached():
+    """The `BD_RUN_CAP` in force when this process has already bought that many credits,
+    else None. BACKLOG 600(a), infra 2026-09-13.
+
+    `bd_rescue.unlock_status` enforces the cap for every rung that buys through it; this
+    class POSTs to `api.brightdata.com` itself, so an operator who set `BD_RUN_CAP=0` to stop
+    spending did NOT stop the digest's JD fill, and the `[bd-spend] ... of a 250 cap` line
+    reported a cap that never applied to the rung that bought most of the digest's credits.
+    One counter (`bd_rescue.SPENT`, which `_book_jd_fill` already feeds) and one reader
+    (`bd_rescue.run_cap`), so the two layers can never disagree about what was spent. The
+    warning is `bd_rescue`'s own and is said once per process, whichever layer hits it first.
+    Fails OPEN on an import error, like every reporting seam here: the per-instance `cap`
+    still bounds the rung."""
+    try:
+        import bd_rescue
+    except Exception:  # noqa: BLE001
+        return None
+    cap = bd_rescue.run_cap()
+    if cap is None or bd_rescue.SPENT["n"] < cap:
+        return None
+    if not bd_rescue.SPENT["capped"]:
+        bd_rescue.SPENT["capped"] = True
+        print(f"::warning::bd_rescue: BD_RUN_CAP={cap} reached; this run buys no more "
+              f"Bright Data credits. Later rungs report `bd-capped`, not `empty`.", flush=True)
+    return cap
+
+
 def _book_jd_fill():
     """Tell the one spend ledger that the JD layer just bought a credit.
 
@@ -1640,8 +1667,9 @@ class Unlocker:
         # THE MONTHLY CEILING BINDS HERE TOO. `pipeline/bd_budget.py` is documented as the one
         # place that knows it, and it reads the LIVE account -- but only `scrape-refresh.yml`
         # ever ran it, and this class POSTs to `api.brightdata.com` itself rather than through
-        # `bd_rescue`, so neither `BD_RUN_CAP` nor `BD_PAID_RUNGS` nor the ceiling reached this
-        # layer at all. With the caps as they now stand that is ~2,025 credits a night against
+        # `bd_rescue`, so until 2026-09-11 neither `BD_RUN_CAP` nor the ceiling reached this
+        # layer at all (the ceiling since 09-11; `BD_RUN_CAP` since 09-13, `_run_cap_reached`,
+        # BACKLOG 600(a); `BD_PAID_RUNGS` is a workflow switch and never reaches python). With the caps as they now stand that is ~2,025 credits a night against
         # a 5,000/month ceiling from 2026-09-01: four nights would empty the month, and the
         # comment justifying the raised cap cited a gate that was not wired (wave 2, P0-2).
         # Consulted LAZILY, on the first spend, so constructing an Unlocker costs no network.
@@ -1697,6 +1725,9 @@ class Unlocker:
         if self.used >= self.cap:
             self.capped = True                    # not `unavailable`: the account is fine and
             return None, "", "bd-capped"          # the reason string stays honest
+        if _run_cap_reached() is not None:        # the PROCESS cap, shared with bd_rescue (600a)
+            self.capped = True
+            return None, "", "bd-capped"
         self.used += 1
         _book_jd_fill()
         payload = {"zone": self.zone, "url": url, "format": "raw"}
@@ -2958,11 +2989,11 @@ class JDFiller:
         # return `bd-render-capped` and spend NOTHING, so a shell page costs no credit here
         # and the backfills, which have the time, keep it. `JDFILL_RENDER_CAP` re-opens it.
         #
-        # `daily-digest.yml` states `JDFILL_RENDER_CAP stays 0` as a PRECONDITION of its cap
-        # arithmetic (infra, 2026-09-12), so this default is theirs to move. The one class it
-        # costs today is an Oracle HCM posting page, a JavaScript shell to the raw fetch: the
-        # 09-13 digest printed `oraclehcm bd-render-capped 1` beside a Fortinet verdict it could
-        # not re-judge. Filed with that number rather than changed here.
+        # `daily-digest.yml` sets `JDFILL_RENDER_CAP: "5"` since 2026-09-13 (infra, BACKLOG
+        # 610): `bd-render-capped 1` on 7 of the 8 scheduled digests 09-06..09-13 (an Oracle
+        # HCM shell beside a Fortinet verdict it could not re-judge), and 5 x RENDER_TIMEOUT
+        # 45 s is 3.75 minutes, which that step's clock arithmetic carries as its own term.
+        # This default stays 0 for every other caller, which sets nothing.
         rcap = int(os.environ.get("JDFILL_RENDER_CAP", "0"))
         self.bd = bd if bd is not None else (Unlocker(cap=cap, render_cap=rcap) if cap > 0 else None)
         self.bd_tried = self.bd_filled = 0

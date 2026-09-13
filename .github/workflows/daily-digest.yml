@@ -317,8 +317,8 @@ jobs:
         id: pipeline
         # THE THIRD BOUND, and the budgets inside it are ADDITIVE because the JD filler and the
     # classifier interleave in one loop: fetch ~880 boards (~8 min) + inline jd-fill
-    # (JDFILL_TIME_BUDGET_MIN, 35) + classify (CLASSIFY_TIME_BUDGET_MIN, default 60 and set
-    # in no workflow) + company intel (15) + board health/roles/render (~2) = 120. At 110
+    # (JDFILL_TIME_BUDGET_MIN, 30) + classify (CLASSIFY_TIME_BUDGET_MIN, default 60 and set
+    # in no workflow) + company intel (15) + board health/roles/render (~2) = 115. At 110
     # with jd-fill at 25 that sum was 110 exactly -- zero margin, and this comment used to
     # omit the jd-fill budget from its own arithmetic. Measured: 17.4 min on 2026-09-12.
         timeout-minutes: 130
@@ -351,9 +351,14 @@ jobs:
           # from `indeed-capped` to `bd-capped` and the mail would still say `cap bound`.
           # 60 x 30 = 1,800/month worst case; the expectation is 44 x 30 = 1,320.
           #
-          # PRECONDITION, stated because it is load-bearing: JDFILL_RENDER_CAP stays 0. A
-          # render costs 5.8-27.8 s against a raw fetch's 4.3 s median, so 150 renders is
-          # 69 minutes and this arithmetic stops holding.
+          # RENDERS HAVE THEIR OWN CAP, AND IT IS A TERM IN THE CLOCK BELOW (infra, 2026-09-13,
+          # BACKLOG 610). A render costs 5.8-27.8 s against a raw fetch's 4.3 s median and is
+          # cut at RENDER_TIMEOUT 45 s. It was 0 here, and `bd-render-capped 1` printed on 7 of
+          # the 8 scheduled digests 09-06..09-13 (4 on 09-07): an Oracle HCM posting is a
+          # JavaScript shell to the raw fetch, and the 09-13 Fortinet verdict could not be
+          # re-judged for it. 5 x 45 s = 3.75 min worst case. Under an unlimited budget the
+          # cap is a CLOCK, not a credit: it may only rise with the budget beside it.
+          JDFILL_RENDER_CAP: "5"
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           JDFILL_BD_CAP: "150"
@@ -376,16 +381,16 @@ jobs:
           # the 2026-09-04 lesson: `WAYBACK_REQ_CAP` 140 bound before `WAYBACK_DAY_CAP` 150,
           # so raising one cap moved the bind rather than lifting it. Here the next bound is
           # a clock, and it counts SECONDS SPENT FETCHING (not wall clock -- see JDFiller).
-          # Measured on the 09-12 run: 295 attempts including 30 paid calls cost <= 7.8 min
-          # of the 25, and no `skipped (budget)` fired. Cap-saturated at 150 the raw calls
-          # are 150 x 6.0 s (the documented max) = 15 min, which fits 25. What does NOT fit
-          # is the tail: `Unlocker.__call__` defaults to `timeout=90` and the failing-streak
-          # breaker opens at `_failing_at`, which is 15 at cap 30 and saturates at 20 for any
-          # cap >= 40 -- so a night where every paid call times out is 20 x 90 s = 30 min,
-          # already 90% of the old budget and past it at any raised cap. 35 covers it.
-          # The one-variable alternative is a per-call timeout of 30 s in pipeline/jdfill.py,
-          # which is `jd-text`'s file; filed rather than written.
-          JDFILL_TIME_BUDGET_MIN: "35"
+          # Measured on the 09-12 run: 295 attempts including 30 paid calls cost <= 7.8 min,
+          # so the free fetches are ~5.6 min. Cap-saturated at 150 the raw calls are
+          # 150 x 6.0 s (the documented max) = 15 min; renders 5 x 45 s = 3.75; together
+          # 24.4 min. The failing-streak TAIL was the term that forced 35 on 09-12 (20 x 90 s
+          # = 30 min); since 600(b) every paid call carries `JDFILL_BD_TIMEOUT_S` 30 s, so the
+          # tail is 20 x 30 s = 10 min. 35 -> 30 (infra, 2026-09-13): the tail no longer needs
+          # it, and five minutes go back to the mail's critical path.
+          # `test_the_inline_jd_caps_bind_before_the_clock_and_the_clock_before_the_kill`
+          # derives every term above from this step and the real Unlocker.
+          JDFILL_TIME_BUDGET_MIN: "30"
           GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
           # the receipt `deliver` writes records which run put today's digest in the mail
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

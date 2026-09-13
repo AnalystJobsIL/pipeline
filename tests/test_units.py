@@ -15244,6 +15244,33 @@ def test_no_workflow_run_block_fakes_a_line_continuation():
     assert checked > 500, "only %d workflow lines scanned; the reader stopped early" % checked
 
 
+def test_no_workflow_echo_line_writes_only_to_the_step_summary():
+    """BACKLOG 605 (ats-fetch, 2026-09-13). `scrape-refresh.yml` decided whether the night may
+    buy the residential rung and wrote the answer ONLY to `$GITHUB_STEP_SUMMARY`, which
+    `gh run view --log` never prints, so a morning check that asked for `paid residential
+    rung: ON` in the 09-12 and 09-13 logs found nothing on two nights the rung was ON. A
+    one-line DECISION a human greps for must reach the log; `| tee -a` puts it in both.
+
+    Scoped to `echo`: the multi-line reports (`python - >> "$GITHUB_STEP_SUMMARY"` in
+    firmographics/jd-archive/scrape-refresh, and `python -m pipeline.stages`, which renders
+    committed state) are page furniture for the run page, not a verdict a log search needs.
+    Measured 2026-09-13: 3 echo sites (scrape-refresh 74, jd-archive 88, firmographics 177)."""
+    cd = _cd()
+    offenders, echoes = [], 0
+    for wf in sorted(glob.glob(os.path.join(cd.ROOT, ".github", "workflows", "*.yml"))):
+        for n, line in enumerate(cd.read(wf).splitlines(), 1):
+            s = line.strip()
+            if s.startswith("#") or "GITHUB_STEP_SUMMARY" not in s:
+                continue
+            if re.match(r"echo\b", s):
+                echoes += 1
+                if re.search(r">>\s*\"?\$GITHUB_STEP_SUMMARY", s):
+                    offenders.append("%s:%d  %s" % (os.path.basename(wf), n, s[:100]))
+    assert not offenders, ("an echo that only the run page can show; use `| tee -a "
+                           "\"$GITHUB_STEP_SUMMARY\"`:\n  " + "\n  ".join(offenders))
+    assert echoes >= 3, "only %d summary echoes found; the reader stopped matching" % echoes
+
+
 @_not_in_the_mutation_archive
 def test_every_workflow_run_block_is_valid_shell():
     """Complements the guard above: that one catches a faked continuation, this one catches
@@ -20213,6 +20240,67 @@ def test_the_monthly_ceiling_binds_the_jd_layers_own_unlocker(monkeypatch):
     bd2 = jdfill.Unlocker(cap=99)
     bd2("https://a.co/y")
     assert bd2.used == 1
+
+
+def test_the_shared_run_cap_binds_the_jd_layers_own_unlocker(monkeypatch):
+    """BACKLOG 600(a), infra 2026-09-13. `BD_RUN_CAP` is the number an operator reaches for
+    to stop spending, and `bd_rescue.unlock_status` enforced it for every rung but this one:
+    `jdfill.Unlocker` POSTs to `api.brightdata.com` itself, so `BD_RUN_CAP=0` did not stop the
+    digest's JD fill and the `[bd-spend] ... of a 250 cap` line reported a cap that never
+    applied to the rung that bought most of the digest's credits.
+
+    One counter for both layers: credits `bd_rescue` bought earlier in the process count
+    against the Unlocker, and the Unlocker's own purchases count against `bd_rescue`.
+
+    Kills `jdfill-unlocker-ignores-run-cap`."""
+    import bd_rescue
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setenv("JD_BD", "1")
+    monkeypatch.setattr(jdfill, "_monthly_ceiling_reached", lambda: "")
+    posts = []
+
+    class _Resp:
+        status = 200
+        headers = {}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self, n):
+            return b"<html>a posting</html>"
+
+    def _urlopen(req, timeout=0):
+        posts.append((req.full_url, timeout))
+        return _Resp()
+
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen", _urlopen)
+
+    # unset: no process cap, the instance cap alone bounds the rung (every existing caller)
+    monkeypatch.delenv("BD_RUN_CAP", raising=False)
+    bd = jdfill.Unlocker(cap=5)
+    assert bd("https://a.co/1")[2] == "" and len(posts) == 1
+
+    # 0 means buy nothing, whatever the instance cap says
+    monkeypatch.setenv("BD_RUN_CAP", "0")
+    bd = jdfill.Unlocker(cap=5)
+    assert bd("https://a.co/2") == (None, "", "bd-capped")
+    assert len(posts) == 1 and bd.used == 0 and bd.capped is True
+    assert bd.unavailable == "", "a reached cap is not a dead account"
+
+    # a credit bd_rescue already bought this process counts: cap 2, one spent elsewhere
+    monkeypatch.setenv("BD_RUN_CAP", "2")
+    bd_rescue.SPENT.update(n=0, capped=False)
+    bd_rescue.book("unlock")
+    bd = jdfill.Unlocker(cap=5)
+    assert bd("https://a.co/3")[2] == "" and len(posts) == 2
+    assert bd_rescue.SPENT["n"] == 2, "the Unlocker's purchase is booked on the shared counter"
+    assert bd("https://a.co/4") == (None, "", "bd-capped") and len(posts) == 2
+    assert bd_rescue.SPENT["capped"] is True, "the run says, once, that the cap bound"
 
 
 def test_the_host_breaker_counts_bought_bodies_not_pages(monkeypatch):
@@ -27497,29 +27585,38 @@ def test_the_inline_jd_caps_bind_before_the_clock_and_the_clock_before_the_kill(
     cap = int(env["JDFILL_BD_CAP"])
     budget = float(env["JDFILL_TIME_BUDGET_MIN"])
 
-    assert int(env.get("JDFILL_RENDER_CAP", "0")) == 0, (
-        "a render is 5.8-27.8 s against a raw fetch's 4.3 s median, so %d renders is %.0f "
-        "minutes and every number below stops holding" % (cap, cap * 27.8 / 60))
-    assert cap * 6.0 / 60 <= budget, (
-        "cap-saturated the raw calls cost %.1f min against a %g-min fetch budget"
-        % (cap * 6.0 / 60, budget))
+    # RENDERS are a term of their own since 2026-09-13 (610): capped, and each cut at
+    # RENDER_TIMEOUT, so the cap x that timeout is what the step must carry. The free fetches
+    # are the third term: 295 attempts with 30 paid cost <= 7.8 min on 09-12, so ~5.6 min.
+    rcap = int(env.get("JDFILL_RENDER_CAP", "0"))
+    render_min = rcap * jdfill.RENDER_TIMEOUT / 60
+    free_min = 5.6
+    assert rcap <= 10, "a render cap is a CLOCK here; past 10 re-derive every term below"
+    assert cap * 6.0 / 60 + render_min + free_min <= budget, (
+        "cap-saturated the raw calls cost %.1f min + renders %.2f + free fetches %.1f against "
+        "a %g-min fetch budget" % (cap * 6.0 / 60, render_min, free_min, budget))
 
     u = jdfill.Unlocker(cap=cap)
-    paid_timeout = 90            # Unlocker.__call__'s default; _bd_call passes none
-    assert u._failing_at * paid_timeout / 60 <= budget, (
-        "the failing-streak tail is %d calls x %d s = %.0f min against a %g-min budget: the "
-        "roles past it are judged with NO DESCRIPTION, which is the defect the cap raise "
-        "exists to remove" % (u._failing_at, paid_timeout,
-                              u._failing_at * paid_timeout / 60, budget))
+    # the per-call timeout `_bd_call` passes (600(b)): the step may pin it, else the code's
+    # default -- read from the SOURCE, because `u.timeout_s` reads this machine's env
+    paid_timeout = float(env.get("JDFILL_BD_TIMEOUT_S") or 30)
+    assert 'os.environ.get("JDFILL_BD_TIMEOUT_S", "30")' in \
+        open(jdfill.__file__, encoding="utf-8").read(), "the 30 above is jdfill's default"
+    assert u._failing_at * paid_timeout / 60 + render_min + free_min <= budget, (
+        "the failing-streak tail is %d calls x %g s = %.0f min (+ renders %.2f + free %.1f) "
+        "against a %g-min budget: the roles past it are judged with NO DESCRIPTION, which is "
+        "the defect the cap raise exists to remove" % (
+            u._failing_at, paid_timeout, u._failing_at * paid_timeout / 60, render_min,
+            free_min, budget))
 
     # the workflow may pin it; when it does not, the default in the code is the real term
     classify = float(env.get("CLASSIFY_TIME_BUDGET_MIN") or 60)
-    fetch_min, intel_min, render_min = 8, 15, 2             # the step's own comment
-    total = fetch_min + budget + classify + intel_min + render_min
+    fetch_min, intel_min, board_min = 8, 15, 2              # the step's own comment
+    total = fetch_min + budget + classify + intel_min + board_min
     assert total < step_timeout, (
         "the pipeline step's budgets are additive and sum to %g against timeout-minutes %d: "
-        "fetch %d + jd-fill %g + classify %g + intel %d + render %d"
-        % (total, step_timeout, fetch_min, budget, classify, intel_min, render_min))
+        "fetch %d + jd-fill %g + classify %g + intel %d + board %d"
+        % (total, step_timeout, fetch_min, budget, classify, intel_min, board_min))
     assert sum(t for _, t, _ in steps if t) <= job_timeout, "see the step-sum guard"
     # ...and the classifier default this arithmetic rests on is really the default
     assert 'os.environ.get("CLASSIFY_TIME_BUDGET_MIN", 60)' in \
@@ -33046,6 +33143,37 @@ def test_a_paid_call_carries_the_unlockers_own_timeout():
     jdfill._bd_call(lambda url, **kw: (plain.append(kw), (200, "", ""))[1], "https://x/2")
     assert plain == [{}]
     assert jdfill.Unlocker(cap=1).timeout_s == 30.0
+
+
+def test_the_paid_call_timeout_reaches_the_transport_and_is_the_env_knob(monkeypatch):
+    """600(b) pinned the DEFAULT and a fake; nothing pinned that the number reaches the real
+    transport or that `JDFILL_BD_TIMEOUT_S` moves it, so a workflow could set 300 and every
+    guard would pass while the failing-streak tail went back to 100 minutes. This drives the
+    real `Unlocker` through `_bd_call` to a stubbed `urlopen` and reads the timeout it got.
+    A render is still clamped to `RENDER_TIMEOUT` (the render breaker's clock)."""
+    from pipeline import jdfill
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
+    monkeypatch.setenv("JD_BD", "1")
+    monkeypatch.delenv("BD_RUN_CAP", raising=False)
+    monkeypatch.setenv("JDFILL_BD_TIMEOUT_S", "7")
+    monkeypatch.setattr(jdfill, "_monthly_ceiling_reached", lambda: "")
+    got = []
+
+    def _urlopen(req, timeout=None):
+        got.append(timeout)
+        raise OSError("stubbed transport")
+
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen", _urlopen)
+    bd = jdfill.Unlocker(cap=5, render_cap=1)
+    assert bd.timeout_s == 7.0
+    jdfill._bd_call(bd, "https://a.co/raw")
+    jdfill._bd_call(bd, "https://a.co/shell", render=True)
+    assert got == [7.0, 7.0], got
+    monkeypatch.setenv("JDFILL_BD_TIMEOUT_S", "300")
+    bd = jdfill.Unlocker(cap=5, render_cap=1)
+    jdfill._bd_call(bd, "https://a.co/shell2", render=True)
+    assert got[-1] == jdfill.RENDER_TIMEOUT, "a render never waits past RENDER_TIMEOUT"
 # --- 566: the posting's own text places it outside Israel (classifier, 2026-09-13) ---
 
 _DIAGEO = {"company": "Diageo", "title": "Data Analyst", "location": "מחוז המרכז",

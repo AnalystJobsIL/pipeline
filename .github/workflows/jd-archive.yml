@@ -85,7 +85,7 @@ jobs:
             echo "paid rungs OFF: the monthly ceiling is reached"; CAP=0
           fi
           echo "JD_ENRICH_BD_CAP=$CAP" >> "$GITHUB_ENV"
-          echo "- Bright Data cap this run: **$CAP**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Bright Data cap this run: **$CAP**" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Submit every posting we have seen to the Internet Archive
         # `archive_evidence.py` (infra, 2026-09-04): a third-party snapshot behind every

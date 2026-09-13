@@ -174,7 +174,7 @@ jobs:
             --db cloud_state/seen.db
           # it PRINTS a plain-text join report and WRITES the markdown; the summary
           # wants the markdown, capped so one sector table cannot bury the page
-          echo "### Requirement mix by company type" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Requirement mix by company type" | tee -a "$GITHUB_STEP_SUMMARY"
           head -40 out/company_type_analysis.md >> "$GITHUB_STEP_SUMMARY"
         continue-on-error: true
 

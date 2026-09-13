@@ -5756,8 +5756,12 @@ with the paid rung switched fully off by the monthly ceiling, **44** Indeed post
 night could not be read (2026-09-10) and **41** the next, against a total inline demand of
 **53** and **49**. So `JDFILL_INDEED_CAP` is **60** (1,800/month worst case, 1,320
 expected) inside a `JDFILL_BD_CAP` of **150** (2.5× a p95 of 59, a circuit breaker that
-is meant never to bind), with `JDFILL_TIME_BUDGET_MIN` at **35** because the
-failing-streak tail is 20 calls × 90 s = 30 min for any cap ≥ 40. The Indeed cards are a
+is meant never to bind), with `JDFILL_TIME_BUDGET_MIN` at **30** (2026-09-13, `infra`: it
+was 35 while the failing-streak tail was 20 calls × 90 s; since `600(b)` every paid call
+carries `JDFILL_BD_TIMEOUT_S` 30 s, so the tail is 10 min) and `JDFILL_RENDER_CAP` **5**
+(`610`: one Oracle HCM shell a night was `bd-render-capped` on 7 of 8 digests; 5 × 45 s is
+a clock term, not a credit one). Since 2026-09-13 the rung also honours `BD_RUN_CAP`
+through `bd_rescue`'s own counter (`jdfill._run_cap_reached`, `600(a)`). The Indeed cards are a
 SUBSET of the inline total, never an addend. A collision between the two classes is still
 alarmed (`bd-capped`) rather than silent. The matched
 driver needs no twin because its failures stamp `jd_attempted` and ride the 7/14/28 ladder
