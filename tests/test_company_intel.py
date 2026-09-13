@@ -2989,50 +2989,28 @@ def test_no_override_ships_a_name_that_render_would_refuse():
             "should not ship until registry merges the rows")
 
 
-def test_every_name_this_lane_publishes_facts_for_has_them(tmp_path):
-    """Clause 1, as a test rather than a paragraph: the lane's own gauge over the COMMITTED
-    state. `identity_key` is the join (`display_index` answers for `Dell` from `Dell
-    Technologies`), the `discovery` pseudo-row is not an employer, and `not_a_company`
-    names are never bought. 2026-08-31 evening: 3 -> 0 (`Hila & Co.`, `Oak`, `University
-    of Notre Dame`).
+def test_every_name_this_lane_publishes_facts_for_has_them():
+    """The four names this lane closed on 2026-08-31 stay answered, each one a CLASS: `Oak` an
+    identity fold the evidence settled, `Hila & Co.` researched from its own posting after the
+    name failed twice, `University of Notre Dame` not retired on the smell of its name, and
+    `Kidum Rehab Projects` a record about the OTHER company of the same name, stripped.
 
-    It measures and PRINTS the gap; it does not pin it (2026-09-11). The registry grows
-    every night and this lane's crons drain behind it, so the number moves without a commit
-    and a cap here reddens every lane's CI on a tree nobody touched. What is never normal is
-    the shape this session fixed -- a name that no amount of re-asking could ever answer --
-    and that one is an alarm in the mail, where somebody reads it every morning."""
-    import csv as _csv
-    import sqlite3 as _sq
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    with open(os.path.join(root, "cloud_state", "firmographics.json"), encoding="utf-8") as f:
-        recs = json.load(f)
+    It used to read `cloud_state/firmographics.json`, `companies.csv` and `seen.db` live and
+    print the lane's gauge beside these assertions. That made it a test whose verdict a cron
+    moves: red at 12:59 on 2026-09-11 after auto-expand, green after the 14:28 intel cron, same
+    code, three other lanes' CI red in between. The GAUGE was never the code's behaviour and it
+    has a daily home already -- the mail's `registry backlog N (+D since <date>)` and `N held
+    (...)` clauses. What stays here is what the CODE decides, on a dated snapshot of the four
+    records (`tests/fixtures/company_intel/2026-09-13-closed-names.json`): `display_index`
+    and `identity_key` still find each one, and the Kidum record is the test-prep group."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(here, "fixtures", "company_intel", "2026-09-13-closed-names.json"),
+              encoding="utf-8") as f:
+        recs = json.load(f)["records"]
     index = F.display_index(recs)
-    with open(os.path.join(root, "companies.csv"), encoding="utf-8-sig") as f:
-        rows = list(_csv.DictReader(f))
-    universe = {r["company_name"] for r in rows
-                if r["active"].strip().lower() == "true"
-                and (r.get("ats_platform") or "").strip().lower() != "discovery"}
-    con = _sq.connect(os.path.join(root, "cloud_state", "seen.db"))
-    universe |= {c for (c,) in con.execute("SELECT DISTINCT company FROM matched")}
-    con.close()
-    gap = sorted(n for n in universe
-                 if not F.not_a_company(n) and not (recs.get(n) or index.get(F.identity_key(n))))
-    # NO CAP. The count this used to pin (`<= 10`) is the drain's CADENCE, not the code's
-    # behaviour: every cron that adds a row moves it and no push can, so on 2026-09-11 the
-    # 12:59 auto-expand took it from 10 to 12 and reddened `guard` for three other lanes on
-    # a clean origin/master, and the 14:27 intel cron took it back to 10 with nobody having
-    # fixed anything. A number a runner can flip while the tree stands still belongs where
-    # a human reads it daily -- the mail's `registry backlog N (+D since <date>)`, and since
-    # today the `N held (...)` clause beside it, which names the shape that is never normal.
-    # What stays here is what the CODE decides: the names below, each a closed class.
-    print(f"gauge: {len(gap)} companies can render a card with no facts: {gap[:12]}")
-    # the four this session closed stay closed, by name -- each one a class, not a row:
-    #   Oak                       an identity fold the evidence settled
-    #   Hila & Co.                researched from its own posting after the name failed twice
-    #   University of Notre Dame  not retired on the smell of its name
-    #   Kidum Rehab Projects      a record about the OTHER company of the same name, stripped
     for closed in ("Oak", "Hila & Co.", "University of Notre Dame", "Kidum Rehab Projects"):
         assert recs.get(closed) or index.get(F.identity_key(closed)), closed
+    assert "Oak" not in recs, "Oak is answered through the identity fold, not by its own key"
     # ...and Kidum is the TEST-PREP group, which is the whole of BACKLOG 525: the record
     # bought on 2026-08-31 was the mental-health hostel operator, on the same Hebrew name
     kidum = recs.get("Kidum Rehab Projects") or {}

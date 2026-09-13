@@ -1,0 +1,1161 @@
+{
+ "test_company_intel.py::test_a_blurb_already_cached_under_a_non_company_name_is_dropped_at_read_time": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_blurb_is_derived_from_facts_without_an_llm_call": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_blurb_outage_does_not_cache_an_empty_blurb": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_blurb_outage_names_its_loop": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_blurb_soft_outage_skips_research_entirely": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_drained_night_still_clears_a_strike_its_record_has_answered": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_dry_run_never_stamps": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_failed_name_carries_its_reason_into_the_mail": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_healthy_cron_with_nothing_to_do_still_stamps_its_stage": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_non_company_never_renders_facts_chips_either": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_non_empty_queue_that_produced_nothing_is_an_alarm_not_a_quiet_night": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_poisoned_blurb_is_purged_where_the_writer_is_and_never_on_a_scoped_run": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_research_answer_that_never_searched_is_counted_and_warned": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_scoped_run_writes_neither_the_export_nor_the_store": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_second_digest_the_same_day_does_not_rebase_the_direction": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_session_retry_never_writes_a_strike_into_the_shared_ledger": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_session_run_researches_a_name_and_never_stamps_the_cron": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_soft_outage_in_the_digest_records_no_strikes": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_soft_outage_stop_is_reported_as_stopped_not_as_budget_spent": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_wall_clock_budget_stops_launching_and_counts_what_it_left": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_a_zero_attempt_run_writes_no_heartbeat_and_a_crash_still_stamps": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_an_all_fail_research_run_warns_even_below_the_outage_threshold": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_an_empty_registry_read_is_not_a_drained_queue": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_an_infra_abort_keeps_the_answers_already_in_flight": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_an_override_the_table_does_not_claim_leaves_the_registry_name": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_an_unreadable_stamp_file_is_said_and_never_overwritten": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_an_unwritten_export_is_said_and_leaves_no_tmp": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_apply_display_names_is_the_single_writer_and_survives_an_unreadable_verify": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_blurb_calls_are_counted_and_three_empties_in_a_row_stop_the_loop": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_chain_targets_exclude_companies_the_export_already_holds": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_corrupt_export_is_never_overwritten_by_the_union": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_display_records_are_chip_safe_but_stored_records_are_not_touched": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_empty_blurbs_retry_monthly_not_daily": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_enrich_for_run_survives_a_malformed_budget_env": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_every_refusal_prints_the_name_it_refused": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_missing_export_is_reported_and_recreated": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_no_active_registry_row_is_refused_by_the_money_gate": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_no_identity_group_merges_two_genuinely_different_companies": {
+  "files": [
+   "cloud_state/firmographics.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_no_override_ships_a_name_that_render_would_refuse": {
+  "files": [
+   "cloud_state/firmographics.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_one_blurb_call_per_identity_not_per_name_variant": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_one_transient_blurb_does_not_report_the_seam_down_or_skip_research": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_only_refuses_the_discovery_pseudo_row_and_repeats": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_research_stops_on_outage_records_no_strike_and_the_mail_says_so": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_save_shared_applies_the_display_pass_so_no_publisher_can_resurrect": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_scoped_run_never_writes_the_shared_export": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_anchor_actually_reaches_the_call_the_bulk_pass_makes": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_backlog_gauge_counts_everything_that_can_render": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_backlog_line_carries_a_direction_and_a_scoped_run_never_stamps": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_blurb_cap_env_actually_caps_the_calls": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_blurb_loop_refuses_a_name_that_is_not_a_company": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_boards_own_titles_reach_the_call_the_bulk_pass_makes": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_bulk_crons_last_stamp_is_read_as_facts_and_grew_plus_stale_is_the_one_warning": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_bulk_stamp_says_what_was_asked_not_only_what_was_done": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_classifier_breaker_stops_this_lane_spending_too": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_digest_hook_asks_with_the_posting_every_board_company_has": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/pipeline_stages.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_export_line_counts_what_was_published_not_what_was_read": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_export_pass_writes_display_names_and_folds_sectors_end_to_end": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_mail_separates_a_weekly_retry_from_a_name_that_is_never_retried": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_purge_has_a_ceiling_and_prints_what_it_deletes": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_seam_audit_reaches_the_mail": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_stamp_counts_held_and_borrowed_boards_in_one_token_per_key": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_verify_row_of_a_folded_alias_vouches_for_the_survivor": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_the_working_exit_clears_an_answered_strike_too": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_three_consecutive_transient_blurbs_are_an_outage_after_all": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_two_empty_answers_do_not_turn_the_next_transient_into_an_outage": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_union_store_applies_the_display_pass_so_the_board_matches_the_file": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_unscoped_run_publishes_the_union": {
+  "files": [
+   "cloud_state/firmo_failed.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_wave1a_defect_classes_are_refused_parent_casing_israel_and_collisions": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_wave1b_verdicts_edges_and_boundaries_hold": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_wave2_memory_matches_evidence_and_the_last_boundaries": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_company_intel.py::test_wave_two_the_heartbeat_the_interrupt_the_empty_export_and_the_tiny_store": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_a_company_cannot_leave_the_registry_without_a_reason": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/registry_ladder.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_a_pool_that_grows_by_half_is_a_mail_line_and_the_deep_key_is_stable": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/registry_ladder.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_every_ownership_mirror_agrees_with_the_tool_it_mirrors": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_no_queue_name_is_retired_without_a_persisted_verdict": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_the_alarm_file_does_not_amplify_itself": {
+  "files": [
+   "cloud_state/board_verify.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_the_ats_queue_separates_build_from_wire": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_the_census_names_an_active_row_on_a_host_the_ledger_ruled_against": {
+  "files": [
+   "cloud_state/registry_ladder.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_the_census_step_never_probes_the_ladder_it_cannot_see": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_the_mailed_alarm_lines_do_not_change_on_a_day_nothing_changed": {
+  "files": [
+   "cloud_state/board_verify.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_the_ownership_matrix_is_built_from_the_tools_own_predicates": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_registry.py::test_the_three_copies_of_the_re_check_pool_still_agree_where_they_are_supposed_to": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_card_blob_title_is_held_out_of_the_mail_not_burned_at_render": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_dead_jd_quality_tier_reaches_the_bold_stages_line": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_failed_board_is_not_written_so_yesterdays_page_survives": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_native_ats_row_points_at_that_ats": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_null_url_does_not_take_the_whole_driver_down": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_page_closed_role_is_not_upserted_so_the_cache_cannot_reopen_it_daily": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_refused_reclean_reaches_the_mail_and_does_not_crash_the_driver": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_reopen_beats_the_search_cadence_exactly_once": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_role_held_for_its_text_is_never_marked_sent_and_is_mailed_when_it_lands": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_role_this_gate_never_held_is_not_re_offered_because_its_text_is_fresh": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_role_with_no_usable_description_reaches_neither_the_board_nor_the_mail": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_a_row_that_left_the_queue_without_producing_anything_is_not_a_recovery": {
+  "files": [
+   "cloud_state/scrape_rot.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_alias_fold_has_no_board_gate_because_same_origin_never_checks_the_host": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_an_archived_role_is_worked_on_the_free_rungs_and_never_bought": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_an_archived_role_reaches_bright_data_only_when_the_operator_says_so": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_an_unreadable_ledger_filters_nothing_and_says_so": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_discovery_drops_are_counted_and_printed": {
+  "files": [
+   "discovered_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_drain_skips_a_name_whose_retirement_is_live": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_drain_stops_scoring_at_the_budget_and_records_nothing_for_the_rest": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_drain_targets_never_tried_first_then_stalest": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_every_active_scrape_row_points_at_something_that_claims_to_list_jobs": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_every_live_census_site_carries_a_floor_and_clears_it": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "ASSERTS on live content, BY DESIGN: a `census` fact in docs/check_docs.py is a floor a doc states (\"1,000+ companies\") against today's registry, and it fails only when the registry shrinks below it - the docs linter's own live gauge. Lane `docs`; BACKLOG 619."
+ },
+ "test_units.py::test_every_registered_fact_computes_and_every_site_still_matches": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_every_registry_platform_has_a_fetcher": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_every_row_lands_in_exactly_one_counted_bucket": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_every_stamped_stage_is_rendered_somewhere_a_human_reads": {
+  "files": [
+   "cloud_state/pipeline_stages.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_failed_pre_steps_reach_the_stages_line": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_fetch_discovery_drops_a_card_whose_slug_says_recruiting": {
+  "files": [
+   "discovered_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_fetch_jd_never_routes_through_pipeline_http": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_holding_a_role_off_the_board_never_tells_the_record_it_closed": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_jd_guards_the_mutation_sweep_found_unpinned": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "ASSERTS on live content: `jdfill.native_url` resolves a board from the company's live `companies.csv` row, and one assertion needs a real row. Lane `jd-text`: a registry-path seam in jdfill, then a snapshot row. BACKLOG 619."
+ },
+ "test_units.py::test_matched_backfill_driver_fills_stamps_and_records": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_no_posting_in_the_committed_cache_came_from_an_unadmitted_board": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_no_two_active_rows_scan_the_same_board": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_outcome_never_replaces_a_same_day_digest_a_rerun_lost": {
+  "files": [
+   "cloud_state/pipeline_stages.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_outcome_writes_the_two_files_only_when_something_failed": {
+  "files": [
+   "cloud_state/pipeline_stages.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_replay_of_the_committed_stale_and_rot_files_through_the_new_health_rule": {
+  "files": [
+   "cloud_state/health_baseline.json",
+   "cloud_state/scrape_rot.json",
+   "companies.csv",
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_scrape_cache_in_points_the_digest_at_a_scratch_cache": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_stale_json_never_publishes_a_query_string": {
+  "files": [
+   "cloud_state/health_baseline.json",
+   "cloud_state/scrape_rot.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_drain_alarm_does_not_fire_on_a_night_that_worked": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_drain_alarm_is_actually_printed": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_drain_alarms_when_it_could_have_run_and_did_not": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_drain_alarms_when_its_selection_set_outruns_a_nights_capacity": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_drivers_run_on_the_budgets_their_docstrings_promise": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_pipeline_renders_the_board_before_the_mail_and_the_mail_says_so": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_pipeline_runs_one_classifier_and_saves_its_verdict_before_rendering": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/pipeline_stages.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_prune_refuses_a_recorded_verdict_that_carries_no_evidence": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_queue_is_pruned_even_on_a_morning_with_nothing_new": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_queue_reports_what_is_owed_not_what_is_merely_unsettled": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_queue_stamp_carries_capacity_and_the_ledger_contradiction_count": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_role_record_runs_end_to_end_on_two_scripted_days": {
+  "files": [
+   "cloud_state/board_verify.json",
+   "cloud_state/firmo_failed.json",
+   "cloud_state/firmographics.json",
+   "cloud_state/health_baseline.json",
+   "cloud_state/intake_rejects.json",
+   "cloud_state/last_delivered.json",
+   "cloud_state/last_run.json",
+   "cloud_state/registry_census.json",
+   "cloud_state/registry_ladder.json",
+   "cloud_state/source_health.json",
+   "cloud_state/stale.json",
+   "companies.csv",
+   "digests/latest.md"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_run_and_the_cli_write_the_same_archive_and_neither_archives_a_removed_row": {
+  "files": [
+   "cloud_state/firmographics.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_stamp_carries_credits_spent_not_only_credits_that_worked": {
+  "files": [
+   "scraped_cache.json"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_stamp_separates_intake_from_resurrection": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
+ },
+ "test_units.py::test_the_two_live_floors_cannot_imply_a_coverage_ratio_that_is_false": {
+  "files": [
+   "companies.csv"
+  ],
+  "since": "2026-09-13",
+  "why": "ASSERTS on live content, BY DESIGN: a `census` fact in docs/check_docs.py is a floor a doc states (\"1,000+ companies\") against today's registry, and it fails only when the registry shrinks below it - the docs linter's own live gauge. Lane `docs`; BACKLOG 619."
+ }
+}

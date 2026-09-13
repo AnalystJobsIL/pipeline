@@ -210,6 +210,24 @@ def _no_bright_data_state_survives_a_test(request):
         mod.SPENT["by"].clear()
 
 
+_LIVE_ALLOW = []
+
+
+@pytest.fixture(autouse=True)
+def _no_test_reads_the_state_a_cron_rewrites(request):
+    """A test may not open `companies.csv`, the caches or anything under `cloud_state/` and
+    `digests/` unless `tests/live_state_allowlist.json` names it and says why (infra,
+    2026-09-13). Those files move several times a day with no commit, so a test asserting on
+    them reds whichever lane pushes next; two did in two days. `tests/live_state.py` has the
+    mechanism and the two ways out. Keyed `<file>::<test>`, parameters stripped."""
+    import live_state
+    if not _LIVE_ALLOW:
+        _LIVE_ALLOW.append(live_state.load_allowlist())
+    name = "%s::%s" % (os.path.basename(str(request.node.fspath)), request.node.originalname)
+    with live_state.guard(name, allowlist=_LIVE_ALLOW[0]):
+        yield
+
+
 def pytest_sessionfinish(session, exitstatus):
     if _rung_leaked:
         print(f"\n[unlock-rung] {len(_rung_leaked)} test(s) left identity_gate's paid rung "

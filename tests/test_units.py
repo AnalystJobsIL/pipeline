@@ -392,12 +392,20 @@ def test_page_mentions_company_beats_domain_heuristics():
     assert not page_mentions_company("RADLogics", "<h1>RAD Data Communications</h1>")
 
 
-def test_registry_is_structurally_sound():
-    """Cheap end-to-end guard: the real companies.csv must pass every invariant."""
+def test_registry_is_structurally_sound(tmp_path):
+    """Cheap end-to-end guard: a real registry passes every invariant through the real script.
+
+    It ran on the LIVE `companies.csv`, which a cron can change between a push and its CI run;
+    the live file is judged where it is written instead -- `check_invariants.py` runs before
+    every persist in seven workflows and the digest -- and a session editing the registry runs
+    it before committing (CLAUDE.md). Here: the dated 2026-09-13 snapshot, in a scratch cwd."""
+    import shutil
     import subprocess
+    import live_state as _LS
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    r = subprocess.run([sys.executable, "check_invariants.py"], cwd=repo,
-                       capture_output=True, text=True)
+    shutil.copy(_LS.snapshot("companies.csv"), tmp_path / "companies.csv")
+    r = subprocess.run([sys.executable, os.path.join(repo, "check_invariants.py")],
+                       cwd=str(tmp_path), capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
 
 
@@ -15161,12 +15169,15 @@ def test_the_receipt_fingerprint_survives_a_windows_checkout(tmp_path):
         "the receipt fingerprint still depends on the checkout's line endings"
     assert ps.digest_sha(lf) != ps.digest_sha(lf.replace(b"body", b"other")), \
         "normalising went too far: a real change no longer moves the fingerprint"
-    # and the receipt in the tree describes the digest in the tree, whatever this OS does
+    # and a real receipt describes its real digest, whatever this OS's checkout did to it --
+    # a dated pair (2026-09-13), not the live one: a digest cron rewrites both, and the LIVE
+    # pair is judged every morning by `_receipt_alarms` in the mail (`something replaced it`)
     import json as _j
-    rec = _j.load(open(os.path.join(_REPO, "cloud_state", "last_delivered.json"), encoding="utf-8"))
-    body = open(os.path.join(_REPO, "digests", "latest.md"), "rb").read()
+    fx = os.path.join(_REPO, "tests", "fixtures", "infra", "2026-09-13-receipt")
+    rec = _j.load(open(os.path.join(fx, "last_delivered.json"), encoding="utf-8"))
+    body = open(os.path.join(fx, "latest.md"), "rb").read()
     assert rec["sha256"] == ps.digest_sha(body), \
-        "cloud_state/last_delivered.json does not describe digests/latest.md"
+        "the receipt fixture does not describe its digest on this checkout"
 
 
 def test_the_two_callers_of_the_fingerprint_cannot_drift():
@@ -18649,12 +18660,14 @@ def test_the_internship_gate_moved_no_role_on_the_live_corpus():
     old = re.compile(
         r"\b(intern|internship|student|trainee|apprentice(ship)?|working student|campus)\b"
         r"|סטודנט|סטודנטית|מתמחה|מתמח", re.I)
-    titles = set()
-    p = os.path.join(root, "scraped_cache.json")
-    if os.path.exists(p):
-        for rows in json.load(open(p, encoding="utf-8")).values():
-            titles |= {(j.get("title") or "").strip() for j in rows if j.get("title")}
-    assert len(titles) > 500, "corpus too small to mean anything"
+    # the corpus is a dated snapshot of the titles the OLD pattern matches (2026-09-13, 32 of
+    # 2,465), not the live cache: a scrape refresh moved this verdict with no commit
+    with open(os.path.join(root, "tests", "fixtures", "classifier",
+                           "2026-09-13-internship-titles.json"), encoding="utf-8") as f:
+        snap = json.load(f)
+    titles = set(snap["old_pattern_matches"])
+    assert snap["corpus_titles"] > 500, "corpus too small to mean anything"
+    assert titles and all(old.search(t) for t in titles), "the snapshot is not what it says"
     released = [t for t in titles if old.search(t) and not seniority._NOT_A_JOB.search(t)]
     assert released == [], "the widened gate RELEASED a title it used to catch: %s" % released[:5]
 
@@ -28261,12 +28274,13 @@ def test_the_live_registry_does_not_park_a_non_employer_on_a_declared_alias_stri
     it. It is deliberately not the general form "no row name may be an ALIASES key": seven
     keys legitimately name live rows (`AWS`, `JPMorganChase`, `Habana Labs (Intel)`,
     `VMware (Broadcom)`, ...), which are real separate scanner rows and must never fold."""
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv as _c
     import os as _o
     from pipeline import roles
     from pipeline.firmographics import identity_key
     root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
-    rows = [r for r in list(_c.reader(open(_o.path.join(root, "companies.csv"),
+    rows = [r for r in list(_c.reader(open(_LS.snapshot("companies.csv"),
                                            encoding="utf-8")))[1:] if r]
     names = {r[0] for r in rows}
     origins = {r[0]: ((r[2] or "").strip() or r[3] or "") for r in rows}
@@ -28292,12 +28306,13 @@ def test_the_live_registry_lets_the_doit_declaration_fold():
     `api_url`), so `ALIASES["investing com"] = "investing"` would be dead on arrival. That
     duplicate leaves the dataset by a url-precise retraction instead, and the registry rename
     that would make it foldable is filed for the lane that owns `companies.csv`."""
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv as _c
     import os as _o
     from pipeline import roles
     from pipeline.firmographics import ALIASES, identity_key
     root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
-    rows = [r for r in list(_c.reader(open(_o.path.join(root, "companies.csv"),
+    rows = [r for r in list(_c.reader(open(_LS.snapshot("companies.csv"),
                                            encoding="utf-8")))[1:] if r]
     names = {r[0] for r in rows}
     origins = {r[0]: ((r[2] or "").strip() or r[3] or "") for r in rows}
@@ -28373,12 +28388,13 @@ def test_the_live_registry_folds_the_six_pairs_declared_on_2026_09_11():
     parked row carrying `alias-of <R>` plus an `ALIASES` key, and this asserts the OUTCOME
     on the shipped registry: it reds if a row is re-activated, renamed, or loses its
     verdict segment, and it reds if the declaration is dropped."""
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv as _c
     import os as _o
     from pipeline import roles, verdicts
     from pipeline.firmographics import identity_key
     root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
-    rows = [r for r in list(_c.reader(open(_o.path.join(root, "companies.csv"),
+    rows = [r for r in list(_c.reader(open(_LS.snapshot("companies.csv"),
                                            encoding="utf-8")))[1:] if r]
     names = {r[0] for r in rows}
     origins = {r[0]: ((r[2] or "").strip() or r[3] or "") for r in rows}
@@ -28430,11 +28446,12 @@ def test_every_alias_of_row_in_the_live_registry_still_parses():
     that row's ruling is invisible to the fold -- the failure is silent, which is the class
     this whole change exists to end. 64 rows carried the verdict on 2026-09-11 and all 64
     parsed; a new spelling that does not must be caught here, not in a digest."""
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv as _c
     import os as _o
     from pipeline import verdicts
     root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
-    rows = [r for r in list(_c.reader(open(_o.path.join(root, "companies.csv"),
+    rows = [r for r in list(_c.reader(open(_LS.snapshot("companies.csv"),
                                            encoding="utf-8")))[1:] if r]
     carry = [r for r in rows if "alias-of" in (r[5] or "")]
     assert len(carry) >= 60, f"only {len(carry)} alias-of rows -- did a merge drop them?"
@@ -31295,10 +31312,11 @@ def test_every_registry_recruiter_verdict_is_a_mechanism():
     answer `is_recruiter()` True. The next such park reds this test until its name lands in
     `_CONFIRMED` — deliberately; that is the coupling a note cannot provide. Kills
     `confirmed-loses-peak-innovation`."""
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv
     from pipeline.recruiters import is_recruiter
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    with open(os.path.join(repo, "companies.csv"), encoding="utf-8") as f:
+    with open(_LS.snapshot("companies.csv"), encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     dated = [r["company_name"] for r in rows
              if re.search(r"\brecruiter 20\d\d-\d\d-\d\d:", r.get("notes") or "")]
@@ -31352,7 +31370,97 @@ def test_the_refused_vocabulary_arms_reach_nothing_the_shipped_appeal_does_not()
     assert rejected == [] and len(passing) == 1 and passing[0][0] == "signal", (rejected, passing)
 
 
-def test_the_delta_audit_lines_bind_to_exactly_one_record_each():
+@pytest.mark.parametrize("door", ["open", "io.open", "pathlib", "sqlite3"])
+def test_a_test_reads_the_state_a_cron_rewrites_only_through_the_allowlist(tmp_path, door):
+    """The lock on tests that read live state (infra, 2026-09-13). `companies.csv`, the caches,
+    `cloud_state/` and `digests/` move with no commit several times a day, so a test asserting
+    on them reds whoever pushes next: `test_every_name_this_lane_publishes_facts_for_has_them`
+    (red at 12:59 after auto-expand, green after the 14:28 intel cron) and
+    `test_the_delta_audit_lines_bind_to_exactly_one_record_each` (red the morning a record was
+    renamed). Measured by this same guard in report mode: 153 tests opened live state at
+    runtime on 2026-09-13; they are listed, with the reason each may, in
+    `tests/live_state_allowlist.json`, and a 154th is refused.
+
+    Driven against a FAKE repo root in tmp_path, through each door a test uses to read a file,
+    so the guard is proven without this test touching live state itself."""
+    import io as _io
+    import pathlib
+    import sqlite3 as _sq
+    import live_state as LS
+    root = tmp_path / "repo"
+    (root / "cloud_state").mkdir(parents=True)
+    (root / "companies.csv").write_text("company_name\n", encoding="utf-8")
+    _sq.connect(str(root / "cloud_state" / "seen.db")).close()
+    (root / "cloud_state" / "stale.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "mine.csv").write_text("x\n", encoding="utf-8")
+    target = {"sqlite3": root / "cloud_state" / "seen.db"}.get(door, root / "companies.csv")
+    import builtins as _b
+    doors = (_b.open, _io.open, _sq.connect)
+
+    def read(path):
+        if door == "open":
+            with open(path, encoding="utf-8") as f:
+                return f.read()
+        if door == "io.open":
+            with _io.open(path, encoding="utf-8") as f:
+                return f.read()
+        if door == "pathlib":
+            return pathlib.Path(path).read_text(encoding="utf-8")
+        _sq.connect(str(path)).close()
+        return ""
+
+    allow = {"test_units.py::allowed": {"files": ["companies.csv", "cloud_state/seen.db"],
+                                        "why": "x", "since": "2026-09-13"}}
+    with LS.guard("test_units.py::allowed", root=str(root), allowlist=allow, report=""):
+        read(target)                                    # named, with a reason: allowed
+        with pytest.raises(LS.LiveStateInTests):
+            read(root / "cloud_state" / "stale.json" if door != "sqlite3"
+                 else root / "cloud_state" / "other.db")  # ...but only the files it names
+    with LS.guard("test_units.py::stranger", root=str(root), allowlist=allow, report=""):
+        with pytest.raises(LS.LiveStateInTests) as e:
+            read(target)
+        assert "test_units.py::stranger" in str(e.value) and "tests/fixtures/" in str(e.value)
+        read(tmp_path / "mine.csv") if door != "sqlite3" else _sq.connect(str(tmp_path / "t.db")).close()
+    import builtins as _b
+    assert (_b.open, _io.open, _sq.connect) == doors, "the guard put every door back"
+    # report mode records instead of raising, once per (test, file)
+    rep = tmp_path / "report.jsonl"
+    with LS.guard("test_units.py::stranger", root=str(root), allowlist={}, report=str(rep)):
+        read(target)
+        read(target)
+    lines = [json.loads(l) for l in rep.read_text(encoding="utf-8").splitlines()]
+    assert lines == [{"test": "test_units.py::stranger",
+                      "file": "cloud_state/seen.db" if door == "sqlite3" else "companies.csv"}]
+    # ...and every entry in the real allowlist says why, and since when
+    for name, entry in LS.load_allowlist().items():
+        assert "::" in name and entry.get("files") and entry.get("why") and entry.get("since"), name
+
+
+def _retraction_snapshot(tmp_path):
+    """(Retractions, records) from the dated 2026-09-13 snapshot, never the live ledger.
+
+    The binding test below read `cloud_state/roles.jsonl` and went red the morning `roles`'
+    title canon renamed a record (2026-09-12, relaxed in 0a2b7f2): a cron moved its verdict
+    while the tree stood still. The snapshot holds every retraction line and the records of
+    the companies the classifier's lines name, so the ambiguity half (exactly ONE record) still
+    has neighbours to be ambiguous with. `tests/live_state.py` is why a test may not reach the
+    ledger itself."""
+    import json
+    from pipeline import roles
+    here = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(here, "fixtures", "roles", "2026-09-13-retraction-bindings.json"),
+              encoding="utf-8") as f:
+        snap = json.load(f)
+    rp, lp = tmp_path / "roles_retractions.jsonl", tmp_path / "roles.jsonl"
+    rp.write_text("".join(json.dumps(e, ensure_ascii=False) + "\n" for e in snap["retractions"]),
+                  encoding="utf-8")
+    lp.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in snap["records"]),
+                  encoding="utf-8")
+    records, _, _ = roles.load(str(lp))
+    return roles.Retractions.load(str(rp)), records
+
+
+def test_the_delta_audit_lines_bind_to_exactly_one_record_each(tmp_path):
     """2026-09-11 (classifier): six url-precise retraction lines (the 545 shape: url AND
     role_id) for the rows adjudicated OUT — Peak Innovation, Edikted, Flex, aQurate, Qlik
     Israel, Bank Leumi. The binding check the 09-01 near-miss taught is run with the predicate
@@ -31369,8 +31477,7 @@ def test_the_delta_audit_lines_bind_to_exactly_one_record_each():
                           "flex flextronics|material planning analyst", "aqurate|data analyst aqurate data",
                           "qlik israel|bi developer qlik specialist",
                           "bank leumi בנק לאומי|business analyst corporate banking division headquarters 3103"])
-    ret = roles.Retractions.load(os.path.join(repo, "cloud_state", "roles_retractions.jsonl"))
-    records, _, _ = roles.load(os.path.join(repo, "cloud_state", "roles.jsonl"))
+    ret, records = _retraction_snapshot(tmp_path)          # dated, not the live ledger
     ret.bind(records)
     # the shape lock, extended to EVERY line on 2026-09-11: INGIMA's placement was re-posted
     # under a new LinkedIn id, the record absorbed the new url, and the url-only line from
@@ -33405,7 +33512,7 @@ def test_the_unreachable_alarm_names_why_each_role_had_no_description(monkeypatc
     assert "(? 1, not-a-job-url 1)" in line, line
 
 
-def test_the_unknown_contract_withdrawals_are_exactly_the_stable_nos_of_the_artifact():
+def test_the_unknown_contract_withdrawals_are_exactly_the_stable_nos_of_the_artifact(tmp_path):
     """2026-09-13 (classifier): 31 records whose published verdict named no contract were
     re-judged on their stored text. Six stable 3-of-3 NOs were withdrawn; the two flaps
     (Zipher Senior Data Analyst, SemiConductor Devices) were NOT, by the 09-11 rule that a
@@ -33424,7 +33531,7 @@ def test_the_unknown_contract_withdrawals_are_exactly_the_stable_nos_of_the_arti
     for r in rows:
         if r["role_id"] in out:
             assert r["now"] == "reject" and r["votes"].count("NO") >= 3, r
-    ret = roles.Retractions.load(os.path.join(repo, "cloud_state", "roles_retractions.jsonl"))
+    ret, _ = _retraction_snapshot(tmp_path)                 # dated, not the live ledger
     mine = [e for e in ret.entries if e.get("on") == "2026-09-13"
             and e.get("by", "").startswith("classifier")]
     assert sorted(e["role_id"] for e in mine) == out

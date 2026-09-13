@@ -1,0 +1,58 @@
+{
+ "_snapshot": "2026-09-13, origin/master ef5a2ea: the cloud_state/firmographics.json records that answer the four names company-intel closed on 2026-08-31 (directly or through identity_key). Dated so a cron that adds or rewrites a record cannot move the test that reads them (infra, tests that read live state).",
+ "records": {
+  "Oak - Identity Security OS": {
+   "as_of": "2026-08-22",
+   "business_model": "Enterprise SaaS subscriptions for its identity security/governance platform",
+   "customer_type": "enterprises",
+   "employees_global": 50,
+   "founded": 2025,
+   "il_center": "Tel Aviv (HQ/R&D); office in San Francisco",
+   "sector": "cybersecurity",
+   "size_band": "S",
+   "stage": "early-private",
+   "stage_note": "Emerged from stealth July 2026 with $60M seed co-led by Accel, CRV and Greylock; founded by Shai Morag (ex-Ermetic, acquired by Tenable for $265M)",
+   "sub_sector": "AI-native identity security platform — unified control plane governing human, machine and AI-agent identities (IGA/ISPM replacement)"
+  },
+  "Hila & Co.": {
+   "as_of": "2026-08-31",
+   "business_model": "Recruitment/headhunting on behalf of client employers",
+   "customer_type": "B2B (employers hiring through an agency)",
+   "employees_global": null,
+   "founded": null,
+   "il_center": "",
+   "sector": "hr services / recruitment",
+   "size_band": "S",
+   "stage": "private-enterprise",
+   "stage_note": "Independent boutique headhunting practice run by Hila Malka; evidence is the posting itself (LinkedIn 4457744315, 2026-08-31): the job poster is the headhunter and the hiring employer is an unnamed FMCG company. Its own site is not identified; the posting's Shoham location is the CLIENT's, not the a",
+   "sub_sector": "Headhunting & Talent Acquisition"
+  },
+  "University of Notre Dame": {
+   "as_of": "2026-08-31",
+   "business_model": "Higher education / research university",
+   "customer_type": "Students, researchers, general public",
+   "employees_global": null,
+   "founded": 1842,
+   "il_center": "Jerusalem (Tantur Ecumenical Institute)",
+   "sector": "education",
+   "size_band": "XL",
+   "stage": "private-enterprise",
+   "stage_note": "Private, nonprofit Catholic research university (not venture-backed); independent institution founded 1842; Israel site confirmed 2026-08-31 from the row's own SmartRecruiters board (Rector - Tantur Ecumenical Institute, Jerusalem, country il)",
+   "sub_sector": "Higher education / university"
+  },
+  "Kidum Rehab Projects": {
+   "as_of": "2026-08-31",
+   "business_model": "B2C education services - matriculation exam prep, psychometric test courses, English/Amirant courses, tutoring",
+   "customer_type": "Consumers (students, high schoolers, adults preparing for exams)",
+   "display_name": "Kidum",
+   "employees_global": null,
+   "founded": 1981,
+   "il_center": "Holon (HQ, HaMashbir 1); branches nationwide",
+   "sector": "education",
+   "size_band": "M",
+   "stage": "private-enterprise",
+   "stage_note": "Largest private test-prep/education group in Israel; founded 1981 per its own About page (kidum.com/about: 'רשת קידום הוקמה בשנת 1981'), legal entity קידום ידע והשכלה בע\"מ; privately owned, not VC-backed",
+   "sub_sector": "Test prep and tutoring services (matriculation, psychometric, English)"
+  }
+ }
+}

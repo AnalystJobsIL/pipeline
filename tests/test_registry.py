@@ -719,12 +719,13 @@ def test_a_tenant_mismatch_alone_must_not_block_an_ats_row():
     What keeps it safe is that no path treats a `True` from this predicate as sufficient.
 
     This test exists so the next reviewer who proposes that fix finds the measurement first."""
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv
     import urllib.parse
     from audit_empty_rows import tenant_is_this_company
     from pipeline.company_identity import ATS_HOST, is_foreign
 
-    rows = [r for r in csv.reader(open("companies.csv", encoding="utf-8"))
+    rows = [r for r in csv.reader(open(_LS.snapshot("companies.csv"), encoding="utf-8"))
             if r and len(r) >= 6][1:]
     active_ats = [r for r in rows if r[4] == "true" and (r[3] or "").startswith("http")
                   and ATS_HOST.search(urllib.parse.urlparse(r[3]).netloc or "")]
@@ -1280,6 +1281,7 @@ def test_the_write_gate_does_not_refuse_the_platforms_it_exists_to_crack():
     tenant string is wrong in both directions; page content is the only discriminator that
     works, so it is the only one used.
     """
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv as _csv
     import os
     import re
@@ -1288,7 +1290,7 @@ def test_the_write_gate_does_not_refuse_the_platforms_it_exists_to_crack():
     orig = IG.page_names_company
     try:
         IG.page_names_company = lambda n, u, html="": True      # perfect page evidence
-        with open(os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
+        with open(_LS.snapshot("companies.csv"), encoding="utf-8") as fh:
             rows = [r for r in _csv.reader(fh) if r and len(r) >= 6][1:]
         plat = re.compile(r"oraclecloud|eightfold|icims|jobvite|taleo|avature|phenom", re.I)
         tgt = [r for r in rows
@@ -1587,12 +1589,13 @@ def test_the_walled_pool_survives_another_tools_note_rewrite():
     with every guard green. Membership now also derives from the row's HOST, which only this
     lane's tools write.
     """
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv as _csv
     import os as _os
     from pipeline.notes import replace_own
     import crack_walled as cw
     root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-    with open(_os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
+    with open(_LS.snapshot("companies.csv"), encoding="utf-8") as fh:
         rows = [r for r in _csv.reader(fh) if r and len(r) >= 6][1:]
     pool = [r for r in rows if r[4] == "false" and IG.is_walled(r)]
     assert pool, "fixture drift: the walled pool is empty"
@@ -1814,13 +1817,14 @@ def test_the_declared_identity_table_is_consistent_with_the_registry():
     """Every `tenants` entry names a real row and matches that row's board; every entry
     carries evidence. Run against the LIVE registry on purpose: a declaration that has
     drifted from the board it vouches for is a wrong accept waiting to happen."""
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv
     import os
     from pipeline import identity_facts as F
     from pipeline import identity_gate as G
     from pipeline.company_identity import ATS_HOST
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    with open(os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
+    with open(_LS.snapshot("companies.csv"), encoding="utf-8") as fh:
         rows = [r for r in csv.reader(fh) if r and len(r) >= 6][1:]
     problems = F.validate(rows, ATS_HOST, G._plumbing)
     assert not problems, "\n".join(problems)
@@ -3281,11 +3285,12 @@ def test_no_note_write_costs_a_row_its_own_re_check_token():
     evicts oldest-first, which is exactly the wrong end -- so the write is skipped when it
     would take the token with it.
     """
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv as _csv
     import os as _os
     from pipeline.notes import replace_own
     root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-    with open(_os.path.join(root, "companies.csv"), encoding="utf-8") as fh:
+    with open(_LS.snapshot("companies.csv"), encoding="utf-8") as fh:
         rows = [r for r in _csv.reader(fh) if r and len(r) >= 6][1:]
     sel = [r for r in rows if "no open israel roles" in (r[5] or "").lower()]
     assert sel, "fixture drift: validate_empty's pool is empty"
@@ -6013,9 +6018,10 @@ def test_no_two_active_rows_share_a_board():
     Anchor Fintech's roles would have published under it. It was the only such pair in 1,244
     rows, and this session created it.
     """
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
     import csv
     from collections import Counter
-    with open("companies.csv", encoding="utf-8") as f:
+    with open(_LS.snapshot("companies.csv"), encoding="utf-8") as f:
         rows = [r for r in csv.reader(f) if r and len(r) >= 6][1:]
     live = [r for r in rows if r[4] == "true" and (r[3] or "").startswith("http")]
     dupes = Counter(r[3] for r in live)
