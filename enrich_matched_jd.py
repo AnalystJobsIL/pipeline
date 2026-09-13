@@ -283,6 +283,12 @@ def _store_text(conn, mkey, text, have, refuted=False):
     A refuted row is not open house either — the donor identity gate is untouched, so only
     text that names THIS role at THIS employer can land in the hole this opens."""
     text, have = (text or "")[:DESC_MAX], have or ""
+    # The door a donor or cache card walks through into `matched`, so the cut belongs here as
+    # well as at the digest's (`JDFiller.normalise`): a card installed with its header is cut
+    # by tonight's `_reclean` and handed back by the ledger's longer copy tomorrow, which is the
+    # 09-11 oscillation one donor away. `reclean_text`'s floor, so a cut that would leave no
+    # posting stores the text whole, exactly as before.
+    text = jdfill.reclean_text(text) or text
     disowned = _refuted_keys(conn, mkey)
     if disowned and jdfill.refute_key(text) in disowned:
         # This exact text was read and disowned for this row before. Whatever rung offered it
@@ -371,7 +377,8 @@ QUALITY_BUDGET_MIN = 4.0
 # What a clean, properly-headed re-capture must keep of a head-truncated text before it may
 # replace it. Measured 2026-09-11 on the six rows in that loop: 0.74 to 0.91. See `_store_text`.
 HEADED_FLOOR = 0.5
-RECLEAN_MAX_SHARE = 0.15
+# jdfill's, re-bound here so an attended one-off can lift it for this driver alone
+RECLEAN_MAX_SHARE = jdfill.RECLEAN_MAX_SHARE
 # what the archived pass gets first refusal on, so it cannot be starved by the live one
 ARCHIVED_BUDGET_SHARE = 0.25
 
@@ -385,7 +392,9 @@ def _reclean(conn, every, dry_run):
     as a job description and never enters the todo -- but the board renders what is STORED,
     and on 2026-08-28 that was 60,015 characters of LinkedIn sign-in form across 17 bodies,
     twelve of them open. Judging the posting and publishing the page is the worst of both."""
-    todo = [(r[0], r[6], strip_head(jd_body(r[6])), (str(r[4] or "")[:10] or str(r[8] or "")))
+    # the rule is `jdfill.reclean_text`, shared with the scrape cache's re-clean (581); the
+    # comment below is why its floor is `looks_like_jd` and not a length
+    todo = [(r[0], r[6], jdfill.reclean_text(r[6]), (str(r[4] or "")[:10] or str(r[8] or "")))
             for r in every]
     # `looks_like_jd(new)`, not `len(new) >= MIN_DESC`. The cut takes the EARLIEST marker,
     # and on a Hebrew LinkedIn page the sign-in block renders BEFORE the posting -- so for
@@ -398,7 +407,7 @@ def _reclean(conn, every, dry_run):
     # the row stays as it is, fails `looks_like_jd` anyway, and goes to the fetch.
     # Measured: 16 rows/56,463 chars under the old guard, 13 rows/39,969 under this one,
     # and the three spared are exactly the three that were damaged.
-    todo = [(k, old, new, d) for k, old, new, d in todo if new != old and looks_like_jd(new)]
+    todo = [(k, old, new, d) for k, old, new, d in todo if new is not None]
     if not todo:
         return 0, 0, {}
     share = len(todo) / float(len(every) or 1)
@@ -432,6 +441,50 @@ def _reclean(conn, every, dry_run):
     if not dry_run:
         conn.commit()
     return len(todo), cut, {k: new for k, _old, new, _d in todo}
+
+
+def _capture_why(text, stamp_v, default):
+    """The `jd_why` a fresh capture earns: `closed-by-page:<capture date>` when the text says
+    the posting stopped taking applicants, `default` otherwise.
+
+    BACKLOG 587. The stamp used to have one writer, `_reclean`, so a posting captured closed --
+    whose sentence `extract_jd` now keeps as the text's first line -- was stamped `ok:` and
+    `page_closed`'s durable arm never learned of it. `stamp_v` begins with the capture date."""
+    if closed_page_at(text) is None:
+        return default
+    return "closed-by-page:" + (str(stamp_v or "")[:10] or dt.date.today().isoformat())
+
+
+def _stamp_closed_pages(conn, every, dry_run):
+    """Stamp `jd_why = closed-by-page:<date>` on every row whose STORED text carries the
+    page's closure sentence and whose `jd_why` is empty. Changes `jd_why` only -- never the text
+    -- so the two stores never disagree and nothing needs retracting. Returns the rows stamped.
+
+    The cut's stamp (`_reclean`) covers a text it shortens; this covers the text nobody will ever
+    shorten again, because `jdfill.with_closed_line` keeps the sentence as its first line and no
+    cutter touches that line. Without it `roles.page_closed` would lean on the text arm alone
+    for those rows, and the stamp is the arm agreed as durable. Only onto an EMPTY `jd_why`: a
+    `structural:` value is a blocker the dataset publishes, and an `ok:` value written by a fetch
+    that ALSO carried the sentence was already stamped by `save` through `_capture_why`."""
+    todo = [(r[0], (str(r[4] or "")[:10] or str(r[8] or "")[:10])) for r in every
+            if closed_page_at(r[6]) is not None]
+    if not todo or conn is None:
+        return 0
+    n = 0
+    for mkey, when in todo:
+        if dry_run:
+            got = conn.execute("SELECT 1 FROM matched WHERE mkey=? AND COALESCE(jd_why,'')=''",
+                               (mkey,)).fetchone()
+            n += bool(got)
+            continue
+        cur = conn.execute("UPDATE matched SET jd_why=? WHERE mkey=? AND COALESCE(jd_why,'')=''",
+                           ("closed-by-page:" + when, mkey))
+        n += cur.rowcount or 0
+    if not dry_run:
+        conn.commit()
+    if n:
+        print(f"  [closed-by-page] {n} row(s) whose stored page says the posting closed", flush=True)
+    return n
 
 
 def _quality_pass(conn, every, dry_run):
@@ -952,6 +1005,7 @@ def _run(args, stamp):
         # phantom length, so 250 characters of junk could overwrite a 6,000-character row.
         every = [(tuple(r[:6]) + (recleaned[r[0]],) + tuple(r[7:]))
                  if r[0] in recleaned else r for r in every]
+    closed_stamped = _stamp_closed_pages(conn, every, args.dry_run)
 
     # The keyword rules first, then the model on what is left ambiguous. A row the tier
     # calls incomplete joins the todo exactly as a row that failed `looks_like_jd` does --
@@ -1121,8 +1175,12 @@ def _run(args, stamp):
             refuted.discard(item.key)      # filled: the ratchet closes again
             # the canonical address answered: record THAT, so `jd_why` never leaves a stale
             # `structural:` verdict standing on a row that has since been filled
+            # ...unless the capture says the posting stopped taking applicants: that is the
+            # verdict `roles.page_closed` reads, dated by the capture, never by today (587)
             conn.execute("UPDATE matched SET jd_why=? WHERE mkey=?",
-                         ("ok:canonical:%s" % (jdfill._host_of(item.url) or "?"), item.key))
+                         (_capture_why(text, stamp_v,
+                                       "ok:canonical:%s" % (jdfill._host_of(item.url) or "?")),
+                          item.key))
         # `jd_tries` counts DEFINITIVE failures only. A transient one (timeout, 5xx, an
         # Unlocker that was down) says nothing about the address, so widening the backoff on
         # it would let one bad morning push a perfectly readable role out to a month.
@@ -1242,6 +1300,7 @@ def _run(args, stamp):
                       matched_llm_rejected=q["rejected"],
                       matched_llm_truncated=q["truncated"],
                       matched_recleaned=n_reclean, matched_furniture_cut=cut_chars,
+                      matched_closed_stamped=closed_stamped,
                       matched_llm_candidates=q["candidates"],
                       matched_llm_unavailable=q["unavailable"],
                       matched_llm_capped=q["capped"],

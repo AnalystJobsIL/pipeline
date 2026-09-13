@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**656 filed · 465 open · 191 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**661 filed · 467 open · 194 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 607.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 612.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -247,7 +247,7 @@ closure convention in the header.
 - **596** `596@registry` **Five active rows publish another company's careers board, and the intel that names
 - **604** `604@registry` **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
 
-### infra — 116 open
+### infra — 117 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -365,8 +365,9 @@ closure convention in the header.
 - **599** `599@infra` **A fourth calendar-rot test, and the class has no owner**
 - **603** `603@infra` **The `ALLOWANCES` table is a 5,000 split of a 13,560/month demand, and `SOFT` is a price
 - **605** `605@infra` **`paid residential rung: ON/OFF` is written to the step SUMMARY only, so no log search can
+- **610** `610@infra` **The inline filler's render cap is 0, and an Oracle HCM posting is a shell without a
 
-### scraper — 31 open
+### scraper — 32 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -399,8 +400,9 @@ closure convention in the header.
 - **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
 - **584** `584@scraper` **The Logica-IT board's category-and-region suffix is read as title words**
 - **594** `594@scraper` **A board that publishes no place per posting yields one card a night, and the one it
+- **608** `608@scraper` **21 scraper-built cache cards carry page furniture that no re-clean can keep off, and 7
 
-### discovery — 30 open
+### discovery — 31 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
 - **4** `4@discovery` **Decide `fetch_serpapi_google_jobs`'s fate on 2026-09-01, not before.** *(lane:
@@ -432,6 +434,7 @@ closure convention in the header.
 - **535** `535@discovery` **A role whose own JD names a New York address is published as an Israel role**
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
 - **569** `569@discovery` **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
+- **609** `609@discovery` **Every accepted Telegram role is held off the board by construction**
 
 ### docs — 25 open
 
@@ -461,7 +464,7 @@ closure convention in the header.
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 - **563** `563@docs` **Nothing checks that a `NNN@lane` reference resolves to an item that still exists** —
 
-### roles — 24 open
+### roles — 25 open
 
 - **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
 - **3** `3@roles` **`pipeline/dates.py`**
@@ -487,6 +490,7 @@ closure convention in the header.
 - **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
 - **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
 - **583** `583@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
+- **607** `607@roles` **`classify_grouped` normalises one member of a merge group, so a twin re-installs the
 
 ### company-intel — 22 open
 
@@ -536,29 +540,6 @@ closure convention in the header.
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
 
-### jd-text — 20 open
-
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
-- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
-- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
-- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
-- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
-- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
-- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
-- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
-- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
-- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
-- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
-- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
-- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
-- **581** `581@jd-text` **The scrape cache keeps the page furniture this layer now cuts, and nothing re-cleans it**
-- **587** `587@jd-text` **When jd-text strips LinkedIn's page chrome, a closed posting silently reopens** —
-- **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
-- **601** `601@jd-text` **Two comment blocks in `pipeline/jdfill.py` now contradict the shipped workflow** —
-- **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
-
 ### classifier — 18 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
@@ -579,6 +560,27 @@ closure convention in the header.
 - **557** `557@classifier` **LTX has not flipped to its own board
 - **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
+
+### jd-text — 18 open
+
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
+- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
+- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
+- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
+- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
+- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
+- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
+- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
+- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
+- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
+- **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
+- **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
+- **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
 
 ### render — 7 open
 
@@ -11836,8 +11838,22 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      morning's fetch installs the wrong text through `upsert_matched` before `open_sync` runs,
      and `reconcile` then has no way to prefer the right one.
 
-581. **The scrape cache keeps the page furniture this layer now cuts, and nothing re-cleans it**
-     — lane: `jd-text`. Filed 2026-09-11.
+581. ~~**The scrape cache keeps the page furniture this layer now cuts, and nothing re-cleans it**~~
+     — lane: `jd-text`. Filed 2026-09-11. **CLOSED 2026-09-13 in code, proof due on the first
+     `jd-archive` schedule run that contains the commit** (HANDOFF morning-check row).
+     `jdfill.reclean_text` is now the one rule; `enrich_matched_jd._reclean` calls it and
+     `enrich_scrape_jd.reclean_cache` runs it at the start of `--archive-only` (the 12:30 run),
+     under the same `RECLEAN_MAX_SHARE` 15 %, stamping `scrape_recleaned` /
+     `scrape_furniture_cut`. Re-measured: 84 cards change, 65 after the floor (32,642 chars,
+     3.4 %), and the pass takes **44 of them (17,596 chars, 2.3 %)** — the cards this layer
+     wrote. The other 21 are scraper-built and rebuilt nightly by `_carry_jd`, so a cut there
+     is undone by morning; they are `608@scraper`. The ceiling did NOT need lifting. The
+     three Menora CAPTCHA cards are gone from the cache (0 today). **The larger half of the
+     class was not the cache at all**: the 09-13 digest re-cleaned 7 `matched` rows and its own
+     commit held 0 of them shorter, because the digest upserts the card — furniture and all —
+     through a length comparison an hour after `_reclean`. `JDFiller.normalise` cuts at that
+     door and `_store_text` at the donor door; the 7 rows were re-cleaned and synced to a
+     fixed point by hand the same day. Original text below.
      `_reclean` walks `matched` only. Over `scraped_cache.json`'s 1,933 stored descriptions the
      same rules would cut **3** bodies on the LinkedIn rail and ~60 on the application-form
      density rule (~44,000 characters, measured 2026-09-11) — and a card is what the `cache`
@@ -11948,8 +11964,17 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      reads the re-served card as a reappearance and resets `first_seen` with a fresh episode
      every morning for up to 21 days.
 
-587. **When jd-text strips LinkedIn's page chrome, a closed posting silently reopens** —
-     lane: `jd-text`. Filed 2026-09-11 by `roles`. `roles.page_closed` (`584`) reads the
+587. ~~**When jd-text strips LinkedIn's page chrome, a closed posting silently reopens**~~ —
+     lane: `jd-text`. Filed 2026-09-11 by `roles`. **CLOSED 2026-09-13.** The stamp had one
+     writer, `_reclean`, so a posting CAPTURED closed lost its sentence to `strip_head` at fetch
+     time and was stamped `ok:canonical:`. Now `extract_jd` (and the JSON-LD fallback) keeps
+     the page's own sentence as the text's first line (`jdfill.with_closed_line`, after the
+     head skip) — no cutter touches that line and `roles.page_says_closed` reads it on day
+     one; `save()` stamps `closed-by-page:<capture date>` over `ok:`; and
+     `_stamp_closed_pages` writes the stamp, `jd_why` only, onto any row whose stored text
+     carries the sentence (1 row today, Mizrahi Tefahot). A `job["jd_why"]` set in memory was
+     rejected: every reader of that column reads sqlite, and `upsert_matched` does not write
+     it. No change in `roles.py`. Original text below. `roles.page_closed` (`584`) reads the
      chrome marker `No longer accepting applications` / `כבר לא מקבלים בקשות` out of the
      stored description, and `jdfill._PAGE_FURNITURE` does not know that phrase today — but
      it is furniture, and the day it is cleaned out the text arm of that predicate goes
@@ -12269,7 +12294,9 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      itself a source of reds on other lanes' pushes — which is what this item describes.
 600. **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout** — lane:
      `jd-text` (its file), filed 2026-09-12 by `infra` while raising the caps above it. Two
-     halves, and the second is the one that costs a morning.
+     halves, and the second is the one that costs a morning. **(b) CLOSED 2026-09-13**:
+     `Unlocker.timeout_s` (`JDFILL_BD_TIMEOUT_S`, default 30) rides every `_bd_call`; a fake
+     without the attribute is called as before. **(a) is still open.**
      (a) `pipeline/jdfill.py`'s `Unlocker` POSTs `api.brightdata.com` itself rather than
      through `bd_rescue.unlock_status`, and says so at its own definition: *"neither
      `BD_RUN_CAP` nor `BD_PAID_RUNGS` nor the ceiling reached this layer"*. 2026-09-11 closed
@@ -12296,8 +12323,10 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      ```
      Cost of not doing it: the 35-minute budget carries the tail instead, which is 35 minutes
      of the mail's critical path reserved for a failure mode.
-601. **Two comment blocks in `pipeline/jdfill.py` now contradict the shipped workflow** —
-     lane: `jd-text` (its file), filed 2026-09-12 by `infra`. `:2842-2862` (the Indeed cap's
+601. ~~**Two comment blocks in `pipeline/jdfill.py` now contradict the shipped workflow**~~ —
+     lane: `jd-text` (its file), filed 2026-09-12 by `infra`. **CLOSED 2026-09-13**: both
+     blocks now name the yml's 150/60 and the decision record, and say the 25 is a default for
+     a caller that sets nothing. `:2842-2862` (the Indeed cap's
      rationale) still says *"25 × 30 nights = **750/month, 15 %** of the 5,000-credit pool"*,
      *"It stays inside the shared `JDFILL_BD_CAP`, which `daily-digest.yml` pins at 30"* and
      *"the observed demand (28) falls as the matched driver's stamps absorb the rows"*; the
@@ -12411,3 +12440,69 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `regressed-to-zero` only if the fetch starts raising. The measurement that decides N is
      how often a Comeet/Greenhouse tenant that went to `[]` came back with postings, which the
      `health_baseline.json` history in git can answer without a live call.
+
+## From the `jd-text` lane, 2026-09-13 (every door into `matched` cuts)
+
+607. **`classify_grouped` normalises one member of a merge group, so a twin re-installs the
+     furniture** — lane: `roles` (`pipeline/roles.py`), filed 2026-09-13 by `jd-text`; no
+     `roles` session was live to agree it. `JDFiller.normalise` runs inside `maybe_fill`,
+     which `classify_grouped` calls on `members[0]` only (`roles.py` ~1213); the inherited-copy
+     line then copies `best`'s text onto a member only when the member's is SHORTER, so an
+     un-normalised twin keeps its longer furniture text and whichever copy
+     `merge_duplicates` makes canonical carries it into `upsert_matched`. 3 of the 7 rows
+     re-lengthened on 09-13 have twins (`solaredge|sales data analyst`,
+     `navan|senior product analyst`, `menora mivtachim|head of analysis`), and `seen_texts`
+     (a sha of the text) now judges a normalised `best` and its twin as two texts. Diff, two
+     lines, before the judging loop: `for m in members: jdfill.normalise(m)` (the module-level
+     helper delegates to the filler). Also in that file: `roles._PAGE_CLOSED` duplicates
+     `jdfill._CLOSED_PAGE` with its own 600 window — read `jdfill.closed_page_at` instead.
+     Check: the `matched_recleaned` stamp on the first digest after the commit is ≤ 3, and 0
+     once this lands.
+
+608. **21 scraper-built cache cards carry page furniture that no re-clean can keep off, and 7
+     Legit Security cards carry their neighbour's link** — lane: `scraper`, filed 2026-09-13
+     by `jd-text`, both told to that lane's live session. (a) `reclean_cache` refuses cards
+     without `_jd_attempted`, because `refresh_scrape_cache._carry_jd` carries a description
+     only onto an EMPTY rebuilt card: Amitim Pension Funds ×8, Adscale, Ageera, Practical
+     Vision ×2, Simply (JoyTunes) ×3, 4cast AI, Intuition Robotics, Marvell. The cut belongs
+     where `scrape_universal` stores the page (`desc[:4000]`): `jdfill.reclean_text(desc) or
+     desc`. (b) 7 of 339 Comeet posting cards, all `legitsecurity.com`, pair a title with
+     another posting's url (`AppSec Analyst Team Lead` → `…/account-executive/76.55C`). This
+     lane now refuses such an address before a fetch (`jdfill.address_names_another_role`,
+     `wrong-address`), so no wrong text is stored — but the card still publishes the wrong
+     apply link. Check: `python -c "import json,sys;sys.path.insert(0,'.');from pipeline.jdfill import address_names_another_role as a;s=json.load(open('scraped_cache.json',encoding='utf-8'));print(sum(1 for v in s.values() if isinstance(v,list) for j in v if isinstance(j,dict) and a(j.get('url'),j.get('title'))))"`.
+
+609. **Every accepted Telegram role is held off the board by construction** — lane:
+     `discovery` (`discovery_telegram.py`), filed 2026-09-13 by `jd-text`. All 145
+     `discovery-telegram` cards store a synthesized `Skills: … Seniority: …` line (78-168
+     characters) as `description`, and their only address is a `secrethunter.io/jobz/<id>`
+     JavaScript shell (`_UNFILLABLE`, `js-shell`), so `text_quality` is `snippet` and the
+     publish gate holds the role. `ClixScale | BI Analyst` was that shape on 09-13 (filled by
+     hand from `clixscale.com/careers-bi-analyst/`). Of the 130 employers, 106 are registry
+     rows whose own boards merge by `merge_key`, so the real gap is the 5 title-passing
+     employers that are not (skfai, Cust2Mate, Comunix, Nebius Global, ClixScale) — a registry
+     crack, sent to `registry`. Two asks here: store the one-liner under a `skills` key, not
+     `description` (`desc_len 94` masquerades as text in the dataset); and
+     `research_companies.json` should not record the secrethunter shell as a `careers_url`.
+     Also yours: 23 `discovery-linkedin-targeted` cards carry a `Show more Show less` tail
+     (`fetchers.py` ~806 is the creation point); the digest now cuts it at intake, so it is
+     cosmetic in the cache.
+
+610. **The inline filler's render cap is 0, and an Oracle HCM posting is a shell without a
+     render** — lane: `infra` (`daily-digest.yml` states `JDFILL_RENDER_CAP stays 0` as a
+     precondition of its cap arithmetic), filed 2026-09-13 by `jd-text`. The 09-13 digest
+     printed `oraclehcm bd-render-capped 1` beside `fortinet|incident response analyst:`, one
+     of the six `superseded verdicts CANNOT be re-judged`. Five renders at `RENDER_TIMEOUT`
+     45 s is 3.75 minutes worst case, and with `600(b)` landed the raw tail is bounded at 30 s
+     a call. The number to decide on is how many `bd-render-capped` the `jd-fill:` line prints
+     over a week; the inline filler now also names it on the job (`_jd_why`).
+
+611. **A WordPress careers post keeps its site navigation and footer, and HTML entities are
+     not decoded** — lane: `jd-text`, filed 2026-09-13 against its own parser. The ClixScale
+     capture that fixed `609`'s row is 2,737 characters of which ~230 are the site's menu
+     (`Our Products / Why Partner with us? / … / Log In`) above the posting and ~300 the
+     footer below, and `&#8230;` / `&#8217;` survive `html_to_text`. It passes the bar and no
+     `quality_suspect` reason fires, so it was stored as is rather than hand-trimmed. Measure
+     over the three caches before adding any marker: a nav block is `_HEAD_FURNITURE`-shaped
+     only when its lines repeat (this one renders the menu twice), and `© All rights reserved`
+     is a tail marker only if it never precedes a posting.

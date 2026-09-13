@@ -5216,6 +5216,70 @@ three caches it promotes **five** bodies and **four of them are site navigation*
 careers search, aQurate's, Xtra Mile's, a BrancoWeiss listing page). One real posting is not
 worth four junk ones, and the row is an honest snippet in the todo instead.
 
+### Every door into `matched` cuts, and a capture keeps what closes it — 2026-09-13
+
+*lane: `jd-text`. Record: `docs/sessions/2026-09-13-jd-text.md`. BACKLOG `581` and `587`
+closed, `600(b)` and `601` closed, `607`-`611` filed.*
+
+**A store that is cut every night and re-lengthened every morning.** The 09-13 digest's
+enrich stamp read `matched_recleaned: 7` (3,752 characters) and the commit that followed held
+**0** of those rows shorter; `roles_text.jsonl` had the cut text and sqlite the long one. The
+nightly `_reclean` ran at 10:44, then `run.py` upserted the morning's cards, and
+`store.upsert_matched` keeps the LONGER description. `JDFiller.maybe_fill` returned at once on
+a card whose text already passed the bar, so the card's `Show more Show less` tail (five
+LinkedIn cards) or its site header (Kibeeri, two Practical Vision rows) walked back in. This
+is the 09-11 fixed-point defect through a third door, and it is what `581` was really about:
+the cache is a writer of `matched`, not only a donor.
+
+| door | who cut before | who cuts now |
+|---|---|---|
+| a fetch (`extract_jd`) | `strip_head` + `jd_body` | unchanged |
+| stored text (`_reclean`) | its inline rule | `jdfill.reclean_text`, the one rule |
+| the digest's job dict | nobody | `JDFiller.normalise`, first line of `maybe_fill`, with the filler switched off too |
+| a donor or cache card (`_store_text`) | nobody | `reclean_text(text) or text` on the incoming text |
+| `scraped_cache.json` | nobody | `enrich_scrape_jd.reclean_cache`, at the start of the 12:30 `--archive-only` run |
+
+Each applies `reclean_text`'s floor (`looks_like_jd` after the cut), so no door can empty a
+posting. None of them is a reader: `jd_body` still carries only the tail rule, for the reasons
+in the 2026-09-11 section above. `RECLEAN_MAX_SHARE` is one number in `jdfill`, re-bound by
+each driver so an attended one-off can lift it for one pass.
+
+**The cache pass takes the cards this layer wrote, and only those.** Over the committed cache
+the cut changes 84 cards, 65 after the floor (32,642 characters, 3.4 % of 1,889 cards with
+text). **21 of the 65 were built by the scraper**, and `refresh_scrape_cache._carry_jd` carries
+a description only onto a rebuilt card whose own is empty, so the nightly rebuild restores
+their furniture and a noon re-clean of them would never converge. The pass selects
+`_jd_attempted`: **44 cards, 17,596 characters, 2.3 %**. The 21 are `608@scraper`. It never
+stamps `_jd_attempted` (nothing was fetched) and never touches a `_jd_shared_page` card.
+
+**587: a capture keeps the page's own closure sentence as its first line.** The stamp
+`closed-by-page:<date>` had one writer, `_reclean`, and it fires only when a cut removes the
+sentence. A posting CAPTURED closed lost the sentence to `strip_head` at fetch time and was
+stamped `ok:canonical:`, so `roles.page_closed` had no text, no stamp and, on a first sighting,
+no ledger memory. `jdfill.with_closed_line` re-attaches the exact matched sentence (English or
+Hebrew, inside the 600-character window) as the LAST step of `extract_jd` and of the JSON-LD
+fallback — after `_HEAD_SKIP`, which would otherwise trim it with the company intro.
+`jd_body`, `strip_head`, `furniture_at`, `_HEAD_SKIP`, `mid_sentence_head` and
+`better_description` all leave that line alone, so it is never cut and never handed back.
+`save()` stamps `closed-by-page:<capture date>` for such a text, and `_stamp_closed_pages`
+writes the stamp (`jd_why` only, onto an empty cell) for any row already carrying it — one row
+on 09-13. **The phrase must never become a furniture marker**: at offset 0 a tail marker makes
+`jd_body` return "", and a head marker re-opens the 09-11 oscillation. Rejected: setting
+`job["jd_why"]` in memory, because every reader of that column reads sqlite and
+`upsert_matched` does not write it.
+
+**Why a job has no description is now said, not inferred.** Every exit of `maybe_fill` that
+leaves a job without text writes `job["_jd_why"]` in memory: `not-a-job-url`, `wrong-address`,
+`js-shell` (or another `_UNFILLABLE` reason), `paid-only`, `budget`, `no-url`, or the fetch's
+own reason; a fill removes it. The `classifier` session is adding it to the `superseded verdict
+cannot be re-judged` line. The 09-13 six, by address: `centraleyes` ×2 and `plus500` are
+listing pages, `legit security|appsec analyst team lead` is another role's Comeet link,
+`gong|senior data scientist …` is a LinkedIn page a runner could not read, and
+`fortinet|incident response analyst:` needed one render the inline cap does not allow (`610`).
+`jdfill.address_names_another_role` is the new `wrong-address` refusal: Comeet only, no shared
+significant token between slug and title after folding `AI/ML`→`aiml` and `V&V`→`vv`, ASCII
+title. It fires on 7 of 339 Comeet posting cards, all Legit Security, and on 0 elsewhere.
+
 ### Which mechanism fills what — read this before believing a cache is empty
 
 *Corrected 2026-08-30. Both the orchestrator and this lane misread it, and a session reading

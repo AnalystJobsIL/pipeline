@@ -408,7 +408,12 @@ def _after_the_wall(text):
 # lines" rule with one false positive would delete a real posting at every reader at once.
 # `looks_like_jd` already declines `_after_the_wall` for the same reason. So the head cut
 # runs where a text is CREATED (`extract_jd`) and where the layer deliberately rewrites the
-# store under a floor and a ceiling (`_reclean`).
+# store under a floor and a ceiling (`_reclean`, `enrich_scrape_jd.reclean_cache`). Since
+# 2026-09-13 "created" includes the two doors by which a card's text ENTERS `matched` --
+# `JDFiller.normalise` on the digest's job dict and `enrich_matched_jd._store_text` on a donor
+# -- because a text cut in the store and left whole at the door is re-installed by the next
+# length comparison (7 rows a night on 09-13). Every one of them applies `reclean_text`'s
+# floor; none of them is a reader.
 _HEAD_FURNITURE = re.compile(
     r"(?m)^\W{0,3}(report this job|דווח על עבודה זו|"
     r"skip to main content|דילוג לתוכן הראשי|"
@@ -440,6 +445,33 @@ def closed_page_at(text):
     postings further down, and that is a statement about somebody else's role."""
     m = _CLOSED_PAGE.search(str(text or "")[:CLOSED_PAGE_WINDOW])
     return m.start() if m else None
+
+
+def with_closed_line(page_text, text):
+    """`text` with the page's own "no longer accepting applications" sentence kept as its
+    FIRST line, when the page said it and the cut removed it; `text` unchanged otherwise.
+
+    BACKLOG 587. The stamp `closed-by-page:<date>` used to be written by exactly one path --
+    `_reclean`, when it cut stored text -- so a posting CAPTURED closed went through
+    `strip_head` at fetch time, lost the sentence with the rest of the header, and nothing
+    stamped it: `roles.page_closed` then had no text arm, no stamp arm and, on a first
+    sighting, no ledger memory, and the role stayed open for the 21 days the discovery cache
+    re-serves the card. The job dict a fetch fills reaches no reader's `jd_why` in the same
+    run (every reader reads sqlite, and `upsert_matched` does not write that column), so the
+    TEXT is the one in-lane carrier that works on day one.
+
+    Why this is safe to leave in the store for ever, measured on the kept shape: `jd_body`,
+    `strip_head`, `furniture_at`, `_HEAD_SKIP` and `mid_sentence_head` all leave it alone, and
+    `looks_like_jd` still passes on the posting below it -- so `_reclean` never cuts it (and
+    must not: a head cut here is handed straight back by `better_description`, the 09-11
+    oscillation). It is NEVER a `_PAGE_FURNITURE`/`_HEAD_FURNITURE` marker: a tail marker at
+    offset 0 makes `jd_body` return "" for every closed row. Only inside
+    `CLOSED_PAGE_WINDOW` of the page, the same rule `closed_page_at` applies."""
+    t = text or ""
+    if not t or closed_page_at(t) is not None:
+        return t
+    m = _CLOSED_PAGE.search(str(page_text or "")[:CLOSED_PAGE_WINDOW])
+    return (m.group(1) + "\n" + t) if m else t
 
 
 def strip_head(text):
@@ -532,6 +564,77 @@ def page_slice(text):
     return len(t) >= DESC_MAX and mid_sentence_head(t)
 
 
+# The share of a store a re-clean may shorten in one pass before it refuses (CLAUDE.md rule 2:
+# a mass rewrite is a broken run until proven otherwise). ONE number for every store this layer
+# re-cleans -- `enrich_matched_jd._reclean` over `matched` and `enrich_scrape_jd.reclean_cache`
+# over `scraped_cache.json` -- each driver re-binds it as a module attribute so an attended
+# one-off can lift it for one pass without leaving a lever a cron can trip.
+RECLEAN_MAX_SHARE = 0.15
+
+
+def reclean_text(old):
+    """The re-clean rule, for text ALREADY stored: the page's header cut off the front and its
+    furniture off the tail, or None when that changes nothing or leaves something that is no
+    longer a job description.
+
+    One rule for both stores (BACKLOG 581). Until 2026-09-13 `_reclean` spelled it inline and
+    `scraped_cache.json` had no re-clean at all, so the cache kept exactly the furniture the
+    store had been cut free of -- and a card is what the digest upserts and the `cache` donor
+    offers. The floor is `looks_like_jd`, never a length: see `_reclean` for the three rows a
+    length floor destroyed."""
+    old = old or ""
+    new = strip_head(jd_body(old))
+    return new if (new != old and looks_like_jd(new)) else None
+
+
+def normalise(job):
+    """`job["description"]` with its page furniture cut, in place, when it already reads as a
+    job description; returns the characters cut (0 when nothing was). The rule is
+    `reclean_text`. `JDFiller.normalise` counts it; a caller holding several copies of one
+    role (a merge group) calls this on each, so no copy re-installs what another had cut."""
+    desc = str(job.get("description") or "").strip()
+    if not looks_like_jd(desc):
+        return 0
+    clean = reclean_text(desc)
+    if clean is None:
+        return 0
+    job["description"] = clean
+    return len(desc) - len(clean)
+
+
+# A Comeet posting address names its role in the slug: `/jobs/<tenant>/<uid>/<role-slug>/<pos>`.
+_COMEET_POSTING = re.compile(r"comeet\.com/jobs/[^/]+/[^/]+/([^/?#]+)/[0-9A-Fa-f.]+/?(?:[?#]|$)", re.I)
+_SLUG_STOP = frozenset("a an the of and for to in at il israel tel aviv senior sr junior jr "
+                       "ii iii".split())
+
+
+def _slug_tokens(s):
+    # `AI/ML` -> `aiml`, `V&V` -> `vv`: fold the joiners a slug drops before splitting, or the
+    # two sides of one role read as disjoint (Darrow, Regulus -- the two false positives)
+    s = re.sub(r"(?<=[a-z0-9])[/&+](?=[a-z0-9])", "", str(s or "").lower())
+    return {t for t in re.findall(r"[a-z0-9]+", s) if t not in _SLUG_STOP}
+
+
+def address_names_another_role(url, title):
+    """True when a posting address spells out a DIFFERENT role than the card's title.
+
+    Measured 2026-09-13: 7 of 339 Comeet posting cards in `scraped_cache.json`, every one on
+    Legit Security's board -- `AppSec Analyst Team Lead` at `.../account-executive/76.55C`,
+    `Bookkeeper` at `.../application-security-sales-engineer/B7.A40` -- the scraper pairing a
+    title with its neighbour's link. Reading such an address fills the row with another role's
+    posting (the 09-01 "whose posting is this" class), and the 09-13 classifier printed one of
+    them as a verdict it could not re-judge. Deliberately narrow: Comeet only (the slug IS the
+    role there), no shared significant token at all, and an ASCII title -- a Hebrew title
+    has no token to compare and never fires. Measured over every Comeet posting card in both
+    caches: 7 fire, all the Legit Security mis-pairs, 0 elsewhere. Requiring two tokens a side
+    missed `Bookkeeper`; dropping role nouns (`lead`, `engineer`) as stop words missed five."""
+    m = _COMEET_POSTING.search(str(url or ""))
+    if not m:
+        return False
+    slug, words = _slug_tokens(m.group(1).replace("-", " ")), _slug_tokens(title)
+    return bool(slug) and bool(words) and not (slug & words)
+
+
 def refute_key(text):
     """The identity of a REFUTED text: the sha1 of the posting inside it.
 
@@ -572,7 +675,8 @@ def extract_jd(html):
     rs = _HEAD_SKIP.search(text)
     if rs and len(text) - rs.start(1) >= MIN_DESC:
         text = text[rs.start(1):]
-    return text[:DESC_MAX]
+    # LAST, after the head skip: prepended any earlier, `_HEAD_SKIP` cuts it off again.
+    return with_closed_line(full, text)[:DESC_MAX]
 
 
 def _marker_families(text):
@@ -1496,6 +1600,9 @@ class Unlocker:
 
     def __init__(self, cap=250, breaker=5, host_breaker=3, render_cap=60):
         self.cap, self.breaker = cap, breaker
+        # Per call, raw and rendered alike (rendered is still capped at RENDER_TIMEOUT). 30 s is
+        # 5x the measured raw maximum of 6.0 s (median 4.3 s); `_bd_call` passes it (600(b)).
+        self.timeout_s = float(os.environ.get("JDFILL_BD_TIMEOUT_S", "30"))
         self.key = os.environ.get("BRIGHTDATA_API_KEY", "")
         self.zone = os.environ.get("BRIGHTDATA_ZONE", "")
         self.used = self.ok = self.streak = 0
@@ -2324,8 +2431,14 @@ def _renders(bd):
 
 
 def _bd_call(bd, url, render=False):
-    """`bd(url)` with the render flag when the object supports it, and without when it does not."""
-    return bd(url, render=True) if (render and _renders(bd)) else bd(url)
+    """`bd(url)` with the render flag when the object supports it, and without when it does not.
+
+    ...and with the Unlocker's own `timeout_s` when it has one (BACKLOG 600(b)). The call used
+    to take `__call__`'s 90-s default, so a night where every paid call hung was 20 x 90 s = 30
+    minutes of the mail's critical path before the failing-streak breaker opened. A fake with
+    no `timeout_s` is called exactly as before."""
+    kw = {"timeout": bd.timeout_s} if getattr(bd, "timeout_s", None) else {}
+    return bd(url, render=True, **kw) if (render and _renders(bd)) else bd(url, **kw)
 
 
 def _from_body(body):
@@ -2336,7 +2449,9 @@ def _from_body(body):
         return jd, "ok"
     jd = jsonld_jd(body)
     if jd:
-        return jd, "ok-jsonld"
+        # the schema.org text never carried the page's chrome, so it never carried the
+        # closure sentence either (587); `html_to_text` is paid only on this fallback
+        return with_closed_line(html_to_text(body), jd)[:DESC_MAX], "ok-jsonld"
     return "", ""
 
 
@@ -2800,8 +2915,11 @@ class JDFiller:
     measured on two ARCHIVED postings; it is corrected there. Rendering is not the missing
     piece and is not used here: raw filled 5 of 5, rendered 4 of 5 and costs more.
 
-    `JDFILL_BD_CAP` bounds it (default `INLINE_BD_CAP`), it is spent only after the free rungs
-    have failed, and `JD_BD=0` disarms it like every other paid rung in this module.
+    `JDFILL_BD_CAP` bounds it, it is spent only after the free rungs have failed, and `JD_BD=0`
+    disarms it like every other paid rung in this module. The default (`INLINE_BD_CAP`) is NOT
+    what bounds the digest: `daily-digest.yml` sets 150 and `JDFILL_INDEED_CAP` 60, on the
+    measured demand in `docs/decisions/2026-09-12-jd-fill-caps-unbound.md` (p95 59 a night, 44
+    of them Indeed), meant never to bind.
 
     The budget counts SECONDS SPENT FETCHING, not wall clock since construction — the shape
     `seniority.Classifier` uses one line away in `run.py`. It used to start at construction,
@@ -2819,6 +2937,9 @@ class JDFiller:
         env = os.environ.get("JDFILL", "")
         self.enabled = (env == "1") if env else (True if enabled is None else enabled)
         self.seconds = 0.0
+        # cards whose EXISTING text already read as a JD and carried page furniture, cut here
+        # at intake (see `normalise`) -- and the characters that cut removed
+        self.normalised = self.normalised_chars = 0
         self.filled = self.tried = self.skipped_budget = self.unfillable = 0
         self.probe = self.probe_ok = 0
         self.probed = False
@@ -2836,6 +2957,12 @@ class JDFiller:
         # times the clock, on the mail's critical path. `render_cap=0` makes a render request
         # return `bd-render-capped` and spend NOTHING, so a shell page costs no credit here
         # and the backfills, which have the time, keep it. `JDFILL_RENDER_CAP` re-opens it.
+        #
+        # `daily-digest.yml` states `JDFILL_RENDER_CAP stays 0` as a PRECONDITION of its cap
+        # arithmetic (infra, 2026-09-12), so this default is theirs to move. The one class it
+        # costs today is an Oracle HCM posting page, a JavaScript shell to the raw fetch: the
+        # 09-13 digest printed `oraclehcm bd-render-capped 1` beside a Fortinet verdict it could
+        # not re-judge. Filed with that number rather than changed here.
         rcap = int(os.environ.get("JDFILL_RENDER_CAP", "0"))
         self.bd = bd if bd is not None else (Unlocker(cap=cap, render_cap=rcap) if cap > 0 else None)
         self.bd_tried = self.bd_filled = 0
@@ -2852,14 +2979,14 @@ class JDFiller:
         # and a posting judged on a 172-character SERP snippet is a verdict made on no
         # description at all (`oak|product analyst` and `diageo|performance analytics
         # analyst` were two of those 20, and both were EMAILED that morning).
-        # The arithmetic shipped with the number: 25 × 30 nights = **750/month, 15 %** of the
-        # 5,000-credit pool that begins 2026-09-01, worst case and never expected — it is a
-        # ceiling on waste, not a schedule, and the observed demand (28) falls as the matched
-        # driver's stamps absorb the rows that carry a role. It stays inside the shared
-        # `JDFILL_BD_CAP`, which `daily-digest.yml` pins at 30 and which the whole inline
-        # layer spent 12 of on that same night — so 25 fits beside the LinkedIn class that
-        # bought 4, the night's ceiling is unchanged at 30, and a collision between the two
-        # is ALARMED (`bd-capped`) rather than silent.
+        # That arithmetic (25 x 30 nights against a 5,000-credit pool, inside a shared cap of 30,
+        # on a demand expected to fall) did not survive: the demand did NOT fall (44 Indeed
+        # postings unreadable on 09-10, 41 on 09-11), there has been no pool to take a share of
+        # since the operator's 2026-09-11 ruling, and `daily-digest.yml` now sets
+        # `JDFILL_INDEED_CAP` 60 inside `JDFILL_BD_CAP` 150 (infra, 2026-09-12,
+        # `docs/decisions/2026-09-12-jd-fill-caps-unbound.md`). The 25 below is the default for
+        # a caller that sets nothing, not the digest's bound. It is still a SUB-cap of
+        # `JDFILL_BD_CAP`, and a collision between the two is ALARMED (`bd-capped`).
         self.indeed_cap = int(os.environ.get("JDFILL_INDEED_CAP", "25"))
         self.indeed_tried = self.indeed_capped = 0
         # work the paid rung WOULD have taken and could not. This counter exists because the
@@ -2872,14 +2999,47 @@ class JDFiller:
     def spent(self):
         return self.budget <= 0 or self.seconds / 60 > self.budget
 
+    def normalise(self, job):
+        """Cut the page furniture off a description the job dict ALREADY carries, in place.
+        True when it cut.
+
+        The job dict is where a card's text enters `matched`, and until 2026-09-13 nothing cut
+        it there: `maybe_fill` returned at once on a text that already read as a JD, and
+        `store.upsert_matched` compares LENGTHS. So the nightly `_reclean` cut a row, the
+        digest upserted the same card an hour later, and the longer furniture text won back
+        -- measured on the 09-13 run: `matched_recleaned` 7 rows / 3,752 characters, and 0
+        of those 7 shorter in the commit that followed (SolarEdge, Navan, Menora, IAI from
+        LinkedIn cards; Kibeeri and two Practical Vision rows from scrape cards). A store
+        that is cut every night and re-lengthened every morning is the 09-11 fixed-point
+        defect through a third door. The rule is `reclean_text`, the one `_reclean` applies,
+        so the two can never disagree about what a clean text is."""
+        cut = normalise(job)
+        if cut:
+            self.normalised += 1
+            self.normalised_chars += cut
+        return bool(cut)
+
     def maybe_fill(self, job):
-        """Fill job['description'] in place when it is missing. Returns True if filled."""
+        """Fill job['description'] in place when it is missing. Returns True if filled.
+
+        Every exit that leaves the job without a description names why in `job["_jd_why"]`
+        (in memory only -- `upsert_matched` ignores unknown keys and nothing writes it to a
+        cache). The classifier prints `superseded verdict cannot be re-judged (no description
+        this run)` about exactly these dicts, and until 2026-09-13 it could not say whether
+        that was a listing page, another role's address, a refused host or a failed fetch:
+        of the six it printed that morning, three were listing pages and one was another
+        role's Comeet link, none of which a fetch would ever fix."""
+        # FIRST, before the switch: a morning with the filler disabled still must not hand a
+        # furniture text to the upsert that re-lengthens a re-cleaned row
+        self.normalise(job)
         if not self.enabled:
             return False
         if looks_like_jd(str(job.get("description") or "").strip()):
+            job.pop("_jd_why", None)
             return False
         url = str(job.get("url") or "")
         if not url.startswith("http"):
+            job["_jd_why"] = "no-url"
             return False
         from .seniority import _relevance
         if _relevance(str(job.get("title") or "").lower()) in ("excluded", "none"):
@@ -2889,8 +3049,10 @@ class JDFiller:
         # `jd-fill: 110/148` hid 22 addresses nothing could ever have read (2026-08-26)
         platform = str(job.get("ats_platform") or "?")   # a list here used to kill the digest
         title = str(job.get("title") or "")
-        why = unfillable(url) or ("" if is_job_url(url, title) else "not-a-job-url")
+        why = (unfillable(url) or ("" if is_job_url(url, title) else "not-a-job-url")
+               or ("wrong-address" if address_names_another_role(url, title) else ""))
         if why:
+            job["_jd_why"] = why
             self.unfillable += 1
             self.refused[(platform, why)] += 1
             # the canary, and this is where it matters: 257 of the 260 refused addresses in the
@@ -2905,10 +3067,12 @@ class JDFiller:
                 if jd.text:
                     self.probe_ok += 1
                     job["description"] = jd.text
+                    job.pop("_jd_why", None)
                     self.filled += 1
                     return True
             return False
         if self.spent():
+            job["_jd_why"] = "budget"
             self.skipped_budget += 1
             return False
         # A paid_only card whose paid rung is NOT running this call is a REFUSAL, decided
@@ -2918,6 +3082,7 @@ class JDFiller:
         jk = indeed_jk(url)
         if jk and (self.bd is None or self.bd.unavailable
                    or self.indeed_tried >= self.indeed_cap):
+            job["_jd_why"] = "paid-only"
             self.unfillable += 1
             self.refused[(platform, "auth-walled")] += 1
             if self.bd is not None and self.bd.unavailable:
@@ -2942,9 +3107,11 @@ class JDFiller:
         self.by_platform[(platform, jd.reason + (f"/{jd.native}" if jd.native else ""))] += 1
         if jd.text:
             job["description"] = jd.text
+            job.pop("_jd_why", None)
             self.filled += 1
             self.via[jd.via] += 1
             return True
+        job["_jd_why"] = jd.reason or "no-text"
         return False
 
     def failures(self, n=6):
@@ -2959,6 +3126,10 @@ class JDFiller:
 
     def summary(self):
         out = f"jd-fill: {self.filled}/{self.tried} descriptions fetched inline"
+        if self.normalised:
+            # the intake cut (`normalise`): not a fetch, so not in the fraction above
+            out += (f"; {self.normalised} card texts normalised "
+                    f"(-{self.normalised_chars} chars of page furniture)")
         if self.via:
             out += " (" + ", ".join(f"{k} {v}" for k, v in self.via.most_common()) + ")"
         if self.tried > self.filled:

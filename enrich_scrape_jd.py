@@ -45,12 +45,13 @@ import sys
 import time
 from collections import Counter
 
+from pipeline import jdfill
 from pipeline.atomic import write_json
 from pipeline.fetchers import clean_scraped as _clean_scraped
 from pipeline.israel import is_israel_job
 from pipeline.jdfill import (DESC_MAX as _DESC_MAX, MIN_DESC as _MIN_TEXT,  # noqa: F401 - re-exports
                              RETRY_DAYS as _RETRY_DAYS, Item, MIN_DESC, Unlocker, _JD_MARKERS,
-                             looks_like_jd,
+                             looks_like_jd, address_names_another_role, reclean_text,
                              alarm_for, extract_jd, html_to_text, load_secrets, plain_fetch,
                              is_job_url, native_candidates, record_enrich, run_backfill,
                              stamp_path_for, why_string)
@@ -82,9 +83,64 @@ BD_HOST_SHELLS = 3
 RENDER_CAP = 60
 # One lap of the archive pool that takes longer than this is starvation, not patience.
 ARCHIVE_STARVED_DAYS = 14
+# jdfill's, re-bound here so an attended one-off can lift it for this driver alone (the same
+# number `enrich_matched_jd._reclean` refuses above, and for the same reason: CLAUDE.md rule 2)
+RECLEAN_MAX_SHARE = jdfill.RECLEAN_MAX_SHARE
 # Written every N saves: `finally` does not run when the runner SIGTERMs a step at its
 # timeout, and a killed night must not lose a lap of fetches.
 CHECKPOINT_EVERY = 100
+
+
+def reclean_cache(cache, dry_run=False):
+    """Cut the page furniture out of descriptions ALREADY in `scraped_cache.json`, by the one
+    rule `enrich_matched_jd._reclean` applies to `matched` (`jdfill.reclean_text`). Returns
+    `(cards, chars)`; `cards` is NEGATIVE when the pass refused. No requests, no credits.
+
+    BACKLOG 581. The cache kept every furniture pattern this layer learned to cut after the text
+    was stored, and nothing re-judged it -- while a card is exactly what the digest upserts
+    into `matched` and what the matched driver's `cache` donor offers. Measured 2026-09-13:
+    84 cards the cut would change, 65 after the floor, 32,642 characters.
+
+    ONLY cards carrying `_jd_attempted` -- the text this layer wrote. The other 21 of those 65
+    were built by the scraper, and `refresh_scrape_cache._carry_jd` carries a description only
+    onto a rebuilt card whose own is EMPTY, so the nightly rebuild restores their furniture: a
+    re-clean of them would be undone every night and redone every noon, a counter that could
+    never reach 0. Their cut belongs where the scraper stores the page, and is filed there.
+
+    Never `_jd_attempted` (nothing was fetched) and never a `_jd_shared_page` card (a board's
+    page is refused by `save`, not cleaned). The share is taken over every card with text, the
+    population a furniture rule gone wrong would reach, and the pass refuses above
+    `RECLEAN_MAX_SHARE` exactly as the `matched` re-clean does."""
+    texted, todo = 0, []
+    for jobs in cache.values():
+        for j in (jobs or []):
+            if not isinstance(j, dict):
+                continue
+            old = str(j.get("description") or "")
+            if not old.strip():
+                continue
+            texted += 1
+            if not j.get("_jd_attempted") or j.get("_jd_shared_page"):
+                continue
+            new = reclean_text(old)
+            if new is not None:
+                todo.append((j, old, new))
+    chars = sum(len(o) - len(n) for _j, o, n in todo)
+    if not todo:
+        return 0, 0
+    share = len(todo) / float(texted or 1)
+    if share > RECLEAN_MAX_SHARE:
+        print(f"::warning::cache reclean REFUSED: {len(todo)} of {texted} cards ({share:.0%}) "
+              f"would be shortened, over the {RECLEAN_MAX_SHARE:.0%} ceiling", flush=True)
+        return -len(todo), chars
+    for j, old, new in todo:
+        if not dry_run:
+            j["description"] = new
+        print(f"  [CUT] {str(j.get('company') or '')[:24]:<24} | "
+              f"{str(j.get('title') or '')[:40]:<40} {len(old):>5} -> {len(new):<5}", flush=True)
+    print(f"cache reclean: {len(todo)} of {texted} cards, -{chars} chars of page furniture"
+          + (" (dry run, nothing written)" if dry_run else ""), flush=True)
+    return len(todo), chars
 
 
 def _plain_fetch(url, timeout=25):
@@ -167,6 +223,12 @@ def _todo(cache):
             if not (native_candidates(url, comp) or is_job_url(url, title_s)):
                 stats["not_job_url"] += 1
                 continue
+            if address_names_another_role(url, title_s):
+                # the card's link spells out a different role (the scraper paired a title with
+                # its neighbour's href): fetching it would store another posting under this
+                # title, and a native rung does not make it this role's (2026-09-13, 7 cards)
+                stats["wrong_address"] += 1
+                continue
             seen.add(url)
             item = Item(j, url, f"{comp} | {title_s}", j.get("_jd_attempted") or "",
                         comp, title_s)
@@ -185,7 +247,8 @@ def _todo(cache):
     # ARCHITECTURE.md section 8 is about and this layer has been caught by it twice; the
     # sister driver asserts the same sum over its own rows.
     _accounted = (stats["has_desc"] + stats["no_url"] + stats["chrome"] + stats["dropped_israel"]
-                  + stats["duplicate_url"] + stats["not_job_url"] + len(title) + len(archive))
+                  + stats["duplicate_url"] + stats["not_job_url"] + stats["wrong_address"]
+                  + len(title) + len(archive))
     # `shared_page` is a REASON a card is in a pool, not a bucket of its own: it is counted and
     # then the card goes on through the gates like any other card without a description.
     assert _accounted == stats["cards"], (
@@ -243,6 +306,8 @@ def main(argv=None):
                    help="ONLY the cards the title gate drops (jd-archive.yml)")
     g.add_argument("--with-archive", action="store_true",
                    help="both pools in one process (a local catch-up; no workflow does this)")
+    g.add_argument("--reclean-only", action="store_true",
+                   help="only the cache re-clean (581): no fetch, no stamp; --dry-run to measure")
     args = ap.parse_args(argv)
     stamp = stamp_path_for(args.cache, CACHE)
     try:
@@ -285,6 +350,17 @@ def _run(args, stamp):
     # and only `save()` was gated -- so a rehearsal bought credits: 6 in a four-card fixture,
     # and up to 274 over the live cache, from a command whose name promises none. The cap raise
     # in this file multiplied that bill by 25 (wave 2, P0-1).
+    # The re-clean runs BEFORE `_todo` and the fetch, so the shared-page set and the pools are
+    # built on the cleaned texts. The 12:30 archive run owns it: the title-pool step sits on the
+    # mail's critical path, and noon is the far side of the day from the other two writers of
+    # this file (`jd-archive.yml`'s schedule comment).
+    recleaned = recleaned_chars = 0
+    if args.archive_only or args.reclean_only:
+        recleaned, recleaned_chars = reclean_cache(cache, dry_run=args.dry_run)
+    if args.reclean_only:
+        if not args.dry_run and recleaned > 0:
+            write_json(args.cache, cache, sort_keys=True)
+        return 0 if recleaned >= 0 else 1
     bd = None if args.dry_run else Unlocker(
         cap=int(os.environ.get("JD_ENRICH_BD_CAP", str(BD_CAP))),
         host_breaker=BD_HOST_SHELLS,
@@ -314,6 +390,7 @@ def _run(args, stamp):
           f"{gates['dropped_title']} dropped by the title gate (archive pool), "
           f"{gates['dropped_israel']} not Israel, {gates['duplicate_url']} duplicate urls, "
           f"{gates['chrome']} page chrome, {gates['not_job_url']} not a job address, "
+          f"{gates['wrong_address']} another role's address, "
           f"{gates['no_url']} without a url", flush=True)
 
     saves = [0]
@@ -428,6 +505,11 @@ def _run(args, stamp):
             if worked and not ca["filled"]:
                 arch_alarms.append(f"archive:zero-fill(0 of {worked} tried, "
                                    f"{thin_left} cards still thin)")
+        if recleaned < 0:
+            # a refusal is the loudest thing the layer can say: the cache still holds the
+            # furniture, and the digest upserts it into `matched` tomorrow
+            arch_alarms.append(f"archive:reclean-refused({-recleaned} cards, "
+                               f"{recleaned_chars} chars of furniture still cached)")
         alarm = "; ".join(a for a in ([alarm_for(c, bd, driver="scrape"), gate_alarm]
                                       + arch_alarms) if a)
         # The archive keys are written ONLY by a run that walked that pool. They are gauges, so
@@ -450,8 +532,13 @@ def _run(args, stamp):
                           scrape_bd_unavailable=c["bd_unavailable"],
                           scrape_skipped=c["skipped_budget"],
                           scrape_why=why_string(c)) if not args.archive_only else {}
+        # written by the archive run only, for the reason `arch` is: the 05:00 run must not
+        # replace the night's number with a zero it never measured
+        recl = (dict(scrape_recleaned=max(recleaned, 0), scrape_furniture_cut=recleaned_chars)
+                if args.archive_only else {})
         record_enrich(alarm=alarm, path=stamp, scrape_cards=gates["cards"],
-                      **arch, **title_keys,
+                      **arch, **title_keys, **recl,
+                      scrape_wrong_address=gates["wrong_address"],
                       scrape_thin_remaining=thin_left,
                       scrape_not_job_url=gates["not_job_url"],
                       scrape_shared_page=gates["shared_page"],

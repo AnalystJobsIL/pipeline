@@ -32357,3 +32357,327 @@ def test_a_teamtailor_board_is_read_from_its_own_rss_feed(monkeypatch):
     asked.clear()
     fetchers.fetch_teamtailor(dict(row, api_url="https://orbia-x.teamtailor.com"))
     assert asked == ["https://orbia-x.teamtailor.com/jobs.rss"]
+# =====================================================================================
+# jd-text lane, 2026-09-13 — every door into `matched` cuts, and a capture keeps what closes it.
+# The 09-13 digest re-cleaned 7 rows and the commit after it held 0 of them shorter: the card
+# the digest upserts an hour later carried the furniture and won on length. And a posting
+# CAPTURED closed lost its closure sentence to `strip_head` with nothing stamping it (587).
+# Record: docs/sessions/2026-09-13-jd-text.md
+# =====================================================================================
+
+def _k13_jd(n=1400):
+    """A posting whose first line is a company intro, so `_HEAD_SKIP` has something to cut."""
+    body = ("About the role\nyou will own the analytics stack.\nRequirements\n3 years of SQL. "
+            + "Ownership of dashboards. " * 80)[:n]
+    return body
+
+
+def _k13_guest_page(sentence="", rail=""):
+    """A LinkedIn-guest-shaped page: header block (with the closure sentence where LinkedIn
+    puts it), a company intro above the posting's first heading, then the tail chrome."""
+    lines = (["Senior Data Analyst at ACME | LinkedIn", "Skip to main content", "Senior Data Analyst",
+              "ACME", "Tel Aviv"] + ([sentence] if sentence else []) + ["Report this job",
+              "ACME is a company that makes things for people everywhere."]
+             + _k13_jd().split("\n") + ["Show more", "Show less"] + (rail.split("\n") if rail else []))
+    return "<html><body>" + "".join("<p>%s</p>" % ln for ln in lines) + "</body></html>"
+
+
+def test_a_fresh_capture_of_a_closed_page_keeps_the_closing_sentence_and_only_that():
+    """587. `extract_jd` cuts the page header, and on a closed LinkedIn posting the header is
+    where `No longer accepting applications` lives, so a posting captured closed used to reach
+    `matched` with a clean text, no stamp and nothing for `roles.page_closed` to read. The
+    capture now keeps that ONE sentence as its first line -- and nothing else of the header,
+    and not a copy of the sentence that belongs to another posting in the rail. The line goes
+    on AFTER the head skip: the intro above `About the role` is cut, the sentence is not."""
+    from pipeline import jdfill, roles
+    for sentence in ("No longer accepting applications", "כבר לא מקבלים בקשות"):
+        out = jdfill.extract_jd(_k13_guest_page(sentence))
+        first, rest = out.split("\n", 1)
+        assert first == sentence, out[:80]
+        assert rest.startswith("About the role"), rest[:80]          # the head skip still ran
+        for chrome in ("Skip to main content", "Report this job", "ACME is a company", "Show more"):
+            assert chrome not in out, chrome
+        assert roles.page_says_closed(out)
+    # an open posting gains nothing
+    assert jdfill.extract_jd(_k13_guest_page()).startswith("About the role")
+    # the same sentence deep in another posting's rail is not this role closing
+    rail = "\n".join(["עבודות דומות"] + ["Analyst at Other %d" % i for i in range(60)]
+                     + ["No longer accepting applications"])
+    assert jdfill.closed_page_at(jdfill.extract_jd(_k13_guest_page(rail=rail))) is None
+
+
+def test_the_kept_closing_line_is_invisible_to_every_cutter():
+    """The line stays in the store for ever, so every rule that rewrites stored text must leave
+    it alone -- a cutter that removed it would re-open the 09-11 oscillation (the ledger's
+    longer copy wins back through `better_description`) and blind `page_closed` again. And a
+    TAIL marker for the phrase would be catastrophic: at offset 0 `jd_body` returns ""."""
+    from pipeline import jdfill, roles
+    jd = _j7_jd(1400)
+    kept = "No longer accepting applications\n" + jd
+    assert jdfill.furniture_at(kept) is None
+    assert jdfill.jd_body(kept) == kept and jdfill.strip_head(kept) == kept
+    assert jdfill.reclean_text(kept) is None and jdfill.looks_like_jd(kept)
+    assert not jdfill.mid_sentence_head(kept)
+    assert roles.better_description(kept, jd) == kept
+
+
+def test_a_schema_org_capture_keeps_the_closing_sentence_too():
+    """The JSON-LD fallback returns the page's own `JobPosting.description`, which never
+    carried the page chrome -- so it never carried the closure sentence either."""
+    from pipeline import jdfill
+    long = "We are looking for an analyst. " * 20
+    body = _j6_ld(long).replace("<p>nav</p>", "<p>No longer accepting applications</p>")
+    text, why = jdfill._from_body(body)
+    assert why == "ok-jsonld" and text.startswith("No longer accepting applications\n"), text[:60]
+    text2, _why2 = jdfill._from_body(_j6_ld(long))
+    assert not text2.startswith("No longer"), text2[:60]
+
+
+def test_a_fresh_capture_of_a_closed_page_is_stamped_with_its_capture_date():
+    """The matched driver's canonical write used to stamp every capture `ok:canonical:<host>`,
+    so the durable arm `page_closed` reads was only ever written by a re-clean. A text carrying
+    the closure sentence now earns `closed-by-page:<the capture's date>` -- never today's."""
+    import enrich_matched_jd as emj
+    kept = "No longer accepting applications\n" + _j7_jd(1400)
+    assert emj._capture_why(kept, "2026-09-12", "ok:canonical:x") == "closed-by-page:2026-09-12"
+    assert emj._capture_why(kept, "2026-09-12 transient", "ok") == "closed-by-page:2026-09-12"
+    assert emj._capture_why(_j7_jd(1400), "2026-09-12", "ok:canonical:x") == "ok:canonical:x"
+
+
+def test_rows_that_already_carry_the_closing_sentence_are_stamped_without_a_cut():
+    """The stamp pass writes `jd_why` and nothing else: the text is byte-identical, so the two
+    stores cannot disagree and nothing needs retracting. Only onto an EMPTY `jd_why` -- a
+    `structural:` blocker is published verbatim, an `ok:` value was the fetch's own verdict --
+    and only on the sentence inside the window, never on another posting's rail."""
+    import enrich_matched_jd as emj
+    import sqlite3 as _sq
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    jd = _j7_jd(1400)
+    kept = "כבר לא מקבלים בקשות\n" + jd
+    deep = jd + "\nעבודות דומות\nNo longer accepting applications\n"
+    for mkey, desc, why in (("c", kept, None), ("s", kept, "structural:gone(donors:0)"),
+                            ("k", kept, "ok:canonical:x"), ("r", deep, None), ("o", jd, "")):
+        conn.execute("INSERT INTO matched VALUES (?,?,?)", (mkey, desc, why))
+    every = [(m, "ACME", "A", "u", att, "", d, 0, "2026-09-13")
+             for m, d, att in (("c", kept, "2026-09-10"), ("s", kept, ""), ("k", kept, ""),
+                               ("r", deep, ""), ("o", jd, ""))]
+    assert emj._stamp_closed_pages(conn, every, dry_run=True) == 1
+    assert conn.execute("SELECT jd_why FROM matched WHERE mkey='c'").fetchone()[0] is None
+    assert emj._stamp_closed_pages(conn, every, dry_run=False) == 1
+    got = dict(conn.execute("SELECT mkey, COALESCE(jd_why,'') FROM matched"))
+    assert got == {"c": "closed-by-page:2026-09-10", "s": "structural:gone(donors:0)",
+                   "k": "ok:canonical:x", "r": "", "o": ""}, got
+    assert conn.execute("SELECT description FROM matched WHERE mkey='c'").fetchone()[0] == kept
+    assert emj._stamp_closed_pages(conn, every, dry_run=False) == 0          # idempotent
+    conn.close()
+
+
+def test_the_inline_filler_normalises_a_card_that_already_reads_as_a_jd(monkeypatch):
+    """The digest's door into `matched`. A card whose text already passed the bar went straight
+    through `maybe_fill` with its furniture, and `upsert_matched` -- a length comparison --
+    handed it back over the row `_reclean` had cut an hour before. The cut is `reclean_text`'s,
+    it buys no fetch, it runs with the filler switched OFF, and a cut that would leave no
+    posting leaves the card alone."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda *a, **k: (_ for _ in ()).throw(AssertionError("fetched")))
+    jd = _j7_jd(1400)
+    f = jdfill.JDFiller(enabled=False)
+    job = {"title": "Data Analyst", "url": "https://x/jobs/1",
+           "description": jd + "\nShow more\nShow less\nSeniority level\nAssociate\n"}
+    assert f.maybe_fill(job) is False and job["description"] == jd
+    assert f.normalised == 1 and f.tried == 0 and f.normalised_chars > 0
+    # a text that does not read as a JD is the fetch's business, never cut here
+    wall = {"title": "Data Analyst", "url": "https://x/jobs/2",
+            "description": "Sign in\nShow more\nShow less\n" + "nav " * 200}
+    before = wall["description"]
+    jdfill.JDFiller(enabled=False).maybe_fill(wall)
+    assert wall["description"] == before
+    g = jdfill.JDFiller(enabled=True, budget_min=5)
+    g.maybe_fill({"title": "Data Analyst", "url": "https://x/jobs/3", "description": jd + "\nShow more\nShow less\n"})
+    assert "1 card texts normalised" in g.summary(), g.summary()
+
+
+def test_the_digest_seam_no_longer_re_installs_the_furniture_every_morning(tmp_path):
+    """The whole 09-13 defect end to end, on a real store: the repaired row holds the clean
+    text, the card arrives with its furniture, and the length ratchet decides. Normalised at
+    the door, the stored text survives; the same card un-normalised is what re-lengthened
+    seven rows that morning."""
+    from pipeline import jdfill, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    jd = _j7_jd(1400)
+    card = {"company": "ACME", "title": "Data Analyst", "location": "TLV", "url": "u",
+            "posted_date": "2026-09-12", "seniority": "mid", "sources": ["discovery-linkedin"],
+            "description": jd + "\nShow more\nShow less\n"}
+    st.upsert_matched({**card, "description": jd}, "2026-09-12")
+    job = dict(card)
+    jdfill.JDFiller(enabled=False).maybe_fill(job)
+    st.upsert_matched(job, "2026-09-13")
+    assert st.conn.execute("select description from matched").fetchone()[0] == jd
+    st.upsert_matched(dict(card), "2026-09-14")
+    assert len(st.conn.execute("select description from matched").fetchone()[0]) > len(jd)
+    st.close()
+
+
+def test_a_donor_text_is_cut_on_the_way_into_matched():
+    """The matched driver's door: a cache card or a donor copy installed with its header would
+    be cut by tonight's `_reclean` and handed back by the ledger tomorrow. `_store_text` now
+    applies the re-clean rule to the INCOMING text; a cut that would leave no posting stores
+    the text whole, exactly as before."""
+    import enrich_matched_jd as emj
+    import sqlite3 as _sq
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES ('a','',NULL)")
+    jd = _j7_jd(1400)
+    headed = "Skip to main content\nSenior Analyst\nACME\nReport this job\n" + jd + "\nShow more\nShow less\n"
+    assert emj._store_text(conn, "a", headed, "") is True
+    assert conn.execute("SELECT description FROM matched WHERE mkey='a'").fetchone()[0] == jd
+    conn.execute("INSERT INTO matched VALUES ('b','',NULL)")
+    junk = "nav bar home about contact " * 30
+    assert emj._store_text(conn, "b", junk, "") is True
+    assert conn.execute("SELECT description FROM matched WHERE mkey='b'").fetchone()[0] == junk
+    conn.close()
+
+
+def test_the_cache_reclean_shares_the_matched_rule_and_keeps_its_floor_and_ceiling():
+    """581. `scraped_cache.json` kept every furniture pattern the store had been cut free of.
+    The pass uses `reclean_text`; it touches only cards THIS layer wrote (`_jd_attempted`),
+    because the scraper rebuilds its own cards nightly and a cut there is undone by morning;
+    it never stamps an attempt; it refuses above the one ceiling; and a second pass finds
+    nothing."""
+    import enrich_scrape_jd as esj
+    import enrich_matched_jd as emj
+    from pipeline import jdfill
+    assert esj.RECLEAN_MAX_SHARE == emj.RECLEAN_MAX_SHARE == jdfill.RECLEAN_MAX_SHARE
+    jd = _j7_jd(1400)
+    dirty = jd + "\nShow more\nShow less\nSeniority level\nAssociate\n"
+    clean_cards = [{"title": "T%d" % i, "description": jd, "_jd_attempted": "2026-09-01"}
+                   for i in range(18)]
+    cache = {"A": [{"title": "ours", "description": dirty, "_jd_attempted": "2026-09-10"},
+                   {"title": "scraper's", "description": dirty},
+                   {"title": "shared", "description": dirty, "_jd_attempted": "2026-09-10",
+                    "_jd_shared_page": True}] + clean_cards}
+    assert esj.reclean_cache(cache, dry_run=True) == (1, len(dirty) - len(jd))
+    assert cache["A"][0]["description"] == dirty                      # dry means dry
+    n, chars = esj.reclean_cache(cache)
+    assert (n, chars) == (1, len(dirty) - len(jd))
+    assert cache["A"][0] == {"title": "ours", "description": jd, "_jd_attempted": "2026-09-10"}
+    assert cache["A"][1]["description"] == dirty and cache["A"][2]["description"] == dirty
+    assert esj.reclean_cache(cache) == (0, 0)
+    # the ceiling: the same furniture on every card we wrote is a rule matching prose
+    mass = {"A": [{"title": "T%d" % i, "description": dirty, "_jd_attempted": "2026-09-10"}
+                  for i in range(10)]}
+    n2, _c2 = esj.reclean_cache(mass)
+    assert n2 < 0 and mass["A"][0]["description"] == dirty
+
+
+def test_the_archive_run_recleans_before_it_fetches_and_reports_it(tmp_path, monkeypatch):
+    """The 12:30 `jd-archive` run is where the cache re-clean lives, and its numbers reach the
+    mail through the enrich stamp -- written only by that run, so the 05:00 title pool cannot
+    replace the night's figure with a zero it never measured. `--reclean-only --dry-run` is
+    the attended measurement and writes nothing at all."""
+    from pipeline import jdfill, stages
+    import enrich_scrape_jd as esj
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: jdfill.JD("", "none", "no-markers", False))
+    jd = _j7_jd(1400)
+    dirty = jd + "\nShow more\nShow less\n"
+    cards = [{"title": "Data Analyst %d" % i, "url": "https://z/jobs/%d" % i, "description": jd,
+              "_jd_attempted": "2026-09-01", "location": "Tel Aviv, Israel"} for i in range(12)]
+    cards[0]["description"] = dirty
+    p = tmp_path / "cache.json"
+    p.write_text(_jd_json.dumps({"Zeta": cards}, ensure_ascii=False), encoding="utf-8")
+    before = p.read_bytes()
+    assert esj.main(["--reclean-only", "--dry-run", "--cache", str(p)]) == 0
+    assert p.read_bytes() == before and not (tmp_path / "stages.json").exists()
+    monkeypatch.setattr(stages, "PATH", str(p) + ".stages.json")
+    assert esj.main(["--cache", str(p)]) == 0                         # the title pool: no cut
+    assert _jd_json.loads(p.read_text(encoding="utf-8"))["Zeta"][0]["description"] == dirty
+    assert "scrape_recleaned" not in stages._load()["enrich"]
+    assert esj.main(["--archive-only", "--cache", str(p)]) == 0
+    assert _jd_json.loads(p.read_text(encoding="utf-8"))["Zeta"][0]["description"] == jd
+    e = stages._load()["enrich"]
+    assert e["scrape_recleaned"] == 1 and e["scrape_furniture_cut"] == len(dirty) - len(jd)
+
+
+def test_the_inline_filler_names_why_a_job_has_no_description_this_run(monkeypatch):
+    """The classifier prints `superseded verdict cannot be re-judged (no description this run)`
+    about the dicts this filler handled, and on 09-13 six such lines hid four different
+    answers -- listing pages, another role's address, a refused host, a failed fetch. Every
+    exit that leaves a job without text now names its reason in memory; a fill clears it."""
+    from pipeline import jdfill
+    monkeypatch.setenv("JDFILL_BD_CAP", "0")
+    answer = {"text": ""}
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda u, **k: jdfill.JD(answer["text"], "html" if answer["text"] else "none",
+                                                 "ok" if answer["text"] else "no-markers", False))
+    f = jdfill.JDFiller(budget_min=5)
+    listing = {"title": "Cyber Analyst", "url": "https://www.centraleyes.com/careers/", "description": ""}
+    f.maybe_fill(listing)
+    assert listing["_jd_why"] == "not-a-job-url"
+    shell = {"title": "BI Analyst", "url": "https://secrethunter.io/jobz/4d9a468ec7", "description": ""}
+    f.maybe_fill(shell)
+    assert shell["_jd_why"] == "js-shell"
+    wrong = {"title": "AppSec Analyst Team Lead",
+             "url": "https://www.comeet.com/jobs/legitsecurity.com/37.004/account-executive/76.55C",
+             "description": ""}
+    f.maybe_fill(wrong)
+    assert wrong["_jd_why"] == "wrong-address"
+    failed = {"title": "Data Analyst", "url": "https://acme.example/jobs/42-data-analyst", "description": ""}
+    f.maybe_fill(failed)
+    assert failed["_jd_why"] == "no-markers"
+    answer["text"] = _j7_jd(1400)
+    assert f.maybe_fill(failed) is True and "_jd_why" not in failed
+    spent = jdfill.JDFiller(budget_min=0)
+    late = {"title": "Data Analyst", "url": "https://acme.example/jobs/43-data-analyst", "description": ""}
+    spent.maybe_fill(late)
+    assert late["_jd_why"] == "budget"
+
+
+def test_a_comeet_address_that_names_another_role_is_refused_and_a_folded_twin_is_not():
+    """Seven Legit Security cards carry their neighbour's link (09-13). The predicate is
+    narrow on purpose -- Comeet only, no shared significant token, an ASCII title -- and the
+    two shapes that looked disjoint until the joiners were folded (`AI/ML` -> `aiml`,
+    `V&V` -> `vv`) must never fire. The scrape driver refuses such a card before the fetch and
+    counts it, and the bucket sum still closes."""
+    from pipeline import jdfill
+    import enrich_scrape_jd as esj
+    base = "https://www.comeet.com/jobs/legitsecurity.com/37.004/"
+    assert jdfill.address_names_another_role(base + "account-executive/76.55C", "AppSec Analyst Team Lead")
+    assert jdfill.address_names_another_role(base + "application-security-sales-engineer/B7.A40?coref=1", "Bookkeeper")
+    assert not jdfill.address_names_another_role(base + "appsec-analyst--team-lead/6C.958", "AppSec Analyst Team Lead")
+    assert not jdfill.address_names_another_role("https://www.comeet.com/jobs/darrow/1.00/senior-aiml-engineer/AB.123", "Senior AI/ML Engineer")
+    assert not jdfill.address_names_another_role("https://www.comeet.com/jobs/regulus/1.00/vv-manager/AB.123", "V&V Manager")
+    assert not jdfill.address_names_another_role(base + "data-analyst/AB.123", "אנליסט/ית נתונים")
+    assert not jdfill.address_names_another_role("https://acme.example/jobs/account-executive", "Data Analyst")
+    cache = {"Legit Security": [
+        {"title": "AppSec Analyst Team Lead", "url": base + "account-executive/76.55C", "description": "",
+         "location": "Tel Aviv, Israel"},
+        {"title": "Security Analyst", "url": base + "security-analyst/A2.66D", "description": "",
+         "location": "Tel Aviv, Israel"}]}
+    title, archive, stats = esj._todo(cache)
+    assert stats["wrong_address"] == 1
+    assert [i.url for i in title + [a for a in archive]] == [base + "security-analyst/A2.66D"]
+
+
+def test_a_paid_call_carries_the_unlockers_own_timeout():
+    """600(b). `_bd_call` used `__call__`'s 90-s default, so a night of hanging paid calls was
+    30 minutes of the digest before the breaker opened. The Unlocker's `timeout_s` (30 by
+    default) now rides every call; a fake without the attribute is called as before."""
+    from pipeline import jdfill
+    seen = []
+
+    class _Fake:
+        timeout_s = 30.0
+
+        def __call__(self, url, **kw):
+            seen.append(kw)
+            return 200, "body", ""
+
+    jdfill._bd_call(_Fake(), "https://x/1")
+    assert seen == [{"timeout": 30.0}]
+    plain = []
+    jdfill._bd_call(lambda url, **kw: (plain.append(kw), (200, "", ""))[1], "https://x/2")
+    assert plain == [{}]
+    assert jdfill.Unlocker(cap=1).timeout_s == 30.0

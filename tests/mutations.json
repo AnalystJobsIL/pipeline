@@ -3345,5 +3345,123 @@
   "replace": "            elif prev_status not in RETRACTABLE and page_closed(rec, rec):",
   "why": "a role closes ONLY where the run actually looked, which every other arm of the ladder enforces through `judged`. The page arm's evidence is stored text, so the check looks redundant - but without it a scoped run closes roles at companies it never fetched: measured 4 closures from `--only \"Wix\"` against the real store, the exact command CLAUDE.md hands every agent as the harmless local run. A full digest is unaffected. Killed by test_a_scoped_run_never_closes_a_page_closed_role_it_did_not_look_at.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "jd-closed-line-dropped-at-capture",
+  "file": "pipeline/jdfill.py",
+  "symbol": "extract_jd",
+  "class": "M6-fallback-removal",
+  "find": "    return with_closed_line(full, text)[:DESC_MAX]\n",
+  "replace": "    return text[:DESC_MAX]\n",
+  "why": "a posting captured CLOSED loses `No longer accepting applications` with the rest of the header `strip_head` cuts, and then nothing stamps it: `roles.page_closed` has no text arm, no stamp and, on a first sighting, no ledger memory, so the role stays open for the 21 days the discovery cache re-serves the card (587). The job dict's `jd_why` reaches no reader in the same run, so the kept first line is the one in-lane carrier. Killed by test_a_fresh_capture_of_a_closed_page_keeps_the_closing_sentence_and_only_that.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_fresh_capture_of_a_closed_page_keeps_the_closing_sentence_and_only_that"
+  ]
+ },
+ {
+  "id": "jd-closed-line-prepended-before-the-head-skip",
+  "file": "pipeline/jdfill.py",
+  "symbol": "extract_jd",
+  "class": "M2-order-swap",
+  "find": "    rs = _HEAD_SKIP.search(text)\n    if rs and len(text) - rs.start(1) >= MIN_DESC:\n        text = text[rs.start(1):]\n    # LAST, after the head skip: prepended any earlier, `_HEAD_SKIP` cuts it off again.\n    return with_closed_line(full, text)[:DESC_MAX]\n",
+  "replace": "    text = with_closed_line(full, text)\n    rs = _HEAD_SKIP.search(text)\n    if rs and len(text) - rs.start(1) >= MIN_DESC:\n        text = text[rs.start(1):]\n    return text[:DESC_MAX]\n",
+  "why": "the order is the whole mechanism: a posting that opens with a company intro above `About the role` is trimmed to its first heading, and a closure line prepended before that trim is trimmed with the intro -- the fix present in the code and absent from every capture that has an intro. Killed by test_a_fresh_capture_of_a_closed_page_keeps_the_closing_sentence_and_only_that.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_fresh_capture_of_a_closed_page_keeps_the_closing_sentence_and_only_that"
+  ]
+ },
+ {
+  "id": "jd-fresh-capture-stamps-ok-over-a-closed-page",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_capture_why",
+  "class": "M4-guard-removal",
+  "find": "    if closed_page_at(text) is None:\n        return default\n",
+  "replace": "    if True:\n        return default\n",
+  "why": "the canonical capture stamped every text `ok:canonical:<host>`, so the durable `closed-by-page` arm `roles.page_closed` reads was written only when a re-clean cut the sentence -- and a capture that KEEPS the sentence is never cut again. Killed by test_a_fresh_capture_of_a_closed_page_is_stamped_with_its_capture_date.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_fresh_capture_of_a_closed_page_is_stamped_with_its_capture_date"
+  ]
+ },
+ {
+  "id": "jd-closed-stamp-overwrites-a-verdict",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_stamp_closed_pages",
+  "class": "M4-guard-removal",
+  "find": "        cur = conn.execute(\"UPDATE matched SET jd_why=? WHERE mkey=? AND COALESCE(jd_why,'')=''\",\n",
+  "replace": "        cur = conn.execute(\"UPDATE matched SET jd_why=? WHERE mkey=?\",\n",
+  "why": "a `structural:` value is a blocker the published dataset quotes verbatim, and an `ok:` value is the fetch's own verdict; the stamp pass may only fill an EMPTY cell. Without the clause it rewrites every row carrying the sentence every night. Killed by test_rows_that_already_carry_the_closing_sentence_are_stamped_without_a_cut.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_rows_that_already_carry_the_closing_sentence_are_stamped_without_a_cut"
+  ]
+ },
+ {
+  "id": "jd-normalise-skips-the-digest-seam",
+  "file": "pipeline/jdfill.py",
+  "symbol": "JDFiller.maybe_fill",
+  "class": "M6-fallback-removal",
+  "find": "        self.normalise(job)\n        if not self.enabled:\n",
+  "replace": "        if not self.enabled:\n",
+  "why": "the 09-13 digest re-cleaned 7 rows (3,752 characters) and the commit after it held 0 of them shorter: the card the digest upserts carried the furniture and `upsert_matched` compares lengths. A store cut every night and re-lengthened every morning. Killed by test_the_digest_seam_no_longer_re_installs_the_furniture_every_morning.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_inline_filler_normalises_a_card_that_already_reads_as_a_jd",
+   "tests/test_units.py::test_the_digest_seam_no_longer_re_installs_the_furniture_every_morning"
+  ]
+ },
+ {
+  "id": "jd-donor-text-installed-with-its-header",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_store_text",
+  "class": "M6-fallback-removal",
+  "find": "    text = jdfill.reclean_text(text) or text\n",
+  "replace": "",
+  "why": "the matched driver's door: a cache card or donor copy installed with its header is cut by tonight's `_reclean` and handed back by the ledger's longer copy tomorrow -- the 09-11 oscillation, one donor away. Killed by test_a_donor_text_is_cut_on_the_way_into_matched.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_donor_text_is_cut_on_the_way_into_matched"
+  ]
+ },
+ {
+  "id": "jd-cache-reclean-cuts-what-the-scraper-wrote",
+  "file": "enrich_scrape_jd.py",
+  "symbol": "reclean_cache",
+  "class": "M5-population-widening",
+  "find": "            if not j.get(\"_jd_attempted\") or j.get(\"_jd_shared_page\"):\n",
+  "replace": "            if j.get(\"_jd_shared_page\"):\n",
+  "why": "21 of the 65 cache cards the cut would change on 09-13 were built by the scraper, and `refresh_scrape_cache._carry_jd` carries a description only onto an EMPTY rebuilt card -- so the nightly rebuild restores their furniture and the noon re-clean would cut it again, for ever, with a counter that never reaches 0. Killed by test_the_cache_reclean_shares_the_matched_rule_and_keeps_its_floor_and_ceiling.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_cache_reclean_shares_the_matched_rule_and_keeps_its_floor_and_ceiling"
+  ]
+ },
+ {
+  "id": "jd-cache-reclean-loses-its-ceiling",
+  "file": "enrich_scrape_jd.py",
+  "symbol": "reclean_cache",
+  "class": "M4-guard-removal",
+  "find": "    if share > RECLEAN_MAX_SHARE:\n        print(f\"::warning::cache reclean REFUSED",
+  "replace": "    if False:\n        print(f\"::warning::cache reclean REFUSED",
+  "why": "CLAUDE.md rule 2 for a store rewrite: a furniture rule that starts matching prose would rewrite the whole cache unattended at 12:30. The matched re-clean refuses above 15 %; the cache pass must refuse on the same number. Killed by test_the_cache_reclean_shares_the_matched_rule_and_keeps_its_floor_and_ceiling.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_cache_reclean_shares_the_matched_rule_and_keeps_its_floor_and_ceiling"
+  ]
+ },
+ {
+  "id": "jd-wrong-address-read-as-this-roles-posting",
+  "file": "pipeline/jdfill.py",
+  "symbol": "JDFiller.maybe_fill",
+  "class": "M1-gate-removal",
+  "find": "               or (\"wrong-address\" if address_names_another_role(url, title) else \"\"))\n",
+  "replace": "               or \"\")\n",
+  "why": "a Comeet link whose slug spells out a different role is the scraper pairing a title with its neighbour's href (7 Legit Security cards, 09-13); reading it fills the row with another role's posting, and the classifier printed one as a verdict it could not re-judge with no way to say why. Killed by test_the_inline_filler_names_why_a_job_has_no_description_this_run.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_inline_filler_names_why_a_job_has_no_description_this_run"
+  ]
  }
 ]
