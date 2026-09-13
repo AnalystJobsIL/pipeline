@@ -7696,9 +7696,15 @@
     "verdict": "nolisting",
     "date": "2026-09-13",
     "url": "https://www.blender.org/jobs/"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "validated",
+    "date": "2026-09-13",
+    "url": "https://www.blender.org/careers/"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "validated"
  },
  "Blender Loans": {
   "last": "2026-08-30",
@@ -38596,7 +38602,7 @@
   "verdict": "already-a-row"
  },
  "Meitav Investment House": {
-  "last": "2026-09-12",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -38651,9 +38657,15 @@
     "verdict": "nolisting",
     "date": "2026-09-12",
     "url": "https://www.meitav.co.il/jobs/"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "validated",
+    "date": "2026-09-13",
+    "url": "https://www.meitav.co.il/jobs/"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "validated"
  },
  "Meitav Trade Securities Ltd": {
   "last": "2026-08-30",
@@ -43789,7 +43801,7 @@
   "verdict": "documented"
  },
  "NeuroBlade": {
-  "last": "2026-09-12",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-05",
@@ -43803,9 +43815,15 @@
     "verdict": "nolisting",
     "date": "2026-09-12",
     "url": "https://www.neuroblade.com/careers/"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "validated",
+    "date": "2026-09-13",
+    "url": "https://www.neuroblade.com/jobs"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "validated"
  },
  "New Feldman": {
   "last": "2026-09-01",
@@ -50174,7 +50192,7 @@
   "verdict": "note-migrated"
  },
  "SQream": {
-  "last": "2026-09-12",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-05",
@@ -50188,9 +50206,15 @@
     "verdict": "nolisting",
     "date": "2026-09-12",
     "url": "https://sqream.com/careers/"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "validated",
+    "date": "2026-09-13",
+    "url": "https://sqream.com/careers/"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "validated"
  },
  "SUN PHARMA": {
   "last": "2026-09-09",
@@ -58749,16 +58773,22 @@
   "verdict": "nolisting"
  },
  "expressvpn": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "https://www.expressvpn.com/jobs/job-openings",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "validated",
+    "date": "2026-09-13",
+    "url": "https://www.expressvpn.com/jobs"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "validated"
  },
  "finbounce": {
   "last": "2026-08-29",
