@@ -220,7 +220,15 @@ def _no_test_reads_the_state_a_cron_rewrites(request):
     2026-09-13). Those files move several times a day with no commit, so a test asserting on
     them reds whichever lane pushes next; two did in two days. `tests/live_state.py` has the
     mechanism and the two ways out. Keyed `<file>::<test>`, parameters stripped."""
-    import live_state
+    try:
+        import live_state
+    except ImportError:
+        # `tools/guard_kill.py` runs the suite with every non-test file put back to the base
+        # commit, and `tests/live_state.py` is one: without this every test ERRORs there and
+        # reads as KILLS whether it can fail or not. In the real tree the module exists, and
+        # `test_a_test_reads_the_state_a_cron_rewrites_only_through_the_allowlist` dies without it.
+        yield
+        return
     if not _LIVE_ALLOW:
         _LIVE_ALLOW.append(live_state.load_allowlist())
     name = "%s::%s" % (os.path.basename(str(request.node.fspath)), request.node.originalname)
