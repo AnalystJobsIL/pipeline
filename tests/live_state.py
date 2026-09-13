@@ -26,6 +26,14 @@ The two ways out, in the order to prefer them:
 
 `LIVE_STATE_REPORT=<path>` records instead of raising: one JSON line per (test, file). That is
 how the class was measured before it was locked.
+
+**The read is never interrupted** (`violations=` list, which `conftest` uses): the open goes
+through and the TEST fails at teardown. Found on the first CI run: `jdfill._registry_board`
+sets its process cache to `{}` and then loads `companies.csv`, so an exception raised mid-load
+left an empty registry for every later test in the session -- a lock that changes the tests it
+guards. A process-wide cache is charged to the first test that fills it, so a SUBSET run (`-k`,
+a mutation shard) can blame a test the full order never does; the mutation harness therefore
+runs with the lock off (`AJIL_MUTANT=1`), and the full suite in CI is where it is judged.
 """
 from __future__ import annotations
 
@@ -58,6 +66,14 @@ def snapshot(name):
 
 class LiveStateInTests(BaseException):
     """A test opened a file the crons rewrite. See tests/live_state.py for the two ways out."""
+
+
+def message(test, rel):
+    return (f"{test} opened {rel}, which a cron rewrites: its verdict moves while the tree "
+            f"stands still and reds whoever pushes next. Read a dated snapshot under "
+            f"tests/fixtures/ instead, or -- if the property is only true of today's data -- "
+            f"move it into check_invariants.py or the mail. Last resort: an entry with a "
+            f"reason in tests/live_state_allowlist.json (see tests/live_state.py).")
 
 
 def live_path(path, root=ROOT):
@@ -100,8 +116,10 @@ def allowed(test, rel, allowlist):
 
 
 @contextlib.contextmanager
-def guard(test, root=ROOT, allowlist=None, report=None):
-    """Refuse (or, with `report`, record) every open of live state by `test`."""
+def guard(test, root=ROOT, allowlist=None, report=None, violations=None):
+    """Refuse every open of live state by `test`: raise, or -- given a `violations` list --
+    let the read through and append the path, for the caller to fail the test afterwards.
+    With `report`, record one JSON line per (test, file) instead."""
     allowlist = load_allowlist() if allowlist is None else allowlist
     report = os.environ.get("LIVE_STATE_REPORT") if report is None else report
     real_open, real_io_open, real_connect = builtins.open, io.open, sqlite3.connect
@@ -117,12 +135,11 @@ def guard(test, root=ROOT, allowlist=None, report=None):
                 with real_open(report, "a", encoding="utf-8") as f:
                     f.write(json.dumps({"test": test, "file": rel}) + "\n")
             return
-        raise LiveStateInTests(
-            f"{test} opened {rel}, which a cron rewrites: its verdict moves while the tree "
-            f"stands still and reds whoever pushes next. Read a dated snapshot under "
-            f"tests/fixtures/ instead, or -- if the property is only true of today's data -- "
-            f"move it into check_invariants.py or the mail. Last resort: an entry with a "
-            f"reason in tests/live_state_allowlist.json (see tests/live_state.py).")
+        if violations is not None:
+            if rel not in violations:
+                violations.append(rel)
+            return
+        raise LiveStateInTests(message(test, rel))
 
     def _open(file, *a, **k):
         check(file)

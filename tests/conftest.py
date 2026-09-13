@@ -229,11 +229,17 @@ def _no_test_reads_the_state_a_cron_rewrites(request):
         # `test_a_test_reads_the_state_a_cron_rewrites_only_through_the_allowlist` dies without it.
         yield
         return
+    if os.environ.get("AJIL_MUTANT") == "1":
+        yield                    # a mutation subset charges a warm cache to the wrong test
+        return
     if not _LIVE_ALLOW:
         _LIVE_ALLOW.append(live_state.load_allowlist())
     name = "%s::%s" % (os.path.basename(str(request.node.fspath)), request.node.originalname)
-    with live_state.guard(name, allowlist=_LIVE_ALLOW[0]):
+    violations = []
+    with live_state.guard(name, allowlist=_LIVE_ALLOW[0], violations=violations):
         yield
+    if violations:                # the read went through; the TEST fails, the session is intact
+        pytest.fail(live_state.message(name, ", ".join(violations)), pytrace=False)
 
 
 def pytest_sessionfinish(session, exitstatus):

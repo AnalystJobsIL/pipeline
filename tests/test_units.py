@@ -31451,6 +31451,14 @@ def test_a_test_reads_the_state_a_cron_rewrites_only_through_the_allowlist(tmp_p
         read(tmp_path / "mine.csv") if door != "sqlite3" else _sq.connect(str(tmp_path / "t.db")).close()
     import builtins as _b
     assert (_b.open, _io.open, _sq.connect) == doors, "the guard put every door back"
+    # collect mode lets the read through (a cache half-filled by an exception poisoned every
+    # later test on the first CI run) and names the file for the caller to fail the test
+    got = []
+    with LS.guard("test_units.py::stranger", root=str(root), allowlist=allow, report="",
+                  violations=got):
+        assert read(target) is not None
+        read(target)
+    assert got == ["cloud_state/seen.db" if door == "sqlite3" else "companies.csv"]
     # report mode records instead of raising, once per (test, file)
     rep = tmp_path / "report.jsonl"
     with LS.guard("test_units.py::stranger", root=str(root), allowlist={}, report=str(rep)):
