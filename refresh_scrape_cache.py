@@ -44,7 +44,7 @@ from pipeline import stages
 from pipeline.atomic import write_csv_rows, write_json
 from pipeline.companies import load_companies
 from pipeline.notes import append as _note_append, replace_own as _note_replace
-from scrape_universal import COMPANY_BUDGET_S, _ip_shaped, scrape_result
+from scrape_universal import COMPANY_BUDGET_S, _ip_shaped, il_host, scrape_result
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the
@@ -241,7 +241,10 @@ def _worker(task):
     name, url = task
     t0 = time.time()
     try:
-        res = scrape_result(name, url)
+        # a board on an Israeli ccTLD host is the row's own vouch for a card that names no
+        # place (`_page_is_il` still wants the page's own token): the hunts set the env flag,
+        # the refresh never did, and Cal read ~30 postings for one and 1 for the other (594)
+        res = scrape_result(name, url, assume_il=il_host(url))
         return {"name": name, "jobs": res.jobs, "status": res.status, "error": res.error,
                 "http_status": res.http_status, "strategy": res.strategy,
                 "rescued": bool(getattr(res, "rescued", False)),

@@ -198,7 +198,8 @@ anyone — that is a separate workflow step. Most tools follow the same conventi
 sonnet call through `pipeline/llm.py` per page that reaches strategy 5;
 `SCRAPE_LLM_MODEL` picks the model, §1),
 `SCRAPE_ASSUME_IL=1` (accept page-level Israel
-signal), `SCRAPE_VIA_UNLOCKER=1` (**spends Bright Data**: residential fetch of a page the
+signal; the 00:00 refresh passes the same row vouch itself for a board whose host is under
+`.il`, `scrape_universal.il_host`, since 2026-09-13), `SCRAPE_VIA_UNLOCKER=1` (**spends Bright Data**: residential fetch of a page the
 plain fetch could not read, and of at most `SCRAPE_UNLOCK_PAGES` (5) position pages per
 company when neither plain HTTP nor Chromium could open any), `SCRAPE_WORKERS` / `SCRAPE_COMPANY_BUDGET_S` /
 `SCRAPE_REFRESH_TIME_BUDGET_MIN` (refresh pool size / per-company seconds / minutes before
@@ -345,7 +346,7 @@ including the claim "none".
    the call is spared and counted (`llm_skipped` in the stamp). Of the 128 calls on the
    08-26 night **94 returned nothing**; over the 81 captured pages the gate skips 2 of the 37
    that reach the tier and 0 of the winners. It reads `_page_is_il`, which under
-   `SCRAPE_ASSUME_IL` is a PAGE-level signal — narrow that to "does the url say Israel" and
+   a row vouch (`SCRAPE_ASSUME_IL`, or the refresh's `.il`-host vouch) is a PAGE-level signal — narrow that to "does the url say Israel" and
    every `listing_hunt` / `crack_walled` page loses its roles. **The A/B, 2026-08-26**, sonnet vs opus through the seam on those 27
    pages: identical title sets on 25, the two differences opus's (a "Future Opportunities"
    non-position; a QA demo board split four ways instead of two), sonnet
@@ -431,7 +432,30 @@ including the claim "none".
    with IL excepted); `ISRAEL_LOC` is word-bounded like `israel._PLACE_PATTERNS`
    (BACKLOG 126; the lookarounds are case-sensitive on purpose — under `re.I` they blocked
    the run-together card text real boards serve, `HerzliyaJunior Software Developer`,
-   `R&DRegularTel Aviv`). **A position page that LABELS the role's place** — `Job Location:
+   `R&DRegularTel Aviv`). Since 2026-09-13 the edges guard Hebrew letters too (594: `אילת`
+   matched inside `שאילתות`, "queries", and Cal's model-developer posting cached as an Eilat
+   role; `ישראל` matched inside `ישראלי`) — a one- or two-letter proclitic still reads
+   (`בירושלים`), so does a place right after a word-final letter (`מיקור חוץראש העין`, fused
+   card text), and 4 of the 844 Hebrew-located cached cards change; and a place name that is
+   also a noun READS as the noun when a Hebrew word follows it — `אזור הצפון` is the region
+   (returned whole), never the town of Azor, and `מודיעין סייבר` is cyber intelligence, while
+   `מודיעין עילית` stays a town (`_noun_reading`: 51 of the 58 cached `אזור` locations and 2
+   of the 8 `מודיעין` were the noun). ACCEPTANCE of a feed's own `אזור המרכז` (120 cached
+   locations, 108 of them Ness Technologies') is unchanged: over the whole cache 0 stored
+   locations stop passing, and 86 cards' own-text place reading moves. **A heading card's
+   caps count characters, not markup** (`_UNIT`, 594): Cal serves Hebrew as `&#x5E0;`, eight
+   characters a letter, so 11 of its 29 titles fit `{5,140}`; the heading group's role-ratio
+   gate counts Hebrew stems too (`_rolish` — decoded, Cal's 29 matched `ROLE` 3 times against a
+   floor of 9, and the board read 0), **but only for a group whose postings have no address of
+   their own**: an addressed heading or DOM reading ends the ladder before the position-link
+   rung opens each posting, and replayed over 33 `.il` boards a Hebrew admission for addressed
+   groups took John Bryce from 11 postings to 1 and Latet from 22 to 2 (DOM admission still asks
+   the anchor's whole text for `ROLE`); and a title element's label-classed
+   descendants are the board's filing chips, not title words — `Splunk Dashboard Developer
+   BACKEND גוש דן` on Logica-IT (584). One vocabulary (`_LABEL_WORDS`, token-bounded, so
+   `stage` is not `tag`) serves the rendered DOM (`_DOM_JS`'s `own` field, which `_from_dom`
+   prefers when it is still a role's name) and the served HTML (`_strip_labels`); the place
+   is still read from the card's context, chips included. **A position page that LABELS the role's place** — `Job Location:
    France, Grenoble` — is making that role's own claim, and it settles the question over any
    place found by proximity, including when it names nowhere in Israel: Weebit Nano prints
    its Hod Hasharon office on every page, so its USA and France roles were cached as Israeli
@@ -447,8 +471,20 @@ including the claim "none".
    `country_code="XX"` (the gate's authoritative NO — the path echo `_bare` cannot strip),
    and every cached location carries `_loc_src` ∈ `own`/`group`/`assumed` so a bare
    "Israel" always says where it came from (`fabricated-loc-N` alarms on any that does not,
-   §5a). `SCRAPE_ASSUME_IL` (the hunts' pre-vetted flag; `"0"` is OFF) is the one surviving
-   assumption and is marked `assumed`. **A card that names
+   §5a). A card that names no place is placed only under a ROW vouch AND an Israeli place on
+   the page itself (`_page_is_il`, both halves, and the page half never widens), and is marked
+   `assumed`. There are two vouches: `SCRAPE_ASSUME_IL` (the hunts' pre-vetted flag; `"0"` is
+   OFF), and, since 2026-09-13, the 00:00 refresh's `assume_il` for a row whose board HOST is
+   under `.il` (`il_host` — the hostname, never the url's path or query). Until then the
+   refresh had no vouch at all: Cal read ~30 postings under the hunt's flag and 1 under the
+   cron (594). The host vouch, with no hunt flag behind it, places only a card with NO address
+   of its own (an addressed card has a page that can place it, and assumed it would end the
+   ladder first — BST Group), and a card placed ONLY by assumption must also name a role in
+   its own title (`_role_named`, whole role nouns, not `ROLE`'s substrings): a vouched board
+   can list its "why join us" bullets as a heading group beside its postings (Globalbit,
+   `AI-First Engineering`, 2026-09-13). And a heading card with no address of its own keeps
+   its card window, cut at its call to action, as its description (`_card_own_text`): Cal's
+   postings are a heading, the text and a modal CV button, so there is no page to fetch. **A card that names
    no place of its own** is the one judgement
    call, and it belongs to the BOARD, not the page: `_parse_position_page` reports what a
    position page says (its heading, its `<title>`, whether either names a place outside
@@ -5955,10 +5991,12 @@ derived from both lists (`check_invariants` G). So a multinational with an Israe
 passes on the posting's own location (the Workday / Eightfold / Phenom / `custom_json`
 fetchers are `israel_scoped`: they ask the board for Israel), an Israeli-only employer passes
 because its postings name the city or district, and a scrape row is pre-filtered at scrape
-time (a location-less card counts only when the listing URL is Israel-filtered, or under
-`SCRAPE_ASSUME_IL` for rows the resolvers pre-vetted). There is **no company-level Israel
-flag** — `companies.csv` has six columns and none is one — and the measurement says none is
-needed:
+time (a location-less card counts only under a row vouch and with an Israeli place on the page
+itself: `SCRAPE_ASSUME_IL` for rows the resolvers pre-vetted, or, since 2026-09-13, a board
+host under `.il` in the nightly refresh; the listing URL's own path or query has not counted
+since 2026-08-30). There is **no company-level Israel flag** — `companies.csv` has six columns
+and none is one; the host vouch is READ from `api_url` by `scrape_universal.il_host`, not
+stored — and the measurement says none is needed:
 
 > 70 random active API rows (comeet/greenhouse/ashby/lever/workable/smartrecruiters/recruitee/
 > breezy/bamboohr), 2026-08-24: **3,370 postings → 674 pass**; dropped 1,493 on a non-IL

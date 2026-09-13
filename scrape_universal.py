@@ -80,6 +80,51 @@ ROLE = re.compile(r"engineer|developer|manager|analyst|scientist|designer|\blead
                   r"\bsre\b|\bux\b|\bui\b|scrum|agile|automation|solution|business|operation|"
                   r"team\s+lead|full[\s-]?stack|back[\s-]?end|front[\s-]?end|principal|staff|"
                   r"vp\b|chief|president|counsel|paralegal|accountant|bookkeeper|generalist", re.I)
+# The same question in Hebrew. `ROLE` is English-only, so a Hebrew board's heading group failed
+# `_from_cards`' role-ratio gate however real it was: Cal's 29 postings matched 3 (`Customer
+# Success`, `Tech Operations Team Lead`, …) against a floor of 9, and read 0 (594, 2026-09-13).
+# A stem, the board's gender/plural spellings (`מפתח.ת`, `נציגי.ות`, `אנליסט/ית`, `חתמ.ת` — a
+# final letter is written open before a suffix), and Hebrew letters on neither side: Hebrew has
+# no `\b`, and unbounded stems read תפקיד/מרכז/מחשב as פקיד/רכז/חשב.
+_ROLE_HE = re.compile(
+    r"(?<![א-ת])(?:"
+    r"(?:נציג|מנהל|מפתח|אנליסט|רפרנט|מהנדס|בודק|יועץ|יועצ|רכז|מוביל|אחראי|חתם|חתמ|מנטר|"
+    r"מפעיל|נהג|מאבטח|מיישב|מתכנת|טכנאי|מדריך|מדריכ|כלכלן|כלכלנ|חשב|מומחה|מומחי|ארכיטקט|"
+    r"מנתח|בנקאי|סוכן|סוכנ|מזכיר|פקיד|עורך|עורכ|מדען|מדענ|מעצב|מתאם|מתאמ|חוקר|מתכנן|מתכננ|"
+    r"מוקדן|מוקדנ|מחסנאי|קופאי|מבקר|שמאי|טכנולוג|מהנדסי|הנדסאי|מיישם|מיישמ)"
+    r"(?:[/.\-]?(?:ית|ת|ים|ות|יות|י|ה))?(?:[/.\-](?:ית|ת|ות|ים|יות|ה))?"
+    r"|ראש(?:ת)? (?:צוות|תחום|מדור|אגף)|איש(?:/אשת)?|אשת)(?![א-ת])")
+
+
+def _rolish(t):
+    """A role-shaped title in either script."""
+    t = t or ""
+    return bool(ROLE.search(t) or _ROLE_HE.search(t))
+
+
+# A card NOTHING placed is admitted only on a row vouch (`_page_is_il`), and then only if its
+# own title NAMES a role: `ROLE` is a group-ratio test (substrings — `engineer` inside
+# `Engineering`, `full stack` inside `Full Stack of Projects`), and one vouched `.il` board
+# (Globalbit, measured 2026-09-13) lists its "why join us" bullets as a heading group beside
+# its postings — `AI-First Engineering`, `Growth & Learning`, `Senior-Level Team` — which the
+# group gate passes and, placeless, only the vouch would have admitted. A role NOUN, whole.
+_ROLE_NOUN = re.compile(
+    r"\b(?:engineers?|developers?|managers?|analysts?|scientists?|designers?|leads?|leaders?|"
+    r"architects?|specialists?|directors?|head|officers?|consultants?|researchers?|"
+    r"representatives?|reps?|coordinators?|administrators?|accountants?|controllers?|"
+    r"bookkeepers?|interns?|internship|students?|experts?|advisors?|programmers?|technicians?|"
+    r"technologists?|chemists?|inspectors?|assemblers?|writers?|editors?|recruiters?|partners?|"
+    r"associates?|executives?|agents?|operators?|assistants?|owners?|counsel|lawyers?|"
+    r"attorneys?|paralegals?|planners?|buyers?|strategists?|marketers?|producers?|auditors?|"
+    r"economists?|actuar(?:y|ies)|underwriters?|nurses?|teachers?|instructors?|trainers?|"
+    r"testers?|secretar(?:y|ies)|implementers?|qa|devops|sre|dba|vp|cto|ceo|cfo|coo|president|"
+    r"chief|success|generalist|sales|tl)\b", re.I)
+
+
+def _role_named(t):
+    """The title itself names a role — the bar for a card placed only by assumption."""
+    t = t or ""
+    return bool(_ROLE_NOUN.search(t) or _ROLE_HE.search(t))
 
 
 def _build_israel_loc():
@@ -104,8 +149,19 @@ def _build_israel_loc():
     # run-together ("R&DRegularTel Aviv", Snap); so "unsafed", "Razor" and "RAZOR" are not
     # Safed and Azor. Right edge: never a lowercase letter or a digit ("Akkodis", "melody",
     # "lod3BakeYZ7").
-    return re.compile(r"(?-i:(?:(?<![A-Za-z])|(?<=[a-z])(?=[A-Z])))(?:" + "|".join(alts)
-                      + r")(?-i:(?![a-z0-9]))", re.I)
+    # Hebrew letters on either side were unguarded until 2026-09-13: `אילת` (Eilat) matched
+    # inside `שאילתות` ("queries") and Cal's model-developer posting shipped as an Eilat role
+    # (594); `ישראל` matched inside `ישראלי`. A Hebrew place now needs a non-Hebrew right edge,
+    # and on the left either a non-Hebrew character or a one/two-letter proclitic (ב ל מ ה ו ש
+    # כ: `בירושלים`, `ובאזור`) that itself starts the word. Over the 844 cached cards with a
+    # Hebrew location, 4 lose their place (measured 2026-09-13).
+    # A final letter (ך ם ן ף ץ) is only ever written at the END of a word, so a place right
+    # after one starts a word of its own — run-together card text again, in Hebrew:
+    # `מיקור חוץראש העין` is "outsourcing" fused onto Rosh HaAyin (כלמוביל's board).
+    mid = "אבגדהוזחטיכלמנסעפצקרשת"          # the letters a word can continue after
+    left = (r"(?-i:(?:(?<![A-Za-z" + mid + r"])|(?<=[a-z])(?=[A-Z])"
+            r"|(?<=(?<![" + mid + r"])[בלמהושכ])|(?<=(?<![" + mid + r"])[ושכ][בלמה])))")
+    return re.compile(left + r"(?:" + "|".join(alts) + r")(?-i:(?![a-z0-9א-ת]))", re.I)
 
 
 ISRAEL_LOC = _build_israel_loc()
@@ -113,19 +169,46 @@ ISRAEL_LOC = _build_israel_loc()
 # a posting link says so in its path
 _POSTING_HREF = re.compile(r"/(job|jobs|position|opening|vacancy|role)s?[/\-_=?]|gh_jid=|/apply\b", re.I)
 # strategy 3: job cards as N same-class siblings
+# One CHARACTER of card text: a letter, or an HTML entity as a whole. The caps below count
+# these, not bytes of markup — a board that serves Hebrew as `&#x5E0;` spends eight characters
+# a letter, so a 20-letter title overflowed `{5,140}` and Cal kept 11 of its 29 headings (594).
+# The three alternatives are DISJOINT on purpose: an entity alternative beside an overlapping
+# `[^<]` backtracks exponentially on an over-cap heading (1.9 s at 20 entities, x3.6 per two).
+_UNIT = r"(?:&[#\w]+;|[^<&]|&(?![#\w]+;))"
 _CARD_PATTERNS = (
     # inner <span>s tolerated: Wix wraps every heading's text in styling spans, so GenCell's
     # 12-role board matched NOTHING under a bare `[^<]` (228; tags are stripped at read)
-    r"<(h[1-4])([^>]*)>((?:[^<]|</?span[^>]*>){5,140}?)</\1>",
+    r"<(h[1-4])([^>]*)>((?:" + _UNIT + r"|</?span[^>]*>){5,140}?)</\1>",
     # non-heading job cards: any tag whose class names it a job/position title
     # (e.g. Legit Security's <p class="job-post-title">)
     r'<(p|div|span|a)([^>]*class=["\'][^"\']*(?:job|position|role|opening)[^"\']*'
-    r'(?:title|name|copy)[^"\']*["\'][^>]*)>([^<]{5,90})</\1>',
+    r'(?:title|name|copy)[^"\']*["\'][^>]*)>(' + _UNIT + r'{5,90})</\1>',
 )
 # a heading whose text IS a link: `[^<]` above breaks on the `<a>`, so this card shape —
 # the one that DECLARES its own address — matched nothing at all until 2026-08-30 (434)
 _CARD_LINKED_HEADING = (r"<(h[1-4])([^>]*)>\s*<a\s[^>]*?href=[\"']([^\"']+)[\"'][^>]*>"
-                        r"([^<]{5,90})</a>\s*</\1>")
+                        r"(" + _UNIT + r"{5,90})</a>\s*</\1>")
+# A board's FILING CHIPS inside a title element — `<span class="meta profession">BACKEND</span>
+# <span class="meta area">גוש דן</span>` on Logica-IT, read as title words (584). The class
+# names a label, token-bounded (`stage`, `metadata`, `labelled` are not labels). One vocabulary
+# for the rendered DOM (`_DOM_JS`) and for the served HTML (`_strip_labels`), so the two
+# readings cannot drift. Only DESCENDANTS of the title element are removed, never the element.
+_LABEL_WORDS = r"metas?|tags?|badges?|labels?|chips?|locations?|departments?|categor(?:y|ies)"
+_LABEL_TAG = re.compile(
+    r"<(span|div|small|em|i|b|p|li|ul)\b[^>]*\bclass=[\"'](?:[^\"']*[^a-z\"'])?(?:" + _LABEL_WORDS
+    + r")(?:[^a-z\"'][^\"']*)?[\"'][^>]*>(?:(?!<\1\b).)*?</\1>"
+    r"|<(time|svg)\b[^>]*>(?:(?!<\2\b).)*?</\2>|<svg\b[^>]*/>", re.I | re.S)
+
+
+def _strip_labels(markup):
+    """A title element's markup without its filing chips — innermost first, to a fixpoint (a
+    `metas` wrapper holds two `meta` chips and only matches once they are gone)."""
+    for _ in range(4):
+        new = _LABEL_TAG.sub(" ", markup)
+        if new == markup:
+            break
+        markup = new
+    return markup
 _CARD_SENTENCE = re.compile(r"(we|our|join|about|why|what|how|let)\b", re.I)
 # strategy 4: a link prefix that names positions
 _LINK_PREFIX = re.compile(r"(job|position|opening|vacanc|career|role)[^/]*/$", re.I)
@@ -138,6 +221,8 @@ _CARD_DATE = re.compile(r"\b(?:posted|published|date posted|posting date)\b[:\s]
                         r"just (?:posted|now))", re.I)
 # a card ends where its call-to-action starts; text after that belongs to the next card
 _CARD_END = re.compile(r"\b(?:apply(?: now)?|view (?:job|details|more)|read more|learn more|see details)\b", re.I)
+# ...and the Hebrew boards' own call to action ("send a CV", "submit a candidacy")
+_CARD_END_HE = re.compile(r"(?<![א-ת])(?:שליחת|שלח(?:/י|ו)?|הגשת|להגשת|הגש(?:/י)?)\s+(?:קורות\s+חיים|קו\"ח|מועמדות)")
 # Strategy 5's contract on the shared seam (`pipeline.llm.call_json`, 2026-08-26). Until then
 # this was a bare `claude -p`: the default model (claude-fable-5, ~5x sonnet's price), EVERY
 # tool enabled, the repo as cwd — with `secrets.env` and `CLAUDE.local.md` on disk — and an
@@ -217,18 +302,24 @@ _STATE_JS = r"""() => {
 }"""
 
 _DOM_JS = r"""() => {
+  const LABEL = /(^|[^a-z])(__LABEL__)([^a-z]|$)/i;
   const out = [], seen = new Set();
   document.querySelectorAll('a[href]').forEach(a => {
     let title = (a.textContent || '').trim().replace(/\s+/g, ' ');
     if (title.length < 5 || title.length > 140) return;
     const k = title + '|' + a.href;
     if (seen.has(k)) return; seen.add(k);
+    const c = a.cloneNode(true);
+    c.querySelectorAll('*').forEach(el => {
+      const tn = el.tagName.toLowerCase();
+      if (tn === 'svg' || tn === 'time' || LABEL.test(el.getAttribute('class') || '')) el.remove(); });
+    const own = (c.textContent || '').trim().replace(/\s+/g, ' ');
     let node = a, ctx = '';
     for (let d = 0; d < 4 && node; d++) { ctx += ' ' + (node.textContent || ''); node = node.parentElement; }
-    out.push({title: title, url: a.href, ctx: ctx.replace(/\s+/g, ' ').slice(0, 500)});
+    out.push({title: title, own: own, url: a.href, ctx: ctx.replace(/\s+/g, ' ').slice(0, 500)});
   });
   return out.slice(0, 500);
-}"""
+}""".replace("__LABEL__", _LABEL_WORDS)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -388,6 +479,35 @@ _PROSE_BEFORE = re.compile(r"(?:^|[^A-Za-z])(?:of|an|a|the|and|to|from|by|with|a
                            r"across|between|into|or|that|this)[ \t]+$", re.I)
 
 
+# A Hebrew place name that is also a common noun reads as the noun when a Hebrew word follows
+# it (the construct state): `אזור הצפון`, `לאזור האישי` are "the north region", "the personal
+# area", never the town of Azor — and Cal's SMB account-manager posting shipped located Azor
+# (594); `רכז.ת מודיעין סייבר` is a cyber-INTELLIGENCE coordinator on Logica-IT's board, not a
+# Modi'in role. Measured 2026-09-13: of the 58 cached cards located `אזור`, 51 carry the word
+# only in that shape and 0 standalone; of the 8 located `מודיעין`, 2 are the noun
+# (`מודיעין והדרכה`) and every town reading is followed by a hyphen, the end, or `עילית`.
+# This is a READING rule, not an acceptance rule: `ISRAEL_LOC` still accepts a feed's own
+# `אזור המרכז` (120 cached locations are that phrase, 108 of them Ness Technologies'). Each
+# entry names the follower that makes the phrase a PLACE, returned whole (`אזור הצפון`,
+# `מודיעין עילית`); any other Hebrew follower is the noun, and the hit is skipped. The town
+# list itself is `pipeline.israel`'s.
+_HE_NOUN_PLACES = {
+    "אזור": re.compile(r"\s+(?:ו?ה?(?:צפון|מרכז|דרום|שרון|שפלה|נגב|גליל|קריות|עמקים|עמק)"
+                       r"|יהודה|שומרון)(?![א-ת])"),
+    "מודיעין": re.compile(r"\s+עילית(?![א-ת])"),
+}
+
+
+def _noun_reading(ctx, h):
+    """None: `h` is a place. Otherwise the text it stands for — the whole place phrase
+    (`אזור הצפון`, `מודיעין עילית`), or "" for a noun that names nothing (`לאזור האישי`)."""
+    place = _HE_NOUN_PLACES.get(ctx[h.start():h.end()])
+    if place is None or not re.match(r"\s+[א-ת]", ctx[h.end():]):
+        return None
+    whole = place.match(ctx, h.end())
+    return ctx[h.start():whole.end()] if whole else ""
+
+
 def _loc_from_ctx(ctx, anchor=None):
     r"""The place a card names, or "" when it names none. Anchored ON the place name (the
     match nearest to `anchor`, the title's index when the caller knows it) and extended only
@@ -398,7 +518,7 @@ def _loc_from_ctx(ctx, anchor=None):
     inside running prose ("…acknowledged as one of Israel") is not a location and returns ""
     so the caller's `url_is_il` gate decides, instead of every such card being accepted."""
     ctx = ctx or ""
-    hits = list(ISRAEL_LOC.finditer(ctx))
+    hits = [h for h in ISRAEL_LOC.finditer(ctx) if _noun_reading(ctx, h) != ""]
     if not hits:
         return ""
     # a card writes its place after its title: the nearest hit at or after `anchor` wins,
@@ -415,6 +535,9 @@ def _loc_from_ctx(ctx, anchor=None):
         if not others:
             return ""
         m = others[0] if anchor is None else min(others, key=near)
+    region = _noun_reading(ctx, m)
+    if region:
+        return _clean_loc(region)
     tail = _LOC_SUFFIX.match(ctx, m.end())
     return _clean_loc(ctx[m.start():tail.end() if tail else m.end()])
 
@@ -1130,26 +1253,46 @@ def _from_dom(dom, add, url_is_il=False, promote_only=False):
     hand a posting its address, never invent one."""
     write = add.promote_or_skip if promote_only else add
     for d in dom:
-        t = d.get("title", "")
+        # the anchor's text without its filing chips (`_DOM_JS`'s `own`, 584) when that is
+        # still a role's name; `title` (the whole anchor text) otherwise — a capture from
+        # before 2026-09-13 has no `own`, and a title that lives IN a label-classed span
+        # leaves `own` empty
+        own = (d.get("own") or "").strip()
+        t = own if (len(own) >= 5 and _rolish(own) and not BAD_TITLE.match(own)) else d.get("title", "")
         u2 = d.get("url", "")
         ctx = d.get("ctx", "")
         m = ISRAEL_LOC.search(ctx)
         near = bool(m and (t in ctx) and abs(ctx.find(t) - m.start()) < 220)
-        if (ROLE.search(t) and not BAD_TITLE.match(t) and _POSTING_HREF.search(u2)
+        # admission is unchanged — the anchor's whole text asks `ROLE`, as before 2026-09-13: a
+        # DOM card always has an address and ends the ladder, so a Hebrew-worded admission here
+        # would take boards from the rungs that open each posting (see `_from_cards`); only the
+        # TITLE it writes loses the chips
+        if (ROLE.search(d.get("title", "")) and not BAD_TITLE.match(t) and _POSTING_HREF.search(u2)
                 and (near or ISRAEL_LOC.search(t))):
             # no date from here: `ctx` is four ancestors' text run together, so a "Posted …"
             # in it belongs to whichever card is nearest, not provably to this one
             loc = _loc_from_ctx(ctx, anchor=ctx.find(t)) or _loc_from_ctx(t)
-            write(t, loc or ("Israel" if url_is_il else ""), u2,
-                  loc_src="assumed" if not loc and url_is_il else "")
+            # a DOM card always has its own address: under a row vouch it is still placed only
+            # by its own text or its page, never assumed (measured 2026-09-13, below)
+            assume = url_is_il and _role_named(t) and not getattr(add, "vouched_only", False)
+            write(t, loc or ("Israel" if assume else ""), u2,
+                  loc_src="assumed" if not loc and assume else "")
 
 
-def _page_is_il(url, page_html):
-    """Is a card with no location of its own implicitly Israeli? ONLY under `SCRAPE_ASSUME_IL=1`
-    (set by listing_hunt, crack_walled, repair_extract_gap for pre-vetted Israeli companies),
-    on a page-level Israel signal — which is why `pipeline.company_identity.
-    looks_like_a_job_listing_page` gates activation: under that flag a nav menu with an Israeli
-    footer scores like a board. This function must never widen further.
+def _page_is_il(url, page_html, vouched=False):
+    """Is a card with no location of its own implicitly Israeli? Two halves, BOTH required.
+
+    (1) Someone vouches for the ROW: `SCRAPE_ASSUME_IL=1` (set by listing_hunt, crack_walled,
+    repair_extract_gap for pre-vetted Israeli companies), or `vouched=True`, which the nightly
+    refresh passes for an active row whose board HOST is under Israel's ccTLD (`il_host`) — a
+    fact about the employer's own site, decided by the caller and never here. Until 2026-09-13
+    the refresh had no vouch at all, so the same page yielded Cal's postings when the hunt
+    read it and one card when the cron did (594).
+    (2) The PAGE names an Israeli place (entities decoded — Cal serves Hebrew as `&#x5E0;`).
+    **The page half must never widen further**: under a vouch a nav menu with an Israeli footer
+    scores like a board, which is why `pipeline.company_identity.
+    looks_like_a_job_listing_page` gates activation, and why the refresh vouches only rows
+    that are already active.
 
     Until 2026-08-30 an Israel token in the LISTING URL also answered yes — but the URL is
     our own search input, query (`jobs.comcast.com/search-jobs?location=Israel`: 14 US
@@ -1161,14 +1304,23 @@ def _page_is_il(url, page_html):
     flag for raw intake names, and a bare truthiness read took the non-empty string "0" as
     ON — re-arming the assumption at exactly the moment its own comment says it must be off
     (found 2026-08-30; this read site is the flag's only consumer)."""
-    return bool(os.environ.get("SCRAPE_ASSUME_IL", "") not in ("", "0")
-                and ISRAEL_LOC.search(page_html or ""))
+    flag = os.environ.get("SCRAPE_ASSUME_IL", "") not in ("", "0")
+    return bool((vouched or flag) and ISRAEL_LOC.search(_html.unescape(page_html or "")))
 
 
 def _url_scoped_il(url):
     """Our own search input: an Israel token anywhere in the LISTING url. A spend signal —
     a scoped page is still worth an LLM call (`_llm_gate`) — and never a location source."""
     return bool(ISRAEL_LOC.search(url or ""))
+
+
+def il_host(url):
+    """The board's HOST is under Israel's ccTLD (`.co.il`, `.org.il`, `.ac.il`, `.gov.il`, …).
+    A fact about the employer's own site, which the refresh reads as `_page_is_il`'s row vouch
+    — never the url's path or query, which are our own search input (`?location=Israel`,
+    `/location/israel-jobs/`: the Comcast and Arm stories, 2026-08-30)."""
+    host = (urllib.parse.urlsplit(url or "").hostname or "").lower().rstrip(".")
+    return host.endswith(".il")
 
 
 def _card_href(page_html, pos):
@@ -1222,6 +1374,20 @@ def _card_anchor_for(title, window_html):
     return hits.pop() if len(hits) == 1 else ""
 
 
+def _card_own_text(window_html):
+    """The text of ONE posting's card, for a card with no address of its own: everything after
+    its heading, up to its call to action. Cal (594) lists 29 postings as a heading, the
+    posting's full description and a modal CV button — no posting has a page, so the refresh
+    cannot fetch one (`not_job_url`) and this window is the only copy of the text there is.
+    "" when what is left is too short to be a description (a chip row, a date)."""
+    body = re.sub(r"(?is)^\s*<(h[1-4])\b[^>]*>.*?</\1>", " ", window_html or "", count=1)
+    body = re.sub(r"(?is)<(script|style|form|select)\b.*?</\1>", " ", body)
+    text = " ".join(_html.unescape(re.sub(r"<[^>]+>", " ", body)).split())
+    cut = [m.start() for m in (_CARD_END.search(text), _CARD_END_HE.search(text)) if m]
+    text = text[:min(cut)].strip() if cut else text
+    return text if len(text) >= 120 else ""
+
+
 def _from_cards(page_html, url_is_il, add, promote_only=False):
     """3) repeated heading-group fallback (Radancy/Google-style server-rendered listings):
     job cards as N same-class <h2>/<h3> siblings. A card with no location is kept only when
@@ -1232,18 +1398,23 @@ def _from_cards(page_html, url_is_il, add, promote_only=False):
     for pat in _CARD_PATTERNS:
         for m in re.finditer(pat, page_html, re.I):
             tag, attrs = m.group(1).lower(), m.group(2)
-            text = re.sub(r"<[^>]+>", "", m.group(3)).strip()
+            # decoded (the caps count characters, 594) and without the board's filing chips
+            # (584) — unless the chips were all there was to a role's name
+            raw = _html.unescape(re.sub(r"<[^>]+>", "", m.group(3))).strip()
+            own = _html.unescape(re.sub(r"<[^>]+>", " ", _strip_labels(m.group(3))))
+            own = " ".join(own.split())
+            text = own if (len(own) >= 5 and (_rolish(own) or not _rolish(raw))) else raw
             cm = re.search(r'class=["\']([^"\']+)', attrs) if "class=" in attrs else None
             cls = cm.group(1) if cm else ""
-            groups.setdefault((tag, cls), []).append((m.start(), text, ""))
+            groups.setdefault((tag, cls), []).append((m.start(), text, "", raw))
     # a heading whose text IS a link (`<h3><a href>Title</a></h3>`) matched neither pattern
     # — `[^<]` breaks on the `<a>` — and it is the one card shape that DECLARES its own
     # address; the href rides along and needs no proximity guess at all (434)
     for m in re.finditer(_CARD_LINKED_HEADING, page_html, re.I):
         tag, attrs, href, text = (m.group(1).lower(), m.group(2), m.group(3),
-                                  m.group(4).strip())
+                                  _html.unescape(m.group(4)).strip())
         cm = re.search(r'class=["\']([^"\']+)', attrs) if "class=" in attrs else None
-        groups.setdefault((tag, cm.group(1) if cm else ""), []).append((m.start(), text, href))
+        groups.setdefault((tag, cm.group(1) if cm else ""), []).append((m.start(), text, href, text))
     for (tag, cls), items in groups.items():
         items.sort(key=lambda it: it[0])
         # ...because linked headings arrive from a SECOND finditer pass: unsorted, a
@@ -1251,36 +1422,61 @@ def _from_cards(page_html, url_is_il, add, promote_only=False):
         # Israeli card silently refused into `loc_unknown` (wave-1 attacker C, F3)
         if len(items) < 3:
             continue
-        titles = [t for _, t, _h in items]
+        titles = [t for _, t, _h, _r in items]
+        floor = max(2, len(titles) // 3)
         junk = sum(1 for t in titles if BAD_TITLE.match(t) or not re.search(r"[a-zא-ת]", t, re.I))
-        rolish = sum(1 for t in titles if ROLE.search(t))
+        english = sum(1 for _p, _t, _h, raw in items if ROLE.search(raw))
+        hebrew = english < floor and sum(1 for t in titles if _rolish(t)) >= floor
         senty = sum(1 for t in titles if _CARD_SENTENCE.match(t))
         oneword = sum(1 for t in titles if len(t.split()) < 2)   # department labels
-        if junk > len(titles) // 3 or rolish < max(2, len(titles) // 3) \
+        if junk > len(titles) // 3 or (english < floor and not hebrew) \
                 or senty > len(titles) // 3 or oneword > len(titles) // 3:
             continue
-        positions = [p for p, _, _h in items]
-        for idx, (pos, t, carried) in enumerate(items):
-            nxt = positions[idx + 1] if idx + 1 < len(positions) else pos + 1600
-            end = min(pos + 1600, nxt)          # never read the NEXT card's location
-            ctx = re.sub(r"<[^>]+>", " ", page_html[pos:end])
-            loc = _loc_from_ctx(ctx, anchor=0)      # the card's text starts with its title
-            # the card's address, by what NAMES the role: the heading's own link, else the
-            # one window anchor whose text or slug names this title, else the byte-nearest
-            # href — refused when its slug names a DIFFERENT role (434: byte proximity on an
-            # interleaved layout is the neighbour's link, and a wrong address is worse than
-            # none)
+        positions = [p for p, _t, _h, _r in items]
+        # the longest window between two siblings bounds the LAST card's, which would otherwise
+        # run into the page's footer and forms
+        span = max(b - a for a, b in zip(positions, positions[1:]))
+        ends = [min(p + 1600, positions[i + 1] if i + 1 < len(positions) else p + 1600)
+                for i, p in enumerate(positions)]      # never read the NEXT card's location
+        # the card's address, by what NAMES the role: the heading's own link, else the one
+        # window anchor whose text or slug names this title, else the byte-nearest href —
+        # refused when its slug names a DIFFERENT role (434: byte proximity on an interleaved
+        # layout is the neighbour's link, and a wrong address is worse than none)
+        hrefs = []
+        for (pos, t, carried, _r), end in zip(items, ends):
             href = carried or _card_anchor_for(t, page_html[max(0, pos - 600):end])
             if not href:
                 near = _card_href(page_html, pos)
                 href = "" if _card_slug_names(t, near) == -1 else near
+            hrefs.append(href)
+        if hebrew and any(hrefs):
+            # A group that only Hebrew role words admit is read HERE only when its postings have
+            # no address of their own (Cal, 594). An addressed Hebrew board is read today by the
+            # rungs that open each posting, and a heading reading with addresses ENDS the ladder
+            # before them: replayed 2026-09-13 over 33 `.il` boards, John Bryce went 11 postings
+            # -> 1, Latet 22 -> 2, Chimes lost all 25 descriptions — beside real gains (Strauss
+            # Water 0 -> 49). That trade is filed, not taken.
+            continue
+        for idx, ((pos, t, carried, _r), end, href) in enumerate(zip(items, ends, hrefs)):
+            nxt = positions[idx + 1] if idx + 1 < len(positions) else pos + 1600
+            ctx = _html.unescape(re.sub(r"<[^>]+>", " ", page_html[pos:end]))
+            loc = _loc_from_ctx(ctx, anchor=0)      # the card's text starts with its title
             # a locationless card is PASSED THROUGH, not skipped: `_Adder._judge` is the one
             # refusal point and the one counter (496 — until 2026-08-30 `url_is_il` covered
             # for the query here, and 14 Comcast US postings shipped as Israel), and the
             # title's own tail can still place the card on the way
-            write(t, loc or ("Israel" if url_is_il else ""), href,
-                  date=_date_from_card(ctx[:400]),
-                  loc_src="assumed" if not loc and url_is_il else "")
+            own = "" if href else _card_own_text(page_html[pos:nxt if idx + 1 < len(positions)
+                                                           else pos + span])
+            # ...and only a card with no address of its own: one that HAS a page is placed by
+            # that page. Assumed and addressed, a card ENDS the ladder (`add.strong`) before
+            # the position-link rung can read its own city and text — BST Group, 2026-09-13:
+            # 1 posting read from its page with its place and description became 6 cards, 5
+            # of them only assumed Israeli, none with a description.
+            assume = (url_is_il and _role_named(t)
+                      and not (href and getattr(add, "vouched_only", False)))
+            write(t, loc or ("Israel" if assume else ""), href,
+                  date=_date_from_card(ctx[:400]), desc=own,
+                  loc_src="assumed" if not loc and assume else "")
 
 
 @dataclass
@@ -2033,10 +2229,15 @@ def _from_embedded_board(company, url, r: Rendered, deadline=None):
     return jobs
 
 
-def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=None, visit=None):
+def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=None, visit=None,
+             assume_il=False):
     """Run the five strategies over a Rendered bundle. Pure apart from `fetch`/`visit`/`llm`
-    (which are injectable) and the SCRAPE_* env flags. Returns (jobs, winning_strategy)."""
+    (which are injectable) and the SCRAPE_* env flags. Returns (jobs, winning_strategy).
+    `assume_il`: the caller vouches for this ROW (`_page_is_il`'s first half)."""
     add, jobs = _make_adder(company, url)
+    # the refresh's host vouch, with no hunt flag behind it, places only ADDRESS-LESS cards
+    # (`_from_cards`/`_from_dom`); the hunts' pre-vetted flag keeps its old reach
+    add.vouched_only = bool(assume_il) and os.environ.get("SCRAPE_ASSUME_IL", "") in ("", "0")
     page_html = r.page_html
 
     def done():
@@ -2065,7 +2266,8 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
     # pass would only add run-together duplicates (Port.io: 16 of them).
     n_structured = add.israeli
     add.stage = "dom"
-    _from_dom(r.dom, add, url_is_il=_page_is_il(url, r.page_html), promote_only=n_structured >= 3)
+    _from_dom(r.dom, add, url_is_il=_page_is_il(url, r.page_html, vouched=assume_il),
+              promote_only=n_structured >= 3)
     if add.strong:
         return done()
     # headless Chromium sometimes gets a bot-stripped page while plain HTTP gets the real
@@ -2092,7 +2294,7 @@ def _extract(company, url, r: Rendered, deadline=None, fetch=_fetch_url, llm=Non
         page_html = r.plain_html if not page_html else page_html + "\n" + r.plain_html
     if not page_html:
         return done()
-    url_is_il = _page_is_il(url, page_html)
+    url_is_il = _page_is_il(url, page_html, vouched=assume_il)
     add.stage = "cards"
     _from_cards(page_html, url_is_il, add, promote_only=add.israeli > 0)
     if add.strong:
@@ -2246,15 +2448,17 @@ def _classify(r: Rendered, jobs):
 # public
 # ---------------------------------------------------------------------------------------------
 def scrape_result(company, url, timeout_ms=45000, *, budget_s=None, render=None, fetch=None,
-                  llm=None, visit=None):
+                  llm=None, visit=None, assume_il=False):
     """Render + parse one listings page. Never raises. `status` says what an empty `jobs`
-    means: "empty" (the page answered, no Israel roles) or "error" (could not read it)."""
+    means: "empty" (the page answered, no Israel roles) or "error" (could not read it).
+    `assume_il`: the caller vouches for the row (`_page_is_il`); the refresh passes `il_host`."""
     t0 = time.monotonic()
     deadline = Deadline.start(COMPANY_BUDGET_S if budget_s is None else budget_s)
     try:
         r = (render or _render)(url, timeout_ms, deadline)
         jobs, strategy = _extract(company, url, r, deadline=deadline,
-                                  fetch=fetch or _fetch_url, llm=llm, visit=visit)
+                                  fetch=fetch or _fetch_url, llm=llm, visit=visit,
+                                  assume_il=assume_il)
         status, error = _classify(r, jobs)
         # NOT `rescued` when the board's own API answered. `rescued` marks jobs that
         # landed before a FAILED render, and the refresh holds those behind the

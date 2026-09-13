@@ -3633,5 +3633,125 @@
   "replace": "        if not _gate.identity_ok(n, monitor) and n == \"\":",
   "why": "a refusal branch that can never be taken is the gate removed with the call still in the source.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-rolish-english-only",
+  "file": "scrape_universal.py",
+  "symbol": "_rolish",
+  "class": "M6-fallback-removal",
+  "find": "    return bool(ROLE.search(t) or _ROLE_HE.search(t))",
+  "replace": "    return bool(ROLE.search(t))",
+  "why": "a Hebrew board's heading group is refused by the role-ratio gate when only `ROLE` (English) counts: Cal's 29 decoded titles matched 3 against a floor of 9 and the board read 0 (594). Killed by test_scrape_entity_encoded_hebrew_headings_are_all_read.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-hebrew-right-edge-drop",
+  "file": "scrape_universal.py",
+  "symbol": "_build_israel_loc",
+  "class": "M3-branch-narrowing",
+  "find": "    return re.compile(left + r\"(?:\" + \"|\".join(alts) + r\")(?-i:(?![a-z0-9א-ת]))\", re.I)",
+  "replace": "    return re.compile(left + r\"(?:\" + \"|\".join(alts) + r\")(?-i:(?![a-z0-9]))\", re.I)",
+  "why": "without a Hebrew right edge `אילת` matches inside `שאילתות` (\"queries\") and Cal's model-developer posting ships located Eilat, a plausible wrong city on the board and in the mail (594). Killed by test_scrape_a_hebrew_place_inside_a_word_is_not_a_place_but_a_proclitic_form_is.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-azor-noun-read-as-town",
+  "file": "scrape_universal.py",
+  "symbol": "_loc_from_ctx",
+  "class": "M4-guard-removal",
+  "find": "    hits = [h for h in ISRAEL_LOC.finditer(ctx) if _noun_reading(ctx, h) != \"\"]",
+  "replace": "    hits = list(ISRAEL_LOC.finditer(ctx))",
+  "why": "`אזור הצפון` / `לאזור האישי` are \"the north region\" / \"the personal area\"; read as places they stamp the town of Azor on the card (51 of the 58 cached `אזור` locations, 2 of Cal's 29). Killed by test_scrape_a_hebrew_place_inside_a_word_is_not_a_place_but_a_proclitic_form_is.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-vouch-without-page-token",
+  "file": "scrape_universal.py",
+  "symbol": "_page_is_il",
+  "class": "M1-gate-removal",
+  "find": "    return bool((vouched or flag) and ISRAEL_LOC.search(_html.unescape(page_html or \"\")))",
+  "replace": "    return bool(vouched or (flag and ISRAEL_LOC.search(_html.unescape(page_html or \"\"))))",
+  "why": "the row vouch must never stand alone: the page's own Israeli place is the half `_page_is_il`'s docstring says may never widen, and without it every locless card on any `.il` host, nav menus included, becomes an assumed Israeli posting. Killed by test_scrape_an_il_host_vouches_a_locless_card_only_with_a_page_token.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-dom-own-ignored",
+  "file": "scrape_universal.py",
+  "symbol": "_from_dom",
+  "class": "M6-fallback-removal",
+  "find": "        t = own if (len(own) >= 5 and _rolish(own) and not BAD_TITLE.match(own)) else d.get(\"title\", \"\")",
+  "replace": "        t = d.get(\"title\", \"\")",
+  "why": "the rendered anchor's textContent runs the board's filing chips into the title: `Splunk Dashboard Developer BACKEND גוש דן` on Logica-IT, read as title words by the classifier (584). Killed by test_scrape_a_dom_entry_prefers_its_own_text_over_the_anchors_label_blob.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-cards-labels-kept",
+  "file": "scrape_universal.py",
+  "symbol": "_from_cards",
+  "class": "M6-fallback-removal",
+  "find": "            text = own if (len(own) >= 5 and (_rolish(own) or not _rolish(raw))) else raw",
+  "replace": "            text = raw",
+  "why": "the served-HTML twin of the DOM `own` field: a heading's label-classed spans are filing chips, and kept they fork the title and the role's key (584). Killed by test_scrape_a_heading_group_drops_label_spans_and_keeps_wix_styling_spans.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-vouch-not-threaded",
+  "file": "refresh_scrape_cache.py",
+  "symbol": "_worker",
+  "class": "M8-argument-mis-passing",
+  "find": "        res = scrape_result(name, url, assume_il=il_host(url))",
+  "replace": "        res = scrape_result(name, url)",
+  "why": "the 00:00 refresh is the only reader that never vouched for a row: Cal read ~30 postings under the hunt's flag and 1 under the cron (594). Killed by test_refresh_worker_vouches_a_row_by_its_board_host.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-addressless-card-text-dropped",
+  "file": "scrape_universal.py",
+  "symbol": "_from_cards",
+  "class": "M6-fallback-removal",
+  "find": "                  date=_date_from_card(ctx[:400]), desc=own,",
+  "replace": "                  date=_date_from_card(ctx[:400]),",
+  "why": "a heading card with no address of its own has no page to fetch (the refresh counts the listing url as `not_job_url`), so its card window is the only copy of the posting's text: Cal's 29 postings, each a heading, its description and a modal CV button (594). Killed by test_scrape_a_card_with_no_address_of_its_own_keeps_its_own_text.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-assumed-card-names-no-role",
+  "file": "scrape_universal.py",
+  "symbol": "_from_cards",
+  "class": "M1-gate-removal",
+  "find": "            assume = (url_is_il and _role_named(t)\n                      and not (href and getattr(add, \"vouched_only\", False)))",
+  "replace": "            assume = (url_is_il\n                      and not (href and getattr(add, \"vouched_only\", False)))",
+  "why": "the row vouch places a card nothing else placed; without the title's own role noun it places whatever heading shares the group: Globalbit's `AI-First Engineering`, `Growth & Learning` and three more \"why join us\" bullets on its .co.il board (measured 2026-09-13, 6 admitted, 0 of them postings). Killed by test_scrape_an_il_host_vouches_a_locless_card_only_with_a_page_token.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-vouch-assumes-an-addressed-card",
+  "file": "scrape_universal.py",
+  "symbol": "_from_cards",
+  "class": "M4-guard-removal",
+  "find": "            assume = (url_is_il and _role_named(t)\n                      and not (href and getattr(add, \"vouched_only\", False)))",
+  "replace": "            assume = url_is_il and _role_named(t)",
+  "why": "an addressed card the host vouch assumes Israeli is a STRONG reading and ends the ladder before the position-link rung reads its page: BST Group read 1 posting from its page with its own place and description, and 6 heading cards with it, 5 of them only assumed and none described (replayed 2026-09-13). Killed by test_scrape_an_il_host_vouches_a_locless_card_only_with_a_page_token.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-hebrew-group-with-addresses-read",
+  "file": "scrape_universal.py",
+  "symbol": "_from_cards",
+  "class": "M5-population-widening",
+  "find": "        if hebrew and any(hrefs):",
+  "replace": "        if False:",
+  "why": "a heading group that only Hebrew role words admit, read with its postings' own addresses, ends the ladder before the position-link rung opens those postings: replayed 2026-09-13 over 33 .il boards, John Bryce 11 postings -> 1, Latet 22 -> 2, Chimes lost all 25 descriptions. Killed by test_scrape_a_hebrew_board_with_addresses_is_left_to_the_rungs_that_open_them.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "scrape-dom-hebrew-admission",
+  "file": "scrape_universal.py",
+  "symbol": "_from_dom",
+  "class": "M5-population-widening",
+  "find": "        if (ROLE.search(d.get(\"title\", \"\")) and not BAD_TITLE.match(t) and _POSTING_HREF.search(u2)",
+  "replace": "        if (_rolish(t) and not BAD_TITLE.match(t) and _POSTING_HREF.search(u2)",
+  "why": "a DOM card always carries its own address and ends the ladder, so admitting Hebrew-worded anchors there takes addressed Hebrew boards from the rung that opens each posting (the same 2026-09-13 replay). Killed by test_scrape_a_hebrew_board_with_addresses_is_left_to_the_rungs_that_open_them.",
+  "must_be_killed_by_behavioural": true
  }
 ]

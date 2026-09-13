@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**663 filed · 469 open · 194 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**667 filed · 471 open · 196 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 614.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 618.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -248,7 +248,7 @@ closure convention in the header.
 - **604** `604@registry` **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 
-### infra — 118 open
+### infra — 119 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -368,41 +368,7 @@ closure convention in the header.
 - **605** `605@infra` **`paid residential rung: ON/OFF` is written to the step SUMMARY only, so no log search can
 - **610** `610@infra` **The inline filler's render cap is 0, and an Oracle HCM posting is a shell without a
 - **612** `612@infra` **Two parked registry rows read one board under names that differ only by a diacritic, and
-
-### scraper — 32 open
-
-- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
-- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
-- **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
-- **219** `219@scraper` **Strategy 5's model, measured once**
-- **220** `220@scraper` **A `links:` carry has no ceiling**
-- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
-- **222** `222@scraper` **`pipeline/llm.py`
-- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
-- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
-- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
-- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
-- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
-- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
-- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
-- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
-- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
-- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
-- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
-- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
-- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
-- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
-- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
-- **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
-- **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
-- **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
-- **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
-- **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
-- **584** `584@scraper` **The Logica-IT board's category-and-region suffix is read as title words**
-- **594** `594@scraper` **A board that publishes no place per posting yields one card a night, and the one it
-- **608** `608@scraper` **21 scraper-built cache cards carry page furniture that no re-clean can keep off, and 7
+- **617** `617@infra` **Four of eight mutation shards already walled past the 1,800 s line on 09-13, and the
 
 ### discovery — 31 open
 
@@ -437,6 +403,40 @@ closure convention in the header.
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
 - **569** `569@discovery` **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
 - **609** `609@discovery` **Every accepted Telegram role is held off the board by construction**
+
+### scraper — 31 open
+
+- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
+- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
+- **90** `90@scraper` **Per-job strategy provenance in the cache**
+- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
+- **219** `219@scraper` **Strategy 5's model, measured once**
+- **220** `220@scraper` **A `links:` carry has no ceiling**
+- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
+- **222** `222@scraper` **`pipeline/llm.py`
+- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
+- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
+- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
+- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
+- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
+- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
+- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
+- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
+- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
+- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
+- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
+- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
+- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
+- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
+- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
+- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
+- **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
+- **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
+- **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
+- **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
+- **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
+- **608** `608@scraper` **21 scraper-built cache cards carry page furniture that no re-clean can keep off, and 7
+- **616** `616@scraper` **A Hebrew careers board whose postings have their own links is still read only by the
 
 ### docs — 25 open
 
@@ -542,7 +542,7 @@ closure convention in the header.
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
 
-### classifier — 18 open
+### classifier — 19 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -562,6 +562,7 @@ closure convention in the header.
 - **557** `557@classifier` **LTX has not flipped to its own board
 - **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
+- **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
 
 ### jd-text — 18 open
 
@@ -584,7 +585,7 @@ closure convention in the header.
 - **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
 - **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
 
-### render — 7 open
+### render — 8 open
 
 - **4** `4@render` **`pipeline/jdtext.py`**
 - **119** `119@render` **`digest._LOC_CANON` and the four seniority vocabularies are copies** *(half closed)*
@@ -593,6 +594,7 @@ closure convention in the header.
 - **150** `150@render` **A failed email stub replaces yesterday's `digests/latest.md`**
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
 - **598** `598@render` **After a fold, a role filed under the ALIAS name loses its brand and its `firmo_match`
+- **614** `614@render` **The mail says `render: 1 role(s) hidden
 
 <!-- BACKLOG-INDEX:END -->
 
@@ -11704,7 +11706,11 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      measured over all 2,513 stored bodies: 126 bodies, 183,400 characters. The count
      this item asked for (distinct rail markers over `matched`) was **62 published rows**
      on 2026-09-11 and is **0**. The `scraper` half stands: the CAPTURE still stores the
-     whole page and this layer cuts it afterwards.
+     whole page and this layer cuts it afterwards. (2026-09-13, `scraper`: NOT shrunk by that
+     session's capture change. Heading and DOM cards write no position-page text, and the one
+     new description source — an address-less card's own window, `_card_own_text` — is cut at
+     the card's call to action. The position-page `desc[:4000]` is untouched; `jd-text` filed
+     the 21 cards it rebuilds nightly, with the fix, as `608`.)
      `nestl nespresso sa|data analyst למחלקת השיווק חברת נספרסו` stored **3,353** characters
      for a posting whose actual JD is **693**: a cookie notice, the JD, `#Nespresso`,
      `Show more / Show less`, the seniority/employment/function block, and then ~27
@@ -11921,8 +11927,17 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      without anyone hand-editing 45 lines again. Check: `grep -c '"role_id"' cloud_state/roles_retractions.jsonl`
      equals the line count.
 
-584. **The Logica-IT board's category-and-region suffix is read as title words** — lane:
-     `scraper`. Filed 2026-09-11 by `classifier`, measured and NOT taken as a gate change.
+584. ~~**The Logica-IT board's category-and-region suffix is read as title words**~~ — lane:
+     `scraper`. **CLOSED 2026-09-13 (`scraper`), cut at capture, not in the classifier.** The
+     suffix is not written into the title: Logica-IT's anchor holds the title AND two chips,
+     `<span class="meta profession">BACKEND</span><span class="meta …">גוש דן</span>`, and
+     `_DOM_JS` took `a.textContent`. One label vocabulary (`_LABEL_WORDS`, token-bounded so
+     `stage` is not `tag`) now serves the rendered DOM (an `own` field `_from_dom` prefers
+     while it is still a role's name) and the served HTML (`_strip_labels` in `_from_cards`).
+     Live through the refresh worker, 0 credits: **10 cards, as tonight, 0 with a chip** (the
+     cache's 10 all end in one: `Python Developer BACKEND גוש דן`). The class in the cache is **1 board**:
+     the 18 other titles ending in a region are employer-written (`נהג/ת מחסן- הוד השרון`).
+     Original text: Filed 2026-09-11 by `classifier`, measured and NOT taken as a gate change.
      Every card on `https://www.logica-it.com/jobs/` (94 cached) ends in the board's own
      filing labels — `Python Developer BACKEND גוש דן`, `Splunk Dashboard Developer BACKEND
      גוש דן`, `Enterprise Data Lead BI השפלה`, `בודק/ת תוכנה QA ירושלים יו"ש` — and no title
@@ -12162,8 +12177,36 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      companies whose board has moved — the rows most likely to be posting somewhere we are
      not reading.
 
-594. **A board that publishes no place per posting yields one card a night, and the one it
-     yields carries another posting's city** — lane: `scraper`. Filed 2026-09-11 by
+594. ~~**A board that publishes no place per posting yields one card a night, and the one it
+     yields carries another posting's city**~~ — lane: `scraper`. **CLOSED 2026-09-13
+     (`scraper`): the stored page replays 1 card → 29, all 29 with their own description, no
+     borrowed city.** Four defects, not three: (1) the card caps now count characters, with an
+     entity as ONE character (`_UNIT`; its alternatives are disjoint, because an overlapping
+     `[^<]` backtracks exponentially on an over-cap heading); (2) decoded, all 29 headings
+     matched and the group was STILL refused — the role-ratio gate read `ROLE`, which has no
+     Hebrew (3 of 29 matched against a floor of 9) — so `_rolish` adds bounded Hebrew stems,
+     counted only for a group whose postings have no address of their own (the addressed case
+     is a measured trade, `616`);
+     (3) the Eilat was `אילת` inside `שאילתות` ("queries"): `ISRAEL_LOC` now has Hebrew word
+     edges (a one- or two-letter proclitic and a word-final letter still read), and two of the
+     29 cards were Azor from `אזור הצפון` ("the north region"), now read as the region phrase
+     (`_noun_reading`; 51 of the cache's 58 `אזור` locations were the noun); (4) the refresh
+     had no row vouch, so it passes `assume_il=il_host(url)` — the board's HOST under `.il`,
+     never the url's path or query — and `_page_is_il` still wants the page's own Israeli
+     place; that vouch places only an ADDRESS-LESS card, and an assumed card must also NAME a
+     role in its title (`_role_named`: Globalbit's
+     `.co.il` board lists "why join us" bullets as a heading group, 6 of them would otherwise
+     have been admitted). A card with no address keeps its own window as its description
+     (`_card_own_text`, cut at its call to action): Cal's postings have no page to fetch. Cache
+     measurement: 0 stored locations stop passing `ISRAEL_LOC`; 86 cards' own-text place
+     reading moves. Full-ladder replay (listing + position pages by free plain HTTP, no
+     browser, no LLM) over the 33 `.il` rows whose reading changes: **123 postings -> 237, 106
+     with a description -> 146, 17 cards lost / 131 gained**; every "lost" is a place fixed
+     (an `אזור` noun, a borrowed Eilat) or, twice, a card that now has no place at all (BST
+     Group, Noga Iso — both carried a borrowed city); gains are Menora 0 -> 72, entrypoint 0 ->
+     20, Margolin 0 -> 11 (read by the LLM rung tonight), Fattal 3 -> 8, Genie 0 -> 4. **Unattended proof due 2026-09-14** (`HANDOFF.md` morning checks). The
+     class, from the 09-13 refresh log and the cache: 129 rows read `via cards`, 28 of them
+     with every card on the listing url (113 cards). Original text: Filed 2026-09-11 by
      `ats-fetch` with the page measured, not guessed; handed over by `registry`, which
      activated `Cal (Israel Credit Cards)` the same day and reported "1 card of ~30, wrong
      location". It is not the accordion shape the hand-over assumed. One unlocker fetch of
@@ -12587,3 +12630,69 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      queue FILE keeps it for ever; `queue_state` counts it `answered on disk`. One arm after
      `disposition_verdict`: a stored `covered-by-row` / `already-a-row` / `settled-by-a-rung`
      record is itself the answer, as `is_retired` already says.
+
+## From the `scraper` lane, 2026-09-13
+
+614. **The mail says `render: 1 role(s) hidden — the scraped title is a card blob` every morning
+     and never names the role; it is a faithful LinkedIn title with a pipe in it** — lane:
+     `render` (the rule and the report), with `roles` (the canon). Filed 2026-09-13 by
+     `scraper`, the lane the alarm's own text sends to ("fix the scrape"). Re-derived with
+     `rolecard.is_mangled_title` over `cloud_state/roles.jsonl` and both caches: the one open
+     role it hides on 2026-09-12 and 09-13 is discovery card **`ONE datAI | Business Data
+     Analyst | SQL & Power BI`** (LinkedIn `4463425241`, `Center District, Israel`). The slug
+     carries the same words, so the pipe is the employer's own — no capture swallowed a tile,
+     and nothing in any scraper can fix it. It is hidden by `jdtext._MANGLED_TITLE`'s bare `|`
+     arm (`pipeline/jdtext.py:34`), while `roles.canonical_title` deliberately KEEPS `| SQL &
+     Power BI` (585 cuts a ` | ` segment only when it is pure schedule/place furniture), so the
+     role is classified and kept, then withheld from the board and the mail for as long as it
+     is open. 36 of the 3,769 titles in `discovered_cache.json` carry ` | `. Two decisions,
+     neither the scraper's: (a) whether one ` | ` followed by a short skills or team segment is
+     a blob at all, or the canon should cut such a segment so both layers agree; (b)
+     `rolecard.report` (`pipeline/rolecard.py:640`) prints a count, never the title, so the next
+     hidden role costs the next session this same re-derivation, while the alias and canon
+     folds already name their strings (`pipeline/run.py:582`). Check: the digest log's `render`
+     group names each hidden title.
+
+615. **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
+     place patterns have no Hebrew word edges** — lane: `classifier` (`pipeline/israel.py`).
+     Filed 2026-09-13 by `scraper`, agreed live with that day's `classifier` session, which is
+     shipping 566 and asked for this to be filed rather than taken. Over `scraped_cache.json`
+     **58 cards are located `אזור`**; 51 carry the word only as the construct-state noun
+     (`אזור הצפון`, `לאזור האישי`), 0 standalone, 7 not in their stored text. Of the 58, **23
+     name another Israeli place and 35 name none** (title, description and url), so deleting
+     the entry would turn 35 cards non-Israeli at `is_israel_job` — the fix is not the deletion.
+     The scraper side is done (`scrape_universal._noun_reading` reads the noun as its region
+     phrase or as nothing; `ISRAEL_LOC` has Hebrew edges, so `אילת` no longer matches inside
+     `שאילתות`), but `israel._PLACE_PATTERNS` (`pipeline/israel.py:128`) keeps ASCII-only
+     lookarounds, so the gate still finds a place inside a longer Hebrew word (`ישראלי`,
+     `אזורי`, `שאילתות`). Also: `מודיעין עילית` (Modi'in Illit) is not in `_IL_PLACES_HE`, and
+     `מודיעין` is also "intelligence" (2 of the 8 cached `מודיעין` locations). The `classifier`
+     session named the measurement: `tools/measure_israel_rule.py --base <ref>` once 566 lands.
+
+616. **A Hebrew careers board whose postings have their own links is still read only by the
+     rungs below the heading cards, and the trade is measured, not taken** — lane: `scraper`.
+     Filed 2026-09-13 by itself. 594 made the heading-group gate count Hebrew role words, and
+     the first version counted them for every group. Replayed over the 33 `.il` boards whose
+     reading changed (listing plus position pages by free plain HTTP, no browser, no LLM), an
+     addressed Hebrew heading reading ENDS the ladder before the position-link rung opens each
+     posting: John Bryce 11 postings -> 1, Latet 22 -> 2, Ram Aderet 6 -> 3, and Chimes 25 -> 65
+     with all 25 descriptions and every own city gone. The same mechanism found real boards
+     nothing reads tonight: Strauss Water 0 -> 49 (`scrape_rot` empty, 17 nights), Oferavnir,
+     one פתרונות טכנולוגיים, Israel Hayom, InfinityLabs (the last four read by the LLM rung),
+     and Logica-IT's 18 Hebrew-only anchors (10 read tonight, 28 under a Hebrew DOM admission).
+     So the Hebrew count admits only an ADDRESS-LESS group, and DOM admission still asks
+     `ROLE`. Wanted before widening: a rule under which a heading reading with addresses does
+     not end the ladder when the position-link rung would read more — `promote_only` for the
+     rung that opens pages is decision 1 of `docs/decisions/2026-08-26-scraper-ladder-and-what-was-declined.md`
+     and must be re-measured, not assumed. The replay driver is scratch tooling; its shape is in
+     `docs/sessions/2026-09-13-scraper.md`. Two English-only gates are the same question
+     unmeasured: `_title_of` (structured JSON titles) and `_from_position_links` still ask
+     `ROLE`, so a Hebrew board publishing schema.org `JobPosting` has every title refused there.
+
+617. **Four of eight mutation shards already walled past the 1,800 s line on 09-13, and the
+     catalogue grew by twelve records the same day** — lane: `infra`. Filed 2026-09-13 by
+     `scraper`, which added the twelve. Run `34755843907` (`640eb3c`): shard walls 1,950 /
+     1,696 / 1,870 / 1,913 / 1,427 / 1,941 / 1,961 / 1,789 s, all green, 41 records each. The
+     workflow's own rule is "past ~1,800 s add a matrix entry AND bump SHARDS, never the
+     budget"; at ~41 s a record the twelve add ~60 s a shard. Not urgent against the 40-minute
+     kill (2,400 s), and `MUTATE_WALL_WARN` already prints on each shard's run page.

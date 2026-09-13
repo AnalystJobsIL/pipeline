@@ -24797,6 +24797,253 @@ def test_scrape_a_span_wrapped_heading_is_still_a_card():
     assert all(j["location"] == "Petah Tikva, Israel" for j in jobs)
 
 
+def _he_entities(text):
+    """Hebrew the way Cal's board serves it: every letter an `&#x5E0;` entity."""
+    return "".join(f"&#x{ord(c):X};" if "\u05d0" <= c <= "\u05ea" else c for c in text)
+
+
+_CAL_TITLES = ("מפתח.ת מודלים סטטיסטיים לניהול סיכונים", "אנליסט/ית נתונים בכיר/ה לצוות הדאטה",
+               "נציג/ת שירות ומכירה למוקד הלקוחות", "מנהל.ת תיקי לקוחות עסקיים בחטיבה",
+               "רפרנט.ית התאמות בנקים ותפעול כספים", "חתמ.ת רכב לחטיבת הביטוח הכללי",
+               "עורכ.ת דין רכש וטכנולוגיות מידע", "מנטר.ת הונאות במערך הסליקה והאשראי",
+               "מהנדס/ת תוכנה לפיתוח מערכות ליבה")
+
+
+def test_scrape_entity_encoded_hebrew_headings_are_all_read():
+    """Kills `scrape-rolish-english-only`. Cal's board (594) is 29 class-less `<h3>` titles,
+    each beside a modal apply button and no link of its own, with Hebrew served as `&#x5E0;`
+    entities. The heading pattern's `{5,140}` counted MARKUP, eight characters a letter, so a
+    20-letter title never matched (11 of 29 did); decoded, all 29 matched and the group was
+    refused anyway, because the role-ratio gate read `ROLE`, which has no Hebrew (3 of 29).
+    The night read one card of ~30."""
+    import html as _h
+    import scrape_universal as N
+    url = "https://www.cal-online.co.il/about/jobs/"
+    cards = "".join(
+        f"<div class=\"container jobItem\"><h3>{_he_entities(t)}</h3>"
+        f"<div><p>{_he_entities('תיאור המשרה ודרישות התפקיד')}</p></div>"
+        f"<p>{_he_entities('תל אביב')}</p>"
+        f"<p><button type=\"button\" data-toggle=\"modal\" data-job-id=\"JB-{i}\">x</button></p></div>"
+        for i, t in enumerate(_CAL_TITLES))
+    page = "<html><body>" + cards + "</body></html>"
+    for served in (page, _h.unescape(page)):
+        add, jobs = N._make_adder("Cal (Israel Credit Cards)", url)
+        N._from_cards(served, False, add)
+        assert [j["title"] for j in jobs] == list(_CAL_TITLES)
+        assert {j["location"] for j in jobs} == {"תל אביב"}
+
+
+def test_scrape_a_card_with_no_address_of_its_own_keeps_its_own_text():
+    """Kills `scrape-addressless-card-text-dropped`. Cal's postings have no page: each is a
+    heading, its whole description and a modal CV button, so the refresh refuses to fetch the
+    listing url as a posting (`not_job_url`) and the card window is the only copy of the text.
+    The card keeps it — cut at its own call to action, the last card bounded by its siblings'
+    longest window (it would run into the CV form and the footer). A card WITH an address
+    keeps no window text: its page is the description."""
+    import scrape_universal as N
+    url = "https://www.cal-online.co.il/about/jobs/"
+    desc = ("תיאור המשרה: ניתוח ביצועי תיקי אשראי וניטור סיכוני מודלי החיתום, עבודה עם SQL ו-Tableau, "
+            "הצגת תובנות להנהלה. דרישות: תואר ראשון רלוונטי וניסיון של שנה לפחות כאנליסט.")
+    cards = "".join(
+        f"<div><h3>{t}</h3><div><p>{desc}</p></div>"
+        f"<p><button data-toggle=\"modal\">שליחת קורות חיים</button></p></div>"
+        for t in _CAL_TITLES[:4])
+    footer = ("<div>" + "טופס שליחת פרטים שם פרטי שם משפחה טלפון " * 40 + "</div>"
+              "<footer>כל הזכויות שמורות לחברת כאל תל אביב</footer>")
+    add, jobs = N._make_adder("Cal (Israel Credit Cards)", url)
+    N._from_cards("<html><body>" + cards + footer + "</body></html>", True, add)
+    assert len(jobs) == 4
+    assert [j["description"] for j in jobs] == [desc] * 4
+    linked = "".join(f'<div><h3><a href="/jobs/{i}">{t}</a></h3><p>{desc}</p><p>Tel Aviv</p></div>'
+                     for i, t in enumerate(("Data Analyst", "BI Developer", "Data Engineer")))
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    N._from_cards("<html>" + linked + "</html>", False, add)
+    assert len(jobs) == 3 and all(j["description"] == "" for j in jobs)
+
+
+def test_scrape_a_hebrew_board_with_addresses_is_left_to_the_rungs_that_open_them():
+    """Kills `scrape-hebrew-group-with-addresses-read` and `scrape-dom-hebrew-admission`. Hebrew
+    role words admit a heading group ONLY when its postings have no address of their own (Cal,
+    594). An addressed Hebrew board is read today by the position-link rung, which opens each
+    posting for its own city and text, and any addressed heading or DOM reading ENDS the ladder
+    before that rung: replayed 2026-09-13 over 33 `.il` boards, John Bryce went 11 postings to
+    1, Latet 22 to 2, and Chimes lost all 25 descriptions."""
+    import scrape_universal as N
+    url = "https://www.chimes.org.il/jobs/"
+    titles = ("אח/ות מוסמכ/ת למעון יום שיקומי", "מדריך/ה מלווה קבוצה בתכנית", "מרפא/ה בעיסוק למעון יום",
+              "רכז/ת תעסוקה לבוגרים", "עובד/ת סוציאלי/ת למרכז")
+    linked = "".join(f'<div><h3>{t}</h3><p>אשקלון</p><a href="/jobs/{i}/">לפרטים</a></div>'
+                     for i, t in enumerate(titles))
+    add, jobs = N._make_adder("Chimes Israel", url)
+    N._from_cards("<html>" + linked + "</html>", False, add)
+    assert jobs == [], "an addressed Hebrew heading group is not this rung's to read"
+    bare = "".join(f'<div><h3>{t}</h3><p>אשקלון</p><button data-toggle="modal">x</button></div>' for t in titles)
+    add, jobs = N._make_adder("Chimes Israel", url)
+    N._from_cards("<html>" + bare + "</html>", False, add)
+    assert [j["title"] for j in jobs] == list(titles)
+    dom = [{"title": f"{t} אשקלון", "own": t, "url": f"{url}{i}/", "ctx": f"{t} אשקלון"}
+           for i, t in enumerate(titles)]
+    add, jobs = N._make_adder("Chimes Israel", url)
+    N._from_dom(dom, add)
+    assert jobs == [], "DOM admission still asks the anchor's text for an English role word"
+
+
+def test_scrape_hebrew_role_words_are_bounded():
+    """A Hebrew role stem counts in either gendered spelling, and never inside a longer word —
+    Hebrew has no `\\b`, and an unbounded `פקיד`/`רכז`/`חשב` reads `תפקיד`/`מרכז`/`מחשב`."""
+    import scrape_universal as N
+    for t in ("מפתח.ת מודלים", "נציג/ת שירות", "נציגי.ות מכירות", "חתמ.ת רכב", "עורך דין",
+              "ראש צוות פיתוח", "Data Analyst"):
+        assert N._rolish(t), t
+    for t in ("תפקיד מעניין", "מרכז שירות", "מדעי המחשב", "אזור המרכז", "משרות פתוחות", ""):
+        assert not N._rolish(t), t
+
+
+def test_scrape_a_hebrew_place_inside_a_word_is_not_a_place_but_a_proclitic_form_is():
+    """Kills `scrape-hebrew-right-edge-drop` and `scrape-azor-noun-read-as-town`. Cal's
+    model-developer posting shipped located Eilat: `אילת` is inside `שאילתות` ("queries")
+    in its description, and `ISRAEL_LOC`'s edges guarded Latin letters only (594). And
+    `אזור הצפון` is "the north region", not the town of Azor — as a reading. As an
+    ACCEPTANCE test a feed's own `אזור המרכז` must still pass (120 cached locations)."""
+    import scrape_universal as N
+    from pipeline.israel import _IL_PLACES, _IL_PLACES_HE
+    assert N._loc_from_ctx("מפתח.ת מודלים, כתיבת שאילתות מורכבות ב-SQL", anchor=0) == ""
+    assert N._loc_from_ctx("נציג/ת שירות בירושלים", anchor=0) == "ירושלים"
+    assert N._loc_from_ctx("Prompt Engineer - מיקור חוץראש העין", anchor=0) == "ראש העין"
+    assert N.ISRAEL_LOC.search("חברה ישראלית מובילה") is None
+    assert N._loc_from_ctx("מנהל.ת תיקי לקוחות - אזור הצפון", anchor=0) == "אזור הצפון"
+    assert N._loc_from_ctx("כניסה לאזור האישי. המשרד בחיפה", anchor=0) == "חיפה"
+    assert N._loc_from_ctx("רכז.ת מודיעין סייבר ותגובה לאירועים", anchor=0) == ""
+    assert N._loc_from_ctx("נציגות שירות למוקד מודיעין עילית", anchor=0) == "מודיעין עילית"
+    assert N._loc_from_ctx("מדריך/ה מלווה קבוצה במודיעין (697)", anchor=0) == "מודיעין"
+    assert N.ISRAEL_LOC.search("אזור המרכז")
+    for latin in ("HerzliyaJunior Software Developer", "Tel AvivApply"):
+        assert N.ISRAEL_LOC.search(latin), latin
+    assert N.ISRAEL_LOC.search("Akkodis") is None
+    assert [p for p in _IL_PLACES + _IL_PLACES_HE if not N.ISRAEL_LOC.search(p)] == []
+
+
+def test_scrape_an_il_host_vouches_a_locless_card_only_with_a_page_token(monkeypatch):
+    """Kills `scrape-vouch-without-page-token`, `scrape-assumed-card-names-no-role` and
+    `scrape-vouch-assumes-an-addressed-card`. The row's vouch is the board's HOST (Cal is
+    `cal-online.co.il`), passed by the caller; the page must still name an Israeli place, and
+    the url's path and query never vouch (the Comcast and Arm stories, 2026-08-30). It places
+    only a card with NO address of its own, and only one that names a role: an addressed card
+    has a page that can place it, and assumed it would END the ladder before that page is read
+    (BST Group, 2026-09-13); a vouched board's "why join us" headings are not postings."""
+    import scrape_universal as N
+    monkeypatch.delenv("SCRAPE_ASSUME_IL", raising=False)
+    il = "https://careers.co.example.co.il/careers"
+
+    def board(titles, footer="", href=False):
+        cards = "".join(f'<div class="card"><h3 class="job-title">{t}</h3>'
+                        + (f'<a href="/jobs/{i}">Apply</a>' if href else '<button data-toggle="modal">x</button>')
+                        + "</div>" for i, t in enumerate(titles))
+        return f"<html><body><h1>Careers</h1>{cards}<footer>{footer}</footer></body></html>"
+
+    roles = [f"Senior Data Analyst {i}" for i in range(4)]
+    assert N._extract("Co", il, _rendered(url=il, page_html=board(roles)), fetch=_no_fetch,
+                      assume_il=True)[0] == [], "a vouch with no Israeli place on the page is nothing"
+    hq = "HQ: 3 Aba Eban, Herzliya"
+    jobs, _ = N._extract("Co", il, _rendered(url=il, page_html=board(roles, hq)), fetch=_no_fetch, assume_il=True)
+    assert len(jobs) == 4 and sorted(j["_loc_src"] for j in jobs) == ["assumed"] * 3 + ["own"]
+    r = _rendered(page_html=board(roles, hq))
+    jobs, _ = N._extract("Co", "https://co.example/careers", r, fetch=_no_fetch)
+    assert [j["_loc_src"] for j in jobs] == ["own"] and r.loc_unknown == 3
+    # an ADDRESSED locless card is left for its page: the host vouch alone never assumes it...
+    r = _rendered(url=il, page_html=board(roles, hq, href=True))
+    jobs, _ = N._extract("Co", il, r, fetch=_no_fetch, assume_il=True)
+    assert [j["_loc_src"] for j in jobs] == ["own"] and r.loc_unknown == 3
+    # ...while the hunts' pre-vetted flag keeps its old reach
+    monkeypatch.setenv("SCRAPE_ASSUME_IL", "1")
+    jobs, _ = N._extract("Co", il, _rendered(url=il, page_html=board(roles, hq, href=True)), fetch=_no_fetch)
+    assert sorted(j["_loc_src"] for j in jobs) == ["assumed"] * 3 + ["own"]
+    monkeypatch.delenv("SCRAPE_ASSUME_IL")
+    # the vouch places a card that NAMES a role, never a "why join us" bullet in the same group
+    mixed = board(["AI-First Engineering", "Growth & Learning", "Full Stack of Projects"] + roles, hq)
+    jobs, _ = N._extract("Co", il, _rendered(url=il, page_html=mixed), fetch=_no_fetch, assume_il=True)
+    assert sorted(j["title"] for j in jobs) == roles
+    assert N.il_host("https://www.cal-online.co.il/about/jobs/")
+    assert N.il_host("https://jobs.gov.il/x")
+    for no in ("https://co.example/careers?location=Israel", "https://co.example/location/israel-jobs/",
+               "https://jobs.ilx.com/", "https://il.linkedin.com/jobs", ""):
+        assert not N.il_host(no), no
+
+
+def test_page_is_il_vouch_needs_the_page_token_and_never_the_url(monkeypatch):
+    """`_page_is_il`'s two halves: a vouch for the row AND a place on the page, read decoded
+    (Cal's only page token is an entity-encoded `בישראל`)."""
+    import scrape_universal as N
+    monkeypatch.delenv("SCRAPE_ASSUME_IL", raising=False)
+    assert N._page_is_il("https://x.co.il/search?location=Israel", "<p>no place</p>", vouched=True) is False
+    assert N._page_is_il("https://x.co.il/jobs", "<p>Herzliya</p>", vouched=True) is True
+    assert N._page_is_il("https://x.co.il/jobs", "<p>Herzliya</p>") is False
+    assert N._page_is_il("https://x.co.il/jobs", "<p>" + _he_entities("חיפה") + "</p>", vouched=True) is True
+    monkeypatch.setenv("SCRAPE_ASSUME_IL", "0")
+    assert N._page_is_il("https://x.co.il/jobs", "<p>Herzliya</p>") is False
+
+
+def test_scrape_a_dom_entry_prefers_its_own_text_over_the_anchors_label_blob():
+    """Kills `scrape-dom-own-ignored`. Logica-IT's anchor text is the title AND its filing
+    chips (`<span class="meta">BACKEND</span><span class="meta">גוש דן</span>`), and
+    `textContent` ran them together: `Splunk Dashboard Developer BACKEND גוש דן` (584).
+    `_DOM_JS` now also reports `own`, the anchor without its chips; the place is still read
+    from `ctx`. No `own` (an older capture), or one that is no role's name, keeps `title`."""
+    import scrape_universal as N
+    base = "https://www.logica-it.com/jobs/"
+    dom = [
+        {"title": "בודק/ת תוכנה QA ירושלים", "own": "בודק/ת תוכנה", "url": base + "20260/",
+         "ctx": "בודק/ת תוכנה QA ירושלים"},
+        {"title": "Python Developer BACKEND Tel Aviv", "own": "Python Developer", "url": base + "20261/",
+         "ctx": "Python Developer BACKEND Tel Aviv"},
+        {"title": "Data Analyst", "url": base + "3/", "ctx": "Data Analyst Tel Aviv"},
+        {"title": "Senior Data Analyst", "own": "New", "url": base + "4/", "ctx": "Senior Data Analyst New Herzliya"},
+    ]
+    add, jobs = N._make_adder("Logica-IT", base)
+    N._from_dom(dom, add)
+    assert [j["title"] for j in jobs] == ["בודק/ת תוכנה", "Python Developer", "Data Analyst", "Senior Data Analyst"]
+    assert [j["location"] for j in jobs] == ["ירושלים", "Tel Aviv", "Tel Aviv", "Herzliya"]
+    assert "own: own" in N._DOM_JS and "__LABEL__" not in N._DOM_JS
+
+
+def test_scrape_a_heading_group_drops_label_spans_and_keeps_wix_styling_spans():
+    """Kills `scrape-cards-labels-kept`. The served-HTML twin of the DOM `own` field: a title
+    element's label-classed descendants are the board's filing chips, not title words (584).
+    A Wix styling span has no such class and stays; `stage` is not `tag`."""
+    import scrape_universal as N
+    cards = "".join(
+        f'<div class="item"><h3 class="job">{t} <span class="metas"><span class="meta profession">'
+        f'BACKEND</span><span class="meta area">ירושלים</span></span></h3></div>'
+        for t in ("Python Developer", "Data Engineer", "QA Automation Engineer"))
+    cards += '<div class="item"><h3 class="job">Data Analyst <span class="stage-x">Senior</span></h3><p>Haifa</p></div>'
+    add, jobs = N._make_adder("Logica-IT", "https://www.logica-it.com/jobs/")
+    N._from_cards("<html>" + cards + "</html>", False, add)
+    assert [j["title"] for j in jobs] == ["Python Developer", "Data Engineer", "QA Automation Engineer",
+                                          "Data Analyst Senior"]
+    assert [j["location"] for j in jobs] == ["ירושלים"] * 3 + ["Haifa"]
+    wix = "".join(f'<h2 class="font_2"><span style="x"><span>{t}</span></span></h2><p>Petah Tikva, Israel</p>'
+                  for t in ("Validation Engineer", "QA Engineer", "Project Manager"))
+    add, jobs = N._make_adder("GenCell", "https://co.example/jobs")
+    N._from_cards("<html>" + wix + "</html>", False, add)
+    assert [j["title"] for j in jobs] == ["Validation Engineer", "QA Engineer", "Project Manager"]
+
+
+def test_refresh_worker_vouches_a_row_by_its_board_host(monkeypatch):
+    """Kills `scrape-vouch-not-threaded`. The 00:00 refresh never set `SCRAPE_ASSUME_IL`, so
+    Cal read ~30 postings when the hunt looked and 1 when the cron did (594). The worker now
+    passes the row's own vouch: its board host is under `.il`."""
+    import refresh_scrape_cache as R
+    seen = []
+
+    def fake(name, url, **kw):
+        seen.append(kw.get("assume_il"))
+        raise RuntimeError("stop here")
+    monkeypatch.setattr(R, "scrape_result", fake)
+    R._worker(("Cal (Israel Credit Cards)", "https://www.cal-online.co.il/about/jobs/"))
+    R._worker(("Co", "https://co.example/careers?location=Israel"))
+    assert seen == [True, False]
+
+
 def test_scrape_a_registry_url_that_is_itself_a_position_page_is_read(monkeypatch):
     """nsKnox's registry url IS the position page (`/jobs/<role-slug>/`, 200, the posting
     live) and no strategy read a single position page as a listing — the row sat
