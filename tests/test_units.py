@@ -20353,6 +20353,29 @@ def test_the_shared_run_cap_binds_the_jd_layers_own_unlocker(monkeypatch):
     assert bd("https://a.co/4") == (None, "", "bd-capped") and len(posts) == 2
     assert bd_rescue.SPENT["capped"] is True, "the run says, once, that the cap bound"
 
+    # ...and the other half of 600, on the same transport stub: the per-call timeout reaches
+    # `urlopen` and is the env knob (600(b), jd-text; it rode its own test until guard_kill
+    # called it CANNOT-FAIL, since this branch did not change it). A workflow setting 300
+    # would otherwise pass every guard while the failing tail went back to 100 minutes.
+    bd_rescue.SPENT.update(n=0, capped=False)
+    monkeypatch.delenv("BD_RUN_CAP", raising=False)
+    monkeypatch.setenv("JDFILL_BD_TIMEOUT_S", "7")
+    got = []
+
+    def _timed(req, timeout=None):
+        got.append(timeout)
+        raise OSError("stubbed transport")
+
+    monkeypatch.setattr(jdfill.urllib.request, "urlopen", _timed)
+    bd = jdfill.Unlocker(cap=5, render_cap=2)
+    assert bd.timeout_s == 7.0
+    jdfill._bd_call(bd, "https://a.co/raw")
+    jdfill._bd_call(bd, "https://a.co/shell", render=True)
+    assert got == [7.0, 7.0], got
+    monkeypatch.setenv("JDFILL_BD_TIMEOUT_S", "300")
+    jdfill._bd_call(jdfill.Unlocker(cap=5, render_cap=1), "https://a.co/shell2", render=True)
+    assert got[-1] == jdfill.RENDER_TIMEOUT, "a render never waits past RENDER_TIMEOUT"
+
 
 def test_the_host_breaker_counts_bought_bodies_not_pages(monkeypatch):
     """`fetch_jd` can buy TWO credits for one page (a raw copy, then a rendered one) and called
@@ -31943,22 +31966,6 @@ def test_an_allowance_refusal_is_never_read_as_an_empty_page(monkeypatch):
 
 
 # ---- the search rung: 76% of the month; the free DuckDuckGo rung was measured and DELETED ----
-def test_the_paid_search_ranks_one_url_per_host_and_prefers_the_listings_page():
-    """The caller renders `cands[:2]`, so the ORDER is the answer: jobs-ish path > any path >
-    bare host, shortest wins, one URL per host. Measured on a live `Exodigo careers` response,
-    where first-per-host kept `comeet.com` and `exodigo.com` and discarded both real pages."""
-    import deep_validate as D
-    got = D._rank_hosts(["https://exodigo.com",
-                         "https://www.comeet.com/jobs/exodigo/89.005/data-analyst",
-                         "https://www.comeet.com",
-                         "https://www.comeet.com/jobs/exodigo/89.005",
-                         "https://exodigo.com/open-roles"])
-    assert got[:2] == ["https://exodigo.com/open-roles",
-                       "https://www.comeet.com/jobs/exodigo/89.005"], got
-    assert D._rank_hosts(["https://exodigo.com", "https://exodigo.com/open-roles"]) \
-        == ["https://exodigo.com/open-roles"], "one URL per host, and not the bare one"
-
-
 def test_the_queue_drain_searches_on_its_first_ask_and_asks_no_free_rung(monkeypatch):
     """2026-09-13 (infra): the free DuckDuckGo rung that stood ahead of every paid search was
     DELETED on its runner measurement -- HTTP 202 to 16 of the 17 processes
@@ -31978,6 +31985,17 @@ def test_the_queue_drain_searches_on_its_first_ask_and_asks_no_free_rung(monkeyp
     assert asked == ["Acme Analytics"], "the paid rung is the first and only search"
     assert out["picked"] == "https://a.example/careers" and out["why"] == "stub"
     assert not hasattr(D, "ddg") and not hasattr(D, "_search_ab"), "the rung came back"
+    # ...and the one ranking the paid rung answers with (it rode a test of its own until
+    # guard_kill called it CANNOT-FAIL: this branch did not change it). The caller renders
+    # `cands[:2]`, so the ORDER is the answer: jobs-ish path > any path > bare host, shortest
+    # wins, one URL per host -- measured on a live `Exodigo careers` response.
+    got = D._rank_hosts(["https://exodigo.com",
+                         "https://www.comeet.com/jobs/exodigo/89.005/data-analyst",
+                         "https://www.comeet.com",
+                         "https://www.comeet.com/jobs/exodigo/89.005",
+                         "https://exodigo.com/open-roles"])
+    assert got[:2] == ["https://exodigo.com/open-roles",
+                       "https://www.comeet.com/jobs/exodigo/89.005"], got
     for mod in ("queue_resolve_search.py", "resolve_broken.py", "listing_hunt.py",
                 "crack_walled.py", "audit_empty_rows.py", "repair_dead_urls.py",
                 "resolve_llm.py", "deep_validate.py", "registry_health.py"):
@@ -33282,35 +33300,6 @@ def test_a_paid_call_carries_the_unlockers_own_timeout():
     assert jdfill.Unlocker(cap=1).timeout_s == 30.0
 
 
-def test_the_paid_call_timeout_reaches_the_transport_and_is_the_env_knob(monkeypatch):
-    """600(b) pinned the DEFAULT and a fake; nothing pinned that the number reaches the real
-    transport or that `JDFILL_BD_TIMEOUT_S` moves it, so a workflow could set 300 and every
-    guard would pass while the failing-streak tail went back to 100 minutes. This drives the
-    real `Unlocker` through `_bd_call` to a stubbed `urlopen` and reads the timeout it got.
-    A render is still clamped to `RENDER_TIMEOUT` (the render breaker's clock)."""
-    from pipeline import jdfill
-    monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
-    monkeypatch.setenv("BRIGHTDATA_ZONE", "z")
-    monkeypatch.setenv("JD_BD", "1")
-    monkeypatch.delenv("BD_RUN_CAP", raising=False)
-    monkeypatch.setenv("JDFILL_BD_TIMEOUT_S", "7")
-    monkeypatch.setattr(jdfill, "_monthly_ceiling_reached", lambda: "")
-    got = []
-
-    def _urlopen(req, timeout=None):
-        got.append(timeout)
-        raise OSError("stubbed transport")
-
-    monkeypatch.setattr(jdfill.urllib.request, "urlopen", _urlopen)
-    bd = jdfill.Unlocker(cap=5, render_cap=1)
-    assert bd.timeout_s == 7.0
-    jdfill._bd_call(bd, "https://a.co/raw")
-    jdfill._bd_call(bd, "https://a.co/shell", render=True)
-    assert got == [7.0, 7.0], got
-    monkeypatch.setenv("JDFILL_BD_TIMEOUT_S", "300")
-    bd = jdfill.Unlocker(cap=5, render_cap=1)
-    jdfill._bd_call(bd, "https://a.co/shell2", render=True)
-    assert got[-1] == jdfill.RENDER_TIMEOUT, "a render never waits past RENDER_TIMEOUT"
 # --- 566: the posting's own text places it outside Israel (classifier, 2026-09-13) ---
 
 _DIAGEO = {"company": "Diageo", "title": "Data Analyst", "location": "מחוז המרכז",
