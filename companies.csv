@@ -278,7 +278,7 @@ Cypago,scrape,https://cypago.com/careers/,https://cypago.com/careers/,true,unive
 Voom,scrape,https://www.voominsurance.com/careers,https://www.voominsurance.com/careers,true,universal-scrape; 2 Israel jobs | zero-confirm 2026-08-29: zero-refuted; rn+llm; ev 22f0a2
 UVeye,scrape,https://www.uveye.com/careers/,https://www.uveye.com/careers/,true,universal-scrape; 6 Israel jobs
 Enlight Renewable Energy,comeet,99.006,https://www.comeet.com/careers-api/2.0/company/99.006/positions?token=996431A9961CC2398456465646132C2FEE996,true,universal-scrape; 1 Israel jobs | repair 2026-08-28: comeet 99.006 off its own page; 16/14 IL
-BeeHero,scrape,https://www.beehero.io/careers,https://www.beehero.io/careers,true,universal-scrape; 1 Israel jobs
+BeeHero,comeet,78.00E,https://www.comeet.com/careers-api/2.0/company/78.00E/positions?token=87E32F43B7287E32F487E43F087E4C6E10FC,true,universal-scrape; 1 Israel jobs | self-heal 2026-09-13: re-resolved to comeet | platform-fix 2026-09-13: comeet uid+token from the page's COMEET.init; 0/0 IL
 Orca AI,scrape,https://www.orca-ai.io/careers/,https://www.orca-ai.io/careers/,true,universal-scrape; 6 Israel jobs
 Meta Israel,scrape,https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel,https://www.metacareers.com/jobs?offices[0]=Tel%20Aviv%2C%20Israel,false,alias-of Meta 2026-08-23: identical board URL; one row per company so the board does not list every role twice | universal-scrape; 12 Israel jobs
 OncoHost,scrape,https://www.oncohost.com/careers,https://www.oncohost.com/careers,true,universal-scrape; 1 Israel jobs
@@ -317,7 +317,7 @@ PepsiCo,scrape,https://www.pepsicojobs.com/main/jobs?location=Israel,https://www
 Qedma,scrape,https://www.qedma.com/careers,https://www.qedma.com/careers,true,universal-scrape; 4 Israel jobs
 Sensos,scrape,https://www.sensos.io/careers,https://www.sensos.io/careers,true,universal-scrape; 3 Israel jobs
 Blink Ops,scrape,https://www.blinkops.com/careers,https://www.blinkops.com/careers,true,universal-scrape; 8 Israel jobs
-Ludeo,scrape,https://www.ludeo.com/careers,https://www.ludeo.com/careers,true,universal-scrape; 4 Israel jobs
+Ludeo,comeet,D7.008,https://www.comeet.com/careers-api/2.0/company/D7.008/positions?token=7D82F101F602F1001F60273827383EC03EC0,true,universal-scrape; 4 Israel jobs | self-heal 2026-09-13: re-resolved to comeet | platform-fix 2026-09-13: comeet uid+token from comeet.com/jobs/ludeo; 0/0 IL
 Deepdub,scrape,https://deepdub.ai/careers,https://deepdub.ai/careers,true,universal-scrape; 6 Israel jobs
 Infinidat,scrape,https://www.infinidat.com/en/careers,https://www.infinidat.com/en/careers,true,universal-scrape; 28 Israel jobs
 Cycode,scrape,https://cycode.com/careers/,https://cycode.com/careers/,true,universal-scrape; 2 Israel jobs
@@ -338,7 +338,7 @@ Gamida Cell,scrape,https://www.gamida-cell.com/careers/,https://www.gamida-cell.
 Protai,scrape,https://www.protai.bio/careers,https://www.protai.bio/careers,true,universal-scrape; 2 Israel jobs
 Snap,scrape,,https://careers.snap.com/jobs,true,"query-filter 2026-08-30: filter leaks, 152/175 cards abroad, 1 IL; needs re-resolution | dark-triage 2026-09-01: extract-gap (LLM found 1: AR Engineer) | listing-hunt 2026-09-02: verified 1 IL via careers.snap.com"
 Roche,scrape,https://careers.roche.com/global/en/search-results?keywords=Israel,https://careers.roche.com/global/en/search-results?keywords=Israel,true,universal-scrape; 4 Israel jobs | query-filter 2026-08-30: honoured 3/3 IL
-ABB,scrape,https://careers.abb/global/en/search-results?keywords=Israel,https://careers.abb/global/en/search-results?keywords=Israel,true,universal-scrape; 1 Israel jobs
+ABB,phenom,,https://careers.abb/widgets,true,"universal-scrape; 1 Israel jobs | self-heal 2026-09-13: re-resolved to phenom | platform-fix 2026-09-13: phenom widgets, for the read; 0/0 IL"
 Island,scrape,https://www.island.io/careers,https://www.island.io/careers,true,universal-scrape; 54 Israel jobs
 Quantum Machines,scrape,https://www.quantum-machines.co/careers/,https://www.quantum-machines.co/careers/,true,universal-scrape; 19 Israel jobs
 ParaZero,scrape,https://parazero.com/careers/,https://parazero.com/careers/,true,universal-scrape; 1 Israel jobs
@@ -600,7 +600,7 @@ Texas Instruments,scrape,,https://careers.ti.com/en/sites/CX/requisitions?locati
 Cadence Design Systems,workday,cadence/External_Careers,https://cadence.wd1.myworkdayjobs.com/wday/cxs/cadence/External_Careers/jobs,false,alias-of Cadence 2026-08-23: identical board URL; one row per company so the board does not list every role twice | deep-resolved; 10/8 IL
 Ericsson,eightfold,ericsson.com,https://jobs.ericsson.com/api/pcsx/search?domain=ericsson.com,true,crack-walled 2026-08-23: eightfold via scrape; verified 1 IL | deep-validated 2026-08-21: unsupported ATS eightfold.ai | self-heal 2026-08-27: re-resolved to eightfold
 ServiceNow,scrape,,https://servicenow.willhire.co/,true,listing-hunt 2026-08-22: verified 1 IL via https://servicenow.willhire.co/
-OpenText,scrape,,https://careers.opentext.com/careers?location=Israel,true,crack-walled 2026-08-22: phenom via scrape; verified 7 IL
+OpenText,phenom,,https://careers.opentext.com/widgets,true,"crack-walled 2026-08-22: phenom via scrape; verified 7 IL | self-heal 2026-09-13: re-resolved to phenom | platform-fix 2026-09-13: phenom widgets, for the read; 0/0 IL"
 Yahoo,workday,ouryahoo/careers,https://ouryahoo.wd5.myworkdayjobs.com/wday/cxs/ouryahoo/careers/jobs,true,re-audit 2026-08-21: deep-verified 1/1 IL (was dark)
 Lyft,greenhouse,lyft,https://boards-api.greenhouse.io/v1/boards/lyft/jobs,true,dark-triage 2026-08-22: page-empty | zero-confirm 2026-08-28: board answered rendered postings; needs re-resolution | re-audit 2026-08-30: deep-verified 169/0 IL (was dark)
 Roblox,scrape,https://careers.roblox.com/jobs,https://careers.roblox.com/jobs?country=Israel,false,"dark-triage 2026-09-12: extract-gap (LLM found 8: [2026] Senior Machine Learning Engineer, Recommendation Syst) | listing-hunt 2026-09-12: no IL listing; monitored candidate"
@@ -753,7 +753,7 @@ Siemens,scrape,,https://jobs.siemens.com/en_US/externaljobs/SearchJobs?location=
 Valeo,workday,valeo/valeo_jobs,https://valeo.wd3.myworkdayjobs.com/wday/cxs/valeo/valeo_jobs/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev e1b47b
 Procter & Gamble,scrape,,https://www.pgcareers.com/search-results,true,deep-validated 2026-08-21: unsupported ATS phenom | dark-triage 2026-08-29: js-shell (job XHRs seen during render) | listing-hunt 2026-08-31: verified 1 IL via www.pgcareers.com
 Deutsche Bank,scrape,https://careers.db.com/,https://careers.db.com/professionals/search-roles/,true,"deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-22: no IL listing; monitored candidate | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
-Deutsche Post DHL,scrape,,https://careers.dhl.com/global/en/search-results?keywords=Israel,true,listing-hunt 2026-08-22: verified 8 IL via https://careers.dhl.com/global/en/search-results?keywords=Is
+Deutsche Post DHL,phenom,,https://careers.dhl.com/widgets,true,"listing-hunt 2026-08-22: verified 8 IL via https://careers.dhl.com/global/en/search-results?keywords=Is | self-heal 2026-09-13: re-resolved to phenom | platform-fix 2026-09-13: phenom widgets, for the read; 0/0 IL"
 Proofpoint,workday,proofpoint/proofpointcareers,https://proofpoint.wd5.myworkdayjobs.com/wday/cxs/proofpoint/proofpointcareers/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev bc4f8a
 Sony (PlayStation),scrape,https://careers.playstation.com/jobs,https://careers.playstation.com/jobs,false,scanned via brightdata; no open Israel roles now - monitored candidate | dark-triage 2026-09-12: page-empty (LLM confirms no open roles (Official PlayStation/SIE careers s) (role phrases were bios/testimonials))
 UBS,scrape,https://www.ubs.com/global/en/careers.html,https://www.ubs.com/global/en/careers/search-jobs.html?location=Israel,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-09-12: js-shell (thin html + job-ish XHR — needs render+capture) | listing-hunt 2026-09-12: no IL listing; monitored candidate
@@ -874,7 +874,7 @@ Embie,scrape,https://www.embie.co/careers,https://www.embie.co/careers,false,dee
 Cnoga Medical,scrape,,https://www.cnogacare.co/careers/,true,scanned via brightdata; roles-text present but no resolvable board - monitored candidate | dark-triage 2026-08-24: extract-gap (LLM found 1: Product marketing) | repair 2026-08-24: extract-gap fixed via LLM tier; 1 IL
 MedAware,scrape,https://www.medaware.com/careers,https://www.medaware.com/careers,false,"deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-09-12: blocked (403/429, unlocker also failed) | listing-hunt 2026-09-12: no IL listing; monitored candidate"
 AnX Robotica,scrape,https://anxrobotica.com/careers/,https://anxrobotica.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-09-13 (conn-dead (URLError))
-Lam Research,scrape,,https://careers.lamresearch.com/careers?location=Israel,true,listing-hunt 2026-08-22: verified 1 IL via https://careers.lamresearch.com/careers?location=Israel
+Lam Research,eightfold,lamresearch.com,https://careers.lamresearch.com/api/pcsx/search?domain=lamresearch.com,true,"listing-hunt 2026-08-22: verified 1 IL via https://careers.lamresearch.com/careers?location=Israel | self-heal 2026-09-13: re-resolved to eightfold | platform-fix 2026-09-13: eightfold pcsx, for the read; 0/0 IL"
 Infineon Technologies,scrape,,https://www.infineon.com/careers/our-locations,true,listing-hunt 2026-08-22: verified 1 IL via https://www.infineon.com/careers/our-locations | zero-confirm 2026-08-29: not-the-board; rnb+llm; ev c6f6f9
 Siemens EDA,scrape,,https://jobs.siemens.com/en_US/externaljobs/SearchJobs?location=Israel,false,listing-hunt 2026-08-22: verified 1 IL via https://jobs.siemens.com/en_US/externaljobs/SearchJobs?locat | alias-of Siemens 2026-08-25: identical board URL (BACKLOG 133)
 Sony (Sony Semiconductor Israel),workday,sonyglobal/SonyGlobalCareers,https://sonyglobal.wd1.myworkdayjobs.com/wday/cxs/sonyglobal/SonyGlobalCareers/jobs,true,re-audit 2026-08-23: verified 0/0 IL (was false-empty) | deep-validated 2026-08-21: no ATS detected (rendered) | listing-hunt 2026-08-23: no IL listing; monitored candidate
@@ -1896,7 +1896,7 @@ City Of David,scrape,,http://www.cityofdavid.org.il/Jobs,true,queue-drain 2026-0
 Clarivate,workday,clarivate/Clarivate_Careers,https://clarivate.wd3.myworkdayjobs.com/wday/cxs/clarivate/Clarivate_Careers/jobs,true,queue-drain 2026-08-29 search-llm; 1/1 IL | self-heal 2026-08-31: re-resolved to workday
 McKinsey & Company,scrape,,https://karriere.mckinsey.de/karriere/search-jobs?location=Israel,false,dark-triage 2026-09-12: js-shell (thin html + job-ish XHR — needs render+capture) | listing-hunt 2026-09-12: no IL listing; monitored candidate | deep-validated 2026-09-13: no ATS detected (rendered)
 YouCC Technologies Ltd.,scrape,,https://youcc.co.il/careers/38,true,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-09-01: verified 1 IL via youcc.co.il
-Exyte,scrape,,https://careers.exyte.net/global/en/c/engineering-jobs,true,queue-hunt 2026-08-29: careers page documented; monitored candidate | listing-hunt 2026-09-01: verified 9 IL via careers.exyte.net
+Exyte,phenom,,https://careers.exyte.net/widgets,true,listing-hunt 2026-09-01: verified 9 IL via careers.exyte.net | self-heal 2026-09-13: re-resolved to phenom | platform-fix 2026-09-13: phenom widgets; 19/19 IL
 Shopix,scrape,,https://www.shopix.no/careers/,false,dark-triage 2026-09-12: wrong-page (LLM: not Shopix's careers page (This page is a generic website template/)) | deep-validated 2026-09-13: no ATS detected (rendered)
 TECEZE,scrape,,https://teceze.com/careers/,false,dark-triage 2026-09-12: page-empty (LLM confirms no open roles (Page is the company's careers land) (role phrases were bios/testimonials)) | deep-validated 2026-09-13: no ATS detected (rendered)
 rating,scrape,,https://www.fitchratings.com/careers,false,dark-triage 2026-09-12: extract-gap (2 role phrases after render) | listing-hunt 2026-09-12: another company's board; no listing found | deep-validated 2026-09-13: no ATS detected (rendered)
