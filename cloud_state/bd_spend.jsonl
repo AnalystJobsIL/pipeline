@@ -285,3 +285,5 @@
 {"at":"2026-09-13T11:06:50Z","cap":250,"capped":false,"ci":true,"credits":21,"pid":11550,"purpose":{"search":12,"unlock":9},"tool":"crack_walled.py"}
 {"at":"2026-09-13T11:11:07Z","cap":250,"capped":false,"ci":true,"credits":15,"pid":2941,"purpose":{"search":1,"unlock":14},"tool":"resolve_broken.py"}
 {"at":"2026-09-13T11:17:46Z","cap":250,"capped":false,"ci":true,"credits":52,"pid":3678,"purpose":{"jd-fill":52},"tool":"run.py"}
+{"at":"2026-09-13T13:12:04Z","cap":5,"capped":false,"ci":false,"credits":1,"pid":20464,"purpose":{"unlock":1},"tool":"-"}
+{"at":"2026-09-13T13:12:21Z","cap":5,"capped":false,"ci":false,"credits":1,"pid":21476,"purpose":{"unlock":1},"tool":"-"}

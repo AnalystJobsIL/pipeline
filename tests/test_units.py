@@ -31457,7 +31457,11 @@ def test_the_gauge_alarms_on_the_free_tier_and_refuses_nothing(tmp_path, monkeyp
     is a SENTENCE in the mail and never a refusal -- `verdict()` still says spend, whatever
     the projection. That is the operator's ruling of 2026-09-11 in one assertion."""
     from pipeline import bd_budget as B
-    day = (dt.date.today() - dt.timedelta(days=1)).isoformat() + "T01:00:00Z"
+    # RELATIVE TO THE FROZEN `today` BELOW, not the real clock: the gauge is computed on
+    # 2026-09-11 with a 7-day window, so a line dated real-today-minus-one left the window on
+    # 2026-09-13 and the assertions went red on every tree (the 599 shape, inverted: a live
+    # fixture against a frozen function). Orchestrator, 2026-09-13.
+    day = (dt.date(2026, 9, 11) - dt.timedelta(days=1)).isoformat() + "T01:00:00Z"
     root = _bd_ledger(tmp_path, [{"at": day, "tool": "listing_hunt.py", "credits": 700}])
     monkeypatch.setattr(B, "spent_this_month", lambda today=None: (5804, {}))
     today = dt.date(2026, 9, 11)
@@ -31482,7 +31486,11 @@ def test_an_unreadable_account_still_reports_a_gauge_from_the_repos_own_ledger(t
     committed ledger and says so, so a rotated token costs the alarm nothing."""
     from pipeline import bd_budget as B
     from pipeline import stages
-    day = (dt.date.today() - dt.timedelta(days=1)).isoformat() + "T01:00:00Z"
+    # RELATIVE TO THE FROZEN `today` BELOW, not the real clock: the gauge is computed on
+    # 2026-09-11 with a 7-day window, so a line dated real-today-minus-one left the window on
+    # 2026-09-13 and the assertions went red on every tree (the 599 shape, inverted: a live
+    # fixture against a frozen function). Orchestrator, 2026-09-13.
+    day = (dt.date(2026, 9, 11) - dt.timedelta(days=1)).isoformat() + "T01:00:00Z"
     root = _bd_ledger(tmp_path, [{"at": day, "tool": "listing_hunt.py", "credits": 700}])
     monkeypatch.setattr(B, "spent_this_month", lambda today=None: (None, None))
     monkeypatch.setattr(stages, "PATH", str(tmp_path / "cloud_state" / "pipeline_stages.json"))
