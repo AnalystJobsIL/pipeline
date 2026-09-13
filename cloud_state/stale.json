@@ -34,11 +34,6 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Adi Il": {
-  "careers_url": "https://adi-il.org.il/careers/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "Airspan Networks": {
   "careers_url": "https://airspan.com/careers/airspan-careers/",
   "platform": "scrape",
@@ -76,7 +71,7 @@
  },
  "Ayalon Highways": {
   "careers_url": "https://www.ayalonhw.co.il/career/jobs-page",
-  "error": "scrape: http:403 (15 nights)",
+  "error": "scrape: http:403 (16 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -117,11 +112,6 @@
  },
  "Bulwarx": {
   "careers_url": "https://www.bulwarx.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Castro Hoodies Group": {
-  "careers_url": "https://www.hoodies.co.il/jobs",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -240,6 +230,11 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Glassix": {
+  "careers_url": "https://glassix.recruitee.com/",
+  "platform": "scrape",
+  "reason": "misconfig-scrape-on-ats"
+ },
  "HUB Security": {
   "careers_url": "https://www.comeet.com/jobs/hub-technologies/07.00F",
   "platform": "scrape",
@@ -267,7 +262,7 @@
  },
  "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ": {
   "careers_url": "https://careers.iec.co.il/",
-  "error": "scrape: http:403 (19 nights)",
+  "error": "scrape: http:403 (20 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -321,12 +316,6 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Microsoft": {
-  "careers_url": "https://apply.careers.microsoft.com/api/pcsx/search",
-  "error": "HttpError: HTTP 429 for https://apply.careers.microsoft.com/api/pcsx/search Too M",
-  "platform": "microsoft",
-  "reason": "fetch-error"
- },
  "Microsoft Israel": {
   "careers_url": "https://apply.careers.microsoft.com/careers",
   "platform": "scrape",
@@ -334,7 +323,7 @@
  },
  "NSO Group": {
   "careers_url": "https://www.nsogroup.com/job/web-security-researcher/",
-  "error": "scrape: http:403 (16 nights)",
+  "error": "scrape: http:403 (17 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -385,7 +374,7 @@
  },
  "PAPAYA": {
   "careers_url": "https://www.papayaglobal.com/careers/",
-  "error": "scrape: http:403 (16 nights)",
+  "error": "scrape: http:403 (17 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -408,6 +397,12 @@
   "careers_url": "https://predicta-med.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
+ },
+ "Prilenia Therapeutics": {
+  "careers_url": "https://api.lever.co/v0/postings/prilenia",
+  "error": "HttpError: network error for https://api.lever.co/v0/postings/prilenia The read o",
+  "platform": "lever",
+  "reason": "fetch-error"
  },
  "Quantum Art": {
   "careers_url": "https://www.quantum-art.tech/careers",
@@ -454,15 +449,11 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Siemens Digital Industries Software": {
-  "careers_url": "https://jobs.sw.siemens.com/jobs/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Siemens Israel": {
-  "careers_url": "https://jobs.sw.siemens.com/locations/isr/jobs/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
+ "Similarweb": {
+  "careers_url": "https://boards-api.greenhouse.io/v1/boards/similarweb/jobs",
+  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/similarwe",
+  "platform": "greenhouse",
+  "reason": "fetch-error"
  },
  "Sola Security": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/A9.003/positions",
@@ -471,9 +462,8 @@
  },
  "SolarEdge": {
   "careers_url": "https://www.solaredge.com/en/search",
-  "error": "scrape: http:403 (1 night)",
   "platform": "scrape",
-  "reason": "fetch-error"
+  "reason": "regressed-to-zero"
  },
  "StarkWare": {
   "careers_url": "https://starkware.co/careers/",
@@ -522,11 +512,6 @@
  },
  "Whalo": {
   "careers_url": "https://www.whalo.com/careers",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
- "Workiz": {
-  "careers_url": "https://www.workiz.com/careers/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
