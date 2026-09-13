@@ -12721,5 +12721,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `scraper`, which added the twelve. Run `34755843907` (`640eb3c`): shard walls 1,950 /
      1,696 / 1,870 / 1,913 / 1,427 / 1,941 / 1,961 / 1,789 s, all green, 41 records each. The
      workflow's own rule is "past ~1,800 s add a matrix entry AND bump SHARDS, never the
-     budget"; at ~41 s a record the twelve add ~60 s a shard. Not urgent against the 40-minute
-     kill (2,400 s), and `MUTATE_WALL_WARN` already prints on each shard's run page.
+     budget"; at ~41 s a record the twelve add ~60 s a shard. Measured on the commit that added
+     them (run `34763087262`, `8e8cb78`, all eight green, 45-46 records each): walls 2,038 /
+     2,052 / 2,061 / 2,100 / 1,979 / 1,978 / 1,623 / 1,889 s — **seven of eight past the line**,
+     the worst 300 s from the 40-minute kill (2,400 s).
