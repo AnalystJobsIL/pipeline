@@ -3323,6 +3323,26 @@ and enter the bucket §5b's one-liner counts, which went 224 → 250 of 873 acti
 alarm, no rotation, and `stale_reason` will never flag them again on its own, so the only way
 back is the scraper producing a posting.
 
+**The class re-derived, 2026-09-13 (`ats-fetch`): a regression that is a board no fetcher
+was pointed at.** The mail read `66 regressed to zero` (72 on 09-11): 59 scrape rows and 7
+native. A free GET of all 59 careers pages found 20 whose own HTML names an ATS the repo
+reads — the row was a scrape of a page that embeds a board, and the scraper's `why: empty,
+found 0` was true of the page and false of the company. Converted, each verified through
+`fetch_company` before `apply_resolved.py` moved it: Arrow Components (a public Workday site,
+5/5 IL), Netafim (Teamtailor, 24 IL of 56), Exyte (Phenom, 19/19 IL), DoubleVerify (a native
+row: its Greenhouse board answers 200 with 0 jobs while its careers page embeds a Workday
+site, 2 IL), and six **for the read**
+— ABB, Deutsche Post DHL and OpenText on Phenom, Lam Research on Eightfold, BeeHero and Ludeo
+on Comeet — whose native answer is an honest zero (the scoped four then leave the count, the
+two Comeet rows stay in it with a real reason). Nine parked, each through `pipeline/notes.py`:
+two duplicates whose page embeds another active row's board (`Cybersixgill` → Bitsight's
+Workday site, `KELA - Cyber Threat Intelligence` → the `KELA` row's Comeet tenant), a dead
+Comeet tenant (REE Automotive, HTTP 400), and six whose careers URL now redirects away
+(Dynamic Yield, Eureka Security, Talenya, Radiflow, Nova, Portnox), routed to the
+19:00 hunt. ASTERRA was not parked although its careers URL lands on the home page: its
+`identity` segment is ~200 of the note's 220 characters and any pool token evicts it.
+What stays, and why, is in `docs/sessions/2026-09-13-ats-fetch.md` §3.
+
 **It reaches the reader — two bullets in the audit block** (`health.mail_lines(stale,
 previous, scanned)`):
 

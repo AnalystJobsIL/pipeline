@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**653 filed · 462 open · 191 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**656 filed · 465 open · 191 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 604.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 607.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 151 open
+### registry — 152 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -245,8 +245,9 @@ closure convention in the header.
 - **571** `571@registry` **A parked `companies.csv` row is sitting on the string a curated alias needs, so the
 - **593** `593@registry` **An abandoned board is refused, alarmed and re-resolved
 - **596** `596@registry` **Five active rows publish another company's careers board, and the intel that names
+- **604** `604@registry` **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
 
-### infra — 115 open
+### infra — 116 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -363,6 +364,7 @@ closure convention in the header.
 - **595** `595@infra` **A killed `firmo_drain` stamps no `budget_min`, so the mail calls it the bulk cron** —
 - **599** `599@infra` **A fourth calendar-rot test, and the class has no owner**
 - **603** `603@infra` **The `ALLOWANCES` table is a 5,000 split of a 13,560/month demand, and `SOFT` is a price
+- **605** `605@infra` **`paid residential rung: ON/OFF` is written to the step SUMMARY only, so no log search can
 
 ### scraper — 31 open
 
@@ -511,6 +513,29 @@ closure convention in the header.
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 - **597** `597@company-intel` **A searchless research answer is counted and never named**
 
+### ats-fetch — 20 open
+
+- **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
+- **1** `1@ats-fetch` **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
+- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
+- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
+- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
+- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
+- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
+- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
+- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
+- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
+- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded**
+- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** —
+- **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
+- **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
+- **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
+- **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
+- **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
+- **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
+- **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
+- **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
+
 ### jd-text — 20 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
@@ -533,28 +558,6 @@ closure convention in the header.
 - **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
 - **601** `601@jd-text` **Two comment blocks in `pipeline/jdfill.py` now contradict the shipped workflow** —
 - **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
-
-### ats-fetch — 19 open
-
-- **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
-- **1** `1@ats-fetch` **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
-- **7** `7@ats-fetch` **`oraclecloud.com` is parked as an "unsupported ATS" on 4 rows while `oraclehcm` is a
-- **9** `9@ats-fetch` **`fetch_discovery`'s slug guard drops real employers, and every drop is uncounted.**
-- **82** `82@ats-fetch` **`health_check.py` (the Monday backstop in `self-heal.yml`) overwrites the daily
-- **102** `102@ats-fetch` **`company_info` has no `''`-aware API**
-- **184** `184@ats-fetch` **`fetch_discovery` judges the display name only; the slug it has in hand says
-- **211** `211@ats-fetch` **Greenhouse postings listing Israel as one of several offices are left out by design** —
-- **241** `241@ats-fetch` **Oracle CE boards above 2,000 requisitions are still read newest-500-first, and hide
-- **243** `243@ats-fetch` **iCIMS: 7 active rows, every one producing zero, and no readable list**
-- **244** `244@ats-fetch` **Avature: 2 active rows, both zero, buildable but unbounded**
-- **245** `245@ats-fetch` **Three SuccessFactors tenants run an older site version the new fetcher cannot page** —
-- **311** `311@ats-fetch` **`fetch_workday`'s `job_id` is a display label, and sixteen Thales roles share one
-- **319** `319@ats-fetch` **`fetch_workday`'s `searchText: "Israel"` is a free-text search, and a tenant that
-- **351** `351@ats-fetch` **`pipeline/http.get_json` binds its timeout default at IMPORT and `fetch_company` takes
-- **375** `375@ats-fetch` **Comeet and Ashby have no per-job endpoint, so 44 role ids cannot reach their own
-- **409** `409@ats-fetch` **`fetch_comeet` overwrites the board's own `company_name`, so the Comeet rung's "third
-- **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
-- **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 
 ### classifier — 18 open
 
@@ -12337,3 +12340,74 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      unwilling to pay it" — which the 2026-09-11 ruling is the negation of.
      `test_the_jd_fill_allowance_is_knowingly_short_of_its_cap_and_the_number_is_written_down`
      goes red the day the table is re-cut, which is how this item gets re-read.
+604. **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
+     the self-heal spends its strikes on boards `fetch_company` already reads** — lane:
+     `registry`, filed 2026-09-13 by `ats-fetch`. Both `resolve_broken._HTML_ATS`
+     (`resolve_broken.py:31`) and `resolve_deep._detect_ats` (`resolve_deep.py:151`) match only
+     the `/wday/cxs/` API form, and `_resolve_via_bd`'s gate (`resolve_broken.py:57`) returns
+     before the loop unless that exact string is in the page. A careers page links the public
+     site (`arrow.wd1.myworkdayjobs.com/en-US/AC/`, `doubleverify.wd5.myworkdayjobs.com/DV_Careers`,
+     `bitsight.wd1.myworkdayjobs.com/Bitsight`), so on 2026-09-13 three of the mail's 66
+     `regressed to zero` rows named a Workday board in plain HTML and no tool could turn it into
+     a row; `ats-fetch` converted Arrow Components (5/5 IL) and DoubleVerify (2 IL; its
+     Greenhouse board serves 0) by hand. `fetchers.workday_cxs_url` now derives the endpoint
+     from any public-site URL and returns the `cxs` form unchanged, so the resolver change is
+     a call, not a parser. Teamtailor needs no page parsing at all: any address on the board
+     answers `/jobs.rss` (`fetchers.fetch_teamtailor`). `companies.csv` already holds 15
+     public-shape Workday URLs on `scrape` rows (14 inactive: Qualcomm Israel, Adtran,
+     Marvell Israel, …) — the first pool this reaches. Proposed:
+
+     ```diff
+     --- a/resolve_broken.py
+     +++ b/resolve_broken.py
+     @@ _HTML_ATS = [
+     +    ("workday", re.compile(r"https?://[a-z0-9-]+\.wd\d+\.myworkdayjobs\.com/(?:[a-z]{2}-[A-Z]{2}/)?[A-Za-z0-9_-]+"),
+     +     lambda m: (lambda api: ("/".join(api.split("/")[-3:-1]), api))(
+     +         __import__("pipeline.fetchers", fromlist=["x"]).workday_cxs_url(m.group(0)))),
+     @@ def _resolve_via_bd(name, careers_url):
+     -    if not html or "myworkdayjobs.com/wday/cxs" not in html and "greenhouse" not in html \
+     +    if not html or "myworkdayjobs.com" not in html and "greenhouse" not in html \
+     --- a/resolve_deep.py
+     +++ b/resolve_deep.py
+     @@ def _detect_ats(urls, comeet):
+     +    for u in urls:
+     +        api = fetchers.workday_cxs_url(u) if "myworkdayjobs.com" in u else None
+     +        if api:
+     +            return ("workday", "/".join(api.split("/")[-3:-1]), api)
+     ```
+
+     The public-site entry must sit AFTER the `cxs` one (a page carrying both names the same
+     board twice, and the `cxs` capture is the stronger evidence), and `workday_cxs_url`
+     returns None for a public URL that names no site, so a bare tenant host is never a match.
+     `resolve_one`'s first-candidate-wins control flow (09-11 record §4: Digital Turbine's
+     page offered a dead Lever slug first) is the neighbouring half and is not in this diff.
+605. **`paid residential rung: ON/OFF` is written to the step SUMMARY only, so no log search can
+     answer whether the 00:00 refresh bought the rung** — lane: `infra`, filed 2026-09-13 by
+     `ats-fetch`. The 2026-09-13 morning-check row asked for that line in the 09-12 and 09-13
+     `scrape-refresh` logs and it was "not found in either log": it is
+     `echo ... >> "$GITHUB_STEP_SUMMARY"` (`.github/workflows/scrape-refresh.yml:74`), which
+     `gh run view --log` never prints. The rung WAS on both nights — the step env dump reads
+     `SCRAPE_VIA_UNLOCKER: 1` (empty on 09-11 under `CEILING REACHED`) and the `collect:` stamps
+     carry `unlock_calls=86` / `84` — so the answer existed and the named string could not be
+     found. One line:
+
+     ```diff
+     -          echo "paid residential rung: ${ON:+ON}${ON:-OFF}" >> "$GITHUB_STEP_SUMMARY"
+     +          echo "paid residential rung: ${ON:+ON}${ON:-OFF}" | tee -a "$GITHUB_STEP_SUMMARY"
+     ```
+606. **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
+     the mail's count mixes boards we cannot read with companies that are not hiring** — lane:
+     `ats-fetch`, filed 2026-09-13 by this lane. `health.stale_reason` raises
+     `regressed-to-zero` for any unscoped platform whose all-time-high baseline is > 0 and whose
+     fetch returned `[]`, and `health.rebase` refuses every row that is not `scrape`. After this
+     session's drain eight rows sit in the class for that reason alone, each measured through
+     `fetch_company` on 2026-09-13 with its own careers page still embedding the same board:
+     six Comeet tenants (NeuReality `89.002`, Nexite `37.000`, Swimm `56.007`, Zesty `06.000`,
+     Sola Security, Zemingo) and two converted today for the read (BeeHero `78.00E`, Ludeo
+     `D7.008`). They are honest zeros, and they cost the count its meaning: a reader cannot
+     tell them from the ~35 scrape rows the scraper genuinely cannot read. Proposed, not built:
+     a native row whose board answered 200 `[]` on N consecutive digests (the scrape side's
+     `n` is the model) moves to a quiet-counted reason like `misconfig`, and returns to
+     `regressed-to-zero` only if the fetch starts raising. The measurement that decides N is
+     how often a Comeet/Greenhouse tenant that went to `[]` came back with postings, which the
+     `health_baseline.json` history in git can answer without a live call.
