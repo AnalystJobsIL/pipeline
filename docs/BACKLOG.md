@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**668 filed · 470 open · 198 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**669 filed · 467 open · 202 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 619.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 620.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -248,7 +248,7 @@ closure convention in the header.
 - **604** `604@registry` **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 
-### infra — 119 open
+### infra — 116 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -360,15 +360,12 @@ closure convention in the header.
 - **582** `582@infra` **One throttle episode ends the archive day, and it is now the binding constraint, not
 - **589** `589@infra` **A cheap model could pick the one right SERP result instead of fetching four**
 - **590** `590@infra` **`cloud_state/queue_state.json` has no trim, and three row rungs now append to it** —
-- **591** `591@infra` **A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
 - **592** `592@infra` **DUPLICATE OF `591`
 - **595** `595@infra` **A killed `firmo_drain` stamps no `budget_min`, so the mail calls it the bulk cron** —
-- **599** `599@infra` **A fourth calendar-rot test, and the class has no owner**
 - **603** `603@infra` **The `ALLOWANCES` table is a 5,000 split of a 13,560/month demand, and `SOFT` is a price
-- **605** `605@infra` **`paid residential rung: ON/OFF` is written to the step SUMMARY only, so no log search can
-- **610** `610@infra` **The inline filler's render cap is 0, and an Oracle HCM posting is a shell without a
 - **612** `612@infra` **Two parked registry rows read one board under names that differ only by a diacritic, and
 - **617** `617@infra` **Four of eight mutation shards already walled past the 1,800 s line on 09-13, and the
+- **619** `619@infra` **Eight tests still assert on the state a cron rewrites, and 134 more open it through a code
 
 ### discovery — 31 open
 
@@ -12111,8 +12108,13 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      reads. Not done here because the file is another lane's and the fix is not urgent —
      the number to watch is `ls -l cloud_state/queue_state.json`.
 
-591. **A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
-     the sha that introduced it** — lane: `infra` (the harness). Filed 2026-09-11 by `jd-text`
+591. ~~**A mutation shard's failure surfaces on whatever sha is at the head of the queue, not on
+     the sha that introduced it**~~ — lane: `infra` (the harness). **CLOSED 2026-09-13
+     (`infra`)**: every `** FAIL **` record line is followed by `introduced by <sha> <date>
+     <subject>` (`tools/mutate._introduced_by`, `git log -S` on the record's own `"id"` line,
+     oldest first), and `mutation-gate` checks out full history so a shallow clone's graft is
+     never named. `page-closed-row-is-upserted-anyway` reads `f88f783 2026-09-11 roles: ...`.
+     The first bullet below (classify the killer before the push) was already in the brief. Filed 2026-09-11 by `jd-text`
      at the `registry` session's request; both of us hit it from opposite sides the same
      afternoon.
      `tools/mutate.py` mutates a `git archive HEAD` of the run's own commit, so a record broken
@@ -12386,7 +12388,15 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      with `firmographics.declared_aliases()` as the map. Until it lands the cell is honest
      (it shows the registry name) and the dataset says `identity`, which is true.
 
-599. **A fourth calendar-rot test, and the class has no owner** — lane: `infra`, filed
+599. ~~**A fourth calendar-rot test, and the class has no owner**~~ — lane: `infra`. **CLOSED
+     2026-09-13 (`infra`)**: `tests/calendar_rot.py` scans every `tests/test_*.py` for both
+     shapes (a literal fixture under a predicate reading the wall clock; a live fixture under
+     a frozen `today`), scoped to the windowed predicates that judge a date.
+     `test_no_test_carries_a_date_the_calendar_can_turn_red` is seeded on five instances'
+     text at the commit before each fix: 5 of 5 found, 0 in the fixed texts, **0 on the tree,
+     no allowlist**. The sixth (`archive_evidence`) was in the function, not the test, and no
+     scan can see it. `queue_state.tried_within`/`row_due` take `today`. The 09-11 JSON-key
+     scan is folded in. Filed
      2026-09-12 by `company-intel`. `tests/test_registry.py::
      test_a_hunted_queue_name_stops_being_a_hunt_target` builds a fixture dated
      `2026-08-29` and asserts `queue_state.tried_within(state, "Alpha", "hunt", 14)`. On
@@ -12416,11 +12426,17 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `row_due`). It needs a different detector, a whitelist (`tests/test_registry.py` alone
      carries 28 post-2021 date literals) and a seeded-instance verification, or the fix is
      itself a source of reds on other lanes' pushes — which is what this item describes.
-600. **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout** — lane:
+600. ~~**`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**~~ — lane:
      `jd-text` (its file), filed 2026-09-12 by `infra` while raising the caps above it. Two
      halves, and the second is the one that costs a morning. **(b) CLOSED 2026-09-13**:
      `Unlocker.timeout_s` (`JDFILL_BD_TIMEOUT_S`, default 30) rides every `_bd_call`; a fake
-     without the attribute is called as before. **(a) is still open.**
+     without the attribute is called as before. **(a) CLOSED 2026-09-13 (`infra`, applied under
+     the brief)**: `jdfill._run_cap_reached` reads `bd_rescue.run_cap()` against
+     `bd_rescue.SPENT`, the counter `_book_jd_fill` already feeds, before a credit is bought;
+     `BD_RUN_CAP=0` now stops the rung and the `[bd-spend]` cap line is true of it. Mutation
+     `jdfill-unlocker-ignores-run-cap` is killed behaviourally. With the 30 s tail
+     (20 × 30 s = 10 min) `JDFILL_TIME_BUDGET_MIN` went 35 → 30, and the clock guard now
+     reads the timeout instead of assuming 90.
      (a) `pipeline/jdfill.py`'s `Unlocker` POSTs `api.brightdata.com` itself rather than
      through `bd_rescue.unlock_status`, and says so at its own definition: *"neither
      `BD_RUN_CAP` nor `BD_PAID_RUNGS` nor the ceiling reached this layer"*. 2026-09-11 closed
@@ -12534,8 +12550,11 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      returns None for a public URL that names no site, so a bare tenant host is never a match.
      `resolve_one`'s first-candidate-wins control flow (09-11 record §4: Digital Turbine's
      page offered a dead Lever slug first) is the neighbouring half and is not in this diff.
-605. **`paid residential rung: ON/OFF` is written to the step SUMMARY only, so no log search can
-     answer whether the 00:00 refresh bought the rung** — lane: `infra`, filed 2026-09-13 by
+605. ~~**`paid residential rung: ON/OFF` is written to the step SUMMARY only, so no log search can
+     answer whether the 00:00 refresh bought the rung**~~ — lane: `infra`. **CLOSED 2026-09-13
+     (`infra`)**: the diff below, and the same shape at `jd-archive.yml` (`Bright Data cap this
+     run`) and `firmographics.yml`; `test_no_workflow_echo_line_writes_only_to_the_step_summary`
+     refuses the next one. Filed 2026-09-13 by
      `ats-fetch`. The 2026-09-13 morning-check row asked for that line in the 09-12 and 09-13
      `scrape-refresh` logs and it was "not found in either log": it is
      `echo ... >> "$GITHUB_STEP_SUMMARY"` (`.github/workflows/scrape-refresh.yml:74`), which
@@ -12612,8 +12631,12 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      (`fetchers.py` ~806 is the creation point); the digest now cuts it at intake, so it is
      cosmetic in the cache.
 
-610. **The inline filler's render cap is 0, and an Oracle HCM posting is a shell without a
-     render** — lane: `infra` (`daily-digest.yml` states `JDFILL_RENDER_CAP stays 0` as a
+610. ~~**The inline filler's render cap is 0, and an Oracle HCM posting is a shell without a
+     render**~~ — lane: `infra`. **CLOSED 2026-09-13 (`infra`)**: `JDFILL_RENDER_CAP: "5"` in the
+     digest's pipeline step. `bd-render-capped` printed on 7 of the 8 scheduled digests
+     09-06..09-13 (1 a night, 4 on 09-07); 5 × `RENDER_TIMEOUT` 45 s = 3.75 min, which the clock
+     guard now carries as its own term instead of asserting the cap is 0. Under an unlimited
+     budget the cap is a clock, not a credit. Filed (`daily-digest.yml` states `JDFILL_RENDER_CAP stays 0` as a
      precondition of its cap arithmetic), filed 2026-09-13 by `jd-text`. The 09-13 digest
      printed `oraclehcm bd-render-capped 1` beside `fortinet|incident response analyst:`, one
      of the six `superseded verdicts CANNOT be re-judged`. Five renders at `RENDER_TIMEOUT`
@@ -12749,3 +12772,36 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      name — the `ALIASES` key alone is the declaration — with the survivor being the identity's
      registry-row record. Not done that evening: one record, no rendered defect, and a second
      fold rule is a second deletion `--export`'s guard must be taught to excuse.
+
+## From the `infra` lane, 2026-09-13 (tests that read live state)
+
+619. **Eight tests still assert on the state a cron rewrites, and 134 more open it through a code
+     default** — lane: `infra` (the guard; each conversion is the owning lane's file), filed
+     2026-09-13 by `infra`. Measured by `tests/live_state.py` in report mode: **153** tests opened
+     `companies.csv`, the caches, `cloud_state/` or `digests/` at runtime, and **25** failed with
+     those files emptied in a scratch checkout. This session converted 17 of the 25 to dated
+     snapshots under `tests/fixtures/` (`live_state.snapshot("companies.csv")`, the retraction
+     bindings, the four closed firmographics names, the receipt pair, the internship titles) and
+     locked the rest: a test opens live state only if `tests/live_state_allowlist.json` names it
+     (137 entries, each with its reason). What is left, by lane:
+     * `docs`: `test_every_live_census_site_carries_a_floor_and_clears_it` and
+       `test_the_two_live_floors_cannot_imply_a_coverage_ratio_that_is_false` compare a doc's
+       stated floor with today's registry. That is the linter's own live gauge by design; it
+       fails only when the registry shrinks below a floor. Decide: keep (allowlisted) or move
+       the floor check into the mail.
+     * `jd-text`: `test_jd_guards_the_mutation_sweep_found_unpinned`,
+       `test_a_stray_seen_id_neither_retires_the_role_nor_skips_its_readable_page`,
+       `test_only_an_authoritative_404_may_retire_a_role` and
+       `test_the_board_token_never_comes_from_a_seen_id` need a live `companies.csv` row
+       (`Nift`'s greenhouse row). The last three never appeared in the report run: the row is read
+       outside their own window (at import, or cached by an earlier test), so the guard does not
+       attribute it to them. Fix: a registry-path seam in `pipeline/jdfill.py`
+       and the snapshot row.
+     * `registry`: `test_two_rehearsed_nights_keep_every_pool` and
+       `test_the_rehearsal_catches_a_cell_overwrite_and_bans_dns` run `tests/rehearse_registry.py`
+       in a SUBPROCESS over a copy of the live registry, which the in-process guard cannot see.
+       Fix: a `--registry` argument pointing at `live_state.snapshot("companies.csv")`.
+     * the 134 `incidental` entries pass with the files emptied; each opens a default the test
+       never redirected (`cloud_state/firmo_failed.json` 42, `board_verify.json` 34, …). Redirect
+       when the file is next touched and delete the entry; the allowlist should only shrink.
+     Check: `python -c "import json;a=json.load(open('tests/live_state_allowlist.json'));print(len(a), sum(v['why'].startswith('ASSERTS') for v in a.values()))"` reads `137 3` on 2026-09-13.
