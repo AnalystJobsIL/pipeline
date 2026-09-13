@@ -157,7 +157,38 @@ No code, no test: a test of the status quo cannot fail against base.
 
 ## 5. Green, and where
 
-*(filled after the gates)*
+**Locally, from the worktree at `origin/master` + this diff, after the last rebase:**
+`python -m pytest` (not `-q`, and without `JD_BD`/`BD_RUN_CAP` in the environment, which reds
+three paid-rung tests on their own) **2 failed, 2010 passed, 13 skipped** — the two are
+`infra`'s bd-gauge tests, red on `origin/master` before this commit (run `34755843907`).
+`python check_invariants.py` `companies.csv OK: 2383 rows, 1381 active, 0 orphans, pool=841`;
+`python docs/check_docs.py` **0 error(s), 0 warning(s) over 132 documents**; `python
+docs/backlog.py check` clean. `python tools/guard_kill.py --base origin/master`: **KILLS 13,
+CANNOT-FAIL 0** — the country-code assertion read CANNOT-FAIL first (it pins the status quo)
+and is folded into the glued-title test. `python tools/mutate.py --id` with baseline, one at a
+time: `geo-gate-veto-removed`, `geo-head-removed-from-classify` and
+`backfill-reads-a-decision-as-judged` **killed** (direct killers), and the re-anchored
+`desc-appeal-survives-a-shared-careers-page` **killed** (behavioural).
+
+**In CI, on the commit that was pushed (`f74f650`): run 34763188734, conclusion `failure`,
+15 of 16 jobs green** — `guard-kill`, six `rehearse` shards and all eight `mutation-gate`
+shards. `guard` red: `2 failed, 2032 passed, 1 skipped`, and the two are exactly
+`test_the_gauge_alarms_on_the_free_tier_and_refuses_nothing` and
+`test_an_unreadable_account_still_reports_a_gauge_from_the_repos_own_ledger` (`infra`).
+
+**Diff** (`git show --numstat f74f650`): +1,870 / −33 over 15 files, of which 771 lines are
+the measurement artifact, 229 tests, 298 the two tools, 227 the four pipeline modules.
+
+**Clause 1 — the lane's number.** *0 role records without a classifier verdict*: 0 before, 0
+after. The number under it moved: published verdicts no contract stands behind, **30 → 0 on
+the next digest** (predicted, morning check 2026-09-14), and foreign-office cards passing the
+Israel gate, **36 → 0** in both caches.
+
+**Clause 2 — delivered or a hand-drain.** Delivered: both the geography rule and the
+unknown-contract drain run inside `daily-digest.yml` at 05:00 UTC with nobody watching; the
+alarms are the `classify:` line's `geo:` clause and the `backfill:` line, and the 09-14
+morning-check rows are the unattended proof. A hand-drain by construction: the six withdrawal
+lines and Ballerine's forgotten key.
 
 ## 6. Clause 4
 
