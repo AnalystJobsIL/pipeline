@@ -840,8 +840,8 @@
   "last": "2026-09-07"
  },
  "אסם": {
-  "fails": 1,
-  "last": "2026-08-31"
+  "fails": 2,
+  "last": "2026-09-13"
  },
  "Jafi": {
   "fails": 2,
@@ -908,8 +908,8 @@
   "last": "2026-09-10"
  },
  "Siemens Israel": {
-  "fails": 1,
-  "last": "2026-09-03"
+  "fails": 2,
+  "last": "2026-09-13"
  },
  "Sola Security": {
   "fails": 2,
@@ -928,8 +928,8 @@
   "last": "2026-09-12"
  },
  "Axioma System Engineering and Integration": {
-  "fails": 1,
-  "last": "2026-09-05"
+  "fails": 2,
+  "last": "2026-09-13"
  },
  "OurCrowd": {
   "fails": 2,
@@ -940,8 +940,8 @@
   "last": "2026-09-12"
  },
  "Siemens Digital Industries Software": {
-  "fails": 1,
-  "last": "2026-09-05"
+  "fails": 2,
+  "last": "2026-09-13"
  },
  "Xtend": {
   "fails": 2,
@@ -1166,5 +1166,37 @@
  "Weizmann Institute of Science": {
   "fails": 1,
   "last": "2026-09-12"
+ },
+ "Ayalon Highways": {
+  "fails": 1,
+  "last": "2026-09-13"
+ },
+ "Bulwarx": {
+  "fails": 1,
+  "last": "2026-09-13"
+ },
+ "Fairtility": {
+  "fails": 1,
+  "last": "2026-09-13"
+ },
+ "Microsoft": {
+  "fails": 1,
+  "last": "2026-09-13"
+ },
+ "Nexar": {
+  "fails": 1,
+  "last": "2026-09-13"
+ },
+ "Opswat": {
+  "fails": 1,
+  "last": "2026-09-13"
+ },
+ "TLVTech": {
+  "fails": 1,
+  "last": "2026-09-13"
+ },
+ "kueez": {
+  "fails": 1,
+  "last": "2026-09-13"
  }
 }
