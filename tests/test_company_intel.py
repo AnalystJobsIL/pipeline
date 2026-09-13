@@ -3499,6 +3499,11 @@ def test_saver1_is_saverone_by_declaration_and_a_lookalike_is_still_held(monkeyp
     assert F._same_company("Saver1", echo)
     assert not F._same_company("Saver1", "Savers Inc"), "a declaration is not a widening"
     assert not F._same_company("Saver1", "Saver Holdings")
+    # the brand the verify ledger names is `SaverOne 2014 Ltd.`: the year is the
+    # registration's, and it is dropped only where a legal suffix followed it
+    assert F._clean_display("SaverOne 2014 Ltd.") == "SaverOne"
+    assert F._clean_display("APPTOR A.I (2023) LTD") == "APPTOR A.I"
+    assert F._clean_display("Studio 2020") == "Studio 2020"
     without = {k: v for k, v in F.ALIASES.items() if k != "saver1"}
     monkeypatch.setattr(F, "ALIASES", without)
     assert not F._same_company("Saver1", echo), "the declaration, not the relation, admits it"

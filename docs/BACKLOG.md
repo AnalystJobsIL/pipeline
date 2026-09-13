@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**667 filed · 470 open · 197 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**668 filed · 470 open · 198 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 618.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 619.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -517,7 +517,7 @@ closure convention in the header.
 - **539** `539@company-intel` **A firmographics record cannot say where its values came from, so a hand-written
 - **550** `550@company-intel` **The board shows `Holisto` for a company that now calls itself trivago Innovation
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
-- **597** `597@company-intel` **A searchless research answer is counted and never named**
+- **618** `618@company-intel` **`DoiT` and `doitintl` are one employer with two firmographics records, and the fold
 
 ### ats-fetch — 20 open
 
@@ -12336,8 +12336,16 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      rows a rung activated (222 never read), and `ledger_contradicted` is on the mail's
      `queue:` stamp and in `alarms_state`. The wrong-company firmographics records (DataCore =
      Datacor, Bdo International = the BDO network, Greylock = the VC) are `company-intel`'s.
+     **Answered 2026-09-13 (`company-intel`)**: `firmographics.DISOWNED` drops the three at
+     every view, dated 2026-09-13 so a record re-bought later stays; the export went 1,651 →
+     1,649 with `Saver1` researched the same evening.
 
-597. **A searchless research answer is counted and never named** — lane: `company-intel`,
+597. ~~**A searchless research answer is counted and never named**~~ — **CLOSED 2026-09-13
+     (`company-intel`)**: `ask` marks a searchless answer on the result it returns,
+     `research_company_detail` keeps the company in `meta["searchless_names"]`, and the job's
+     `seam:` line, the mail's `N SEARCHLESS (…)` clause and both warnings print the names.
+     `pipeline/llm.py` unchanged. Pinned by `test_a_searchless_answer_names_the_company_it_guessed`
+     and mutation `ci-searchless-answer-unnamed`. Original report — lane: `company-intel`,
      filed 2026-09-11 by itself. `llm._searches()` sums `modelUsage[m].webSearchRequests`
      per CALL, and `meta` accumulates the total, so the run says `12 calls, 243s, 14
      searches, 1 SEARCHLESS` and the mail warns that *some* record is a parametric guess
@@ -12725,3 +12733,19 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      them (run `34763087262`, `8e8cb78`, all eight green, 45-46 records each): walls 2,038 /
      2,052 / 2,061 / 2,100 / 1,979 / 1,978 / 1,623 / 1,889 s — **seven of eight past the line**,
      the worst 300 s from the 40-minute kill (2,400 s).
+
+618. **`DoiT` and `doitintl` are one employer with two firmographics records, and the fold
+     cannot reach the pair because no registry row carries the alias** — lane:
+     `company-intel`, filed 2026-09-13 by itself. `ALIASES` declares `doit` → `doitintl` (the
+     LinkedIn brand and the Greenhouse tenant published one `Product Analyst` on 2026-09-03),
+     but `fold_aliases` folds only what `declared_aliases()` returns, and that needs a PARKED
+     registry row carrying its own `alias-of` verdict. `DoiT` is not a row in any state, so the
+     second declaration cannot exist. The two records agree (founded 2011; 750 against 729
+     employees; `DoiT` says `Tel Aviv (HQ)`, `doitintl` names Santa Clara), `display_index`
+     answers for the group, and the visible difference is which one an exact-name lookup finds.
+     Measured over the whole export on 2026-09-13: **1** record has a key that is no registry
+     row, whose plain form is an `ALIASES` key, and whose identity holds a second record. The
+     candidate rule is the one `roles._alias_fold_target` already applies to a non-registry
+     name — the `ALIASES` key alone is the declaration — with the survivor being the identity's
+     registry-row record. Not done that evening: one record, no rendered defect, and a second
+     fold rule is a second deletion `--export`'s guard must be taught to excuse.

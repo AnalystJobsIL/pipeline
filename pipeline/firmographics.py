@@ -1650,12 +1650,20 @@ def _stem(s):
 def _clean_display(raw):
     s = " ".join(str(raw or "").split()).strip("\"'“”‘’ ")
     s = " ".join(re.sub(r"\([^)]*\)", " ", s).split())  # a parenthetical is never the brand
-    prev = None
+    prev, legal = None, False
     while s != prev:
         prev = s
-        s = _DN_LEGAL.sub("", s)
+        bare = _DN_LEGAL.sub("", s)
+        legal = legal or bare != s
+        s = bare
         # a stripped suffix can expose a dangling joiner: "Levi Strauss & Co." -> "& "
         s = re.sub(r"(?i)(?:\s+(?:and|&))?[\s,.&/–—-]*$", "", s)
+        # ...or the incorporation year an Israeli registration carries before `Ltd`:
+        # `SaverOne 2014 Ltd.` rendered `SaverOne 2014` (2026-09-13; 2 of the verify ledger's
+        # names, both this shape). Only behind a stripped suffix, so a brand that ends in a
+        # year keeps it.
+        if legal:
+            s = re.sub(r"\s+\(?(?:19|20)\d{2}\)?$", "", s)
     return s
 
 

@@ -2325,19 +2325,6 @@
     "stage_note": "Extended Seed funding to $17M total, led by Battery Ventures and boldstart ventures (2026)",
     "sub_sector": "AI Code Review & Agentic Coding Governance"
   },
-  "Bdo International": {
-    "as_of": "2026-09-11",
-    "business_model": "B2B professional services",
-    "customer_type": "Enterprises, public companies, private businesses across sectors",
-    "employees_global": 115000,
-    "founded": 1963,
-    "il_center": "Tel Aviv (HQ of BDO Israel/Ziv Haft); multiple branches across Israel",
-    "sector": "professional services",
-    "size_band": "XL",
-    "stage": "private-enterprise",
-    "stage_note": "Global partnership network of independent member firms (BDO Israel/Ziv Haft is the local member firm), not VC-backed",
-    "sub_sector": "Audit, Tax & Advisory"
-  },
   "Beach Bum": {
     "as_of": "2026-08-30",
     "business_model": "B2C mobile gaming",
@@ -4965,19 +4952,6 @@
     "stage_note": "Raised $100M funding round (reported 2026, Times of Israel) to secure AI applications and autonomous agents",
     "sub_sector": "AI Agent / Agentic AI Security"
   },
-  "DataCore": {
-    "as_of": "2026-09-11",
-    "business_model": "B2B",
-    "customer_type": "enterprise",
-    "employees_global": 150,
-    "founded": 1981,
-    "il_center": "None identified; HQ in Florham Park, NJ, USA",
-    "sector": "enterprise software",
-    "size_band": "S",
-    "stage": "private-enterprise",
-    "stage_note": "Long-standing privately held US software vendor, no VC funding rounds identified",
-    "sub_sector": "ERP software for chemical/process manufacturing"
-  },
   "Databricks": {
     "as_of": "2026-08-21",
     "business_model": "Consumption-based SaaS: usage-priced compute/DBUs on its cloud lakehouse platform plus enterprise subscriptions",
@@ -7577,19 +7551,6 @@
     "stage": "growth-private",
     "stage_note": "~$50M raised total; $20M round led by Deep Insight (April 2024)",
     "sub_sector": "AI-based precision spraying systems that retrofit agricultural sprayers for selective weed control"
-  },
-  "Greylock Partners": {
-    "as_of": "2026-09-11",
-    "business_model": "B2B",
-    "customer_type": "Startups/portfolio companies",
-    "employees_global": null,
-    "founded": 1965,
-    "il_center": "Herzliya (Greylock Israel office)",
-    "sector": "financial services",
-    "size_band": "S",
-    "stage": "private-enterprise",
-    "stage_note": "Partner-owned VC firm founded 1965; not itself the employer for the listed jobs, which are portfolio-company openings aggregated on Greylock's jobs board",
-    "sub_sector": "Venture Capital"
   },
   "Grip Security": {
     "as_of": "2026-08-21",
@@ -16627,6 +16588,20 @@
     "stage": "private-enterprise",
     "stage_note": "Spun off from Plasan in 2013 and wholly owned by Kibbutz Sasa (cooperative ownership); the kibbutz itself invested ~$5M in 2014 — no venture rounds",
     "sub_sector": "Content Disarm and Reconstruction (CDR) file sanitization for email, web, removable media and cross-domain/OT network transfers (GateScanner suite)"
+  },
+  "Saver1": {
+    "as_of": "2026-09-13",
+    "business_model": "Automotive safety technology (cellular-based driver distraction prevention & vulnerable road user detection systems)",
+    "customer_type": "B2B",
+    "display_name": "SaverOne",
+    "employees_global": 40,
+    "founded": 2014,
+    "il_center": "Petah Tikva (HQ)",
+    "sector": "automotive tech / road safety",
+    "size_band": "S",
+    "stage": "public",
+    "stage_note": "Nasdaq: SVRE",
+    "sub_sector": "Driver distraction prevention & pedestrian detection systems"
   },
   "SavorEat": {
     "as_of": "2026-08-23",

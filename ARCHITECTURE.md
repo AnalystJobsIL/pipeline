@@ -4038,6 +4038,17 @@ no matched-only company). Before the 08-28 drain they read **139** and **138**; 
 number with the other's name is how a survivor list came out naming `Discovery` instead of
 `Hila & Co.`.
 
+**The floor at 05:00 is not zero, and a `<= N` prediction on it fails on a cron artefact**
+(2026-09-13; the 09-07 and 09-12 rows both did). The digest's own drain runs before the line is
+written, so the mail's `registry backlog` is the names that drain could not answer, and they
+are legible beside it: the `gated` (struck in the last seven days), `failed` and `left` counts
+of the `firmo` stamp, plus any company whose first role was matched by that same morning's
+pipeline step, after the drain, and held off the board — the hook researches only board and
+email companies, and the 14:2x cron picks it up. Measured 2026-09-13: **3** = 2 gated
+(`Mars Antennas And Rf Systems`, `Saver1`) + 0 failed + 0 left + `ClixScale`, first matched at
+11:17 against a drain that ran at 10:46. A prediction about this number names that identity;
+it never states a ceiling.
+
 Count it through `identity_key`, **not** by name — the name-match version reports **16**
 false gaps today (20 against 4), because `display_index` already answers for "Dell" out of
 "Dell Technologies":
@@ -4151,7 +4162,7 @@ Four rules, and each is the answer to one of the objections above:
   active; the rule exists because a fold keyed on `identity_key` groups instead of the
   registry's rulings would take the ACTIVE `AWS` row into `Amazon`.
 
-It runs inside **`union_store` and `save_shared`**, not once over the file, because
+It runs inside **`union_store` and `save_shared`** (through `settle_keys`, below), not once over the file, because
 `cloud_state/seen.db` is `SINGLE_WRITER: daily-digest`: a key deleted from the export comes
 back out of the runner's sqlite copy the next morning. Folding every view is what makes the
 deletion stick with no tombstone and no second writer — `242`'s two blockers, avoided rather
@@ -4159,6 +4170,22 @@ than solved. `--export`'s superset guard subtracts **the folds that actually hap
 (`fold_aliases` over a copy of the file), not the ones declared: the first version excused
 every declared alias, which excused 20 keys the fold refuses to touch — `Intel Israel` and
 its 19 site-form siblings could all have vanished and the guard would have printed nothing.
+
+**A record the registry ruled is ANOTHER company's is dropped the same way** (`DISOWNED`,
+`drop_disowned`, 2026-09-13 — the mirror of `596`). Three records were bought while their row
+read a foreign board, and each profiles that board's owner: `DataCore` is Datacor Inc (the
+greenhouse tenant `datacor`), `Bdo International` is the BDO network, `Greylock Partners` is
+the VC whose portfolio page the row scraped. `registry` parked or retired all three rows, so
+nothing renders under them; but a record keyed by the name answers `n in have` for 180 days,
+and the morning a hunt re-activates `DataCore` on its own board nobody would research it.
+The ruling is **dated, not a tombstone** — a record whose `as_of` is later was bought after it
+and stays — and **declared, not derived** from `identity_facts.not_domains`/`not_tenants`: of
+the six declared rows that hold a record, three (`Entropy Organizational Development`, `hms -
+Strategic Financial IT`, `Alma Labs`) were researched from the name or its own roles rather
+than the foreign board, and a derivation would delete all three. Both key-removing passes run
+as ONE call, `settle_keys`, at every view, in `--display-report`, and inside `--export`'s
+superset guard, which therefore excuses exactly what the views remove. The export went
+1,651 → **1,649** that evening: three dropped, `Saver1` researched.
 
 **The fold also makes an alias's page vouch for the survivor**, because it would otherwise
 delete a brand with the duplicate. `display_plan` (the ONE reading of `board_verify` that
@@ -4818,7 +4845,7 @@ key added since.
 | a blurb purged | `… blurbs: …, 1 purged from the store (not a company)`; above the ceiling the step log says `blurb purge REFUSED: N of M …` and nothing is deleted |
 | a name is not a company | `… (1 research failed, weekly retry + 1 not a company — unprofiled)` — one counter used to call both "weekly retry", which a job title never gets |
 | a name failed | `… why failed: Nowhere Ltd: model could not identify the name` — the cause used to exist only in stderr, while the strike gated the name for 7 days |
-| **search silently off** | `… 0 searches, 2 SEARCHLESS` + a warning that those records are parametric guesses |
+| **search silently off** | `… 0 searches, 2 SEARCHLESS (Wix, Fiverr)` + a warning naming those records as parametric guesses — named since 2026-09-13 (`597`), because a count cannot be re-asked |
 | model drift | `::warning::company-intel model drift: asked ['sonnet'], served …` |
 | the digest attempted nothing it should have | `::warning::company-intel N board companies needed facts and this run attempted none, with no outage or budget reported` |
 | CLI down | `claude unavailable after 0 research calls (auth: Failed to authenticate. API Error: 401) — 2 unprofiled board companies wait` + warning, **no strikes** (this exit-0 shape used to strike real companies). The kind travels since 2026-08-30: two mornings (08-28, 08-29) said `(is_error (api_error_status=None))` and nothing more, because the CLI's *error* envelope carries no `result` and no `api_error_status` at all — its cause is in `subtype`/`errors[]`, which `pipeline/llm.py` discards (shared plumbing; the diff is in `docs/BACKLOG.md`) |

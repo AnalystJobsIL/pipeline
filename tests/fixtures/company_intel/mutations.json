@@ -872,5 +872,15 @@
     "replace": "        if False:\n            names.append(company)",
     "why": "company-intel guard 2026-09-13 (BACKLOG 597): a searchless research answer is a parametric guess cached for 180 days, and a count alone cannot be re-asked.",
     "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-display-year-strip-without-a-suffix",
+    "file": "pipeline/firmographics.py",
+    "symbol": "_clean_display",
+    "class": "M5-population-widening",
+    "find": "        if legal:\n            s = re.sub(",
+    "replace": "        if True:\n            s = re.sub(",
+    "why": "company-intel guard 2026-09-13: the incorporation year of an Israeli registration (`SaverOne 2014 Ltd.`) is dropped only behind a stripped legal suffix, so a brand that ends in a year keeps it.",
+    "must_be_killed_by_behavioural": true
   }
 ]
