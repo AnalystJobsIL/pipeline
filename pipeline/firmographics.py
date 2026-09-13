@@ -339,6 +339,13 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     #   registry row, so this declaration makes the two one identity -- which is what the
     #   evidence says they are, one company reading one board.
     "arrow components": "arrow electronics",
+    #   `Saver1` is SaverOne, the in-cabin distracted-driving company: the row's board is
+    #   `saver.one/careers`, its one posting reads `מתקין שטח | SaverOne ... חברת סייברוואן`,
+    #   and the research echo was `SaverOne (Saver1) 2014 Ltd.` -- our spelling inside the
+    #   page's. The guard held it twice on 2026-09-12 (`saver1` and `saverone` share no
+    #   edge), the class-A shape of 2026-09-11. Checked before declaring (522): no other
+    #   row, record or role answers to `saverone`. 2026-09-13, `company-intel`.
+    "saver1": "saverone",
     "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
     "vmware broadcom": "vmware",
     "simply joytunes": "simply",
@@ -759,6 +766,7 @@ def ask(prompt, *, system, schema, model, effort, tools=(), timeout=240, meta=No
             # `::warning::company-intel 1 research answer(s) made no web search` about it.
             # A warning that fires on the gate WORKING is how a reader learns to skim.
             meta["searchless"] = meta.get("searchless", 0) + 1
+            res["searchless"] = True    # the caller knows WHICH company; this seam does not
     return res
 
 
@@ -878,6 +886,13 @@ def research_company_detail(company, context="", timeout=240, meta=None,
               system=system or _RESEARCH_SYSTEM, schema=_RESEARCH_SCHEMA,
               model=RESEARCH_MODEL, effort=RESEARCH_EFFORT, tools=SEARCH,
               timeout=timeout, meta=meta)
+    if meta is not None and res.get("searchless"):
+        # BACKLOG 597: the count said SOME record was a parametric guess and nothing said
+        # which, so the warning could not be acted on. Every other refusal in this lane
+        # prints its name; this one does now.
+        names = meta.setdefault("searchless_names", [])
+        if company not in names:
+            names.append(company)
     rec = result_object(res, _RESEARCH_SCHEMA)
     if rec is None:
         return None, "no JSON in the answer"
@@ -1366,7 +1381,7 @@ def union_store(st, shared=None):
     except Exception:  # noqa: BLE001 — an unreadable verify must never break the union
         verify = {}
     aliased = declared_aliases()
-    fold_aliases(out, aliased)
+    settle_keys(out, aliased)
     apply_display_names(out, verify, aliased=aliased)
     return out
 
@@ -1481,6 +1496,58 @@ def fold_aliases(records, aliased=None):
         records.pop(alias, None)
         folded.append((alias, survivor))
     return folded
+
+
+# ---- records the registry has ruled describe ANOTHER company ---------------------------- #
+# 2026-09-13, the mirror of `596`. Each record below was bought while its row read a board
+# that belongs to somebody else, and it profiles THAT company -- the echo guard let it
+# through because the answer carried our name. `registry` has since parked or retired each
+# row and declared the board foreign (`identity_facts.not_tenants`, `aggregators.HOSTS`), so
+# nothing renders under these names today; but a record keyed by the name answers
+# `n in have` for 180 days, so the morning a hunt re-activates the row on its OWN board the
+# lane would never research it.
+#
+# DATED, not a tombstone: a record whose `as_of` is after the ruling was bought afterwards,
+# about whatever the row reads then, and it stays. NOT derived from the registry's
+# `not_domains`/`not_tenants`: of the six declared rows that hold a record, three
+# (`Entropy Organizational Development`, `hms - Strategic Financial IT`, `Alma Labs`) were
+# researched about the NAME and are right, and a derivation would delete all three.
+DISOWNED = {
+    # greenhouse tenant `datacor` = Datacor Inc (process-manufacturing ERP, Florham Park NJ)
+    "DataCore": "2026-09-13",
+    # BDO USA's oraclecloud board; the record is the BDO network. The Israeli firm is `BDO Israel`
+    "Bdo International": "2026-09-13",
+    # a VC's portfolio-jobs aggregator; the record is the VC, not an employer of these roles
+    "Greylock Partners": "2026-09-13",
+}
+
+
+def drop_disowned(records, disowned=None):
+    """Remove, in place, every record `DISOWNED` rules is another company's and that was
+    bought on or before that ruling. Returns the names removed, sorted."""
+    gone = []
+    for name, ruled in sorted((DISOWNED if disowned is None else disowned).items()):
+        rec = records.get(name)
+        if not isinstance(rec, dict):
+            continue
+        if str(rec.get("as_of") or "") > ruled:
+            continue            # re-researched after the ruling: a new answer, not the old one
+        records.pop(name, None)
+        gone.append(name)
+    return gone
+
+
+def settle_keys(records, aliased=None):
+    """Every pass that REMOVES a key from a view, as one call: the declared-alias fold and
+    the disowned drop. Returns the keys it removed.
+
+    One call because four places must agree on it: `union_store` and `save_shared` (a key
+    deleted from the export comes back out of the runner's sqlite copy unless EVERY view
+    removes it -- `cloud_state/seen.db` is SINGLE_WRITER), `--display-report` (it reports on
+    the keys `--export` will write), and `--export`'s superset guard, which runs this over a
+    copy of the file to learn which vanished keys were meant."""
+    folded = fold_aliases(records, declared_aliases() if aliased is None else aliased)
+    return [a for a, _s in folded] + drop_disowned(records)
 
 
 def display_index(records):
@@ -1852,7 +1919,7 @@ def save_shared(records):
     except Exception:  # noqa: BLE001 — an unreadable verify must never block a publish
         verify = {}
     _aliased = declared_aliases()
-    fold_aliases(records, _aliased)
+    settle_keys(records, _aliased)
     apply_display_names(records, verify, aliased=_aliased)
     fold_sectors(records)    # the same one-writer symmetry: no publisher ships mixed case
     path = os.path.abspath(SHARED_EXPORT)

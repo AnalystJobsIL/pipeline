@@ -3483,3 +3483,78 @@ def test_the_stamp_counts_held_and_borrowed_boards_in_one_token_per_key(tmp_path
     assert d["held"] == 2 and d["board_other"] == 1
     assert d["held_names"] == "mars-antennas-and-rf+regatta-data", d["held_names"]
     assert " " not in d["held_names"] and ";" not in d["held_names"]
+
+
+
+# --- company-intel, 2026-09-13: the held name that was ours, the records that were not ---
+
+
+def test_saver1_is_saverone_by_declaration_and_a_lookalike_is_still_held(monkeypatch):
+    """`Saver1` was HELD twice on 2026-09-12: the echo was `SaverOne (Saver1) 2014 Ltd.`,
+    the company's own spelling of itself with ours inside it, and `saver1`/`saverone` share
+    no edge. The board on the row (`saver.one/careers`, a SaverOne posting) is the evidence,
+    so the rescue is an `ALIASES` declaration -- never a looser relation, which on 09-11
+    accepted 13 pairs already ruled different companies."""
+    echo = "SaverOne (Saver1) 2014 Ltd."
+    assert F._same_company("Saver1", echo)
+    assert not F._same_company("Saver1", "Savers Inc"), "a declaration is not a widening"
+    assert not F._same_company("Saver1", "Saver Holdings")
+    without = {k: v for k, v in F.ALIASES.items() if k != "saver1"}
+    monkeypatch.setattr(F, "ALIASES", without)
+    assert not F._same_company("Saver1", echo), "the declaration, not the relation, admits it"
+
+
+def test_a_record_ruled_another_companys_is_dropped_at_every_view_and_only_until_rebought(
+        env, monkeypatch, tmp_path):
+    """BACKLOG 596's mirror. `DataCore`'s record is Datacor Inc -- bought while the row read
+    the greenhouse tenant `datacor` -- and a record keyed by the name answers `n in have` for
+    180 days, so the morning the row comes back on DataCore's own board nobody researches it.
+    The drop has to beat the runner's sqlite copy (SINGLE_WRITER, like the fold), the export
+    guard has to know it is meant, and it must NOT be a tombstone: a record bought after the
+    ruling is a new answer."""
+    import research_firmographics as RF
+    st, export, _, _ = env
+    monkeypatch.setattr(F, "declared_aliases", lambda rows=None: {})
+    monkeypatch.setattr(F, "DISOWNED", {"DataCore": "2026-09-13"})
+    datacor = {**REC, "founded": 1981, "as_of": "2026-09-11"}
+    export.write_text(json.dumps({"DataCore": datacor, "Wix": REC}), encoding="utf-8")
+    st.save_firmographics({"DataCore": datacor}, "2026-09-11")     # the runner's copy
+    assert "DataCore" in st.load_firmographics()
+    assert "DataCore" not in F.union_store(st, F.load_shared()), "sqlite cannot resurrect it"
+    monkeypatch.setattr(RF, "EXPORT", str(tmp_path / "state" / "firmographics.json"))
+    monkeypatch.setattr(RF, "SeenStore", lambda *a, **k: st)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--export"])
+    assert RF.main() != 1, "a DISOWNED record is not a lost record"
+    assert set(json.load(open(export, encoding="utf-8"))) == {"Wix"}
+    # dated, not a tombstone
+    rebought = {"DataCore": {**REC, "as_of": "2026-10-01"}}
+    assert F.drop_disowned(rebought) == [] and "DataCore" in rebought
+    # an undeclared name is never touched, and the pass is idempotent
+    recs = {"DataCore": dict(datacor), "Entropy Organizational Development": dict(datacor)}
+    assert F.drop_disowned(recs) == ["DataCore"]
+    assert F.drop_disowned(recs) == [] and "Entropy Organizational Development" in recs
+    # ...and a key that vanishes with no ruling is still the loss the guard exists for
+    export.write_text(json.dumps({"Ghost": REC, "Wix": REC}), encoding="utf-8")
+    monkeypatch.setattr(RF, "union_store", lambda *a, **k: {"Wix": REC})
+    assert RF.main() == 1
+
+
+def test_a_searchless_answer_names_the_company_it_guessed(monkeypatch):
+    """BACKLOG 597. The 2026-09-11 run said `12 calls, 14 searches, 1 SEARCHLESS` and the mail
+    warned that a record was a parametric guess cached until 2027-02 -- without saying which
+    of nine names. A count alone cannot be re-asked. A refusal is still not a guess."""
+    from pipeline import llm
+
+    def fake_call_meta(prompt, **kw):
+        known = "Agency" not in prompt
+        return {"data": {"known": known, **(REC if known else {})}, "envelope": {},
+                "models": ["m"], "searches": 1 if "Fiverr" in prompt else 0, "seconds": 0.0}
+    monkeypatch.setattr(llm, "call_meta", fake_call_meta)
+    meta = {}
+    for company in ("Wix", "Fiverr", "Agency"):
+        F.research_company_detail(company, meta=meta)
+    assert meta["searchless"] == 1 and meta["searchless_names"] == ["Wix"], meta
+    rep = {**CI._report(), "llm": meta}
+    line, warn = CI.audit_lines(rep)
+    assert "1 SEARCHLESS (Wix)" in line[0], line
+    assert any("no web search" in w and w.endswith(": Wix") for w in warn), warn

@@ -380,11 +380,11 @@
   {
     "id": "ci-export-drops-records",
     "file": "research_firmographics.py",
-    "find": "        lost = sorted(set(shared) - set(recs) - _folded)\n",
+    "find": "        lost = sorted(set(shared) - set(recs) - _settled)\n",
     "replace": "        lost = []\n",
     "class": "M1",
     "symbol": "export_drops_records",
-    "why": "company-intel guard 2026-08-28; re-aimed 2026-09-11 when the guard learned what a DECLARED fold is (it subtracts `declared_aliases()` now). Removing the check is the same defeat: the union is a superset by construction and this file has lost records twice when the write looked fine."
+    "why": "company-intel guard 2026-08-28; re-aimed 2026-09-11 when the guard learned what a DECLARED fold is (it subtracts `declared_aliases()` now). Removing the check is the same defeat: the union is a superset by construction and this file has lost records twice when the write looked fine. Re-aimed 2026-09-13: it subtracts `settle_keys` over a copy of the file, which is the declared folds AND the disowned drops that actually happen."
   },
   {
     "id": "ci-ledger-pre-run-union",
@@ -841,6 +841,36 @@
     "find": "        if ALIASES.get(plain) == identity_key(target):\n            out[name] = target",
     "replace": "        if identity_key(name) == identity_key(target):\n            out[name] = target",
     "why": "company-intel guard: TWO declarations, and the second has to BE one. `identity_key` agreement alone is satisfied by the generic suffix stripper, which folded `Intel Corporation`, `JPMorgan Chase` and `Cadence Design Systems` on one declaration plus a rule for one evening -- the `AppSec Labs`/`AppSec` shape `roles._alias_fold_target` refuses by name, and the JPMorgan fold moved a rendered `founded` chip 1799 -> 2000.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-disowned-drop-ignores-its-date",
+    "file": "pipeline/firmographics.py",
+    "symbol": "drop_disowned",
+    "class": "M1-gate-removal",
+    "find": "        if str(rec.get(\"as_of\") or \"\") > ruled:\n            continue",
+    "replace": "        if False:\n            continue",
+    "why": "company-intel guard 2026-09-13: a DISOWNED ruling is dated, not a tombstone. A record bought after it is a new answer about whatever the row reads then; without the date the name could never be profiled again.",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-disowned-drop-skipped-by-the-union",
+    "file": "pipeline/firmographics.py",
+    "symbol": "union_store",
+    "class": "M6-fallback-removal",
+    "find": "    settle_keys(out, aliased)\n",
+    "replace": "    fold_aliases(out, aliased)\n",
+    "why": "company-intel guard 2026-09-13: cloud_state/seen.db is SINGLE_WRITER, so a record dropped from the export comes back out of the runner's sqlite copy unless every view drops it (Datacor Inc's record under `DataCore`).",
+    "must_be_killed_by_behavioural": true
+  },
+  {
+    "id": "ci-searchless-answer-unnamed",
+    "file": "pipeline/firmographics.py",
+    "symbol": "research_company_detail",
+    "class": "M6-fallback-removal",
+    "find": "        if company not in names:\n            names.append(company)",
+    "replace": "        if False:\n            names.append(company)",
+    "why": "company-intel guard 2026-09-13 (BACKLOG 597): a searchless research answer is a parametric guess cached for 180 days, and a count alone cannot be re-asked.",
     "must_be_killed_by_behavioural": true
   }
 ]

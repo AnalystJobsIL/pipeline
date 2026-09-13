@@ -849,13 +849,16 @@ def _audit_lines(rep):
                            for m, n in sorted(llm.get("models", {}).items(), key=lambda kv: -kv[1]))
         bits = [f"{llm['calls']} calls", f"{llm.get('seconds', 0):.0f}s",
                 f"{llm.get('searches', 0)} searches"]
+        # BACKLOG 597: named, because a count alone cannot be re-asked
+        _guessed = ", ".join(_ascii(n, 40) for n in (llm.get("searchless_names") or ())[:5])
         if llm.get("searchless"):
-            bits.append(f"{llm['searchless']} SEARCHLESS")
+            bits.append(f"{llm['searchless']} SEARCHLESS" + (f" ({_guessed})" if _guessed else ""))
         parts.append("seam: " + (served + " · " if served else "") + ", ".join(bits))
         # a research call that never searched is a parametric guess cached until 2027-02
         if llm.get("searchless"):
             warn.append(f"{llm['searchless']} research answer(s) made no web search — those "
-                        f"records are parametric guesses, not researched facts")
+                        f"records are parametric guesses, not researched facts"
+                        + (f": {_guessed}" if _guessed else ""))
         asked = {a for a in (llm.get("asked") or set())}
         drift = [m for m in llm.get("models", {}) if asked and not any(
             str(a).lower() in str(m).lower() for a in asked)]

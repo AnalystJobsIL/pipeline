@@ -391,7 +391,7 @@ def main():
         # opened (a report must have zero side effects, wave 1b).
         verify = BV.load(os.path.join(HERE, BV.PATH))
         recs, _status = load_shared_status()
-        F.fold_aliases(recs)     # the file's own view: report on the keys --export will write
+        F.settle_keys(recs)      # the file's own view: report on the keys --export will write
         plan, _hold, unmatched = F.display_plan(recs, verify)
         buckets = {"write": [], "absent": [], "report": []}
         for key, named, verdict, payload in plan:
@@ -438,8 +438,11 @@ def main():
         # `fold_aliases` refuses a site form and refuses a survivor with no record, so
         # excusing every declared alias excused 20 keys nothing folds (`Intel Israel` and
         # its 19 siblings could all vanish and this guard would print nothing).
-        _folded = {a for a, _s in F.fold_aliases(dict(shared), F.declared_aliases())}
-        lost = sorted(set(shared) - set(recs) - _folded)
+        # ...and a DISOWNED record (`F.drop_disowned`) is the same kind of meant deletion.
+        # `settle_keys` is the one call every view makes, so the guard excuses exactly what
+        # the views remove and nothing a declaration merely names.
+        _settled = set(F.settle_keys(dict(shared)))
+        lost = sorted(set(shared) - set(recs) - _settled)
         if lost:
             print("::error::company-intel refusing to publish: the union DROPS %d record(s) "
                   "the export already holds (%s%s)"
@@ -932,11 +935,16 @@ def main():
         extra = ""
         if meta.get("searchless"):
             extra = ", %d SEARCHLESS" % meta["searchless"]
+            if meta.get("searchless_names"):
+                extra += " (%s)" % ", ".join(meta["searchless_names"])
         print("seam: %s | %d calls, %.0fs, %d searches%s" % (
             models, meta["calls"], meta.get("seconds", 0), meta.get("searches", 0), extra))
     if meta.get("searchless"):
         print("::warning::company-intel %d research answer(s) made no web search - "
-              "those records are guesses, not researched facts" % meta["searchless"])
+              "those records are guesses, not researched facts%s" % (
+                  meta["searchless"],
+                  (": " + ", ".join(meta["searchless_names"]))
+                  if meta.get("searchless_names") else ""))
     # health heartbeat: stamped ONLY when the run PROVED the infrastructure works —
     # something was researched, or every attempt at least reached the model (zero infra
     # errors) and it wasn't an all-fail soft outage. A 1-2 name run where EVERY attempt
