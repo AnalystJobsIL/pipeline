@@ -55,7 +55,7 @@ GATE_CALLERS = {
                            "deep_validate.py", "validate_empty.py"),
     "ok_to_write": (),
     "write_verdict": ("crack_walled.py",),
-    "identity_ok": ("listing_hunt.py", "repair_extract_gap.py"),
+    "identity_ok": ("listing_hunt.py", "queue_pipeline.py", "repair_extract_gap.py"),
     "embedded_board_ok": ("bd_rescue.py", "validate_empty.py", "wayback_rescue.py"),
 }
 

@@ -99,6 +99,17 @@ _CONFIRMED = {
     # suite until its name lands here — deliberately.
     "peak innovation", "peak tech innovation",
     "hila & co.", "hila & co",
+    # Added 2026-09-13 (`registry`, BACKLOG 596), each read on its own site that day and each
+    # ACTIVE on its own job board -- which is why every identity gate said yes: the page
+    # really does name the company, the postings are simply its clients'.
+    #   genecit              - genecit.com: "חברת מיקור חוץ ... המספקת שירותים מקצועיים
+    #                          לחברות וארגונים" (an outsourcing firm serving client companies);
+    #                          its board titles roles "לחברה ביטחונית בחיפה". 2 LinkedIn cards
+    #   john bryce solutions - jobs.johnbryce.co.il: John Bryce's job board, "השמת בוגרי ג'ון
+    #                          ברייס" (placement of its graduates) beside "מעסיקים? בואו לגייס"
+    #   totsaot              - totsaot.co.il: "חברת גיוס והשמה" (recruitment and placement),
+    #                          a job board for biotech / pharma / finance. 1 LinkedIn card
+    "genecit", "john bryce solutions", "totsaot", "totsaot - human resources",
 }
 
 # Some agencies are only ever written in Hebrew, and some carry the parent group in the

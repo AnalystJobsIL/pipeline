@@ -790,6 +790,14 @@ def alarms_state(rows=None, prev=None):
         if not members and label.startswith(("triage_dark", "listing_hunt", "probe_candidates")):
             out.append(f"re-check pool EMPTY: {label} — a predicate inverted, or the notes "
                        f"column was clobbered")
+    try:
+        lc = ledger_contradicted(rows)
+    except Exception:  # noqa: BLE001
+        lc = []
+    if lc:
+        # names, never a date: a stable line while the state is stable (docstring above)
+        out.append(f"{len(lc)} ACTIVE rows read a host the board-verify ledger ruled "
+                   f"another company's: {', '.join(n for n, _ in lc[:6])}")
     out += pool_floor(rows, prev=prev)
     out += pool_growth(rows, prev=prev)
     try:
@@ -877,6 +885,54 @@ def alarms(rows=None, live=False, res=None, prev=None):
 _RECRUITER_VERDICT = re.compile(r"^recruiter \d{4}-\d{2}-\d{2}\s*:", re.I)
 
 
+def _site(host):
+    """The registrable domain WITH its suffix: `careers.mars.com` -> `mars.com`,
+    `jobs.johnbryce.co.il` -> `johnbryce.co.il`. `company_identity.registrable` returns the
+    bare label, which folds `adscale.com` (AdScale's own board, ledger `ok`) into
+    `adscale.tech` (Adscale Tech, NOT-THEIRS) -- measured, it put an innocent row in the
+    census. Reuses that function's suffix rule rather than keeping a second list."""
+    from pipeline.company_identity import registrable
+    h = (host or "").lower().split(":")[0]
+    h = h[4:] if h.startswith("www.") else h
+    parts = [p for p in h.split(".") if p]
+    lab = registrable(h)
+    for i in range(len(parts) - 1, -1, -1):
+        if parts[i] == lab:
+            return ".".join(parts[i:])
+    return h
+
+
+def ledger_contradicted(rows, state=None):
+    """ACTIVE rows reading a host `pipeline/board_verify` already ruled NOT-THEIRS for that
+    very name -- on ANY url of that host, because the ledger is keyed on the exact url a read
+    happened on and the hunt re-finds a sibling path (`Mars Antennas And Rf Systems`: read on
+    `/us/en/search-results?keywords=Israel`, re-activated on `/us/search-results`). A host the
+    company DECLARES its own (`identity_facts` `domains`) is excluded: that is how a misread
+    row is settled. Returns [(name, employer_named)], report-only (BACKLOG 596; 12 on
+    2026-09-13, before the parks)."""
+    import urllib.parse
+    from pipeline import board_verify as BV
+    from pipeline import identity_facts as F
+    state = BV.load() if state is None else state
+    ruled = {}
+    for k, v in (state or {}).items():
+        if (v or {}).get("verdict") != BV.NOT_THEIRS or "|" not in k:
+            continue
+        n, u = k.split("|", 1)
+        dom = _site((urllib.parse.urlparse(u).netloc or "").lower())
+        if dom:
+            ruled.setdefault((n, dom), v.get("employer_named") or "")
+    out = []
+    for r in rows:
+        if len(r) < 6 or r[4] != "true" or not (r[3] or "").startswith("http"):
+            continue
+        host = (urllib.parse.urlparse(r[3]).netloc or "").lower()
+        hit = (r[0].strip().lower(), _site(host))
+        if hit in ruled and not F.host_matches(host, F.domains(r[0])):
+            out.append((r[0], ruled[hit]))
+    return out
+
+
 def recruiter_verdicts_without_a_mechanism(rows):
     """Rows a human judged a staffing agency whose NAME nothing in code recognises.
 
@@ -927,6 +983,14 @@ def _report(rows, live=False, want_ats=False, ladder=True):
         print("  (parked with a dated `recruiter <date>:` note, but `recruiters.is_recruiter`")
         print("   answers False, so intake keeps re-creating their roles -- add the name to")
         print("   `pipeline/recruiters._CONFIRMED` with its evidence line)")
+
+    lc = ledger_contradicted(rows)
+    print(f"\nACTIVE ROWS ON A HOST THE LEDGER RULED NOT-THEIRS: {len(lc)}"
+          + (f" -- {', '.join(n for n, _ in lc)}" if lc else ""))
+    if lc:
+        print("  (park with `python queue_pipeline.py --park \"<name>\" --apply`, then declare the")
+        print("   host in `pipeline/identity_facts` `not_domains`/`not_tenants` so no hunt re-opens it;")
+        print("   if the read was WRONG, declare the host in `domains` instead)")
 
     print("\nre-check ownership (recomputed from each tool's own filter):")
     for label, members in pools(rows).items():
@@ -1000,7 +1064,8 @@ def explain(name, rows=None, fetch=False, out=print):
     out("== declared identity (pipeline/identity_facts.py -- consulted before any heuristic) ==")
     fx = F.facts(name)
     if fx:
-        out(f"  DECLARED tenants={sorted(F.tenants(name))} domains={list(F.domains(name))}")
+        out(f"  DECLARED tenants={sorted(F.tenants(name))} domains={list(F.domains(name))} "
+            f"not_domains={list(F.not_domains(name))}")
         out(f"  why: {fx.get('why', '')}")
     else:
         out("  none declared -- to make an acquired company's board legitimate, add a row to "

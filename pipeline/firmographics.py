@@ -293,6 +293,21 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     # so the Latin name's stem and its plain form differ and the declared gate (which tests
     # the plain form) could not bridge them without a second key.
     "מנורה מבטחים החזקות": "menora mivtachim",
+    # --- 2026-09-13, `registry` (BACKLOG 517). Osem (`אסם`) is Nestlé's Israeli operating
+    # company and the advertiser of record: Indeed files one Osem posting under BOTH `אסם`
+    # and `Nestlé` (`claim conflicts 1 (אסם<-Nestlé)` every morning), and the two Nestle rows
+    # read nestlejobs.com's US portal with a `?location=Israel` query board_verify found empty.
+    # Both Nestle rows are parked `alias-of אסם`, so each is the second declaration. The
+    # accented key reads `nestl` because `identity_key` DELETES `é` ([^0-9a-z...]); without it
+    # the accented row stays its own identity. `Nespresso` too, on the board's own evidence:
+    # osem-nestle.co.il/career/open-positions publishes `Data Analyst למחלקת השיווק חברת נספרסו`
+    # (requisition 414885), the role Indeed filed under Nespresso -- read through the unlocker
+    # 2026-09-13. NOT `Nestlé Nespresso SA`, the global entity LinkedIn names: the 2026-09-01
+    # ruling that it is a different legal entity stands (the Bounce/Bounce AI class).
+    "nestl": "אסם", "nestle": "אסם", "nespresso": "אסם",
+    # the LinkedIn employer string (company slug `osem-nestle`); no registry row carries it,
+    # so this declaration alone folds it. Its board, osem-nestle.co.il, is the row's.
+    "osem nestle אסם נסטלה": "אסם",
     # --- 2026-09-11, `company-intel`. Three names the echo guard held for a week each,
     # where the row's OWN board is the evidence that the echo is this company: the guard
     # compares strings and these three differ by a typo, an abbreviation and a trading

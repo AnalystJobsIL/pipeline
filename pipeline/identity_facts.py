@@ -29,6 +29,15 @@ DECLARATION, not a cleverer string test (`docs/BACKLOG.md` registry items 21, 49
   segment was evicted after four routine stamps). Refuse-only: a row may declare both
   `tenants` and `not_tenants`. `validate()` refuses a `not_tenants` token that equals the
   SAME row's live active token — declaring the incident forces the park.
+* `not_domains` — ordinary (non-ATS) careers HOSTS proven to be another company's (2026-09-13,
+  docs/BACKLOG.md 596). The mirror of `not_tenants` for the hosts `is_foreign` judges, and the
+  only durable memory of one: the 19:00 hunt re-found `careers.mars.com` for `Mars Antennas And
+  Rf Systems` four nights after a model read had parked it there, because `verdict()` scores a
+  shared word `weak` and nothing reads `weak`. Refuse-only, consumed in ONE place --
+  `company_identity.verdict` answers `mismatch` -- so `is_foreign` is True and every gate that
+  already consults it refuses without a branch of its own. Matched against the FULL host by
+  `host_matches`, never through `registrable()`, which returns the bare label (`mars`).
+  `validate()` refuses an ACTIVE row on one of its own `not_domains`: declaring forces the park.
 * `why` — the evidence: the board URL, the acquisition, the date. Required. A row without
   evidence is a guess, and a guess here publishes one company's roles under another's name.
 
@@ -210,6 +219,52 @@ DECLARED = {
         "not_tenants": ("israeljobs",),
         "why": "the parenthetical split made bare `israel` an identity target (wave-6 R1, B1); "
                "no board of that name is D&B's"},
+
+    # --- NEGATIVE declarations, 2026-09-13 (`registry`, BACKLOG 596). Each row was ACTIVE on
+    #     a board `pipeline/board_verify` had already read and named as another employer's
+    #     (`cloud_state/board_verify.json`, verdict NOT-THEIRS, `employer_named` quoted), and
+    #     most had been parked `wrong-url` once and re-activated by the next hunt on the same
+    #     host, because nothing but that ledger remembered the read.
+    "Mars Antennas And Rf Systems": {
+        "not_domains": ("mars.com",),
+        "why": "careers.mars.com is Mars, Incorporated's (the confectioner) -- board_verify "
+               "2026-08-30 NOT-THEIRS on /us/en/search-results; the company is MARS Antennas and "
+               "RF Systems Ltd., mars-antennas.com. Re-activated by listing-hunt 2026-09-03"},
+    "Regatta Data": {
+        "not_domains": ("regattagroupcareers.com",),
+        "why": "regattagroupcareers.com is The Regatta Group's (UK outdoor clothing); Regatta "
+               "Data is RegattaDB, whose own page https://regatta.dev/careers board_verify read "
+               "`ok` 2026-09-09. Activated by listing-hunt 2026-09-10 the night triage called it "
+               "wrong-page"},
+    "Entropy Organizational Development": {
+        "not_domains": ("entropy.sa",),
+        "why": "www.entropy.sa is a Saudi firm named Entropy -- board_verify 2026-08-29 "
+               "NOT-THEIRS; parked wrong-url 2026-08-30, re-activated by listing-hunt 2026-09-12"},
+    "hms - Strategic Financial IT": {
+        "not_domains": ("investstrategic.com",),
+        "why": "investstrategic.com is Strategic Financial Services' -- board_verify 2026-08-29 "
+               "NOT-THEIRS; parked wrong-url 2026-08-30, re-activated by listing-hunt 2026-09-09"},
+    "Alma Labs": {
+        "not_domains": ("almainc.com",),
+        "why": "almainc.com is Alma Lasers' careers site -- board_verify 2026-08-29 NOT-THEIRS "
+               "(`Alma (Alma Lasers)`), and the ACTIVE row `Alma Lasers` already reads that "
+               "company on comeet 67.006. Re-activated by listing-hunt 2026-08-31"},
+    "DataCore": {
+        "not_tenants": ("datacor",),
+        "why": "https://boards-api.greenhouse.io/v1/boards/datacor/jobs is Datacor Inc's "
+               "(Florham Park NJ, chemical-industry ERP; its research record reads founded 1981, "
+               "HQ NJ); the row's seed is DataCore's Herzliya posting. Written by auto-expand "
+               "(15/0 IL), never page-read"},
+    "Bdo International": {
+        "not_tenants": ("ebqb",),
+        "why": "ebqb.fa.us2.oraclecloud.com siteNumber=BDOEntryLevelCareers is BDO USA, P.C.'s "
+               "-- board_verify 2026-09-02 NOT-THEIRS; the Israeli member firm is the row "
+               "`BDO Israel` (bdo-career.hunterhrms.com, board_verify ok 2026-09-13)"},
+    "Ethos": {
+        "not_tenants": ("ethoslife",),
+        "why": "https://boards-api.greenhouse.io/v1/boards/ethoslife/jobs is Ethos Life's (US "
+               "insurance) -- board_verify 2026-09-02 NOT-THEIRS; the re-audit 2026-09-13 "
+               "counted 67/0 IL on it"},
 }
 
 # Deliberately NOT declared, and why -- so the next reader does not "fix" them:
@@ -255,6 +310,20 @@ def not_tenants(name):
     return frozenset(_norm(t) for t in facts(name).get("not_tenants", ()) if _norm(t))
 
 
+def not_domains(name):
+    """Ordinary careers hosts PROVEN to be another company's; refuse-only, empty when none."""
+    return tuple(facts(name).get("not_domains", ()))
+
+
+def host_matches(host, suffixes):
+    """Does `host` sit on one of `suffixes`? The WHOLE host or a dot-bounded tail -- so
+    `mars.com` covers `careers.mars.com` and refuses neither `xmars.com` nor
+    `mars.com.example`. One helper, imported by the gate and by every census that asks."""
+    h = (host or "").strip().lower().split(":")[0].rstrip(".")
+    return bool(h) and any(h == d or h.endswith("." + d)
+                           for d in ((x or "").strip().lower() for x in suffixes) if d)
+
+
 def validate(rows, ats_host_rx, plumbing):
     """Self-consistency of DECLARED against the real registry. Returns a list of problems
     (empty = consistent). Called by the test suite, never at import.
@@ -268,12 +337,22 @@ def validate(rows, ats_host_rx, plumbing):
     for name, d in DECLARED.items():
         if not (d.get("why") or "").strip():
             problems.append(f"{name}: no `why` -- a declaration without evidence is a guess")
-        if not d.get("tenants") and not d.get("domains") and not d.get("not_tenants"):
+        if (not d.get("tenants") and not d.get("domains") and not d.get("not_tenants")
+                and not d.get("not_domains")):
             problems.append(f"{name}: declares nothing")
         row = by_name.get(_key(name))
         neg = {_norm(t) for t in d.get("not_tenants", ())}
         if neg & {_norm(t) for t in d.get("tenants", ())}:
             problems.append(f"{name}: a token is declared both a tenant and a not_tenant")
+        nd = d.get("not_domains", ())
+        if nd and any(host_matches(x, nd) or host_matches(y, (x,))
+                      for x in d.get("domains", ()) for y in nd):
+            problems.append(f"{name}: a host is declared both a domain and a not_domain")
+        if nd and row is not None and row[4] == "true":
+            nhost = (urllib.parse.urlparse(row[3] or "").netloc or "").lower()
+            if host_matches(nhost, nd):
+                problems.append(f"{name}: is ACTIVE on a host it declares not its own "
+                                f"({nhost}) -- park the row, then declare")
         if neg and row is not None and row[4] == "true":
             host = (urllib.parse.urlparse(row[3] or "").netloc or "").lower()
             labels = [l for l in host.split(".")[:-2] if not plumbing(l)]

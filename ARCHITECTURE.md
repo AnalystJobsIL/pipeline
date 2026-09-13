@@ -1713,6 +1713,46 @@ rows in this class: 1 activates on its own page, 4 defer (2 English/JS-rendered,
 `docs/BACKLOG.md` 510; `511` is the same blindness in `queue_resolve_search._is_ours`, where
 it cost 13 false refusals of 67 in one night.
 
+**A host the ledger has already ruled another company's is a DECLARATION, not a note**
+(2026-09-13, BACKLOG 596). `queue_pipeline --verify-existing` reads a live address with a
+model and parks a NOT-THEIRS row `wrong-url <date>: board names X; needs re-resolution`,
+clearing the address — and `needs re-resolution` is a hunt-pool token, so the 19:00 hunt
+searched again, found the same host on a sibling path, and re-activated the row: on an
+ordinary host `identity_ok` is `not is_foreign`, and `verdict()` scores a shared WORD `weak`,
+which nothing consumes. `Mars Antennas And Rf Systems` went ACTIVE on the confectioner's
+`careers.mars.com` four nights after the park; **12 ACTIVE rows** read a host the ledger had
+ruled against for that very name (`registry_health.ledger_contradicted`, which compares the
+registrable domain WITH its suffix — the bare label folds `adscale.com` into `adscale.tech`).
+Three changes, and the first is the rule:
+
+* `pipeline/identity_facts` **`not_domains`** — the ordinary-host mirror of `not_tenants`,
+  refuse-only, matched on the whole host or a dot-bounded tail (`host_matches`), consumed in
+  ONE place: `company_identity.verdict` answers `mismatch`, so `is_foreign` is True and every
+  gate that reads it refuses without a branch of its own. `validate()` refuses an ACTIVE row on
+  its own `not_domains`, so declaring forces the park. Rejected: a veto in `identity_ok` that
+  reads `cloud_state/board_verify.json` — the ledger is keyed on the exact url a read happened
+  on (it would have missed Mars, 1 of the 5 rows 596 named), and a pure gate that
+  `--explain`, the tests and the mutation harness call offline must not read a state file.
+* the verify step's scope takes **ACTIVE `scrape` rows a page-scraping rung activated**
+  (`activated_by_a_rung`: a `listing-hunt` / `re-audit` / `repair` / `crack-walled` stamp
+  reading `verified N`), 222 of which had never been read on their live address. Native-ATS
+  rows stay out on the measurement (126 queue rows on an ATS host read 99 `ok` / 27
+  `UNVERIFIABLE` / 0 parked: an API endpoint is not a page; the tenant gate judges those). A
+  NOT-THEIRS read on a host the company DECLARES its own (`domains`) is kept, not parked —
+  the settlement for a model that keeps misreading one row, which would otherwise flap
+  between a park and the hunt every 30 days.
+* `python queue_pipeline.py --park "<names>" [--monitor <url>] --apply` parks through
+  `park_unverified` **only on the ledger's own refusing read**, and writes a replacement
+  address only where the ledger reads that url `ok` AND `identity_ok` admits it.
+
+The same day: a social page and a VC's portfolio-jobs page joined `aggregators.HOSTS`
+(`facebook.com`, `instagram.com`, `greylock.com/jobs` — each named the company correctly, so
+only the host list could refuse it), and three placement firms' own boards with them
+(`genecit.com`, `jobs.johnbryce.co.il`, `totsaot.co.il`) beside their names in
+`recruiters._CONFIRMED`. A non-employer that is not an agency is parked `redundant <date>:`
+(a VC, a US municipality, an immigration consultancy), the token `Oak Group (Isle of Man)`
+already used; a new terminal token was rejected at five files for three rows.
+
 `test_every_activation_path_checks_company_identity` walks the AST of every root script for
 `row[4] = "true"` and fails if that module never consults `company_identity`;
 `test_every_activation_path_refuses_an_active_twin` scans the same way for `active_twin`.
@@ -1908,7 +1948,7 @@ so a given night processes fewer rows than the pool holds.
 | `triage_dark (18:00 daily)` | `triage-dark.yml` `0 18 * * *` | rows matching its own `TARGET_NOTES` minus `SKIP_NOTES` — classifies a dark row's failure mode and routes it | no |
 | `listing_hunt (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | parked rows matching `HUNT_POOL`, minus terminal, recruiters, discovery junk and `_triaged_page_empty` — one fourteenth of them a night (`hunt_targets`: `queue_state.row_due` 14d, stalest first, `actionable_mode` overriding) | **yes** |
 | `repair_extract_gap (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | `in_extract_gap_pool`: rows triage stamped `extract-gap` (`MODE`) with an `http` address, minus terminal and recruiters — the terminal exclusion arrived 2026-08-25, the day it selected a freshly parked `alias-of` twin | **yes** |
-| `queue_resolve_search (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | intake NAMES with no row, no settled verdict (`queue_state`) and no LIVE retirement (`queue_disposition`), never-searched first — 4 shards x a self-budgeted 28 = **112 a night against a measured brand-new intake of 161/day median, 212 mean** (7 days to 2026-08-30) — searches, lets a model ORDER the candidates, and lets the SCRAPE decide what is a board | no — proposals only |
+| `queue_resolve_search (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | intake NAMES with no row, no settled verdict (`queue_state`) and no LIVE retirement (`queue_disposition`), never-searched first — 4 shards x a self-budgeted 44 = **176 a night** (112 until 2026-09-13, below that night's own selection set of 155) against a measured brand-new intake of 161/day median, 212 mean (7 days to 2026-08-30) — searches, lets a model ORDER the candidates, and lets the SCRAPE decide what is a board | no — proposals only |
 | `queue_pipeline --apply-proposals (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | every scrape/monitor proposal from the drain; `pipeline/board_verify` reads the RENDERED page and only `ok` reaches `apply_proposals` | **yes**, via the applier's own gates |
 | `queue_pipeline --verify-existing (19:00 daily)` | `listing-hunt.yml` `0 19 * * *` | 60 live addresses a night whose verdict has aged past 30 days — a failed one is parked AND ITS ADDRESS CLEARED, so it leaves `probe_candidates`' daily pool | no — it only parks |
 | `crack_walled (19:00 daily + Sun)` | `listing-hunt.yml` `0 19 * * *`, `audit-coverage.yml` `0 4 * * 0` | rows `identity_gate.is_walled` claims — the note token OR a walled ATS host — minus terminal and recruiters; `crack_targets` re-cracks each on a **14-day** cadence (daily until 2026-09-11: 847 credits in eleven days for 2-3 boards a night) | **yes** |
@@ -2336,9 +2376,9 @@ is in `ORDER`, and the line leads with the actionable count —
 unsettled)`. The `GROWING` alarm now keys on OWED too, so a night that only accumulates
 answered-but-unapplied names no longer reads as a backlog forming.
 
-**The steady state, in two numbers.** The cloud drain can take **112 names a night** (4
-shards × 28: `queue_resolve_search.nightly_capacity()`, derived from the constants it runs
-on, never a literal). Brand-new intake — names never seen in the file's history — was
+**The steady state, in two numbers.** The cloud drain can take **176 names a night** (4
+shards × 44: `queue_resolve_search.nightly_capacity()`, derived from the constants it runs
+on, never a literal; it was 4 × 28 = 112 until 2026-09-13, see below). Brand-new intake — names never seen in the file's history — was
 **161/day at the median and 212 mean** over the seven days to 2026-08-30 (258 · 53 · 75 ·
 109 · 652 · 161 · 173, from a name-set diff of every commit of `research_companies.json`).
 It cannot hold, and no number this lane can drain by hand changes that: the queue refilled
@@ -2409,7 +2449,24 @@ on the other side of it. Two changes, both keyed on evidence that was already on
   is deliberately below the alarm — it is visible in `empty_search_share` without crying
   wolf, because an alarm that fires on the normal case is the one people learn to skip.
 
-**A shard budgets itself.** The four shards run inside one step with `timeout-minutes: 30`,
+**The first full-cap night set the pace, and the cap was the second bound** (2026-09-13).
+Run `34719109028` was the first night the drain selected its whole budget: 4 × 28 names,
+**48 / 55 / 56 / 73 s a name**, one shard `budget hit (26 min), 6 names not searched/scored`
+— six searches paid for and never read — and the next stamp said `drain_alarm=queue drain
+BEHIND: 155 selectable against a nightly capacity of 112`, all 155 of them repeats whose 14-day
+cadence had lapsed (`new_intake=0`), none of them already answered (0 of the night's 112
+phase-1 names carried a RETIRABLE verdict). So `SEC_PER_NAME` is the measured **58**, the
+shard's budget is **43 min** inside a **47-min** step, and `NIGHT_CAP` rose to **45** with it:
+a longer step alone stops at 4 × 30 = 120, because `budgeted()` takes the minimum of the cap
+and the clock (the `WAYBACK_REQ_CAP` lesson of 2026-09-04, one workflow over). Capacity **176**,
+at ~1.37 credits a name ≈ **240 credits a night**. The pin test now also demands that a
+shard's selection fit its OWN budget at the assumed pace, and that the pace never be faster
+than 58. The job's budgets sum to **344 of 350**; the ceiling a 4-shard drain can reach inside
+that cap is ~196 (a 52-min step), and past it another step's budget has to give. On the
+afternoon this landed the set already read **190** (35 new, 155 repeats), so the alarm is
+expected to say BEHIND at ~1.1 nights until the lapsed wave is through.
+
+**A shard budgets itself.** The four shards run inside one step with `timeout-minutes: 47`,
 and `queue_state.py --ingest` sits after `wait` in that same step: one slow shard past the
 line erases every shard's attempt log for the night — the same names selected and re-bought
 tomorrow, every refusal lost, the IDLE alarm firing with the wrong causes, every step green.

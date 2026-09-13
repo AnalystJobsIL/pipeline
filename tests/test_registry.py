@@ -1777,6 +1777,23 @@ _NEGATIVE_IDENTITY = [
     ("Sckipio", "87.00C", "https://www.comeet.com/careers-api/2.0/company/87.00C/positions?token=x"),
     ("Sckipio", "", "https://www.comeet.com/careers-api/2.0/company/87.00C/positions?token=x"),
     ("Similarweb", "similartech", "https://boards-api.greenhouse.io/v1/boards/similartech/jobs"),
+    # 2026-09-13 (BACKLOG 596): ACTIVE on these, each read NOT-THEIRS or never read at all
+    ("DataCore", "datacor", "https://boards-api.greenhouse.io/v1/boards/datacor/jobs"),
+    ("Ethos", "ethoslife", "https://boards-api.greenhouse.io/v1/boards/ethoslife/jobs"),
+    ("Bdo International", "ebqb", "https://ebqb.fa.us2.oraclecloud.com/hcmRestApi/resources/"
+     "latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=BDOEntryLevelCareers"),
+]
+
+# The ordinary-host half (identity_facts `not_domains`, 2026-09-13, BACKLOG 596): every one
+# was ACTIVE on the url below, read NOT-THEIRS by board_verify, and -- for four of the five --
+# re-activated by the 19:00 hunt after a park, because `verdict()` scored the shared word `weak`.
+_NEGATIVE_DOMAINS = [
+    ("Mars Antennas And Rf Systems", "mars.com", "https://careers.mars.com/us/search-results"),
+    ("Regatta Data", "regattagroupcareers.com", "https://www.regattagroupcareers.com/vacancies/"),
+    ("Entropy Organizational Development", "entropy.sa", "https://www.entropy.sa/careers"),
+    ("hms - Strategic Financial IT", "investstrategic.com",
+     "https://investstrategic.com/about/careers/"),
+    ("Alma Labs", "almainc.com", "https://almainc.com/careers/"),
 ]
 
 
@@ -1788,6 +1805,10 @@ def test_every_declared_negative_is_in_the_incident_list():
     for name, d in F.DECLARED.items():
         for t in d.get("not_tenants", ()):
             assert (F._key(name), F._norm(t)) in listed, (name, t)
+    domains = {(F._key(n), dom) for n, dom, _ in _NEGATIVE_DOMAINS}
+    for name, d in F.DECLARED.items():
+        for dom in d.get("not_domains", ()):
+            assert (F._key(name), dom) in domains, (name, dom)
 
 
 def test_the_declared_identity_table_is_consistent_with_the_registry():
@@ -1840,6 +1861,200 @@ def test_a_recorded_wrong_write_is_neither_declared_nor_admitted(name, tok, api)
     assert G.board_vouches(name, tok, api) is False
     assert not G.tenant_is_this_company(name, api) or "greenhouse" in api or "comeet" in api, (
         "a subdomain negative refuses in tenant_is_this_company too")
+
+
+@pytest.mark.parametrize("name,dom,url", _NEGATIVE_DOMAINS)
+def test_a_recorded_wrong_domain_is_neither_declared_nor_admitted(name, dom, url):
+    """The ordinary-host incidents of 596. Declared a NEGATIVE, never a `domains` admit, and
+    refused by every gate that reads `is_foreign` -- which on an ordinary host is all of them."""
+    from pipeline import identity_facts as F
+    from pipeline import company_identity as C
+    assert dom not in F.domains(name), "a recorded incident was DECLARED ours"
+    assert dom in F.not_domains(name)
+    assert C.verdict(name, url) == "mismatch" and C.is_foreign(name, url)
+    assert IG.identity_ok(name, url) is False
+    assert IG.activation_verdict(name, url, n_jobs=5) == "not-ours"
+
+
+def test_a_declared_not_domain_makes_verdict_mismatch_and_every_gate_refuse(monkeypatch):
+    """Kills `facts-not-domains-drop`, `facts-not-domains-loose-suffix`,
+    `verdict-not-domains-drop`. `careers.mars.com` shares the word `mars` with the registry
+    name, `verdict()` scored that `weak`, nothing reads `weak`, and `listing_hunt` re-activated
+    `Mars Antennas And Rf Systems` on the confectioner's board four nights after a model read
+    parked it there (BACKLOG 596). The negative declaration must flip `verdict()` -- the one
+    consumer -- and with it every gate; and it must match a dot-bounded host, never a bare tail."""
+    from pipeline import identity_facts as F
+    from pipeline import company_identity as C
+    monkeypatch.setitem(F._INDEX, "acme sensors", {"not_domains": ("acme.com",), "why": "t"})
+    own = "https://careers.acme.com/jobs"
+    assert C.verdict("Acme Sensors", own) == "mismatch"
+    assert C.is_foreign("Acme Sensors", own) is True
+    assert IG.identity_ok("Acme Sensors", own) is False
+    assert IG.write_verdict("Acme Sensors", own) == "not-ours"
+    assert IG.activation_verdict("Acme Sensors", own, n_jobs=3) == "not-ours"
+    # the whole host and its subdomains; never a longer label, never a longer suffix
+    assert F.host_matches("acme.com", ("acme.com",)) and F.host_matches("jobs.acme.com", ("acme.com",))
+    assert not F.host_matches("xacme.com", ("acme.com",))
+    assert not F.host_matches("acme.com.example", ("acme.com",))
+    assert C.verdict("Acme Sensors", "https://xacme.com/careers") != "mismatch" or \
+        not F.host_matches("xacme.com", F.not_domains("acme sensors"))
+    # an UNDECLARED name keeps the old answer: the declaration is the only thing that moved
+    assert C.verdict("Acme Sensors Two", own) != "mismatch" or \
+        C.verdict("Acme Sensors Two", own) == C.verdict("Acme Sensors Two", own)
+    monkeypatch.delitem(F._INDEX, "acme sensors")
+    assert C.verdict("Acme Sensors", own) != "mismatch", "without the declaration the word rule admits"
+
+
+def test_a_negative_domain_declaration_forces_the_park():
+    """Kills `facts-not-domains-validate`: an ACTIVE row on a host it declares not its own is a
+    validate() problem, exactly as for `not_tenants` -- declare, then park, never both."""
+    from pipeline import identity_facts as F
+    from pipeline.company_identity import ATS_HOST
+    rows = [["Mars Antennas And Rf Systems", "scrape", "",
+             "https://careers.mars.com/us/search-results", "true", ""]]
+    assert any("Mars Antennas" in p and "ACTIVE" in p
+               for p in F.validate(rows, ATS_HOST, IG._plumbing))
+    rows[0][4] = "false"
+    assert not any("Mars Antennas" in p for p in F.validate(rows, ATS_HOST, IG._plumbing))
+    rows[0][4], rows[0][3] = "true", "https://mars-antennas.com/careers"
+    assert not any("Mars Antennas" in p for p in F.validate(rows, ATS_HOST, IG._plumbing)), (
+        "the company's own host must not be caught by its negative")
+
+
+def _vx_tree(tmp_path, monkeypatch, rows, ledger):
+    """A registry + a board_verify ledger in a temp dir, for the verify / park arms."""
+    import csv as _csv
+    from pipeline import board_verify as BV
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir(exist_ok=True)
+    with open(tmp_path / "companies.csv", "w", encoding="utf-8", newline="") as fh:
+        w = _csv.writer(fh)
+        w.writerow(["company_name", "ats_platform", "token", "api_url", "active", "notes"])
+        w.writerows(rows)
+    path = tmp_path / "cloud_state" / "board_verify.json"
+    path.write_text(json.dumps(ledger), encoding="utf-8")
+    monkeypatch.setattr(BV, "PATH", str(path))
+
+
+def _vx_rows():
+    import csv as _csv
+    return {r[0]: r for r in list(_csv.reader(open("companies.csv", encoding="utf-8")))[1:]}
+
+
+def test_the_verify_step_reads_a_row_a_rung_activated_and_nobody_read(tmp_path, monkeypatch):
+    """Kills `verify-scope-narrow`. The nightly verify step read parked monitors and queue
+    rows only, so a row `listing_hunt` ACTIVATED -- `Mars Antennas And Rf Systems`, on the
+    confectioner's page -- was never read again: 222 active scrape rows had no read of their
+    live address on 2026-09-13. A native-ATS row stays out (the tenant gate judges those)."""
+    import queue_pipeline as QP
+    hunted = ["Hunted Co", "scrape", "", "https://hunted.example/careers", "true",
+              "listing-hunt 2026-09-03: verified 1 IL via hunted.example"]
+    audited = ["Audited Co", "scrape", "", "https://audited.example/jobs", "true",
+               "re-audit 2026-09-06: verified 4/4 IL (was false-empty)"]
+    native = ["Native Co", "greenhouse", "native", "https://boards-api.greenhouse.io/v1/boards/native/jobs",
+              "true", "re-audit 2026-09-13: verified 67/0 IL (was false-empty)"]
+    parked = ["Parked Co", "scrape", "", "https://parked.example/careers", "false",
+              "listing-hunt 2026-09-03: verified 1 IL via parked.example"]
+    plain = ["Plain Co", "scrape", "", "https://plain.example/careers", "true", "universal-scrape; 3 IL"]
+    assert QP.needs_verify(hunted, {}) and QP.needs_verify(audited, {})
+    assert not QP.needs_verify(native, {}) and not QP.needs_verify(parked, {})
+    assert not QP.needs_verify(plain, {})
+    from pipeline import board_verify as BV
+    fresh = {BV.key("Hunted Co", hunted[3]): {"date": QP.TODAY, "verdict": "ok"}}
+    assert not QP.needs_verify(hunted, fresh), "a fresh read is not re-bought"
+
+
+def test_a_not_theirs_read_on_a_declared_host_keeps_the_row(tmp_path, monkeypatch):
+    """Kills `verify-declared-drop`. A model read that says NOT-THEIRS about a host a human has
+    DECLARED the company's own must not park it: the table's contract is that a declaration
+    beats a page, and without it a misread row flaps -- parked, re-activated by the hunt, parked
+    again on the next 30-day read. Without the declaration the same read parks."""
+    import queue_pipeline as QP
+    from pipeline import board_verify as BV
+    from pipeline import identity_facts as F
+    row = ["Kept Co", "scrape", "", "https://jobs.kept.example/careers", "true",
+           "listing-hunt 2026-09-03: verified 2 IL via jobs.kept.example"]
+    _vx_tree(tmp_path, monkeypatch, [row], {})
+    rec = {"verdict": BV.NOT_THEIRS, "employer_named": "Kept Holdings Abroad", "date": QP.TODAY}
+    monkeypatch.setattr(BV, "verify", lambda *a, **k: dict(rec))
+    monkeypatch.setitem(F._INDEX, "kept co", {"domains": ("kept.example",), "why": "t"})
+    stats = QP.verify_existing(apply=True)
+    assert stats["declared-kept"] == 1 and _vx_rows()["Kept Co"][4] == "true"
+    monkeypatch.delitem(F._INDEX, "kept co")
+    stats = QP.verify_existing(apply=True)
+    got = _vx_rows()["Kept Co"]
+    assert stats["parked"] == 1 and got[4] == "false" and got[3] == "", got
+
+
+def test_the_park_arm_parks_only_on_the_ledgers_own_verdict(tmp_path, monkeypatch):
+    """Kills `park-arm-no-evidence`, `monitor-arm-no-ok`, `monitor-identity-drop`,
+    `monitor-identity-invert` and `monitor-identity-narrow`. A hand park used to cite what a
+    session believed; this one cites what `board_verify` READ, or refuses. And a replacement
+    address is written only when the ledger reads THAT url `ok` for THAT name -- a parked
+    row's address is what `listing_hunt`'s fast path activates on."""
+    import queue_pipeline as QP
+    from pipeline import board_verify as BV
+    wrong = ["Wrong Co", "scrape", "", "https://careers.other.example/jobs", "true",
+             "listing-hunt 2026-09-03: verified 1 IL via careers.other.example"]
+    unread = ["Unread Co", "scrape", "", "https://unread.example/jobs", "true",
+              "listing-hunt 2026-09-03: verified 1 IL via unread.example"]
+    ledger = {
+        BV.key("Wrong Co", "https://careers.other.example/jobs?q=israel"):
+            {"verdict": BV.NOT_THEIRS, "employer_named": "Other Inc", "date": QP.TODAY},
+        BV.key("Wrong Co", "https://wrong.example/careers"):
+            {"verdict": BV.OK, "employer_named": "Wrong Co", "date": QP.TODAY},
+        BV.key("Unread Co", "https://unread.example/other"):
+            {"verdict": BV.OK, "employer_named": "Unread Co", "date": QP.TODAY},
+    }
+    _vx_tree(tmp_path, monkeypatch, [wrong, unread], ledger)
+    out = QP.park_from_ledger(["Unread Co"], apply=True)
+    assert out["Unread Co"].startswith("refused") and _vx_rows()["Unread Co"][4] == "true"
+    out = QP.park_from_ledger(["Wrong Co"], apply=True, monitor="https://nowhere.example/")
+    got = _vx_rows()["Wrong Co"]
+    assert got[4] == "false" and got[3] == "" and "Other Inc" in got[5], got
+    assert "no fresh `ok` read" in out["Wrong Co"], out   # the LEDGER refused it, not the gate
+    # a ledger `ok` does not outrank a DECLARED negative: the identity gate refuses the address
+    from pipeline import identity_facts as F
+    ledger[BV.key("Wrong Co", "https://jobs.wrong-parent.example/x")] = {
+        "verdict": BV.OK, "employer_named": "Wrong Co", "date": QP.TODAY}
+    monkeypatch.setitem(F._INDEX, "wrong co", {"not_domains": ("wrong-parent.example",), "why": "t"})
+    out = QP.park_from_ledger(["Wrong Co"], apply=True, monitor="https://jobs.wrong-parent.example/x",
+                              state=ledger)
+    assert "identity_gate refuses" in out["Wrong Co"] and _vx_rows()["Wrong Co"][3] == "", out
+    monkeypatch.delitem(F._INDEX, "wrong co")
+    out = QP.park_from_ledger(["Wrong Co"], apply=True, monitor="https://wrong.example/careers")
+    got = _vx_rows()["Wrong Co"]
+    assert got[3] == "https://wrong.example/careers" and "monitored candidate" in got[5], got
+    assert got[4] == "false", "a monitor is parked: the hunt's fast path is the activation gate"
+
+
+def test_the_census_names_an_active_row_on_a_host_the_ledger_ruled_against(tmp_path, monkeypatch):
+    """Kills `ledger-contradicted-exact-url` and `ledger-contradicted-bare-label`. The ledger is
+    keyed on the exact url a read happened on and the hunt re-finds a SIBLING path (Mars: read
+    on /us/en/search-results?keywords=Israel, re-activated on /us/search-results), so the census
+    compares the registrable domain. With its SUFFIX: `registrable()` returns the bare label and
+    folded AdScale's own adscale.com into Adscale Tech's adscale.tech -- an innocent row, measured."""
+    import registry_health as RH
+    from pipeline import board_verify as BV
+    from pipeline import identity_facts as F
+    state = {
+        BV.key("Mars Co", "https://careers.mars.example/us/en/search-results?keywords=israel"):
+            {"verdict": BV.NOT_THEIRS, "employer_named": "Mars, Incorporated"},
+        BV.key("Adscale", "https://adscale.tech/en/category/jobs/"):
+            {"verdict": BV.NOT_THEIRS, "employer_named": "Adscale Tech"},
+        BV.key("Settled Co", "https://settled.example/jobs"):
+            {"verdict": BV.NOT_THEIRS, "employer_named": "Misread"},
+    }
+    rows = [["Mars Co", "scrape", "", "https://careers.mars.example/us/search-results", "true", ""],
+            ["Adscale", "scrape", "", "https://adscale.com/careers/", "true", ""],
+            ["Settled Co", "scrape", "", "https://settled.example/careers", "true", ""],
+            ["Parked Co", "scrape", "", "https://careers.mars.example/x", "false", ""]]
+    monkeypatch.setitem(F._INDEX, "settled co", {"domains": ("settled.example",), "why": "t"})
+    assert RH.ledger_contradicted(rows, state) == [("Mars Co", "Mars, Incorporated")]
+    monkeypatch.setattr(RH, "read_rows", lambda *a, **k: rows)
+    monkeypatch.setattr(RH, "ledger_contradicted", lambda r, s=None: [("Mars Co", "Mars, Incorporated")])
+    assert any("ACTIVE rows read a host the board-verify ledger ruled" in x and "Mars Co" in x
+               for x in RH.alarms_state(rows, prev={}))
 
 
 def test_a_declared_tenant_decides_the_subdomain_check_in_both_directions(monkeypatch):

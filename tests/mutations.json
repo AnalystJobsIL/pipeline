@@ -3463,5 +3463,175 @@
   "killers": [
    "tests/test_units.py::test_the_inline_filler_names_why_a_job_has_no_description_this_run"
   ]
+ },
+ {
+  "id": "facts-not-domains-drop",
+  "file": "pipeline/identity_facts.py",
+  "symbol": "not_domains",
+  "class": "M1-gate-removal",
+  "find": "    return tuple(facts(name).get(\"not_domains\", ()))",
+  "replace": "    return ()",
+  "why": "the negative host declarations are the only memory of a board_verify NOT-THEIRS read the 19:00 hunt consults: without them Mars Antennas re-activates on careers.mars.com (BACKLOG 596).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "facts-not-domains-loose-suffix",
+  "file": "pipeline/identity_facts.py",
+  "symbol": "host_matches",
+  "class": "M5-population-widening",
+  "find": "    return bool(h) and any(h == d or h.endswith(\".\" + d)",
+  "replace": "    return bool(h) and any(h == d or h.endswith(d)",
+  "why": "a bare suffix refuses xmars.com for a mars.com declaration -- another company's refusal written by this one's evidence.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "facts-not-domains-validate",
+  "file": "pipeline/identity_facts.py",
+  "symbol": "validate",
+  "class": "M3-branch-narrowing",
+  "find": "        if nd and row is not None and row[4] == \"true\":",
+  "replace": "        if nd and row is not None and row[4] == \"maybe\":",
+  "why": "declaring an incident must force the park, exactly as for not_tenants; an active row on its own not_domain is a contradiction the suite must see.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "verdict-not-domains-drop",
+  "file": "pipeline/company_identity.py",
+  "symbol": "verdict",
+  "class": "M1-gate-removal",
+  "find": "    if identity_facts.host_matches(host, identity_facts.not_domains(cname)):\n        return \"mismatch\"",
+  "replace": "    if False:\n        return \"mismatch\"",
+  "why": "the ONE consumer of not_domains: without it is_foreign stays False on a shared word and every ordinary-host gate admits the foreign board again.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "verify-scope-narrow",
+  "file": "queue_pipeline.py",
+  "symbol": "needs_verify",
+  "class": "M3-branch-narrowing",
+  "find": "    if not (is_monitor or is_queue_active or activated_by_a_rung(r)):",
+  "replace": "    if not (is_monitor or is_queue_active):",
+  "why": "a row a scraping rung ACTIVATED is never read by a model otherwise: 222 active scrape rows on 2026-09-13, Mars Antennas among them.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "verify-declared-drop",
+  "file": "queue_pipeline.py",
+  "symbol": "verify_existing",
+  "class": "M4-guard-removal",
+  "find": "        if v == BV.NOT_THEIRS and declared_ours(r[0], r[3]):",
+  "replace": "        if False:",
+  "why": "a declaration beats a page; without it a misread row flaps between a park and the hunt's re-activation every 30 days.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "park-arm-no-evidence",
+  "file": "queue_pipeline.py",
+  "symbol": "park_from_ledger",
+  "class": "M4-guard-removal",
+  "find": "        if not recs:\n            out[n] = \"refused: the ledger has no NOT-THEIRS / not-a-board / dead-url read\"\n            continue",
+  "replace": "        if not recs:\n            recs = [{}]",
+  "why": "a hand park must cite what board_verify read, never what a session believed.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "monitor-arm-no-ok",
+  "file": "queue_pipeline.py",
+  "symbol": "park_from_ledger",
+  "class": "M4-guard-removal",
+  "find": "        if not BV.is_ok(state, n, monitor):",
+  "replace": "        if False:",
+  "why": "a parked row's address is what listing_hunt's fast path activates on; only a url the ledger reads ok may be written there.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "ledger-contradicted-exact-url",
+  "file": "registry_health.py",
+  "symbol": "ledger_contradicted",
+  "class": "M3-branch-narrowing",
+  "find": "        hit = (r[0].strip().lower(), _site(host))",
+  "replace": "        hit = (r[0].strip().lower(), _site(host) + urllib.parse.urlparse(r[3]).path)",
+  "why": "the ledger is keyed on the url a read happened on and the hunt re-finds a sibling path; an exact-url census misses Mars, the founding case.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "ledger-contradicted-bare-label",
+  "file": "registry_health.py",
+  "symbol": "_site",
+  "class": "M5-population-widening",
+  "find": "            return \".\".join(parts[i:])",
+  "replace": "            return parts[i]",
+  "why": "the bare label folds adscale.com (AdScale's own board) into adscale.tech (Adscale Tech): measured, an innocent row in the census.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "agg-hosts-drop-social",
+  "file": "pipeline/aggregators.py",
+  "symbol": "HOSTS",
+  "class": "M7-constant-drift",
+  "find": "    \"greylock.com/jobs\", \"facebook.com\", \"instagram.com\",",
+  "replace": "",
+  "why": "a VC portfolio page and a social page both name the company, so only the host list refuses them (Greylock Partners, אסם).",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "spend-armed-drop",
+  "file": "bd_rescue.py",
+  "symbol": "book",
+  "class": "M4-guard-removal",
+  "find": "        SPENT[\"armed\"] = True",
+  "replace": "        pass",
+  "why": "apply_proposals pops the key at import; every queue-drain shard since 2026-09-11 bought ~36 credits and wrote no ledger line.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "qrs-pace-optimistic",
+  "file": "queue_resolve_search.py",
+  "symbol": "SEC_PER_NAME",
+  "class": "M7-constant-drift",
+  "find": "SEC_PER_NAME = float(os.environ.get(\"QRS_SEC_PER_NAME\", \"58\") or 58)",
+  "replace": "SEC_PER_NAME = float(os.environ.get(\"QRS_SEC_PER_NAME\", \"40\") or 40)",
+  "why": "an optimistic pace selects more names than a shard's budget can score: 09-12/13 paid 6 searches it never read at 55.",
+  "must_be_killed_by_behavioural": false
+ },
+ {
+  "id": "qrs-cap-second-bound",
+  "file": "queue_resolve_search.py",
+  "symbol": "NIGHT_CAP",
+  "class": "M7-constant-drift",
+  "find": "NIGHT_CAP = 45",
+  "replace": "NIGHT_CAP = 30",
+  "why": "the cap is the second bound: with it at 30 no step length lifts capacity past 4 x 30 = 120, below the 155 the alarm counted.",
+  "must_be_killed_by_behavioural": false
+ },
+ {
+  "id": "monitor-identity-drop",
+  "file": "queue_pipeline.py",
+  "symbol": "park_from_ledger",
+  "class": "M1-gate-removal",
+  "find": "        if not _gate.identity_ok(n, monitor):",
+  "replace": "        if False:",
+  "why": "the monitor arm writes a row's address; without the identity gate a ledger ok outranks a declared negative.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "monitor-identity-invert",
+  "file": "queue_pipeline.py",
+  "symbol": "park_from_ledger",
+  "class": "M2-gate-inversion",
+  "find": "        if not _gate.identity_ok(n, monitor):",
+  "replace": "        if _gate.identity_ok(n, monitor) is None:",
+  "why": "truthiness inverted with the source token intact: the shape a wave-8 reviewer reopened in listing_hunt.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "monitor-identity-narrow",
+  "file": "queue_pipeline.py",
+  "symbol": "park_from_ledger",
+  "class": "M3-branch-narrowing",
+  "find": "        if not _gate.identity_ok(n, monitor):",
+  "replace": "        if not _gate.identity_ok(n, monitor) and n == \"\":",
+  "why": "a refusal branch that can never be taken is the gate removed with the call still in the source.",
+  "must_be_killed_by_behavioural": true
  }
 ]

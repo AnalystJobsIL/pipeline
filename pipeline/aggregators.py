@@ -154,6 +154,20 @@ HOSTS = (
     #                   בהייטק"; its listings are its clients', not its own
     "jobkarov.com", "maof-hr.co.il", "jobsseek.info", "44ventures.com",
     "jobnet.co.il", "sqlink.com",
+    # Added by `registry` 2026-09-13 (BACKLOG 596/517), same shape as the block above: each
+    # passed every gate we ship because the page really does name the company.
+    #   greylock.com/jobs  a VC's PORTFOLIO-jobs page (the tlv.partners / insightpartners
+    #                      class): `Greylock Partners` was ACTIVE on it, publishing the roles
+    #                      of the companies Greylock funds. The path, not the host -- the
+    #                      firm's own site is not a job board
+    #   facebook.com       a social page is not a board and cannot be walked: `אסם` (Osem) was
+    #   instagram.com      ACTIVE on facebook.com/osem.nestle.career, a 400 KB script shell the
+    #                      page read called `careers-landing/ok`
+    "greylock.com/jobs", "facebook.com", "instagram.com",
+    #   genecit.com / jobs.johnbryce.co.il / totsaot.co.il -- placement and outsourcing firms'
+    #   own job boards (the maof-hr.co.il shape above): `pipeline/recruiters._CONFIRMED` stops
+    #   the NAME, only this list stops the BOARD being activated under a client's name
+    "genecit.com", "jobs.johnbryce.co.il", "totsaot.co.il",
 )
 
 # host-anchored: "t.me/" must not match supplant.me / supersmart.me

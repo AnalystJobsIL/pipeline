@@ -4,6 +4,7 @@
     python queue_pipeline.py --verify-existing            # dry run: what would be parked
     python queue_pipeline.py --verify-existing --apply
     python queue_pipeline.py --census                     # the table, from the files on disk
+    python queue_pipeline.py --park "A,B" [--monitor URL] # hand-park on the LEDGER's own verdict
 
 **The standard this exists to enforce.** Every name that ever entered
 `research_companies.json` ends as exactly one of: a duplicate / an acquired company / not an
@@ -99,22 +100,55 @@ def seed_for(name):
 
 
 
+# A rung that ACTIVATES a row off a page it scraped. `listing_hunt` writes `verified N IL via
+# <host>` and the Sunday audit `re-audit <date>: verified N`, and neither asks a model whose
+# board it is: on an ordinary host their only identity gate is `is_foreign`, which answers on a
+# shared WORD. So `Mars Antennas And Rf Systems` went ACTIVE on the confectioner's careers page
+# four nights after this very step had parked it there, and `needs_verify` never looked again,
+# because the row no longer carried a queue marker (BACKLOG 596).
+ACTIVATING_STAMP = r"\b(listing-hunt|re-audit|repair|crack-walled) \d{4}-\d{2}-\d{2}: [^|]*\bverified \d+"
+
+
+def activated_by_a_rung(r):
+    """An ACTIVE `scrape` row that a page-scraping rung turned on. `scrape` only, measured: of
+    the 126 ACTIVE queue rows on an ATS host this step already reads, 99 read `ok` and 27
+    `UNVERIFIABLE` (an API endpoint is not a page), 0 were parked -- the tenant gate
+    (`identity_gate.board_vouches`) is what judges those, and a native row's wrong tenant is a
+    `not_tenants` declaration, not a nightly model read."""
+    import re as _re
+    return (len(r) >= 6 and r[4] == "true" and r[1] == "scrape"
+            and bool(_re.search(ACTIVATING_STAMP, r[5] or "")))
+
+
 def needs_verify(r, state):
     """Is this row's address in scope AND due for a read? (see `verify_priority` for order)
 
-    Scope: every parked monitor, and every ACTIVE row this lane wrote from the queue. Due:
-    `board_verify.due` -- never read, or a verdict past its cadence, or unreadable more than
-    a week ago. A row whose address a model passed within the cadence is skipped, so a re-run
-    is cheap and a nightly run always advances.
+    Scope: every parked monitor, every ACTIVE row this lane wrote from the queue, and every
+    ACTIVE scrape row a page-scraping rung activated (`activated_by_a_rung`, 2026-09-13 --
+    222 of them had never been read on their live address). Due: `board_verify.due` -- never
+    read, or a verdict past its cadence, or unreadable more than a week ago. A row whose
+    address a model passed within the cadence is skipped, so a re-run is cheap and a nightly
+    run always advances.
     """
     from pipeline import board_verify as BV
     if len(r) < 6 or not (r[3] or "").startswith("http"):
         return False
     is_monitor = r[4] == "false" and MONITOR_TOKEN in (r[5] or "")
     is_queue_active = r[4] == "true" and from_queue(r)
-    if not (is_monitor or is_queue_active):
+    if not (is_monitor or is_queue_active or activated_by_a_rung(r)):
         return False
     return BV.due(state, r[0], r[3])[0]
+
+
+def declared_ours(name, url):
+    """Has a human DECLARED this host the company's own (`identity_facts` `domains`)? A
+    declaration beats a page read -- the table's own contract -- so a NOT-THEIRS read on a
+    declared host is kept, not parked. It is the settlement for a model that keeps misreading
+    one row: without it a wrong read parks the row, the hunt re-activates it, and the pair
+    repeat every 30 days."""
+    import urllib.parse
+    from pipeline import identity_facts as F
+    return F.host_matches(urllib.parse.urlparse(url or "").netloc, F.domains(name))
 
 
 def verify_priority(r, state):
@@ -191,7 +225,10 @@ def verify_existing(limit=0, apply=False, allow_paid=True, shard=""):
         v = rec.get("verdict")
         stats[v] += 1
         flag = ""
-        if v in (BV.NOT_THEIRS, BV.NOT_A_BOARD, BV.DEAD_URL):
+        if v == BV.NOT_THEIRS and declared_ours(r[0], r[3]):
+            stats["declared-kept"] += 1
+            flag = "-> kept: the host is DECLARED this company's"
+        elif v in (BV.NOT_THEIRS, BV.NOT_A_BOARD, BV.DEAD_URL):
             ok = park_unverified(r[0], rec.get("employer_named") or "", apply=apply,
                                  verdict=v)
             stats["parked" if (ok and apply) else "would-park" if ok else "park-refused"] += 1
@@ -204,6 +241,64 @@ def verify_existing(limit=0, apply=False, allow_paid=True, shard=""):
     if not apply:
         print("(dry run: companies.csv untouched)")
     return stats
+
+
+REFUSING = ("NOT-THEIRS", "not-a-board", "dead-url")
+
+
+def park_from_ledger(names, apply=False, monitor="", state=None):
+    """Hand-park rows through `park_unverified`, on the LEDGER's verdict and nothing else.
+
+    A session that finds a wrong board used to write the park by hand, and a hand park cites
+    what the session believed. This one cites what `pipeline/board_verify` READ: a name with no
+    NOT-THEIRS / not-a-board / dead-url record in `cloud_state/board_verify.json` is refused,
+    so the park is always the same evidence the nightly step would have acted on.
+
+    `monitor` (one name only): after the park, give the row a replacement address -- ONLY a
+    url the ledger reads `ok` for this name (`board_verify.is_ok`), because a parked row's
+    address is what `listing_hunt`'s fast path activates on. Returns {name: outcome}."""
+    from pipeline import board_verify as BV
+    from pipeline import identity_gate as _gate
+    from pipeline.atomic import write_csv_rows
+    from pipeline.notes import replace_own
+    state = BV.load() if state is None else state
+    out = {}
+    names = [n.strip() for n in names if n and n.strip()]
+    if monitor and len(names) != 1:
+        raise SystemExit("--monitor takes exactly one --park name")
+    for n in names:
+        recs = [v for k, v in state.items()
+                if k.split("|", 1)[0] == n.lower() and v.get("verdict") in REFUSING]
+        if not recs:
+            out[n] = "refused: the ledger has no NOT-THEIRS / not-a-board / dead-url read"
+            continue
+        rec = max(recs, key=lambda v: v.get("date", ""))
+        ok = park_unverified(n, rec.get("employer_named") or "", apply=apply,
+                             verdict=rec.get("verdict", ""))
+        out[n] = ("parked" if apply else "would park") if ok else "park refused (note full)"
+        if not (ok and monitor):
+            continue
+        if not BV.is_ok(state, n, monitor):
+            out[n] += "; monitor refused: the ledger has no fresh `ok` read of that url"
+            continue
+        if not _gate.identity_ok(n, monitor):
+            # a model read is one opinion; a DECLARED negative (identity_facts) outranks it,
+            # and this is the gate every other writer of a row's address consults
+            out[n] += "; monitor refused: identity_gate refuses that address for this name"
+            continue
+        if apply:
+            fresh = rows()                          # re-read immediately before the write
+            for fr in fresh:
+                if fr and fr[0].strip().lower() == n.lower() and len(fr) > 5:
+                    fr[3] = monitor
+                    fr[5] = replace_own(fr[5], "queue-hunt",
+                                        "queue-hunt %s: careers page documented; "
+                                        "monitored candidate" % TODAY)
+            write_csv_rows(CSV, fresh)
+        out[n] += "; monitor " + monitor
+    for n, v in out.items():
+        print("  %-40s %s" % (n[:40], v))
+    return out
 
 
 def _in_a_recheck_pool(r):
@@ -307,7 +402,14 @@ def census(stamp=False):
     for k in sorted(b):
         print("  %-46s %5d" % (k, b[k]))
     print("\n  %-46s %5d" % ("rows with an UNVERIFIED live address", unverified))
+    try:
+        import registry_health as _RH
+        contradicted = _RH.ledger_contradicted(rows(), state)
+    except Exception:                                             # noqa: BLE001
+        contradicted = []
+    print("  %-46s %5d" % ("ACTIVE rows on a host the ledger ruled NOT-THEIRS", len(contradicted)))
     receipt = {"date": TODAY, "buckets": dict(b), "unverified_rows": unverified,
+               "ledger_contradicted": len(contradicted),
                "owed": owed[:2000], "stuck": stuck[:2000]}
     os.makedirs("cloud_state", exist_ok=True)
     from pipeline.atomic import write_json
@@ -810,7 +912,11 @@ def stamp_queue(receipt):
               "rows_from_queue": sum(int(v) for k, v in receipt.get("buckets", {}).items()
                                      if k.startswith("ROW")),
               "retired": int(receipt.get("buckets", {}).get("retired with evidence", 0)),
-              "unverified_rows": int(receipt.get("unverified_rows", 0))}
+              "unverified_rows": int(receipt.get("unverified_rows", 0)),
+              # the two numbers the drain alarm is read against, so the mail says both halves:
+              # what tonight's selection set is (`selectable`, below) and what a night can take
+              "capacity": DRAIN_NIGHTLY_CAP,
+              "ledger_contradicted": int(receipt.get("ledger_contradicted", 0))}
     if delta is not None:
         detail["delta"] = delta
         detail["direction"] = "GROWING" if delta > 0 else ("falling" if delta < 0 else "flat")
@@ -1436,6 +1542,10 @@ def main(argv=None):
     ap.add_argument("--verify-existing", action="store_true",
                     help="LLM-verify every live address that has no fresh verdict")
     ap.add_argument("--census", action="store_true", help="print the table and write a receipt")
+    ap.add_argument("--park", default="",
+                    help="comma-separated row names to park on the board_verify ledger's verdict")
+    ap.add_argument("--monitor", default="",
+                    help="with ONE --park name: a replacement address the ledger reads `ok`")
     ap.add_argument("--dispose", action="store_true",
                     help="judge every name still owed and retire what the evidence settles")
     ap.add_argument("--no-page-reads", action="store_true",
@@ -1456,6 +1566,9 @@ def main(argv=None):
     ap.add_argument("--no-paid", action="store_true", help="never spend a Bright Data credit")
     ap.add_argument("--apply", action="store_true")
     a = ap.parse_args(argv)
+    if a.park:
+        park_from_ledger(a.park.split(","), apply=a.apply, monitor=a.monitor)
+        return 0
     if a.verify_existing:
         verify_existing(limit=a.limit, apply=a.apply, allow_paid=not a.no_paid, shard=a.shard)
     if a.retire_settled:

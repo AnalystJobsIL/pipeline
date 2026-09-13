@@ -29034,5 +29034,52 @@
   "employer_named": "Genius Sports",
   "page_kind": "careers-landing",
   "states_no_openings": false
+ },
+ "datacore|https://job-boards.greenhouse.io/datacor": {
+  "date": "2026-09-13",
+  "url": "https://job-boards.greenhouse.io/datacor",
+  "name": "DataCore",
+  "model": "opus",
+  "route": "plain",
+  "chars": 27904,
+  "text_chars": 1014,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Datacor",
+  "employer_named": "Datacor",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "regatta data|https://www.regattagroupcareers.com/vacancies/": {
+  "date": "2026-09-13",
+  "url": "https://www.regattagroupcareers.com/vacancies/",
+  "name": "Regatta Data",
+  "model": "opus",
+  "route": "render",
+  "chars": 103497,
+  "text_chars": 9000,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to The Regatta Group",
+  "employer_named": "The Regatta Group",
+  "page_kind": "board",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "NOT-THEIRS",
+   "why": "belongs to The Regatta Group",
+   "mechanical_said": true
+  }
+ },
+ "אסם|https://www.osem-nestle.co.il/career/open-positions": {
+  "date": "2026-09-13",
+  "url": "https://www.osem-nestle.co.il/career/open-positions",
+  "name": "אסם",
+  "model": "opus",
+  "route": "unlock",
+  "chars": 72212,
+  "text_chars": 3757,
+  "verdict": "ok",
+  "why": "This is Osem-Nestlé's own careers site at osem-nestle.co.il. It lists 57 open jobs in Israeli locations, including the job we first saw it hiring for.",
+  "employer_named": "אסם-נסטלה",
+  "page_kind": "board",
+  "states_no_openings": false
  }
 }

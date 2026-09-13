@@ -101,6 +101,12 @@ def book(purpose="unlock", n=1):
     gap is the reason the mail could not say what the month was being spent on."""
     SPENT["n"] += n
     SPENT.setdefault("by", Counter())[purpose] += n
+    if (os.environ.get("BRIGHTDATA_API_KEY") or "").strip():
+        # remembered AT THE SPEND: a later import may pop the key from os.environ on purpose
+        # (`apply_proposals` locks the paid rungs at import), and the exit guard below used to
+        # read the env at exit -- so every queue-drain shard since 2026-09-11 bought ~36
+        # credits and wrote no ledger line, because phase 2 imports apply_proposals
+        SPENT["armed"] = True
 
 # This pass's rung name in `cloud_state/queue_state.json`, and how long an answer holds.
 # Fourteen days is the registry's standing re-check cadence (`listing_hunt`, the intake
@@ -200,7 +206,8 @@ def _report_spend():
     # to `api.brightdata.com` with one or is a test double. The `.git` condition is what
     # keeps this scoped to a real checkout, exactly as above -- a tmp_path ROOT still
     # writes, so the guards that exercise this function are untouched.
-    if in_checkout and not (os.environ.get("BRIGHTDATA_API_KEY") or "").strip():
+    if in_checkout and not (SPENT.get("armed")
+                            or (os.environ.get("BRIGHTDATA_API_KEY") or "").strip()):
         print(f"[bd-spend] no Bright Data credential in this process -- NOT writing "
               f"cloud_state/bd_spend.jsonl. The {SPENT['n']} credit(s) above cannot have "
               f"been bought (BACKLOG 374/381).", flush=True)

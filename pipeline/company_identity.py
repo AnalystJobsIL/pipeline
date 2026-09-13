@@ -177,6 +177,13 @@ def verdict(company: str, url: str) -> str:
     if not dom or not cn:
         return "unknown"
 
+    # A declared NEGATIVE beats every admit rule below (identity_facts `not_domains`, BACKLOG
+    # 596): `careers.mars.com` shares the word `mars` with `Mars Antennas And Rf Systems`, the
+    # word rule scores that `weak`, nothing consumes `weak`, and the hunt re-activated the row
+    # on the confectioner's board. This is the ONE consumer; `is_foreign` follows from it.
+    if identity_facts.host_matches(host, identity_facts.not_domains(cname)):
+        return "mismatch"
+
     for parent in identity_facts.domains(cname):
         if host.endswith(parent) or dom == registrable(parent):
             return "match"

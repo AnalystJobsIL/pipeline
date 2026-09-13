@@ -1424,7 +1424,11 @@ def test_no_identity_group_merges_two_genuinely_different_companies():
     groups = collections.defaultdict(list)
     for name in d:
         groups[F.identity_key(name)].append(name)
-    KNOWN = {"amazon", "jpmorgan chase", "microsoft"}   # a unit, a spelling, a site form
+    KNOWN = {"amazon", "jpmorgan chase", "microsoft",   # a unit, a spelling, a site form
+             # Osem-Nestlé (registry 2026-09-13, 517): the Israeli group whose own board
+             # publishes the Nestlé and Nespresso roles; the members' records are the global
+             # parents' facts (founded 1866 / 1986) until `fold_aliases` folds them into אסם
+             "אסם"}
     suspect = []
     for key, members in groups.items():
         if len(members) < 2 or key in KNOWN:

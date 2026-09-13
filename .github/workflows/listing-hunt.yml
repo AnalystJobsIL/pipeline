@@ -148,15 +148,16 @@ jobs:
           # the default is 150 PER PROCESS and returns [] in SILENCE when reached, which
           # reads exactly like "this company has no board" (BACKLOG 426)
           DEEP_BD_SEARCH_CAP: "500"
-        # 4 shards x 30 = 120 names a night at ~55 s/name/shard = ~28 min. Measured intake
-        # is a median of 92/day and a mean of 167, so this keeps pace with the median; a
-        # 258-name day leaves a residue and the queue stamp is what announces it.
-        timeout-minutes: 30
+        # 4 shards x budgeted(45) = 4 x 44 = 176 names a night, at the MEASURED 58 s/name
+        # (queue_resolve_search.SEC_PER_NAME; the shard stops itself at 43 min). Was 4 x 28 =
+        # 112 in 30 min, below the 155 the 09-13 stamp could select; ~1.37 credits a name, so
+        # ~240 a night (`registry` 2026-09-13, BACKLOG 491 item 3).
+        timeout-minutes: 47
         run: |
           set +e
           for i in 1 2 3 4; do
             QRS_SHARD=$i/4 python -u queue_resolve_search.py \
-              --propose "out/qrs_$i.json" --cap 30 &
+              --propose "out/qrs_$i.json" --cap 45 &
           done
           wait
         continue-on-error: true

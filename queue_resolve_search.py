@@ -100,10 +100,19 @@ def _reopened_since_search(state, name):
 # ITSELF: it selects only as many names as `QRS_TIME_BUDGET_MIN` can score at
 # `QRS_SEC_PER_NAME` (the workflow's own measured figure), and stops between names when the
 # clock says so. `tests` pin these two against `listing-hunt.yml`.
+#
+# 2026-09-13 (`registry`, BACKLOG 491 item 3): 4 x 28 = 112 was below the night's own selection
+# set (`drain_alarm=queue drain BEHIND: 155 selectable`), and the first night at full cap
+# (run 34719109028) measured 48 / 55 / 56 / 73 s per name -- one shard printed `budget hit (26
+# min), 6 names`, six searches paid and never read. So the pace is the MEASURED one (58), the
+# budget follows the step (47 min, `listing-hunt.yml`), and the cap is the second bound that
+# would otherwise hold capacity at 4 x 30 = 120 however long the step: 4 x budgeted(45) = 4 x
+# 44 = 176. The defaults live HERE rather than in the step's env because the pin test reads
+# the module's values, and a figure set only in YAML is a figure no test sees.
 NIGHT_SHARDS = 4
-NIGHT_CAP = 30
-TIME_BUDGET_MIN = float(os.environ.get("QRS_TIME_BUDGET_MIN", "26") or 0)
-SEC_PER_NAME = float(os.environ.get("QRS_SEC_PER_NAME", "55") or 55)
+NIGHT_CAP = 45
+TIME_BUDGET_MIN = float(os.environ.get("QRS_TIME_BUDGET_MIN", "43") or 0)
+SEC_PER_NAME = float(os.environ.get("QRS_SEC_PER_NAME", "58") or 58)
 
 
 def budgeted(cap, budget_min=None, sec_per_name=None):

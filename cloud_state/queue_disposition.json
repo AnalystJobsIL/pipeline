@@ -25629,5 +25629,24 @@
    "matched_on": "name-normalised",
    "tried": []
   }
+ },
+ "Osem Nestle אסם נסטלה": {
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "אסם",
+  "why": "a rung found this name's board (osem-nestle.co.il, board_verify ok 2026-09-13) and the registry row 'אסם' now reads that board's listings page; matched by a session reading the page, not on the name (517)",
+  "evidence": {
+   "matched_on": "hand: board page read",
+   "row": "אסם",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.osem-nestle.co.il"
+    ]
+   ],
+   "board": "https://www.osem-nestle.co.il/career/open-positions"
+  }
  }
 }

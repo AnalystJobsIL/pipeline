@@ -18213,6 +18213,104 @@ def test_the_re_judge_budget_is_charged_on_delivery_not_on_intent(monkeypatch):
                       "description": _TEXT + f" R{i}."})
     assert clf.stale_rejudged == 0 and clf.failed >= 3         # nothing was bought
     assert clf.off_reason                                       # ...and the breaker noticed
+def test_social_pages_and_vc_portfolio_boards_stay_on_the_aggregator_host_list():
+    """Kills `agg-hosts-drop-social`. `registry`'s 2026-09-13 entries (BACKLOG 596/517), the
+    class the identity gate cannot see because the page really does name the company:
+    `Greylock Partners` was ACTIVE on its own portfolio-jobs page (the roles of the companies
+    it funds) and `אסם` on facebook.com/osem.nestle.career, which the page read called
+    `careers-landing/ok`. `board_verify`'s mechanical veto reads the same predicate, so the
+    ledger can no longer admit either shape."""
+    from pipeline.aggregators import is_aggregator
+    from pipeline import board_verify as BV
+    for url in ("https://greylock.com/jobs/portfolio-jobs/",
+                "https://www.facebook.com/osem.nestle.career/?locale=he_IL",
+                "https://www.instagram.com/somecompany.careers/"):
+        assert is_aggregator(url), url
+        assert BV._mechanical_veto("Any Co", url) == "aggregator", url
+    # positive controls: the firm's own site and a real employer's page are not aggregators
+    for ok in ("https://greylock.com/team/", "https://www.osem-nestle.co.il/careers",
+               "https://supplant.me/facebook"):
+        assert not is_aggregator(ok), ok
+
+
+def test_a_key_popped_after_the_spend_still_leaves_its_ledger_line(tmp_path, monkeypatch):
+    """Kills `spend-armed-drop`. `queue_resolve_search` buys its searches, then imports
+    `apply_proposals`, which POPS the Bright Data key at import (on purpose: it locks the paid
+    rungs). The exit guard read the env at exit, so from 2026-09-11 every drain shard printed
+    `this step bought 36 Bright Data credit(s)` AND `no Bright Data credential in this process --
+    NOT writing` -- ~145 credits a night missing from the ledger the mail's gauge reads. The
+    credential is now remembered at the spend; a process that never had one still writes
+    nothing."""
+    import sys as _sys
+    import bd_rescue as B
+    monkeypatch.setattr(B, "ROOT", str(tmp_path))
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    (tmp_path / ".git").write_text("gitdir: elsewhere", encoding="utf-8")
+    monkeypatch.delitem(_sys.modules, "pytest")     # reach the credential guard, not the test one
+    ledger = tmp_path / "cloud_state" / "bd_spend.jsonl"
+    try:
+        B.SPENT.update(n=0, capped=False)
+        B.SPENT.pop("armed", None)
+        monkeypatch.setenv("BRIGHTDATA_API_KEY", "k")
+        B.book("search", 3)
+        monkeypatch.delenv("BRIGHTDATA_API_KEY")    # what `import apply_proposals` does
+        B._report_spend()
+        assert ledger.exists() and json.loads(ledger.read_text().splitlines()[-1])["credits"] == 3
+        ledger.unlink()
+        B.SPENT.update(n=0, capped=False)
+        B.SPENT.pop("armed", None)
+        B.book("search", 2)                          # booked with no key at all
+        B._report_spend()
+        assert not ledger.exists(), "a credit no process could have bought was written"
+    finally:
+        B.SPENT.update(n=0, capped=False)
+        B.SPENT.pop("armed", None)
+        B.SPENT["by"].clear()
+
+
+def test_the_nestle_rows_fold_onto_osem_only_with_both_declarations():
+    """BACKLOG 517. Indeed files one Osem posting under `אסם` AND `Nestlé`, and the mail read
+    `claim conflicts 1 (אסם<-Nestlé)` every morning because no fold was eligible: a registry
+    name folds only when its own dated `alias-of` verdict and an `ALIASES` key agree. The
+    accented row's key is `nestl` (`identity_key` deletes the `é`). `Nespresso` folds because
+    Osem-Nestlé's own board publishes its Israeli role (requisition 414885); `Nestlé Nespresso
+    SA`, the global entity, is a different legal entity by the 2026-09-01 ruling and must not."""
+    from pipeline import roles as R
+    from pipeline.firmographics import identity_key
+    reg = {"Nestlé", "Nestle", "אסם", "Nespresso"}
+    act = {"אסם": {"אסם"}}
+    ruled = {"Nestlé": "אסם", "Nestle": "אסם", "Nespresso": "אסם"}
+    for n in ("Nestlé", "Nestle", "Nespresso"):
+        assert identity_key(n) == "אסם"
+        assert R._alias_fold_target(n, "", reg, act, {}, ruled) == ("אסם", "declared")
+        assert R._alias_fold_target(n, "", reg, act, {}, {}) is None, "one declaration is not two"
+    assert R._alias_fold_target("Osem Nestle אסם נסטלה", "", reg, act, {}, {}) == ("אסם", "declared")
+    assert R._alias_fold_target("Nestlé Nespresso SA", "", reg, act, {}, ruled) is None, (
+        "the global legal entity is not Osem")
+    # and where both spellings still meet in one claim group, the survivor wins in either order
+    mute = "Analytics role. Requirements: SQL. Responsibilities: dashboards."
+    osem = {"company": "אסם", "title": "t", "url": "https://il.indeed.com/viewjob?jk=1",
+            "description": mute, "sources": ["discovery-indeed"]}
+    nest = {"company": "Nestlé", "title": "t", "url": "https://il.indeed.com/viewjob?jk=2",
+            "description": mute, "sources": ["discovery-indeed"]}
+    assert R.Ledger._winner([nest, osem], [0, 1], set()) == 1
+    assert R.Ledger._winner([osem, nest], [0, 1], set()) == 0
+
+
+def test_the_queue_stamp_carries_capacity_and_the_ledger_contradiction_count(tmp_path, monkeypatch):
+    """The drain alarm compares two numbers and the mail printed one: `selectable` rode the
+    stamp, the capacity it is read against did not. And the 596 census has to reach a line a
+    human reads daily, or it is a number on a run page."""
+    import queue_pipeline as QP
+    from pipeline import stages
+    _r830_tree(tmp_path, monkeypatch, queue=["Owed Co"])
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "cloud_state" / "stages.json"))
+    QP.stamp_queue({"buckets": {"owed, a nightly rung retries it": 1}, "unverified_rows": 0,
+                    "ledger_contradicted": 7})
+    q = stages._load()["queue"]
+    assert q["capacity"] == QP.DRAIN_NIGHTLY_CAP and q["ledger_contradicted"] == 7, q
+
+
 def test_the_israeli_job_boards_stay_on_the_aggregator_host_list():
     """`pipeline/aggregators.py` is DISCOVERY's file; these six entries are `registry`'s,
     added 2026-08-28 (340@discovery), and this pins them so they cannot be dropped silently.
@@ -23026,6 +23124,16 @@ def test_the_drain_capacity_constants_match_the_workflow():
         "the names a shard selects must fit the step at the assumed pace")
     assert QRS.nightly_capacity() == QRS.NIGHT_SHARDS * QRS.budgeted(QRS.NIGHT_CAP)
     assert QRS.budgeted(30, 0, 55) == 30, "budget 0 means no clock"
+    # 2026-09-13 (BACKLOG 491 item 3). The first full-cap night, run 34719109028, measured 48 /
+    # 55 / 56 / 73 s per name and one shard overran its 26 minutes by 6 PAID names. So the pace
+    # a shard budgets with may never be faster than the measured one, the names it selects must
+    # fit its OWN budget at that pace (not merely GitHub's kill), and the night must hold the
+    # selection set that raised the alarm (`155 selectable against a nightly capacity of 112`).
+    # Kills `qrs-pace-optimistic` and `qrs-cap-second-bound`.
+    assert QRS.SEC_PER_NAME >= 58, "the assumed pace is faster than any full-cap night measured"
+    assert QRS.budgeted(QRS.NIGHT_CAP) * QRS.SEC_PER_NAME / 60 <= QRS.TIME_BUDGET_MIN, (
+        "a shard selects more names than its own budget can score at the assumed pace")
+    assert QRS.nightly_capacity() >= 155, "capacity is below the 2026-09-13 selection set"
 
 
 def test_drain_stops_scoring_at_the_budget_and_records_nothing_for_the_rest(
@@ -31187,6 +31295,7 @@ def test_a_credit_nobody_could_have_bought_is_never_written_to_the_ledger(tmp_pa
     (tmp_path / ".git").write_text("gitdir: elsewhere", encoding="utf-8")   # a worktree's .git
     monkeypatch.setenv("BRIGHTDATA_API_KEY", "")
     B.SPENT.update(n=3, capped=False)
+    B.SPENT.pop("armed", None)          # a credential remembered at a spend is a real spend
     B._report_spend()
     assert not (tmp_path / "cloud_state" / "bd_spend.jsonl").exists(), \
         "no credential in this process: the 3 credits cannot have been bought"

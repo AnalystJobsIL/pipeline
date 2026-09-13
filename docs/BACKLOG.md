@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**661 filed · 467 open · 194 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**663 filed · 469 open · 194 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 612.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 614.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 152 open
+### registry — 153 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -246,8 +246,9 @@ closure convention in the header.
 - **593** `593@registry` **An abandoned board is refused, alarmed and re-resolved
 - **596** `596@registry` **Five active rows publish another company's careers board, and the intel that names
 - **604** `604@registry` **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
+- **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 
-### infra — 117 open
+### infra — 118 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -366,6 +367,7 @@ closure convention in the header.
 - **603** `603@infra` **The `ALLOWANCES` table is a 5,000 split of a 13,560/month demand, and `SOFT` is a price
 - **605** `605@infra` **`paid residential rung: ON/OFF` is written to the step SUMMARY only, so no log search can
 - **610** `610@infra` **The inline filler's render cap is 0, and an Oracle HCM posting is a shell without a
+- **612** `612@infra` **Two parked registry rows read one board under names that differ only by a diacritic, and
 
 ### scraper — 32 open
 
@@ -1012,6 +1014,13 @@ outside the `discovery` lane and are NOT fixed.
     the cap now leaves 23 minutes for a 45-minute drain without touching it again. The
     `audit_query_urls.py --apply` step is NOT built: a new nightly registry writer needs its
     ledger in `persist_state`'s table and `registry` to say what `--apply` may write.
+    **Item 3 CLOSED 2026-09-13 (`registry`, both files, `infra` named).** Four shards, not six:
+    the first full-cap night (run 34719109028) read 48 / 55 / 56 / 73 s a name at FOUR
+    processes and one shard overran its 26 minutes by 6 paid names, so six on a 2-vCPU runner
+    buys contention. Step 30 → **47** min, `--cap` 30 → **45**, `QRS_TIME_BUDGET_MIN` default
+    **43**, `QRS_SEC_PER_NAME` default **58** (the measured pace) ⇒ `nightly_capacity()` **176**,
+    ~240 credits a night; budgets 344 of 350. The cap had to move with the step — `budgeted`
+    takes the minimum, so a 47-minute step at cap 30 is still 120.
 
 492. **`check_invariants` F2 fires on 109 legitimate `no-url` rows — decision taken: import the mode set** — lane: `infra` (`282`), decided by `registry` 2026-08-30. The message "no pool matches it" is right for a TRUNCATED mode and wrong for `no-url`, which four pools own. The one-line fix in `282` (`from triage_dark import MODES as TRIAGE_MODES`) is the decision; the message text can stay because it stops firing on the false class. Until it lands, every reader of the invariants output must know the 109 are noise, which is the cost. **CLOSED 2026-08-30 (`infra`)** with `282`: the import landed; F2 fires on a truncated mode only.
 
@@ -9854,6 +9863,21 @@ Record: `docs/sessions/2026-08-31-registry.md`.
      aliasing either Nestlé row moves a role that is on the board TODAY. Whoever takes it
      should decide the canonical row first, then let `_alive` age the loser out rather
      than purging it.
+
+     **CLOSED 2026-09-13 (`registry`).** Crowned `אסם`, and moved it off the Facebook page to
+     Osem-Nestlé's own board, `https://www.osem-nestle.co.il/career/open-positions` — 57 Israel
+     postings read through the unlocker (the host refuses a plain GET and serves a local render
+     an Incapsula block), including `אנליסט/ית בקרת מכירות לקבוצת אסם נסטלה` (req 419068, the
+     card behind `claim conflicts 1 (אסם<-Nestlé)`) and `Data Analyst למחלקת השיווק חברת
+     נספרסו` (req 414885, behind `אסם<-Nespresso`). `board_verify` reads it `ok`. `Nestlé`,
+     `Nestle` and `Nespresso` are parked `alias-of אסם 2026-09-13` with `ALIASES` `nestl` (the
+     accented row's key — `identity_key` deletes `é`), `nestle`, `nespresso` and the LinkedIn
+     string `osem nestle אסם נסטלה` → `אסם`, so each card folds at intake; `Nestlé Nespresso SA`,
+     the global entity, is NOT declared (the 09-01 ruling stands). `roles._winner` now lets a
+     declared alias yield to its survivor where both still meet (A-Z had crowned `Nestlé`).
+     `facebook.com` / `instagram.com` joined `aggregators.HOSTS`, which is (a) as a mechanism.
+     The queue name `Osem Nestle אסם נסטלה` carries a `covered-by-row` record, so the drain
+     skips it. (c) is the fold, and the diacritic twin half of (b) is `612@infra`.
 518. **A terminal registry verdict does not reach the roles purge path, so an agency's role
      is filed `closed` — as though it had been a real vacancy that ended** — lane: `roles`
      (the predicate) with `registry` (the evidence); found 2026-08-31 by an adversarial pass
@@ -12221,6 +12245,28 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      the prior question — whether an aggregator page earns an active row at all (`441`'s
      shape, on the registry side).
 
+     **CLOSED 2026-09-13 (`registry`) — the five were one class of 12, and a park alone had
+     already been tried on nine of them.** `registry_health.ledger_contradicted` counts ACTIVE
+     rows on a host `board_verify` ruled NOT-THEIRS for that very name: **12 → 0**. Nine carried
+     `wrong-url` then `listing-hunt verified` in their own note — parked, re-activated by the
+     19:00 hunt on a sibling path of the same host, because on an ordinary host the gate is
+     `is_foreign` and a shared word scores `weak`. What holds them now is a declaration:
+     `identity_facts.not_domains` (Mars → `mars.com`, Regatta Data, Entropy, hms, Alma Labs),
+     consumed only by `company_identity.verdict`, and `not_tenants` for DataCore (`datacor`,
+     read NOT-THEIRS that day), Bdo International (`ebqb`) and Ethos (`ethoslife`). Per row:
+     Mars, DataCore, Entropy, hms, Alma Labs, Ethos parked `wrong-url … needs re-resolution`
+     through `queue_pipeline --park` (the ledger's own read, address cleared); Regatta Data
+     parked as a monitor on its own `regatta.dev/careers` (ledger `ok`); Greylock Partners,
+     City Of Sunbury Ohio, Bdo International and Y Axis Global retired `redundant` (a VC's
+     aggregator page, a US municipality, BDO USA's board beside the parked `BDO Israel` row,
+     an Indian immigration consultancy); GENECIT, John Bryce Solutions and TOTSAOT parked
+     `recruiter` with their names in `recruiters._CONFIRMED` and their boards in
+     `aggregators.HOSTS`. Mars' own site has no careers page and DataCore's openings page is a
+     JavaScript embed, so both stay in the hunt pool. The verify step now reads ACTIVE scrape
+     rows a rung activated (222 never read), and `ledger_contradicted` is on the mail's
+     `queue:` stamp and in `alarms_state`. The wrong-company firmographics records (DataCore =
+     Datacor, Bdo International = the BDO network, Greylock = the VC) are `company-intel`'s.
+
 597. **A searchless research answer is counted and never named** — lane: `company-intel`,
      filed 2026-09-11 by itself. `llm._searches()` sums `modelUsage[m].webSearchRequests`
      per CALL, and `meta` accumulates the total, so the run says `12 calls, 243s, 14
@@ -12506,3 +12552,38 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      over the three caches before adding any marker: a nav block is `_HEAD_FURNITURE`-shaped
      only when its lines repeat (this one renders the menu twice), and `© All rights reserved`
      is a tail marker only if it never precedes a posting.
+
+## From the `registry` lane, 2026-09-13 (wrong boards, Osem-Nestlé, drain capacity)
+
+612. **Two parked registry rows read one board under names that differ only by a diacritic, and
+     no invariant compares them** — lane: `infra` (`check_invariants.py`), filed 2026-09-13 by
+     `registry`. Check B compares exact names and B2 fires only on two ACTIVE rows, so `Nestle`
+     and `Nestlé` sat as two parked monitors on the byte-identical
+     `nestlejobs.com/job-search?location=Israel` from 2026-08-30 until this session parked both
+     `alias-of אסם` (`517`). The fold key already exists — `queue_pipeline.same_employer_row`
+     normalises spelling — and `identity_key` makes it worse, not better: it DELETES `é`, so
+     `Nestlé` and `Nestle` are different identities (`nestl` / `nestle`). Measured over
+     `companies.csv` with NFKD minus combining marks, casefolded: **2 pairs** —
+     `Nestle`/`Nestlé` (now both terminal) and `Flo Optics`/`flō Optics`. Proposed, a WARN
+     beside B2:
+
+     ```python
+     import unicodedata
+     def _fold(s): return "".join(c for c in unicodedata.normalize("NFKD", s)
+                                   if not unicodedata.combining(c)).casefold().strip()
+     seen = {}
+     for r in rows:
+         seen.setdefault(_fold(r[0]), []).append(r[0])
+     twins = [v for v in seen.values() if len(set(v)) > 1]
+     ```
+
+613. **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
+     url match cannot reproduce** — lane: `registry`, filed 2026-09-13 by itself. The drain is
+     right about the name (`queue_disposition.is_retired` honours every `SETTLED_VERDICTS`
+     record, so `Osem Nestle אסם נסטלה` is no longer selected), but `retire_settled` asks
+     `disposition_verdict` (the judge's five verdicts only) and then `covered_by_row`, which
+     re-derives the match from the rung's attempt url — the site ROOT here, where the row now
+     reads `/career/open-positions`. So the record stands, the drain skips the name, and the
+     queue FILE keeps it for ever; `queue_state` counts it `answered on disk`. One arm after
+     `disposition_verdict`: a stored `covered-by-row` / `already-a-row` / `settled-by-a-rung`
+     record is itself the answer, as `is_retired` already says.

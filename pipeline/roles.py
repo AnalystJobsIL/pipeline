@@ -1563,7 +1563,7 @@ class Ledger:
              evidence an aggregator pair carries, and the one that decides Nestlé/אסם
           5. else not the "X Israel" site form, not a lowercase stub row ("kornit"), then
              the shortest identity (the parent), then A-Z"""
-        from .firmographics import identity_key
+        from .firmographics import ALIASES, identity_key
 
         def rank(i):
             j = jobs[i]
@@ -1578,6 +1578,10 @@ class Ledger:
                     # `name == name.lower()` is true of every one of them and demoted
                     # `אסם` under a parked `Nestlé` on the pair this key never judged.
                     1 if (name == name.lower() and name != name.upper()) else 0,
+                    # a DECLARED alias yields to its survivor. Two names of one identity tie on
+                    # every key below, and A-Z then crowned the Latin `Nestlé` over `אסם` the
+                    # day `ALIASES` made them one identity (2026-09-13, registry, 517)
+                    1 if _plain_norm(name) in ALIASES else 0,
                     len(identity_key(name)),
                     name)
         return min(idxs, key=rank)
