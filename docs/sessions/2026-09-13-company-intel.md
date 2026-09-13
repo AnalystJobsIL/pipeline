@@ -124,9 +124,11 @@ refusal is still not a guess: the `_known` test in `ask` decides both the count 
 
 | | |
 |---|---|
-| `python -m pytest` (worktree) | see `HANDOFF.md` line |
+| `python -m pytest` (worktree, before the rebase) | **1 failed, 2,024 passed, 13 skipped**; the failure was `test_docs_are_consistent_with_the_code`, run while the archived morning-check row was still missing, and it passes alone on the committed tree (`1 passed`) |
+| CI on `79d5781` | run `34780964192`, **16 of 16 success** |
+| `docs/check_docs.py` | 0 errors, 0 warnings |
 | `check_invariants.py` | 2,383 rows · 1,381 active · 0 orphans |
-| mutation records, this session | 5 new or re-aimed (listed in the commit) |
+| mutation records, this session | 5 run (4 new, 1 re-aimed), **5 killed**, every killer `behavioural` by `_classify_killer` |
 
 ## What I made harder for the next lane
 
