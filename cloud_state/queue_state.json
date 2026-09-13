@@ -125,7 +125,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "1E Therapeutics": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -133,9 +133,15 @@
     "url": "https://careers.lilly.com/us/en/search-results?location=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers.lilly.com/us/en/search-results?location=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "1global": {
   "last": "2026-08-29",
@@ -166,7 +172,7 @@
   "verdict": "already-a-row"
  },
  "1touch.io": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -174,9 +180,15 @@
     "url": "https://1touch.io/company/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://1touch.io/company/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "200apps": {
   "last": "2026-08-29",
@@ -364,9 +376,15 @@
     "date": "2026-09-12",
     "url": "https://3dsignals.com/careers/",
     "tries": 1
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://3dsignals.com/careers/"
    }
   ],
-  "verdict": "unreachable"
+  "verdict": "nolisting"
  },
  "44 Ventures": {
   "last": "2026-08-29",
@@ -546,7 +564,7 @@
   "verdict": "duplicate-of"
  },
  "90min": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -554,9 +572,15 @@
     "url": "https://90seconds.com/about/careers/positions/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://90seconds.com/about/careers/positions/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "A B S Altman Broadcast Services": {
   "last": "2026-08-29",
@@ -792,7 +816,7 @@
   "verdict": "note-migrated"
  },
  "AE Capital": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -859,9 +883,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "AES Embedded Solutions": {
   "last": "2026-09-10",
@@ -985,7 +1015,7 @@
   "verdict": "nolisting"
  },
  "AMD": {
-  "last": "2026-09-12",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-03",
@@ -1012,9 +1042,15 @@
     "rung": "crack-walled",
     "url": "https://internal-amd.icims.com/jobs/search?ss=1&searchLocation=Israel",
     "verdict": "novrfy"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://internal-amd.icims.com/jobs/search?ss=1&searchLocation=Israel"
    }
   ],
-  "verdict": "novrfy"
+  "verdict": "nolisting"
  },
  "ARAN Software": {
   "last": "2026-09-10",
@@ -2826,7 +2862,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Aerohandling": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -2888,9 +2924,15 @@
     "url": "https://www.aerohandling.com/CAREERS/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.aerohandling.com/CAREERS/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Aerospike": {
   "last": "2026-08-29",
@@ -3583,7 +3625,7 @@
   "verdict": "no-board"
  },
  "Air Doctor": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -3591,9 +3633,15 @@
     "url": "https://www.air-dr.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.air-dr.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Air Ev": {
   "last": "2026-08-29",
@@ -4795,7 +4843,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Amimon": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -4803,9 +4851,15 @@
     "url": "https://www.comeet.com/jobs/amimon/50.00C",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.comeet.com/jobs/amimon/50.00C"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Amital": {
   "last": "2026-09-10",
@@ -4869,7 +4923,7 @@
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "Andromeda Security": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -4877,12 +4931,18 @@
     "url": "https://www.andromedasecurity.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.andromedasecurity.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Anetac": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -4890,12 +4950,18 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Aniview": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -4909,6 +4975,12 @@
     "rung": "listing-hunt",
     "url": "https://aniview.com/careers/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://aniview.com/careers/"
    }
   ],
   "verdict": "nolisting"
@@ -4926,7 +4998,7 @@
   "verdict": "no-search-results"
  },
  "Anodot": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -4940,6 +5012,12 @@
     "rung": "listing-hunt",
     "url": "https://www.anodot.com/jobs/?location=Israel",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.anodot.com/jobs/?location=Israel"
    }
   ],
   "verdict": "nolisting"
@@ -5138,7 +5216,7 @@
   "verdict": "documented"
  },
  "Aptiv": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -5146,9 +5224,15 @@
     "url": "https://www.aptiv.com/en/jobs/search?location=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.aptiv.com/en/jobs/search?location=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Aquarius Spectrum": {
   "last": "2026-09-11",
@@ -5237,7 +5321,7 @@
   "verdict": "documented"
  },
  "Archimedes | ארכימדס": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -5282,6 +5366,12 @@
     "rung": "search-llm",
     "url": "https://www.archimedesglobal.com/careers/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.archimedesglobal.com/careers"
    }
   ],
   "verdict": "documented"
@@ -5491,7 +5581,7 @@
   "verdict": "already-a-row"
  },
  "Atlassian": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
@@ -5505,12 +5595,18 @@
     "rung": "listing-hunt",
     "url": "https://www.atlassian.com/company/careers/all-jobs?search=&team=&location=Israel",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.atlassian.com/company/careers/all-jobs?search=&team=&location=Israel"
    }
   ],
   "verdict": "nolisting"
  },
  "Auth21": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -5577,9 +5673,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "AutoDS - Automatic Dropshipping Tools": {
   "last": "2026-09-09",
@@ -5706,7 +5808,7 @@
   "verdict": "found"
  },
  "BDO Israel": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -5751,6 +5853,12 @@
     "rung": "search-llm",
     "url": "https://bdo-career.hunterhrms.com/כל-המשרות/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://bdo-career.hunterhrms.com"
    }
   ],
   "verdict": "documented"
@@ -5824,7 +5932,7 @@
   "verdict": "no-board"
  },
  "BPLinks": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -5864,6 +5972,12 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "no candidate was this company's live page"
@@ -5959,7 +6073,7 @@
   "verdict": "nolisting"
  },
  "Bank Leumi בנק לאומי": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -5992,9 +6106,15 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "no candidate was this company's live page"
+  "verdict": "no-search-results"
  },
  "Bank of America": {
   "last": "2026-09-11",
@@ -6046,7 +6166,7 @@
   "verdict": "no-board"
  },
  "Batm": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -6075,9 +6195,15 @@
     "url": "https://www.telco.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.telco.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Batsheva Dance Company": {
   "last": "2026-08-29",
@@ -6192,19 +6318,25 @@
   "verdict": "no-board"
  },
  "Be2See.": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://www.be2see.co.il/jobs",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.be2see.co.il/jobs"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "Beacon Sec": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -6233,12 +6365,18 @@
     "url": "https://beacon.security/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://beacon.security/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Beamr": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -6246,9 +6384,15 @@
     "url": "https://www.comeet.com/jobs/beamr/A9.00B",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.comeet.com/jobs/beamr/A9.00B"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Beamup": {
   "last": "2026-08-29",
@@ -6278,7 +6422,7 @@
   "verdict": "already-a-row"
  },
  "Beckman Coulter": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -6307,9 +6451,15 @@
     "url": "https://www.beckmancoulter.com/about-beckman-coulter/careers-at-beckman-coulter-diagnostics",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.beckmancoulter.com/about-beckman-coulter/careers-at-beckman-coulter-diagnostics"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Beer Sheva Theatre": {
   "last": "2026-08-30",
@@ -6329,7 +6479,7 @@
   "verdict": "no-board"
  },
  "Behalf": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -6337,9 +6487,15 @@
     "url": "https://behalf.zohorecruit.com/jobs/Careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://behalf.zohorecruit.com/jobs/Careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Beilinson Rabin Medical Center": {
   "last": "2026-08-30",
@@ -6422,7 +6578,7 @@
   "verdict": "note-migrated"
  },
  "Beit Issie Shapiro": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -6451,9 +6607,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Beitar Illit Municipality": {
   "last": "2026-08-29",
@@ -6505,7 +6667,7 @@
   "verdict": "no-board"
  },
  "Belong.Life": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -6513,9 +6675,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://belong.life/career/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Ben Gurion University": {
   "last": "2026-08-30",
@@ -6592,7 +6760,7 @@
   "verdict": "already-a-row"
  },
  "Beonemedicines": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -6621,9 +6789,15 @@
     "url": "https://beonemedicines.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://beonemedicines.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Beresheet Mobile Services": {
   "last": "2026-08-29",
@@ -6759,7 +6933,7 @@
   "verdict": "nolisting"
  },
  "Betway Africa": {
-  "last": "2026-09-10",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -6795,12 +6969,24 @@
     "url": "https://myhcm.wd3.myworkdayjobs.com/Betway_Africa",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://myhcm.wd3.myworkdayjobs.com/en-US/Betway_Africa"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "skip",
+    "date": "2026-09-13",
+    "url": "https://myhcm.wd3.myworkdayjobs.com/en-US/Betway_Africa"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "skip"
  },
  "Bexhub": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -6829,9 +7015,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Beyond Air": {
   "last": "2026-09-11",
@@ -6882,7 +7074,7 @@
   "verdict": "no-board"
  },
  "Bigabid": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -6890,12 +7082,18 @@
     "url": "https://www.bigabid.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.bigabid.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Bigbrothers": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -6924,9 +7122,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Bilton": {
   "last": "2026-08-29",
@@ -7270,7 +7474,7 @@
   "verdict": "no-board"
  },
  "Bit": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -7278,9 +7482,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Bitsight": {
   "last": "2026-08-29",
@@ -7322,7 +7532,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Bk Management Consulting": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -7351,9 +7561,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Bks Group Pty Limited": {
   "last": "2026-08-29",
@@ -7407,7 +7623,7 @@
   "verdict": "already-a-row"
  },
  "Blackrock": {
-  "last": "2026-09-10",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -7443,12 +7659,18 @@
     "url": "https://blackrock.wd1.myworkdayjobs.com/en-US/BlackRock_Professional?locationCountry=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://blackrock.wd1.myworkdayjobs.com/en-US/BlackRock_Professional?locationCountry=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Blender": {
-  "last": "2026-09-12",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
@@ -7468,9 +7690,15 @@
     "verdict": "validated",
     "date": "2026-09-12",
     "url": "https://www.blender.org/careers/"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.blender.org/jobs/"
    }
   ],
-  "verdict": "validated"
+  "verdict": "nolisting"
  },
  "Blender Loans": {
   "last": "2026-08-30",
@@ -7582,7 +7810,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Bloor Homes": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -7611,9 +7839,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers.bloorhomes.com/job-search/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Blossom Kc": {
   "last": "2026-08-29",
@@ -7643,7 +7877,7 @@
   "verdict": "already-a-row"
  },
  "Blue White Robotics": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -7651,9 +7885,15 @@
     "url": "https://www.bluewhite.ai/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.bluewhite.ai/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Bluegen Water": {
   "last": "2026-08-30",
@@ -7951,7 +8191,7 @@
   "verdict": "nolisting"
  },
  "Bookmap": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -7959,9 +8199,15 @@
     "url": "https://bookmap.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://bookmap.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Boolzai": {
   "last": "2026-09-11",
@@ -8099,7 +8345,7 @@
   "verdict": "no-board"
  },
  "BrainQ": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -8107,9 +8353,15 @@
     "url": "https://careers.brainqtech.com/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers.brainqtech.com/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "BrancoWeiss": {
   "last": "2026-08-29",
@@ -8350,7 +8602,7 @@
   "verdict": "found"
  },
  "Browsi": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -8379,9 +8631,15 @@
     "url": "https://browsi.com/careers-2/co/il/all",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://browsi.com/careers-2/co/il/all"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Bruker Corporation": {
   "last": "2026-08-29",
@@ -8411,7 +8669,7 @@
   "verdict": "already-a-row"
  },
  "Bruker Jv Israel": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -8440,12 +8698,18 @@
     "url": "https://www.bruker.com/en/careers.html",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.bruker.com/en/careers.html"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Bsre": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -8474,9 +8738,15 @@
     "url": "https://www.bsre.co.il/en/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.bsre.co.il/en/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Btb Be The Bank": {
   "last": "2026-08-29",
@@ -8750,7 +9020,7 @@
   "verdict": "documented"
  },
  "CAF (Construcciones y Auxiliar de Ferrocarriles)": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -8795,6 +9065,12 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "no candidate was this company's live page"
@@ -8875,7 +9151,7 @@
   "verdict": "documented"
  },
  "COM-C-TECH LTD": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -8913,6 +9189,12 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "no candidate was this company's live page"
@@ -9295,7 +9577,7 @@
   "verdict": "note-migrated"
  },
  "Cameri Theatre": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -9324,9 +9606,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Candex": {
   "last": "2026-08-29",
@@ -9437,7 +9725,7 @@
   "verdict": "note-migrated"
  },
  "Capow Tech": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -9466,12 +9754,18 @@
     "url": "https://capow.energy/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://capow.energy/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Capsloc": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -9500,9 +9794,15 @@
     "url": "https://capslock.global/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://capslock.global/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Captain's Eye": {
   "last": "2026-09-11",
@@ -9534,7 +9834,7 @@
   "verdict": "duplicate-of"
  },
  "CardiacSense": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-08",
@@ -9548,6 +9848,12 @@
     "rung": "listing-hunt",
     "url": "https://www.cardiacsense.com/en/careers/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.cardiacsense.com/en/careers/"
    }
   ],
   "verdict": "nolisting"
@@ -10295,7 +10601,7 @@
   "verdict": "already-a-row"
  },
  "Chorus": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -10357,9 +10663,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.chorus.co.uk/about/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Cielo Inertial Solutions": {
   "last": "2026-08-29",
@@ -10493,7 +10805,7 @@
   "verdict": "already-a-row"
  },
  "City Of Knoxville Iowa": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -10522,12 +10834,18 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.knoxvilleia.gov"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "City Of Sunbury Ohio": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -10556,9 +10874,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "found",
+    "date": "2026-09-12",
+    "url": "https://sunburyohio.org/jobs.aspx"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "found"
  },
  "City Roofing Planning": {
   "last": "2026-08-29",
@@ -10573,7 +10897,7 @@
   "verdict": "documented"
  },
  "City and more": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -10635,9 +10959,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://jobs.cityhome.com/jobs"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Cityofdesperes": {
   "last": "2026-08-29",
@@ -10793,7 +11123,7 @@
   "verdict": "documented"
  },
  "Clayton Homes": {
-  "last": "2026-09-10",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -10829,9 +11159,15 @@
     "url": "https://claytonhomes.wd1.myworkdayjobs.com/ClaytonCareers?locationCountry=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://claytonhomes.wd1.myworkdayjobs.com/ClaytonCareers?locationCountry=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Clear Gate": {
   "last": "2026-08-29",
@@ -11040,7 +11376,7 @@
   "verdict": "note-migrated"
  },
  "Cogniteam": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -11055,30 +11391,48 @@
     "url": "https://www.cogniteam.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.cogniteam.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Coinmama": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "https://api.smartrecruiters.com/v1/companies/coinmama/postings",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://api.smartrecruiters.com/v1/companies/coinmama/postings"
    }
   ],
   "verdict": "nolisting"
  },
  "Colu": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "",
     "verdict": "dead"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "dead"
@@ -11375,25 +11729,37 @@
   "verdict": "documented"
  },
  "Constru": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "https://www.careersinconstruction.com/companies",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.careersinconstruction.com/companies"
    }
   ],
   "verdict": "nolisting"
  },
  "Continuse Biometrics": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "",
     "verdict": "dead"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "dead"
@@ -11467,16 +11833,22 @@
   "verdict": "note-migrated"
  },
  "Corephotonics Ltd": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://corephotonics.com/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "found",
+    "date": "2026-09-12",
+    "url": "https://corephotonics.com/careers"
    }
   ],
-  "verdict": "documented"
+  "verdict": "found"
  },
  "Cover": {
   "last": "2026-09-11",
@@ -11552,7 +11924,7 @@
   "verdict": "found"
  },
  "CyCognito": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -11560,9 +11932,15 @@
     "url": "https://www.comeet.com/jobs/CyCognito/14.00A",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.comeet.com/jobs/CyCognito/14.00A"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "CyberArk": {
   "last": "2026-09-07",
@@ -11606,7 +11984,7 @@
   "verdict": "already-a-row"
  },
  "Cyberint": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -11614,9 +11992,15 @@
     "url": "https://careers.checkpoint.com/index.php?module=cpcareers&a=search&q=Cyberint",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers.checkpoint.com/index.php?module=cpcareers&a=search&q=Cyberint"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Cylus": {
   "last": "2026-08-29",
@@ -11698,7 +12082,7 @@
   "verdict": "note-migrated"
  },
  "Cynamics": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -11706,9 +12090,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Cynerio": {
   "last": "2026-09-06",
@@ -11736,7 +12126,7 @@
   "verdict": "found"
  },
  "Cyvers": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -11744,9 +12134,15 @@
     "url": "https://apply.jobappnetwork.com/culvers#TRUE-BLUE-CREW-POSITIONS",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://apply.jobappnetwork.com/culvers#TRUE-BLUE-CREW-POSITIONS"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "DIGATE": {
   "last": "2026-09-10",
@@ -11779,7 +12175,7 @@
   "verdict": "nolisting"
  },
  "DSV - Global Transport and Logistics": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -11817,9 +12213,15 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "budget hit: searched, not scored",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "no candidate was this company's live page"
+  "verdict": "budget hit: searched, not scored"
  },
  "DT": {
   "last": "2026-09-04",
@@ -12023,7 +12425,7 @@
   "verdict": "note-migrated"
  },
  "Datorios": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -12038,21 +12440,33 @@
     "url": "https://sartorius.wd3.myworkdayjobs.com/en-US/sartoriuscareers/job/Ann-Arbor-MI-United-States-of-America/Biology-Research-Intern--iPSC----Ann-Arbor--MI_R41236",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://sartorius.wd3.myworkdayjobs.com/en-US/sartoriuscareers/job/Ann-Arbor-MI-United-States-of-America/Biology-Research-Intern--iPSC----Ann-Arbor--MI_R41236"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "DatoviaPlayHouse": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://datoviaplayhouse.com/jobs",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://datoviaplayhouse.com/jobs/"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "Datumate": {
   "last": "2026-09-11",
@@ -12113,7 +12527,7 @@
   "verdict": "already-a-row"
  },
  "Decart": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -12121,9 +12535,15 @@
     "url": "https://api.ashbyhq.com/posting-api/job-board/decart-ai",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://api.ashbyhq.com/posting-api/job-board/decart-ai"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "DeePlan": {
   "last": "2026-09-05",
@@ -12289,16 +12709,22 @@
   "verdict": "note-migrated"
  },
  "Direct Experts (DEX)": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://direct-ex.co.il/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://direct-ex.co.il/careers/"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "Discreet Company": {
   "last": "2026-08-30",
@@ -12356,7 +12782,7 @@
   "verdict": "not-an-employer"
  },
  "DockTech": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -12364,9 +12790,15 @@
     "url": "https://www.decktechinc.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.decktechinc.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "DoiT": {
   "last": "2026-09-02",
@@ -12777,16 +13209,22 @@
   "verdict": "not-an-employer"
  },
  "EasySend": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://www.easysend.io/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.easysend.io/careers"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "Echo": {
   "last": "2026-08-29",
@@ -12880,16 +13318,22 @@
   "verdict": "already-a-row"
  },
  "Egis": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://jobs.egis-group.com",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://jobs.egis-group.com/jobs?keywords=Israel"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "ElMindA": {
   "last": "2026-09-08",
@@ -13218,7 +13662,7 @@
   "verdict": "documented"
  },
  "Entropy Organizational Development": {
-  "last": "2026-08-29",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -13226,9 +13670,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "found",
+    "date": "2026-09-12",
+    "url": "https://www.entropy.sa/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "found"
  },
  "Enzymit": {
   "last": "2026-09-11",
@@ -13243,7 +13693,7 @@
   "verdict": "nolisting"
  },
  "EqualWeb": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -13251,12 +13701,18 @@
     "url": "https://www.equalweb.com/about/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.equalweb.com/about/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Ethos": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -13302,12 +13758,18 @@
     "url": "https://job-boards.greenhouse.io/ethoslife",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://job-boards.greenhouse.io/ethoslife"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Everysight": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -13315,9 +13777,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Experda.com": {
   "last": "2026-08-29",
@@ -13564,7 +14032,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "FDNA": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -13572,12 +14040,18 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "FIBI - הבנק הבינלאומי": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -13617,6 +14091,12 @@
     "rung": "search-llm",
     "url": "https://www.fibi.co.il/private/general/about/jobs/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.fibi.co.il/careers"
    }
   ],
   "verdict": "documented"
@@ -13653,7 +14133,7 @@
   "verdict": "found"
  },
  "Fast Corporation": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -13693,6 +14173,12 @@
     "rung": "search-llm",
     "url": "https://fasttechnologies.com/careers/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://recruitee.com"
    }
   ],
   "verdict": "documented"
@@ -13779,7 +14265,7 @@
   "verdict": "note-migrated"
  },
  "Fetcher": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -13787,9 +14273,15 @@
     "url": "https://jobs.workable.com/company/gmcsxeb1LRbKZb5DhdQSoi/jobs-at-fetcher",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://jobs.workable.com/company/gmcsxeb1LRbKZb5DhdQSoi/jobs-at-fetcher"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Feverup": {
   "last": "2026-08-31",
@@ -13804,7 +14296,7 @@
   "verdict": "documented"
  },
  "Fibonatix": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -13818,6 +14310,12 @@
     "rung": "listing-hunt",
     "url": "https://www.fibonatix.com/careers/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.fibonatix.com/careers/"
    }
   ],
   "verdict": "nolisting"
@@ -13879,7 +14377,7 @@
   "verdict": "note-migrated"
  },
  "Fieldin": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -13887,9 +14385,15 @@
     "url": "https://www.comeet.com/jobs/fieldintech/68.001",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.comeet.com/jobs/fieldintech/68.001"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Filigran": {
   "last": "2026-09-06",
@@ -14015,7 +14519,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Finaro": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -14023,9 +14527,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Fingular": {
   "last": "2026-08-31",
@@ -14101,7 +14611,7 @@
   "verdict": "found"
  },
  "Fionics": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -14130,9 +14640,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "FireArc Technologies .LTD": {
   "last": "2026-09-11",
@@ -14336,7 +14852,7 @@
   "verdict": "already-a-row"
  },
  "Flex": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -14360,9 +14876,15 @@
     "rung": "search-llm",
     "url": "https://flex.com/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "budget hit: searched, not scored",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "documented"
+  "verdict": "budget hit: searched, not scored"
  },
  "Flexfactor": {
   "last": "2026-09-06",
@@ -14460,7 +14982,7 @@
   "verdict": "already-a-row"
  },
  "Flo Live": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -14527,9 +15049,15 @@
     "url": "https://flo.health/careers-listing",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://flo.health/careers-listing"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Flo Optics": {
   "last": "2026-08-29",
@@ -14792,7 +15320,7 @@
   "verdict": "documented"
  },
  "Fornova": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -14800,12 +15328,18 @@
     "url": "https://www.fornova.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.fornova.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Forsea Foods": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -14813,9 +15347,15 @@
     "url": "https://forseafoods.com/career-lobby",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://forseafoods.com/career-lobby"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Fortrea": {
   "last": "2026-08-29",
@@ -14846,7 +15386,7 @@
   "verdict": "already-a-row"
  },
  "Forvision": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -14913,9 +15453,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Fox Group": {
   "last": "2026-09-08",
@@ -15130,7 +15676,7 @@
   "verdict": "note-migrated"
  },
  "Fugu": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
@@ -15144,6 +15690,12 @@
     "rung": "listing-hunt",
     "url": "https://fugu.global/careers/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://fugu.global/careers/"
    }
   ],
   "verdict": "nolisting"
@@ -15223,7 +15775,7 @@
   "verdict": "no-board"
  },
  "Fuse": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -15231,9 +15783,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.fusenext.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Fuse Sys": {
   "last": "2026-08-29",
@@ -16044,7 +16602,7 @@
   "verdict": "not-an-employer"
  },
  "Gamma Gruppe": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -16106,9 +16664,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://gammagroup.co/company/careers-vacancies/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Gartner": {
   "last": "2026-08-29",
@@ -16333,7 +16897,7 @@
   "verdict": "no-board"
  },
  "Gemified": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -16378,9 +16942,15 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "budget hit: searched, not scored",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+  "verdict": "budget hit: searched, not scored"
  },
  "Genecit Com": {
   "last": "2026-08-29",
@@ -16906,7 +17476,7 @@
   "verdict": "note-migrated"
  },
  "Get Gain": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -16973,9 +17543,15 @@
     "url": "https://www.thisisgain.com/post/gain-careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.thisisgain.com/post/gain-careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Get Healthee": {
   "last": "2026-08-30",
@@ -17934,7 +18510,7 @@
   "verdict": "note-migrated"
  },
  "Girlygeekdom": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -18001,9 +18577,15 @@
     "url": "https://girlygeekdom.com/tag/career/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://girlygeekdom.com/tag/career/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Givat Haviva": {
   "last": "2026-08-30",
@@ -18765,7 +19347,7 @@
   "verdict": "already-a-row"
  },
  "Globus Worldwide Logistics": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -18827,9 +19409,15 @@
     "url": "https://www.globus-logistics.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://globus-intr.co.il/%d7%93%d7%a8%d7%95%d7%a9%d7%99%d7%9d/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Glowsecurity": {
   "last": "2026-08-30",
@@ -18986,7 +19574,7 @@
   "verdict": "already-a-row"
  },
  "Go Apprentice": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -19048,9 +19636,15 @@
     "url": "https://www.goapprentice.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.goapprentice.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Goarc": {
   "last": "2026-08-29",
@@ -19171,7 +19765,7 @@
   "verdict": "documented"
  },
  "Goldman Sachs": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -19179,9 +19773,15 @@
     "url": "https://higher.gs.com/roles?page=1&sort=RELEVANCE&location=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://higher.gs.com/roles?page=1&sort=RELEVANCE&location=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Golfisrael": {
   "last": "2026-08-29",
@@ -19562,7 +20162,7 @@
   "verdict": "note-migrated"
  },
  "Gotion High Tech Indonesia Factory": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -19614,9 +20214,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://gotion.asia/career/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Gov Il": {
   "last": "2026-08-30",
@@ -21093,7 +21699,7 @@
   "verdict": "not-an-employer"
  },
  "HYK Ventures": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -21132,9 +21738,15 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+  "verdict": "no candidate was this company's live page"
  },
  "Habima": {
   "last": "2026-08-30",
@@ -21465,7 +22077,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Hadia": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -21526,9 +22138,15 @@
     "url": "https://hadiatech.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://hadiatech.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Haifa Museums": {
   "last": "2026-08-29",
@@ -22759,7 +23377,7 @@
   "verdict": "already-a-row"
  },
  "Herbalife": {
-  "last": "2026-09-10",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -22822,9 +23440,15 @@
     "url": "https://careers-herbalife.icims.com/jobs/search?ss=1&searchLocation=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers-herbalife.icims.com/jobs/search?ss=1&searchLocation=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Here For You Ministries": {
   "last": "2026-08-31",
@@ -22954,7 +23578,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "HiO": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -22993,9 +23617,15 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.hio.ai/careers"
    }
   ],
-  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+  "verdict": "documented"
  },
  "Highland Europe": {
   "last": "2026-08-31",
@@ -23408,7 +24038,7 @@
   "verdict": "documented"
  },
  "Homebiogas": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -23416,9 +24046,15 @@
     "url": "https://www.corporatestaffing.co.ke/executive-search-headhunting-services/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.corporatestaffing.co.ke/executive-search-headhunting-services/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Homerun Global": {
   "last": "2026-08-31",
@@ -23805,7 +24441,7 @@
   "verdict": "note-migrated"
  },
  "ICE": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -23813,9 +24449,15 @@
     "url": "https://www.usajobs.gov/Search/Results?k=%22immigration%20and%20customs%20enforcement%22",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.usajobs.gov/Search/Results?k=%22immigration%20and%20customs%20enforcement%22"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "ICON Plc": {
   "last": "2026-09-01",
@@ -24018,7 +24660,7 @@
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "ISRAEL-is": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -24052,6 +24694,12 @@
     "rung": "search-llm",
     "url": "https://www.israel-is.org/career/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.israel-is.org/jobs"
    }
   ],
   "verdict": "documented"
@@ -24326,7 +24974,7 @@
   "verdict": "found"
  },
  "ImageSat International": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -24334,9 +24982,15 @@
     "url": "https://www.mondelezinternational.com/snacking-made-right/our-positions/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.mondelezinternational.com/snacking-made-right/our-positions/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Imagen": {
   "last": "2026-09-10",
@@ -24364,7 +25018,7 @@
   "verdict": "note-migrated"
  },
  "Imco Industries Ltd.": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -24397,9 +25051,15 @@
     "rung": "search-llm",
     "url": "https://imco-ind.com/careers-hebrew/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "documented"
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "Imdsoft": {
   "last": "2026-08-31",
@@ -24541,7 +25201,7 @@
   "verdict": "already-a-row"
  },
  "Incredo (DouxMatok)": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -24555,9 +25215,15 @@
     "rung": "listing-hunt",
     "url": "",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "dead"
  },
  "Indocs": {
   "last": "2026-08-29",
@@ -24653,7 +25319,7 @@
   "verdict": "note-migrated"
  },
  "InnovoPro": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -24661,12 +25327,18 @@
     "url": "https://jobs.jvpvc.com/jobs/innovopro",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://jobs.jvpvc.com/jobs/innovopro"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Innplay Labs": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -24674,9 +25346,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Inspira Technologies": {
   "last": "2026-09-11",
@@ -24724,7 +25402,7 @@
   "verdict": "nolisting"
  },
  "InspireMD": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -24732,9 +25410,15 @@
     "url": "https://inspiremd.com/careers/europe-israel/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://inspiremd.com/careers/europe-israel/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Integra LifeSciences": {
   "last": "2026-08-29",
@@ -24814,7 +25498,7 @@
   "verdict": "nolisting"
  },
  "Intelligent Business": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -24848,6 +25532,12 @@
     "rung": "search-llm",
     "url": "https://www.intelligentbusiness.ai/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.intelligentbusiness.ai/careers"
    }
   ],
   "verdict": "documented"
@@ -24877,7 +25567,7 @@
   "verdict": "documented"
  },
  "Ironblocks": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -24885,9 +25575,15 @@
     "url": "https://www.nbn.org.il/jobboard/company/Rimon%20Farms/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.nbn.org.il/jobboard/company/Rimon%20Farms/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Irregular Com": {
   "last": "2026-08-31",
@@ -25688,7 +26384,7 @@
   "verdict": "no-board"
  },
  "Israel Shipyards": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -25755,9 +26451,15 @@
     "url": "https://www.israel-shipyards.com/he/jobsuc.asp",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.israel-shipyards.com/he/jobsuc.asp"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Israel Shipyards Ltd": {
   "last": "2026-09-11",
@@ -27119,7 +27821,7 @@
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "Jelly Button Games": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -27127,9 +27829,15 @@
     "url": "https://www.playtika.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.playtika.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Jerusalem Biblical Zoo": {
   "last": "2026-09-11",
@@ -28068,7 +28776,7 @@
   "verdict": "documented"
  },
  "Jones1": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -28128,9 +28836,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Jove": {
   "last": "2026-08-29",
@@ -28409,7 +29123,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Kahun": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -28417,12 +29131,18 @@
     "url": "https://consider.com/boards/co/kahun",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://consider.com/boards/co/kahun"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kai Capital": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -28483,9 +29203,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://kaicapital.co.il"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kai.ai": {
   "last": "2026-09-11",
@@ -28598,7 +29324,7 @@
   "verdict": "no-board"
  },
  "Kanat Insurance": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -28658,9 +29384,15 @@
     "url": "https://www.kanat.co.il/jobs/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.kanat.co.il/jobs/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kaplan Medical Center": {
   "last": "2026-08-30",
@@ -28711,7 +29443,7 @@
   "verdict": "no-board"
  },
  "Karamba Security": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -28719,9 +29451,15 @@
     "url": "https://karambasecurity.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://karambasecurity.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kardome": {
   "last": "2026-08-29",
@@ -28805,7 +29543,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Katayama": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -28860,9 +29598,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Kavim Public Transportation Ltd": {
   "last": "2026-08-29",
@@ -29152,7 +29896,7 @@
   "verdict": "already-a-row"
  },
  "Kennedys": {
-  "last": "2026-08-29",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -29206,9 +29950,15 @@
     "date": "2026-08-29",
     "rung": "search-llm",
     "verdict": "already-a-row"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers.kennedyslaw.com/jobs/vacancy/find/results/action/posbrowser_resetto/?pagestamp=1fd6fe22-4e8a-453d-b92a-c26f56d1caf8"
    }
   ],
-  "verdict": "already-a-row"
+  "verdict": "nolisting"
  },
  "Keren Hayesod - UIA": {
   "last": "2026-09-03",
@@ -29263,7 +30013,7 @@
   "verdict": "found"
  },
  "Keystoneco": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -29303,12 +30053,18 @@
     "url": "https://www.keystonecoop.com/careers/current-openings",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.keystonecoop.com/careers/current-openings"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kfar Tikva": {
-  "last": "2026-09-08",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -29369,12 +30125,18 @@
     "url": "https://kfar-tikva.org.il/jobs/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://kfar-tikva.org.il/jobs/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kibbutz Contemporary Dance Company": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -29420,9 +30182,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kibeeri": {
   "last": "2026-08-29",
@@ -29516,7 +30284,7 @@
   "verdict": "already-a-row"
  },
  "Kima": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -29524,12 +30292,18 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "found",
+    "date": "2026-09-12",
+    "url": "https://careers.akima.com/?vs=4835&amp;utm_source=Akima.com-DE&amp;utm_medium=Other&amp;utm_campaign=Akima.com"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "found"
  },
  "Kinderzentrum Wei Er Stein Marburg Wehrda Ev": {
-  "last": "2026-08-29",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -29557,9 +30331,15 @@
     "rung": "hunt",
     "url": "https://www.kize-weisser-stein.de/jobs",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.kize-weisser-stein.de/jobs"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "Kinetiqo Ltd.": {
   "last": "2026-09-09",
@@ -29600,7 +30380,7 @@
   "verdict": "note-migrated"
  },
  "King Solomon School": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -29656,9 +30436,15 @@
     "url": "https://kingsolomonacademy.org/jobs/vacancies",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://kingsolomonacademy.org/jobs/vacancies"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kinneret": {
   "last": "2026-09-04",
@@ -30048,7 +30834,7 @@
   "verdict": "already-a-row"
  },
  "Koladin": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -30109,12 +30895,18 @@
     "url": "https://koladin.ai/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://koladin.ai/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kone": {
-  "last": "2026-09-10",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -30162,9 +30954,15 @@
     "url": "https://kone.wd3.myworkdayjobs.com/en-US/Careers?locationCountry=abd8f8d144e64ad692fdcbdbb5535c93_Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://kone.wd3.myworkdayjobs.com/en-US/Careers?locationCountry=abd8f8d144e64ad692fdcbdbb5535c93_Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Konfidas": {
   "last": "2026-09-09",
@@ -30609,7 +31407,7 @@
   "verdict": "nolisting"
  },
  "Kuehn Gmbh": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -30664,9 +31462,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://jobs.kuehne-nagel.com/global/en/search-results?ss=%5B%22Israel%22%5D"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Kuni": {
   "last": "2026-09-10",
@@ -30829,7 +31633,7 @@
   "verdict": "note-migrated"
  },
  "L7 Defense": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -30837,9 +31641,15 @@
     "url": "https://search-careers.gm.com/en/locations/israel/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://search-careers.gm.com/en/locations/israel/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "LAVI Light Rail Operation & Maintanence": {
   "last": "2026-09-09",
@@ -30867,7 +31677,7 @@
   "verdict": "documented"
  },
  "La Casa Norte": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -30917,9 +31727,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "LabOS": {
   "last": "2026-09-08",
@@ -30977,7 +31793,7 @@
   "verdict": "duplicate-of"
  },
  "Lacuna Ads": {
-  "last": "2026-09-08",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -31032,9 +31848,15 @@
     "url": "https://lacunaautism.com/current-opportunities/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://lacunaautism.com/current-opportunities/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Lakefs Treeverse": {
   "last": "2026-08-29",
@@ -31485,13 +32307,19 @@
   "verdict": "duplicate-of"
  },
  "LawGeex": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "https://www.lawgeex.com/careers-list/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.lawgeex.com/careers-list/"
    }
   ],
   "verdict": "nolisting"
@@ -31617,7 +32445,7 @@
   "verdict": "note-migrated"
  },
  "LayerX Security": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -31625,9 +32453,15 @@
     "url": "https://www.comeet.com/jobs/layerxsecurity/F9.00D",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.comeet.com/jobs/layerxsecurity/F9.00D"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Leadersapp Technologies": {
   "last": "2026-08-29",
@@ -32319,7 +33153,7 @@
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "LexCheck": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -32333,21 +33167,33 @@
     "rung": "listing-hunt",
     "url": "https://www.lexcheck.com/company/careers",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.lexcheck.com/company/careers"
    }
   ],
   "verdict": "nolisting"
  },
  "Liacom Systems Ltd.": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://www.liacom.co.il/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.liacom.co.il/en/jobs/"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "Libra Insurance Ltd": {
   "last": "2026-08-31",
@@ -32443,7 +33289,7 @@
   "verdict": "no-board"
  },
  "Lido As": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -32472,9 +33318,15 @@
     "url": "https://www.lido.app/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.lido.app/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Lidwaveil": {
   "last": "2026-08-30",
@@ -32965,13 +33817,19 @@
   "verdict": "nolisting"
  },
  "Liquidity Group": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "https://www.liquidity.com/careers",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.liquidity.com/careers"
    }
   ],
   "verdict": "nolisting"
@@ -33918,16 +34776,22 @@
   "verdict": "already-a-row"
  },
  "Luna Media": {
-  "last": "2026-09-08",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-08",
     "rung": "search-llm",
     "url": "https://lunamedia.io/jobs/account-manager-3/",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://lunamedia.io/company/#careers"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "Lunairai": {
   "last": "2026-08-29",
@@ -34358,7 +35222,7 @@
   "verdict": "documented"
  },
  "MARESTRA": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -34397,6 +35261,12 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "no candidate was this company's live page"
@@ -34415,7 +35285,7 @@
   "verdict": "note-migrated"
  },
  "MNS Consulting IL": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -34448,6 +35318,12 @@
     "rung": "search-llm",
     "url": "https://mns-consulting.co.il/en_us/positions/senior-analyst-for-the-project-finance-department/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://mns-consulting.co.il/careers"
    }
   ],
   "verdict": "documented"
@@ -35539,7 +36415,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Maof - מעוף": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -35580,9 +36456,15 @@
     "rung": "search-llm",
     "url": "https://www.facebook.com/maof.jobs/?locale\\u003dhe_IL",
     "verdict": "found"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "found"
+  "verdict": "no-search-results"
  },
  "Margolin Engineering Consulting": {
   "last": "2026-08-29",
@@ -35623,7 +36505,7 @@
   "verdict": "already-a-row"
  },
  "Market Blend": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -35661,6 +36543,12 @@
     "rung": "search-llm",
     "url": "https://blend.com/company/careers/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://blend.com/careers"
    }
   ],
   "verdict": "documented"
@@ -36292,7 +37180,7 @@
   "verdict": "duplicate-of"
  },
  "Maverick Medical AI": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -36347,9 +37235,15 @@
     "url": "https://maverick-ai.com/about/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://maverick-ai.com/about/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Max Security Solutions Ltd": {
   "last": "2026-08-29",
@@ -36447,7 +37341,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Maxlinear": {
-  "last": "2026-09-10",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -36516,9 +37410,15 @@
     "url": "https://careersintl-maxlinear.icims.com/jobs/search?ss=1&searchLocation=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careersintl-maxlinear.icims.com/jobs/search?ss=1&searchLocation=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Mayanei Hayeshuah Medical Center": {
   "last": "2026-08-29",
@@ -36593,7 +37493,7 @@
   "verdict": "already-a-row"
  },
  "McCANN": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -36628,6 +37528,12 @@
     "rung": "search-llm",
     "url": "https://www.comeet.com/jobs/mccann/33.00C",
     "verdict": "found"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://mccann.co.il"
    }
   ],
   "verdict": "found"
@@ -36645,7 +37551,7 @@
   "verdict": "found"
  },
  "McKinsey & Company": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -36705,9 +37611,15 @@
     "url": "https://karriere.mckinsey.de/karriere/search-jobs?location=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://karriere.mckinsey.de/karriere/search-jobs?location=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Mccann Erickson Israel": {
   "last": "2026-08-29",
@@ -36793,7 +37705,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Mclfinance": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -36860,9 +37772,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Mdaspace": {
   "last": "2026-08-29",
@@ -36987,7 +37905,7 @@
   "verdict": "documented"
  },
  "MedAware": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -36995,9 +37913,15 @@
     "url": "https://www.medaware.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.medaware.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Medasense Biometrics Ltd": {
   "last": "2026-08-29",
@@ -37077,16 +38001,22 @@
   "verdict": "no-search-results"
  },
  "Mediaverse.ai": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://mediaverse.ai/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "found",
+    "date": "2026-09-12",
+    "url": "https://mediaverse.ai/careers"
    }
   ],
-  "verdict": "documented"
+  "verdict": "found"
  },
  "Medica Refael Hospitals": {
   "last": "2026-09-10",
@@ -37382,7 +38312,7 @@
   "verdict": "documented"
  },
  "Megapharm": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -37438,9 +38368,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "not a listings page",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "not a listings page"
  },
  "Megiddo Y K": {
   "last": "2026-08-31",
@@ -37660,7 +38596,7 @@
   "verdict": "already-a-row"
  },
  "Meitav Investment House": {
-  "last": "2026-08-29",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -37709,9 +38645,15 @@
     "date": "2026-08-29",
     "rung": "search-llm",
     "verdict": "already-a-row"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.meitav.co.il/jobs/"
    }
   ],
-  "verdict": "already-a-row"
+  "verdict": "nolisting"
  },
  "Meitav Trade Securities Ltd": {
   "last": "2026-08-30",
@@ -38373,7 +39315,7 @@
   "verdict": "documented"
  },
  "Mesh Cybersecurity": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -38429,9 +39371,15 @@
     "url": "https://www.meshsecurity.io/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.meshsecurity.io/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Metalix Cad Cam Ltd": {
   "last": "2026-08-30",
@@ -38580,7 +39528,7 @@
   "verdict": "no-board"
  },
  "MetoMotion": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -38588,9 +39536,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Metriko": {
   "last": "2026-08-30",
@@ -38728,7 +39682,7 @@
   "verdict": "no-board"
  },
  "Meuhedet": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -38784,9 +39738,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "not a listings page",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "not a listings page"
  },
  "Mevakerhamedina": {
   "last": "2026-08-30",
@@ -39133,7 +40093,7 @@
   "verdict": "documented"
  },
  "Micron Technology": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -39172,9 +40132,15 @@
     "rung": "search-llm",
     "url": "https://careers.micron.com/careers/*/hyderabad_telangana_india?domain\\u003dmicron.com",
     "verdict": "found"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://careers.micron.com"
    }
   ],
-  "verdict": "found"
+  "verdict": "documented"
  },
  "Microsoft (Xbox/Gaming)": {
   "last": "2026-09-11",
@@ -39952,7 +40918,7 @@
   "verdict": "no-board"
  },
  "Minimed Diabetes": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -40019,9 +40985,15 @@
     "url": "https://www.minimed.com/en-us/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.minimed.com/en-us/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Minimus": {
   "last": "2026-08-29",
@@ -40393,7 +41365,7 @@
   "verdict": "no-board"
  },
  "Mivne Group | קבוצת מבנה": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -40427,6 +41399,12 @@
     "rung": "search-llm",
     "url": "https://www.mivnegroup.co.il/jobs/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.mivnegroup.co.il/jobs"
    }
   ],
   "verdict": "documented"
@@ -40531,7 +41509,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Mobb": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -40539,9 +41517,15 @@
     "url": "https://content.mobb.ai/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://content.mobb.ai/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Mobile Group Ltd.": {
   "last": "2026-08-30",
@@ -41605,7 +42589,7 @@
   "verdict": "documented"
  },
  "MyndYou": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -41613,9 +42597,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "N.P.R HR": {
   "last": "2026-09-09",
@@ -41823,7 +42813,7 @@
   "verdict": "already-a-row"
  },
  "NRGene": {
-  "last": "2026-09-08",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-08",
@@ -41831,9 +42821,15 @@
     "url": "https://nrgene.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://nrgene.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "NTU International A/S": {
   "last": "2026-09-03",
@@ -41970,7 +42966,7 @@
   "verdict": "documented"
  },
  "Namogoo": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -41978,9 +42974,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Nanoghost": {
   "last": "2026-08-31",
@@ -42230,7 +43232,7 @@
   "verdict": "no-search-results"
  },
  "Nayax": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -42244,6 +43246,12 @@
     "rung": "listing-hunt",
     "url": "https://ir.nayax.com/careers/opportunities/default.aspx",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://ir.nayax.com/careers/opportunities/default.aspx"
    }
   ],
   "verdict": "nolisting"
@@ -42577,7 +43585,7 @@
   "verdict": "nolisting"
  },
  "Nestle": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
@@ -42591,6 +43599,12 @@
     "rung": "listing-hunt",
     "url": "https://www.nestlejobs.com/job-search?location=Israel",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.nestlejobs.com/job-search?location=Israel"
    }
   ],
   "verdict": "nolisting"
@@ -42775,7 +43789,7 @@
   "verdict": "documented"
  },
  "NeuroBlade": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -42783,9 +43797,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.neuroblade.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "New Feldman": {
   "last": "2026-09-01",
@@ -43056,7 +44076,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Nokia Israel": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -43064,12 +44084,18 @@
     "url": "https://jobs.nokia.com/en/sites/CX_1/jobs?location=Israel&locationLevel=country&mode=location",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://jobs.nokia.com/en/sites/CX_1/jobs?location=Israel&locationLevel=country&mode=location"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Nokod Security": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -43077,12 +44103,18 @@
     "url": "https://careers.meron.co/companies/nokod-security#content",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers.meron.co/companies/nokod-security#content"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Noogata": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -43090,9 +44122,15 @@
     "url": "https://www.yolo-japan.com/en/recruit/job",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.yolo-japan.com/en/recruit/job"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Northside Air Conditioning": {
   "last": "2026-09-02",
@@ -43313,7 +44351,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Nutanix": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -43334,6 +44372,12 @@
     "rung": "listing-hunt",
     "url": "https://nutanix.eightfold.ai/careers?location=Israel",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://nutanix.eightfold.ai/careers?location=Israel"
    }
   ],
   "verdict": "nolisting"
@@ -43666,7 +44710,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "One Step": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -43674,9 +44718,15 @@
     "url": "https://www.careeronestop.org/JobSearch/job-search.aspx",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.careeronestop.org/JobSearch/job-search.aspx"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "One1 Systems": {
   "last": "2026-09-03",
@@ -43915,13 +44965,19 @@
   "verdict": "no candidate was this company's live page"
  },
  "OrCam": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "https://orcam.zohorecruit.com",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://orcam.zohorecruit.com"
    }
   ],
   "verdict": "nolisting"
@@ -44343,7 +45399,7 @@
   "verdict": "documented"
  },
  "PCB Technologies Ltd.": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -44382,6 +45438,12 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
@@ -44691,7 +45753,7 @@
   "verdict": "documented"
  },
  "Partner": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -44725,9 +45787,15 @@
     "rung": "search-llm",
     "url": "https://www.partnercareer.com",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "budget hit: searched, not scored",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "documented"
+  "verdict": "budget hit: searched, not scored"
  },
  "Partner Israel": {
   "last": "2026-09-07",
@@ -44840,7 +45908,7 @@
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "PayEm": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -44854,6 +45922,12 @@
     "rung": "listing-hunt",
     "url": "https://www.payem.co/careers",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.payem.co/careers"
    }
   ],
   "verdict": "nolisting"
@@ -45277,7 +46351,7 @@
   "verdict": "documented"
  },
  "Phoenix Financial": {
-  "last": "2026-09-06",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-06",
@@ -45285,9 +46359,15 @@
     "url": "https://www.arizonafinancial.org/Careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.arizonafinancial.org/Careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Phoenixfinancialltd": {
   "last": "2026-09-06",
@@ -45587,7 +46667,7 @@
   "verdict": "found"
  },
  "Plasan": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -45595,9 +46675,15 @@
     "url": "https://career.plasan.com/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://career.plasan.com/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Plasan Sasa Ltd": {
   "last": "2026-09-06",
@@ -45673,7 +46759,7 @@
   "verdict": "found"
  },
  "PlayerMaker": {
-  "last": "2026-09-07",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-07",
@@ -45681,9 +46767,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Playnance | The Blockchain of On-Chain Entertainment": {
   "last": "2026-09-05",
@@ -45765,7 +46857,7 @@
   "verdict": "note-migrated"
  },
  "Pluri": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -45773,9 +46865,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Plus500™": {
   "last": "2026-08-29",
@@ -46164,7 +47262,7 @@
   "verdict": "no-search-results"
  },
  "Privya": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -46172,9 +47270,15 @@
     "url": "https://www.privya.ai/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.privya.ai/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Probit Group": {
   "last": "2026-09-07",
@@ -46250,13 +47354,19 @@
   "verdict": "no candidate was this company's live page"
  },
  "Promo.com": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "https://www.comeet.com/careers-api/2.0/company/73.00F/positions?token=37F117BA7D00187914FADFC1BF86FE",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.comeet.com/careers-api/2.0/company/73.00F/positions?token=37F117BA7D00187914FADFC1BF86FE"
    }
   ],
   "verdict": "nolisting"
@@ -46676,7 +47786,7 @@
   "verdict": "documented"
  },
  "Qualcomm Israel": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -46691,9 +47801,15 @@
     "url": "https://qualcomm.wd5.myworkdayjobs.com/External?locations=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://qualcomm.wd5.myworkdayjobs.com/External?locations=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Qualitest": {
   "last": "2026-09-09",
@@ -46752,7 +47868,7 @@
   "verdict": "nolisting"
  },
  "QuantLR": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
@@ -46766,6 +47882,12 @@
     "rung": "listing-hunt",
     "url": "https://quantlr.com/careers/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://quantlr.com/careers/"
    }
   ],
   "verdict": "nolisting"
@@ -46850,7 +47972,7 @@
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "Quris AI": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -46858,9 +47980,15 @@
     "url": "https://www.comeet.com/jobs/quris/17.000",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.comeet.com/jobs/quris/17.000"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Qwak": {
   "last": "2026-09-10",
@@ -46907,7 +48035,7 @@
   "verdict": "note-migrated"
  },
  "RAAAM Memory Technologies": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -46915,9 +48043,15 @@
     "url": "https://raaam-tech.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://raaam-tech.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "RAD": {
   "last": "2026-09-09",
@@ -47105,7 +48239,7 @@
   "verdict": "documented"
  },
  "Rafael Advanced Defense Systems": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -47113,9 +48247,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://career.rafael.co.il"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Rafael Advanced Defense Systems Official": {
   "last": "2026-09-08",
@@ -47253,7 +48393,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "RapidAPI": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -47261,9 +48401,15 @@
     "url": "https://rapidapi.com/search/Jobs?sortBy=ByRelevance",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://rapidapi.com/search/Jobs?sortBy=ByRelevance"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Rapyd Financial Network": {
   "last": "2026-08-29",
@@ -47792,7 +48938,7 @@
   "verdict": "documented"
  },
  "Refine Intelligence": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -47800,9 +48946,15 @@
     "url": "https://career.refined.com/jobs",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://career.refined.com/jobs"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Regatta Data": {
   "last": "2026-09-09",
@@ -48162,7 +49314,7 @@
   "verdict": "documented"
  },
  "Rezonate": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -48170,9 +49322,15 @@
     "url": "https://boards.briohr.com/keyreplypteltd-j0zjhzlual",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://boards.briohr.com/keyreplypteltd-j0zjhzlual"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Rhino Federated Computing": {
   "last": "2026-09-10",
@@ -48436,7 +49594,7 @@
   "verdict": "documented"
  },
  "Rollic": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -48450,6 +49608,12 @@
     "rung": "listing-hunt",
     "url": "https://www.rollicgames.com/jobs",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.rollicgames.com/jobs"
    }
   ],
   "verdict": "nolisting"
@@ -48803,7 +49967,7 @@
   "verdict": "note-migrated"
  },
  "SD;LC": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -48842,6 +50006,12 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
@@ -49004,7 +50174,7 @@
   "verdict": "note-migrated"
  },
  "SQream": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -49012,9 +50182,15 @@
     "url": "https://sqream.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://sqream.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "SUN PHARMA": {
   "last": "2026-09-09",
@@ -49457,19 +50633,25 @@
   "verdict": "no candidate was this company's live page"
  },
  "Sanmina Il": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://www.sanmina.com/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "found",
+    "date": "2026-09-12",
+    "url": "https://www.sanmina.com/careers"
    }
   ],
-  "verdict": "documented"
+  "verdict": "found"
  },
  "Sanolla": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -49477,9 +50659,15 @@
     "url": "https://jobs.sanofi.com/research-and-development ",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://jobs.sanofi.com/research-and-development "
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Sara Textile And Apparel Sourcing Fzc": {
   "last": "2026-09-11",
@@ -49783,16 +50971,22 @@
   "verdict": "no-search-results"
  },
  "Seal Cybersecurity": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://www.seal.security/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.seal.security/company/careers"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "Seatylock Ino Vision Ltd": {
   "last": "2026-09-11",
@@ -49892,16 +51086,22 @@
   "verdict": "not-an-employer"
  },
  "Seetrue AI": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "search-llm",
     "url": "https://seetrue.ai/careers",
     "verdict": "documented"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://seetrue.ai/careers/"
    }
   ],
-  "verdict": "documented"
+  "verdict": "nolisting"
  },
  "Segmanta": {
   "last": "2026-09-11",
@@ -49940,7 +51140,7 @@
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "Sensibo": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -49948,9 +51148,15 @@
     "url": "http://careers.sensibo.com/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "http://careers.sensibo.com/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Sensifai Health": {
   "last": "2026-09-08",
@@ -50062,7 +51268,7 @@
   "verdict": "note-migrated"
  },
  "Shopix": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -50122,12 +51328,18 @@
     "url": "https://www.shopix.no/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.shopix.no/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Siemens Energy": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -50161,9 +51373,15 @@
     "rung": "search-llm",
     "url": "https://www.siemens-energy.com/global/en/home/careers/working-with-us.html",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "budget hit: searched, not scored",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "documented"
+  "verdict": "budget hit: searched, not scored"
  },
  "Siemens Healthineers": {
   "last": "2026-09-11",
@@ -50211,7 +51429,7 @@
   "verdict": "note-migrated"
  },
  "Sight Sciences": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -50232,6 +51450,12 @@
     "rung": "listing-hunt",
     "url": "https://recruiting2.ultipro.com/SIG1008SIGH/JobBoard/cf92642a-98a5-4c01-b0b8-f7305a74d51c/?q=Israel&o=postedDateDesc&w=&wc=&we=&wpst=",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://recruiting2.ultipro.com/SIG1008SIGH/JobBoard/cf92642a-98a5-4c01-b0b8-f7305a74d51c/?q=Israel&o=postedDateDesc&w=&wc=&we=&wpst="
    }
   ],
   "verdict": "nolisting"
@@ -50332,7 +51556,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Sivo": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -50340,9 +51564,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.sivoinsights.com/research"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Six Values": {
   "last": "2026-09-10",
@@ -50714,7 +51944,7 @@
   "verdict": "nolisting"
  },
  "Source Defense": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -50722,9 +51952,15 @@
     "url": "https://sourcedefense.com/company/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://sourcedefense.com/company/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "SpacePharma": {
   "last": "2026-09-08",
@@ -50740,7 +51976,7 @@
   "verdict": "note-migrated"
  },
  "Speedata": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -50748,9 +51984,15 @@
     "url": "https://www.speedata.io/careers-1",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.speedata.io/careers-1"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Speedata.io": {
   "last": "2026-08-29",
@@ -50966,7 +52208,7 @@
   "verdict": "already-a-row"
  },
  "Steadicopter": {
-  "last": "2026-09-08",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-08",
@@ -50974,12 +52216,18 @@
     "url": "https://steadicopter.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://steadicopter.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Steakholder Foods": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -50993,12 +52241,18 @@
     "rung": "listing-hunt",
     "url": "https://steakholderfoods.com/careers",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://steakholderfoods.com/careers"
    }
   ],
   "verdict": "nolisting"
  },
  "StemRad": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -51006,9 +52260,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Strada": {
   "last": "2026-08-29",
@@ -51051,7 +52311,7 @@
   "verdict": "already-a-row"
  },
  "Strategic Matching": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -51090,9 +52350,15 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "no candidate was this company's live page"
+  "verdict": "no-search-results"
  },
  "Strauss Group": {
   "last": "2026-08-29",
@@ -51140,7 +52406,7 @@
   "verdict": "found"
  },
  "SupPlant": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-09",
@@ -51155,9 +52421,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Super Group (SGHC)": {
   "last": "2026-09-10",
@@ -51278,7 +52550,7 @@
   "verdict": "note-migrated"
  },
  "Synopsys Israel": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
@@ -51292,9 +52564,21 @@
     "rung": "listing-hunt",
     "url": "https://synopsys.avature.net/talentcommunity",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://synopsys.avature.net/talentcommunity?location=Israel"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "novrfy",
+    "date": "2026-09-13",
+    "url": "https://synopsys.avature.net/talentcommunity"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "novrfy"
  },
  "Sysnet Group": {
   "last": "2026-08-30",
@@ -51579,7 +52863,7 @@
   "verdict": "nolisting"
  },
  "Tabnine": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -51593,6 +52877,12 @@
     "rung": "listing-hunt",
     "url": "https://www.comeet.com/jobs/tabnine/39.006",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://www.comeet.com/jobs/tabnine/39.006"
    }
   ],
   "verdict": "nolisting"
@@ -51724,7 +53014,7 @@
   "verdict": "note-migrated"
  },
  "Tama Group": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -51758,9 +53048,15 @@
     "rung": "search-llm",
     "url": "https://www.tama.co.il/דרושים/attachment/main-tamajobs/",
     "verdict": "documented"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "budget hit: searched, not scored",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "documented"
+  "verdict": "budget hit: searched, not scored"
  },
  "Tamir Fishman": {
   "last": "2026-09-03",
@@ -51799,7 +53095,7 @@
   "verdict": "no candidate was this company's live page"
  },
  "Team 3 Group": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -51833,6 +53129,12 @@
     "rung": "search-llm",
     "url": "https://team8.vc/careers/",
     "verdict": "found"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://www.team3.co.il"
    }
   ],
   "verdict": "found"
@@ -51851,7 +53153,7 @@
   "verdict": "note-migrated"
  },
  "Technion - Israel Institute of Technology": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -51884,9 +53186,15 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://dean.technion.ac.il"
    }
   ],
-  "verdict": "no candidate was this company's live page"
+  "verdict": "found"
  },
  "Tel Aviv University": {
   "last": "2026-09-09",
@@ -51946,7 +53254,7 @@
   "verdict": "no-board"
  },
  "Tel-Hai University of Kiryat Shmona in the Galilee": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -51985,6 +53293,12 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "no candidate was this company's live page"
@@ -52022,7 +53336,7 @@
   "verdict": "already-a-row"
  },
  "Temi": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -52030,9 +53344,15 @@
     "url": "https://www.robotemi.com/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.robotemi.com/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Temi (Robotemi)": {
   "last": "2026-09-11",
@@ -52047,7 +53367,7 @@
   "verdict": "nolisting"
  },
  "Teradyne": {
-  "last": "2026-08-29",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -52087,12 +53407,18 @@
     "url": "https://jobs.teradyne.com/Teradyne/search/?createNewAlert=false&amp;q=&amp;optionsFacetsDD_customfield1=Teradyne&amp;optionsFacetsDD_dept=&amp;location=Israel&amp;locale=en_US",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://jobs.teradyne.com/Teradyne/search/?createNewAlert=false&q=&optionsFacetsDD_customfield1=Teradyne&optionsFacetsDD_dept=&location=Israel&locale=en_US"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Terafence": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -52100,9 +53426,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Terra Security": {
   "last": "2026-08-29",
@@ -52133,7 +53465,7 @@
   "verdict": "already-a-row"
  },
  "Tesla": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -52141,9 +53473,15 @@
     "url": "https://www.tesla.com/careers/search/?site=IL",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.tesla.com/careers/search/?site=IL"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Teva Pharmaceutical Industries": {
   "last": "2026-09-09",
@@ -52244,7 +53582,7 @@
   "verdict": "already-a-row"
  },
  "Tevel Aerobotics": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -52252,12 +53590,18 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Tevel Aerobotics Technologies": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -52265,9 +53609,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Texas Instruments Europe": {
   "last": "2026-08-30",
@@ -52358,7 +53708,7 @@
   "verdict": "note-migrated"
  },
  "The Ritz-Carlton Hotel Company, L.L.C.": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -52404,12 +53754,18 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Theator": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -52423,6 +53779,12 @@
     "rung": "listing-hunt",
     "url": "https://theator.io/careers/#open-positions",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://theator.io/careers/#open-positions"
    }
   ],
   "verdict": "nolisting"
@@ -52490,7 +53852,7 @@
   "verdict": "no-board"
  },
  "ThriveDX": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -52498,9 +53860,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Tiebreak": {
   "last": "2026-09-10",
@@ -52527,7 +53895,7 @@
   "verdict": "documented"
  },
  "TipRanks": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -52535,9 +53903,15 @@
     "url": "https://lp.tipranks.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://lp.tipranks.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Tnuva": {
   "last": "2026-09-04",
@@ -52615,7 +53989,7 @@
   "verdict": "nolisting"
  },
  "Tortech Nano Fibers": {
-  "last": "2026-09-08",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-08",
@@ -52623,9 +53997,15 @@
     "url": "https://www.tortechnano.com/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.tortechnano.com/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Tourist Israel": {
   "last": "2026-09-06",
@@ -52728,7 +54108,7 @@
   "verdict": "note-migrated"
  },
  "TripleW": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-07",
@@ -52749,6 +54129,12 @@
     "rung": "listing-hunt",
     "url": "https://triplew.co/careers",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://triplew.co/careers"
    }
   ],
   "verdict": "nolisting"
@@ -52766,7 +54152,7 @@
   "verdict": "found"
  },
  "Tritone Technologies": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -52774,9 +54160,15 @@
     "url": "https://tritoneam.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://tritoneam.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Trustmi": {
   "last": "2026-09-10",
@@ -52816,7 +54208,7 @@
   "verdict": "found"
  },
  "UBS": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -52824,9 +54216,15 @@
     "url": "https://www.ubs.com/global/en/careers/search-jobs.html?location=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.ubs.com/global/en/careers/search-jobs.html?location=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "ULTRA RED": {
   "last": "2026-09-09",
@@ -52944,7 +54342,7 @@
   "verdict": "documented"
  },
  "UWORK": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -53011,9 +54409,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Unilever": {
   "last": "2026-09-11",
@@ -53085,7 +54489,7 @@
   "verdict": "no-search-results"
  },
  "Unipharm Career": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -53141,9 +54545,15 @@
     "url": "https://www.unipharm.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.unipharm.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Unity": {
   "last": "2026-09-11",
@@ -53165,7 +54575,7 @@
   "verdict": "nolisting"
  },
  "University of Haifa": {
-  "last": "2026-08-29",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -53199,9 +54609,15 @@
     "rung": "search-llm",
     "url": "",
     "verdict": "no candidate was this company's live page"
+   },
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
-  "verdict": "no candidate was this company's live page"
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "Upstep Custom Orthotics": {
   "last": "2026-08-30",
@@ -53259,7 +54675,7 @@
   "verdict": "documented"
  },
  "UserWay": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -53273,6 +54689,12 @@
     "rung": "listing-hunt",
     "url": "https://www.levelaccess.com/careers/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.levelaccess.com/careers/"
    }
   ],
   "verdict": "nolisting"
@@ -53354,7 +54776,7 @@
   "verdict": "documented"
  },
  "Vacatures.sr | SurinameJobs.com": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -53410,9 +54832,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.surinamejobs.com/jobs"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Valence Security": {
   "last": "2026-08-29",
@@ -53546,13 +54974,19 @@
   "verdict": "note-migrated"
  },
  "Vertical Field": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-11",
     "rung": "listing-hunt",
     "url": "",
     "verdict": "dead"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-13",
+    "url": ""
    }
   ],
   "verdict": "dead"
@@ -53652,7 +55086,7 @@
   "verdict": "found"
  },
  "Vocalis Health": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -53660,9 +55094,15 @@
     "url": "https://www.employbl.com/companies/Vocalis-Health/jobs",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.employbl.com/companies/Vocalis-Health/jobs"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Voiceitt": {
   "last": "2026-09-04",
@@ -53754,7 +55194,7 @@
   "verdict": "found"
  },
  "WINT Water Intelligence": {
-  "last": "2026-09-11",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -53769,9 +55209,15 @@
     "url": "https://wint.careers.hibob.com/jobs",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://wint.careers.hibob.com/jobs"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Walmart Global Tech": {
   "last": "2026-09-10",
@@ -53819,7 +55265,7 @@
   "verdict": "note-migrated"
  },
  "Wanda Fish": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -53827,9 +55273,15 @@
     "url": "https://www.bluefishjobs.com/jobs/22551127/?utm_source=34482&amp;utm_medium=featuredJobs&amp;utm_campaign=mainLanding&amp;utm_term=?utm_source=34482&amp;utm_medium=recentJobs&amp;utm_campaign=mainLanding&amp;utm_term=",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.bluefishjobs.com/jobs/22551127/?utm_source=34482&amp;utm_medium=featuredJobs&amp;utm_campaign=mainLanding&amp;utm_term=?utm_source=34482&amp;utm_medium=recentJobs&amp;utm_campaign=mainLanding&amp;utm_term="
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Warner Music Group": {
   "last": "2026-09-06",
@@ -53889,7 +55341,7 @@
   "verdict": "found"
  },
  "Watergen": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -53897,9 +55349,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Way2Deep LTD": {
   "last": "2026-09-11",
@@ -53939,7 +55397,7 @@
   "verdict": "found"
  },
  "WeSpace Technologies": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-04",
@@ -53947,9 +55405,15 @@
     "url": "https://wespacetech.com/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://wespacetech.com/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Webiks": {
   "last": "2026-09-01",
@@ -54218,7 +55682,7 @@
   "verdict": "their page, but not a board (no jobs, no board-shaped url)"
  },
  "Wobi": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -54226,9 +55690,15 @@
     "url": "https://www.wobi.com/join/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "not a listings page",
+    "date": "2026-09-12",
+    "url": "https://www.wobi.com/join/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "not a listings page"
  },
  "World Food Programme": {
   "last": "2026-09-10",
@@ -54516,7 +55986,7 @@
   "verdict": "already-a-row"
  },
  "XJet": {
-  "last": "2026-09-05",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-05",
@@ -54524,9 +55994,15 @@
     "url": "https://xjet3d.com/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://xjet3d.com/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "XM Cyber": {
   "last": "2026-09-09",
@@ -55267,7 +56743,7 @@
   "verdict": "note-migrated"
  },
  "Ycon": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -55323,9 +56799,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "dead",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "dead"
  },
  "Yedioth Ahronoth": {
   "last": "2026-08-30",
@@ -55671,7 +57153,7 @@
   "verdict": "already-a-row"
  },
  "Youappi": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -55717,9 +57199,15 @@
     "url": "https://job-boards.greenhouse.io/youappi",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://job-boards.greenhouse.io/youappi"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "Your Cybersecurity Upgraded": {
   "last": "2026-08-30",
@@ -57119,7 +58607,7 @@
   "verdict": "already-a-row"
  },
  "eBay": {
-  "last": "2026-09-12",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-04",
@@ -57146,9 +58634,15 @@
     "rung": "crack-walled",
     "url": "https://jobs.ebayinc.com/widgets",
     "verdict": "novrfy"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-13",
+    "url": "https://jobs.ebayinc.com/widgets"
    }
   ],
-  "verdict": "novrfy"
+  "verdict": "nolisting"
  },
  "eOS (esh Group)": {
   "last": "2026-08-30",
@@ -57408,7 +58902,7 @@
   "verdict": "note-migrated"
  },
  "iForex": {
-  "last": "2026-09-03",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-09-03",
@@ -57416,9 +58910,15 @@
     "url": "",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "iTalent - Hire Smarter": {
   "last": "2026-09-08",
@@ -57715,7 +59215,7 @@
   "verdict": "acquired-by"
  },
  "rating": {
-  "last": "2026-09-04",
+  "last": "2026-09-12",
   "tried": [
    {
     "date": "2026-08-29",
@@ -57776,9 +59276,15 @@
     "url": "https://www.fitchratings.com/careers",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.fitchratings.com/careers"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "nolisting"
  },
  "raven_sport": {
   "last": "2026-09-10",
@@ -58335,5 +59841,1061 @@
    }
   ],
   "verdict": "documented"
+ },
+ "Iguazio": {
+  "tried": [
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.iguazio.com/careers/"
+   }
+  ],
+  "last": "2026-09-12",
+  "verdict": "nolisting"
+ },
+ "Emendo Biotherapeutics": {
+  "tried": [
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://emendo.com/careers/"
+   }
+  ],
+  "last": "2026-09-12",
+  "verdict": "nolisting"
+ },
+ "Roblox": {
+  "tried": [
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers.roblox.com/jobs?country=Israel"
+   }
+  ],
+  "last": "2026-09-12",
+  "verdict": "nolisting"
+ },
+ "Tarya": {
+  "tried": [
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.teyacompany.com/careers"
+   }
+  ],
+  "last": "2026-09-12",
+  "verdict": "nolisting"
+ },
+ "Criaterra": {
+  "tried": [
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-12",
+  "verdict": "nolisting"
+ },
+ "GE Vernova": {
+  "tried": [
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers.gevernova.com/jobs?location=Israel"
+   }
+  ],
+  "last": "2026-09-12",
+  "verdict": "nolisting"
+ },
+ "Glassix": {
+  "tried": [
+   {
+    "rung": "listing-hunt",
+    "verdict": "found",
+    "date": "2026-09-12",
+    "url": "https://glassix.recruitee.com/"
+   }
+  ],
+  "last": "2026-09-12",
+  "verdict": "found"
+ },
+ "EisnerAmper": {
+  "tried": [
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://careers.eisneramper.com/search?location=Israel"
+   }
+  ],
+  "last": "2026-09-12",
+  "verdict": "nolisting"
+ },
+ "Genius Sports": {
+  "tried": [
+   {
+    "rung": "listing-hunt",
+    "verdict": "nolisting",
+    "date": "2026-09-12",
+    "url": "https://www.geniussports.com/careers/"
+   }
+  ],
+  "last": "2026-09-12",
+  "verdict": "nolisting"
+ },
+ "טאלנטס השמת עובדים": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://talent-hr.co.il"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "The Walt Disney Company": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://www.disneycareers.com"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "iLeadX - Executive search": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Unistream - יוניסטרים": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://unistream.co.il/jobs"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "RISEN ENERGY CO., LTD.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "BTG A Ferring Company": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.ferring.com/career"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Shbiro Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://shbiro.co.il/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "Pi-Cardia": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "W Hotels": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Doona": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Chemipal": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.chemipal.co.il/career"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Bruker Technologies Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.bruker.com/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "IMAGINET": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.imaginet.co.za/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Senai Ovint": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Sepiocyber": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Servotronix": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.servotronix.cn/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Shaare Zedek Medical Center": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Shahar Hunt": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://hunt.co.il/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Shanti House": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://shanti.org.il/jobs/"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "Sharegain": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://careers.sharegain.com"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Materialspace": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://materialspace.io/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "Statitech Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Domicile Import & Export LTD": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.domicile.co.il/en/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "CATL": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.catl-career.com"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Davidson Institute of Science Education": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://davidson.org.il/jobs"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "Commtact Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://commtact-systems.com/career"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Synergy7": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Sonova Group": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://jobs.sonova.com"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "SKIDEAL": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.skideal.co.il/jobs"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Wizedom": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://wizedom.com"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "TherMagiX": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Independent Doctors Association (IDA)": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Selected Digital": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Sendi IO": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Sequans Communications": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://sequans.com/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "Sessioncam Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Shabak": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Shaldor": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.shaldor.com/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Shapesco": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Sharonim": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no-search-results"
+ },
+ "Super-Pharm": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Biotechnological Processes Unit from IMDEA Energy": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "MDA Space": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.space-careers.com"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "AiGents": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.aigents.pm/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "ReliefWeb": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Funky Flow": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.withflow.com/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Osem Nestle אסם נסטלה": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://www.osem-nestle.co.il"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "CFO+": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://cfo-recruit.com"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "NorthMed Empowerment Center": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Braude College of Engineering Karmiel": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://w3.braude.ac.il/jobs"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "עיריית חיפה | Haifa Municipality": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no-search-results",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no-search-results"
+ },
+ "Eitan Medical": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Seller Snap Inc": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://careers.snap.com"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Sense Education": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.sense.education/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Sequoia Lipo": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://jobs.sequoiacap.com"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Sg Vd Capellen": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Shafir Production Systems Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.shafir.co.il/jobs"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Shalva": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Shapir Civil And Marine Engineering Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Sharp Brains Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://sb-recruit.co.uk"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "EngRadar": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://willbi.work/companies/engradar"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "Phibro Middle East & Europe": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "SME Careers": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Bottomline": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.bottomline.com/about/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Kalexius": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.kalexius.com/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "MARQUIS TECHNOLOGIES PRIVATE LIMITED": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "ClearCut Medical Ltd.": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "I.Sherman - Tailoring Integrated Solutions": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "Coral Energy Services Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.coral.energy/about/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Zabar Solar | צבר סולאר": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "their page, but not a board (no jobs, no board-shaped url)",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "their page, but not a board (no jobs, no board-shaped url)"
+ },
+ "mdc medical device certification GmbH": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "ALTEZIA": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
+ },
+ "Semiconductor Engineering": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://semiengineering.com/jobs"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Sensi AI": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "found",
+    "date": "2026-09-13",
+    "url": "https://www.sensi.ai/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "found"
+ },
+ "Servi Tech Ltd": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://servi-tech.co.il/jobs"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Sgtech Co Il": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://sgtech.co.il/career"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Shagrir Systems": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://www.shagrir.co.il/jobs"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Shamir Optical Ind": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "documented",
+    "date": "2026-09-13",
+    "url": "https://shamir.com/careers"
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "documented"
+ },
+ "Shapir Engineering": {
+  "tried": [
+   {
+    "rung": "search-llm",
+    "verdict": "no candidate was this company's live page",
+    "date": "2026-09-13",
+    "url": ""
+   }
+  ],
+  "last": "2026-09-13",
+  "verdict": "no candidate was this company's live page"
  }
 }

@@ -275,3 +275,7 @@
 {"at":"2026-09-12T10:15:55Z","cap":250,"capped":false,"ci":true,"credits":30,"pid":4901,"purpose":{"jd-fill":30},"tool":"run.py"}
 {"at":"2026-09-12T16:18:35Z","cap":null,"capped":false,"ci":true,"credits":21,"pid":2520,"purpose":{"jd-fill":21},"tool":"enrich_scrape_jd.py"}
 {"at":"2026-09-12T20:43:14Z","cap":250,"capped":false,"ci":true,"credits":12,"pid":3023,"purpose":{"unlock":12},"tool":"triage_dark.py"}
+{"at":"2026-09-12T21:16:28Z","cap":250,"capped":false,"ci":true,"credits":8,"pid":2882,"purpose":{"search":8},"tool":"repair_dead_urls.py"}
+{"at":"2026-09-12T21:50:07Z","cap":250,"capped":false,"ci":true,"credits":3,"pid":2976,"purpose":{"unlock":3},"tool":"repair_extract_gap.py"}
+{"at":"2026-09-13T00:10:30Z","cap":250,"capped":false,"ci":true,"credits":218,"pid":14567,"purpose":{"search":150,"unlock":68},"tool":"listing_hunt.py"}
+{"at":"2026-09-13T01:02:57Z","cap":250,"capped":false,"ci":true,"credits":4,"pid":92193,"purpose":{"search":2,"unlock":2},"tool":"crack_walled.py"}

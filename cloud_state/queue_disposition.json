@@ -3538,16 +3538,16 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "BlueBird Aero Systems Ltd.": {
-  "date": "2026-09-11",
-  "evidence": {
-   "matched_on": "name-normalised",
-   "row": "BlueBird Aero Systems",
-   "tried": []
-  },
-  "other_name": "BlueBird Aero Systems",
-  "raw_verdict": "",
+  "date": "2026-09-13",
   "verdict": "covered-by-row",
-  "why": "the registry row 'BlueBird Aero Systems' is this employer under another spelling (name-normalised)"
+  "raw_verdict": "",
+  "other_name": "BlueBird Aero Systems",
+  "why": "the registry row 'BlueBird Aero Systems' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "BlueBird Aero Systems",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
  },
  "Bluegen Water": {
   "date": "2026-08-30",
@@ -5642,10 +5642,14 @@
   "why": "apply_proposals refused the proposal as dup-url: a registry row already covers this company under another name string"
  },
  "Ceva, Inc.": {
-  "date": "2026-09-11",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Ceva",
+  "why": "the registry row 'Ceva' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "matched_on": "name-normalised",
    "row": "Ceva",
+   "matched_on": "name-normalised",
    "tried": [
     [
      "hunt",
@@ -5658,11 +5662,7 @@
      "https://www.comeet.com/jobs/ceva/76.005/sales-operations-specialist/DE.B67"
     ]
    ]
-  },
-  "other_name": "Ceva",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "the registry row 'Ceva' is this employer under another spelling (name-normalised)"
+  }
  },
  "Cfo Co": {
   "date": "2026-08-30",
@@ -6622,10 +6622,14 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Cynet Security": {
-  "date": "2026-09-11",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Cynet",
+  "why": "a rung found this name's board and the registry row 'Cynet' already reads it (matched on hostpath, never on the name)",
   "evidence": {
-   "matched_on": "hostpath",
    "row": "Cynet",
+   "matched_on": "hostpath",
    "tried": [
     [
      "search-llm",
@@ -6633,11 +6637,7 @@
      "https://www.cynet.com/careers"
     ]
    ]
-  },
-  "other_name": "Cynet",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Cynet' already reads it (matched on hostpath, never on the name)"
+  }
  },
  "DSV - Global Transport and Logistics": {
   "date": "2026-08-30",
@@ -7836,41 +7836,27 @@
   "why": "Funpressor is a real HVAC/R compressor startup with its own site (home/technology/market/team/contact only); a 12-path careers probe of funpressor.com found no careers page or job board."
  },
  "Fuse Sys": {
-  "date": "2026-08-30",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Fuse",
+  "why": "a rung found this name's board and the registry row 'Fuse' already reads it (matched on url, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://www.fusenext.com/careers",
-     "https://www.fusenext.com/careers/"
+   "row": "Fuse",
+   "matched_on": "url",
+   "tried": [
+    [
+     "hunt",
+     "no-listing",
+     "https://www.fuseintegration.com/careers/open-positions/"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs",
-     "/jobs/",
-     "/career",
-     "/career/",
-     "/about/careers",
-     "/company/careers",
-     "/en/careers",
-     "/careers/open-positions",
-     "/join-us",
-     "/%D7%A7%D7%A8%D7%99%D7%99%D7%A8%D7%94"
+    [
+     "search-llm",
+     "documented",
+     "https://www.fusenext.com/careers"
     ]
-   },
-   "read_page": "https://www.fusenext.com/careers",
-   "search_pages": [
-    "https://www.fusenext.com/careers",
-    "https://www.fuseintegration.com/careers/open-positions/",
-    "https://fuse.org/careers/",
-    "https://careers.fuse.vc/jobs"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "The intake name \"Fuse Sys\" is not matched by any evidence: searches returned several unrelated \"Fuse\" companies (fusenext.com, Fuse Integration, fuse.org, fuse.vc), and the only probed domain (fusenext.com) is a different product company with no shown link to \"Fuse Sys\". Nothing settles identity, an"
+   ]
+  }
  },
  "Future Electronics": {
   "board_url_if_any": "",
@@ -10353,10 +10339,14 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Guideline Group": {
-  "date": "2026-09-11",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Guideline",
+  "why": "the registry row 'Guideline' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "matched_on": "name-normalised",
    "row": "Guideline",
+   "matched_on": "name-normalised",
    "tried": [
     [
      "hunt",
@@ -10369,11 +10359,7 @@
      "https://www.comeet.com/jobs/guideline/89.009"
     ]
    ]
-  },
-  "other_name": "Guideline",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "the registry row 'Guideline' is this employer under another spelling (name-normalised)"
+  }
  },
  "Gytpol": {
   "date": "2026-08-30",
@@ -11580,10 +11566,14 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Hillcrest Labs, acquired by CEVA": {
-  "date": "2026-09-02",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Ceva",
+  "why": "a rung found this name's board and the registry row 'Ceva' already reads it (matched on hostpath, never on the name)",
   "evidence": {
-   "matched_on": "hostpath",
    "row": "Ceva",
+   "matched_on": "hostpath",
    "tried": [
     [
      "search-llm",
@@ -11591,11 +11581,7 @@
      "https://www.ceva-ip.com/career"
     ]
    ]
-  },
-  "other_name": "Ceva",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Ceva' already reads it (matched on hostpath, never on the name)"
+  }
  },
  "Hilti Israel": {
   "date": "2026-08-31",
@@ -15761,10 +15747,14 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Level App": {
-  "date": "2026-09-11",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "UserWay",
+  "why": "a rung found this name's board and the registry row 'UserWay' already reads it (matched on url, never on the name)",
   "evidence": {
-   "matched_on": "url",
    "row": "UserWay",
+   "matched_on": "url",
    "tried": [
     [
      "search-llm",
@@ -15772,11 +15762,7 @@
      "https://www.levelaccess.com/careers/"
     ]
    ]
-  },
-  "other_name": "UserWay",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'UserWay' already reads it (matched on url, never on the name)"
+  }
  },
  "Levi Sterk Zilberstein": {
   "date": "2026-08-30",
@@ -16130,16 +16116,16 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Linx Security": {
-  "date": "2026-09-11",
-  "evidence": {
-   "matched_on": "name-normalised",
-   "row": "Linxsecurity",
-   "tried": []
-  },
-  "other_name": "Linxsecurity",
-  "raw_verdict": "",
+  "date": "2026-09-13",
   "verdict": "covered-by-row",
-  "why": "the registry row 'Linxsecurity' is this employer under another spelling (name-normalised)"
+  "raw_verdict": "",
+  "other_name": "Linxsecurity",
+  "why": "the registry row 'Linxsecurity' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Linxsecurity",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
  },
  "Linxsecurity": {
   "board_url_if_any": "",
@@ -16502,7 +16488,11 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Lubinski Group": {
-  "date": "2026-09-10",
+  "date": "2026-09-13",
+  "verdict": "settled-by-a-rung",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -16543,11 +16533,7 @@
      "already-a-row"
     ]
    ]
-  },
-  "other_name": "",
-  "raw_verdict": "already-a-row",
-  "verdict": "settled-by-a-rung",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+  }
  },
  "Ludeoofficial": {
   "date": "2026-08-30",
@@ -17597,16 +17583,16 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Marketeam.ai": {
-  "date": "2026-09-11",
-  "evidence": {
-   "matched_on": "name-normalised",
-   "row": "Marketeam AI",
-   "tried": []
-  },
-  "other_name": "Marketeam AI",
-  "raw_verdict": "",
+  "date": "2026-09-13",
   "verdict": "covered-by-row",
-  "why": "the registry row 'Marketeam AI' is this employer under another spelling (name-normalised)"
+  "raw_verdict": "",
+  "other_name": "Marketeam AI",
+  "why": "the registry row 'Marketeam AI' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Marketeam AI",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
  },
  "Marketily": {
   "board_url_if_any": "",
@@ -21578,10 +21564,14 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Plus500™": {
-  "date": "2026-09-11",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Plus500",
+  "why": "the registry row 'Plus500' is this employer under another spelling (name-normalised)",
   "evidence": {
-   "matched_on": "name-normalised",
    "row": "Plus500",
+   "matched_on": "name-normalised",
    "tried": [
     [
      "hunt",
@@ -21594,11 +21584,7 @@
      "https://careers.plus500.com/"
     ]
    ]
-  },
-  "other_name": "Plus500",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "the registry row 'Plus500' is this employer under another spelling (name-normalised)"
+  }
  },
  "Poc System": {
   "date": "2026-09-07",
@@ -21651,10 +21637,14 @@
   "why": "a rung found this name's board and the registry row 'Primis' already reads it (matched on url, never on the name)"
  },
  "Primis, Video Discovery": {
-  "date": "2026-09-11",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Primis",
+  "why": "a rung found this name's board and the registry row 'Primis' already reads it (matched on url, never on the name)",
   "evidence": {
-   "matched_on": "url",
    "row": "Primis",
+   "matched_on": "url",
    "tried": [
     [
      "search-llm",
@@ -21662,11 +21652,7 @@
      "https://www.primis.tech/careers/"
     ]
    ]
-  },
-  "other_name": "Primis",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Primis' already reads it (matched on url, never on the name)"
+  }
  },
  "Profimex": {
   "date": "2026-09-07",
@@ -22729,10 +22715,14 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Speedata.io": {
-  "date": "2026-09-11",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Speedata",
+  "why": "a rung found this name's board and the registry row 'Speedata' already reads it (matched on url, never on the name)",
   "evidence": {
-   "matched_on": "url",
    "row": "Speedata",
+   "matched_on": "url",
    "tried": [
     [
      "hunt",
@@ -22740,11 +22730,7 @@
      "https://www.speedata.io/careers-1"
     ]
    ]
-  },
-  "other_name": "Speedata",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Speedata' already reads it (matched on url, never on the name)"
+  }
  },
  "Squaretalk": {
   "board_url_if_any": "",
@@ -22821,10 +22807,14 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-09-11",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Strauss Water Ltd. שטראוס מים",
+  "why": "a rung found this name's board and the registry row 'Strauss Water Ltd. שטראוס מים' already reads it (matched on url, never on the name)",
   "evidence": {
-   "matched_on": "url",
    "row": "Strauss Water Ltd. שטראוס מים",
+   "matched_on": "url",
    "tried": [
     [
      "own-site",
@@ -22842,11 +22832,7 @@
      "https://www.strauss-group.co.il/career/"
     ]
    ]
-  },
-  "other_name": "Strauss Water Ltd. שטראוס מים",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Strauss Water Ltd. שטראוס מים' already reads it (matched on url, never on the name)"
+  }
  },
  "Super Group (SGHC)": {
   "board_url_if_any": "",
@@ -23160,7 +23146,11 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Teva Pharmaceuticals": {
-  "date": "2026-09-10",
+  "date": "2026-09-13",
+  "verdict": "settled-by-a-rung",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
    "tried": [
@@ -23205,11 +23195,7 @@
      "already-a-row"
     ]
    ]
-  },
-  "other_name": "",
-  "raw_verdict": "already-a-row",
-  "verdict": "settled-by-a-rung",
-  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
+  }
  },
  "Texas Instruments Europe": {
   "date": "2026-08-30",
@@ -23674,16 +23660,16 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Weebit Nano Ltd": {
-  "date": "2026-09-11",
-  "evidence": {
-   "matched_on": "name-normalised",
-   "row": "Weebit Nano",
-   "tried": []
-  },
-  "other_name": "Weebit Nano",
-  "raw_verdict": "",
+  "date": "2026-09-13",
   "verdict": "covered-by-row",
-  "why": "the registry row 'Weebit Nano' is this employer under another spelling (name-normalised)"
+  "raw_verdict": "",
+  "other_name": "Weebit Nano",
+  "why": "the registry row 'Weebit Nano' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Weebit Nano",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
  },
  "WellyBox": {
   "date": "2026-08-30",
@@ -23793,16 +23779,16 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Wobi Ltd": {
-  "date": "2026-09-11",
-  "evidence": {
-   "matched_on": "name-normalised",
-   "row": "Wobi",
-   "tried": []
-  },
-  "other_name": "Wobi",
-  "raw_verdict": "",
+  "date": "2026-09-13",
   "verdict": "covered-by-row",
-  "why": "the registry row 'Wobi' is this employer under another spelling (name-normalised)"
+  "raw_verdict": "",
+  "other_name": "Wobi",
+  "why": "the registry row 'Wobi' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Wobi",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
  },
  "Worthy Com": {
   "board_url_if_any": "",
@@ -25395,10 +25381,14 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "נגה - החברה לניהול מערכת החשמל Noga - Israel Independent System Operator": {
-  "date": "2026-09-11",
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Noga Iso",
+  "why": "a rung found this name's board and the registry row 'Noga Iso' already reads it (matched on hostpath, never on the name)",
   "evidence": {
-   "matched_on": "hostpath",
    "row": "Noga Iso",
+   "matched_on": "hostpath",
    "tried": [
     [
      "search-llm",
@@ -25406,11 +25396,7 @@
      "https://www.noga-iso.co.il/jobs"
     ]
    ]
-  },
-  "other_name": "Noga Iso",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Noga Iso' already reads it (matched on hostpath, never on the name)"
+  }
  },
  "קבוצת צליח-רוטשילד | Saliah-Rothschild Group": {
   "date": "2026-08-30",
@@ -25487,5 +25473,161 @@
   "raw_verdict": "real-company-no-board",
   "verdict": "no-board",
   "why": "Real small Israeli environmental planning consultancy (founded 2016, Wix site); careers-path probe of sadotproj.co.il found no careers/jobs page."
+ },
+ "Act": {
+  "date": "2026-09-13",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "GE Vernova": {
+  "date": "2026-09-13",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Glassix": {
+  "date": "2026-09-13",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Telnyx": {
+  "date": "2026-09-13",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Istra Research Ltd.": {
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Istra Research",
+  "why": "the registry row 'Istra Research' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Istra Research",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "TransPerfect": {
+  "date": "2026-09-13",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Aeronautics Group": {
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Aeronautics",
+  "why": "the registry row 'Aeronautics' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Aeronautics",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "EisnerAmper": {
+  "date": "2026-09-13",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "קבוצת דרייב - Drive group": {
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Drive Group",
+  "why": "the registry row 'Drive Group' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Drive Group",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Clariness": {
+  "date": "2026-09-13",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Genius Sports": {
+  "date": "2026-09-13",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Tomax-Think Academy": {
+  "date": "2026-09-13",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Tomax Think Academy",
+  "why": "the registry row 'Tomax Think Academy' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Tomax Think Academy",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
  }
 }
