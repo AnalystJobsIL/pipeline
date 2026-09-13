@@ -4478,7 +4478,7 @@
   "verdict": "documented"
  },
  "Allspring": {
-  "last": "2026-09-06",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -4545,9 +4545,15 @@
     "url": "https://www.allspringglobal.com/corporate/careers/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "notours",
+    "date": "2026-09-13",
+    "url": "https://www.allspringglobal.com/corporate/careers/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "notours"
  },
  "Allstarsit": {
   "last": "2026-08-29",
@@ -8675,7 +8681,7 @@
   "verdict": "already-a-row"
  },
  "Bruker Jv Israel": {
-  "last": "2026-09-12",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -8710,9 +8716,15 @@
     "verdict": "nolisting",
     "date": "2026-09-12",
     "url": "https://www.bruker.com/en/careers.html"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "notours",
+    "date": "2026-09-13",
+    "url": "https://www.bruker.com/en/careers.html"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "notours"
  },
  "Bsre": {
   "last": "2026-09-12",
@@ -9361,7 +9373,7 @@
   "verdict": "no-board"
  },
  "Cactus Communications": {
-  "last": "2026-09-06",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -9390,9 +9402,15 @@
     "url": "https://jobs.cactusglobal.com/jobs?location=Israel",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "novrfy",
+    "date": "2026-09-13",
+    "url": "https://jobs.cactusglobal.com/jobs?location=Israel"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "novrfy"
  },
  "Caesarstone": {
   "last": "2026-08-29",
@@ -24932,16 +24950,22 @@
   "verdict": "note-migrated"
  },
  "Igt": {
-  "last": "2026-08-31",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-31",
     "rung": "search-llm",
     "url": "https://jobs.igt.com",
     "verdict": "documented"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "novrfy",
+    "date": "2026-09-13",
+    "url": "https://jobs.igt.com/search/?q=&locationsearch=Israel"
    }
   ],
-  "verdict": "documented"
+  "verdict": "novrfy"
  },
  "Ihghotels And Resorts": {
   "last": "2026-08-31",
@@ -26795,7 +26819,7 @@
   "verdict": "no-board"
  },
  "Iss International": {
-  "last": "2026-09-06",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -26849,9 +26873,15 @@
     "url": "https://jobs.issworld.com/",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "novrfy",
+    "date": "2026-09-13",
+    "url": "https://jobs.issworld.com/"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "novrfy"
  },
  "Istra Research": {
   "last": "2026-09-11",
@@ -31413,7 +31443,7 @@
   "verdict": "nolisting"
  },
  "Kuehn Gmbh": {
-  "last": "2026-09-12",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -31474,9 +31504,15 @@
     "verdict": "nolisting",
     "date": "2026-09-12",
     "url": "https://jobs.kuehne-nagel.com/global/en/search-results?ss=%5B%22Israel%22%5D"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "notours",
+    "date": "2026-09-13",
+    "url": "https://jobs.kuehne-nagel.com/global/en/search-results?ss=%5B%22Israel%22%5D"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "notours"
  },
  "Kuni": {
   "last": "2026-09-10",
@@ -32832,7 +32868,7 @@
   "verdict": "note-migrated"
  },
  "Lenox Investments": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -32867,9 +32903,15 @@
     "rung": "listing-hunt",
     "url": "https://www.lenoxadvisors.com/about/careers/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "novrfy",
+    "date": "2026-09-13",
+    "url": "https://www.lenoxadvisors.com/about/careers/"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "novrfy"
  },
  "Letsgooo": {
   "last": "2026-08-29",
@@ -47559,7 +47601,7 @@
   "verdict": "note-migrated"
  },
  "Publicis Re:Sources": {
-  "last": "2026-09-06",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-06",
@@ -47567,9 +47609,15 @@
     "url": "https://careers.publicisgroupe.com/jobs?tags2=Publicis%20Re:Sources%20Global%7CPublicis%20Re:Sources%20India&page=1",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "novrfy",
+    "date": "2026-09-13",
+    "url": "https://careers.publicisgroupe.com/jobs?tags2=Publicis%20Re:Sources%20Global%7CPublicis%20Re:Sources%20India&page=1"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "novrfy"
  },
  "Push digital il": {
   "last": "2026-09-02",
@@ -48821,7 +48869,7 @@
   "verdict": "nolisting"
  },
  "Reckitt": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-09-09",
@@ -48841,9 +48889,15 @@
     "rung": "listing-hunt",
     "url": "https://careers.reckitt.com/search/?q=&location=Israel&locale=en_US",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "novrfy",
+    "date": "2026-09-13",
+    "url": "https://careers.reckitt.com/search/?q=&location=Israel&locale=en_US"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "novrfy"
  },
  "Reclaim Security": {
   "last": "2026-09-09",
@@ -53391,7 +53445,7 @@
   "verdict": "nolisting"
  },
  "Teradyne": {
-  "last": "2026-09-12",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -53437,9 +53491,15 @@
     "verdict": "nolisting",
     "date": "2026-09-12",
     "url": "https://jobs.teradyne.com/Teradyne/search/?createNewAlert=false&q=&optionsFacetsDD_customfield1=Teradyne&optionsFacetsDD_dept=&location=Israel&locale=en_US"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "novrfy",
+    "date": "2026-09-13",
+    "url": "https://jobs.teradyne.com/Teradyne/search/?createNewAlert=false&q=&optionsFacetsDD_customfield1=Teradyne&optionsFacetsDD_dept=&location=Israel&locale=en_US"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "novrfy"
  },
  "Terafence": {
   "last": "2026-09-12",
@@ -58028,7 +58088,7 @@
   "verdict": "nolisting"
  },
  "Zion Today": {
-  "last": "2026-09-11",
+  "last": "2026-09-13",
   "tried": [
    {
     "date": "2026-08-29",
@@ -58074,9 +58134,15 @@
     "rung": "listing-hunt",
     "url": "https://careers.zionsbancorp.com/",
     "verdict": "nolisting"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "notours",
+    "date": "2026-09-13",
+    "url": "https://careers.zionsbancorp.com/"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "notours"
  },
  "Ziv Av": {
   "last": "2026-09-11",
@@ -60263,10 +60329,16 @@
     "verdict": "documented",
     "date": "2026-09-13",
     "url": "https://www.catl-career.com"
+   },
+   {
+    "rung": "crack-walled",
+    "verdict": "novrfy",
+    "date": "2026-09-13",
+    "url": "https://www.catl-career.com"
    }
   ],
   "last": "2026-09-13",
-  "verdict": "documented"
+  "verdict": "novrfy"
  },
  "Davidson Institute of Science Education": {
   "tried": [
