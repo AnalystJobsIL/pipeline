@@ -36,7 +36,7 @@ import sys
 import time
 import urllib.parse
 
-from deep_validate import Renderer, ddg
+from deep_validate import Renderer
 from audit_empty_rows import AGG, active_twin as _active_twin
 from pipeline.aggregators import is_aggregator
 from pipeline.recruiters import is_recruiter
@@ -360,11 +360,10 @@ def hunt_one(name, seed, documented=False, mode=""):
     cands = [] if (not seed or is_aggregator(seed) or seed_is_bad) else [seed]
     if rebrand:
         cands += [f"https://{rebrand}/careers", f"https://{rebrand}/careers/"]
-    cands += [u for u in ddg(f"{name} jobs") if u not in cands]
     if seed_is_bad and seed:
         # keep the dead seed as a LAST resort: triage may have been wrong about it
         cands.append(seed)
-    if len(cands) < 2:                     # DDG blocked/empty (datacenter IPs) — paid fallback
+    if len(cands) < 2:                     # the search (a free DDG rung sat above until 2026-09-13)
         cands += [u for u in google_via_unlocker(f"{name} careers") if u not in cands]
     links, reachable = [], False
     # IMPORTANT: harvest with a SHORT-LIVED Renderer and close it BEFORE calling scrape() —

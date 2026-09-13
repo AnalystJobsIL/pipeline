@@ -329,14 +329,8 @@ def serp(name, limit=5):
     if urls:
         _SEARCH["produced"] += 1
         return urls
-    try:
-        from deep_validate import ddg
-        urls = [u for u in (ddg(name) or []) if not is_aggregator(u)][:limit]
-    except Exception:  # noqa: BLE001
-        urls = []
-    if urls:
-        _SEARCH["produced"] += 1
-        return urls
+    # (a free DuckDuckGo rung sat here until 2026-09-13; it answered 202 on the runners
+    # before almost every query -- docs/decisions/2026-09-13-search-rung-deleted.md)
     try:
         from deep_validate import google_via_unlocker
         urls = [u for u in (google_via_unlocker(name) or []) if not is_aggregator(u)][:limit]

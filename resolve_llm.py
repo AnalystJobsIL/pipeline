@@ -115,19 +115,14 @@ def _search_candidates(name, limit=5):
     Until 2026-08-25 this was SerpApi only. With that quota at 0 (resets 2026-09-01) and an
     aggregator seed contributing no page, `_gather` produced the literal
     `(no pages reachable)` and `claude -p` was still asked -- 20 evidence-free calls a day
-    that returned `unknown` every time (docs/BACKLOG.md 177). DuckDuckGo is free and works
-    on the runners; the unlocker rung is capped per run by LLM_BD_SEARCH_CAP (default 5:
+    that returned `unknown` every time (docs/BACKLOG.md 177). A free DuckDuckGo rung sat
+    between the two until 2026-09-13, when the runner measurement showed it answering HTTP
+    202 to 16 of 17 runner processes (docs/decisions/2026-09-13-search-rung-deleted.md).
+    The unlocker rung is capped per run by LLM_BD_SEARCH_CAP (default 5:
     the project ceiling is 4,500 credits/month from 2026-09 and two runs a day at 5 is ~7%
     of it). Lazy imports: `deep_validate` imports this module at top level.
     """
     urls = _serp_candidates(name, limit)
-    if urls:
-        return urls
-    try:
-        from deep_validate import ddg
-        urls = [u for u in (ddg(name) or []) if not _is_aggregator(u)][:limit]
-    except Exception:  # noqa: BLE001
-        urls = []
     if urls:
         return urls
     cap = int(os.environ.get("LLM_BD_SEARCH_CAP", "5"))

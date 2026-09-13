@@ -184,7 +184,7 @@ def _stub_all(policy, rng):
     # repair_dead_urls: `resolves` decides membership (worst: every host is dead), the
     # candidates are fetched (worst: unreadable) -- nothing may be written from no page
     RD.resolves = lambda host, tries=3: False if policy == "worst" else rng.random() < 0.7
-    RD.candidates = lambda name, dead_url: []      # the search ladder (ddg/unlocker) is a seam, not a fixture
+    RD.candidates = lambda name, dead_url: []      # the search ladder (the unlocker) is a seam, not a fixture
     RD.fetch = lambda url: (None, "")
     RD._unlock = lambda url: ""
     RD.time.sleep = lambda s: None

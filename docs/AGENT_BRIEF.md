@@ -196,9 +196,9 @@ Declare these in your plan before spending them:
 - **GitHub Actions concurrency group `repo-state`** — eight of the nine scheduled workflows
   share it (all but `daily-digest.yml`, which has its own). A long job makes the next one
   queue or be superseded, with no error anywhere.
-- **DuckDuckGo is rate-limited from this machine, not blocked** — it answers, then returns
-  zero for the same query minutes later (measured: `ddg("Wix")` gave 4 URLs, then 0). Treat
-  it as a rung that sometimes answers, never the only one. It is reliable on the runners.
+- **There is no free search rung.** DuckDuckGo was rate-limited from this machine and, measured
+  2026-09-13, answered HTTP 202 to 16 of 17 runner processes within minutes of starting, so
+  `deep_validate.ddg` was deleted. Every search is `deep_validate.google_via_unlocker`, paid.
 
 ## Rules that will bite you
 

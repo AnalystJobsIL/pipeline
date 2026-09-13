@@ -23312,11 +23312,8 @@ def test_search_one_returns_a_dict_when_every_search_raises(monkeypatch):
     def boom(name):
         raise RuntimeError("unlocker 502")
     monkeypatch.setattr(DV, "google_via_unlocker", boom)
-    # ...and the FREE rung, which since 2026-09-11 is asked first. Stubbed to answer nothing,
-    # because this test is about what the PAID one's exception does. Unstubbed it reached the
-    # live endpoint on the runner and came back with four real careers URLs (`conftest`'s
-    # transport ban now refuses that outright, which is how this was caught).
-    monkeypatch.setattr(DV, "ddg", lambda name, limit=4: [])
+    # (the FREE rung asked first from 2026-09-11 was stubbed here; it was deleted on
+    # 2026-09-13, and `conftest`'s transport ban still refuses a live search)
     monkeypatch.setattr(QRS.time, "sleep", lambda s: None)
     got = QRS.search_one("Acme")
     assert isinstance(got, dict) and got["urls"] == [] and got["why"].startswith("search-error")
@@ -31838,92 +31835,48 @@ def test_an_allowance_refusal_is_never_read_as_an_empty_page(monkeypatch):
     assert jdfill._monthly_ceiling_reached() == "", "under pytest the JD layer never asks"
 
 
-# ---- the search rung: 76% of the month, so the free one is tried first and MEASURED ----
-def test_duckduckgo_gives_up_for_the_run_on_its_soft_block(monkeypatch):
-    """DDG's rate limit is an HTTP **202** carrying "Ratelimit", not a 4xx and not an empty
-    page -- so a fetcher that only reads the body records it as "this company has no search
-    results", which is a claim about the company made by a throttle. One 202 ends the free
-    rung for the whole run: re-asking is what earns a longer block, and the paid rung is
-    right there."""
+# ---- the search rung: 76% of the month; the free DuckDuckGo rung was measured and DELETED ----
+def test_the_paid_search_ranks_one_url_per_host_and_prefers_the_listings_page():
+    """The caller renders `cands[:2]`, so the ORDER is the answer: jobs-ish path > any path >
+    bare host, shortest wins, one URL per host. Measured on a live `Exodigo careers` response,
+    where first-per-host kept `comeet.com` and `exodigo.com` and discarded both real pages."""
     import deep_validate as D
-    D._DDG.update(blocked=False, next=0.0, asked=0, answered=0)
-    calls = []
-
-    def _f(url, timeout=15):
-        calls.append(url)
-        return 202, "<html>Ratelimit</html>"
-    monkeypatch.setattr(D, "_ddg_fetch", _f)
-    monkeypatch.setattr(D.time, "sleep", lambda *_a: None)
-    assert D.ddg("Wix") == []
-    assert D.ddg("Fiverr") == [] and len(calls) == 1, "no second ask after a 202"
-    assert D._DDG["blocked"] is True
-    # a 200 that carries the same banner is the same block
-    D._DDG.update(blocked=False)
-    monkeypatch.setattr(D, "_ddg_fetch", lambda url, timeout=15: (200, "Ratelimit, please"))
-    assert D.ddg("Wix") == [] and D._DDG["blocked"] is True
-
-
-def test_both_search_rungs_rank_candidates_the_same_way(monkeypatch):
-    """A free rung that ranks differently from the paid one is not a substitute for it: the
-    caller renders `cands[:2]`, so the ORDER is the answer. `ddg` used to return raw document
-    order while the unlocker ranked -- jobs-ish path > any path > bare host, shortest wins --
-    and the A/B that decides whether to keep the free rung compares their top hosts."""
-    import deep_validate as D
-    D._DDG.update(blocked=False, next=0.0)
-    monkeypatch.setattr(D.time, "sleep", lambda *_a: None)
-    page = ('<a href="https://exodigo.com">x</a>'
-            '<a href="https://www.comeet.com/jobs/exodigo/89.005/data-analyst">y</a>'
-            '<a href="https://www.comeet.com">z</a>'
-            '<a href="https://www.comeet.com/jobs/exodigo/89.005">w</a>'
-            '<a href="https://exodigo.com/open-roles">v</a>')
-    monkeypatch.setattr(D, "_ddg_fetch", lambda url, timeout=15: (200, page))
-    got = D.ddg("Exodigo")
+    got = D._rank_hosts(["https://exodigo.com",
+                         "https://www.comeet.com/jobs/exodigo/89.005/data-analyst",
+                         "https://www.comeet.com",
+                         "https://www.comeet.com/jobs/exodigo/89.005",
+                         "https://exodigo.com/open-roles"])
     assert got[:2] == ["https://exodigo.com/open-roles",
                        "https://www.comeet.com/jobs/exodigo/89.005"], got
-    assert D._rank_hosts([u for u in
-                          ["https://exodigo.com", "https://exodigo.com/open-roles"]]) \
+    assert D._rank_hosts(["https://exodigo.com", "https://exodigo.com/open-roles"]) \
         == ["https://exodigo.com/open-roles"], "one URL per host, and not the bare one"
 
 
-def test_the_free_rung_is_asked_before_the_paid_one_in_every_search_tool():
-    """`queue_resolve_search` (12% of the month) and `resolve_broken` (9%) were the only two
-    callers with NO free rung: they bought a Google page for every name, first attempt. Every
-    other search tool has tried DuckDuckGo first since long before this."""
-    import os as _os
-    root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+def test_the_queue_drain_searches_on_its_first_ask_and_asks_no_free_rung(monkeypatch):
+    """2026-09-13 (infra): the free DuckDuckGo rung that stood ahead of every paid search was
+    DELETED on its runner measurement -- HTTP 202 to 16 of the 17 processes
+    that asked, 0 answers for the 156 names the queue drain searched on 09-11 and 09-12
+    (docs/decisions/2026-09-13-search-rung-deleted.md). What the drain ran on every one of
+    those nights was the paid rung, first ask; this pins that, and pins that no search tool
+    still imports a rung that does not exist (an `ImportError` inside a bare `except` would
+    read as "no search results", a claim about the company made by our own deletion)."""
+    import deep_validate as D
+    import queue_resolve_search as Q
+    asked = []
+    monkeypatch.setattr(D, "google_via_unlocker",
+                        lambda name, limit=4: asked.append(name) or
+                        ["https://a.example/careers", "https://boards.greenhouse.io/a"])
+    monkeypatch.setattr(Q, "choose", lambda name, urls, timeout=120: (urls[0], "stub"))
+    out = Q.search_one("Acme Analytics")
+    assert asked == ["Acme Analytics"], "the paid rung is the first and only search"
+    assert out["picked"] == "https://a.example/careers" and out["why"] == "stub"
+    assert not hasattr(D, "ddg") and not hasattr(D, "_search_ab"), "the rung came back"
     for mod in ("queue_resolve_search.py", "resolve_broken.py", "listing_hunt.py",
                 "crack_walled.py", "audit_empty_rows.py", "repair_dead_urls.py",
-                "resolve_llm.py", "deep_validate.py"):
-        src = open(_os.path.join(root, mod), encoding="utf-8").read()
-        assert "ddg(" in src, f"{mod} pays for a search with no free rung ahead of it"
-        if "google_via_unlocker" in src and mod != "deep_validate.py":
-            assert src.index("ddg(") < src.index("google_via_unlocker("), \
-                f"{mod}: the free rung must be asked FIRST"
-
-
-def test_the_paid_search_measures_the_free_one_for_nothing(monkeypatch):
-    """76% of this project's credits are one function, and "would the free rung have said the
-    same?" cannot be settled by reasoning. Every paid search also asks DDG and prints the two
-    top hosts; the summary is the number that decides whether the rung stays (>= 70%)."""
-    import deep_validate as D
-    D._AB.update(n=0, agree=0, answered=0)
-    D._DDG.update(blocked=False, next=0.0)
-    monkeypatch.setattr(D.time, "sleep", lambda *_a: None)
-    monkeypatch.setattr(D, "_ddg_fetch",
-                        lambda url, timeout=15: (200, '<a href="https://wix.com/jobs">a</a>'))
-    # `force=True`: the A/B makes a REAL request, so it is off under pytest -- a unit suite
-    # that reaches the live internet is slow and flaky, and this one cost a CI run on
-    # 2026-09-11. The behaviour stays covered by driving it here with the fetch stubbed.
-    assert D._search_ab("Wix", ["https://wix.com/careers"]) is None and D._AB["n"] == 0, \
-        "off under pytest unless a test asks for it"
-    D._search_ab("Wix", ["https://wix.com/careers"], force=True)
-    assert (D._AB["n"], D._AB["answered"], D._AB["agree"]) == (1, 1, 1)
-    D._search_ab("Fiverr", ["https://elsewhere.example/jobs"], force=True)
-    assert (D._AB["n"], D._AB["answered"], D._AB["agree"]) == (2, 2, 1), "a disagreement counts"
-    D._AB["cap"] = 2
-    D._search_ab("Third", ["https://x.io"], force=True)
-    assert D._AB["n"] == 2, "bounded per process: a free rung still costs seconds"
-    D._AB.update(n=0, agree=0, answered=0, cap=40)
+                "resolve_llm.py", "deep_validate.py", "registry_health.py"):
+        code = "\n".join(l for l in open(os.path.join(_REPO, mod), encoding="utf-8")
+                         .read().splitlines() if not l.lstrip().startswith("#"))
+        assert not re.search(r"\bddg\b", code), f"{mod} still names the deleted free rung"
 
 
 def test_the_per_record_linkedin_dataset_is_off_unless_a_session_arms_it(monkeypatch):

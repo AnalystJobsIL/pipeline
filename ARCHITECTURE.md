@@ -2225,7 +2225,8 @@ believing any sentence below about how a rung performs.
    `auto-expand.yml` change and therefore `infra`'s; the number that should decide it is
    `hopeless` in rung 2 below.
 2. `resolve_llm.py`: evidence bundle (page fetch + the search ladder SerpApi →
-   `deep_validate.ddg` → `google_via_unlocker`, the paid rung capped per run by
+   `google_via_unlocker` — a free DuckDuckGo rung sat between them until 2026-09-13, see
+   the search ladder in §3 — the paid rung capped per run by
    `LLM_BD_SEARCH_CAP`, default 5 → ATS-hint extraction) → single `claude -p` proposal
    `{platform, token, api_url}` → **verified** via the real fetcher. One retry carrying the
    verification error. The call goes through the shared seam `pipeline/llm.py::call_json`
@@ -2261,8 +2262,8 @@ believing any sentence below about how a rung performs.
    a new detection pattern in the code.
 
 **Rung 4 searches, so a zero it brings back may be a STRANGER's zero** (2026-09-01, lane
-`registry`). `validate_one`'s candidate list is the row's own seed **plus** `ddg(name)` plus
-`google_via_unlocker(name)`, so on a row whose seed is dark the board it renders can belong
+`registry`). `validate_one`'s candidate list is the row's own seed **plus**
+`google_via_unlocker(name)` (and `ddg(name)` until 2026-09-13), so on a row whose seed is dark the board it renders can belong
 to whatever the search matched on the name. Run over eleven parked rows on 2026-09-01, four
 came back with a name-alike's Workday: `Experda`→Expedia, `Prologic LTD`→Prologis,
 `Recolabs`→Ecolab, `SemiConductor Devices`→Analog Devices. **The activation gate held on all
@@ -2616,8 +2617,8 @@ the short version of the three gates and the code that enforces them.
   row, which is both the point and the rotation key. Yield on the first 73 names, against the
   slug rung's 61 Israel jobs from the *entire* queue: **33 boards found, 521 Israel jobs.**
 
-- **Every rung that searches needs all three fallbacks.** The ladder is SerpApi (cheapest,
-  currently useless) → `deep_validate.ddg` (free) → `deep_validate.google_via_unlocker`
+- **Every rung that searches needs a fallback below SerpApi.** The ladder is SerpApi
+  (cheapest, currently useless) → `deep_validate.google_via_unlocker`
   (Bright Data, capped by `DEEP_BD_SEARCH_CAP` in `deep_validate`/`audit_empty_rows`, and by
   `resolve_llm`'s own `LLM_BD_SEARCH_CAP` since 2026-08-25 — it had been SerpApi-only, i.e.
   a no-op, for the whole month). Verified against the live account on
@@ -2634,12 +2635,16 @@ the short version of the three gates and the code that enforces them.
   (`cognata.com/hiring/` — an iCIMS row), `Sproutt` 0; before the fix all three were `[]`.
   When every rung comes back empty the tool now prints a `::warning::` naming which
   credential was missing, because that is a broken run, not a measurement.
-- **DuckDuckGo is rate-limited from the dev machine, not blocked.** Repeatedly documented
-  here as "returns nothing"; measured on 2026-08-23 it returned 4 good URLs for `Wix`
-  (`careers.wix.com/positions`) and 4 for `Fortinet` (including its real oraclecloud CX
-  site), then `0` for the same query minutes later. Treat it as a rung that *sometimes*
-  answers — which is why it can never be the only one. It is reliable on the runners; the
-  unlocker works from both.
+- **There is no free search rung, and "DuckDuckGo is reliable on the runners" was false**
+  (`infra`, 2026-09-13, `docs/decisions/2026-09-13-search-rung-deleted.md`). From the dev machine it is
+  rate-limited (2026-08-23: 4 URLs for `Wix`, then 0 minutes later). On the runners it
+  answered **HTTP 202 to 16 of the 17 processes** (14 within five seconds of starting) that asked between the
+  09-11 19:00 hunt and the 09-13 self-heal, so the queue drain got **0 answers for 156
+  names**, and the one process it answered (self-heal) named `en.axioma-in.com` where the
+  unlocker named `www.axioma-in.com`. `deep_validate.ddg`, its `[search-ab]` measurement
+  and every caller's free-first block were deleted; each ladder is what it already was on
+  every blocked night. The paid search is 71 % of the month's credits and the operator's
+  2026-09-11 ruling pays it. The unlocker works from both.
 - Never activate a scrape of an aggregator page (LinkedIn/Indeed/Glassdoor/secrethunter) —
   their "similar jobs" sidebars attribute other companies' roles to the target. Enforced at
   resolution (all resolvers) **and at runtime** in `pipeline/run.py`, which drops such rows
@@ -8306,11 +8311,11 @@ is the most reusable page in the repo: **a green workflow means nothing here.**
 4. **Search results will hand you another company's board** — and it verifies, with real
    jobs. `_slug_matches` guards it. But note the inverse: CyberArk→PANW and Imperva→Thales
    looked like false matches and were actually **real acquisitions**. Check before "fixing".
-5. **DuckDuckGo is RATE-LIMITED from this developer machine, not blocked** (corrected
-   2026-08-23; §3 has the measurement — 4 good URLs for `Wix`, then 0 for the same query
-   minutes later). Treat it as a rung that sometimes answers, which is why it may never be
-   the only one. It is reliable on the runners. Local resolution work should still carry the
-   Bright Data path (`deep_validate.google_via_unlocker`). SerpApi quota resets
+5. **There is no free search rung** (deleted 2026-09-13, §3 has the measurement: HTTP 202 on
+   16 of 17 runner processes, 14 within five seconds; rate-limited from this developer machine
+   too). Local resolution work carries the Bright Data path
+   (`deep_validate.google_via_unlocker`), which needs the repo-root credentials a worktree
+   lacks. SerpApi quota resets
    **2026-09-01**.
 6. **Never overwrite a file you didn't read.** `pipeline/aggregators.py` already existed and
    held `fetch_serpapi_google_jobs`; creating a same-named module destroyed it silently

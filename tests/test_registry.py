@@ -58,10 +58,9 @@ def test_the_weekly_audit_search_has_a_fallback_below_serpapi():
     names = {n.attr for n in ast.walk(ast.parse(src)) if isinstance(n, ast.Attribute)}
     names |= {n.id for n in ast.walk(ast.parse(src)) if isinstance(n, ast.Name)}
     assert "_serpapi" in names, "the SerpApi rung must still be tried first (it is cheapest)"
-    assert "ddg" in names, "the free DuckDuckGo rung is missing from serp()"
     assert "google_via_unlocker" in names, (
-        "the Bright Data rung is missing — with SerpApi at 0 and DDG rate-limited, "
-        "serp() has no way to return a URL at all")
+        "the Bright Data rung is missing — with SerpApi at 0 (and the free DuckDuckGo rung "
+        "deleted on 2026-09-13), serp() has no way to return a URL at all")
 
 def test_activation_branches_append_to_the_note_instead_of_replacing_it():
     """The three tools that flip a row to active used to assign the whole notes cell. That
@@ -2777,7 +2776,8 @@ def test_the_search_ladder_actually_falls_through_when_serpapi_is_empty():
     """Kills `audit-ladder-serpapi-only`.
 
     `test_the_weekly_audit_search_has_a_fallback_below_serpapi` walks the AST of `serp` for
-    the NAMES `_serpapi`, `ddg` and `google_via_unlocker`. The mutation
+    the NAMES `_serpapi` and `google_via_unlocker` (and `ddg`, until that rung was deleted on
+    2026-09-13). The mutation
     `urls = _serpapi(...)` -> `return _serpapi(...)` leaves all three names in the function,
     now as dead code, and that guard stayed green -- a textbook source-shape defeat.
 
@@ -2792,25 +2792,24 @@ def test_the_search_ladder_actually_falls_through_when_serpapi_is_empty():
         calls.append("serpapi")
         return []
 
-    def _ddg(q, limit=5):
-        calls.append("ddg")
+    def _paid(q, limit=5):
+        calls.append("unlocker")
         return ["https://boards.greenhouse.io/fiverr"]
 
-    # `serp` imports its fallback rungs lazily FROM `deep_validate`, inside the function, so
-    # that is where they have to be patched -- patching `audit_empty_rows` would miss them.
+    # `serp` imports its fallback rung lazily FROM `deep_validate`, inside the function, so
+    # that is where it has to be patched -- patching `audit_empty_rows` would miss it.
     import deep_validate as D
-    orig = (A._serpapi, D.ddg, D.google_via_unlocker)
+    orig = (A._serpapi, D.google_via_unlocker)
     try:
-        A._serpapi, D.ddg = _serp, _ddg
-        D.google_via_unlocker = lambda q, limit=5: ["https://never.example"]
+        A._serpapi, D.google_via_unlocker = _serp, _paid
         urls = A.serp("Fiverr")
         assert "serpapi" in calls, "the first rung must still be tried"
-        assert "ddg" in calls, (
+        assert "unlocker" in calls, (
             "SerpApi returned nothing and the ladder stopped there: %r" % (calls,))
         assert urls == ["https://boards.greenhouse.io/fiverr"], (
             "the fallback rung's result must be returned, got %r" % (urls,))
     finally:
-        A._serpapi, D.ddg, D.google_via_unlocker = orig
+        A._serpapi, D.google_via_unlocker = orig
 
 
 def test_crack_walled_novrfy_does_not_persist_an_address_it_could_not_confirm(
@@ -4127,13 +4126,9 @@ def test_auto_expand_rereads_the_registry_before_appending_a_PARKED_row(tmp_path
                   "unreachable; could not scan", file=fh)
         return ("empty", None)
     monkeypatch.setattr(E, "resolve", _resolve)
-    # The free search rung is a LIVE request and this path reaches it (`auto_expand` ->
-    # the drain -> `deep_validate.ddg`). It has always reached it; `tests/conftest.py`'s
-    # transport ban only learned about the endpoint on 2026-09-11, and this test was one of
-    # two it caught going out to the internet on every run. Stub the fetch, not `ddg`: the
-    # rung's own parsing and 202 handling stay exercised wherever a test wants them.
-    import deep_validate as _DV
-    monkeypatch.setattr(_DV, "_ddg_fetch", lambda url, timeout=15: (200, ""))
+    # (a `deep_validate._ddg_fetch` stub stood here: this path reached the free DuckDuckGo
+    # rung live until `tests/conftest.py` banned the host on 2026-09-11. The rung itself was
+    # deleted on 2026-09-13; the ban stays, so a re-added live search still fails here.)
     E.main()
 
     import csv
@@ -4168,19 +4163,22 @@ def test_resolve_llm_does_not_ask_claude_without_a_reachable_page(monkeypatch):
     assert L.LAST["asked"] is True and L.LAST["pages"] == 1, L.LAST
 
 
-def test_resolve_llm_search_ladder_uses_ddg_and_caps_the_unlocker(monkeypatch):
-    """Kills `llm-ddg-rung-drop` and `llm-bd-cap-default`. The same ladder
-    `audit_empty_rows.serp` got on 2026-08-23; the paid rung has its OWN counter (the
-    `deep_validate` one is per process with a 150 default) and defaults to 5 per run."""
+def test_resolve_llm_search_ladder_caps_the_unlocker(monkeypatch):
+    """Kills `llm-bd-cap-default`. The same ladder `audit_empty_rows.serp` got on 2026-08-23;
+    the paid rung has its OWN counter (the `deep_validate` one is per process with a 150
+    default) and defaults to 5 per run. (It also killed `llm-ddg-rung-drop` until the free
+    DuckDuckGo rung was deleted on 2026-09-13; that record went with the code.)"""
     import deep_validate as D
     import resolve_llm as L
     monkeypatch.delenv("SERPAPI_KEY", raising=False)
-    monkeypatch.setattr(D, "ddg", lambda name, limit=4: ["https://www.x.example/careers", _LI])
-    monkeypatch.setattr(D, "google_via_unlocker", lambda name, limit=4: (_ for _ in ()).throw(AssertionError("paid rung used while DDG answered")))
-    assert L._search_candidates("X Ltd") == ["https://www.x.example/careers"], "DDG rung missing or aggregator leak"
+    monkeypatch.setattr(D, "google_via_unlocker",
+                        lambda name, limit=4: ["https://www.x.example/careers", _LI])
+    monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
+    L._BD_OWN["used"] = 0
+    assert L._search_candidates("X Ltd") == ["https://www.x.example/careers"], \
+        "an aggregator leaked through the paid rung"
 
     paid = []
-    monkeypatch.setattr(D, "ddg", lambda name, limit=4: [])
     monkeypatch.setattr(D, "google_via_unlocker", lambda name, limit=4: paid.append(name) or ["https://g.example/careers"])
     monkeypatch.setenv("BRIGHTDATA_API_KEY", "x")
     monkeypatch.delenv("LLM_BD_SEARCH_CAP", raising=False)

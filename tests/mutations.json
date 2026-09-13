@@ -1149,16 +1149,6 @@
   "must_be_killed_by_behavioural": true
  },
  {
-  "id": "llm-ddg-rung-drop",
-  "file": "resolve_llm.py",
-  "symbol": "_search_candidates",
-  "class": "M6-fallback-removal",
-  "find": "        from deep_validate import ddg\n        urls = [u for u in (ddg(name) or []) if not _is_aggregator(u)][:limit]",
-  "replace": "        urls = []",
-  "why": "with SerpApi at 0 a ladder without the free rung is SerpApi-only again -- the audit's 2026-08-23 defect, one tool over.",
-  "must_be_killed_by_behavioural": true
- },
- {
   "id": "llm-bd-cap-default",
   "file": "resolve_llm.py",
   "symbol": "_search_candidates",

@@ -84,8 +84,7 @@ def _no_paid_calls(req, *args, **kwargs):
     if host in FREE_BUT_LIVE_HOSTS:
         raise PaidCallInTests(
             f"a test reached {url} -- free, but the LIVE INTERNET. Stub the rung this test "
-            f"exercises (`deep_validate._ddg_fetch` for DuckDuckGo, "
-            f"`discovery_daily._li_guest` for the LinkedIn guest endpoint -- `_li_replay` in "
+            f"exercises (`discovery_daily._li_guest` for the LinkedIn guest endpoint -- `_li_replay` in "
             f"tests/test_units.py is the ready-made one) rather than letting the suite depend "
             f"on somebody else's rate limiter; see tests/conftest.py."
         )
@@ -105,7 +104,6 @@ urllib.request.urlopen = _no_paid_calls
 # number production runs on.
 os.environ.setdefault("LINKEDIN_GUEST_PAUSE_S", "0")
 os.environ.setdefault("LINKEDIN_BLOCK_PAUSE_S", "0")
-os.environ.setdefault("DDG_PACE_S", "0")
 
 # SET TO EMPTY, NEVER POPPED -- and that one word is the difference between working and not.
 # Every arming path is now the ONE loader, `pipeline/secretsenv.load` (`438`/`468`: four

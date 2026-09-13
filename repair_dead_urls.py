@@ -128,13 +128,11 @@ def _unlock(url: str) -> str:
 
 def candidates(name: str, dead_url: str):
     """Search first; then the obvious patterns on the company's registrable domain."""
-    from deep_validate import ddg, google_via_unlocker
+    from deep_validate import google_via_unlocker
     out = []
     for q in (f"{name} careers Israel", f"{name} jobs"):
-        try:
-            out += ddg(q) or []
-        except Exception:  # noqa: BLE001
-            pass
+        # (a free DuckDuckGo ask stood here until 2026-09-13; deleted on its runner
+        # measurement, docs/decisions/2026-09-13-search-rung-deleted.md)
         if len(out) < 3:
             try:
                 out += google_via_unlocker(q) or []

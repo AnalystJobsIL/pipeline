@@ -25,7 +25,7 @@ import time
 import urllib.parse
 import urllib.request
 
-from deep_validate import Renderer, ddg
+from deep_validate import Renderer
 from audit_empty_rows import AGG, active_twin, verify
 import check_invariants as _INV      # the platform<->host table, imported not retyped
 from pipeline.aggregators import is_aggregator
@@ -149,10 +149,10 @@ def listing_urls(platform, m, page_url):
 
 def crack_one(name, seed, platform):
     cands = [] if not seed or is_aggregator(seed) else [seed]
-    cands += [u for u in ddg(f"{name} careers") if u not in cands]
     if len(cands) < 2:
-        # DuckDuckGo returns nothing from datacenter/blocked networks, and with no fallback
-        # this only ever tried the stored seed — which for these rows is the MARKETING
+        # (the free DuckDuckGo rung that stood above this was deleted on 2026-09-13: it
+        # answered 202 on the runners, docs/decisions/2026-09-13-search-rung-deleted.md)
+        # With no search at all this only ever tried the stored seed — which for these rows is the MARKETING
         # careers page, not the ATS. listing_hunt has had this fallback all along; crack did
         # not, which is much of why 29 of 39 came back "nocapture" on its first real run.
         from deep_validate import google_via_unlocker

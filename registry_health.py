@@ -721,13 +721,6 @@ def resources(live=False):
         add("SerpApi", left > 0, f"{left} searches left this month")
     elif not key:
         add("SerpApi", False, "no SERPAPI_KEY")
-    try:
-        from deep_validate import ddg
-        n = len(ddg("Wix") or [])
-        add("DuckDuckGo HTML (free search rung)", n > 0,
-            f"{n} results" if n else "0 results — blocked from this machine (works on runners)")
-    except Exception as e:  # noqa: BLE001
-        add("DuckDuckGo HTML (free search rung)", False, str(e)[:60])
     if bd:
         try:
             from deep_validate import google_via_unlocker

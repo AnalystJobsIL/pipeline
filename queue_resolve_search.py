@@ -450,27 +450,21 @@ def search_one(name):
     Playwright has run in the same process, which turns every later name into a false
     `no-search-results`. Returns {"urls": [...], "picked": url, "why": str}.
     """
-    from deep_validate import ddg, google_via_unlocker
+    from deep_validate import google_via_unlocker
 
-    # THE FREE RUNG FIRST (2026-09-11). This drain is 12% of the month's credits and was the
-    # only caller with no free rung at all -- every other search tool has tried DuckDuckGo
-    # before paying since long before this. It answers or it does not; a blocked DDG returns
-    # [] for the rest of the run and the paid rung below is exactly what it always was.
-    # Fewer than two distinct hosts is not an answer: the model needs candidates to order.
+    # A FREE DuckDuckGo rung stood here from 2026-09-11 to 2026-09-13 and was deleted on its
+    # measurement: 0 answers for the 156 names this drain searched on 09-11 and 09-12, because
+    # DuckDuckGo answered the first query of every shard with HTTP 202
+    # (docs/decisions/2026-09-13-search-rung-deleted.md). The paid rung below is what the
+    # drain was actually running on every one of those nights.
     urls = []
-    try:
-        free = ddg(name) or []
-        if len(free) >= 2:
-            urls = free           # ...and fall through to the model's ordering, unchanged
-    except Exception:                                             # noqa: BLE001
-        pass
     # `google_via_unlocker` builds its own query — `f"{name} careers"` — so the argument is
     # the COMPANY NAME, not a query. Passing "X careers" searched for "X careers careers"
     # and quietly cost candidates. It also carries a PER-PROCESS cap (`DEEP_BD_SEARCH_CAP`,
     # default 150) and returns [] when it is reached: a shard of ~137 names doing up to two
     # searches each hits it around name 75, and every name after that was recorded as
     # `no-search-results` — a claim about the company made by our own budget running out.
-    for attempt in range(3 if not urls else 0):
+    for attempt in range(3):
         # A SECOND QUERY when the first comes back empty. `Youappi` was refused
         # `no-search-results` while its Comeet board and its Greenhouse board were both one
         # search away -- an empty result from the unlocker is a transport outcome, not an
