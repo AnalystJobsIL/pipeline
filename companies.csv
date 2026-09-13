@@ -2378,3 +2378,6 @@ Sgtech Co Il,scrape,,https://sgtech.co.il/career,false,queue-hunt 2026-09-13: ca
 Shagrir Systems,scrape,,https://www.shagrir.co.il/jobs,false,queue-hunt 2026-09-13: careers page documented; monitored candidate | deep-validated 2026-09-13: no ATS detected (rendered)
 Shamir Optical Ind,scrape,,https://shamir.com/careers,false,queue-hunt 2026-09-13: careers page documented; monitored candidate | deep-validated 2026-09-13: no ATS detected (rendered)
 HiO,scrape,,https://www.hio.ai/careers,false,queue-hunt 2026-09-13: careers page documented; monitored candidate | deep-validated 2026-09-13: no ATS detected (rendered)
+WEBLET,scrape,https://www.weblet.ai/weblet-careers/,https://www.weblet.ai/weblet-careers/,true,auto-expand scrape; 1 IL
+Shipin,scrape,https://www.shipin.ai/,https://www.shipin.ai/,false,scanned; no open Israel roles now | own-site 2026-09-13: www.shipin.ai linkback
+Simploud,scrape,https://simploud.com/careers/,https://simploud.com/careers/,true,auto-expand scrape; 2 IL

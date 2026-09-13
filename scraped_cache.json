@@ -31367,6 +31367,32 @@
    "url": "https://www.silicom-usa.com/jobs/sales-director/"
   }
  ],
+ "Simploud": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Simploud",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://simploud.com/careers/sales-development-representative/",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Sales Development Representative",
+   "url": "https://simploud.com/careers/sales-development-representative/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Simploud",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://simploud.com/careers/customer-success-engineer/",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Customer Success Engineer",
+   "url": "https://simploud.com/careers/customer-success-engineer/"
+  }
+ ],
  "Simply (JoyTunes)": [
   {
    "_loc_src": "own",
@@ -35166,6 +35192,21 @@
    "posted_date": "",
    "title": "Product Group Lead",
    "url": "https://www.comeet.com/jobs/voyantis/86.00B/product-group-lead/A5.F6E"
+  }
+ ],
+ "WEBLET": [
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "WEBLET",
+   "country_code": "",
+   "description": "WEBLET היא חברת טכנולוגיה מובילה המפתחת פתרונות SaaS מתקדמים לניהול ואופטימיזציה של פעילות שטח, לוגיסטיקה, הפצה ושירות בארגונים גדולים. אנו משלבים טכנולוגיות Web, מובייל ויכולות AI בסביבה מקצועית, חדשנית ודינמית. \nניסיון קודם ב־ QA או בבדיקות תוכנה. היכרות עם סמארטפונים, טאבלטים ואפליקציות Web / Mobile\n\n\n\n. ידע טכנולוגי טוב ויכולת הבנה של מערכות תוכנה מורכבות\n. יכולת כתיבת תרחישי בדיקה, ביצוע בדיקות ידניות ותיעוד באגים\n. יכולת עבודה מול צוותי פיתוח, יישום ותמיכה. דיוק, סדר ויכולת עבודה שיטתית לפי תהליכים\n. תודעת שירות ויכולת תקשורת ברורה בעברית. יכולת לעבוד ממשרדי החברה במגדל BSR 4 בבני ברק, בסמוך לקו האדום של הרכבת הקלה. **אפשרויות קידום והתפתחות מקצועית למתאימים** היכרות עם מערכות ERP, לוגיסטיקה, הפצה או שירות שטח. ידע ב־SQL. ניסיון בעבודה עם כלי ניהול באגים או משימות",
+   "job_id": "7ad7c6e967a56c06",
+   "location": "Bnei Brak",
+   "posted_date": "2026-07-19",
+   "title": "בודק.ת תוכנה QA",
+   "url": "https://www.weblet.ai/weblet-careers/"
   }
  ],
  "WSC Sports": [
