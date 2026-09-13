@@ -881,6 +881,80 @@ def fetch_successfactors(row):
 fetch_successfactors.israel_scoped = False
 
 
+_TT_ITEM = _re.compile(r"<item>(.*?)</item>", _re.S)
+_TT_LOCATION = _re.compile(r"<tt:location>(.*?)</tt:location>", _re.S)
+
+
+def _tt_field(block, tag):
+    m = _re.search(r"<%s>(.*?)</%s>" % (tag, tag), block, _re.S)
+    return _html.unescape(m.group(1)).strip() if m else ""
+
+
+def _teamtailor_feed(api_url):
+    """The board's RSS address, `<scheme>://<host>/jobs.rss`, whatever page of the board the
+    row names (`/`, `/jobs`, a posting). A custom domain (`careers.netafim.com`) serves the
+    same feed as the `<tenant>.teamtailor.com` host it fronts."""
+    u = (api_url or "").strip()
+    parts = urlsplit(u)
+    if parts.path.endswith(".rss"):
+        return u
+    return f"{parts.scheme or 'https'}://{parts.netloc}/jobs.rss"
+
+
+def fetch_teamtailor(row):
+    """Teamtailor career sites (Netafim/Orbia, Moburst, ...): the board's own RSS feed,
+
+        GET https://<board host>/jobs.rss
+
+    one `<item>` per open posting carrying title, link, `pubDate`, the full description and a
+    `tt:locations` block with a name, city and country per location. `api_url` is any address
+    on the board. Measured 2026-09-13: the feed lists every posting the paginated HTML does
+    (Netafim 56 of 56, Moburst 10 of 10) in one GET, and `careers.netafim.com/jobs.rss` is
+    the same 56 as the tenant host.
+
+    **Not `israel_scoped`**: the feed is the whole board (Netafim: 24 Israel postings of 56,
+    beside Mexico, India and Brazil), so an empty feed is an empty board. `country_code` is
+    stamped `IL` only when a location names Israel and left `""` otherwise, for the reason
+    `_sf_country` gives: a code is authoritative in both directions, so a foreign token would
+    let this fetcher delete a posting whose second location is Israeli.
+    """
+    import email.utils as _eu
+    feed = http.get_text(_teamtailor_feed(row["api_url"]))
+    out, seen = [], set()
+    for block in _TT_ITEM.findall(feed or ""):
+        link = _tt_field(block, "link")
+        m = _re.search(r"/jobs/(\d+)", link)
+        jid = m.group(1) if m else _tt_field(block, "guid")
+        title = _clean(_tt_field(block, "title"))
+        if not jid or not title or jid in seen:
+            continue
+        seen.add(jid)
+        places = _TT_LOCATION.findall(block)
+        names = [_tt_field(b, "tt:name") or ", ".join(
+            x for x in (_tt_field(b, "tt:city"), _tt_field(b, "tt:country")) if x) for b in places]
+        try:
+            posted = _eu.parsedate_to_datetime(_tt_field(block, "pubDate")).date().isoformat()
+        except (TypeError, ValueError, IndexError):
+            posted = ""
+        out.append({
+            "company": row["company_name"],
+            "title": title,
+            "location": _clean("; ".join(n for n in names if n)),
+            "country_code": ("IL" if any(_tt_field(b, "tt:country").lower() == "israel"
+                                         for b in places) else ""),
+            "url": link,
+            "posted_date": posted,
+            "ats_platform": "teamtailor",
+            "job_id": jid,
+            "description": _snippet(_tt_field(block, "description")),
+        })
+    return out
+
+
+# The feed is the whole board: an empty one is evidence, not "no Israel roles today".
+fetch_teamtailor.israel_scoped = False
+
+
 _JV_ROW = _re.compile(
     r'<a[^>]+href="(/[^"/]+/job/[^"]+)"[^>]*>.*?'
     r'class="[^"]*jv-job-list-name[^"]*"[^>]*>\s*(.*?)\s*</div>'
@@ -1269,6 +1343,7 @@ FETCHERS = {
     "eightfold": fetch_eightfold,
     "microsoft": fetch_eightfold,   # Microsoft's site IS Eightfold; the name is the store key
     "phenom": fetch_phenom,
+    "teamtailor": fetch_teamtailor,
     "scrape": fetch_scrape,         # pseudo-platform: reads scraped_cache.json
     "discovery": fetch_discovery,   # pseudo-platform: reads discovered_cache.json
 }

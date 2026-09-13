@@ -35,7 +35,7 @@ every lane imports and no lane owns — changing it is a report-it-loudly event.
   └────────────────────────────────────── run check_invariants.py, or registry_health.py --census, for today's counts ──┘
                    │
   ┌ 3 FETCH ──────────────────────────── lanes: ats-fetch (API) · scraper (page) ┐
-  │  pipeline/fetchers.py  17 platforms with a native API  live, every digest    │
+  │  pipeline/fetchers.py  18 platforms with a native API  live, every digest    │
   │  scrape_universal.py   5 escalating strategies, + 1 discovery row            │
   │  refresh_scrape_cache.py 00:00                          ──▶ scraped_cache.json
   └── the API/page split moves daily: registry_health.py --census prints it ─────┘
@@ -505,7 +505,7 @@ including the claim "none".
    companies with no readable board — and the intake that feeds NEW companies into
    resolution (below).
 
-Full `FETCHERS` map — **19 keys, 17 platforms** (this line said 16 keys until 2026-08-24, 17 / 15 until the evening of 2026-08-26
+Full `FETCHERS` map — **20 keys, 18 platforms** (this line said 19 / 17 until 2026-09-13, when `teamtailor` was added; 16 keys until 2026-08-24, 17 / 15 until the evening of 2026-08-26
 and 18 / 16 until 2026-08-26, when `jazzhr` — no public JSON, a fetcher that returned `[]`
 by design — was retired with its last row converted to `scrape`, and `applytojob.com` left
 `health.ATS_HOST` with it so that row is not flagged as a misconfiguration;
@@ -524,8 +524,16 @@ at all, and the fragment their own pagination calls answers in one GET. `John De
 (the `/`<slug>`/search` list; Varonis 0 → 3),
 **eightfold** (the `/api/pcsx/search` endpoint; `microsoft` is the same fetcher
 under the name its rows have always carried, because the store keys roles on
-`{ats_platform}:{job_id}`), **phenom** (`POST /widgets`), plus the pseudo-platforms `scrape`
-and `discovery`. Five fetchers ask the board for Israel itself and carry
+`{ats_platform}:{job_id}`), **phenom** (`POST /widgets`), **teamtailor** (the board's own
+`/jobs.rss`, added 2026-09-13: one GET carries every posting the paginated HTML lists —
+Netafim 56 of 56 — with its full description and a `tt:country` per location, so
+`fetch_teamtailor` stamps `IL` the `_sf_country` way and is not `israel_scoped`; Netafim went
+0 → 24 Israel postings), plus the pseudo-platforms `scrape` and `discovery`. **A Workday row
+may carry the public careers-site URL** since the same day: `fetchers.workday_cxs_url` derives
+`/wday/cxs/<tenant>/<site>/jobs` from `https://<tenant>.wdN.myworkdayjobs.com[/xx-XX]/<site>`,
+where `fetch_workday` used to POST the public URL verbatim at an HTML page (the registry still
+stores the `cxs` form; the resolvers that cannot yet read the public form are `registry`'s,
+`docs/BACKLOG.md` 604). Five fetchers ask the board for Israel itself and carry
 `israel_scoped = True` — workday, eightfold/microsoft, phenom, custom_json — which §5a
 explains. **A fetcher's job includes the country field, and an empty one is not free:**
 `israel.is_israel_job` reads `country_code` first and trusts a NON-Israeli one as a negative,

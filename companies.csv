@@ -327,7 +327,7 @@ Hypernative,scrape,https://www.hypernative.io/careers,https://www.hypernative.io
 Earnix,scrape,https://earnix.com/careers/,https://earnix.com/careers/,true,universal-scrape; 5 Israel jobs
 Okoora,comeet,85.00C,https://www.comeet.com/careers-api/2.0/company/85.00C/positions?token=58C1BBC2C60B1826D410A410A4163058C26D4,true,universal-scrape; 16 Israel jobs | self-heal 2026-08-24: re-resolved to comeet
 IDE Technologies,scrape,https://www.ide-tech.com/en/careers/,https://www.ide-tech.com/en/careers/,true,universal-scrape; 2 Israel jobs
-Netafim,scrape,https://orbia-orbia-precision-agriculture-netafim.teamtailor.com,https://orbia-orbia-precision-agriculture-netafim.teamtailor.com,true,universal-scrape; 3 Israel jobs
+Netafim,teamtailor,orbia-orbia-precision-agriculture-netafim,https://careers.netafim.com/jobs.rss,true,universal-scrape; 3 Israel jobs | self-heal 2026-09-13: re-resolved to teamtailor | platform-fix 2026-09-13: teamtailor rss; 56/24 IL
 ForSight Robotics,scrape,https://www.forsightrobotics.com/careers/,https://www.forsightrobotics.com/careers/,true,universal-scrape; 6 Israel jobs
 Radwin,scrape,https://www.radwin.com/careers/,https://www.radwin.com/careers/,true,universal-scrape; 1 Israel jobs
 Tomorrow.io,scrape,https://www.tomorrow.io/careers/,https://www.tomorrow.io/careers/,true,universal-scrape; 2 Israel jobs

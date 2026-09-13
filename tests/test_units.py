@@ -9265,8 +9265,9 @@ def test_jazzhr_is_retired_and_a_scrape_row_on_applytojob_is_not_a_misconfig():
         platform_check.check()
     grid = {l.split()[0] for l in buf.getvalue().splitlines() if l}
     assert "jazzhr" not in grid and "greenhouse" in grid
-    # 15 until the evening of 2026-08-26, when `successfactors` and `jobvite` were added
-    assert "17 platforms" in buf.getvalue()
+    # 15 until the evening of 2026-08-26, when `successfactors` and `jobvite` were added;
+    # 17 until 2026-09-13, when `teamtailor` was
+    assert "18 platforms" in buf.getvalue()
 
 
 def test_scrape_cache_in_points_the_digest_at_a_scratch_cache(tmp_path, monkeypatch):
@@ -31845,7 +31846,8 @@ def test_no_scoped_or_pseudo_platform_is_ever_judged_on_freshness():
     scoped = sorted(k for k, f in fetchers.FETCHERS.items() if getattr(f, "israel_scoped", False))
     unscoped = sorted(k for k, f in fetchers.FETCHERS.items()
                       if k not in ("scrape", "discovery") and not getattr(f, "israel_scoped", False))
-    assert len(unscoped) == 12 and "smartrecruiters" in unscoped and "workday" in scoped
+    # 13 since 2026-09-13: `teamtailor` dates every posting from its feed, so it is judged
+    assert len(unscoped) == 13 and "smartrecruiters" in unscoped and "workday" in scoped
     ancient = [_abnd_job(4000)]
     for plat in scoped + ["scrape", "discovery"]:
         assert health.abandoned(plat, "https://x.example/board", ancient, today=_ABND_TODAY) is None, plat
@@ -32306,3 +32308,52 @@ def test_a_workday_public_careers_url_is_read_through_its_cxs_endpoint(monkeypat
     assert posted == [cxs], posted
     assert [j["url"] for j in jobs] == [
         "https://arrow.wd1.myworkdayjobs.com/AC/job/Kfar-Saba-Israel/QC_R243877"]
+
+
+_TT_RSS_0913 = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:tt="https://teamtailor.com/locations"><channel><title>Orbia</title>
+<item><title>Executive Administrative Assistant</title>
+<description>&lt;p&gt;Support the &lt;strong&gt;HQ&lt;/strong&gt; team.&lt;/p&gt;</description>
+<pubDate>Mon, 07 Sep 2026 02:22:30 -0400</pubDate>
+<link>https://careers.netafim.com/jobs/8326939-executive-administrative-assistant</link>
+<guid>c4abca13</guid>
+<tt:locations><tt:location><tt:name>Givatayim, Israel</tt:name><tt:city>Givatayim</tt:city>
+<tt:country>Israel</tt:country></tt:location></tt:locations></item>
+<item><title>Analista de Calidad</title><description>x</description>
+<pubDate>Tue, 01 Sep 2026 10:00:00 -0600</pubDate>
+<link>https://careers.netafim.com/jobs/8300001-analista-de-calidad</link><guid>g2</guid>
+<tt:locations><tt:location><tt:name>Irapuato, Mexico</tt:name><tt:city>Irapuato</tt:city>
+<tt:country>Mexico</tt:country></tt:location></tt:locations></item>
+<item><title>Regional Agronomist</title><description>y</description>
+<pubDate>Wed, 02 Sep 2026 09:00:00 +0300</pubDate>
+<link>https://careers.netafim.com/jobs/8300002-regional-agronomist</link><guid>g3</guid>
+<tt:locations><tt:location><tt:name>Fresno, United States</tt:name>
+<tt:country>United States</tt:country></tt:location><tt:location><tt:name>Hatserim, Israel</tt:name>
+<tt:country>Israel</tt:country></tt:location></tt:locations></item>
+</channel></rss>"""
+
+
+def test_a_teamtailor_board_is_read_from_its_own_rss_feed(monkeypatch):
+    """Netafim's row was a scrape row on its Teamtailor tenant host, empty 18 nights, while
+    `careers.netafim.com/jobs.rss` carried 56 postings, 24 of them in Israel, each with its
+    full description. The feed is the whole board, so the fetcher is not `israel_scoped` and
+    stamps `IL` only when a location says Israel — a foreign code would let it delete the
+    agronomist whose SECOND location is Hatserim."""
+    from pipeline import fetchers, health, israel
+    asked = []
+    monkeypatch.setattr(fetchers.http, "get_text", lambda u, **k: (asked.append(u), _TT_RSS_0913)[1])
+    row = {"company_name": "Netafim", "ats_platform": "teamtailor", "token": "",
+           "api_url": "https://careers.netafim.com/jobs"}
+    jobs = fetchers.fetch_company(row)
+    assert asked == ["https://careers.netafim.com/jobs.rss"], asked
+    assert [j["job_id"] for j in jobs] == ["8326939", "8300001", "8300002"]
+    assert [j["country_code"] for j in jobs] == ["IL", "", "IL"]
+    assert jobs[0]["posted_date"] == "2026-09-07" and jobs[0]["location"] == "Givatayim, Israel"
+    assert jobs[2]["location"] == "Fresno, United States; Hatserim, Israel"
+    assert "Support the HQ team." in jobs[0]["description"] and "<" not in jobs[0]["description"]
+    assert [j["job_id"] for j in jobs if israel.is_israel_job(j)] == ["8326939", "8300002"]
+    assert fetchers.fetch_teamtailor.israel_scoped is False
+    assert health.stale_reason("teamtailor", "", 0, "empty", 0) == "empty-board"
+    asked.clear()
+    fetchers.fetch_teamtailor(dict(row, api_url="https://orbia-x.teamtailor.com"))
+    assert asked == ["https://orbia-x.teamtailor.com/jobs.rss"]

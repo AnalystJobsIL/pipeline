@@ -21,7 +21,7 @@ The editable company list. Columns:
   `python -c "from pipeline.fetchers import FETCHERS; print(sorted(FETCHERS))"`):
   `ashby`, `bamboohr`, `breezy`, `comeet`, `custom_json`, `eightfold`, `greenhouse`,
   `jobvite`, `lever`, `microsoft`, `oraclehcm`, `phenom`, `recruitee`, `smartrecruiters`,
-  `successfactors`, `workable`, `workday` — plus the two pseudo-platforms `scrape` (no public
+  `successfactors`, `teamtailor`, `workable`, `workday` — plus the two pseudo-platforms `scrape` (no public
   API; read from the rendered careers page) and `discovery` (the synthetic row that reads the
   LinkedIn/Indeed/Telegram cache). **`jazzhr` was retired on 2026-08-26** and this list carried
   it until 2026-08-27; `eightfold`, `phenom`, `successfactors` and `jobvite` were missing from
@@ -67,6 +67,9 @@ To add a company:
 - SuccessFactors: no JSON at all — the `/tile-search-results/` HTML fragment is parsed (2 rows)
 - Jobvite: `https://jobs.jobvite.com/{token}/search` (1 row)
 - Phenom: `https://{careers-host}/widgets` (1 row)
+- Teamtailor: `https://{board-host}/jobs.rss` — the tenant host (`{tenant}.teamtailor.com`) or
+  the custom domain in front of it (`careers.netafim.com`); any address on the board works,
+  the fetcher reads the feed at its host (added 2026-09-13)
 - Workday: `https://{tenant}.wd{N}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs` — **POST**
   only (a plain GET 400s), body like `{"searchText":"Israel","limit":20,"offset":0}`. `{tenant}`,
   `{N}` (wd1/wd3/wd5/wd12...), and `{site}` all vary per company and must be discovered from the
