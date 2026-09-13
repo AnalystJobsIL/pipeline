@@ -8226,9 +8226,14 @@ def test_outcome_commits_the_notice_alone_from_a_fresh_worktree(tmp_path, monkey
     """The notice commit starts from origin/master in its own worktree: a dirty, half-merged
     or corrupt registry in the runner's checkout can never ride along."""
     import persist_state as P
+    from pipeline import stages
     origin, a, b = _repo_pair(tmp_path, {"digests/latest.md": "# yesterday\n", "companies.csv": "good\n"})
     (b / "companies.csv").write_text("corrupt, not staged\n", encoding="utf-8")
     monkeypatch.setattr(P, "ROOT", str(b))
+    # the notice's stage line reads `stages.PATH`, which resolves from pipeline/ and not from
+    # P.ROOT -- so it read the LIVE cloud_state/pipeline_stages.json on every runner, found by
+    # the live-state lock on its first CI run (2026-09-13; this test is skipped in a worktree)
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "pipeline_stages.json"))
     monkeypatch.setenv("STEPS_JSON", json.dumps({"pipeline": {"outcome": "failure"}}))
     monkeypatch.setenv("JOB_STATUS", "failure")
     monkeypatch.setenv("RUN_URL", "https://x/runs/2")
