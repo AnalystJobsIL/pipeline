@@ -32269,3 +32269,40 @@ def test_the_stale_board_census_reads_the_refusal_instead_of_being_blinded_by_it
     line = capsys.readouterr().out.splitlines()[0]
     assert "ABANDONED (newest >= 365d) 2" in line and "SPARED by a live hosted board 1" in line \
         and "REFUSED 1" in line, line
+
+
+# --------------------------------------------------------------------------- #
+# ats-fetch 2026-09-13: the `regressed to zero` class — boards the page names and no
+# fetcher could read (a Workday PUBLIC site; a Teamtailor board)
+# --------------------------------------------------------------------------- #
+def test_a_workday_public_careers_url_is_read_through_its_cxs_endpoint(monkeypatch):
+    """Arrow Components sat 12 nights as an empty scrape row while its careers page linked
+    `arrow.wd1.myworkdayjobs.com/en-US/AC/` and that site's `cxs` endpoint served five Israel
+    postings. `fetch_workday` POSTed whatever `api_url` held, so a public site URL sent the
+    search to an HTML page with `site == ""`. The endpoint is derived from the three facts the
+    public URL carries; a posting URL and a `?locations=` query name the same board."""
+    from pipeline import fetchers
+    cxs = "https://arrow.wd1.myworkdayjobs.com/wday/cxs/arrow/AC/jobs"
+    for public in ("https://arrow.wd1.myworkdayjobs.com/en-US/AC/",
+                   "https://arrow.wd1.myworkdayjobs.com/AC",
+                   "https://arrow.wd1.myworkdayjobs.com/en-US/AC/job/Kfar-Saba/QC_R243877",
+                   "https://arrow.wd1.myworkdayjobs.com/AC?locations=Israel"):
+        assert fetchers.workday_cxs_url(public) == cxs, public
+    assert fetchers.workday_cxs_url(cxs) == cxs, "an endpoint is returned unchanged"
+    assert fetchers.workday_cxs_url("https://arrow.wd1.myworkdayjobs.com/") is None
+    assert fetchers.workday_cxs_url("https://careers.arrow.com/us/en") is None
+
+    posted = []
+
+    def fake_post(url, body, **kw):
+        posted.append(url)
+        return {"total": 1, "jobPostings": [{
+            "title": "QC", "locationsText": "Kfar Saba, Israel", "postedOn": "Posted 30+ Days Ago",
+            "externalPath": "/job/Kfar-Saba-Israel/QC_R243877", "bulletFields": ["R243877"]}]}
+    monkeypatch.setattr(fetchers.http, "post_json", fake_post)
+    jobs = fetchers.fetch_workday({"company_name": "Arrow Components", "ats_platform": "workday",
+                                   "token": "arrow/AC",
+                                   "api_url": "https://arrow.wd1.myworkdayjobs.com/en-US/AC/"})
+    assert posted == [cxs], posted
+    assert [j["url"] for j in jobs] == [
+        "https://arrow.wd1.myworkdayjobs.com/AC/job/Kfar-Saba-Israel/QC_R243877"]

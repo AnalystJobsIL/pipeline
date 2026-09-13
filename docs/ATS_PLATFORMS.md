@@ -70,7 +70,9 @@ To add a company:
 - Workday: `https://{tenant}.wd{N}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs` — **POST**
   only (a plain GET 400s), body like `{"searchText":"Israel","limit":20,"offset":0}`. `{tenant}`,
   `{N}` (wd1/wd3/wd5/wd12...), and `{site}` all vary per company and must be discovered from the
-  live careers page's network requests.
+  live careers page's network requests — or read off the public site the careers page links
+  (`https://{tenant}.wd{N}.myworkdayjobs.com/en-US/{site}`), which `fetchers.workday_cxs_url`
+  turns into this endpoint; `fetch_workday` accepts either form since 2026-09-13.
 - Custom JSON (e.g. Amazon): one-off per company, discovered via the careers page's own network
   requests. No shared pattern — verify and document each individually in `notes`.
 

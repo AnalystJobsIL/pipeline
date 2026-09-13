@@ -453,8 +453,42 @@ def _wd_date(raw):
     return t[:10] if (len(t) >= 10 and t[4:5] == "-") else ""
 
 
+_WD_PUBLIC = _re.compile(
+    r"^https?://(?P<host>(?P<tenant>[a-z0-9-]+)\.wd\d+\.myworkdayjobs\.com)"
+    r"/(?:[a-z]{2}-[A-Z]{2}/)?(?P<site>[A-Za-z0-9_-]+)(?:[/?#]|$)")
+
+
+def workday_cxs_url(url):
+    """The `wday/cxs` search endpoint behind a Workday careers URL, or None.
+
+    A company's careers page links the PUBLIC site — `https://arrow.wd1.myworkdayjobs.com/
+    en-US/AC/`, `https://bitsight.wd1.myworkdayjobs.com/Bitsight`, a posting under it, or the
+    site with a `?locations=` query — while the only thing that answers JSON is
+    `https://<tenant>.wdN.myworkdayjobs.com/wday/cxs/<tenant>/<site>/jobs`. The two carry the
+    same three facts (host, tenant = the host's first label, site = the first path segment
+    after an optional `xx-XX` language), so the endpoint is derived, not searched for.
+
+    Until 2026-09-13 `fetch_workday` POSTed a public URL verbatim: `site` came out `""` and
+    the request went to an HTML page. A careers page that plainly embeds a Workday board
+    read as an empty scrape row for it (Arrow Components: 12 nights at `why: empty` while
+    `arrow/AC` served five Israel postings). An address already in `cxs` form is returned
+    unchanged; one with no site segment returns None, because it names no board.
+    """
+    u = (url or "").strip()
+    if "/wday/cxs/" in u:
+        return u
+    m = _WD_PUBLIC.match(u)
+    if not m or m.group("site").lower() in ("wday", "job", "jobs"):
+        return None
+    return (f"https://{m.group('host')}/wday/cxs/{m.group('tenant')}/"
+            f"{m.group('site')}/jobs")
+
+
 def fetch_workday(row):
     """Workday: POST search with searchText=Israel to narrow to Israel-relevant jobs.
+
+    `api_url` is the `wday/cxs/.../jobs` endpoint; a public careers-site URL is read through
+    the endpoint `workday_cxs_url` derives from it.
 
     Global board — even with searchText=Israel a few text-matches from other countries
     can slip in; the downstream Israel filter (via the externalPath in `url`) drops them.
@@ -466,7 +500,7 @@ def fetch_workday(row):
     all (Dell Technologies that day) — is told apart by one unscoped probe
     (`_whole_board_or_raise`) and raised as `BoardEmpty`.
     """
-    api = row["api_url"]
+    api = workday_cxs_url(row["api_url"]) or row["api_url"]
     host = urlsplit(api).netloc
     # api path: /wday/cxs/{tenant}/{site}/jobs  ->  public URL base: https://{host}/{site}
     parts = urlsplit(api).path.strip("/").split("/")
