@@ -287,3 +287,4 @@
 {"at":"2026-09-13T11:17:46Z","cap":250,"capped":false,"ci":true,"credits":52,"pid":3678,"purpose":{"jd-fill":52},"tool":"run.py"}
 {"at":"2026-09-13T13:12:04Z","cap":5,"capped":false,"ci":false,"credits":1,"pid":20464,"purpose":{"unlock":1},"tool":"-"}
 {"at":"2026-09-13T13:12:21Z","cap":5,"capped":false,"ci":false,"credits":1,"pid":21476,"purpose":{"unlock":1},"tool":"-"}
+{"at":"2026-09-13T16:54:53Z","cap":null,"capped":false,"ci":true,"credits":16,"pid":2532,"purpose":{"jd-fill":16},"tool":"enrich_scrape_jd.py"}
