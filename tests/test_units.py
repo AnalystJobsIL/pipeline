@@ -26357,7 +26357,8 @@ def test_backfill_verdicts_skips_what_is_judged_and_names_the_rest(tmp_path, mon
     calls = _fake_seam(monkeypatch, lambda p: _ok("NO"))
     recs = _ledger(4)
     ids = sorted(recs)
-    recs[ids[0]]["class"] = {"decision": "accept", "path": "llm", "reason": "judged already"}
+    recs[ids[0]]["class"] = {"decision": "accept", "path": "llm", "reason": "judged already",
+                             "contract": "v3.0f84ab84"}
     recs[ids[1]]["status"] = "superseded"
     for rid in ids:
         recs[rid]["description"] = _TEXT
@@ -27198,7 +27199,7 @@ def test_the_backfill_queue_is_only_what_the_dataset_publishes(tmp_path):
     # for truthiness alone made it look judged for ever while shipping an empty cell
     recs[ids[0]]["class"] = {"path": "llm"}
     assert ids[0] in [r for r, _ in class_backfill.candidates(recs)]
-    recs[ids[0]]["class"] = {"decision": "accept", "path": "llm"}
+    recs[ids[0]]["class"] = {"decision": "accept", "path": "llm", "contract": "v3.0f84ab84"}
     assert ids[0] not in [r for r, _ in class_backfill.candidates(recs)]
 
 
@@ -33037,3 +33038,229 @@ def test_a_paid_call_carries_the_unlockers_own_timeout():
     jdfill._bd_call(lambda url, **kw: (plain.append(kw), (200, "", ""))[1], "https://x/2")
     assert plain == [{}]
     assert jdfill.Unlocker(cap=1).timeout_s == 30.0
+# --- 566: the posting's own text places it outside Israel (classifier, 2026-09-13) ---
+
+_DIAGEO = {"company": "Diageo", "title": "Data Analyst", "location": "מחוז המרכז",
+           "url": "https://il.indeed.com/viewjob?jk=8018875cc3df2f8b",
+           "description": "Job Description :\nRole: Performance Analytics Analyst\nLevel: 6\n"
+                          "Location: 3 WTC (New York)\nAbout Diageo: the U.S. Spirits and "
+                          "Beer marketplace needs dashboards, SQL and insight. " * 3}
+
+
+def test_a_foreign_city_glued_to_the_title_is_not_an_israeli_posting():
+    """Wiliot's widget copied `Israel` onto eight cards and glued each office to the title;
+    `Data Solutions AnalystSan Mateo` passed the gate and reached the classifier's residue."""
+    job = {"company": "Wiliot", "title": "Data Solutions AnalystSan Mateo", "location": "Israel",
+           "url": "https://www.wiliot.com/positions/position-65_a6c"}
+    assert israel.stated_foreign_place(job) == "title:San Mateo"
+    assert israel.is_israel_job(job) is False
+    assert israel.is_israel_job(dict(job, title="Senior Backend EngineerPortugal")) is False
+    assert israel.is_israel_job(dict(job, title="Compliance Officer - San Francisco")) is False
+    assert israel.is_israel_job(dict(job, title="ADAS Feature EngineerLeonberg, Germany")) is False
+    # ...and an Israeli country code still decides first: 548 is a different question
+    assert israel.is_israel_job(dict(job, country_code="IL")) is True
+
+
+def test_an_aggregator_stamp_loses_to_the_postings_own_location_line():
+    """Diageo was published for days: `il.indeed.com` stamped `מחוז המרכז` over a JD whose
+    third line reads `Location: 3 WTC (New York)`."""
+    assert israel.stated_foreign_place(_DIAGEO) == "description:New York"
+    assert israel.is_israel_job(_DIAGEO) is False
+
+
+def test_a_company_boards_israeli_city_outranks_a_foreign_location_line_in_its_text():
+    """Gamida Cell's own board says Kiryat Gat; its stored text carries `Location: US - Remote`
+    from a sibling posting's bleed (552). The board's word is the second signal and wins."""
+    job = {"company": "Gamida Cell", "title": "Senior Business Analyst",
+           "location": "On Site - Kiryat Gat", "url": "https://gamida-cell.com/careers/x",
+           "description": "Commercial analytics.\nLocation: US – Remote\nSQL, dashboards."}
+    assert israel.stated_foreign_place(job) is None
+    assert israel.is_israel_job(job) is True
+
+
+def test_a_tel_aviv_posting_naming_its_new_york_office_does_not_move():
+    """The one-sided rule: any Israeli place anywhere on the posting silences both arms."""
+    job = {"company": "Acme", "title": "Data Analyst", "location": "Israel", "url": "",
+           "description": "Location: New York HQ, and this role sits in our Tel Aviv office."}
+    assert israel.stated_foreign_place(job) is None and israel.is_israel_job(job) is True
+    job = {"company": "Acme", "title": "Data Analyst - New York", "location": "Israel",
+           "description": "Join the Herzliya analytics team."}
+    assert israel.stated_foreign_place(job) is None and israel.is_israel_job(job) is True
+
+
+@pytest.mark.parametrize("title", ["Senior KYC Analyst, Onboarding operations, EMEA",
+                                   "Sales account manager – europe",
+                                   "Account Executive - Germany",
+                                   "Strada Pay Implementation Consultant - Turkey"])
+def test_a_territory_in_the_title_is_not_an_office(title):
+    """9 of 9 region/country suffixes a broader draft flipped were territories of Israeli
+    roles; only a CITY after a separator, or a place glued to the title, is an office."""
+    job = {"company": "Airwallex", "title": title, "location": "Tel Aviv-Yafo, Israel"}
+    assert israel.stated_foreign_place(job) is None and israel.is_israel_job(job) is True
+
+
+def test_a_location_label_needs_a_label_and_a_place_on_its_own_line():
+    """`us` is a pronoun, `location-based` is not a label, and an empty label must not borrow
+    the next line's words."""
+    for d in ("Location: work with us in a great team",
+              "A location-based services company in London",
+              "Location:\nVISA Sponsorship: London office supports it"):
+        assert israel.stated_foreign_place({"title": "Analyst", "location": "",
+                                            "description": d}) is None, d
+    assert israel.stated_foreign_place({"title": "Analyst", "location": "",
+                                        "description": "Job Location: Austin, TX"}) \
+        == "description:Austin"
+
+
+def test_the_classifier_head_refuses_a_posting_whose_own_text_places_it_abroad():
+    """The gate sees the aggregator's 160-char snippet; the head sees the filled text. The
+    seam judged Diageo YES on scope and was right to: geography is not in `LLM_RULES`."""
+    clf = seniority.Classifier(use_llm=False, llm_cache={})
+    r = clf.classify(dict(_DIAGEO))
+    assert (r["decision"], r["path"]) == ("reject", "keyword")
+    assert "outside Israel (description:New York)" in r["reason"]
+    assert clf.geo_rejected == 1 and "geo: 1 refused" in clf.summary()
+    b = seniority.Classifier(use_llm=False, llm_cache={}).judge_backfill(dict(_DIAGEO))
+    assert (b["decision"], b["path"]) == ("reject", "keyword") and "outside Israel" in b["reason"]
+
+
+def test_another_postings_location_line_is_not_this_roles_evidence():
+    """A shared careers page is blanked before the head reads it, so its `Location:` line
+    cannot refuse a sibling role."""
+    clf = seniority.Classifier(use_llm=False, llm_cache={})
+    page = "Careers at Acme.\nLocation: London\n" + "We build analytics products. " * 20
+    first = clf.classify({"company": "Acme", "title": "Data Analyst", "location": "",
+                          "url": "https://acme.com/a", "description": page})
+    second = clf.classify({"company": "Acme", "title": "Product Analyst", "location": "",
+                           "url": "https://acme.com/b", "description": page})
+    assert "outside Israel" in first["reason"]
+    assert "outside Israel" not in second["reason"] and clf.shared_text == 1
+
+
+# --- the unknown-contract drain, the targeted re-judge, the unreachable reasons (classifier, 2026-09-13) ---
+
+def test_a_decision_no_contract_stands_behind_is_owed_a_verdict():
+    """`rows_unknown` read 30 of 170 on 2026-09-12, every one `closed`: stamped before the
+    verdict carried its contract, and the backfill -- the only thing that reaches a closed
+    record -- read "has a decision" as "judged". Nothing drained them."""
+    from pipeline import class_backfill, roles
+    assert roles.class_unjudged({}) and roles.class_unjudged({"class": {"path": "llm"}})
+    assert roles.class_unjudged({"class": {"decision": "accept", "path": "llm_cache"}})
+    assert not roles.class_unjudged({"class": {"decision": "accept", "contract": "v3.0f84ab84"}})
+    recs = _ledger(3)
+    ids = sorted(recs)
+    for rid in ids:
+        recs[rid]["status"] = "closed"
+    recs[ids[0]]["class"] = {"decision": "accept", "path": "llm", "contract": "v3.0f84ab84"}
+    recs[ids[1]]["class"] = {"decision": "accept", "path": "llm_cache"}        # unknown
+    assert [r for r, _ in class_backfill.candidates(recs)] == ids[1:]
+    # the CLI's apply step: an unknown cell takes a verdict that names its contract, never
+    # another unknown one; a contract-stamped cell is never touched
+    got = class_backfill.apply_to(recs, {
+        ids[0]: {"decision": "reject", "path": "llm", "contract": "v3.0f84ab84"},
+        ids[1]: {"decision": "reject", "path": "llm_cache", "contract": "v3.0f84ab84"},
+        ids[2]: {"decision": "accept", "path": "llm"}}, "2026-09-13")
+    assert sorted(got) == ids[1:]
+    assert recs[ids[0]]["class"]["decision"] == "accept"
+    assert recs[ids[1]]["class"] == {"decision": "reject", "path": "llm_cache",
+                                     "contract": "v3.0f84ab84"}
+    assert not class_backfill.apply_to(
+        {"x": {"class": {"decision": "accept", "path": "llm"}}},
+        {"x": {"decision": "reject", "path": "llm"}}, "2026-09-13"), "unknown for unknown"
+
+
+def test_record_run_refills_an_unknown_contract_cell_and_never_this_runs_own_verdict(tmp_path):
+    """The backfill map now replaces a cell no contract stands behind -- but a record the run
+    judged itself keeps the run's verdict, whatever that stamp carries."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-09-13")
+    recs = _ledger(4)
+    ids = sorted(recs)
+    for rid in ids:
+        recs[rid]["status"] = "closed"
+        recs[rid]["description"] = ""
+    recs[ids[1]]["class"] = {"decision": "accept", "path": "llm_cache"}             # unknown
+    recs[ids[2]]["class"] = {"decision": "accept", "path": "llm", "contract": "v3.aaaa"}
+    recs[ids[3]]["class"] = {"decision": "accept", "path": "llm_cache"}             # unknown
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid in ids:
+        st.insert_matched({**recs[rid], "mkey": rid})
+    live = {"decision": "accept", "path": "llm_cache", "reason": "this run, legacy row"}
+    job = dict(recs[ids[0]], _class=live)
+    new = {"decision": "reject", "path": "llm_cache", "reason": "r", "contract": "v3.bbbb"}
+    lines = lg.record_run("2026-09-13", board_jobs=[job], merged=[job], scanned_ok=set(),
+                          failed=set(), paths={}, scoped=True,
+                          class_backfill={ids[0]: new, ids[1]: new, ids[2]: new,
+                                          ids[3]: {"decision": "reject", "path": "llm"}})
+    st.close()
+    assert lg.records[ids[0]]["class"]["reason"] == "this run, legacy row", "live wins"
+    assert lg.records[ids[1]]["class"]["contract"] == "v3.bbbb"
+    assert lg.records[ids[2]]["class"]["contract"] == "v3.aaaa", "a stamped cell is the drain's"
+    assert "contract" not in lg.records[ids[3]]["class"], "unknown is not swapped for unknown"
+    assert any("class-backfilled 1" in ln for ln in lines)
+
+
+def test_rejudge_rows_finds_and_forgets_a_jobs_verdict_under_every_prefix(tmp_path, monkeypatch):
+    """Ballerine's NO was bought on 2026-09-02 over site chrome and served after jd-text
+    repaired the text, because the key carries no text hash (551). An invalidation must reach
+    every prefix `_versioned` would serve, and the legacy row, and nothing else."""
+    from pipeline import store
+    monkeypatch.syspath_prepend(os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "tools"))
+    import rejudge_rows
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    job = {"company": "Ballerine Ltd", "title": "AI Fraud Data Analyst (Senior)"}
+    mine = ["v3.0f84ab84|ballerine|ai fraud data analyst (senior)|jd",
+            "v3.da2cb878|ballerine|ai fraud data analyst (senior)|bare",
+            "v2|ballerine|ai fraud data analyst (senior)|jd",
+            "ballerine ltd|ai fraud data analyst (senior)"]
+    other = ["v3.0f84ab84|ballerine|ai fraud data analyst|jd", "jdq1|ballerine"]
+    st.save_llm_cache({k: False for k in mine + other}, "2026-09-02")
+    found = [k for k, _v, _u in rejudge_rows.job_keys(st.conn, job)]
+    assert sorted(found) == sorted(mine)
+    assert rejudge_rows.forget(st.conn, found) == 4
+    assert sorted(st.load_llm_cache()) == sorted(other)
+    st.close()
+
+
+def test_the_unreachable_alarm_names_why_each_role_had_no_description(monkeypatch):
+    """jd-text leaves `_jd_why` on the job at every refusal; six unreachable verdicts on
+    2026-09-13 had three different owners (a listing-page url, another role's address, a
+    render cap) and the alarm said only "6"."""
+    calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
+    cache = {"v3.deadbeef|acme|data analyst|jd": True, "v3.deadbeef|acme|bi analyst|jd": False}
+    clf = seniority.Classifier(llm_cache=cache)
+    clf.classify({"company": "Acme", "title": "Data Analyst", "_jd_why": "not-a-job-url"})
+    clf.classify({"company": "Acme", "title": "BI Analyst"})
+    assert clf.stale_unreachable == 2 and not calls
+    line = next(a for a in clf.alarms() if "CANNOT be re-judged" in a)
+    assert "(? 1, not-a-job-url 1)" in line, line
+
+
+def test_the_unknown_contract_withdrawals_are_exactly_the_stable_nos_of_the_artifact():
+    """2026-09-13 (classifier): 31 records whose published verdict named no contract were
+    re-judged on their stored text. Six stable 3-of-3 NOs were withdrawn; the two flaps
+    (Zipher Senior Data Analyst, SemiConductor Devices) were NOT, by the 09-11 rule that a
+    flap resolves in the conservative direction. Asserted between the two hand-written files
+    only, so a cron that renames a record cannot rot it; the binding against the ledger was
+    run once with `Retractions.bind` and is in the session record."""
+    import json
+    from pipeline import roles
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(repo, "tests", "fixtures", "classifier",
+                           "2026-09-13-geo-and-unknown-contract.json"), encoding="utf-8") as f:
+        art = json.load(f)
+    rows = art["unknown_contract"]["rows"]
+    out = sorted(r["role_id"] for r in rows if r["adjudication"] == "withdrawn")
+    assert len(rows) == 31 and len(out) == 6
+    for r in rows:
+        if r["role_id"] in out:
+            assert r["now"] == "reject" and r["votes"].count("NO") >= 3, r
+    ret = roles.Retractions.load(os.path.join(repo, "cloud_state", "roles_retractions.jsonl"))
+    mine = [e for e in ret.entries if e.get("on") == "2026-09-13"
+            and e.get("by", "").startswith("classifier")]
+    assert sorted(e["role_id"] for e in mine) == out
+    assert all(e["status"] == "withdrawn" and e["url"].startswith("https://") for e in mine)
+    assert all(e["label"] == "right" for e in art["geo_566"]["flips"])

@@ -6032,6 +6032,41 @@ zero-confirmation, queue drain, every resolver), so the same rule would also tur
 alone cannot tell the nine from the two; only the scrape, which saw whether the card had a
 place of its own, can — which is why the fix lives at the source and the gate stays trusting.
 
+**2026-09-13 — the posting's own statement that it is elsewhere outranks the feed's location
+(`566`).** The location field is often not the posting's word. `il.indeed.com` stamped
+`מחוז המרכז` over Diageo's JD, whose third line reads `Location: 3 WTC (New York)`, and the
+row was published. Wiliot's careers widget copied `Israel` onto eight cards while each office
+sat glued to its title (`Data Solutions AnalystSan Mateo`). `israel.stated_foreign_place` is
+checked after the country code and before the place scan. It is one-sided: it can only take a
+posting out, and any Israeli place anywhere in the title or the description silences it, so a
+Tel Aviv JD that names its New York HQ does not move. Two arms:
+
+* **title** — a listed CITY ending the title after a separator (`… - Houston`,
+  `(New York)`), or a listed city or country GLUED to it by a widget. A trailing country or
+  region alone never fires: a broader draft's 9 region/country flips on discovered cards were
+  all territories of Israeli roles (`KYC Analyst … EMEA` in Tel Aviv).
+* **description** — a labelled `Location:` line naming a listed place, `US`/`UK` or a `, ST`
+  state code, and only when the card's own location is weak: empty, the bare word `Israel`, a
+  work mode, or an aggregator url. A company board's Israeli city is the second signal `548`
+  asks for and wins, because a stored text can be another posting's bleed (Gamida Cell's own
+  board says Kiryat Gat and its text carries `Location: US – Remote`).
+
+It runs at two sites, because the gate cannot see the text that matters. The gate at fetch
+time reads the card, and an aggregator's card is a 160-character snippet. The classifier's
+deterministic head (`_classify` and `judge_backfill`, after the shared-text guard) asks again
+on the filled description and rejects on the `keyword` path. The seam never could: nothing in
+`LLM_RULES` asks about geography, and it judged Diageo YES on scope.
+
+> **Measured before shipping** (`python tools/measure_israel_rule.py --base <ref> --texts`,
+> no calls): **36 of 6,691 cached cards flip, every one read, 0 wrong** — Wayve 23 → 4
+> (`…Leonberg, Germany`, `…Tokyo, Japan`), Wiliot 8 → 0, Bright Data 27 → 23, Adcore, Flytrex,
+> ctera, one Freightos and one Lightbits card. Discovered cards: 0. Published records the head
+> would reject: **0** (only the already-withdrawn Diageo, of 264). Misses, named: a bare
+> country or region ending a title (`Deployment Strategist - USA`), and TransUnion's "India's
+> leading credit information company", which is company boilerplate and not a location line.
+> Artifact: `tests/fixtures/classifier/2026-09-13-geo-and-unknown-contract.json`. The step log
+> says it fired: `classify: … geo: N refused on the posting's own text + M at the gate`.
+
 **Gate 2 — does it qualify?** `seniority` decides from the lowercased **title** first:
 
 | title says | decision | `path` |
@@ -6547,6 +6582,16 @@ was read against the seam's reason and **14 were given retraction lines**, four 
 retraction is permanent; one sits on a BI-developer boundary no decision record draws —
 `530`/`532`). Next run: **167 → 153 rows, 0 empty, reconciliation holds** (rehearsed on a
 scratch copy).
+**2026-09-13 — a decision no contract stands behind is owed a verdict too.**
+`roles.class_unjudged` is the one predicate: no decision, or a decision with no `contract`.
+`roles.csv.meta.json` read `rows_unknown 30` of 170 on 2026-09-12 — cells stamped before the
+verdict dict carried its contract, every one `closed` — and this queue, the only writer that
+reaches a closed record, read any decision as judged. `record_run` now replaces such a cell
+with a backfill verdict that names its contract, never on a record the run judged itself
+(`by_key`, `class_rejects`) and never unknown-for-unknown. Re-judged on the day it landed, 31
+records: **23 kept, 8 moved** — seven accept → reject and `Parametrix | Technical Data
+Analyst` reject → accept, YES three times. Six were stable 3-of-3 NOs and were withdrawn
+(Cato, dentsu, Paz, DealHub, SuperPlay Head of BI, Zipher Data Scientist); two flaps were not.
 The step log's `backfill:` line is printed **even when there is nothing to do** — at steady
 state that is every morning, and a hook that goes silent when it succeeds cannot be told
 apart from one that never ran, which is the only question the morning after asks.
@@ -6628,7 +6673,14 @@ quarantine uses, with
 re-judged **once** when the description arrives (BACKLOG 107, closed — `mobileye|experienced
 data analyst` was a NO judged on an empty description and served forever after the JD came);
 a `|jd` verdict is never re-judged on a bare title, so a role whose inline fetch fails one
-day does not flip-flop. `store.save_llm_cache` writes only new or changed boolean rows, so
+day does not flip-flop. **What the key cannot see is a `|jd` text REPLACED by another `|jd`
+text** (`551` b): `Ballerine | AI Fraud Data Analyst (Senior)` was judged NO on 2026-09-02
+over 2,671 characters of site chrome, jd-text repaired the text to the posting's own 1,662
+characters on 09-11, and the 09-12 digest stamped the record `reject` from the cached NO. The
+tool is `python tools/rejudge_rows.py --role-id <id> --forget --judge --votes 2`, run from the
+shared checkout: it deletes the job's keys under every prefix `_versioned` would serve plus
+the legacy row, and re-judges through `judge_backfill`. Ballerine answered YES three times.
+Never a contract bump, which re-supersedes ~560 cells to reach one. `store.save_llm_cache` writes only new or changed boolean rows, so
 `updated` is the judgment date from the first v2 run on (before, every row was upserted every
 run: all 247 said `2026-08-24`). Rows:
 `python -c "import sqlite3;c=sqlite3.connect('file:cloud_state/seen.db?mode=ro',uri=True);print(c.execute('select count(*),sum(verdict),sum(title_key like \"v2|%\") from llm_cache').fetchone())"`
@@ -6659,7 +6711,7 @@ X` the attempt failures (the alarm below uses X). The classifier's alarms ride t
 | a scope change still propagating | `classify N roles decided by a SUPERSEDED verdict that this run could have re-judged (M done, cap 250) - about R more run(s) at this rate` | unit test only (`test_the_stale_alarm_separates_the_queue_from_what_no_cap_can_reach`) |
 | the backfill could not finish | `classify dataset backfill could not judge N verdict-less records this run …` | unit test only (`test_the_dataset_backfill_is_bounded_and_never_eats_the_runs_budget`) |
 | the backfill rejected a PUBLISHED row | `classify dataset backfill judged N published record(s) NO: they carry class_decision=reject until a line in cloud_state/roles_retractions.jsonl withdraws them (lane: roles)` | unit test only (`test_backfill_verdicts_skips_what_is_judged_and_names_the_rest`) |
-| ...and the part no cap can reach | `classify N superseded verdicts CANNOT be re-judged: the role has no description this run … (lane: jd-text)` | same |
+| ...and the part no cap can reach | `classify N superseded verdicts CANNOT be re-judged (<why> n, …): the role has no description this run … (lane: jd-text)` — grouped by the `_jd_why` jd-text's `JDFiller.maybe_fill` leaves on the job (`not-a-job-url`, `wrong-address`, `bd-render-capped`, …; `?` before it lands), and each per-key step-log line ends `- jd: <why>` | same |
 | the propagation has STOPPED | `classify the contract drain did NOT move this run: N roles were re-judgeable, the seam was available and the cap is 250 - the scope change has stalled` | same |
 
 Real-CLI rehearsal (15 companies, sonnet, 2026-08-24): `classify: 232 judged = keyword 213 +

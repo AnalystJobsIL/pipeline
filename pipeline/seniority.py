@@ -41,7 +41,7 @@ import time
 import unicodedata
 from collections import Counter
 
-from . import llm
+from . import israel, llm
 from .llm import LLMUnavailable, _ascii, _envelope, _kind, _MAX_SCAN  # noqa: F401 (re-exported for tests)
 
 # --------------------------------------------------------------------------- #
@@ -871,12 +871,20 @@ class Classifier:
                                                   # the same cohort, or another cohort's flips
                                                   # silence it
         self.stale_served = self.stale_rejudged = self.shared_text = 0
+        # postings whose OWN text places them outside Israel, refused here after the fill
+        # (docs/BACKLOG.md 566): the gate at fetch time sees only the card, and an
+        # aggregator's card carries a 160-char snippet, never the `Location:` line
+        self.geo_rejected = 0
         # `stale_rejudged` stays the TOTAL -- "how many superseded verdicts did this run
         # re-judge" is the question the summary line answers -- and the uncapped YES cohort is
         # a SUBSET of it, so the cap can be applied to the capped cohort alone without the
         # headline number changing meaning.
         self.stale_rejudged_yes = 0
         self.stale_unreachable = 0    # superseded, and no description today to re-judge it on
+        # ...and WHY there is no description, by the reason `JDFiller.maybe_fill` left on the
+        # job (`_jd_why`, jd-text, never persisted): a listing-page url, another role's address
+        # and a render cap are three different owners, and one count hid which (2026-09-13)
+        self.unreachable_why = Counter()
         self.drain_to_yes = self.drain_to_no = 0
         self._drain_keys = set()      # keys the DRAIN bought: never withheld with a mass-flip
         self._text_owner = {}         # (company, sha1(description)) -> the title judged on it
@@ -966,6 +974,20 @@ class Classifier:
                         "path": "keyword", "contract": self.contract,
                         "reason": ("engineering/ML/non-data-analyst title" if bare == "excluded"
                                    else "no analytics signal in title")}
+        # The posting's own text places it outside Israel (docs/BACKLOG.md 566). The Israel
+        # gate at fetch time asks the same question, but of the CARD, and an aggregator's card
+        # is a 160-character snippet: Diageo's `Location: 3 WTC (New York)` arrived with the
+        # fill, after the gate had already let `מחוז המרכז` through, and the seam judged it
+        # YES on scope and was right to -- nothing in `LLM_RULES` asks about geography. So the
+        # deterministic head asks again, on the text it is about to judge. After the shared
+        # guard on purpose: another posting's `Location:` line is not this role's evidence.
+        # A refusal, never an accept: `stated_foreign_place` is one-sided and silent whenever
+        # an Israeli place is named anywhere on the posting.
+        place = israel.stated_foreign_place(job)
+        if place:
+            self.geo_rejected += 1
+            return {**base, "decision": "reject", "path": "keyword",
+                    "reason": f"the posting places itself outside Israel ({place})"}
         # Does this role have a description of its own that is worth keying a verdict to?
         # `shared` has already blanked another role's text above, so this asks only about
         # THIS role -- and it asks `jdfill.looks_like_jd`, which is the same question
@@ -1083,11 +1105,15 @@ class Classifier:
                 # cap rises, and the alarm now says so.
                 self.stale_unreachable += stale and not drainable
                 if stale and not drainable:
+                    self.unreachable_why["shared text" if shared
+                                         else (job.get("_jd_why") or "?")] += 1
+                if stale and not drainable:
                     # the mail counts these ("N superseded verdicts CANNOT be re-judged")
                     # and until 2026-09-11 nothing named them; one greppable line each
                     why = "shared text" if shared else "no description this run"
                     print(f"  [classify] superseded verdict cannot be re-judged ({why}): "
-                          f"{_ascii(jd_key, 120)} <- {prior[4]}", flush=True)
+                          f"{_ascii(jd_key, 120)} <- {prior[4]} - jd: "
+                          f"{_ascii(job.get('_jd_why') or '?', 40)}", flush=True)
                 return {**base, "decision": "accept" if prior[0] else "reject",
                         "path": "llm_cache", "contract": prior[4],
                         "reason": ("cached LLM verdict" if prior[3] else
@@ -1252,6 +1278,13 @@ class Classifier:
                         "path": "keyword", "contract": self.contract,
                         "reason": ("engineering/ML/non-data-analyst title" if bare == "excluded"
                                    else "no analytics signal in title")}
+        # ...and the geography head, exactly as in `_classify` (566): a closed record's stored
+        # text is the only place an aggregator row's `Location:` line lives at all
+        place = israel.stated_foreign_place(job)
+        if place:
+            self.geo_rejected += 1
+            self.backfill_keyword += 1
+            return _reject("keyword", f"the posting places itself outside Israel ({place})")
         has_text = looks_like_jd(str(desc or "").strip())
         key, jd_key, bare_key, _legacy = cache_keys(job, has_text, self.contract)
         # A CURRENT-contract verdict, if one exists, is the answer and costs nothing. Read
@@ -1517,6 +1550,9 @@ class Classifier:
                  f" ({self.stale_unreachable} unreachable without a description)"
                  if self.stale_served or self.stale_rejudged else "")
         shared = f"; {self.shared_text} judged bare (shared description)" if self.shared_text else ""
+        # the gate's refusals are counted where the gate is (`israel.VETOED`), the head's here
+        geo = (f"; geo: {self.geo_rejected} refused on the posting's own text + "
+               f"{israel.vetoed()} at the gate" if self.geo_rejected or israel.vetoed() else "")
         # every clause here is conditional on its own counter, so a run that backfills
         # nothing prints the line it has always printed
         bf_total = (self.backfill_judged + self.backfill_cached + self.backfill_keyword
@@ -1535,7 +1571,7 @@ class Classifier:
                 f" failed calls {self.failed};"
                 f" attempts {self.attempts} in {self.seconds / 60:.1f} min,"
                 f" rejudged {self.rejudged}{flips}; model {model}; breaker {state}"
-                f"{zero}{drain}{shared}{backfill}")
+                f"{zero}{drain}{shared}{geo}{backfill}")
 
     def alarms(self):
         """Lines for the mail's bold `Stages:` line — only when something is wrong."""
@@ -1598,8 +1634,10 @@ class Classifier:
                           if self.stale_rejudged_yes else "")
                        + f") - about {runs} more run(s) at this rate")
         if self.stale_unreachable:
+            why = ", ".join(f"{k} {n}" for k, n in sorted(self.unreachable_why.items(),
+                                                          key=lambda kv: (-kv[1], kv[0])))
             out.append(f"classify {self.stale_unreachable} superseded verdicts CANNOT be "
-                       f"re-judged: the role has no description this run, and a JD-backed "
+                       f"re-judged ({why}): the role has no description this run, and a JD-backed "
                        f"verdict is never re-judged on a bare title. Raising "
                        f"CLASSIFY_REJUDGE_CAP does not reach them - a description does "
                        f"(lane: jd-text)")

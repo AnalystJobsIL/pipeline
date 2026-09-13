@@ -62,9 +62,15 @@ def candidates(records):
 
     The verdict is read as `class["decision"]`, not as "is `class` truthy": a record whose
     class dict lost its decision would otherwise ship an empty `class_decision` for ever
-    while looking judged to this queue."""
+    while looking judged to this queue.
+
+    **And a decision with no contract is owed one too** (`roles.class_unjudged`, 2026-09-13):
+    30 published rows carried a decision stamped before the verdict recorded which rules
+    made it, every one `closed`, and this queue -- the only thing that reaches a closed
+    record -- read "has a decision" as "judged". The meta called them `rows_unknown` and
+    nothing drained them."""
     return [(rid, rec) for rid, rec in sorted(records.items())
-            if not (rec.get("class") or {}).get("decision") and rec.get("title")
+            if _roles.class_unjudged(rec) and rec.get("title")
             and (rec.get("status") or "open") in PUBLISHED]
 
 
@@ -109,21 +115,27 @@ def backfill_verdicts(ledger, clf, *, verbose=True):
             print(f"  [backfill] {_ascii(rec.get('company'), 40)} | "
                   f"{_ascii(rec.get('title'), 60)} -> "
                   f"{r['decision']}: {_ascii(r['reason'], 120)}", flush=True)
-    line = (f"backfill: {len(rows)} verdict-less record(s), {clf.backfill_judged} judged "
+    line = (f"backfill: {len(rows)} verdict-less record(s) "
+            f"({sum(1 for _r, x in rows if (x.get('class') or {}).get('decision'))} of them "
+            f"an unknown-contract decision), {clf.backfill_judged} judged "
             f"({clf.backfill_yes} yes, {clf.backfill_no} no) + {clf.backfill_cached} cached "
             f"+ {clf.backfill_keyword} keyword, {clf.backfill_held} held")
     return out, line
 
 
 def apply_to(records, verdicts, run_date):
-    """Fill an EMPTY `class` from the map. Returns the role_ids it changed.
+    """Fill an EMPTY or unknown-contract `class` from the map. Returns the role_ids it changed.
 
-    Fill-only-empty, the same rule `Ledger` applies, so running the CLI and the in-run hook
-    on the same day cannot produce two different answers for one role."""
+    The same rule `Ledger.record_run` applies -- an empty cell takes any verdict, an
+    unknown-contract cell only one that names its contract -- so running the CLI and the
+    in-run hook on the same day cannot produce two different answers for one role."""
     changed = []
     for rid, cls in (verdicts or {}).items():
         rec = records.get(rid)
-        if rec is None or (rec.get("class") or {}).get("decision") or not cls:
+        if rec is None or not cls or not _roles.class_unjudged(rec):
+            continue
+        if (rec.get("class") or {}).get("decision") and (not cls.get("contract")
+                                                         or cls == rec.get("class")):
             continue
         rec["class"] = dict(cls)
         rec["updated"] = run_date

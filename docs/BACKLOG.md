@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**667 filed · 471 open · 196 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**667 filed · 470 open · 197 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -542,7 +542,7 @@ closure convention in the header.
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
 
-### classifier — 19 open
+### classifier — 18 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -560,7 +560,6 @@ closure convention in the header.
 - **548** `548@classifier` **A remote posting is counted as Israeli on the board's `country_code` alone, with no
 - **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
 - **557** `557@classifier` **LTX has not flipped to its own board
-- **566** `566@classifier` **The Israel filter believes the aggregator's location field over the posting's own
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 - **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
 
@@ -10542,6 +10541,15 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      delete the row's `llm_cache` keys under EVERY prefix (`_versioned` suffix match) — never a
      contract bump, which re-supersedes ~560 rows for a dozen. The verdict dict now carries
      `contract`, so a future strip-and-rejudge can at least be told from a served cell.
+     **2026-09-13 (`classifier`): the precedent is a tool, and half (b) has its first measured
+     casualty.** `Ballerine | AI Fraud Data Analyst (Senior)`: NO judged 2026-09-02 over 2,671
+     characters of site chrome, text repaired to 1,662 characters on 09-11 (`1c1e4a3`), and
+     the 09-12 digest stamped the record `reject` from the cached NO. `tools/rejudge_rows.py
+     --role-id <id> --forget --judge --votes 2` deletes the job's keys under every prefix and
+     the legacy row and re-judges through `judge_backfill`: Ballerine YES/YES/YES. Half (b) as
+     a MECHANISM is still open — nothing notices a repair on its own; the natural trigger is
+     jd-text's `jd_refuted` stamp (`572`), which could name the key to forget at the moment it
+     refutes a text.
 
 552. **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
      reproduces the splice** - lane: `scraper` (with `jd-text`). Filed by `jd-text` 2026-09-01.
@@ -10854,7 +10862,12 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      262 records were `closed` + `accept`** on 2026-09-11, frozen because a closed role never
      re-enters `merged`. NOT closed by this: nothing DRAINS them — the column makes the
      freeze legible, and re-judging a closed row is still `classifier`'s
-     `judge_backfill` reaching only empty cells. Original report: Filed by `classifier` 2026-09-01. The ledger's `class` dict is
+     `judge_backfill` reaching only empty cells. **2026-09-13 (`classifier`): it drains now for
+     the unknown half** — `roles.class_unjudged` counts a decision with no `contract` as owed,
+     and the backfill replaces such a cell with a verdict that names its contract (31 records,
+     8 moved, 6 withdrawn on a stable NO). A closed cell under a RETIRED contract
+     (`rows_stale`, 0 today) is still frozen; it becomes a candidate the day a contract bump
+     makes one, and that would be one more predicate clause, not a new mechanism. Original report: Filed by `classifier` 2026-09-01. The ledger's `class` dict is
      `{decision, path, reason}` and both whitelists (`roles.py`, the live-stamp and the
      `class_backfill` map) drop any other key, so there is no contract, no date and no
      provenance on the cell. And the cell freezes for a reason worth stating precisely, because it is easy to get wrong: the LIVE path overwrites `rec["class"]` unconditionally on every run the role is in `merged` (`pipeline/roles.py`), and only the `class_backfill` map is fill-only-empty — so a verdict freezes not because the cell refuses writes but because a CLOSED role never re-enters `merged` (which is `543`'s mechanism). After the 2026-09-01 bump and this commit's withdrawals, **26 of the ~136 published rows** are closed and carry a verdict made under a retired contract, permanently, and nothing in the file says so. The lane's acceptance test ("0 records without a
@@ -11352,9 +11365,23 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
 ## From the classifier lane, 2026-09-02
 
-566. **The Israel filter believes the aggregator's location field over the posting's own
-     text, and four published or publishable rows are foreign jobs because of it** — lane:
-     `classifier` (`pipeline/israel.py`), measured 2026-09-02 while adjudicating the deferred
+566. ~~**The Israel filter believes the aggregator's location field over the posting's own
+     text, and four published or publishable rows are foreign jobs because of it**~~ — lane:
+     `classifier`. **CLOSED 2026-09-13 (`classifier`)**: `israel.stated_foreign_place` — a
+     listed city ending the title, a place glued to it, or a `Location:` line under a weak
+     location field (empty, bare `Israel`, a work mode, an aggregator url), silenced by any
+     Israeli place on the posting — refuses at the gate (`is_israel_job`, after the country
+     code) and again in the classifier's deterministic head on the filled text, because the
+     gate only ever sees an aggregator's snippet. Measured with `tools/measure_israel_rule.py`:
+     36 of 6,691 cached cards flip, all read, 0 wrong; 0 published records the head would
+     reject (the withdrawn Diageo is the one ledger hit). Of the four instances: Wiliot x2 and
+     Diageo are caught; **TransUnion is a named miss** — "India's leading credit information
+     company" is company boilerplate, not a location line, and a rule that read it would move
+     every Tel Aviv posting of a foreign company. Also missed by design: a bare country or
+     region ending a title (`Deployment Strategist - USA`, `KYC Analyst … EMEA`), which is a
+     territory as often as an office (9 of 9 wrong in a broader draft). `548` is untouched: a
+     `country_code: IL` still decides first. Record: `docs/sessions/2026-09-13-classifier.md`.
+     The original report follows. Measured 2026-09-02 while adjudicating the deferred
      `desc_mismatch` rows. `Diageo | Performance Analytics Analyst` carries location
      `מחוז המרכז` from `il.indeed.com` while its own first three lines read
      `Role: Performance Analytics Analyst | Level: 6 | Location: 3 WTC (New York)` and the

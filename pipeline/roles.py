@@ -816,6 +816,22 @@ def _class_of(cls, live_contract=""):
     return out
 
 
+def class_unjudged(rec):
+    """Is this record owed a classifier verdict? True when its `class` cell has no decision,
+    or has one that no contract stands behind.
+
+    The second half is the 2026-09-13 widening (lane: `classifier`). A cell stamped before
+    the verdict dict carried its contract (2026-09-11), or served from a legacy
+    `company|title` cache row, exports `class_contract` "" -- 30 of 170 published rows on
+    2026-09-12, every one `closed`, so no live run would ever re-stamp them, and the
+    backfill read "has a decision" as "judged" and never looked. A decision nobody can say
+    which rules produced is not a verdict under the rules live today. It is refilled from the
+    live contract (a cache hit where one exists, one call where not), never by a contract
+    bump, which would re-supersede ~560 cells to reach 30."""
+    cls = rec.get("class") or {}
+    return not cls.get("decision") or not cls.get("contract")
+
+
 def same_role_twin(a, b, weak_ids=frozenset()):
     """Two SAME-company jobs/records that are provably one posting — the retitle class the
     seen-id collision alarm counts (`id_collisions`: HoneyBook's `product data analyst`
@@ -2384,14 +2400,22 @@ class Ledger:
                                f"rules changed on purpose")
         # The classifier's backlog verdicts (lane: `classifier`, `pipeline/class_backfill.py`),
         # applied AFTER the loop above so a record this run actually fetched keeps the verdict
-        # the run made for it. Fill-only-empty in both directions: a record that already
-        # carries a `class` is never touched here, and re-judging one is the contract drain's
-        # job, under the drain's caps.
+        # the run made for it. It fills an EMPTY cell, and since 2026-09-13 it also replaces a
+        # cell no contract stands behind (`class_unjudged`) -- but only with a verdict that
+        # names its contract, so "unknown" is never swapped for another "unknown", and never
+        # on a record this run judged itself (`by_key`: the live stamp; `class_rejects`: the
+        # run's own NOs), whatever that stamp carries. A cell with a contract is never
+        # touched: re-judging one is the contract drain's job, under the drain's caps.
         for rid, cls in (class_backfill or {}).items():
             rec = self.records.get(rid)
-            if rec is None or (rec.get("class") or {}) or not cls:
+            if rec is None or not cls or rid in by_key or rid in (class_rejects or {}):
                 continue
-            rec["class"] = _class_of(cls, self.live_contract)
+            new_cls = _class_of(cls, self.live_contract)
+            if (rec.get("class") or {}) and (not class_unjudged(rec)
+                                             or not new_cls.get("contract")
+                                             or new_cls == rec.get("class")):
+                continue
+            rec["class"] = new_cls
             self._touch(rec)
             c["class_backfilled"] += 1
         # mass-close guard: statuses are held, the mail is told
