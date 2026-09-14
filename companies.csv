@@ -899,7 +899,7 @@ Wix (Wixpress),scrape,https://www.wix.com/jobs/locations/israel,https://www.wix.
 T-Mobile,workday,tmobile/External,https://tmobile.wd1.myworkdayjobs.com/wday/cxs/tmobile/External/jobs,true,re-audit 2026-08-21: deep-verified 0/0 IL (was dark)
 Bristol Myers Squibb,workday,bristolmyerssquibb/BMS,https://bristolmyerssquibb.wd5.myworkdayjobs.com/wday/cxs/bristolmyerssquibb/BMS/jobs,true,re-audit 2026-08-21: verified 0/0 IL (was false-empty) | zero-confirm 2026-08-28: confirmed; rnb+llm; ev 53fc15
 Eon,greenhouse,eonio,https://boards-api.greenhouse.io/v1/boards/eonio/jobs,true,re-audit 2026-08-21: verified 25/1 IL (was false-empty)
-Navan,scrape,https://navan.com/careers,https://navan.com/careers,true,deep-scrape; 14 Israel jobs
+Navan,greenhouse,xai,https://boards-api.greenhouse.io/v1/boards/xai/jobs,true,deep-scrape; 14 Israel jobs | self-heal 2026-09-14: re-resolved to greenhouse
 Firmus,greenhouse,firmus,https://boards-api.greenhouse.io/v1/boards/firmus/jobs,true,re-audit 2026-08-21: deep-verified 40/0 IL (was dark)
 QuamCore,scrape,,https://www.quamcore.com/careers,true,listing-hunt 2026-08-22: verified 1 IL via https://www.quamcore.com/careers
 Flytrex,scrape,,https://www.flytrex.com/careers,true,listing-hunt 2026-08-22: verified 11 IL via https://www.flytrex.com/careers
@@ -1297,7 +1297,7 @@ Cal (Israel Credit Cards),scrape,https://www.cal-online.co.il/about/jobs/,https:
 Clalit Health Services,scrape,https://www.clalit.co.il/he/info/career/Pages/default.aspx,https://www.clalit.co.il/he/info/career/Pages/default.aspx,true,listing-hunt 2026-08-28: queue-hunt; verified 6 IL
 Clinch,scrape,https://clinch.co/careers,https://clinch.co/careers,true,listing-hunt 2026-08-28: queue-hunt; verified 2 IL
 Codium,scrape,https://codiumsystems.com/careers,https://codiumsystems.com/careers,false,wrong-url 2026-08-30: board names Codium Systems; needs re-resolution | dark-triage 2026-09-07: no-url (no url on the row) | listing-hunt 2026-09-08: no IL listing; monitored candidate
-Cust2Mate - A2Z (NASDAQ: AZ),scrape,,https://cust2mate.com/careers/,true,dark-triage 2026-08-28: js-shell (job XHRs seen during render) | listing-hunt 2026-08-28: verified 1 IL via cust2mate.com
+Cust2Mate - A2Z (NASDAQ: AZ),comeet,6A.00D,https://www.comeet.com/careers-api/2.0/company/6A.00D/positions?token=A6D48FB34210A6D29B414DA5DD53E8E29B4,true,dark-triage 2026-08-28: js-shell (job XHRs seen during render) | listing-hunt 2026-08-28: verified 1 IL via cust2mate.com | self-heal 2026-09-14: re-resolved to comeet
 DRS RADA Technologies,scrape,https://www.drsrada.com/careers,https://www.drsrada.com/careers,true,listing-hunt 2026-08-28: queue-hunt; verified 45 IL
 DRW,scrape,https://www.drw.com/work-at-drw/listings,https://www.drw.com/work-at-drw/listings,true,listing-hunt 2026-08-28: queue-hunt; verified 4 IL
 Diageo,scrape,,https://www.diageo.com/en/careers/search-and-apply,true,zero-confirm 2026-08-29: board answered rendered postings; needs re-resolution | deep-validated 2026-08-31: workday diageo/Diageo_Careers; 0 jobs (empty board) | listing-hunt 2026-09-11: verified 9 IL via www.diageo.com
@@ -2346,7 +2346,7 @@ EasySend,scrape,,https://www.easysend.io/careers,false,deep-validated 2026-09-13
 Corephotonics Ltd,scrape,,https://corephotonics.com/careers,true,queue-hunt 2026-09-12: careers page documented; monitored candidate | listing-hunt 2026-09-12: verified 18 IL via corephotonics.com
 Act,ashby,act,https://api.ashbyhq.com/posting-api/job-board/act,true,auto-expand slug-probe; 4/4 IL
 GE Vernova,scrape,https://www.gevernova.com/,https://careers.gevernova.com/jobs?location=Israel,false,scanned; no open Israel roles now | empty-but-suspect 2026-09-13; 2+ role-near-Israel mentions in HTML | deep-validated 2026-09-13: verified 0 jobs (empty board)
-Glassix,scrape,,https://glassix.recruitee.com/,true,"dark-triage 2026-09-12: wrong-page (LLM: not Glassix's careers page (This is the company's homepage, not the )) | listing-hunt 2026-09-12: verified 1 IL via glassix.recruitee.com"
+Glassix,recruitee,glassix,https://glassix.recruitee.com/api/offers/,true,"dark-triage 2026-09-12: wrong-page (LLM: not Glassix's careers page (This is the company's homepage, not the )) | self-heal 2026-09-14: re-resolved to recruitee"
 Telnyx,greenhouse,telnyx54,https://boards-api.greenhouse.io/v1/boards/telnyx54/jobs,true,auto-expand; 54/2 IL
 TransPerfect,scrape,https://www.transperfect.com/about/careers,https://www.transperfect.com/about/careers,true,auto-expand scrape; 3 IL
 EisnerAmper,workday,eisneramper/EisnerAmper_External,https://eisneramper.wd1.myworkdayjobs.com/wday/cxs/eisneramper/EisnerAmper_External/jobs,true,scanned; no open Israel roles now | own-site 2026-09-12: www.eisneramper.com linkback | listing-hunt 2026-09-12: no IL listing; monitored candidate | re-audit 2026-09-13: verified 1/1 IL (was false-empty)
