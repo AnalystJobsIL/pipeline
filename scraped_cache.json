@@ -8105,6 +8105,21 @@
    "url": "https://www.cognyte.com/careers/63.B61/senior-signal-processing-communications-algorithm-engineer"
   }
  ],
+ "Commtact Ltd.": [
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Commtact Ltd.",
+   "country_code": "",
+   "description": "",
+   "job_id": "84c391b160605f06",
+   "location": "Yavne, Israel",
+   "posted_date": "",
+   "title": "Project/Program Manager",
+   "url": "https://commtact-systems.com/career"
+  }
+ ],
  "Consist Group": [
   {
    "_loc_src": "own",
@@ -30879,6 +30894,94 @@
    "url": "https://www.shabak.gov.il/career/conditions/"
   }
  ],
+ "Shafir Production Systems Ltd": [
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Shafir Production Systems Ltd",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://minisite.niloos.ai/vacancy/67ebd2e352065dc70a00b53b",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מרכיב/ה MATRIX",
+   "url": "https://minisite.niloos.ai/vacancy/67ebd2e352065dc70a00b53b"
+  },
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Shafir Production Systems Ltd",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://minisite.niloos.ai/vacancy/69f98f172c65eb4d8c1da9c8",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מהנדס/ת NPI",
+   "url": "https://minisite.niloos.ai/vacancy/69f98f172c65eb4d8c1da9c8"
+  },
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Shafir Production Systems Ltd",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://minisite.niloos.ai/vacancy/6943b7aa8f2a0f4551a5a03b",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "ביקורת קבלה",
+   "url": "https://minisite.niloos.ai/vacancy/6943b7aa8f2a0f4551a5a03b"
+  },
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Shafir Production Systems Ltd",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://minisite.niloos.ai/vacancy/68f5f4192f19342534be9657",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מוביל/ה פרויקטים בהנדסה",
+   "url": "https://minisite.niloos.ai/vacancy/68f5f4192f19342534be9657"
+  },
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Shafir Production Systems Ltd",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://minisite.niloos.ai/vacancy/67a36438fe5ff3b9f61c3127",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "מבקר/ת איכות",
+   "url": "https://minisite.niloos.ai/vacancy/67a36438fe5ff3b9f61c3127"
+  },
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Shafir Production Systems Ltd",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://minisite.hunter-edge.me/vacancy/6693708bec697b760f9aae5b",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "תכן מכאני – הנדסת מכונות",
+   "url": "https://minisite.hunter-edge.me/vacancy/6693708bec697b760f9aae5b"
+  }
+ ],
+ "Shahar Hunt": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Shahar Hunt",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://hunt.co.il/career/senior-performance-manager",
+   "location": "Rishon LeZion",
+   "posted_date": "",
+   "title": "Senior Performance Manager",
+   "url": "https://hunt.co.il/career/senior-performance-manager"
+  }
+ ],
  "Shanti House": [
   {
    "_jd_attempted": "2026-09-13",
@@ -32724,6 +32827,20 @@
    "posted_date": "",
    "title": "ארכיון ציוד רפואי - השמה בהתאמה עם - תוצאות",
    "url": "https://totsaot.co.il/jobs-board/%D7%A6%D7%99%D7%95%D7%93-%D7%A8%D7%A4%D7%95%D7%90%D7%99/"
+  }
+ ],
+ "Talenya": [
+  {
+   "_loc_src": "assumed",
+   "ats_platform": "scrape",
+   "company": "Talenya",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://www.paycor.com/resource-center/guides-white-papers/leaders-guide-hiring-recruiting/",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "The HR Leader’s Guide to Recruiting & Hiring",
+   "url": "https://www.paycor.com/resource-center/guides-white-papers/leaders-guide-hiring-recruiting/"
   }
  ],
  "Taplix": [

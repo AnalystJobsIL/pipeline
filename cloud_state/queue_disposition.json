@@ -3538,7 +3538,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "BlueBird Aero Systems Ltd.": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "BlueBird Aero Systems",
@@ -6622,7 +6622,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Cynet Security": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Cynet",
@@ -10339,7 +10339,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Guideline Group": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Guideline",
@@ -15747,7 +15747,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Level App": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "UserWay",
@@ -16116,7 +16116,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Linx Security": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Linxsecurity",
@@ -17583,7 +17583,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Marketeam.ai": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Marketeam AI",
@@ -19614,10 +19614,14 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Mindspace Poland": {
-  "date": "2026-09-09",
+  "date": "2026-09-14",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Mindspace",
+  "why": "a rung found this name's board and the registry row 'Mindspace' already reads it (matched on url, never on the name)",
   "evidence": {
-   "matched_on": "url",
    "row": "Mindspace",
+   "matched_on": "url",
    "tried": [
     [
      "search-llm",
@@ -19625,11 +19629,7 @@
      "https://www.mindspace.me/careers/"
     ]
    ]
-  },
-  "other_name": "Mindspace",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Mindspace' already reads it (matched on url, never on the name)"
+  }
  },
  "Mindteck": {
   "date": "2026-08-30",
@@ -21564,7 +21564,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Plus500™": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Plus500",
@@ -21637,7 +21637,7 @@
   "why": "a rung found this name's board and the registry row 'Primis' already reads it (matched on url, never on the name)"
  },
  "Primis, Video Discovery": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Primis",
@@ -22715,7 +22715,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Speedata.io": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Speedata",
@@ -22807,7 +22807,7 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Strauss Water Ltd. שטראוס מים",
@@ -23660,7 +23660,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Weebit Nano Ltd": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Weebit Nano",
@@ -23779,7 +23779,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Wobi Ltd": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Wobi",
@@ -25381,7 +25381,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "נגה - החברה לניהול מערכת החשמל Noga - Israel Independent System Operator": {
-  "date": "2026-09-13",
+  "date": "2026-09-14",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Noga Iso",
@@ -25647,6 +25647,86 @@
     ]
    ],
    "board": "https://www.osem-nestle.co.il/career/open-positions"
+  }
+ },
+ "Sensi AI": {
+  "date": "2026-09-14",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "sensi",
+  "why": "a rung found this name's board and the registry row 'sensi' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "sensi",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.sensi.ai/careers"
+    ]
+   ]
+  }
+ },
+ "WEBLET": {
+  "date": "2026-09-14",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Shekel Group": {
+  "date": "2026-09-14",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Shekel",
+  "why": "the registry row 'Shekel' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Shekel",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Shipin": {
+  "date": "2026-09-14",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Simploud": {
+  "date": "2026-09-14",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Singular Labs": {
+  "date": "2026-09-14",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Singular",
+  "why": "the registry row 'Singular' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Singular",
+   "matched_on": "name-normalised",
+   "tried": []
   }
  }
 }

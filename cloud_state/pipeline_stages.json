@@ -203,28 +203,29 @@
   "scanned": 1383
  },
  "queue": {
-  "answered_on_disk": 1,
-  "date": "2026-09-13",
-  "delta": -34,
+  "answered_on_disk": 2,
+  "capacity": 176,
+  "date": "2026-09-14",
+  "delta": -32,
   "direction": "falling",
-  "drain_alarm": "queue drain BEHIND: 155 selectable against a nightly capacity of 112 -- it needs 1.4 nights to clear its own selection set",
-  "empty_search_share": 0.045,
-  "finished_at": "2026-09-13T01:02:07+00:00",
+  "empty_search_share": 0.153,
+  "finished_at": "2026-09-14T01:00:03+00:00",
+  "ledger_contradicted": 0,
   "new_intake": 0,
-  "on_cadence": 599,
-  "owed": 155,
-  "retired": 376,
-  "retired_in_queue": 1,
-  "rows_from_queue": 678,
-  "searched_recently": 112,
-  "selectable": 155,
+  "on_cadence": 646,
+  "owed": 123,
+  "retired": 380,
+  "retired_in_queue": 2,
+  "rows_from_queue": 671,
+  "searched_recently": 288,
+  "selectable": 123,
   "stuck": 0,
-  "unsettled": 754,
-  "unverified_rows": 0
+  "unsettled": 769,
+  "unverified_rows": 192
  },
  "repair": {
-  "date": "2026-09-13",
-  "finished_at": "2026-09-13T01:02:57+00:00"
+  "date": "2026-09-14",
+  "finished_at": "2026-09-14T01:01:05+00:00"
  },
  "wayback": {
   "backlog": 6134,
