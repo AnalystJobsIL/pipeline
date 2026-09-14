@@ -56398,7 +56398,7 @@
   "verdict": "found"
  },
  "TechAviv": {
-  "last": "2026-09-08",
+  "last": "2026-09-14",
   "tried": [
    {
     "date": "2026-09-08",
@@ -56406,9 +56406,15 @@
     "url": "https://techaviv.com",
     "verdict": "note-migrated",
     "why": "seeded 2026-09-11 from the row's surviving dated stamp"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "validated",
+    "date": "2026-09-14",
+    "url": "https://techaviv.com"
    }
   ],
-  "verdict": "note-migrated"
+  "verdict": "validated"
  },
  "Technion - Israel Institute of Technology": {
   "last": "2026-09-13",
