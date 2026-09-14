@@ -2,8 +2,8 @@
  "Bright Security": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -70,8 +70,8 @@
  "Fabric": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -88,8 +88,8 @@
  "ClearML": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -97,8 +97,8 @@
  "AlgoSec": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 16,
+  "last": "2026-09-14",
+  "n": 17,
   "error": "",
   "found": 0,
   "http": 200
@@ -106,8 +106,8 @@
  "Anjuna Security": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -115,8 +115,8 @@
  "Bridgewise": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -124,8 +124,8 @@
  "Nominal": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -151,8 +151,8 @@
  "Nokia": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 403
@@ -171,8 +171,8 @@
  "Deutsche Telekom": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -180,8 +180,8 @@
  "Harman": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -189,8 +189,8 @@
  "Lasso": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -217,8 +217,8 @@
  "Zoomd": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -226,8 +226,8 @@
  "SuperSmart": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -235,8 +235,8 @@
  "Remilk": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -262,8 +262,8 @@
  "Superwise": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -271,8 +271,8 @@
  "NextSilicon": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -289,8 +289,8 @@
  "Sasa Software": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -307,8 +307,8 @@
  "HUB Security": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -316,8 +316,8 @@
  "FundGuard": {
   "since": "2026-08-25",
   "why": "error",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403,
@@ -336,8 +336,8 @@
  "Cyberwrite": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -345,8 +345,8 @@
  "ColorChip": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -354,8 +354,8 @@
  "Ramon.Space": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -372,8 +372,8 @@
  "Sol-Chip": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -381,8 +381,8 @@
  "Rivulis": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -390,8 +390,8 @@
  "Evogene": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -431,8 +431,8 @@
  "Salignostics": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -449,8 +449,8 @@
  "Bayer": {
   "since": "2026-08-25",
   "why": "error",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403,
@@ -460,8 +460,8 @@
  "Continental": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -469,8 +469,8 @@
  "Mercedes-Benz (MBRDNA)": {
   "since": "2026-08-25",
   "why": "error",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403,
@@ -480,8 +480,8 @@
  "John Deere": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -507,8 +507,8 @@
  "Stigg": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200,
@@ -517,8 +517,8 @@
  "OpenWeb": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -554,8 +554,8 @@
  "Vimeo": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -563,8 +563,8 @@
  "SavorEat": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -572,8 +572,8 @@
  "Amai Proteins": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -581,8 +581,8 @@
  "Comeet": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -599,8 +599,8 @@
  "Hudson Rock": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -608,8 +608,8 @@
  "Sepio": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -626,8 +626,8 @@
  "Allot": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -635,8 +635,8 @@
  "Fordefi": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200,
@@ -654,8 +654,8 @@
  "Tranzila": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -663,8 +663,8 @@
  "Blaize": {
   "since": "2026-08-25",
   "why": "error",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403,
@@ -683,8 +683,8 @@
  "Brenmiller Energy": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -692,8 +692,8 @@
  "Doral Energy": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -701,8 +701,8 @@
  "N-Drip": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -715,8 +715,8 @@
  "Samsung Israel": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -724,8 +724,8 @@
  "Pinterest": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -733,8 +733,8 @@
  "Procter & Gamble": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 16,
+  "last": "2026-09-14",
+  "n": 17,
   "error": "",
   "found": 0,
   "http": 200
@@ -742,8 +742,8 @@
  "Deutsche Bank": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -751,8 +751,8 @@
  "Rivery": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -787,8 +787,8 @@
  "BigPanda": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -796,8 +796,8 @@
  "Backslash Security": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -823,8 +823,8 @@
  "Seraphic Security": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -841,8 +841,8 @@
  "Fairmatic": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200,
@@ -851,8 +851,8 @@
  "Autotalks": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200,
@@ -861,17 +861,18 @@
  "Cognata": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
  },
  "Aquarius Engines": {
-  "since": "2026-09-12",
-  "why": "empty",
-  "n": 2,
-  "last": "2026-09-13",
+  "since": "2026-09-14",
+  "why": "error",
+  "n": 1,
+  "shape": "page",
+  "last": "2026-09-14",
   "error": "goto:TimeoutError",
   "found": 0
  },
@@ -883,8 +884,8 @@
  "Datos Health": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 16,
+  "last": "2026-09-14",
+  "n": 17,
   "error": "",
   "found": 0,
   "http": 200
@@ -892,8 +893,8 @@
  "Nucleix": {
   "since": "2026-09-02",
   "why": "empty",
-  "n": 12,
-  "last": "2026-09-13",
+  "n": 13,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -919,8 +920,8 @@
  "Boston Scientific": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -937,8 +938,8 @@
  "Denso": {
   "since": "2026-08-25",
   "why": "error",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403,
@@ -957,8 +958,8 @@
  "Navan": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -989,11 +990,11 @@
  "RightHear": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 16,
+  "last": "2026-09-14",
+  "n": 17,
   "error": "",
   "found": 0,
-  "http": 200
+  "http": 202
  },
  "Xsight Labs": {
   "since": "2026-08-25",
@@ -1018,8 +1019,8 @@
  "Plarium": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1027,8 +1028,8 @@
  "Estoty": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1036,8 +1037,8 @@
  "Bookaway": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1054,11 +1055,11 @@
  "Deepchecks": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
-  "http": 200
+  "http": 202
  },
  "Qwak": {
   "since": "2026-08-23",
@@ -1072,8 +1073,8 @@
  "Astrix Security": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1108,8 +1109,8 @@
  "Fundbox": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1126,8 +1127,8 @@
  "Lightico": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1135,8 +1136,8 @@
  "Ceva": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1153,8 +1154,8 @@
  "Phinergy": {
   "since": "2026-08-25",
   "why": "error",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403,
@@ -1174,8 +1175,8 @@
  "Lumus": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1188,8 +1189,8 @@
  "Robotican": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1197,8 +1198,8 @@
  "Iscar": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1206,8 +1207,8 @@
  "Cordio Medical": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1224,8 +1225,8 @@
  "Genoox": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1260,8 +1261,8 @@
  "Renault Group": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1278,8 +1279,8 @@
  "Keshet Media Group": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1287,8 +1288,8 @@
  "Akamai Technologies": {
   "since": "2026-08-25",
   "why": "error",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403,
@@ -1312,8 +1313,8 @@
  "Shufersal": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1321,8 +1322,8 @@
  "appsforce": {
   "since": "2026-08-23",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1354,8 +1355,8 @@
  "ASTERRA": {
   "since": "2026-08-24",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1399,17 +1400,17 @@
  "Telrad Networks": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
-  "http": 200
+  "http": 202
  },
  "PayPlus": {
   "since": "2026-08-24",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1426,8 +1427,8 @@
  "High Lander": {
   "since": "2026-08-24",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1444,8 +1445,8 @@
  "Alison": {
   "since": "2026-08-24",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1453,8 +1454,8 @@
  "TCM Technologies LTD": {
   "since": "2026-08-24",
   "why": "empty",
-  "last": "2026-09-13",
-  "n": 20,
+  "last": "2026-09-14",
+  "n": 21,
   "error": "",
   "found": 0,
   "http": 200
@@ -1480,8 +1481,8 @@
  "StarkWare": {
   "since": "2026-08-25",
   "why": "empty",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1489,8 +1490,8 @@
  "Cnoga Medical": {
   "since": "2026-08-25",
   "why": "empty",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1507,8 +1508,8 @@
  "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ": {
   "since": "2026-08-25",
   "why": "error",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403,
@@ -1537,8 +1538,8 @@
  "AU10TIX": {
   "since": "2026-08-25",
   "why": "empty",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 21,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1546,17 +1547,8 @@
  "Predicta Med": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Bits of Gold": {
-  "since": "2026-08-25",
-  "why": "empty",
-  "n": 20,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1564,11 +1556,11 @@
  "Ride Vision": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
-  "http": 200
+  "http": 202
  },
  "GenCell Energy": {
   "since": "2026-08-25",
@@ -1582,8 +1574,8 @@
  "Groundwork BioAg": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1600,8 +1592,8 @@
  "Perception Point": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1618,8 +1610,8 @@
  "BlueSnap": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1627,8 +1619,8 @@
  "Ottopia": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1645,8 +1637,8 @@
  "Supersonic Studios": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1663,8 +1655,8 @@
  "Apollo Power": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1690,8 +1682,8 @@
  "GenCell": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1726,8 +1718,8 @@
  "Verizon": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1744,8 +1736,8 @@
  "Taranis": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1753,8 +1745,8 @@
  "Infineon Technologies": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1771,8 +1763,8 @@
  "Schneider Electric": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 403
@@ -1789,8 +1781,8 @@
  "Essence SmartCare": {
   "since": "2026-09-07",
   "why": "empty",
-  "n": 7,
-  "last": "2026-09-13",
+  "n": 8,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1798,8 +1790,8 @@
  "Amazon Web Services (AWS)": {
   "since": "2026-08-26",
   "why": "empty",
-  "n": 19,
-  "last": "2026-09-13",
+  "n": 20,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1843,8 +1835,8 @@
  "Axon Pulse": {
   "since": "2026-08-28",
   "why": "empty",
-  "n": 17,
-  "last": "2026-09-13",
+  "n": 18,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1852,8 +1844,8 @@
  "Diageo": {
   "since": "2026-08-28",
   "why": "empty",
-  "n": 3,
-  "last": "2026-09-13",
+  "n": 4,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1861,8 +1853,8 @@
  "IAI - Israel Aerospace Industries": {
   "since": "2026-08-28",
   "why": "empty",
-  "n": 17,
-  "last": "2026-09-13",
+  "n": 18,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 247
@@ -1870,8 +1862,8 @@
  "ISCAR ISRAEL": {
   "since": "2026-08-28",
   "why": "empty",
-  "n": 17,
-  "last": "2026-09-13",
+  "n": 18,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1879,10 +1871,10 @@
  "NSO Group": {
   "since": "2026-08-28",
   "why": "error",
-  "n": 17,
+  "n": 18,
   "shape": "ip",
   "ip_since": "2026-08-28",
-  "last": "2026-09-13",
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403
@@ -1890,10 +1882,10 @@
  "PAPAYA": {
   "since": "2026-08-28",
   "why": "error",
-  "n": 17,
+  "n": 18,
   "shape": "ip",
   "ip_since": "2026-08-28",
-  "last": "2026-09-13",
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403
@@ -1901,8 +1893,8 @@
  "Strauss Water Ltd. שטראוס מים": {
   "since": "2026-08-28",
   "why": "empty",
-  "n": 17,
-  "last": "2026-09-13",
+  "n": 18,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 247
@@ -1918,21 +1910,20 @@
   "http": 200
  },
  "Continental Israel": {
-  "since": "2026-09-11",
+  "since": "2026-09-14",
   "why": "error",
-  "n": 3,
-  "shape": "links",
-  "ip_since": "2026-09-11",
-  "last": "2026-09-13",
-  "error": "links:unread:net",
+  "n": 1,
+  "shape": "page",
+  "last": "2026-09-14",
+  "error": "http:404",
   "found": 0,
   "http": 404
  },
  "Quantum Art": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1949,8 +1940,8 @@
  "Webbing": {
   "since": "2026-08-29",
   "why": "empty",
-  "n": 16,
-  "last": "2026-09-13",
+  "n": 17,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1968,10 +1959,10 @@
  "Ayalon Highways": {
   "since": "2026-08-29",
   "why": "error",
-  "n": 16,
+  "n": 17,
   "shape": "ip",
   "ip_since": "2026-08-29",
-  "last": "2026-09-13",
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403
@@ -1989,8 +1980,8 @@
  "penlink": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -1998,8 +1989,8 @@
  "Edikted": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2007,8 +1998,8 @@
  "Telit Cinterion": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2016,8 +2007,8 @@
  "Galil Systems": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2025,8 +2016,8 @@
  "Lely Industries Nv": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2034,8 +2025,8 @@
  "Zoho": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2043,53 +2034,17 @@
  "Medasense Biometrics Ltd": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
-  "http": 200
- },
- "Y D Barzani": {
-  "since": "2026-08-30",
-  "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Alexander Schneider Ltd": {
-  "since": "2026-08-30",
-  "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Group19 Tech": {
-  "since": "2026-08-30",
-  "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Indocs": {
-  "since": "2026-08-30",
-  "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
+  "http": 202
  },
  "Matan Health Services": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2097,17 +2052,8 @@
  "Mink N Vik": {
   "since": "2026-08-30",
   "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Omnisys": {
-  "since": "2026-08-30",
-  "why": "empty",
-  "n": 15,
-  "last": "2026-09-13",
+  "n": 16,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2115,8 +2061,8 @@
  "Arm": {
   "since": "2026-08-31",
   "why": "empty",
-  "n": 14,
-  "last": "2026-09-13",
+  "n": 15,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2134,8 +2080,8 @@
  "Whalo": {
   "since": "2026-08-31",
   "why": "empty",
-  "n": 14,
-  "last": "2026-09-13",
+  "n": 15,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2143,8 +2089,8 @@
  "EPAM Systems, Inc.": {
   "since": "2026-09-12",
   "why": "empty",
-  "n": 2,
-  "last": "2026-09-13",
+  "n": 3,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2152,10 +2098,10 @@
  "Aeronautics": {
   "since": "2026-08-31",
   "why": "error",
-  "n": 14,
+  "n": 15,
   "shape": "ip",
   "ip_since": "2026-08-31",
-  "last": "2026-09-13",
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403
@@ -2163,8 +2109,8 @@
  "Challenge Group": {
   "since": "2026-08-31",
   "why": "empty",
-  "n": 14,
-  "last": "2026-09-13",
+  "n": 15,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2181,8 +2127,8 @@
  "SolarEdge": {
   "since": "2026-09-13",
   "why": "empty",
-  "n": 1,
-  "last": "2026-09-13",
+  "n": 2,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2190,8 +2136,8 @@
  "AWS": {
   "since": "2026-08-31",
   "why": "empty",
-  "n": 14,
-  "last": "2026-09-13",
+  "n": 15,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2199,8 +2145,8 @@
  "Volkswagen (CARIAD)": {
   "since": "2026-08-31",
   "why": "empty",
-  "n": 14,
-  "last": "2026-09-13",
+  "n": 15,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2226,8 +2172,8 @@
  "K2view": {
   "since": "2026-09-01",
   "why": "empty",
-  "n": 13,
-  "last": "2026-09-13",
+  "n": 14,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2235,8 +2181,8 @@
  "Nanomotion": {
   "since": "2026-09-01",
   "why": "empty",
-  "n": 13,
-  "last": "2026-09-13",
+  "n": 14,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2250,20 +2196,11 @@
   "found": 0,
   "http": 200
  },
- "max מקס": {
-  "since": "2026-09-02",
-  "why": "empty",
-  "n": 12,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
  "mylo AI": {
   "since": "2026-09-02",
   "why": "empty",
-  "n": 12,
-  "last": "2026-09-13",
+  "n": 13,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2271,8 +2208,8 @@
  "HIAS": {
   "since": "2026-09-02",
   "why": "empty",
-  "n": 12,
-  "last": "2026-09-13",
+  "n": 13,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2280,8 +2217,8 @@
  "Talenya": {
   "since": "2026-09-02",
   "why": "empty",
-  "n": 12,
-  "last": "2026-09-13",
+  "n": 13,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2289,8 +2226,8 @@
  "Scytale": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "embed": "comeet:2A.009:unverified",
@@ -2299,8 +2236,8 @@
  "Airspan Networks": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2308,8 +2245,8 @@
  "Revolut": {
   "since": "2026-09-05",
   "why": "empty",
-  "n": 9,
-  "last": "2026-09-13",
+  "n": 10,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2317,8 +2254,8 @@
  "ASML": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2326,8 +2263,8 @@
  "Biscience": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "embed": "comeet:0A.00B:unverified",
@@ -2336,8 +2273,8 @@
  "Cemex": {
   "since": "2026-09-12",
   "why": "empty",
-  "n": 2,
-  "last": "2026-09-13",
+  "n": 3,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2345,17 +2282,8 @@
  "Imdsoft": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Herzoglaw": {
-  "since": "2026-09-03",
-  "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2363,8 +2291,8 @@
  "Kroll Consulting": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2372,8 +2300,8 @@
  "Movement The Wellness Group": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2381,8 +2309,8 @@
  "Feverup": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2390,8 +2318,8 @@
  "Fives Intralogistics": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2399,17 +2327,8 @@
  "Hikvision": {
   "since": "2026-09-04",
   "why": "empty",
-  "n": 10,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Naya Technologies": {
-  "since": "2026-09-03",
-  "why": "empty",
   "n": 11,
-  "last": "2026-09-13",
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2417,8 +2336,8 @@
  "Netline Communications Technologies Nct Ltd": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2426,8 +2345,8 @@
  "Webiks": {
   "since": "2026-09-03",
   "why": "empty",
-  "n": 11,
-  "last": "2026-09-13",
+  "n": 12,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2435,8 +2354,8 @@
  "entrypoint": {
   "since": "2026-09-04",
   "why": "empty",
-  "n": 10,
-  "last": "2026-09-13",
+  "n": 11,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2444,8 +2363,8 @@
  "SUMIT": {
   "since": "2026-09-04",
   "why": "empty",
-  "n": 10,
-  "last": "2026-09-13",
+  "n": 11,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2453,8 +2372,8 @@
  "Milliman": {
   "since": "2026-09-04",
   "why": "empty",
-  "n": 10,
-  "last": "2026-09-13",
+  "n": 11,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2462,8 +2381,8 @@
  "Global Dev Experts": {
   "since": "2026-09-04",
   "why": "empty",
-  "n": 10,
-  "last": "2026-09-13",
+  "n": 11,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2480,8 +2399,8 @@
  "A.P. Moller - Maersk": {
   "since": "2026-09-04",
   "why": "empty",
-  "n": 10,
-  "last": "2026-09-13",
+  "n": 11,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2489,8 +2408,8 @@
  "aiOla": {
   "since": "2026-09-04",
   "why": "empty",
-  "n": 10,
-  "last": "2026-09-13",
+  "n": 11,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2498,8 +2417,8 @@
  "Hailo": {
   "since": "2026-09-04",
   "why": "empty",
-  "n": 10,
-  "last": "2026-09-13",
+  "n": 11,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2507,8 +2426,8 @@
  "Xtend": {
   "since": "2026-09-06",
   "why": "empty",
-  "n": 8,
-  "last": "2026-09-13",
+  "n": 9,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2516,8 +2435,8 @@
  "Hilti Israel": {
   "since": "2026-09-05",
   "why": "empty",
-  "n": 9,
-  "last": "2026-09-13",
+  "n": 10,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2525,8 +2444,8 @@
  "Midea Group": {
   "since": "2026-09-05",
   "why": "empty",
-  "n": 9,
-  "last": "2026-09-13",
+  "n": 10,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2534,8 +2453,8 @@
  "Pearson": {
   "since": "2026-09-05",
   "why": "empty",
-  "n": 9,
-  "last": "2026-09-13",
+  "n": 10,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2543,17 +2462,8 @@
  "Particulatech": {
   "since": "2026-09-06",
   "why": "empty",
-  "n": 8,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "DeePlan": {
-  "since": "2026-09-06",
-  "why": "empty",
-  "n": 8,
-  "last": "2026-09-13",
+  "n": 9,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2561,8 +2471,8 @@
  "Phytech": {
   "since": "2026-09-06",
   "why": "empty",
-  "n": 8,
-  "last": "2026-09-13",
+  "n": 9,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2570,8 +2480,8 @@
  "Forbes Advisor": {
   "since": "2026-09-06",
   "why": "empty",
-  "n": 8,
-  "last": "2026-09-13",
+  "n": 9,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "embed": "greenhouse:forbes:unverified",
@@ -2580,8 +2490,8 @@
  "Xpend Global Marketing": {
   "since": "2026-09-07",
   "why": "empty",
-  "n": 7,
-  "last": "2026-09-13",
+  "n": 8,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2589,8 +2499,8 @@
  "PB Israel": {
   "since": "2026-09-07",
   "why": "empty",
-  "n": 7,
-  "last": "2026-09-13",
+  "n": 8,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2598,17 +2508,8 @@
  "Yad Vashem, the World Holocaust Remembrance Center": {
   "since": "2026-09-07",
   "why": "empty",
-  "n": 7,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Rashi Foundation": {
-  "since": "2026-09-08",
-  "why": "empty",
-  "n": 6,
-  "last": "2026-09-13",
+  "n": 8,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2616,8 +2517,8 @@
  "Prodactive": {
   "since": "2026-09-08",
   "why": "empty",
-  "n": 6,
-  "last": "2026-09-13",
+  "n": 7,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2625,17 +2526,8 @@
  "Sensos": {
   "since": "2026-09-08",
   "why": "empty",
-  "n": 6,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Prologic LTD": {
-  "since": "2026-09-08",
-  "why": "empty",
-  "n": 6,
-  "last": "2026-09-13",
+  "n": 7,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2643,8 +2535,8 @@
  "Uvision Group": {
   "since": "2026-09-09",
   "why": "empty",
-  "n": 5,
-  "last": "2026-09-13",
+  "n": 6,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2652,17 +2544,8 @@
  "Cenevo": {
   "since": "2026-09-09",
   "why": "empty",
-  "n": 5,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "Rafa Labartories": {
-  "since": "2026-09-09",
-  "why": "empty",
-  "n": 5,
-  "last": "2026-09-13",
+  "n": 6,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2670,9 +2553,9 @@
  "Uber": {
   "since": "2026-09-09",
   "why": "error",
-  "n": 5,
+  "n": 6,
   "shape": "page",
-  "last": "2026-09-13",
+  "last": "2026-09-14",
   "error": "http:404",
   "found": 0,
   "http": 404
@@ -2680,8 +2563,8 @@
  "Sanofi": {
   "since": "2026-09-09",
   "why": "empty",
-  "n": 5,
-  "last": "2026-09-13",
+  "n": 6,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2707,8 +2590,8 @@
  "Planview": {
   "since": "2026-09-10",
   "why": "empty",
-  "n": 4,
-  "last": "2026-09-13",
+  "n": 5,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2716,8 +2599,8 @@
  "Practitest": {
   "since": "2026-09-10",
   "why": "empty",
-  "n": 4,
-  "last": "2026-09-13",
+  "n": 5,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2725,8 +2608,8 @@
  "Ingram Micro": {
   "since": "2026-09-10",
   "why": "empty",
-  "n": 4,
-  "last": "2026-09-13",
+  "n": 5,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2734,8 +2617,8 @@
  "Indus3Design": {
   "since": "2026-09-10",
   "why": "empty",
-  "n": 4,
-  "last": "2026-09-13",
+  "n": 5,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2743,10 +2626,10 @@
  "Zim": {
   "since": "2026-09-12",
   "why": "error",
-  "n": 2,
+  "n": 3,
   "ip_since": "2026-09-10",
   "shape": "links",
-  "last": "2026-09-13",
+  "last": "2026-09-14",
   "error": "links:unread:403",
   "found": 0,
   "http": 403
@@ -2781,8 +2664,8 @@
  "UST": {
   "since": "2026-09-11",
   "why": "empty",
-  "n": 3,
-  "last": "2026-09-13",
+  "n": 4,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2790,8 +2673,8 @@
  "HBX Group": {
   "since": "2026-09-11",
   "why": "empty",
-  "n": 3,
-  "last": "2026-09-13",
+  "n": 4,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2799,8 +2682,8 @@
  "Microsoft Israel": {
   "since": "2026-09-12",
   "why": "empty",
-  "n": 2,
-  "last": "2026-09-13",
+  "n": 3,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2808,10 +2691,10 @@
  "מטריקס": {
   "since": "2026-09-12",
   "why": "error",
-  "n": 2,
+  "n": 3,
   "shape": "ip",
   "ip_since": "2026-09-12",
-  "last": "2026-09-13",
+  "last": "2026-09-14",
   "error": "http:403",
   "found": 0,
   "http": 403
@@ -2819,17 +2702,8 @@
  "Axioma System Engineering and Integration": {
   "since": "2026-09-12",
   "why": "empty",
-  "n": 2,
-  "last": "2026-09-13",
-  "error": "",
-  "found": 0,
-  "http": 200
- },
- "אסם": {
-  "since": "2026-09-12",
-  "why": "empty",
-  "n": 2,
-  "last": "2026-09-13",
+  "n": 3,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2846,8 +2720,8 @@
  "Bulwarx": {
   "since": "2026-09-12",
   "why": "empty",
-  "n": 2,
-  "last": "2026-09-13",
+  "n": 3,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2855,8 +2729,8 @@
  "Opswat": {
   "since": "2026-09-12",
   "why": "empty",
-  "n": 2,
-  "last": "2026-09-13",
+  "n": 3,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2864,8 +2738,8 @@
  "ZyG": {
   "since": "2026-09-12",
   "why": "empty",
-  "n": 2,
-  "last": "2026-09-13",
+  "n": 3,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2879,31 +2753,20 @@
   "found": 0,
   "http": 200
  },
- "Chimes Israel": {
-  "since": "2026-09-13",
-  "why": "error",
-  "n": 1,
-  "shape": "runner",
-  "partial_n": 1,
-  "last": "2026-09-13",
-  "error": "partial:deadline:links",
-  "found": 18,
-  "http": 200
- },
  "Morinside": {
   "since": "2026-09-13",
   "why": "error",
-  "n": 1,
+  "n": 2,
   "shape": "page",
-  "last": "2026-09-13",
+  "last": "2026-09-14",
   "error": "goto:TimeoutError",
   "found": 0
  },
  "Mediaverse.ai": {
   "since": "2026-09-13",
   "why": "empty",
-  "n": 1,
-  "last": "2026-09-13",
+  "n": 2,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2911,8 +2774,8 @@
  "Sanmina Il": {
   "since": "2026-09-13",
   "why": "empty",
-  "n": 1,
-  "last": "2026-09-13",
+  "n": 2,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2920,8 +2783,8 @@
  "Corephotonics Ltd": {
   "since": "2026-09-13",
   "why": "empty",
-  "n": 1,
-  "last": "2026-09-13",
+  "n": 2,
+  "last": "2026-09-14",
   "error": "",
   "found": 0,
   "http": 200
@@ -2935,15 +2798,6 @@
   "found": 0,
   "http": 200
  },
- "AMAREL LTD": {
-  "since": "2026-09-13",
-  "why": "error",
-  "n": 1,
-  "shape": "page",
-  "last": "2026-09-13",
-  "error": "goto:TimeoutError",
-  "found": 0
- },
  "Entropy Organizational Development": {
   "since": "2026-09-13",
   "why": "empty",
@@ -2952,5 +2806,205 @@
   "error": "",
   "found": 0,
   "http": 200
+ },
+ "SeatPick": {
+  "since": "2026-09-14",
+  "why": "error",
+  "n": 1,
+  "shape": "ip",
+  "ip_since": "2026-09-14",
+  "last": "2026-09-14",
+  "error": "http:429",
+  "found": 0,
+  "http": 429
+ },
+ "Keter": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "http": 202
+ },
+ "Clalit Health Services": {
+  "since": "2026-09-14",
+  "why": "error",
+  "n": 1,
+  "shape": "ip",
+  "ip_since": "2026-09-14",
+  "last": "2026-09-14",
+  "error": "http:403",
+  "found": 0,
+  "http": 403
+ },
+ "Cust2Mate - A2Z (NASDAQ: AZ)": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "embed": "comeet:6A.00D:unverified",
+  "http": 200
+ },
+ "Logica-IT": {
+  "since": "2026-09-14",
+  "why": "error",
+  "n": 1,
+  "shape": "page",
+  "last": "2026-09-14",
+  "error": "goto:TimeoutError",
+  "found": 0
+ },
+ "Wayve": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "http": 202
+ },
+ "Scylladb": {
+  "since": "2026-09-14",
+  "why": "error",
+  "n": 1,
+  "shape": "page",
+  "partial_n": 1,
+  "last": "2026-09-14",
+  "error": "partial:render:Error",
+  "found": 1,
+  "http": 403
+ },
+ "Voyage81": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "http": 202
+ },
+ "Bio Technology General": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "http": 200
+ },
+ "Commtact Ltd.": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "http": 200
+ },
+ "Wiliot": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 8,
+  "http": 200
+ },
+ "Highcon": {
+  "since": "2026-09-14",
+  "why": "error",
+  "n": 1,
+  "shape": "page",
+  "last": "2026-09-14",
+  "error": "http:522",
+  "found": 0,
+  "http": 522
+ },
+ "ParaZero": {
+  "since": "2026-09-14",
+  "why": "error",
+  "n": 1,
+  "shape": "page",
+  "last": "2026-09-14",
+  "error": "render:Error",
+  "found": 0,
+  "http": 202
+ },
+ "Siemens Digital Industries Software": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "http": 200
+ },
+ "Adcore": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 1,
+  "http": 200
+ },
+ "Workiz": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "http": 200
+ },
+ "Sightec": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "http": 202
+ },
+ "Flytrex": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 1,
+  "http": 200
+ },
+ "IRP Systems": {
+  "since": "2026-09-14",
+  "why": "empty",
+  "n": 1,
+  "last": "2026-09-14",
+  "error": "",
+  "found": 0,
+  "http": 202
+ },
+ "aQurate": {
+  "since": "2026-09-14",
+  "why": "error",
+  "n": 1,
+  "shape": "page",
+  "last": "2026-09-14",
+  "error": "goto:TimeoutError",
+  "found": 0
+ },
+ "Medison Pharma": {
+  "since": "2026-09-14",
+  "why": "error",
+  "n": 1,
+  "shape": "ip",
+  "ip_since": "2026-09-14",
+  "last": "2026-09-14",
+  "error": "http:403",
+  "found": 0,
+  "http": 403
  }
 }
