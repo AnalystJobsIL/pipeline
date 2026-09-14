@@ -2394,3 +2394,11 @@ Adnm,scrape,,https://www.adnm.net/jobs,false,queue-hunt 2026-09-14: careers page
 Akita Cyber Security Ltd,scrape,,https://akitacyber.com/careers,false,queue-hunt 2026-09-14: careers page documented; monitored candidate
 Sheatufim,scrape,,https://sheatufim.org.il/jobs,false,queue-hunt 2026-09-14: careers page documented; monitored candidate
 Wenrix,scrape,,https://www.wenrix.com/careers,false,queue-hunt 2026-09-14: careers page documented; monitored candidate
+TRM Labs,ashby,trm-labs,https://api.ashbyhq.com/posting-api/job-board/trm-labs,true,auto-expand slug-probe; 103/1 IL
+Lawyal,scrape,https://law-yal.com,https://law-yal.com,false,scanned; no open Israel roles now | own-site 2026-09-14: law-yal.com linkback
+Valerann,scrape,https://valerann.com,https://valerann.com,false,scanned; no open Israel roles now | own-site 2026-09-14: valerann.com linkback
+Tondo,scrape,https://tondo-ii.com,https://tondo-ii.com,false,scanned; no open Israel roles now | own-site 2026-09-14: tondo-ii.com linkback
+Adipolo,scrape,https://adipolo.com,https://adipolo.com,false,scanned; no open Israel roles now | own-site 2026-09-14: adipolo.com linkback
+Snatch Up,scrape,https://www.snatch-up.com/,https://www.snatch-up.com/,false,scanned; no open Israel roles now | own-site 2026-09-14: www.snatch-up.com linkback
+Sohohouseco,greenhouse,sohohouseco,https://boards-api.greenhouse.io/v1/boards/sohohouseco/jobs,true,auto-expand slug-probe; 453/3 IL
+Unistream - יוניסטרים,scrape,https://unistream.co.il,https://unistream.co.il,false,scanned; no open Israel roles now | own-site 2026-09-14: unistream.co.il linkback
