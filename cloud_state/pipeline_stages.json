@@ -206,27 +206,27 @@
  "queue": {
   "answered_on_disk": 2,
   "capacity": 176,
-  "date": "2026-09-14",
-  "delta": -32,
+  "date": "2026-09-15",
+  "delta": -93,
   "direction": "falling",
   "empty_search_share": 0.153,
-  "finished_at": "2026-09-14T01:00:03+00:00",
-  "ledger_contradicted": 0,
+  "finished_at": "2026-09-15T01:11:42+00:00",
+  "ledger_contradicted": 1,
   "new_intake": 0,
-  "on_cadence": 646,
-  "owed": 123,
-  "retired": 380,
+  "on_cadence": 765,
+  "owed": 30,
+  "retired": 382,
   "retired_in_queue": 2,
-  "rows_from_queue": 671,
-  "searched_recently": 288,
-  "selectable": 123,
+  "rows_from_queue": 692,
+  "searched_recently": 352,
+  "selectable": 30,
   "stuck": 0,
-  "unsettled": 769,
-  "unverified_rows": 192
+  "unsettled": 795,
+  "unverified_rows": 144
  },
  "repair": {
-  "date": "2026-09-14",
-  "finished_at": "2026-09-14T01:01:05+00:00"
+  "date": "2026-09-15",
+  "finished_at": "2026-09-15T01:12:09+00:00"
  },
  "wayback": {
   "alarm": "zero-produce: 0 of 175 planned captures landed",

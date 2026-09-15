@@ -3538,7 +3538,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "BlueBird Aero Systems Ltd.": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "BlueBird Aero Systems",
@@ -6622,7 +6622,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Cynet Security": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Cynet",
@@ -10339,7 +10339,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Guideline Group": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Guideline",
@@ -17450,33 +17450,32 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Mantin Plast": {
-  "date": "2026-08-30",
+  "date": "2026-09-15",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Plastics App",
+  "why": "a rung found this name's board and the registry row 'Plastics App' already reads it (matched on hostpath, never on the name)",
   "evidence": {
-   "careers_probe": {
-    "answered": [
-     "https://careers.kpfilms.com/careers",
-     "https://careers.kpfilms.com/careers/",
-     "https://careers.kpfilms.com/jobs"
+   "row": "Plastics App",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "hunt",
+     "another company's board",
+     "https://tefen.muni.il/en/משרות/"
     ],
-    "tried": [
-     "/careers",
-     "/careers/",
-     "/jobs"
+    [
+     "search-llm",
+     "documented",
+     "https://plastictime.co.il/jobs/מוביל-ת-מצויינות-תפעולית-pmoopex/"
+    ],
+    [
+     "search-llm",
+     "documented",
+     "https://plastics-app.com/careers"
     ]
-   },
-   "read_page": "https://careers.kpfilms.com",
-   "search_pages": [
-    "https://careers.kpfilms.com",
-    "https://www.maukerja.my/company/versatile-creative-plastic-sdn-bhd",
-    "https://my.jobstreet.com/Ban-Seng-Plastic-Industries-\\u0026-Assembly-Sdn-Bhd-jobs/in-Mantin-Negeri-Sembilan/full-time",
-    "https://plastictime.co.il/jobs/מוביל-ת-מצויינות-תפעולית-pmoopex/"
-   ],
-   "verify": []
-  },
-  "other_name": "",
-  "raw_verdict": "cannot-tell",
-  "verdict": "cannot-tell",
-  "why": "All evidence (Klöckner Pentaplast careers, Malaysian plastics firms in Mantin, an Israeli job ad) is about other companies; the probed domain belongs to kp, not Mantin Plast. Nothing settles what Mantin Plast is."
+   ]
+  }
  },
  "Manufacturers Association Of Israel": {
   "date": "2026-08-30",
@@ -19614,7 +19613,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Mindspace Poland": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Mindspace",
@@ -21564,7 +21563,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Plus500™": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Plus500",
@@ -21637,7 +21636,7 @@
   "why": "a rung found this name's board and the registry row 'Primis' already reads it (matched on url, never on the name)"
  },
  "Primis, Video Discovery": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Primis",
@@ -22715,7 +22714,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Speedata.io": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Speedata",
@@ -22807,7 +22806,7 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Strauss Water Ltd. שטראוס מים",
@@ -23660,7 +23659,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Weebit Nano Ltd": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Weebit Nano",
@@ -23779,7 +23778,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Wobi Ltd": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Wobi",
@@ -25381,7 +25380,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "נגה - החברה לניהול מערכת החשמל Noga - Israel Independent System Operator": {
-  "date": "2026-09-14",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Noga Iso",
@@ -25529,7 +25528,7 @@
   }
  },
  "Istra Research Ltd.": {
-  "date": "2026-09-13",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Istra Research",
@@ -25726,6 +25725,140 @@
   "evidence": {
    "row": "Singular",
    "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Unistream - יוניסטרים": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "search-llm",
+     "documented"
+    ],
+    [
+     "listing-hunt",
+     "not a listings page"
+    ]
+   ]
+  }
+ },
+ "TRM Labs": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Lawyal": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Magenta Medical Ltd.": {
+  "date": "2026-09-15",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Magenta Medical",
+  "why": "the registry row 'Magenta Medical' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Magenta Medical",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Valerann": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Tondo": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Adipolo": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Snatch Up": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Sohohouseco": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
    "tried": []
   }
  }
