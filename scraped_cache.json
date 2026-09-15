@@ -36054,6 +36054,20 @@
    "url": "https://solitics.bamboohr.com/careers/91"
   }
  ],
+ "Sparkbeyond": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Sparkbeyond",
+   "country_code": "",
+   "description": " Principal BackEnd &amp; Data Engineer — Deep Tech / GenAI Platform (Python) Technology Always-Optimized Platform Capabilities patents Solutions Banking Telecom Industry 4.0 Retail Insurance Oil &amp; Gas Resources Case studies Articles Whitepapers Company About us PARTNERS Careers Contact Contact Us Contact company &gt; careers &gt; applications menu Principal BackEnd &amp; Data Engineer — Deep Tech / GenAI Platform (Python) Netanya , Israel Our Team’s mission statement About SparkBeyond SparkBeyond is building the future of AI in the enterprise. Our AI technology allows a company to optimize operational performance using GenAI, 24x7. Our customers are already using AI to predict and explain product demand, decide which loans should be given, check transactions for fraud, give maintenance instructions to engineers and much more. Operating at the intersection of Generative AI, Data Science, and Machine Learning , our platform pushes the boundaries of what machines and LLM’s can infer from large volumes of structured data and reason what to do based on that knowledge - to the point it’s been described as “science fiction made real.” We serve large enterprises looking to jump to the future where GenAI deeply understands what drives the performance of a business and so can help decision-making and innovation through data-driven discovery. Job Description The Role We’re looking for a Principal Backend &amp; Data Engineer to own and evolve the core data-intensive backend architecture of our AI platform. This is a senior individual contributor role with broad architectural responsibility and deep hands-on impact. You will be a technical authority in building scalable, high-performance backend and data systems that power our AI research engine - working closely with AI scientists, platform engineers, and product leaders. Beyond implementation, you will define technical direction, set engineering standards, and influence how we build and scale data-driven AI systems across the organization. What You’ll Do Architecture &amp; Technical Ownership Own the architecture of core backend and data systems that support large-scale, AI-driven computation and inference. Design and evolve high-performance analytical processing layers handling complex data workloads at scale. Make and drive long-term architectural decisions across backend, data, and AI integration domains. Define standards and best practices for performance, scalability, reliability, and data correctness. Backend &amp; Data Engineering Design, implement, and optimize data-intensive backend services using Python. Build and evolve analytical compute pipelines using technologies such as Polars, DuckDB, AirFlow, Iceberg, Spark and other ingestion and processing frameworks. Collaborate closely with AI scientists to productionize algorithms and embed advanced intelligence into the platform. Platform &amp; Infrastructure Architect and maintain containerized systems using Docker and Kubernetes. Ensure systems are observable, debuggable, and operable in production environments. Drive performance tuning and cost-efficiency across compute-heavy workloads. Technical Leadership Act as a technical authority and thought leader within the engineering organization. Mentor senior engineers through design reviews, architectural guidance, and hands-on collaboration. Serve as a force multiplier by unblocking complex technical challenges and raising the overall engineering bar. What We’re Looking For A passion for building cutting-edge AI and data platforms that solve real, high-impact business problems. Significant experience (8+ years) designing, building, and operating large-scale backend and data-intensive systems in production. Deep Hands-on expertise in Python and strong understanding of analytical data processing and distributed systems. Proven track record of owning and evolving complex system architectures over time. Strong experience with containerization and orchestration technologies (Docker",
+   "job_id": "https://sparkbeyond.ai/careers/principal-backend-data-engineer----deep-tech-genai-platform-python",
+   "location": "Netanya , Israel",
+   "posted_date": "",
+   "title": "Principal BackEnd & Data Engineer — Deep Tech / GenAI Platform (Python)",
+   "url": "https://sparkbeyond.ai/careers/principal-backend-data-engineer----deep-tech-genai-platform-python"
+  }
+ ],
  "Spear UAV": [
   {
    "_loc_src": "own",
@@ -36127,6 +36141,94 @@
    "posted_date": "",
    "title": "Hardware Engineer (Board Design)",
    "url": "https://spearuav.com/category/careers/hardware/"
+  }
+ ],
+ "Spectrum Dynamics": [
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Spectrum Dynamics",
+   "country_code": "",
+   "description": "Tomer Gabay serves as Spectrum Dynamics Medical’s CEO, being responsible for setting the company’s vision and strategy, leading the executive team and other senior management, balancing short-term and long-term goals, and driving growth by exploring new business models, markets, and products. Before assuming the role of CEO, Tomer served as the company’s CFO. Before joining the company, Tomer served as an audit manager of public and private companies in various industries at PwC Israel. Tomer brings over 15 years of experience holding leadership roles in finance, business and operations in global organizations, as well as startups, including business planning, budgeting, forecasting, negotiations, due-diligence and fundraising. Tomer holds a BA in Economics and Accounting, and is a certified public accountant.",
+   "job_id": "c53a32c4aea36f23",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Chief Executive Officer",
+   "url": "https://spectrum-dynamics.com/careers/"
+  },
+  {
+   "_loc_src": "own",
+   "_own_url": false,
+   "ats_platform": "scrape",
+   "company": "Spectrum Dynamics",
+   "country_code": "",
+   "description": "Gilad serves as Spectrum Dynamics Medical CE O since 2019. Before assuming the role of CEO Gilad served as the company CFO and chief operations officer of the co mpany Before joining the company Gilad served as Chief Financial Officer at CoreFlow , and Senior Manager at Ernst & Young. Gilad graduated the University of Haifa with a BA degree in Economics and has spent his career in roles of increasing responsibility giving him a great range of exposure and leadership in business planning, medical devices, entrepreneurship, venture capital, and biotechnology.",
+   "job_id": "1c6c116d945f8e4e",
+   "location": "Haifa",
+   "posted_date": "",
+   "title": "Chief Executive Officer",
+   "url": "https://spectrum-dynamics.com/careers/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Spectrum Dynamics",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://spectrum-dynamics.com/jobs/vp-clinical-application/",
+   "location": "Caesarea",
+   "posted_date": "",
+   "title": "VP Clinical Application",
+   "url": "https://spectrum-dynamics.com/jobs/vp-clinical-application/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Spectrum Dynamics",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://spectrum-dynamics.com/jobs/3129/",
+   "location": "Caesarea",
+   "posted_date": "",
+   "title": "Final Testing Technician",
+   "url": "https://spectrum-dynamics.com/jobs/3129/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Spectrum Dynamics",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://spectrum-dynamics.com/jobs/15209/",
+   "location": "Caesarea",
+   "posted_date": "",
+   "title": "Algorithm team Leader (R&D)",
+   "url": "https://spectrum-dynamics.com/jobs/15209/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Spectrum Dynamics",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://spectrum-dynamics.com/jobs/customer-success-manager/",
+   "location": "Caesarea",
+   "posted_date": "",
+   "title": "Customer Success Manager",
+   "url": "https://spectrum-dynamics.com/jobs/customer-success-manager/"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "Spectrum Dynamics",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://spectrum-dynamics.com/jobs/integrator/",
+   "location": "Caesarea",
+   "posted_date": "",
+   "title": "Integrator",
+   "url": "https://spectrum-dynamics.com/jobs/integrator/"
   }
  ],
  "Spikerz Security": [

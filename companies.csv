@@ -2421,3 +2421,9 @@ Sony Semicon Il,scrape,,https://www.sonyjobs.com,false,queue-hunt 2026-09-15: ca
 Chargeafter,scrape,,https://chargeafter.com/careers,false,queue-hunt 2026-09-15: careers page documented; monitored candidate
 GT Technologies,scrape,,https://www.gttechnologies.com/careers,false,queue-hunt 2026-09-15: careers page documented; monitored candidate
 Hillel Il,scrape,,https://www.hillel.org/careers,false,queue-hunt 2026-09-15: careers page documented; monitored candidate
+Trivago,greenhouse,trivago,https://boards-api.greenhouse.io/v1/boards/trivago/jobs,true,auto-expand; 9/0 IL
+Rocoto,scrape,https://www.rocotosolutions.com/,https://www.rocotosolutions.com/,false,scanned; no open Israel roles now | own-site 2026-09-15: www.rocotosolutions.com linkback
+Sparkbeyond,scrape,https://sparkbeyond.ai/careers,https://sparkbeyond.ai/careers,true,auto-expand scrape; 1 IL
+Spectrum Dynamics,scrape,https://spectrum-dynamics.com/careers/,https://spectrum-dynamics.com/careers/,true,auto-expand scrape; 7 IL
+Stradaglobal,scrape,https://stradaglobal.com,https://stradaglobal.com,false,scanned; no open Israel roles now | own-site 2026-09-15: stradaglobal.com linkback
+Strixdrones,scrape,https://www.strixdrones.com/,https://www.strixdrones.com/,false,scraped page is not this company's; no listing found | own-site 2026-09-15: www.strixdrones.com linkback
