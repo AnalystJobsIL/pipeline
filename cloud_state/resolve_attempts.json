@@ -500,8 +500,8 @@
   "last": "2026-08-24"
  },
  "Ludeo": {
-  "fails": 3,
-  "last": "2026-09-08"
+  "fails": 4,
+  "last": "2026-09-15"
  },
  "WSC Sports": {
   "fails": 1,
@@ -512,8 +512,8 @@
   "last": "2026-09-08"
  },
  "AU10TIX": {
-  "fails": 3,
-  "last": "2026-09-08"
+  "fails": 4,
+  "last": "2026-09-15"
  },
  "Continental Israel": {
   "fails": 1,
@@ -540,8 +540,8 @@
   "last": "2026-08-25"
  },
  "StarkWare": {
-  "fails": 3,
-  "last": "2026-09-08"
+  "fails": 4,
+  "last": "2026-09-15"
  },
  "Siemens EDA": {
   "fails": 1,
@@ -1210,5 +1210,9 @@
  "Bio Technology General": {
   "fails": 1,
   "last": "2026-09-14"
+ },
+ "Navan": {
+  "fails": 1,
+  "last": "2026-09-15"
  }
 }
