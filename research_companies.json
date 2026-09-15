@@ -1122,12 +1122,6 @@
   "slug": "%D7%A7%D7%91%D7%95%D7%A6%D7%AA-%D7%A9%D7%99%D7%91%D7%95%D7%9C%D7%AA"
  },
  {
-  "name": "IO Security",
-  "careers_url": "https://secrethunter.io/companies/io-security",
-  "ats": "unknown",
-  "slug": "io-security"
- },
- {
   "name": "Iron Fitness Ltd",
   "careers_url": "https://secrethunter.io/companies/iron-fitness-ltd",
   "ats": "unknown",
@@ -4674,12 +4668,6 @@
   "slug": "siteawareinc"
  },
  {
-  "name": "Sivan Group",
-  "careers_url": "https://secrethunter.io/companies/sivan-group",
-  "ats": "unknown",
-  "slug": "sivan-group"
- },
- {
   "name": "Skillreal",
   "careers_url": "https://secrethunter.io/companies/skillreal",
   "ats": "unknown",
@@ -4782,12 +4770,6 @@
   "slug": "sonol"
  },
  {
-  "name": "Trivago",
-  "careers_url": "https://il.indeed.com/viewjob?jk=2cbff46345fc2ad1",
-  "ats": "unknown",
-  "slug": ""
- },
- {
   "name": "ironSource Ltd.",
   "careers_url": "https://il.indeed.com/viewjob?jk=946ff65ca21f8ebd",
   "ats": "unknown",
@@ -4818,24 +4800,6 @@
   "slug": "ltx-io"
  },
  {
-  "name": "Speedata.io",
-  "careers_url": "https://il.linkedin.com/jobs/view/data-infrastructure-engineer-at-speedata-io-4465639580",
-  "ats": "unknown",
-  "slug": "speedataio"
- },
- {
-  "name": "HUNTHEAD",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-strategy-economic-policy-consultant-at-hunthead-4465715184",
-  "ats": "unknown",
-  "slug": "hunthead"
- },
- {
-  "name": "NATASHA DENONA IL",
-  "careers_url": "https://il.linkedin.com/jobs/view/marketing-performance-specialist-at-natasha-denona-il-4465683327",
-  "ats": "unknown",
-  "slug": "natasha-denona-il"
- },
- {
   "name": "Jungle Technology",
   "careers_url": "https://il.linkedin.com/jobs/view/programmatic-supply-side-manager-at-jungle-technology-4465517434",
   "ats": "unknown",
@@ -4848,34 +4812,10 @@
   "slug": "medical-online-israel"
  },
  {
-  "name": "נגה - החברה לניהול מערכת החשמל Noga - Israel Independent System Operator",
-  "careers_url": "https://il.linkedin.com/jobs/view/sox-internal-controls-analyst-at-%D7%A0%D7%92%D7%94-%D7%94%D7%97%D7%91%D7%A8%D7%94-%D7%9C%D7%A0%D7%99%D7%94%D7%95%D7%9C-%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA-%D7%94%D7%97%D7%A9%D7%9E%D7%9C-noga-israel-independent-system-operator-4465030369",
-  "ats": "unknown",
-  "slug": "noga-iso"
- },
- {
-  "name": "Rocoto",
-  "careers_url": "https://il.linkedin.com/jobs/view/sales-operations-specialist-at-rocoto-4467243116",
-  "ats": "unknown",
-  "slug": "rocotosolutions"
- },
- {
   "name": "Plaee",
   "careers_url": "https://il.linkedin.com/jobs/view/affiliate-manager-at-plaee-4465772379",
   "ats": "unknown",
   "slug": "plaee"
- },
- {
-  "name": "M.D. Mechanical Devices Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/operations-process-controller-at-m-d-mechanical-devices-ltd-4467073599",
-  "ats": "unknown",
-  "slug": "m--d--mechanical-devices"
- },
- {
-  "name": "NGsoft",
-  "careers_url": "https://il.linkedin.com/jobs/view/salesforce-systems-analyst-at-ngsoft-4465510314",
-  "ats": "unknown",
-  "slug": "ngsoft-ltd."
  },
  {
   "name": "Connecticut Innovations",
@@ -4888,12 +4828,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/priority-implementor-at-cura9-4464736104",
   "ats": "unknown",
   "slug": "cura9"
- },
- {
-  "name": "Comigo.io",
-  "careers_url": "https://il.linkedin.com/jobs/view/junior-systems-implementer-%D7%9E%D7%99%D7%99%D7%A9%D7%9D-%D7%AA-%D7%9E%D7%A2%D7%A8%D7%9B%D7%95%D7%AA-at-comigo-io-4465241015",
-  "ats": "unknown",
-  "slug": "comigo-io"
  },
  {
   "name": "peax talent",
@@ -4920,30 +4854,6 @@
   "slug": "blue-water-shield-ltd"
  },
  {
-  "name": "BlueBird Aero Systems Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/system-implementation-specialist-at-bluebird-aero-systems-ltd-4463028656",
-  "ats": "unknown",
-  "slug": "bluebird-aero-systems-ltd-"
- },
- {
-  "name": "Primis, Video Discovery",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-at-primis-video-discovery-4462276841",
-  "ats": "unknown",
-  "slug": "primis-um"
- },
- {
-  "name": "Wobi Ltd",
-  "careers_url": "https://il.linkedin.com/jobs/view/digital-product-business-manager-at-wobi-ltd-4463419069",
-  "ats": "unknown",
-  "slug": "wobi-ltd"
- },
- {
-  "name": "Guideline Group",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-guideline-group-4465832339",
-  "ats": "unknown",
-  "slug": "kav-manche-group"
- },
- {
   "name": "VMRay",
   "careers_url": "https://il.linkedin.com/jobs/view/senior-outbound-product-manager-europe-or-middle-east-at-vmray-4466510133",
   "ats": "unknown",
@@ -4956,28 +4866,10 @@
   "slug": "ecoplant-technological-innovation-ltd"
  },
  {
-  "name": "Magenta Medical Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/director-of-product-medical-device-at-magenta-medical-ltd-4465733600",
-  "ats": "unknown",
-  "slug": "magenta-medical"
- },
- {
-  "name": "Cynet Security",
-  "careers_url": "https://il.linkedin.com/jobs/view/cyops-analyst-at-cynet-security-4463442109",
-  "ats": "unknown",
-  "slug": "cynet-security"
- },
- {
   "name": "Rail Vision Ltd",
   "careers_url": "https://il.linkedin.com/jobs/view/deep-learning-research-engineer-at-rail-vision-ltd-4467054951",
   "ats": "unknown",
   "slug": "rail-vision"
- },
- {
-  "name": "eTeacher Group",
-  "careers_url": "https://il.linkedin.com/jobs/view/ai-innovation-builder-at-eteacher-group-4465526888",
-  "ats": "unknown",
-  "slug": "eteachergroup"
  },
  {
   "name": "tasq.ai",
@@ -4990,12 +4882,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/senior-full-stack-developer-ai-engineer-at-recruitricks-4467075025",
   "ats": "unknown",
   "slug": "recruitricks"
- },
- {
-  "name": "NVIDIA AI",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-solutions-architect-deep-learning-at-nvidia-ai-4465237158",
-  "ats": "unknown",
-  "slug": ""
  },
  {
   "name": "NanoScout",
@@ -5022,12 +4908,6 @@
   "slug": "tomedes.com"
  },
  {
-  "name": "Texas Instruments Europe",
-  "careers_url": "https://il.linkedin.com/jobs/view/field-applications-program-at-texas-instruments-europe-4440742999",
-  "ats": "unknown",
-  "slug": "texas-instruments-europe"
- },
- {
   "name": "Tel Aviv Medical Center",
   "careers_url": "https://il.linkedin.com/jobs/view/human-resources-specialist-at-tel-aviv-medical-center-4373774944",
   "ats": "unknown",
@@ -5040,12 +4920,6 @@
   "slug": "mindtelgloba"
  },
  {
-  "name": "Plus500™",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-designer-at-plus500%E2%84%A2-4440489255",
-  "ats": "unknown",
-  "slug": "plus500-official-page"
- },
- {
   "name": "Ananey Paramount",
   "careers_url": "https://il.linkedin.com/jobs/view/%D7%9B%D7%95%D7%AA%D7%91-%D7%AA-%D7%95%D7%A2%D7%95%D7%A8%D7%9B-%D7%AA-%D7%AA%D7%95%D7%9B%D7%9F-%D7%9C%D7%9E%D7%97%D7%9C%D7%A7%D7%AA-%D7%94%D7%AA%D7%A7%D7%A9%D7%95%D7%A8%D7%AA-%D7%95%D7%94%D7%A9%D7%99%D7%95%D7%95%D7%A7-at-ananey-paramount-4465506621",
   "ats": "unknown",
@@ -5056,12 +4930,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/%D7%A8%D7%A4%D7%A8%D7%A0%D7%98-%D7%99%D7%AA-%D7%94%D7%A0%D7%93%D7%A1%D7%94-%D7%AA%D7%A2%D7%A9%D7%99%D7%99%D7%94-%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C-at-fritz-logistics-forwarding-supply-chain-solutions-israel-4465517475",
   "ats": "unknown",
   "slug": "fritz-logistics-and-forwarding"
- },
- {
-  "name": "Thing or Two",
-  "careers_url": "https://il.linkedin.com/jobs/view/account-manager-at-thing-or-two-4465767470",
-  "ats": "unknown",
-  "slug": "thingortwo"
  },
  {
   "name": "Octup",
@@ -5094,12 +4962,6 @@
   "slug": "spacialio"
  },
  {
-  "name": "Sparkbeyond",
-  "careers_url": "https://secrethunter.io/companies/sparkbeyond",
-  "ats": "unknown",
-  "slug": "sparkbeyond"
- },
- {
   "name": "Speak Up Professional English",
   "careers_url": "https://secrethunter.io/companies/speak-up-professional-english",
   "ats": "unknown",
@@ -5110,12 +4972,6 @@
   "careers_url": "https://secrethunter.io/companies/speaknow",
   "ats": "unknown",
   "slug": "speaknow"
- },
- {
-  "name": "Spectrum Dynamics",
-  "careers_url": "https://secrethunter.io/companies/spectrum-dynamics",
-  "ats": "unknown",
-  "slug": "spectrum-dynamics"
  },
  {
   "name": "Speechifyinc",
@@ -5202,12 +5058,6 @@
   "slug": "stjosefstift"
  },
  {
-  "name": "Stradaglobal",
-  "careers_url": "https://secrethunter.io/companies/stradaglobal",
-  "ats": "unknown",
-  "slug": "stradaglobal"
- },
- {
   "name": "Stratacom",
   "careers_url": "https://secrethunter.io/companies/stratacom",
   "ats": "unknown",
@@ -5224,12 +5074,6 @@
   "careers_url": "https://secrethunter.io/companies/streamkey",
   "ats": "unknown",
   "slug": "streamkey"
- },
- {
-  "name": "Strixdrones",
-  "careers_url": "https://secrethunter.io/companies/strixdrones",
-  "ats": "unknown",
-  "slug": "strixdrones"
  },
  {
   "name": "Strugo Pharm",

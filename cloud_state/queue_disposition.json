@@ -20603,16 +20603,16 @@
   "why": "The evidence resolves \"NBN Connect\" to nbn.org.il, the site of Nefesh B'Nefesh (NBN); NBN Connect is a program/brand of that nonprofit rather than a separate employer. Hiring (e.g., its own Junior Graphic Designer posting) happens under Nefesh B'Nefesh."
  },
  "NGsoft": {
-  "date": "2026-09-03",
-  "evidence": {
-   "matched_on": "name-normalised",
-   "row": "Ngsoft Ltd",
-   "tried": []
-  },
-  "other_name": "Ngsoft Ltd",
-  "raw_verdict": "",
+  "date": "2026-09-15",
   "verdict": "covered-by-row",
-  "why": "the registry row 'Ngsoft Ltd' is this employer under another spelling (name-normalised)"
+  "raw_verdict": "",
+  "other_name": "Ngsoft Ltd",
+  "why": "the registry row 'Ngsoft Ltd' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Ngsoft Ltd",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
  },
  "NONO - GROUP": {
   "board_url_if_any": "",
@@ -25852,6 +25852,130 @@
   }
  },
  "Sohohouseco": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "IO Security": {
+  "date": "2026-09-15",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Island",
+  "why": "a rung found this name's board and the registry row 'Island' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Island",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.island.io/careers"
+    ]
+   ]
+  }
+ },
+ "Sivan Group": {
+  "date": "2026-09-15",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Sivan Design",
+  "why": "a rung found this name's board and the registry row 'Sivan Design' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Sivan Design",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://sivandesign.com/careers"
+    ]
+   ]
+  }
+ },
+ "Trivago": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Rocoto": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "eTeacher Group": {
+  "date": "2026-09-15",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "eteacher",
+  "why": "the registry row 'eteacher' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "eteacher",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Sparkbeyond": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Spectrum Dynamics": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Stradaglobal": {
+  "date": "2026-09-15",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Strixdrones": {
   "date": "2026-09-15",
   "verdict": "already-a-row",
   "raw_verdict": "already-a-row",
