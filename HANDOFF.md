@@ -40,12 +40,8 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 
 | due | lane | must be true | answered | verdict |
 |---|---|---|---|---|
-| 2026-09-15 | ats-fetch | **the `regressed to zero` class drains unattended.** First `event: schedule` digest on a headSha containing this commit: the mail's `regressed to zero` reads **<= 49** plus any new entrant, named (**66** on 09-13); none of Arrow Components, Netafim, Exyte, DoubleVerify, ABB, Deutsche Post DHL, OpenText or Lam Research on a `Boards` line or `Failed companies:`; `cloud_state/health_baseline.json` Netafim >= **24**, Exyte >= **19**, Arrow Components >= **5**; `native-ATS rows` >= **612** (603 + 9); no `mass verdict:`. A zero for Netafim, Exyte or Arrow means the repoint is wrong, not the board | | |
 | 2026-09-27 | registry | of rows stamped `zero-confirm 2026-08-28: confirmed`, **<=5%** have `health_baseline > 0` (and on 09-28 the same for `zero-confirm 2026-08-29: confirmed` rows, carried from the 09-05 row); above that, strip that run's verdicts | | |
 | 2026-09-18 | company-intel | **the held class is legible the morning it is asked.** The first digest whose drain reaches `Mars Antennas And Rf Systems` (gated 7 days by `[2, 2026-09-11]`) prints `1 held (mars-antennas-and-rf)` — or a record landed and it prints nothing | 2026-09-13 (`registry`) | N/A — `registry` parked `Mars Antennas And Rf Systems` on 09-13 (`596`, `not_domains` `mars.com`): research reads ACTIVE rows, so no drain reaches it. The `held` clause needs another held name to be read |
-| 2026-09-15 | company-intel | **the repointed boards arrive profiled.** The 09-14 and 09-15 mails' `Company intel:` open `all N board companies profiled` — Netafim, Exyte, Arrow Components and DoubleVerify each hold a record on 09-13 — and never `board companies unprofiled`; if it appears, the name is in the same line's `why failed` |  |  |
-| 2026-09-15 | registry | **the lapsed wave drains.** 09-15 `queue:` stamp: `selectable` below the 09-14 stamp's, `unverified_rows` below 09-14's; `drain_alarm` absent only if `selectable` <= 176 (190 on 09-13 afternoon, so BEHIND at ~1.1 nights is a reading, not a FAIL) |  |  |
-| 2026-09-15 | infra | **no free search rung runs.** 09-14 19:00 `listing-hunt` (schedule, ⊇ this commit): **0** `[ddg]` and **0** `[search-ab]` lines; the four drain `[bd-spend]` lines sum **<= 260** at 176 names (145 for 112 on 09-12) | | |
 
 ## State at handoff — 2026-09-01 ~17:00 UTC, every number re-derived
 
