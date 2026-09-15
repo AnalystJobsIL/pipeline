@@ -66303,5 +66303,17 @@
   ],
   "last": "2026-09-15",
   "verdict": "found"
+ },
+ "Uber": {
+  "tried": [
+   {
+    "rung": "bd-rescue",
+    "verdict": "validated",
+    "date": "2026-09-15",
+    "url": "https://www.uber.com/en/jobs/"
+   }
+  ],
+  "last": "2026-09-15",
+  "verdict": "validated"
  }
 }
