@@ -92,16 +92,22 @@ jobs:
         # posting before a dispute needs one -- Taboola's vanished nine days after we last
         # saw it and no cache held its text. FIRST, before the 90-minute enrich pass, so an
         # overrun there cannot starve it. Anonymous, one request every 6 s (the archive
-        # allows 15 a minute per IP and blocks for five minutes past that), 100 postings +
-        # 25 careers pages a day, 140 requests all told. The 302 naming a capture arrives
-        # after 18 s or after minutes (measured 09-04), so three threads wait behind one 6 s
-        # pace gate, and a 60 s timeout is `pending` -- the capture very probably exists and
-        # the next run asks the archive. It never raises: a refusal is a
-        # ledger line with a cooldown, a throttle ends the day, and `continue-on-error`
-        # keeps a crash from taking the enrich pass with it -- the crash is still a
-        # `wayback crashed:` clause in the morning mail's `Stages:` line, so it is not
-        # silent. What it produced is the `[wayback] submitted N` line below and the same
-        # numbers in the `wayback` stamp.
+        # allows 15 a minute per IP and blocks for five minutes past that), 150 postings +
+        # 25 careers pages a day, boards one in six, 220 requests all told. The 302 naming
+        # a capture arrives after 18 s or after minutes (measured 09-04), so three threads
+        # wait behind one 6 s pace gate, and a 60 s timeout is `pending` -- the capture MAY
+        # exist and the next run asks the archive (271 of 271 pending lines to 09-15 were
+        # timeouts, 206 never became captures: `captured` in the stamp is what was NAMED).
+        # It never raises: a refusal of an address is a ledger line with a cooldown; the
+        # archive's own failure (a connection error, a 5xx, a 429) is never the address's
+        # and never parks a host -- eight in a row pause the day 90 s, a 429 pauses it for
+        # its Retry-After, the third pause of either kind ends the day (`stop=archive-down`
+        # / `throttled`, infra 2026-09-15: two nights of `zero-produce` were the archive
+        # down, read as four hosts refusing). `continue-on-error` keeps a crash from taking
+        # the enrich pass with it -- the crash is still a `wayback crashed:` clause in the
+        # morning mail's `Stages:` line, so it is not silent. What it produced is the
+        # `[wayback] submitted N ... captured C, net a, server b, refused c` line below and
+        # the same numbers in the `wayback` stamp.
         env:
           WAYBACK_DAY_CAP: "150"
           WAYBACK_BOARD_CAP: "25"

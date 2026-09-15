@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**669 filed · 467 open · 202 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**670 filed · 468 open · 202 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 620.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 621.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -248,7 +248,7 @@ closure convention in the header.
 - **604** `604@registry` **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 
-### infra — 116 open
+### infra — 117 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -366,6 +366,7 @@ closure convention in the header.
 - **612** `612@infra` **Two parked registry rows read one board under names that differ only by a diacritic, and
 - **617** `617@infra` **Four of eight mutation shards already walled past the 1,800 s line on 09-13, and the
 - **619** `619@infra` **Eight tests still assert on the state a cron rewrites, and 134 more open it through a code
+- **620** `620@infra` **The Internet Archive names ~9 captures a night for us, against a backlog of 6,193 and
 
 ### discovery — 31 open
 
@@ -12082,6 +12083,25 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      The reading that decides it is the stamp's `throttled` count against `submitted` over a
      week, which is now in the mail every morning.
 
+     **CLOSED 2026-09-15 by `infra`**, extended by what the ledger said: the two nights after
+     this was filed (09-14, 09-15) landed 0 and the reason was not the throttle. `net:URLError`
+     38/25, `500` 11/7, `429` 1/1; on 09-14 39 of 40 availability lookups failed too (the whole
+     archive down), on 09-15 all 40 answered while every `/save/` failed. The host-park rule had
+     fired on **0** refusals in twelve nights (0 `http`/`blocked`/`excluded`/`limit-url` lines in
+     768) — every `parked for today` was the archive's failure charged to LinkedIn, Comeet and
+     Indeed. Shipped: (a) two pauses a day of either kind through one `_pause` — a 429 with its
+     own Retry-After each time, or 8 archive-side requests in a row for 90 s — and the third ends
+     the day as `stop=throttled` / `archive-down`; (b) boards one in six (`interleave`); the
+     archive's failures park nothing and are not the address's attempts (`refusals` in the
+     ledger state); `captured` beside `submitted` (271 of 271 `pending` lines were timeouts, 206
+     never captures), `net`/`server`/`refused` in the stamp, `zero-produce` on a night that
+     names nothing. The threshold 8 was measured in ledger order: fires on the five degraded
+     nights (14, 19, 12, 50, 33 in a row), on none of the seven others (max 5). Honest expectation
+     for the second 429 episode: on 09-13/14/15 the resend after the first pause was 429'd at
+     5 requests a minute, so it buys one more resend inside the same outage. Proof is the 09-16
+     and 09-17 morning-check rows; a `net`-only night on both is the archive down, not this.
+     `docs/sessions/2026-09-15-infra.md`. What is left is capacity, `620`.
+
 589. **A cheap model could pick the one right SERP result instead of fetching four** — lane:
      `infra`. Filed 2026-09-11 by `infra` from the alternatives research behind
      `docs/decisions/2026-09-11-bd-unlimited-optimize-once.md`. A resolution today is 1 SERP
@@ -12805,3 +12825,24 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
        never redirected (`cloud_state/firmo_failed.json` 42, `board_verify.json` 34, …). Redirect
        when the file is next touched and delete the entry; the allowlist should only shrink.
      Check: `python -c "import json;a=json.load(open('tests/live_state_allowlist.json'));print(len(a), sum(v['why'].startswith('ASSERTS') for v in a.values()))"` reads `137 3` on 2026-09-13.
+
+## From the `infra` lane, 2026-09-15 (the archive down is not a host refusing)
+
+620. **The Internet Archive names ~9 captures a night for us, against a backlog of 6,193 and
+     rising — the queue cannot drain at any ordering** — lane: `infra` (operator decision),
+     filed 2026-09-15 by `infra` from the ledger. Twelve nights, 768 lines: **52** immediate
+     named captures + **53** verified later = 105 captures, ~9 a night; 271 `pending` lines
+     (every one a 60-s timeout, `http: 0`) of which **206** were `unverified` three days on
+     (76 %); `backlog` 4,603 (09-04) → 6,193 (09-15) with the discovery net adding ~124
+     addresses a day. `582` fixed what the step did wrong on a bad night; it does not change
+     what the archive does on a good one: `WAYBACK_DAY_CAP` 150 is asked, ~60 are accepted, ~9
+     are named. Three readings, none taken here: (a) shrink the target set to what is
+     disputed — tier 1 (the role store and its `seen_ids` copies, ~500 addresses) and drop the
+     discovery net and the scrape corpus, which nobody has ever asked a snapshot of; (b) keep
+     the tiers and accept that the ledger is a sample, and say so on the card; (c) a second
+     archive — rejected by this session on 0 lines of reader code for one
+     (`jdfill.wayback_snapshot`, `wayback_rescue` read only the Internet Archive) and no
+     anonymous API at archive.today. Also rejected: a proxy egress for `/save/` (on 09-15 the
+     availability API answered 40/40 from the same runner while every `/save/` failed — the
+     egress is not the variable) and raising the caps (neither bound on any of the last three
+     nights: 50-138 of 220). Check: `python -c "import json;r=[json.loads(l) for l in open('cloud_state/wayback_ledger.jsonl',encoding='utf-8') if l.strip()];print(sum(1 for x in r if x['err']=='' and x['snap']),sum(1 for x in r if x['err']=='verified'),sum(1 for x in r if x['err']=='unverified'))"` reads `52 53 206` on 2026-09-15.
