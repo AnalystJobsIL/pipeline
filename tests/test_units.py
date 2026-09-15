@@ -30526,9 +30526,9 @@ def test_wayback_plan_is_oldest_first_by_tier_with_a_host_share_and_retries_last
     for i in range(4):
         u = f"https://board{i}.io/careers"
         targets[u] = T(u, "board", 9, "", i == 3)
-    ledger = {"https://x.com/retry": {"attempts": 1, "last_at": "2026-09-01", "last_err": "server",
+    ledger = {"https://x.com/retry": {"attempts": 1, "refusals": 0, "last_at": "2026-09-01", "last_err": "server",
                                       "ok_at": "", "pending_at": "", "kind": "posting"},
-              "https://board0.io/careers": {"attempts": 1, "last_at": "2026-09-03", "last_err": "",
+              "https://board0.io/careers": {"attempts": 1, "refusals": 0, "last_at": "2026-09-03", "last_err": "",
                                             "ok_at": "2026-09-03", "pending_at": "", "kind": "board"}}
     caps = _wb_caps(day=10, boards=2)
     postings, boards, backlog, due = A.plan_batch(targets, ledger, today, caps)
@@ -30548,8 +30548,9 @@ def test_wayback_plan_is_oldest_first_by_tier_with_a_host_share_and_retries_last
 
 def test_wayback_a_failure_is_retried_tomorrow_and_never_excluded():
     """A 429 / 5xx / connection error is eligible again after a day, another 4xx after
-    seven, an archive exclusion after thirty, and past four attempts after thirty -- there is
-    no state from which an address is never tried again. A captured posting is done; a
+    seven, an archive exclusion after thirty, and past four REFUSALS after thirty (the
+    archive's own failures are not the address's -- 2026-09-15) -- there is no state from
+    which an address is never tried again. A captured posting is done; a
     captured board is due again after seven days; a pending 200 waits for verification."""
     import archive_evidence as A
     T = A.Target("https://x.com/p", "posting", 1, "2026-08-01")
@@ -30557,7 +30558,7 @@ def test_wayback_a_failure_is_retried_tomorrow_and_never_excluded():
     d = _wb_dt.date.fromisoformat
 
     def st(**kw):
-        s = {"attempts": 1, "last_at": "2026-09-01", "last_err": "", "ok_at": "", "pending_at": "", "kind": "posting"}
+        s = {"attempts": 1, "refusals": 0, "last_at": "2026-09-01", "last_err": "", "ok_at": "", "pending_at": "", "kind": "posting"}
         s.update(kw)
         return s
     assert A.eligible(T, None, d("2026-09-04"))
@@ -30569,8 +30570,9 @@ def test_wayback_a_failure_is_retried_tomorrow_and_never_excluded():
     assert A.eligible(T, st(last_err="http"), d("2026-09-08"))
     assert not A.eligible(T, st(last_err="excluded"), d("2026-09-30"))
     assert A.eligible(T, st(last_err="excluded"), d("2026-10-01"))
-    assert not A.eligible(T, st(attempts=4, last_err="throttled"), d("2026-09-20"))
-    assert A.eligible(T, st(attempts=4, last_err="throttled"), d("2026-10-01"))
+    assert not A.eligible(T, st(attempts=4, refusals=4, last_err="http"), d("2026-09-20"))
+    assert A.eligible(T, st(attempts=4, refusals=4, last_err="http"), d("2026-10-01"))
+    assert A.eligible(T, st(attempts=4, refusals=0, last_err="throttled"), d("2026-09-02"))   # four archive failures are not four refusals
     assert not A.eligible(T, st(ok_at="2026-09-01"), d("2027-01-01"))               # a capture is final
     assert not A.eligible(T, st(pending_at="2026-09-01"), d("2026-09-02"))           # awaiting CDX
     assert not A.eligible(B, st(kind="board", ok_at="2026-09-01"), d("2026-09-07"))
@@ -30586,7 +30588,7 @@ def test_wayback_a_failure_is_retried_tomorrow_and_never_excluded():
         f.write("\n".join(_json.dumps(x) for x in lines) + "\n")
     s = A.read_ledger(path)["https://x.com/p"]
     os.unlink(path)
-    assert s["attempts"] == 2 and s["ok_at"] == "2026-09-03" and s["pending_at"] == "" and s["last_err"] == ""
+    assert s["attempts"] == 2 and s["refusals"] == 0 and s["ok_at"] == "2026-09-03" and s["pending_at"] == "" and s["last_err"] == ""
 
 
 def test_wayback_classify_every_shape_the_archive_has_answered_with():
@@ -30647,6 +30649,16 @@ def test_wayback_request_is_anonymous_and_a_timeout_is_pending(monkeypatch):
         raise ConnectionRefusedError("no route")
     monkeypatch.setattr(A, "_open", refused)
     assert A.submit("https://x.com/p", 1.0).err == "net:ConnectionRefusedError"
+    # `net:URLError` said nothing 137 times in twelve nights: the reason's class rides along
+    import socket as _socket
+    import urllib.error as _ue
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(_ue.URLError(_socket.gaierror(-3, "Temporary failure in name resolution"))))
+    assert A.submit("https://x.com/p", 1.0).err == "net:URLError:gaierror"
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(_ue.URLError(ConnectionResetError(104, "reset"))))
+    assert A.submit("https://x.com/p", 1.0).err == "net:URLError:ConnectionResetError"
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(_ue.URLError("unknown url type")))
+    assert A.submit("https://x.com/p", 1.0).err == "net:URLError:str"
+    assert A.cooldown_days("net:URLError:gaierror", 0) == 1                     # the family is still the first field
 
 
 def test_wayback_run_writes_one_line_per_attempt_and_verifies_yesterdays_pending(tmp_path, monkeypatch):
@@ -30737,24 +30749,48 @@ def _wb_clock(waits):
     return clock
 
 
-def test_wayback_throttled_twice_ends_the_day_and_a_zero_day_alarms(tmp_path, monkeypatch):
-    """A 429 pauses every thread for the archive's block (Retry-After, else five minutes)
-    and is retried once; a second ends the run. `throttled` is a counter; the ALARM is that
-    nothing landed -- a throttled IP on a shared runner is not this repo's fault, a day that
-    produced nothing is what the mail must say."""
+def test_wayback_a_second_throttle_episode_gets_its_own_wait_and_the_third_ends_the_day(tmp_path, monkeypatch):
+    """A 429 pauses every thread for its Retry-After (else five minutes) and is retried once;
+    a 429 to the request sent after that pause opens a SECOND pause with its own
+    Retry-After; the third ends the run (`582`: one episode ended the day on 09-06, 09-10,
+    09-13, 09-14 and 09-15, and on the last three the single resend was refused again at
+    five requests a minute). `throttled` counts 429 responses; the alarm is that nothing was
+    named, and the stamp says why the day ended."""
     import archive_evidence as A
     _wb_quiet(monkeypatch, tmp_path)
-    root = _wb_root(tmp_path, roles=[{"status": "open", "first_seen": "2026-08-01", "url": f"https://h{i}.io/p", "seen_ids": []}
-                                     for i in range(5)])
+    today = _wb_dt.date(2026, 9, 15)
+    urls = [f"https://h{i}.io/p" for i in range(5)]
+    root = _wb_root(tmp_path, roles=[{"status": "open", "first_seen": (today - _wb_dt.timedelta(days=30 - i)).isoformat(), "url": u, "seen_ids": []}
+                                     for i, u in enumerate(urls)])
     waits, calls = [], []
     monkeypatch.setattr(A, "_sleep", lambda s: waits.append(s))
-    monkeypatch.setattr(A, "_open", lambda req, timeout: calls.append(req.full_url) or (_ for _ in ()).throw(_wb_http_error(429, {"Retry-After": "120"})))
     monkeypatch.setattr(A.time, "monotonic", _wb_clock(waits))
-    rep = A.run(root, today=_wb_dt.date(2026, 9, 4), caps=_wb_caps(pace_s=0.0))
-    assert rep.throttled == 2 and rep.failed == 1 and rep.submitted == 0 and len(calls) == 2
-    assert rep.backlog == 4 and rep.alarm.startswith("zero-produce")
-    assert rep.lines[0].err == "throttled" and rep.lines[0].http == 429
-    assert 120.0 in waits                                                       # Retry-After honoured, slept once, never polled
+
+    def opener(req, timeout):
+        calls.append(req.full_url)
+        ra = {1: "120", 2: "60"}.get(len(calls))
+        raise _wb_http_error(429, {"Retry-After": ra} if ra else {})
+    monkeypatch.setattr(A, "_open", opener)
+    rep = A.run(root, today=today, caps=_wb_caps(pace_s=0.0, throttle_wait_s=300.0))
+    assert (len(calls), rep.throttled, rep.failed, rep.submitted, rep.backlog, rep.stop) == (3, 3, 2, 0, 3, "throttled")
+    assert waits == [120.0, 60.0]                                               # each episode its own Retry-After, slept once, never polled
+    assert [(l.url, l.err, l.http) for l in rep.lines] == [(urls[0], "throttled", 429), (urls[1], "throttled", 429)]
+    assert rep.alarm == "zero-produce: 0 named of 5 planned (accepted 0, net 0, server 0, refused 0, stopped throttled)"
+    # and a block that lifts after the second pause costs one address, not the day
+    root2 = _wb_root(tmp_path / "b", roles=[{"status": "open", "first_seen": (today - _wb_dt.timedelta(days=30 - i)).isoformat(), "url": u, "seen_ids": []}
+                                            for i, u in enumerate(urls)])
+    waits.clear()
+    calls.clear()
+
+    def opener2(req, timeout):
+        calls.append(req.full_url)
+        if len(calls) <= 2:
+            raise _wb_http_error(429, {"Retry-After": "30"})
+        raise _wb_http_error(302, {"Location": "/web/20260915120000/" + req.full_url.split("/save/", 1)[1]})
+    monkeypatch.setattr(A, "_open", opener2)
+    rep2 = A.run(root2, today=today, caps=_wb_caps(pace_s=0.0))
+    assert (rep2.submitted, rep2.captured, rep2.failed, rep2.throttled, rep2.stop, rep2.alarm) == (4, 4, 1, 2, "", "")
+    assert waits == [30.0, 30.0] and len(calls) == 6
 
 
 def test_wayback_five_refusals_park_a_host_and_the_budget_counts_requests(tmp_path, monkeypatch):
@@ -30916,6 +30952,262 @@ def test_wayback_ledger_merge_is_uncapped_and_the_audit_logs_still_cap():
     wf = open(os.path.join(_WB_REPO, ".github", "workflows", "jd-archive.yml"), encoding="utf-8").read()
     assert "cloud_state/wayback_ledger.jsonl" in wf and "python archive_evidence.py" in wf
     assert wf.index("python archive_evidence.py") < wf.index("enrich_scrape_jd.py --archive-only")
+
+
+# ------------------------------------------------------------------ lane: infra, 2026-09-15
+# Two nights of `zero-produce` (09-14, 09-15) were the archive down, and the step read them
+# as four hosts refusing: 0 refusal lines in 768 all-time, every park archive-side. Below:
+# the two families, the pause primitive, boards one in six, the ledger's `refusals`, and a
+# stamp that tells "archive down" from "we are blocked".
+
+
+def _wb_roles(today, hosts):
+    """One open role per entry, seen on consecutive days so the plan keeps this order."""
+    return [{"status": "open", "first_seen": (today - _wb_dt.timedelta(days=60 - i)).isoformat(),
+             "url": u, "seen_ids": []} for i, u in enumerate(hosts)]
+
+
+def test_wayback_an_archive_side_failure_never_parks_a_host_but_a_refusal_still_does(tmp_path, monkeypatch, capsys):
+    """Every `5 consecutive refusals, parked for today` printed from 09-04 to 09-15 was the
+    archive failing -- a connection error or a 5xx -- charged to LinkedIn, Comeet and Indeed
+    (the ledger holds 0 lines of class http/blocked/excluded/limit-url). The archive's own
+    failure parks nothing and resets nothing about the host; a 4xx from the archive about
+    THIS address still parks it after five; and a real answer in the middle of an
+    archive-side run resets the outage streak. Also: the archive is banned in the suite
+    BELOW the module's own opener, which never passes `urlopen`."""
+    import archive_evidence as A
+    import urllib.error
+    import urllib.request
+    from tests.conftest import PaidCallInTests
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 15)
+    li = [f"https://il.linkedin.com/jobs/view/{i}" for i in range(7)]
+    ok = [f"https://g{i}.io/p" for i in range(3)]
+    order = li[:3] + ok[:1] + li[3:6] + ok[1:2] + li[6:] + ok[2:]      # L L L G L L L G L G
+    root = _wb_root(tmp_path, roles=_wb_roles(today, order))
+    calls, waits = [], []
+    monkeypatch.setattr(A, "_sleep", lambda s: waits.append(s))
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock(waits))
+
+    def opener(req, timeout):
+        calls.append(req.full_url)
+        if "linkedin" in req.full_url:
+            raise urllib.error.URLError(ConnectionResetError(104, "Connection reset by peer"))
+        raise _wb_http_error(302, {"Location": "/web/20260915120000/" + req.full_url.split("/save/", 1)[1]})
+    monkeypatch.setattr(A, "_open", opener)
+    rep = A.run(root, today=today, caps=_wb_caps(host_share=1.0))
+    assert (rep.host_parked, rep.net, rep.server, rep.refused, rep.failed, rep.submitted, rep.captured) == (0, 7, 0, 0, 7, 3, 3)
+    assert len(calls) == 7 * 2 + 3 and A.OUTAGE_WAIT_S not in waits           # each archive failure retried once, no pause
+    assert {l.err for l in rep.lines if "linkedin" in l.url} == {"net:URLError:ConnectionResetError"}
+    assert rep.alarm == "" and rep.stop == "" and "parked for today" not in capsys.readouterr().out
+    # the same seven addresses REFUSED by the archive (a 4xx about the address): parked after five
+    root2 = _wb_root(tmp_path / "r", roles=_wb_roles(today, li))
+    calls.clear()
+    monkeypatch.setattr(A, "_open", lambda req, timeout: calls.append(req.full_url) or (_ for _ in ()).throw(_wb_http_error(403)))
+    rep2 = A.run(root2, today=today, caps=_wb_caps(host_share=1.0))
+    assert (rep2.host_parked, rep2.refused, rep2.net, rep2.failed, len(calls), rep2.backlog) == (1, 5, 0, 5, 5, 2)
+    assert "il.linkedin.com: 5 consecutive refusals, parked for today" in capsys.readouterr().out
+    # a refusal between two archive-side runs is a real answer: it resets the streak (six
+    # requests, then six, never OUTAGE_AFTER) -- and parks nothing on its own
+    order3 = li[:3] + ["https://h.io/p"] + li[3:6]
+    root3 = _wb_root(tmp_path / "s", roles=_wb_roles(today, order3))
+    calls.clear()
+    waits.clear()
+
+    def opener3(req, timeout):
+        calls.append(req.full_url)
+        if "linkedin" in req.full_url:
+            raise urllib.error.URLError(ConnectionResetError(104, "reset"))
+        raise _wb_http_error(403)
+    monkeypatch.setattr(A, "_open", opener3)
+    rep3 = A.run(root3, today=today, caps=_wb_caps(host_share=1.0))
+    assert (rep3.net, rep3.refused, rep3.host_parked, rep3.stop, len(calls)) == (6, 1, 0, "", 13)
+    assert A.OUTAGE_WAIT_S not in waits and waits.count(15.0) == 6
+    # the ban, one level below `urlopen`: the module's private OpenerDirector, no stub
+    with pytest.raises(PaidCallInTests):
+        A._OPENER.open(urllib.request.Request("https://web.archive.org/save/https://x.com/p"), timeout=1)
+
+
+def test_wayback_the_archive_down_pauses_twice_then_ends_the_day_with_no_host_parked(tmp_path, monkeypatch, capsys):
+    """OUTAGE_AFTER consecutive archive-side REQUESTS (retries included) pause every thread
+    for OUTAGE_WAIT_S; a second streak after the pause pauses again; a third ends the day
+    as `archive-down` -- with no host parked, the day's requests bounded, and the stamp
+    saying which family it was. Measured 09-04..09-15 in ledger order: the five degraded
+    nights ran 14, 19, 12, 50 and 33 archive-side lines in a row, the seven others at most
+    5; the two dead nights alone would have reached the third streak."""
+    import archive_evidence as A
+    import socket
+    import urllib.error
+    from pipeline import stages
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 15)
+    root = _wb_root(tmp_path, roles=_wb_roles(today, [f"https://h{i}.io/p" for i in range(20)]))
+    calls, waits, events = [], [], []
+
+    def sleep(s):
+        waits.append(s)
+        events.append((s, len(calls)))
+    monkeypatch.setattr(A, "_sleep", sleep)
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock(waits))
+
+    def opener(req, timeout):
+        calls.append(req.full_url)
+        raise urllib.error.URLError(socket.gaierror(-3, "Temporary failure in name resolution"))
+    monkeypatch.setattr(A, "_open", opener)
+    rep = A.run(root, today=today, caps=_wb_caps())
+    assert len(calls) == 3 * A.OUTAGE_AFTER == 24                             # three streaks of eight requests, then the day ends
+    assert [n for s, n in events if s == A.OUTAGE_WAIT_S] == [8, 16]          # each pause opened by exactly the eighth request
+    assert waits.count(15.0) == 12                                            # one in-thread retry per address, none after a pause opened
+    assert (rep.stop, rep.host_parked, rep.net, rep.server, rep.failed, rep.submitted, rep.backlog) == ("archive-down", 0, 12, 0, 12, 0, 8)
+    assert {l.err for l in rep.lines} == {"net:URLError:gaierror"} and len(rep.lines) == 12
+    assert rep.alarm == "zero-produce: 0 named of 20 planned (accepted 0, net 12, server 0, refused 0, stopped archive-down)"
+    A._report(rep, False)
+    assert stages.alarms("wayback", 1) == ["wayback " + rep.alarm]            # what the mail reads
+    st = stages._load()["wayback"]
+    assert (st["stop"], st["net"], st["server"], st["refused"], st["captured"]) == ("archive-down", 12, 0, 0, 0)
+    out = capsys.readouterr().out
+    assert out.count("pause 1 of 2 (archive-down): 90 s after 8 requests") == 1
+    assert out.count("pause 2 of 2 (archive-down): 90 s after 16 requests") == 1
+    assert "parked for today" not in out and "stopped: archive-down" in out
+    assert rep.line().endswith("requests 24, captured 0, net 12, server 0, refused 0, stopped archive-down -- ALARM " + rep.alarm)
+
+
+def test_wayback_boards_go_out_one_in_six_so_an_early_end_still_captures_boards(tmp_path, monkeypatch):
+    """Boards queued behind every posting read `boards 0 (of ~595 due)` on every night from
+    09-04 to 09-15, because the day ends first. `interleave` puts a board after every
+    `postings // boards` postings (150 / 25: one in six), leftovers last; a run cut short by
+    its request cap still lands boards."""
+    import archive_evidence as A
+    _wb_quiet(monkeypatch, tmp_path)
+    P = [f"p{i}" for i in range(14)]
+    B = ["b0", "b1", "b2"]
+    assert A.interleave(P, B) == P[:4] + ["b0"] + P[4:8] + ["b1"] + P[8:12] + ["b2"] + P[12:]
+    assert A.interleave(P[:3], B) == ["p0", "b0", "p1", "b1", "p2", "b2"]
+    assert A.interleave(P[:2], B) == ["p0", "b0", "p1", "b1", "b2"]            # more boards than postings: the tail
+    assert A.interleave(P[:3], []) == P[:3] and A.interleave([], B) == B and A.interleave([], []) == []
+    q = A.interleave([f"p{i}" for i in range(150)], [f"b{i}" for i in range(25)])
+    assert len(q) == 175 and [i for i, x in enumerate(q) if x.startswith("b")] == [7 * k + 6 for k in range(25)]
+    # the production caps: 30 postings + 5 boards planned, a request cap of 14 -> two boards land
+    today = _wb_dt.date(2026, 9, 15)
+    root = _wb_root(tmp_path, roles=_wb_roles(today, [f"https://p{i}.io/j" for i in range(30)]),
+                    companies=[[f"Co{i}", "scrape", "", f"https://board{i}.io/careers", "true", ""] for i in range(5)])
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(
+        _wb_http_error(302, {"Location": "/web/20260915120000/" + req.full_url.split("/save/", 1)[1]})))
+    rep = A.run(root, today=today, caps=_wb_caps(requests=14, boards=5))
+    assert (rep.boards, rep.submitted, rep.captured, rep.requests, rep.boards_due, rep.backlog) == (2, 12, 14, 14, 5, 21)
+    assert [l.kind for l in rep.lines] == ["posting"] * 6 + ["board"] + ["posting"] * 6 + ["board"]
+
+
+def test_wayback_the_archives_failures_are_not_the_urls_attempts(tmp_path):
+    """`refusals` counts the lines the archive answered about THIS address (a 4xx, a block,
+    an exclusion, an `unverified` capture); a connection error, a 5xx, a 429 or a timeout is
+    the archive's. The 30-day `tired` cooldown reads refusals (160 of 483 uncaptured urls
+    had only archive-side lines on 09-15, 232 at two attempts), with a bound of
+    3 x MAX_ATTEMPTS attempts of any kind; `attempts` still orders the retry reserve."""
+    import archive_evidence as A
+    import json as _json
+    today = _wb_dt.date(2026, 9, 15)
+    T = A.Target("https://x.com/p", "posting", 1, "2026-08-01")
+
+    def state(errs):
+        lines = [{"at": (today - _wb_dt.timedelta(days=len(errs) - i)).isoformat() + "T12:00:00Z", "url": T.url,
+                  "kind": "posting", "err": e, "snap": ""} for i, e in enumerate(errs)]       # the last one yesterday
+        p = tmp_path / "l.jsonl"
+        p.write_text("\n".join(_json.dumps(x) for x in lines) + "\n", encoding="utf-8")
+        return A.read_ledger(str(p))[T.url]
+    d30 = today + _wb_dt.timedelta(days=30)
+    s = state(["net:URLError:ConnectionResetError"] * 4)
+    assert (s["attempts"], s["refusals"]) == (4, 0) and A.eligible(T, s, today)
+    s = state(["server", "server", "throttled", "net:URLError"])
+    assert (s["attempts"], s["refusals"]) == (4, 0) and A.eligible(T, s, today)
+    s = state(["http"] * 4)
+    assert (s["attempts"], s["refusals"]) == (4, 4) and not A.eligible(T, s, today) and A.eligible(T, s, d30)
+    s = state(["pending", "unverified", "pending", "unverified"])
+    assert (s["attempts"], s["refusals"], s["pending_at"]) == (4, 2, "") and A.eligible(T, s, today)
+    s = state(["http", "blocked", "pending", "unverified", "unverified"])
+    assert s["refusals"] == 4 and not A.eligible(T, s, today)
+    s = state(["net:URLError"] * 11)
+    assert (s["attempts"], s["refusals"]) == (11, 0) and A.eligible(T, s, today)
+    s = state(["net:URLError"] * 12)
+    assert (s["attempts"], s["refusals"]) == (12, 0) and not A.eligible(T, s, today) and A.eligible(T, s, d30)
+    assert (A.cooldown_days("net:URLError", 0, 11), A.cooldown_days("net:URLError", 0, 12)) == (1, 30)
+    assert (A.cooldown_days("http", 3), A.cooldown_days("http", 4), A.cooldown_days("excluded", 0)) == (7, 30, 30)
+    # the retry reserve still orders by attempts, fewest first
+    urls = ["https://a.io/1", "https://b.io/2"]
+    targets = {u: A.Target(u, "posting", 1, "2026-08-01") for u in urls}
+    ledger = {urls[0]: dict(state(["net:URLError"] * 3), kind="posting"), urls[1]: dict(state(["server"]), kind="posting")}
+    postings, _b, _d, _due = A.plan_batch(targets, ledger, today, _wb_caps(day=10))
+    assert [t.url for t in postings] == [urls[1], urls[0]]
+
+
+def test_wayback_the_stamp_carries_the_split_and_captured_is_not_submitted(tmp_path, monkeypatch):
+    """`submitted` counts a timeout as accepted -- 09-12 read `submitted 64` and 37 of them
+    were `unverified` three days later -- so the stamp says `captured` (the archive NAMED a
+    capture) beside it, and `net` / `server` / `refused` so a reader can tell the archive
+    being down from the archive refusing us without a run log. The counters add up, `stop`
+    is stamped only when the day ended early, and a night that names nothing alarms
+    whatever it accepted."""
+    import archive_evidence as A
+    from pipeline import stages
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 15)
+    urls = ["https://a1.io/p", "https://a2.io/p", "https://t1.io/p", "https://t2.io/p", "https://t3.io/p",
+            "https://n1.io/p", "https://n2.io/p", "https://r1.io/p"]
+    root = _wb_root(tmp_path, roles=_wb_roles(today, urls))
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock([]))
+
+    def opener(req, timeout):
+        u = req.full_url
+        if "a1.io" in u:
+            raise _wb_http_error(302, {"Location": "/web/20260915120000/https://a1.io/p"})
+        if "a2.io" in u:
+            return _WbResp(200, {"X-Page-Cache": "HIT"}, "", u)
+        if "/t" in u:
+            raise TimeoutError("The read operation timed out")
+        if "/n" in u:
+            raise ConnectionResetError(104, "reset")
+        raise _wb_http_error(403)
+    monkeypatch.setattr(A, "_open", opener)
+    rep = A.run(root, today=today, caps=_wb_caps())
+    assert (rep.submitted, rep.captured, rep.failed, rep.net, rep.server, rep.refused, rep.throttled, rep.requests) == (5, 2, 3, 2, 0, 1, 0, 10)
+    pend = sum(1 for l in rep.lines if l.err == "pending")
+    assert rep.submitted + rep.boards == rep.captured + pend
+    assert rep.failed == rep.net + rep.server + rep.refused + sum(1 for l in rep.lines if l.err in ("throttled", "daily-limit"))
+    assert len(rep.lines) == rep.submitted + rep.boards + rep.failed + rep.verified + sum(1 for l in rep.lines if l.err == "unverified")
+    assert rep.alarm == "" and rep.stop == ""
+    assert rep.line() == ("[wayback] submitted 5, failed 3, backlog 0, boards 0 (of 0 due), verified 0, throttled 0, "
+                          "requests 10, captured 2, net 2, server 0, refused 1")
+    A._report(rep, False)
+    st = stages._load()["wayback"]
+    assert (st["submitted"], st["captured"], st["net"], st["server"], st["refused"]) == (5, 2, 2, 0, 1)
+    assert "stop" not in st and "alarm" not in st and "stop=" not in stages.summary()
+    assert "captured=2" in stages.summary() and "refused=1" in stages.summary()
+    # three timeouts and nothing named: accepted 3, and still zero-produce
+    root2 = _wb_root(tmp_path / "t", roles=_wb_roles(today, urls[2:5]))
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(TimeoutError("timed out")))
+    rep2 = A.run(root2, today=today, caps=_wb_caps())
+    assert (rep2.submitted, rep2.captured, rep2.failed) == (3, 0, 0)
+    assert rep2.alarm == "zero-produce: 0 named of 3 planned (accepted 3, net 0, server 0, refused 0)"
+
+
+def test_wayback_production_lines_carry_their_own_clock(tmp_path, monkeypatch):
+    """A production run (no `today`) stamps each ledger line when it is written; a run
+    given its day stamps them all with that day (the cadence rule in `_now`). One `now` for
+    the whole run gave every line of a night the run's start time, and the archive's
+    failures could only be shown to come in runs by line ORDER (09-15)."""
+    import archive_evidence as A
+    import itertools
+    _wb_quiet(monkeypatch, tmp_path)
+    urls = [f"https://c{i}.io/p" for i in range(4)]
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(
+        _wb_http_error(302, {"Location": "/web/20260915120000/" + req.full_url.split("/save/", 1)[1]})))
+    tick = itertools.count()
+    monkeypatch.setattr(A, "_now", lambda today=None: "2026-09-15T12:00:%02dZ" % next(tick))
+    rep = A.run(_wb_root(tmp_path / "prod", roles=_wb_roles(_wb_dt.date.today(), urls)), caps=_wb_caps())
+    assert rep.submitted == 4 and len({l.at for l in rep.lines}) == 4
+    today = _wb_dt.date(2026, 9, 15)
+    rep2 = A.run(_wb_root(tmp_path / "dated", roles=_wb_roles(today, urls)), today=today, caps=_wb_caps())
+    assert rep2.submitted == 4 and len({l.at for l in rep2.lines}) == 1
 
 
 # =====================================================================================

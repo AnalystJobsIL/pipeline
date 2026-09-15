@@ -18,6 +18,17 @@ capture timestamp when a header or the redirect carried one, `pending` when the 
 200 and named no capture (looked up on CDX from the next run on), and a class for every
 refusal, each with a cooldown -- a failure today is retryable tomorrow, never a verdict.
 
+Two families of failure, and they mean different things (2026-09-15, over 768 ledger lines:
+0 lines of the second family, and every "5 consecutive refusals" host park was the first).
+ARCHIVE-SIDE is the archive failing to answer -- a connection error, a 5xx, a 429 -- and says
+nothing about the address; a HOST REFUSAL is the archive answering that it will not take
+THIS address. Only a refusal parks a host. An archive-side streak is the archive being down:
+the day pauses for it (`OUTAGE_AFTER`, `OUTAGE_WAIT_S`), twice, then ends (`archive-down`),
+and the stamp's `net` / `server` / `refused` say which of the two it was. A 429 gets the same
+two pauses (its Retry-After, else five minutes). `pending` is a timeout (271 of 271 lines by
+09-15): it is neither family, and a night that names no capture is `zero-produce` however
+many timeouts it "accepted".
+
     python archive_evidence.py --dry-run      # the plan, no network, no ledger write
     python archive_evidence.py --limit 5      # a hand-sized real run
     python archive_evidence.py                # jd-archive.yml, 12:30 UTC, first step
@@ -71,6 +82,18 @@ PENDING_DAYS = 3          # a 200 with no capture is looked up on CDX for this l
 MAX_ATTEMPTS = 4          # past this a URL waits COOLDOWN_TIRED days, and is still retried
 COOLDOWN = {"soft": 1, "hard": 7, "excluded": 30}
 COOLDOWN_TIRED = 30
+# The two families (module docstring). A `throttled` line is the archive's per-IP block, so it
+# is the archive's, not the host's; `pending` (a timeout) and `unverified` are in neither set:
+# a timeout is unread, and an unverified capture is the target refusing the archive's crawler
+# (149 of 206 by 09-15 were LinkedIn / Indeed / Comeet), which `read_ledger` counts as a
+# refusal of that address.
+ARCHIVE_SIDE = frozenset(["net", "server", "throttled"])
+HOST_REFUSAL = frozenset(["http", "blocked", "excluded", "limit-url"])
+OUTAGE_AFTER = 8          # consecutive archive-side REQUESTS that open a pause: fires on the five
+#                           degraded nights of 09-04..09-15 (14, 19, 12, 50, 33 in a row) and on
+#                           none of the seven others (max 5)
+OUTAGE_WAIT_S = 90.0      # the pause; the third trigger of any kind ends the day
+PAUSE_EPISODES = 2        # pauses a day, a 429 or an outage streak alike
 TS = re.compile(r"/web/(\d{14})")
 # Tracking parameters only. `jk=` (Indeed), `gh_jid=` (Greenhouse embeds) and `token=` are
 # the address, and are kept.
@@ -85,6 +108,10 @@ BODY_CLASSES = (
 )
 SUCCESS = frozenset(["", "cached", "verified"])
 SOFT = frozenset(["throttled", "server", "net", "blocked", "unverified", "limit-url", "daily-limit"])
+
+
+def _family(err: str) -> str:
+    return str(err or "").split(":", 1)[0]
 
 
 @dataclass
@@ -167,19 +194,31 @@ class Report:
     throttled: int = 0
     requests: int = 0
     host_parked: int = 0
+    captured: int = 0          # the archive NAMED a capture (a 302 / header, or `cached`); `submitted` also counts timeouts
+    net: int = 0               # recorded lines by family -- the split the mail needs to tell "archive down" from "we are blocked"
+    server: int = 0
+    refused: int = 0
+    stop: str = ""             # why the day ended early: throttled | archive-down | daily-limit
     alarm: str = ""
     lines: list = field(default_factory=list)
 
     def counters(self) -> dict:
-        d = {k: v for k, v in self.__dict__.items() if k not in ("lines", "alarm")}
+        d = {k: v for k, v in self.__dict__.items() if k not in ("lines", "alarm", "stop")}
+        if self.stop:
+            d["stop"] = self.stop
         if self.alarm:
             d["alarm"] = self.alarm
         return d
 
+    def split(self) -> str:
+        return (f"net {self.net}, server {self.server}, refused {self.refused}"
+                + (f", stopped {self.stop}" if self.stop else ""))
+
     def line(self) -> str:
         return (f"[wayback] submitted {self.submitted}, failed {self.failed}, backlog {self.backlog}, "
                 f"boards {self.boards} (of {self.boards_due} due), verified {self.verified}, "
-                f"throttled {self.throttled}, requests {self.requests}"
+                f"throttled {self.throttled}, requests {self.requests}, captured {self.captured}, "
+                + self.split()
                 + (f", host parked {self.host_parked}" if self.host_parked else "")
                 + (f" -- ALARM {self.alarm}" if self.alarm else ""))
 
@@ -311,8 +350,11 @@ def _load_json(path, default):
 
 # ------------------------------------------------------------------ the ledger
 def read_ledger(path: str) -> dict:
-    """url -> the latest state: `attempts`, `last_at`, `last_err`, `ok_at` (the newest
-    successful capture's date), `pending_at` (an unverified 200 awaiting CDX)."""
+    """url -> the latest state: `attempts` (every line but a `verified`), `refusals` (the
+    attempts the archive answered about THIS address: a host refusal or `unverified` --
+    never a connection error, a 5xx, a 429 or a timeout, which are the archive's), `last_at`,
+    `last_err`, `ok_at` (the newest successful capture's date), `pending_at` (an unverified
+    200 awaiting CDX)."""
     state: dict = {}
     try:
         with open(path, encoding="utf-8") as f:
@@ -329,14 +371,16 @@ def read_ledger(path: str) -> dict:
             recs.append(rec)
     recs.sort(key=lambda r: str(r.get("at") or ""))
     for rec in recs:
-        s = state.setdefault(rec["url"], {"attempts": 0, "last_at": "", "last_err": "", "ok_at": "",
-                                          "pending_at": "", "kind": rec.get("kind") or "posting"})
+        s = state.setdefault(rec["url"], {"attempts": 0, "refusals": 0, "last_at": "", "last_err": "",
+                                          "ok_at": "", "pending_at": "", "kind": rec.get("kind") or "posting"})
         err = str(rec.get("err") or "")
         at = str(rec.get("at") or "")[:10]
         if err == "verified":                     # a CDX confirmation, not an attempt
             s["ok_at"], s["pending_at"], s["last_err"] = at, "", ""
             continue
         s["attempts"] += 1
+        if _family(err) in HOST_REFUSAL or err == "unverified":
+            s["refusals"] += 1
         s["last_at"], s["last_err"] = at, err
         if err in SUCCESS and (rec.get("snap") or err == "cached"):
             s["ok_at"], s["pending_at"] = at, ""
@@ -347,9 +391,15 @@ def read_ledger(path: str) -> dict:
     return state
 
 
-def cooldown_days(err: str, attempts: int) -> int:
-    err = err.split(":", 1)[0]
-    if attempts >= MAX_ATTEMPTS:
+def cooldown_days(err: str, refusals: int, attempts: int = 0) -> int:
+    """Days before an address is due again. Tired (30 days) after MAX_ATTEMPTS REFUSALS --
+    the archive's own failures do not count, or a fortnight of outages would have retired
+    every address it touched (160 of 483 uncaptured urls had only archive-side lines on
+    09-15) -- or after three times that many attempts of any kind, so an address the
+    archive specifically cannot take (a 5xx on one huge page) is not asked every day for
+    ever."""
+    err = _family(err)
+    if refusals >= MAX_ATTEMPTS or attempts >= 3 * MAX_ATTEMPTS:
         return COOLDOWN_TIRED
     if err in SOFT:
         return COOLDOWN["soft"]
@@ -371,7 +421,7 @@ def eligible(t: Target, s: dict | None, today: dt.date) -> bool:
         return _days(today, s["ok_at"]) >= BOARD_DAYS and (
             not s["last_at"] or s["last_at"] <= s["ok_at"] or
             _days(today, s["last_at"]) >= cooldown_days(s["last_err"], 0))
-    return _days(today, s["last_at"]) >= cooldown_days(s["last_err"], s["attempts"])
+    return _days(today, s["last_at"]) >= cooldown_days(s["last_err"], s["refusals"], s["attempts"])
 
 
 def _days(today: dt.date, iso: str) -> int:
@@ -419,6 +469,26 @@ def plan_batch(targets: dict, ledger: dict, today: dt.date, caps: Caps):
         per_host[t.host] = per_host.get(t.host, 0) + 1
         chosen.append(t)
     return chosen, [b[-1] for b in boards[:caps.boards]], deferred, len(boards)
+
+
+def interleave(postings: list, boards: list) -> list:
+    """The day's send order: a board after every `len(postings) // len(boards)` postings
+    (150 / 25 is one in six), leftovers of either kind at the tail. Boards queued behind
+    every posting read `boards 0 (of ~595 due)` on every night from 09-04 to 09-15,
+    because the day ends before the postings do."""
+    if not boards:
+        return list(postings)
+    if not postings:
+        return list(boards)
+    every = max(1, len(postings) // len(boards))
+    out, b = [], 0
+    for i, p in enumerate(postings, 1):
+        out.append(p)
+        if i % every == 0 and b < len(boards):
+            out.append(boards[b])
+            b += 1
+    out.extend(boards[b:])
+    return out
 
 
 # ------------------------------------------------------------------ the wire
@@ -502,7 +572,9 @@ def submit(url: str, timeout: float = 60.0) -> Result:
     except Exception as e:  # noqa: BLE001 - a network error is a ledger line, not a crash
         if isinstance(e, TimeoutError) or "timed out" in str(e).lower():
             return Result(0, "", "pending")
-        return Result(0, "", "net:" + type(e).__name__)
+        # `net:URLError` said nothing 137 times (09-04..09-15); the reason's class does
+        why = type(e.reason).__name__ if isinstance(e, urllib.error.URLError) and e.reason is not None else ""
+        return Result(0, "", "net:" + type(e).__name__ + (":" + why if why else ""))
 
 
 def capture_since(url: str, since: str, timeout: float = 30.0):
@@ -574,8 +646,10 @@ class _Pool:
         self.lock = threading.Lock()
         self.next_send = 0.0
         self.stop = ""
-        self.throttle_at = None          # when the day's one throttle episode began
-        self.throttle_wait = 0.0
+        self.pause_at = None             # when the current pause (a 429 or an outage streak) began
+        self.pause_wait = 0.0
+        self.episodes = 0                # pauses so far; PAUSE_EPISODES is the day's allowance
+        self.arch_streak = 0             # consecutive archive-side requests since the last real answer
         self.parked, self.streak = set(), {}
 
     def _exhausted(self) -> bool:
@@ -604,6 +678,8 @@ class _Pool:
                 return False
             now = time.monotonic()
             wait = max(0.0, self.next_send - now)
+            if now + wait - self.started > self.budget_s:
+                return False                 # a pause that ends past the budget is not slept through and then sent
             self.next_send = max(now, self.next_send) + self.caps.pace_s
             self.rep.requests += 1
         if wait > 0:
@@ -622,69 +698,113 @@ class _Pool:
             attempt = (self.ledger.get(t.url) or {}).get("attempts", 0) + 1
             sent = time.monotonic()
             res = submit(t.url, self.caps.timeout_s)
-            if res.err == "throttled" or res.err == "server" or res.err.startswith("net:"):
-                res = self._retry(t, res, sent)
-            self.record(t, attempt, res)
+            if _family(res.err) in ARCHIVE_SIDE:
+                res, sent = self._retry(t, res, sent)
+            self.record(t, attempt, res, sent)
 
-    def _throttled(self, sent: float) -> float:
-        """Under the lock. 0.0 when a 429 to a request SENT at `sent` ends the day (it went
-        out after the day's one pause had elapsed, so the block is back), else the pause
-        every thread now waits. Three in-flight threads all see the same block at once --
-        one episode, not two (wave 1: the second thread through the lock ended the day
-        before anyone had paused; judged by arrival time, a paused thread's own resend
-        looked like a second episode)."""
-        self.rep.throttled += 1
-        if self.throttle_at is not None and sent >= self.throttle_at + self.throttle_wait:
-            self.stop = "throttled"
+    def _pause(self, sent: float, wait: float, reason: str) -> float:
+        """Under the lock. The day's one pause primitive: a 429 (`throttled`, the archive's
+        per-IP block, its Retry-After or five minutes) and an archive-side streak
+        (`archive-down`, OUTAGE_AFTER connection errors / 5xx in a row, OUTAGE_WAIT_S) both
+        push every thread's next send past the pause. Returns the pause every thread now
+        waits, or 0.0 when this trigger ENDS the day: the request was sent after the current
+        pause had elapsed -- judged by send time, because three in-flight threads all see one
+        block at once and a paused thread's own resend is not a new episode (wave 1) -- and
+        the day's PAUSE_EPISODES are spent. One episode ended the day until 09-15, and on
+        09-13/14/15 the resend after it was refused each night at 5 requests a minute."""
+        if self.stop:
             return 0.0
-        if self.throttle_at is None:
-            self.throttle_at = time.monotonic()
-            self.throttle_wait = self.caps.throttle_wait_s
-            self.next_send = max(self.next_send, self.throttle_at + self.throttle_wait)
-        return self.throttle_wait
+        now = time.monotonic()
+        if self.pause_at is not None and sent < self.pause_at + self.pause_wait:
+            return self.pause_wait               # sent inside the current pause: the same episode
+        if self.episodes >= PAUSE_EPISODES:
+            self.stop = reason
+            return 0.0
+        self.episodes += 1
+        self.pause_at, self.pause_wait = now, wait
+        self.next_send = max(self.next_send, now + wait)
+        self.arch_streak = 0
+        print(f"[wayback] pause {self.episodes} of {PAUSE_EPISODES} ({reason}): {wait:.0f} s after "
+              f"{self.rep.requests} requests (net {self.rep.net}, server {self.rep.server})", flush=True)
+        return wait
 
-    def _retry(self, t: Target, res: Result, sent: float) -> Result:
-        """Once. A 429 is the archive's five-minute block on this IP (or its Retry-After):
-        every thread pauses for it, and a 429 to a request sent after the pause ends the
-        day. 5xx / a connection error: this thread waits 15 s."""
+    def _arch(self, sent: float) -> bool:
+        """Under the lock. One archive-side REQUEST (a connection error or a 5xx) sent at
+        `sent`. A request sent inside the current pause is not evidence about the archive
+        after it (a thread already asleep in `slot()` sends on its old schedule). True when
+        this one made the streak long enough to open a pause or end the day."""
+        if self.pause_at is not None and sent < self.pause_at + self.pause_wait:
+            return False
+        self.arch_streak += 1
+        if self.arch_streak < OUTAGE_AFTER:
+            return False
+        self._pause(sent, OUTAGE_WAIT_S, "archive-down")
+        return True
+
+    def _retry(self, t: Target, res: Result, sent: float):
+        """Once, and only when the ARCHIVE failed (a refusal of the address is final for the
+        day). A 429: every thread pauses for its Retry-After (else five minutes), and a 429 to
+        a request sent after that pause opens the day's second pause, then ends the day. A
+        connection error or 5xx: this thread waits 15 s -- unless it was the OUTAGE_AFTER-th
+        in a row, when the archive is down and the pause is the retry. Returns the result to
+        record and when it was sent."""
         with self.lock:
             if res.err == "throttled":
-                if res.retry_after and self.throttle_at is None:
-                    self.caps.throttle_wait_s = res.retry_after
-                wait = self._throttled(sent)
+                self.rep.throttled += 1
+                wait = self._pause(sent, res.retry_after or self.caps.throttle_wait_s, "throttled")
                 if not wait:
-                    return res
+                    return res, sent
             else:
+                if self._arch(sent):
+                    return res, sent
                 wait = 15.0
             if time.monotonic() - self.started + wait > self.budget_s:
-                return res
+                return res, sent
         if res.err != "throttled":
             _sleep(wait)
         if not self.slot():
-            return res
+            return res, sent
         sent = time.monotonic()
         res2 = submit(t.url, self.caps.timeout_s)
         if res2.err == "throttled":
             with self.lock:
-                self._throttled(sent)
-        return res2
+                self.rep.throttled += 1
+                self._pause(sent, res2.retry_after or self.caps.throttle_wait_s, "throttled")
+        return res2, sent
 
-    def record(self, t: Target, attempt: int, res: Result) -> None:
+    def record(self, t: Target, attempt: int, res: Result, sent: float = 0.0) -> None:
         with self.lock:
             self.out.append(_line(t, attempt, res, self.now), self.rep)
+            fam = _family(res.err)
             if res.err in SUCCESS or res.err == "pending":
                 if t.kind == "board":
                     self.rep.boards += 1
                 else:
                     self.rep.submitted += 1
+                if res.snap or res.err == "cached":
+                    self.rep.captured += 1
                 self.streak[t.host] = 0
+                if res.err != "pending":             # a timeout is unread: it neither counts nor resets
+                    self.arch_streak = 0
                 return
             self.rep.failed += 1
-            self.streak[t.host] = self.streak.get(t.host, 0) + 1
-            if self.streak[t.host] >= self.caps.host_park_after and t.host not in self.parked:
-                self.parked.add(t.host)
-                self.rep.host_parked += 1
-                print(f"[wayback] {t.host}: {self.streak[t.host]} consecutive refusals, parked for today", flush=True)
+            if fam == "net":
+                self.rep.net += 1
+            elif fam == "server":
+                self.rep.server += 1
+            elif fam in HOST_REFUSAL:
+                self.rep.refused += 1
+            if fam in ARCHIVE_SIDE:                  # the archive's failure: the streak, never the host
+                if fam != "throttled":               # a 429 had its own pause in `_retry`
+                    self._arch(sent)
+            else:
+                self.arch_streak = 0
+            if fam in HOST_REFUSAL:                  # only the archive's word about THIS address parks it
+                self.streak[t.host] = self.streak.get(t.host, 0) + 1
+                if self.streak[t.host] >= self.caps.host_park_after and t.host not in self.parked:
+                    self.parked.add(t.host)
+                    self.rep.host_parked += 1
+                    print(f"[wayback] {t.host}: {self.streak[t.host]} consecutive refusals, parked for today", flush=True)
             if res.err == "daily-limit":
                 self.stop = "daily-limit"
                 self.rep.alarm = "daily-limit: the archive refused further anonymous captures today"
@@ -700,6 +820,7 @@ class _Pool:
         with self.lock:
             if self.stop:
                 print(f"[wayback] stopped: {self.stop}", flush=True)
+                self.rep.stop = self.stop
             self.rep.backlog += len(self.queue)
             self.queue = []
 
@@ -708,8 +829,11 @@ def run(root: str = ROOT, today: dt.date | None = None, caps: Caps | None = None
         dry_run: bool = False, limit: int = 0) -> Report:
     # A caller that names the day stamps the ledger with THAT day: every cadence here is a
     # difference against `today`, so a line dated by the wall clock in a run dated otherwise
-    # is a cadence measured against two different calendars (see `_now`).
-    now = _now(today)
+    # is a cadence measured against two different calendars (see `_now`). A production run
+    # (no `today`) stamps each line when it is written: one `now` for the whole run gave
+    # every line of a night the run's start time, and the ledger could not show that the
+    # archive's failures come in runs of 12-50 (09-15; they were measured by line ORDER).
+    now = _now(today) if today else None
     today = today or dt.date.today()
     caps = caps or Caps.from_env()
     rep = Report()
@@ -746,16 +870,19 @@ def run(root: str = ROOT, today: dt.date | None = None, caps: Caps | None = None
             rep.requests += 1
             if ts:
                 rep.verified += 1
-                out.append(Line(now, url, s["kind"], 0, s["attempts"], 200, ts, "verified"), rep)
+                out.append(Line(now or _now(), url, s["kind"], 0, s["attempts"], 200, ts, "verified"), rep)
             elif _days(today, s["pending_at"]) >= PENDING_DAYS:
-                out.append(Line(now, url, s["kind"], 0, s["attempts"], 200, "", "unverified"), rep)
+                out.append(Line(now or _now(), url, s["kind"], 0, s["attempts"], 200, "", "unverified"), rep)
             _sleep(caps.pace_s)
-        # 2. the day's captures
-        _Pool(postings + boards, ledger, out, rep, caps, started, budget_s, now).run()
+        # 2. the day's captures, boards one in six so an early end still reaches them
+        _Pool(interleave(postings, boards), ledger, out, rep, caps, started, budget_s, now).run()
     finally:
         out.close()
-    if not rep.alarm and rep.submitted == 0 and rep.boards == 0 and (postings or boards):
-        rep.alarm = f"zero-produce: 0 of {len(postings) + len(boards)} planned captures landed"
+    # `captured`, not `submitted`: a night of timeouts "accepted" 64 and named 0 (09-12), and
+    # 37 of those were `unverified` three days later. The token is what the mail check greps.
+    if not rep.alarm and rep.captured == 0 and (postings or boards):
+        rep.alarm = (f"zero-produce: 0 named of {len(postings) + len(boards)} planned "
+                     f"(accepted {rep.submitted + rep.boards}, {rep.split()})")
     return rep
 
 
@@ -772,8 +899,8 @@ def _report(rep: Report, dry_run: bool) -> None:
     if summary:
         try:
             with open(summary, "a", encoding="utf-8") as f:
-                f.write(f"- wayback: **{rep.submitted} postings** + {rep.boards} boards captured, "
-                        f"{rep.failed} refused, {rep.backlog} left for tomorrow, {rep.verified} verified"
+                f.write(f"- wayback: **{rep.submitted} postings** + {rep.boards} boards accepted, "
+                        f"{rep.captured} named, {rep.failed} failed ({rep.split()}), {rep.backlog} left for tomorrow, {rep.verified} verified"
                         + (f", **alarm:** {rep.alarm}" if rep.alarm else "") + "\n")
         except OSError:
             pass

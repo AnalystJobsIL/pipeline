@@ -3786,5 +3786,97 @@
   "killers": [
    "tests/test_units.py::test_the_shared_run_cap_binds_the_jd_layers_own_unlocker"
   ]
+ },
+ {
+  "id": "wayback-net-parks-host",
+  "file": "archive_evidence.py",
+  "symbol": "_Pool.record",
+  "class": "M1-gate-removal",
+  "find": "            if fam in HOST_REFUSAL:                  # only the archive's word about THIS address parks it\n",
+  "replace": "            if True:\n",
+  "why": "2026-09-15: every `5 consecutive refusals, parked for today` from 09-04 to 09-15 was the archive's own failure (a connection error or a 5xx, 0 refusal lines in 768) charged to LinkedIn, Comeet and Indeed, four hosts a night; a park must read only the archive's word about THIS address (infra).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_an_archive_side_failure_never_parks_a_host_but_a_refusal_still_does"
+  ]
+ },
+ {
+  "id": "wayback-pause-never-stops",
+  "file": "archive_evidence.py",
+  "symbol": "PAUSE_EPISODES",
+  "class": "M7-constant-drift",
+  "find": "PAUSE_EPISODES = 2        # pauses a day, a 429 or an outage streak alike\n",
+  "replace": "PAUSE_EPISODES = 99       # pauses a day, a 429 or an outage streak alike\n",
+  "why": "the day must END after its two pauses: a dead archive would otherwise be asked in eights until the request cap, and the 30-minute budget is the only other bound (infra, 2026-09-15).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_the_archive_down_pauses_twice_then_ends_the_day_with_no_host_parked",
+   "tests/test_units.py::test_wayback_a_second_throttle_episode_gets_its_own_wait_and_the_third_ends_the_day"
+  ]
+ },
+ {
+  "id": "wayback-second-429-ends-the-day",
+  "file": "archive_evidence.py",
+  "symbol": "PAUSE_EPISODES",
+  "class": "M7-constant-drift",
+  "find": "PAUSE_EPISODES = 2        # pauses a day, a 429 or an outage streak alike\n",
+  "replace": "PAUSE_EPISODES = 1        # pauses a day, a 429 or an outage streak alike\n",
+  "why": "`582`: one pause ended the archive day on five of twelve nights; the second episode with its own Retry-After is the item (infra, 2026-09-15).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_a_second_throttle_episode_gets_its_own_wait_and_the_third_ends_the_day"
+  ]
+ },
+ {
+  "id": "wayback-outage-after-drift",
+  "file": "archive_evidence.py",
+  "symbol": "OUTAGE_AFTER",
+  "class": "M7-constant-drift",
+  "find": "OUTAGE_AFTER = 8          # consecutive archive-side REQUESTS that open a pause",
+  "replace": "OUTAGE_AFTER = 9          # consecutive archive-side REQUESTS that open a pause",
+  "why": "the threshold was measured (fires on the five degraded nights of 09-04..09-15, on none of the seven others); a test that only says `pauses twice` cannot see it move (infra, 2026-09-15).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_the_archive_down_pauses_twice_then_ends_the_day_with_no_host_parked"
+  ]
+ },
+ {
+  "id": "wayback-boards-tail",
+  "file": "archive_evidence.py",
+  "symbol": "run",
+  "class": "M1-gate-removal",
+  "find": "        _Pool(interleave(postings, boards), ledger, out, rep, caps, started, budget_s, now).run()\n",
+  "replace": "        _Pool(postings + boards, ledger, out, rep, caps, started, budget_s, now).run()\n",
+  "why": "boards queued behind every posting read `boards 0 (of ~595 due)` on every night from 09-04 to 09-15 because the day ended first (infra, 2026-09-15).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_boards_go_out_one_in_six_so_an_early_end_still_captures_boards"
+  ]
+ },
+ {
+  "id": "wayback-archive-side-is-an-attempt",
+  "file": "archive_evidence.py",
+  "symbol": "eligible",
+  "class": "M1-gate-removal",
+  "find": "    return _days(today, s[\"last_at\"]) >= cooldown_days(s[\"last_err\"], s[\"refusals\"], s[\"attempts\"])\n",
+  "replace": "    return _days(today, s[\"last_at\"]) >= cooldown_days(s[\"last_err\"], s[\"attempts\"], s[\"attempts\"])\n",
+  "why": "the 30-day `tired` cooldown read every line as the address's attempt: 160 of 483 uncaptured urls had only archive-side lines on 09-15 and were two outage nights from retirement (infra, 2026-09-15).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_the_archives_failures_are_not_the_urls_attempts"
+  ]
+ },
+ {
+  "id": "wayback-timeout-is-a-capture",
+  "file": "archive_evidence.py",
+  "symbol": "run",
+  "class": "M1-gate-removal",
+  "find": "    if not rep.alarm and rep.captured == 0 and (postings or boards):\n",
+  "replace": "    if not rep.alarm and rep.submitted == 0 and rep.boards == 0 and (postings or boards):\n",
+  "why": "the old rule: `submitted` counts a 60-s timeout as accepted, so 09-12 (64 accepted, 0 named, 37 unverified three days later) never alarmed (infra, 2026-09-15).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_the_stamp_carries_the_split_and_captured_is_not_submitted"
+  ]
  }
 ]

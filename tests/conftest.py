@@ -33,6 +33,7 @@ machine: it makes a local run behave like the CI run that is already green.
 """
 import os
 import sys
+import http.client
 import urllib.request
 from urllib.parse import urlsplit
 
@@ -55,8 +56,16 @@ PAID_HOSTS = {"api.brightdata.com"}
 # before. Every existing walk test stubs `discovery_daily._li_guest`, so nothing depended on
 # reaching it -- which is exactly when to close a hole, rather than after the wall-clock
 # guards added here gave a future test a reason to.
+# The Internet Archive joined on 2026-09-15 (infra). `archive_evidence.py` WRITES to it
+# through its own `OpenerDirector` (a 302 from `/save/` names the capture and must not be
+# followed), which the `urlopen` wrap below never sees -- so the ban is repeated one level
+# down, on `http.client.HTTPConnection.connect`, where every stdlib opener actually opens a
+# socket. `jdfill.wayback_snapshot` and `wayback_rescue.py` READ it through `urlopen`. The
+# archive was down two nights running the day this went in; a suite that reaches it is
+# non-hermetic on exactly the nights the step under test is broken.
 FREE_BUT_LIVE_HOSTS = {"html.duckduckgo.com", "lite.duckduckgo.com",
-                       "linkedin.com", "www.linkedin.com", "il.linkedin.com"}
+                       "linkedin.com", "www.linkedin.com", "il.linkedin.com",
+                       "web.archive.org", "archive.org"}
 
 
 class PaidCallInTests(BaseException):
@@ -73,9 +82,7 @@ class PaidCallInTests(BaseException):
 _real_urlopen = urllib.request.urlopen
 
 
-def _no_paid_calls(req, *args, **kwargs):
-    url = req if isinstance(req, str) else getattr(req, "full_url", "")
-    host = urlsplit(url).hostname
+def _refuse_if_banned(host, url):
     if host in PAID_HOSTS:
         raise PaidCallInTests(
             f"a test reached {url} -- that is real money. Stub `urllib.request.urlopen` (or "
@@ -88,10 +95,30 @@ def _no_paid_calls(req, *args, **kwargs):
             f"tests/test_units.py is the ready-made one) rather than letting the suite depend "
             f"on somebody else's rate limiter; see tests/conftest.py."
         )
+
+
+def _no_paid_calls(req, *args, **kwargs):
+    url = req if isinstance(req, str) else getattr(req, "full_url", "")
+    _refuse_if_banned(urlsplit(url).hostname, url)
     return _real_urlopen(req, *args, **kwargs)
 
 
 urllib.request.urlopen = _no_paid_calls
+
+# The same ban where the socket is opened. NOT on `OpenerDirector.open`: the test that proves
+# a 302 from `/save/` is never followed drives a real OpenerDirector with a fake handler at a
+# web.archive.org url and never connects -- and that is the right shape, so this hook sits
+# below it. `HTTPSConnection.connect` calls this first, so TLS is covered too.
+_real_connect = http.client.HTTPConnection.connect
+
+
+def _no_paid_connect(self):
+    scheme = "https" if isinstance(self, http.client.HTTPSConnection) else "http"
+    _refuse_if_banned(self.host, f"{scheme}://{self.host}/")
+    return _real_connect(self)
+
+
+http.client.HTTPConnection.connect = _no_paid_connect
 
 # THE SUITE DOES NOT SLEEP. Set here, at import, so the constants that read these names pick
 # up the zero whatever imports them later. Added 2026-09-11 (infra) with the LinkedIn guest
