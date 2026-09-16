@@ -523,6 +523,19 @@ def _digest_cap(name):
     return int(m.group(1)) if m else 0
 
 
+def _archive_cap(name):
+    """A cap set in `jd-archive.yml`'s Save Page Now step (infra, 2026-09-16: ARCHITECTURE's
+    §4 row said `100 postings` from 09-04 to 09-16 while the workflow pinned 150 -- the
+    `JDFILL_BD_CAP` drift again, on the step nobody's fact read)."""
+    wf = read(os.path.join(ROOT, ".github", "workflows", "jd-archive.yml"))
+    a = wf.find("- name: Submit every posting we have seen to the Internet Archive")
+    b = wf.find("- name: Fetch descriptions for the cards the title gate drops")
+    if a < 0 or b < a:
+        return 0
+    m = re.search(r"^\s+%s:\s*\"?(\d+)" % re.escape(name), wf[a:b], re.M)
+    return int(m.group(1)) if m else 0
+
+
 FACTS = [
     # THE 12-DAY DRIFT THIS EXISTS FOR: `ARCHITECTURE.md` said `JDFILL_BD_CAP` 25 from
     # 2026-08-30 to 2026-09-12 while the workflow pinned 30, and nothing noticed, because
@@ -537,6 +550,10 @@ FACTS = [
          "JDFILL_INDEED_CAP in daily-digest.yml's pipeline step",
          [("ARCHITECTURE.md", r"`JDFILL_INDEED_CAP` \(\*\*(\d+)\*\*")],
          "a SUB-cap of the one above; raising it alone only moves the refusal"),
+    Fact("wayback_day_cap", "exact", lambda: (_archive_cap("WAYBACK_DAY_CAP"),),
+         "WAYBACK_DAY_CAP in jd-archive.yml's Save Page Now step",
+         [("ARCHITECTURE.md", r"\*\*`WAYBACK_DAY_CAP` (\d+)\*\* postings")],
+         "the postings the archive step asks for a day; the §4 row read 100 for twelve days while the step ran 150"),
     # A FLOOR, not a pin: every lane that adds a workflow step moves this, and when it
     # broke it took `Registry invariants` and the fourteen rehearsed nights down with it
     # (they are steps below `Unit guards` in the same job, so a red suite SKIPS them).

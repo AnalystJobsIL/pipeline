@@ -116,8 +116,8 @@ jobs:
         # it produced is the `[wayback] submitted N ... captured C, net a, server b, refused
         # c, jobs J, polls P` line below and the same numbers in the `wayback` stamp; the
         # `[wayback] authenticated: N slots, D of L captures used today` line prints before
-        # the plan and again after the day (its delta is the archive's own count of what
-        # this run captured).
+        # the plan and again after the day (its delta is the archive's own count of the
+        # jobs this run opened -- `jobs`, an error end included, not `captured`).
         env:
           ARCHIVE_ORG_ACCESS_KEY: ${{ secrets.ARCHIVE_ORG_ACCESS_KEY }}
           ARCHIVE_ORG_SECRET_KEY: ${{ secrets.ARCHIVE_ORG_SECRET_KEY }}

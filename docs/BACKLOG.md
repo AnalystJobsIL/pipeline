@@ -12846,3 +12846,18 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      availability API answered 40/40 from the same runner while every `/save/` failed — the
      egress is not the variable) and raising the caps (neither bound on any of the last three
      nights: 50-138 of 220). Check: `python -c "import json;r=[json.loads(l) for l in open('cloud_state/wayback_ledger.jsonl',encoding='utf-8') if l.strip()];print(sum(1 for x in r if x['err']=='' and x['snap']),sum(1 for x in r if x['err']=='verified'),sum(1 for x in r if x['err']=='unverified'))"` reads `52 53 206` on 2026-09-15.
+
+     **RE-SCOPED 2026-09-16 by `infra`** (`docs/decisions/2026-09-16-archive-authenticated.md`):
+     the ~9 a night was the ANONYMOUS rung's number. The step runs on the operator's
+     archive.org account since `9bae94a` — a job per url, read to its end, so `pending`
+     timeouts are gone and `captured` is exact — and the archive's own ceiling for an account
+     is 7 captures a minute on 3 slots: ~150–250 jobs a night at the 60-minute budget (the
+     first run: 13 jobs and 4 captures in 5 unpaused minutes), so the backlog (6,085) drains
+     in weeks and tier 1 in days. The prompt's "drain it in three nights" is 295 minutes of
+     sends a night at the archive's limit and is not reachable by any cap. What is left is a
+     different question: **which addresses capture at all** — on the first slice every
+     `il.indeed.com` job ended `error:bad-request` (7 of 7) and every
+     `www.linkedin.com/jobs/view/<id>` ended `error:not-found` (2 of 2), while
+     `il.linkedin.com/jobs/view/<slug>-<id>` captured; the two hosts are 46.5 % of the target
+     set. Operator decision after a week of scheduled nights: keep a host that never
+     captures in the tiers, or not. Check: `python -c "import json,collections;from urllib.parse import urlsplit as u;c=collections.Counter();[c.update([(u(x['url']).hostname, 'ok' if (x['err']=='' and x['snap']) or x['err'] in ('cached','verified') else x.get('status_ext') or x['err'])]) for x in (json.loads(l) for l in open('cloud_state/wayback_ledger.jsonl',encoding='utf-8') if l.strip()) if x.get('job_id')];print(sorted(c.items(),key=lambda kv:-kv[1])[:20])"` — the per-host outcome of every keyed job; read it on 2026-09-23.
