@@ -31503,7 +31503,9 @@ def test_wayback_a_job_past_the_ceiling_is_pending_with_its_id_and_resolved_next
     today = _wb_dt.date(2026, 9, 16)
     urls = ["https://a.io/1", "https://b.io/2", "https://c.io/3"]
     root = _wb_root(tmp_path, roles=_wb_roles(today, urls))
-    arch = _WbSpn2(status=lambda jid, nth: {"status": "pending", "job_id": jid, "resources": []})
+    # jobs 1 and 2 answer `pending` for the whole ceiling; job 3's reads FAIL (a 502 from the
+    # status endpoint) -- the line must still carry the id the POST answered with
+    arch = _WbSpn2(status=lambda jid, nth: _wb_http_error(502) if jid == "job-3" else {"status": "pending", "job_id": jid, "resources": []})
     monkeypatch.setattr(A, "_open", arch)
     rep = A.run(root, today=today, caps=_wb_caps(timeout_s=1.0), auth=_wb_auth())         # timeout_s 1.0: one read per job
     assert (rep.submitted, rep.captured, rep.polls, rep.jobs) == (3, 0, 3, 3)
