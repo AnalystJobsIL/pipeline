@@ -206,27 +206,27 @@
  "queue": {
   "answered_on_disk": 2,
   "capacity": 176,
-  "date": "2026-09-15",
-  "delta": -30,
-  "direction": "falling",
-  "empty_search_share": 0.153,
-  "finished_at": "2026-09-15T23:56:59+00:00",
+  "date": "2026-09-16",
+  "delta": 0,
+  "direction": "flat",
+  "empty_search_share": 0.118,
+  "finished_at": "2026-09-16T23:51:56+00:00",
   "ledger_contradicted": 2,
   "new_intake": 0,
-  "on_cadence": 833,
+  "on_cadence": 868,
   "owed": 0,
-  "retired": 385,
+  "retired": 388,
   "retired_in_queue": 2,
-  "rows_from_queue": 695,
-  "searched_recently": 437,
+  "rows_from_queue": 698,
+  "searched_recently": 337,
   "selectable": 0,
   "stuck": 0,
-  "unsettled": 833,
-  "unverified_rows": 95
+  "unsettled": 868,
+  "unverified_rows": 48
  },
  "repair": {
-  "date": "2026-09-15",
-  "finished_at": "2026-09-15T23:58:05+00:00"
+  "date": "2026-09-16",
+  "finished_at": "2026-09-16T23:52:28+00:00"
  },
  "wayback": {
   "auth": "keyed",

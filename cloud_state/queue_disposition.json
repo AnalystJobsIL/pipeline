@@ -3538,7 +3538,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "BlueBird Aero Systems Ltd.": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "BlueBird Aero Systems",
@@ -6622,7 +6622,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Cynet Security": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Cynet",
@@ -10339,7 +10339,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Guideline Group": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Guideline",
@@ -20603,7 +20603,7 @@
   "why": "The evidence resolves \"NBN Connect\" to nbn.org.il, the site of Nefesh B'Nefesh (NBN); NBN Connect is a program/brand of that nonprofit rather than a separate employer. Hiring (e.g., its own Junior Graphic Designer posting) happens under Nefesh B'Nefesh."
  },
  "NGsoft": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Ngsoft Ltd",
@@ -21563,7 +21563,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Plus500™": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Plus500",
@@ -22714,7 +22714,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Speedata.io": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Speedata",
@@ -22806,7 +22806,7 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Strauss Water Ltd. שטראוס מים",
@@ -23778,7 +23778,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Wobi Ltd": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Wobi",
@@ -25618,7 +25618,7 @@
   }
  },
  "Tomax-Think Academy": {
-  "date": "2026-09-13",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Tomax Think Academy",
@@ -25776,7 +25776,7 @@
   }
  },
  "Magenta Medical Ltd.": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Magenta Medical",
@@ -25926,7 +25926,7 @@
   }
  },
  "eTeacher Group": {
-  "date": "2026-09-15",
+  "date": "2026-09-16",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "eteacher",
@@ -25983,6 +25983,128 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
   "evidence": {
    "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Itron": {
+  "date": "2026-09-16",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Itron, Inc.",
+  "why": "the registry row 'Itron, Inc.' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Itron, Inc.",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Gyro": {
+  "date": "2026-09-16",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Obligo": {
+  "date": "2026-09-16",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "B&K Management Consulting": {
+  "date": "2026-09-16",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Bk Management Consulting",
+  "why": "the registry row 'Bk Management Consulting' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Bk Management Consulting",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Kin Payments": {
+  "date": "2026-09-16",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "altshare": {
+  "date": "2026-09-16",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Surense": {
+  "date": "2026-09-16",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "found"
+    ]
+   ]
+  }
+ },
+ "Sympera": {
+  "date": "2026-09-16",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "dotcompliance": {
+  "date": "2026-09-16",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Dot Compliance",
+  "why": "the registry row 'Dot Compliance' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Dot Compliance",
+   "matched_on": "name-normalised",
    "tried": []
   }
  }
