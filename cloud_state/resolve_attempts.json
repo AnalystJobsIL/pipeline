@@ -404,8 +404,8 @@
   "last": "2026-09-14"
  },
  "Microsoft Israel": {
-  "fails": 2,
-  "last": "2026-09-09"
+  "fails": 3,
+  "last": "2026-09-16"
  },
  "MDClone": {
   "fails": 1,
@@ -596,8 +596,8 @@
   "last": "2026-08-26"
  },
  "Predicta Med": {
-  "fails": 3,
-  "last": "2026-09-09"
+  "fails": 4,
+  "last": "2026-09-16"
  },
  "NetApp": {
   "fails": 1,
@@ -680,8 +680,8 @@
   "last": "2026-08-26"
  },
  "aspectiva": {
-  "fails": 3,
-  "last": "2026-09-09"
+  "fails": 4,
+  "last": "2026-09-16"
  },
  "Netafim": {
   "fails": 3,
@@ -768,8 +768,8 @@
   "last": "2026-09-14"
  },
  "Sensos": {
-  "fails": 2,
-  "last": "2026-09-09"
+  "fails": 3,
+  "last": "2026-09-16"
  },
  "SolarEdge": {
   "fails": 3,
@@ -856,16 +856,16 @@
   "last": "2026-09-01"
  },
  "ASML": {
-  "fails": 2,
-  "last": "2026-09-09"
+  "fails": 3,
+  "last": "2026-09-16"
  },
  "Adi Il": {
   "fails": 2,
   "last": "2026-09-09"
  },
  "Cyabra": {
-  "fails": 2,
-  "last": "2026-09-09"
+  "fails": 3,
+  "last": "2026-09-16"
  },
  "Harmonya Technologies": {
   "fails": 1,
@@ -876,12 +876,12 @@
   "last": "2026-09-09"
  },
  "K2view": {
-  "fails": 2,
-  "last": "2026-09-09"
+  "fails": 3,
+  "last": "2026-09-16"
  },
  "Shortical": {
-  "fails": 2,
-  "last": "2026-09-09"
+  "fails": 3,
+  "last": "2026-09-16"
  },
  "AlgoSec": {
   "fails": 2,
@@ -1040,8 +1040,8 @@
   "last": "2026-09-09"
  },
  "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ": {
-  "fails": 1,
-  "last": "2026-09-09"
+  "fails": 2,
+  "last": "2026-09-16"
  },
  "IRP Systems": {
   "fails": 1,
@@ -1060,12 +1060,12 @@
   "last": "2026-09-09"
  },
  "Zemingo": {
-  "fails": 1,
-  "last": "2026-09-09"
+  "fails": 2,
+  "last": "2026-09-16"
  },
  "somekhchaikin": {
-  "fails": 1,
-  "last": "2026-09-09"
+  "fails": 2,
+  "last": "2026-09-16"
  },
  "Alice (Formerly ActiveFence)": {
   "fails": 1,
@@ -1214,5 +1214,17 @@
  "Navan": {
   "fails": 1,
   "last": "2026-09-15"
+ },
+ "Maelyscosmetics": {
+  "fails": 1,
+  "last": "2026-09-16"
+ },
+ "Matific": {
+  "fails": 1,
+  "last": "2026-09-16"
+ },
+ "Valence Security": {
+  "fails": 1,
+  "last": "2026-09-16"
  }
 }

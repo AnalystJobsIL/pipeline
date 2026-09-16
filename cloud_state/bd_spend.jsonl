@@ -333,3 +333,4 @@
 {"at":"2026-09-15T23:56:57Z","cap":250,"capped":false,"ci":true,"credits":4,"pid":50029,"purpose":{"unlock":4},"tool":"queue_pipeline.py"}
 {"at":"2026-09-15T23:58:05Z","cap":250,"capped":false,"ci":true,"credits":6,"pid":52340,"purpose":{"search":2,"unlock":4},"tool":"crack_walled.py"}
 {"at":"2026-09-16T00:20:36Z","cap":250,"capped":false,"ci":true,"credits":4,"pid":3006,"purpose":{"search":4},"tool":"auto_expand.py"}
+{"at":"2026-09-16T10:27:30Z","cap":250,"capped":false,"ci":true,"credits":24,"pid":2945,"purpose":{"search":2,"unlock":22},"tool":"resolve_broken.py"}
