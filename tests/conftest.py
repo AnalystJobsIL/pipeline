@@ -146,7 +146,13 @@ os.environ.setdefault("LINKEDIN_BLOCK_PAUSE_S", "0")
 # _is_visible` reached `https://api.brightdata.com/request` for real. That is the 381 incident,
 # reproduced. With them emptied it takes the no-key path -- byte for byte what CI does, which
 # is the point: a local run must not diverge from the run that is already green.
-for _k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE"):
+#
+# The two archive.org names joined on 2026-09-16 (infra): `secrets.env` carries them beside the
+# Bright Data pair, `pipeline/run.py` / `jdfill` / `bd_rescue` load that file during the
+# session, and `archive_evidence.Auth.from_env` would then run every `run()` test on the
+# AUTHENTICATED Save Page Now rung. Empty, so `Auth.from_env()` reads "no keys" and a test
+# that wants the keyed rung passes an `Auth` in by hand.
+for _k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE", "ARCHIVE_ORG_ACCESS_KEY", "ARCHIVE_ORG_SECRET_KEY"):
     os.environ[_k] = ""
 
 
@@ -217,7 +223,7 @@ def _no_bright_data_state_survives_a_test(request):
     the leak; it does not fix the test that causes it, which is another lane's file. A printed
     line, never a failure -- turning someone else's test red is not this guard's job.
     """
-    for k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE"):
+    for k in ("BRIGHTDATA_API_KEY", "BRIGHTDATA_ZONE", "ARCHIVE_ORG_ACCESS_KEY", "ARCHIVE_ORG_SECRET_KEY"):
         if os.environ.get(k):
             os.environ[k] = ""                  # a real value must never reach a test
         elif k not in os.environ:

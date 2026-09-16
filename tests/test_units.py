@@ -30434,12 +30434,18 @@ def _wb_caps(**kw):
     return A.Caps(**base)
 
 
-def _wb_quiet(monkeypatch, tmp_path):
+def _wb_quiet(monkeypatch, tmp_path, real_auth=False):
+    """The three things every `run()` test needs -- and, since 2026-09-16, the anonymous rung
+    WITHOUT its `unauthenticated` alarm clause: `conftest` empties the two archive.org names,
+    so the real `Auth.from_env` would put that clause on every anonymous run here. A test of
+    the fallback itself passes `real_auth=True` and sees the clause."""
     import archive_evidence as A
     from pipeline import stages
     monkeypatch.setattr(A, "_sleep", lambda s: None)
     monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    if not real_auth:
+        monkeypatch.setattr(A.Auth, "from_env", classmethod(lambda cls, env=None: cls()))
 
 
 def test_wayback_canon_drops_tracking_and_keeps_the_address():
@@ -31208,6 +31214,447 @@ def test_wayback_production_lines_carry_their_own_clock(tmp_path, monkeypatch):
     today = _wb_dt.date(2026, 9, 15)
     rep2 = A.run(_wb_root(tmp_path / "dated", roles=_wb_roles(today, urls)), today=today, caps=_wb_caps())
     assert rep2.submitted == 4 and len({l.at for l in rep2.lines}) == 1
+
+
+# --- the authenticated rung (infra, 2026-09-16): POST a job, read it to its end ---------------
+_WB_KEY, _WB_SECRET = "AKEYXYZ123", "ASECRETXYZ456"
+
+
+def _wb_auth():
+    import archive_evidence as A
+    return A.Auth(_WB_KEY, _WB_SECRET)
+
+
+def _wb_user(available=3, used=10, limit=30000):
+    return {"available": available, "processing": 0, "daily_captures": used,
+            "daily_captures_limit": limit, "daily_status": 0, "daily_status_limit": 70000}
+
+
+class _WbSpn2:
+    """A scripted SPN2 archive behind `_open`. `user` answers `/save/status/user` (a dict, or
+    an exception to raise, or a list consumed in order); `post(url)` answers the POST (a dict
+    or an exception; default: a job named after the url); `status(job_id, nth)` answers the
+    nth read of that job; `avail(url)` the availability API. Every request is kept."""
+
+    def __init__(self, user=None, post=None, status=None, avail=None):
+        self.user = _wb_user() if user is None else user
+        self.post, self.status, self.avail = post, status, avail
+        self.calls, self.reads = [], {}
+
+    def __call__(self, req, timeout):
+        import archive_evidence as A
+        import json as _json
+        import urllib.parse as _up
+        m, u = req.get_method(), req.full_url
+        self.calls.append((m, u, dict(req.header_items()), req.data))
+        if u == A.STATUS_URL + "user":
+            ans = self.user.pop(0) if isinstance(self.user, list) else self.user
+        elif u.startswith(A.STATUS_URL):
+            jid = u[len(A.STATUS_URL):]
+            self.reads[jid] = self.reads.get(jid, 0) + 1
+            ans = self.status(jid, self.reads[jid])
+        elif u == A.SAVE_API and m == "POST":
+            target = _up.parse_qs(req.data.decode("ascii"))["url"][0]
+            ans = self.post(target) if self.post else {"url": target, "job_id": "job-" + target.rsplit("/", 1)[-1]}
+        elif u.startswith(A.AVAILABLE):
+            ans = self.avail(u) if self.avail else {}
+        else:
+            raise AssertionError("unexpected request: %s %s" % (m, u))
+        if isinstance(ans, BaseException):
+            raise ans
+        return _WbResp(200, {}, _json.dumps(ans), u)
+
+    def posts(self):
+        return [c for c in self.calls if c[0] == "POST"]
+
+
+def _wb_success(ts):
+    return lambda jid, nth: {"status": "success", "job_id": jid, "original_url": "x", "timestamp": ts, "duration_sec": 20.1, "resources": [], "outlinks": {}}
+
+
+def _wb_error(word):
+    return lambda jid, nth: {"status": "error", "job_id": jid, "status_ext": "error:" + word, "message": word, "exception": "x", "resources": []}
+
+
+def test_wayback_keyed_post_then_poll_names_the_capture(tmp_path, monkeypatch, capsys):
+    """The authenticated rung: `POST /save` with the url in the body and the account in the
+    header answers a `job_id`; the job is read POLL_S apart until it ends; `success` names
+    the capture and the line carries the job. The POST is the one request the pace gate
+    fronts and the one that counts; the two status reads are `polls`. The account is read
+    before the plan and again after the day, and the after-line says what this run spent."""
+    import archive_evidence as A
+    import json as _json
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 16)
+    root = _wb_root(tmp_path, roles=_wb_roles(today, ["https://a.io/1"]))
+    waits = []
+    monkeypatch.setattr(A, "_sleep", lambda s: waits.append(s))
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock(waits))
+    ts = "20260916123456"
+    arch = _WbSpn2(user=[_wb_user(3, 10), _wb_user(3, 11)],
+                   status=lambda jid, nth: {"status": "pending", "job_id": jid, "resources": []} if nth == 1 else _wb_success(ts)(jid, nth))
+    monkeypatch.setattr(A, "_open", arch)
+    caps = _wb_caps(timeout_s=20.0, workers=6)
+    rep = A.run(root, today=today, caps=caps, auth=_wb_auth())
+    assert (rep.auth, rep.submitted, rep.captured, rep.failed, rep.requests, rep.jobs, rep.polls) == ("keyed", 1, 1, 0, 1, 1, 2)
+    assert rep.alarm == "" and rep.stop == ""
+    m, u, h, body = arch.posts()[0]
+    assert (m, u, body) == ("POST", A.SAVE_API, b"url=https%3A%2F%2Fa.io%2F1")
+    assert {k.lower() for k in h} == {"user-agent", "accept", "authorization", "content-type"}
+    assert h["Authorization"] == "LOW AKEYXYZ123:ASECRETXYZ456" and h["Accept"] == "application/json" and h["User-agent"] == A.UA
+    assert [c[1] for c in arch.calls].count(A.STATUS_URL + "user") == 2                # before the plan, after the day
+    assert [c[1] for c in arch.calls if c[1].startswith(A.STATUS_URL + "job-")] == [A.STATUS_URL + "job-1"] * 2
+    assert waits.count(A.POLL_S) == 2                                                  # one wait before EVERY read; never a read at t=0
+    lines = [_json.loads(x) for x in open(tmp_path / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
+    assert len(lines) == 1 and (lines[0]["snap"], lines[0]["err"], lines[0]["job_id"], lines[0]["http"]) == (ts, "", "job-1", 200)
+    assert set(lines[0]) == {"at", "url", "kind", "tier", "attempt", "http", "snap", "err", "job_id"}   # status_ext only on an error end
+    assert rep.line().endswith("captured 1, net 0, server 0, refused 0, jobs 1, polls 2")
+    assert caps.workers == 6 and caps.day == 100                                       # the probe lowered THIS run's copy, not the caller's
+    out = capsys.readouterr().out
+    assert "[wayback] authenticated: 3 slots, 10 of 30000 captures used today; 3 workers, day cap 100" in out
+    assert "[wayback] authenticated: 3 slots, 11 of 30000 captures used today (+1 this run)" in out
+    from pipeline import stages
+    A._report(rep, False)
+    st = stages._load()["wayback"]
+    assert (st["auth"], st["jobs"], st["polls"], st["captured"]) == ("keyed", 1, 2, 1) and "auth=keyed" in stages.summary()
+
+
+def test_wayback_status_ext_words_land_on_the_two_families(tmp_path, monkeypatch):
+    """The archive's `status_ext` words onto the ledger's classes, by the 09-15 rule: a word
+    about the ARCHIVE is `server` (the streak, never a park), a word about the TARGET is the
+    address's refusal (parks a host, cools the address), and a word not in the table is the
+    archive's -- a host is never parked on a word we do not know. Two words the prompt
+    misread: `too-many-daily-captures` is per url (`limit-url`), `no-access` is the target's
+    403 (`http`). The word itself rides on the line as `status_ext`."""
+    import archive_evidence as A
+    import json as _json
+    cj = A._classify_job
+    assert (cj({"status": "error", "status_ext": "error:blocked-url"}).err, A.cooldown_days("excluded", 1)) == ("excluded", 30)
+    assert cj({"status": "error", "status_ext": "error:not-found"}).err == "http"
+    assert cj({"status": "error", "status_ext": "error:no-access"}).err == "http"
+    assert cj({"status": "error", "status_ext": "error:too-many-daily-captures"}).err == "limit-url"
+    assert cj({"status": "error", "status_ext": "error:capture-location-error"}).err == "server"
+    assert cj({"status": "error", "status_ext": "error:something-new"}).err == "server"
+    assert cj({"status": "error", "status_ext": "error:max-daily-bandwidth"}).err == "daily-limit"
+    assert cj({"status": "error", "status_ext": "error:user-session-limit"}).err == "throttled"
+    assert cj({"status": "error", "status_ext": "error:too-many-requests"}).err == "blocked"
+    r = cj({"status": "error", "status_ext": "error:blocked-url", "job_id": "j"})
+    assert (r.job_id, r.status_ext) == ("j", "error:blocked-url")
+    assert cj({"status": "success", "timestamp": "20260916000000", "job_id": "j"}).snap == "20260916000000"
+    assert cj({"status": "pending", "job_id": "j"}).err == "pending"
+    assert cj({"url": "x", "message": "The same snapshot had been made 3 minutes ago. You can make new capture of this URL after 20 minutes."}).err == "cached"
+    assert cj({"url": "x", "message": "This URL has been already captured 10 times today."}).err == "limit-url"
+    assert cj({}).err == "server" and cj(None).err == "server"
+    assert all(v in ("server", "throttled", "daily-limit", "limit-url", "excluded", "blocked", "http") for v in A.STATUS_EXT.values())
+    # in a run: five `blocked-url` ends on one host park it (the sixth is deferred), two
+    # `capture-location-error` ends are retried once each and park nothing
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 16)
+    urls = [f"https://h.io/{i}" for i in range(6)] + ["https://s1.io/p", "https://s2.io/p"]
+    root = _wb_root(tmp_path, roles=_wb_roles(today, urls))
+    arch = _WbSpn2(status=lambda jid, nth: _wb_error("capture-location-error" if jid == "job-p" else "blocked-url")(jid, nth))
+    monkeypatch.setattr(A, "_open", arch)
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock([]))
+    rep = A.run(root, today=today, caps=_wb_caps(host_share=1.0), auth=_wb_auth())
+    assert (rep.host_parked, rep.refused, rep.server, rep.failed, rep.backlog, rep.captured) == (1, 5, 2, 7, 1, 0)
+    assert len(arch.posts()) == 5 + 2 * 2                                              # the archive's word is retried once; the address's is not
+    lines = [_json.loads(x) for x in open(tmp_path / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
+    assert {(l["err"], l["status_ext"]) for l in lines} == {("excluded", "error:blocked-url"), ("server", "error:capture-location-error")}
+    st = A.read_ledger(str(tmp_path / "cloud_state" / "wayback_ledger.jsonl"))
+    assert st["https://h.io/0"]["refusals"] == 1 and st["https://s1.io/p"]["refusals"] == 0
+    assert not A.eligible(A.Target("https://h.io/0", "posting", 1, ""), st["https://h.io/0"], today + _wb_dt.timedelta(days=29))
+    assert A.eligible(A.Target("https://s1.io/p", "posting", 1, ""), st["https://s1.io/p"], today + _wb_dt.timedelta(days=1))
+
+
+def test_wayback_the_account_probe_sets_workers_and_the_day_before_the_plan(tmp_path, monkeypatch, capsys):
+    """`/save/status/user` is read before `plan_batch`, because the cap it lowers is the one
+    the plan reads: `available` bounds the workers below the ceiling, and what the account
+    has left today bounds the day. Nothing left: no POST, `stop=daily-limit`, and the verify
+    loop still runs (it costs the account nothing)."""
+    import archive_evidence as A
+    import concurrent.futures
+    import json as _json
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 16)
+    urls = [f"https://c{i}.io/p" for i in range(20)]
+    root = _wb_root(tmp_path, roles=_wb_roles(today, urls))
+    seen = {}
+
+    class Ex(concurrent.futures.ThreadPoolExecutor):
+        def __init__(self, max_workers=None):
+            seen["workers"] = max_workers
+            super().__init__(max_workers=max_workers)
+    monkeypatch.setattr(A.concurrent.futures, "ThreadPoolExecutor", Ex)
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock([]))
+    arch = _WbSpn2(user=_wb_user(available=2, used=29990, limit=30000), status=_wb_success("20260916120000"))
+    monkeypatch.setattr(A, "_open", arch)
+    rep = A.run(root, today=today, caps=_wb_caps(workers=6, day=100), auth=_wb_auth())
+    assert seen["workers"] == 2                                                          # min(the ceiling 6, available 2)
+    assert (rep.submitted, rep.captured, rep.backlog, len(arch.posts())) == (10, 10, 10, 10)   # 30000 - 29990: the plan held ten
+    assert "2 workers, day cap 10" in capsys.readouterr().out
+    # nothing left today: a pending line from yesterday is still verified, no capture is asked
+    root2 = _wb_root(tmp_path / "spent", roles=_wb_roles(today, urls[:3]))
+    with open(tmp_path / "spent" / "cloud_state" / "wayback_ledger.jsonl", "w", encoding="utf-8") as f:
+        f.write(A.Line((today - _wb_dt.timedelta(days=1)).isoformat() + "T12:00:00Z", "https://old.io/p", "posting", 1, 1, 200, "", "pending").dumps() + "\n")
+    arch2 = _WbSpn2(user=_wb_user(available=3, used=30000, limit=30000),
+                    avail=lambda u: {"archived_snapshots": {"closest": {"timestamp": "20260915120500", "status": "200"}}})
+    monkeypatch.setattr(A, "_open", arch2)
+    rep2 = A.run(root2, today=today, caps=_wb_caps(workers=6), auth=_wb_auth())
+    assert (rep2.stop, rep2.submitted, rep2.verified, len(arch2.posts()), rep2.requests) == ("daily-limit", 0, 1, 0, 1)
+    assert rep2.alarm == "daily-limit: the account's 30000 captures were spent before this run"   # no zero-produce: nothing was planned
+    lines = [_json.loads(x) for x in open(tmp_path / "spent" / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
+    assert lines[-1]["err"] == "verified"
+
+
+def test_wayback_no_keys_or_refused_keys_fall_back_anonymous_and_say_so(tmp_path, monkeypatch, capsys):
+    """Fail closed, loudly: no keys, or the archive refusing them (401/403 to the account
+    read), runs the anonymous GET rung -- exactly its two headers, no Authorization -- and
+    the alarm carries `unauthenticated: <why>`, COMPOSED with the night's `zero-produce`,
+    both into the mail's `Stages:` clause. The endpoint failing (a 503) is not the keys
+    failing: the run stays keyed on the ceiling's workers. A 401 to a POST mid-run ends the
+    day (`stop=unauthenticated`) and parks no host."""
+    import archive_evidence as A
+    from pipeline import stages
+    _wb_quiet(monkeypatch, tmp_path, real_auth=True)
+    # `Auth.from_env`: keyed only with BOTH names, no keys is always a `why`, and conftest
+    # holds the two names EMPTY so a developer's `secrets.env` never arms a test
+    assert A.Auth.from_env({"ARCHIVE_ORG_ACCESS_KEY": "a", "ARCHIVE_ORG_SECRET_KEY": "b"}).keyed
+    half = A.Auth.from_env({"ARCHIVE_ORG_ACCESS_KEY": "a"})
+    assert not half.keyed and half.why == "no keys (ARCHIVE_ORG_SECRET_KEY unset)"
+    assert os.environ.get("ARCHIVE_ORG_ACCESS_KEY") == "" and os.environ.get("ARCHIVE_ORG_SECRET_KEY") == ""
+    assert not A.Auth.from_env().keyed
+    today = _wb_dt.date(2026, 9, 16)
+    root = _wb_root(tmp_path, roles=_wb_roles(today, ["https://a.io/1"]))
+    seen = []
+
+    def anon(req, timeout):
+        seen.append((req.get_method(), req.full_url, dict(req.header_items())))
+        raise TimeoutError("timed out")
+    monkeypatch.setattr(A, "_open", anon)
+    rep = A.run(root, today=today, caps=_wb_caps())                                     # conftest: both names are ""
+    assert seen == [("GET", A.SAVE + "https://a.io/1", {"User-agent": A.UA, "Accept": "text/html"})]
+    assert rep.auth == "anon" and rep.submitted == 1 and rep.captured == 0
+    assert rep.alarm == ("unauthenticated: no keys (ARCHIVE_ORG_ACCESS_KEY, ARCHIVE_ORG_SECRET_KEY unset); "
+                         "zero-produce: 0 named of 1 planned (accepted 1, net 0, server 0, refused 0)")
+    A._report(rep, False)
+    assert stages.alarms("wayback", 1) == ["wayback " + rep.alarm]
+    out = capsys.readouterr().out
+    assert "[wayback] UNAUTHENTICATED: no keys (ARCHIVE_ORG_ACCESS_KEY, ARCHIVE_ORG_SECRET_KEY unset) -- anonymous rung" in out
+    assert "ALARM unauthenticated: no keys" in out and "; zero-produce:" in out
+    # the keys refused
+    seen.clear()
+    monkeypatch.setattr(A, "_open", lambda req, timeout: anon(req, timeout) if req.full_url.startswith(A.SAVE + "http") else (_ for _ in ()).throw(_wb_http_error(401)))
+    rep2 = A.run(_wb_root(tmp_path / "r", roles=_wb_roles(today, ["https://a.io/1"])), today=today, caps=_wb_caps(), auth=_wb_auth())
+    assert rep2.auth == "anon" and [s[0] for s in seen] == ["GET"] and "Authorization" not in seen[0][2]
+    assert rep2.alarm.startswith("unauthenticated: the archive answered 401 to /save/status/user (keys refused); zero-produce:")
+    # the endpoint down is not the keys down
+    arch = _WbSpn2(user=_wb_http_error(503), status=_wb_success("20260916120000"))
+    monkeypatch.setattr(A, "_open", arch)
+    rep3 = A.run(_wb_root(tmp_path / "e", roles=_wb_roles(today, ["https://a.io/1"])), today=today, caps=_wb_caps(workers=6), auth=_wb_auth())
+    assert (rep3.auth, rep3.captured, rep3.alarm, len(arch.posts())) == ("keyed", 1, "", 1)
+    assert "authenticated, but /save/status/user answered 503 server: 6 workers, day cap 100 kept" in capsys.readouterr().out
+    # 401 to the POST itself, mid-run
+    arch4 = _WbSpn2(post=lambda u: _wb_http_error(401))
+    monkeypatch.setattr(A, "_open", arch4)
+    urls = [f"https://h.io/{i}" for i in range(6)]
+    rep4 = A.run(_wb_root(tmp_path / "m", roles=_wb_roles(today, urls)), today=today, caps=_wb_caps(host_share=1.0), auth=_wb_auth())
+    assert (rep4.stop, rep4.host_parked, rep4.server, rep4.refused) == ("unauthenticated", 0, 1, 0)
+    assert rep4.lines[0].status_ext == "unauthenticated" and len(arch4.posts()) == 1
+    assert "unauthenticated: the archive answered 401 to a capture request (keys refused)" in rep4.alarm and "zero-produce" in rep4.alarm
+
+
+def test_wayback_keys_never_reach_the_log_the_ledger_or_the_stamp(tmp_path, monkeypatch, capsys):
+    """The key is read in `_auth_headers` and nowhere else: a whole `main()` on the keyed
+    rung leaves neither value in stdout, the ledger, the stamp or the step summary -- while
+    the request did carry it -- and the crash line is redacted."""
+    import archive_evidence as A
+    from pipeline import stages
+    _wb_quiet(monkeypatch, tmp_path, real_auth=True)
+    monkeypatch.setenv("ARCHIVE_ORG_ACCESS_KEY", _WB_KEY)
+    monkeypatch.setenv("ARCHIVE_ORG_SECRET_KEY", _WB_SECRET)
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "summary.md"))
+    root = _wb_root(tmp_path, roles=_wb_roles(_wb_dt.date.today(), ["https://a.io/1"]))
+    arch = _WbSpn2(status=_wb_success("20260916120000"))
+    monkeypatch.setattr(A, "_open", arch)
+    assert A.main(["--root", root]) == 0
+    assert arch.posts()[0][2]["Authorization"] == "LOW AKEYXYZ123:ASECRETXYZ456"
+    texts = [capsys.readouterr().out,
+             open(tmp_path / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8").read(),
+             open(stages.PATH, encoding="utf-8").read(),
+             open(tmp_path / "summary.md", encoding="utf-8").read()]
+    assert "captured 1" in texts[0] and "job-1" in texts[1] and '"auth": "keyed"' in texts[2]
+    assert not any(_WB_KEY in t or _WB_SECRET in t for t in texts)
+    monkeypatch.setattr(A, "run", lambda *a, **k: (_ for _ in ()).throw(RuntimeError(f"boom {_WB_KEY} {_WB_SECRET}")))
+    assert A.main(["--root", root]) == 1
+    out = capsys.readouterr().out
+    assert "[wayback] CRASHED: RuntimeError: boom *** ***" in out and _WB_KEY not in out
+
+
+def test_wayback_a_job_past_the_ceiling_is_pending_with_its_id_and_resolved_next_run(tmp_path, monkeypatch):
+    """A job this run could not read to its end (the status endpoint answering `pending`
+    for the whole ceiling) is `pending` WITH its `job_id`; the next run asks that job first
+    and gets the exact answer -- `success` is `verified`, an `error` end is its own class,
+    never `unverified` (a refusal of the address) -- while a line with no id (the anonymous
+    rung, every line before 2026-09-16) still goes to the availability API. A read that
+    fails falls through to that path and its PENDING_DAYS bound."""
+    import archive_evidence as A
+    import json as _json
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 16)
+    urls = ["https://a.io/1", "https://b.io/2", "https://c.io/3"]
+    root = _wb_root(tmp_path, roles=_wb_roles(today, urls))
+    arch = _WbSpn2(status=lambda jid, nth: {"status": "pending", "job_id": jid, "resources": []})
+    monkeypatch.setattr(A, "_open", arch)
+    rep = A.run(root, today=today, caps=_wb_caps(timeout_s=1.0), auth=_wb_auth())         # timeout_s 1.0: one read per job
+    assert (rep.submitted, rep.captured, rep.polls, rep.jobs) == (3, 0, 3, 3)
+    assert rep.alarm == "zero-produce: 0 named of 3 planned (accepted 3, net 0, server 0, refused 0)"
+    path = tmp_path / "cloud_state" / "wayback_ledger.jsonl"
+    lines = [_json.loads(x) for x in open(path, encoding="utf-8")]
+    assert [(l["err"], l["job_id"]) for l in lines] == [("pending", "job-1"), ("pending", "job-2"), ("pending", "job-3")]
+    with open(path, "a", encoding="utf-8") as f:                                          # an anonymous-rung line: no id
+        f.write(A.Line(today.isoformat() + "T12:00:00Z", "https://d.io/4", "posting", 1, 1, 200, "", "pending").dumps() + "\n")
+    st = A.read_ledger(str(path))
+    assert st["https://a.io/1"]["job_id"] == "job-1" and st["https://d.io/4"]["job_id"] == ""
+    # the next day: 1 ended `success`, 2 ended `error:capture-location-error`, 3's read fails, 4 has no id
+    arch2 = _WbSpn2(status=lambda jid, nth: _wb_success("20260916130000")(jid, nth) if jid == "job-1"
+                    else _wb_error("capture-location-error")(jid, nth) if jid == "job-2" else _wb_http_error(502),
+                    avail=lambda u: {"archived_snapshots": {"closest": {"timestamp": "20260916130500", "status": "200"}}} if "d.io" in u else {})
+    monkeypatch.setattr(A, "_open", arch2)
+    rep2 = A.run(root, today=today + _wb_dt.timedelta(days=1), caps=_wb_caps(), auth=_wb_auth())
+    reads = [c[1] for c in arch2.calls]
+    assert reads.count(A.STATUS_URL + "job-1") == 1 and reads.count(A.STATUS_URL + "job-3") == 1
+    assert sum(1 for r in reads if r.startswith(A.AVAILABLE)) == 2                       # c (read failed) and d (no id); never a, b
+    assert (rep2.verified, rep2.failed, rep2.server, rep2.submitted, len(arch2.posts()), rep2.requests) == (2, 1, 1, 0, 0, 5)
+    lines = [_json.loads(x) for x in open(path, encoding="utf-8")]
+    ends = {l["url"]: l for l in lines[4:]}
+    assert (ends["https://a.io/1"]["err"], ends["https://a.io/1"]["snap"]) == ("verified", "20260916130000")
+    assert (ends["https://b.io/2"]["err"], ends["https://b.io/2"]["status_ext"], ends["https://b.io/2"]["job_id"]) == ("server", "error:capture-location-error", "job-2")
+    assert ends["https://d.io/4"]["err"] == "verified" and "https://c.io/3" not in ends            # still pending, inside PENDING_DAYS
+    st = A.read_ledger(str(path))
+    assert st["https://a.io/1"]["job_id"] == "" and st["https://b.io/2"]["job_id"] == "" and st["https://c.io/3"]["job_id"] == "job-3"
+    assert A.eligible(A.Target("https://b.io/2", "posting", 1, ""), st["https://b.io/2"], today + _wb_dt.timedelta(days=2))   # the archive's word: retried tomorrow
+    assert rep2.alarm == ""                                                                # nothing planned: no zero-produce
+
+
+def test_wayback_a_post_that_answers_prose_instead_of_a_job(tmp_path, monkeypatch):
+    """The POST can answer a `message` and no job: "the same snapshot had been made 3
+    minutes ago" is a capture that exists (`cached`, counted as captured), a daily-limit
+    text on a 4xx is the day's end, and prose the parser does not know is the archive's
+    (`server`), never the address's."""
+    import archive_evidence as A
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 16)
+    urls = ["https://a.io/1", "https://b.io/2", "https://c.io/3"]
+    root = _wb_root(tmp_path, roles=_wb_roles(today, urls))
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock([]))
+
+    def post(u):
+        if u.endswith("/1"):
+            return {"url": u, "message": "The same snapshot had been made 3 minutes ago. You can make new capture of this URL after 20 minutes."}
+        if u.endswith("/2"):
+            return {"url": u, "message": "Something the parser has never seen."}
+        return {"url": u, "job_id": "job-3"}
+    arch = _WbSpn2(post=post, status=_wb_success("20260916120000"))
+    monkeypatch.setattr(A, "_open", arch)
+    rep = A.run(root, today=today, caps=_wb_caps(), auth=_wb_auth())
+    assert (rep.captured, rep.submitted, rep.server, rep.host_parked, rep.jobs) == (2, 2, 1, 0, 1)
+    assert [(l.err, l.status_ext[:8]) for l in rep.lines] == [("cached", "message:"), ("server", "message:"), ("", "")]
+    assert len(arch.posts()) == 4                                                        # the unknown prose was retried once, as the archive's
+    # the account's limit as a 4xx with a message
+    arch2 = _WbSpn2(post=lambda u: _wb_http_error(429, {"Retry-After": "0"}, b'{"message": "You have reached your daily captures limit."}'))
+    monkeypatch.setattr(A, "_open", arch2)
+    rep2 = A.run(_wb_root(tmp_path / "l", roles=_wb_roles(today, urls)), today=today, caps=_wb_caps(), auth=_wb_auth())
+    assert rep2.stop == "daily-limit" and len(arch2.posts()) == 1 and rep2.throttled == 0
+    assert rep2.alarm.startswith("daily-limit: the archive refused further captures today (message:")
+
+
+def test_wayback_a_keyed_429_without_retry_after_is_a_slot_wait_not_a_pause(tmp_path, monkeypatch, capsys):
+    """Measured on the first authenticated run (2026-09-16, `--limit 20`): three slots, three
+    workers, and the POST after a job's end was 429'd with no Retry-After -- the archive's
+    slot count lags a finished job -- and the anonymous rung's 300-s pause answered it
+    twice, ten of fifteen minutes. On the keyed rung that 429 is "no free slot": this
+    thread waits SLOT_WAIT_S and asks once more; a second 429 in a row opens the day's
+    pause at OUTAGE_WAIT_S (not five minutes); a 429 that NAMES its Retry-After pauses
+    every thread for it, as before."""
+    import archive_evidence as A
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 16)
+    urls = ["https://ok.io/p", "https://slot.io/p", "https://twice.io/p", "https://named.io/p"]
+    root = _wb_root(tmp_path, roles=_wb_roles(today, urls))
+    waits = []
+    monkeypatch.setattr(A, "_sleep", lambda s: waits.append(s))
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock(waits))
+    seen = {}
+
+    def post(u):
+        seen[u] = seen.get(u, 0) + 1
+        if "slot.io" in u and seen[u] == 1:
+            return _wb_http_error(429)                                                    # no Retry-After
+        if "twice.io" in u:
+            return _wb_http_error(429)
+        if "named.io" in u and seen[u] == 1:
+            return _wb_http_error(429, {"Retry-After": "42"})
+        return {"url": u, "job_id": "job-" + u[8:10]}
+    arch = _WbSpn2(post=post, status=_wb_success("20260916120000"))
+    monkeypatch.setattr(A, "_open", arch)
+    rep = A.run(root, today=today, caps=_wb_caps(throttle_wait_s=300.0, timeout_s=20.0), auth=_wb_auth())
+    assert (rep.captured, rep.throttled, rep.failed, rep.stop) == (3, 4, 1, "")
+    assert seen == {"https://ok.io/p": 1, "https://slot.io/p": 2, "https://twice.io/p": 2, "https://named.io/p": 2}
+    assert waits.count(A.SLOT_WAIT_S) == 2                                                # slot.io and twice.io each waited once, in-thread
+    out = capsys.readouterr().out
+    assert out.count("pause 1 of 2 (throttled): 90 s") == 1                              # twice.io's second 429: the day's pause, OUTAGE_WAIT_S
+    assert out.count("pause 2 of 2 (throttled): 42 s") == 1                              # named.io: the archive's own Retry-After, no slot wait first
+    assert "300 s" not in out and 300.0 not in waits
+    assert [l.err for l in rep.lines if "twice" in l.url] == ["throttled"]
+
+
+def test_wayback_polls_are_not_requests_and_the_pace_gate_fronts_the_post(tmp_path, monkeypatch):
+    """Three workers, one gate: consecutive POSTs are `pace_s` apart whatever the thread
+    count (the archive allows an account 7 captures a minute), and the status reads
+    between them are `polls`, never `requests` -- `WAYBACK_REQ_CAP` bounds captures. A 429
+    to a READ waits and reads again: it must not re-POST a job that is still running. A
+    POST that times out is the archive not answering (`net:TimeoutError`, retried), never
+    `pending` -- which would send it to the availability API and, unanswered, to
+    `unverified`, a refusal of the address."""
+    import archive_evidence as A
+    _wb_quiet(monkeypatch, tmp_path)
+    today = _wb_dt.date(2026, 9, 16)
+    urls = [f"https://c{i}.io/p" for i in range(6)]
+    root = _wb_root(tmp_path, roles=_wb_roles(today, urls))
+    waits, stamps = [], []
+    clock = _wb_clock(waits)
+    monkeypatch.setattr(A, "_sleep", lambda s: waits.append(s))
+    monkeypatch.setattr(A.time, "monotonic", clock)
+
+    def status(jid, nth):
+        if jid == "job-p" and nth == 1:                                                   # c0: the first read is 429'd
+            return _wb_http_error(429, {"Retry-After": "5"})
+        return {"status": "pending", "job_id": jid, "resources": []} if nth == 1 else _wb_success("20260916120000")(jid, nth)
+
+    def post(u):
+        if u.startswith("https://c5") and not any(c[3] and b"c5" in c[3] for c in arch.posts()[:-1]):
+            return TimeoutError("timed out")                                              # c5: the first POST times out
+        return {"url": u, "job_id": "job-" + ("p" if u.startswith("https://c0") else u[8:10])}
+    arch = _WbSpn2(post=post, status=status)
+
+    def opener(req, timeout):
+        if req.get_method() == "POST":
+            stamps.append(clock())
+        return arch(req, timeout)
+    monkeypatch.setattr(A, "_open", opener)
+    rep = A.run(root, today=today, caps=_wb_caps(workers=3, pace_s=9.0, timeout_s=60.0, requests=140), auth=_wb_auth())
+    assert (rep.captured, rep.submitted, rep.failed, rep.net, rep.throttled) == (6, 6, 0, 0, 0)
+    assert len(arch.posts()) == 7 and rep.requests == 7                                   # six addresses, one retried POST; not a read among them
+    assert rep.polls == 12 == sum(1 for c in arch.calls if c[1].startswith(A.STATUS_URL + "job-"))   # two reads a job, the 429'd one included
+    gaps = [b - a for a, b in zip(sorted(stamps), sorted(stamps)[1:])]
+    assert gaps and min(gaps) >= 9.0
+    assert 5.0 in waits                                                                    # the read's Retry-After was slept, not re-POSTed
+    assert sum(1 for c in arch.posts() if c[3] and b"c5" in c[3]) == 2                   # the timeout was retried
+    assert sum(1 for c in arch.posts() if c[3] and b"c0" in c[3]) == 1
+    # the error itself, at the seam: a POST timeout is `net:`, an anonymous timeout is `pending`
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(TimeoutError("timed out")))
+    assert A.submit("https://x.io/p", 1.0, _wb_auth()).err == "net:TimeoutError"
+    assert A.submit("https://x.io/p", 1.0).err == "pending"
 
 
 # =====================================================================================

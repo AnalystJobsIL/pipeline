@@ -3845,8 +3845,8 @@
   "file": "archive_evidence.py",
   "symbol": "run",
   "class": "M1-gate-removal",
-  "find": "        _Pool(interleave(postings, boards), ledger, out, rep, caps, started, budget_s, now).run()\n",
-  "replace": "        _Pool(postings + boards, ledger, out, rep, caps, started, budget_s, now).run()\n",
+  "find": "        _Pool(interleave(postings, boards), ledger, out, rep, caps, started, budget_s, now, auth=auth).run()\n",
+  "replace": "        _Pool(postings + boards, ledger, out, rep, caps, started, budget_s, now, auth=auth).run()\n",
   "why": "boards queued behind every posting read `boards 0 (of ~595 due)` on every night from 09-04 to 09-15 because the day ended first (infra, 2026-09-15).",
   "must_be_killed_by_behavioural": true,
   "killers": [
@@ -3871,12 +3871,182 @@
   "file": "archive_evidence.py",
   "symbol": "run",
   "class": "M1-gate-removal",
-  "find": "    if not rep.alarm and rep.captured == 0 and (postings or boards):\n",
-  "replace": "    if not rep.alarm and rep.submitted == 0 and rep.boards == 0 and (postings or boards):\n",
+  "find": "    if rep.captured == 0 and (postings or boards):\n",
+  "replace": "    if rep.submitted == 0 and rep.boards == 0 and (postings or boards):\n",
   "why": "the old rule: `submitted` counts a 60-s timeout as accepted, so 09-12 (64 accepted, 0 named, 37 unverified three days later) never alarmed (infra, 2026-09-15).",
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_wayback_the_stamp_carries_the_split_and_captured_is_not_submitted"
+  ]
+ },
+ {
+  "id": "wayback-polls-count-as-requests",
+  "file": "archive_evidence.py",
+  "symbol": "_Pool._submit",
+  "class": "M7-constant-drift",
+  "find": "            self.rep.polls += res.polls\n",
+  "replace": "            self.rep.polls += res.polls\n            self.rep.requests += res.polls\n",
+  "why": "a status read is not a capture: `WAYBACK_REQ_CAP` bounds captures + verifications, and three reads a job would spend it three times over before the day's cap (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_polls_are_not_requests_and_the_pace_gate_fronts_the_post"
+  ]
+ },
+ {
+  "id": "wayback-unknown-status-ext-is-http",
+  "file": "archive_evidence.py",
+  "symbol": "_classify_job",
+  "class": "M7-constant-drift",
+  "find": "        return Result(http, \"\", STATUS_EXT.get(word.split(\":\", 1)[-1], \"server\"), job_id=jid, status_ext=word)\n",
+  "replace": "        return Result(http, \"\", STATUS_EXT.get(word.split(\":\", 1)[-1], \"http\"), job_id=jid, status_ext=word)\n",
+  "why": "a word the table does not know must be the archive's, never the address's: 09-15 showed every host park to date was an archive failure charged to the host that happened to be next (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_status_ext_words_land_on_the_two_families"
+  ]
+ },
+ {
+  "id": "wayback-ceiling-drops-job-id",
+  "file": "archive_evidence.py",
+  "symbol": "_poll",
+  "class": "M8-argument-mis-passing",
+  "find": "    n, last = 0, Result(200, \"\", \"pending\", job_id=job_id)\n",
+  "replace": "    n, last = 0, Result(200, \"\", \"pending\")\n",
+  "why": "a `pending` with no id goes to the availability API and, unanswered for three days, becomes `unverified` -- a refusal of the address -- when the archive could have answered exactly (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_a_job_past_the_ceiling_is_pending_with_its_id_and_resolved_next_run"
+  ]
+ },
+ {
+  "id": "wayback-probe-cap-is-documentation",
+  "file": "archive_evidence.py",
+  "symbol": "_probe",
+  "class": "M1-gate-removal",
+  "find": "            caps.day = min(caps.day, lim - used)\n",
+  "replace": "            caps.day = caps.day\n",
+  "why": "the day cap the account has left must be the one `plan_batch` reads, or it is documentation (the `577` defect again: a cap nothing enforced) (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_the_account_probe_sets_workers_and_the_day_before_the_plan"
+  ]
+ },
+ {
+  "id": "wayback-probe-after-plan",
+  "file": "archive_evidence.py",
+  "symbol": "run",
+  "class": "M8-argument-mis-passing",
+  "find": "    if not dry_run:                                  # BEFORE the plan: the cap it lowers is the one `plan_batch` reads\n        auth, used_before = _probe(auth, caps, rep)\n    postings, boards, rep.backlog, rep.boards_due = plan_batch(targets, ledger, today, caps)\n",
+  "replace": "    postings, boards, rep.backlog, rep.boards_due = plan_batch(targets, ledger, today, caps)\n    if not dry_run:\n        auth, used_before = _probe(auth, caps, rep)\n",
+  "why": "the probe lowers `caps.day`; read after `plan_batch` it lowers nothing the plan used (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_the_account_probe_sets_workers_and_the_day_before_the_plan"
+  ]
+ },
+ {
+  "id": "wayback-first-alarm-wins",
+  "file": "archive_evidence.py",
+  "symbol": "Report.add_alarm",
+  "class": "M3-branch-narrowing",
+  "find": "        if clause and clause not in self.alarm.split(\"; \"):\n            self.alarm = (self.alarm + \"; \" + clause) if self.alarm else clause\n",
+  "replace": "        if clause and not self.alarm:\n            self.alarm = clause\n",
+  "why": "the old `if not rep.alarm` let the first clause suppress `zero-produce`: an unauthenticated zero night must say both in the mail (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_no_keys_or_refused_keys_fall_back_anonymous_and_say_so"
+  ]
+ },
+ {
+  "id": "wayback-poll-429-reposts",
+  "file": "archive_evidence.py",
+  "symbol": "_poll",
+  "class": "M6-fallback-removal",
+  "find": "        if err is not None and err.err == \"throttled\" and err.retry_after:\n            _sleep(min(err.retry_after, max(0.0, deadline - time.monotonic())))\n",
+  "replace": "        if err is not None and err.err == \"throttled\":\n            last = err\n            break\n",
+  "why": "a 429 to a status READ handed to the pool as `throttled` re-POSTs a job that is still running: a duplicate capture, a second of the url's five a day, and a pause charged to a read (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_polls_are_not_requests_and_the_pace_gate_fronts_the_post"
+  ]
+ },
+ {
+  "id": "wayback-crash-print-unredacted",
+  "file": "archive_evidence.py",
+  "symbol": "main",
+  "class": "M6-fallback-removal",
+  "find": "        print(f\"[wayback] CRASHED: {type(e).__name__}: {_redact(str(e)[:200])}\", flush=True)\n",
+  "replace": "        print(f\"[wayback] CRASHED: {type(e).__name__}: {str(e)[:200]}\", flush=True)\n",
+  "why": "the crash line is the one print that carries free text; an exception that quotes a request would put the account key on a public run page (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_keys_never_reach_the_log_the_ledger_or_the_stamp"
+  ]
+ },
+ {
+  "id": "wayback-empty-status-ext-written",
+  "file": "archive_evidence.py",
+  "symbol": "Line.dumps",
+  "class": "M5-population-widening",
+  "find": "        d = {k: v for k, v in self.__dict__.items() if v or k not in (\"job_id\", \"status_ext\")}\n",
+  "replace": "        d = dict(self.__dict__)\n",
+  "why": "an anonymous-rung line must stay the 2026-09-04 shape byte for byte: the ledger is append-only, merged as whole lines, and 768 lines predate the two fields (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_run_writes_one_line_per_attempt_and_verifies_yesterdays_pending",
+   "tests/test_units.py::test_wayback_keyed_post_then_poll_names_the_capture"
+  ]
+ },
+ {
+  "id": "wayback-unauthenticated-retried",
+  "file": "archive_evidence.py",
+  "symbol": "_Pool.work",
+  "class": "M4-dead-conjunct",
+  "find": "            if _family(res.err) in ARCHIVE_SIDE and res.status_ext != \"unauthenticated\":   # our keys refused: no second ask\n",
+  "replace": "            if _family(res.err) in ARCHIVE_SIDE:\n",
+  "why": "our keys refused is not the archive down: a second POST with the same keys is a second refusal, and a 15-s wait for it on every thread (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_no_keys_or_refused_keys_fall_back_anonymous_and_say_so"
+  ]
+ },
+ {
+  "id": "wayback-post-timeout-is-pending",
+  "file": "archive_evidence.py",
+  "symbol": "_json_call",
+  "class": "M7-constant-drift",
+  "find": "        return 0, None, _exc_result(e, \"net:TimeoutError\")\n",
+  "replace": "        return 0, None, _exc_result(e, \"pending\")\n",
+  "why": "the POST answers in a second; a silence there is the archive not answering, and a `pending` with no job goes to the availability API and then to `unverified`, a refusal of the address (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_polls_are_not_requests_and_the_pace_gate_fronts_the_post"
+  ]
+ },
+ {
+  "id": "wayback-job-status-skipped",
+  "file": "archive_evidence.py",
+  "symbol": "run",
+  "class": "M6-fallback-removal",
+  "find": "            if s.get(\"job_id\") and auth.keyed:\n",
+  "replace": "            if False:\n",
+  "why": "a pending line that names its job is resolved exactly by `/save/status/<job_id>`; the availability API is the anonymous rung's guess and needed three days and 206 `unverified` lines (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_a_job_past_the_ceiling_is_pending_with_its_id_and_resolved_next_run"
+  ]
+ },
+ {
+  "id": "wayback-keyed-429-pauses-the-day",
+  "file": "archive_evidence.py",
+  "symbol": "_Pool._retry",
+  "class": "M1-gate-removal",
+  "find": "                if keyed and not res.retry_after:\n                    wait, slot_wait = SLOT_WAIT_S, True\n                else:\n",
+  "replace": "                if False:\n                    wait, slot_wait = SLOT_WAIT_S, True\n                else:\n",
+  "why": "measured 2026-09-16: the account's 429 with no Retry-After is a lagging slot count, and the anonymous rung's 300-s pause answered it twice in a 15-minute run -- ten minutes paused for two free slots (infra).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_a_keyed_429_without_retry_after_is_a_slot_wait_not_a_pause"
   ]
  }
 ]

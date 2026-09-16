@@ -62,8 +62,10 @@ jobs:
     # is deliberately smaller: `repo-state` already carries scrape-refresh (78 min observed),
     # retry-unreachable (50), auto-expand twice daily, firmographics, listing-hunt, triage-dark
     # and a 330-minute Sunday audit, all queued behind each other. Reserving 150 minutes of a
-    # serialised group on an ESTIMATE is how a queue starves.
-    timeout-minutes: 170
+    # serialised group on an ESTIMATE is how a queue starves. 170 -> 180 on 2026-09-16: the
+    # archive step's budget went 30 -> 60 min (its own timeout 70) ahead of the 90-min enrich
+    # budget, and the two plus checkout and the commit no longer fit 170.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -91,39 +93,51 @@ jobs:
         # `archive_evidence.py` (infra, 2026-09-04): a third-party snapshot behind every
         # posting before a dispute needs one -- Taboola's vanished nine days after we last
         # saw it and no cache held its text. FIRST, before the 90-minute enrich pass, so an
-        # overrun there cannot starve it. Anonymous, one request every 6 s (the archive
-        # allows 15 a minute per IP and blocks for five minutes past that), 150 postings +
-        # 25 careers pages a day, boards one in six, 220 requests all told. The 302 naming
-        # a capture arrives after 18 s or after minutes (measured 09-04), so three threads
-        # wait behind one 6 s pace gate, and a 60 s timeout is `pending` -- the capture MAY
-        # exist and the next run asks the archive (271 of 271 pending lines to 09-15 were
-        # timeouts, 206 never became captures: `captured` in the stamp is what was NAMED).
-        # It never raises: a refusal of an address is a ledger line with a cooldown; the
-        # archive's own failure (a connection error, a 5xx, a 429) is never the address's
-        # and never parks a host -- eight in a row pause the day 90 s, a 429 pauses it for
-        # its Retry-After, the third pause of either kind ends the day (`stop=archive-down`
-        # / `throttled`, infra 2026-09-15: two nights of `zero-produce` were the archive
-        # down, read as four hosts refusing). `continue-on-error` keeps a crash from taking
-        # the enrich pass with it -- the crash is still a `wayback crashed:` clause in the
-        # morning mail's `Stages:` line, so it is not silent. What it produced is the
-        # `[wayback] submitted N ... captured C, net a, server b, refused c` line below and
-        # the same numbers in the `wayback` stamp.
+        # overrun there cannot starve it. AUTHENTICATED since 2026-09-16 (the two
+        # ARCHIVE_ORG_* secrets; `docs/decisions/2026-09-16-archive-authenticated.md`):
+        # `POST /save` opens a job, `GET /save/status/<job_id>` reads it to `success` (the
+        # capture timestamp) or `error` (the archive's `status_ext` word, kept in the
+        # ledger), so every job ENDS and `captured` in the stamp is exact -- the anonymous
+        # rung's 60-s timeout (`pending`, 271 of 271 lines to 09-15, 206 never captures)
+        # is gone from this path. The archive's limits for an account: 7 captures a
+        # minute (WAYBACK_PACE_S 9 = 60/7), `available` concurrent jobs read from
+        # `/save/status/user` every run (3 on 09-16; WAYBACK_WORKERS is only the ceiling),
+        # 30,000 a day (the day cap is lowered to what the account has left), 2 minutes a
+        # capture (WAYBACK_TIMEOUT_S 150 is the ceiling on reading one job). Without the
+        # keys, or with the archive refusing them, the step runs the anonymous GET rung and
+        # the mail says `wayback unauthenticated: ...` -- never silently. It never raises:
+        # a refusal of an address is a ledger line with a cooldown; the archive's own failure
+        # (a connection error, a 5xx, a 429, its own `status_ext` words) is never the
+        # address's and never parks a host -- eight in a row pause the day 90 s, a 429
+        # pauses it for its Retry-After, the third pause of either kind ends the day
+        # (`stop=archive-down` / `throttled`, infra 2026-09-15). `continue-on-error` keeps
+        # a crash from taking the enrich pass with it -- the crash is still a `wayback
+        # crashed:` clause in the morning mail's `Stages:` line, so it is not silent. What
+        # it produced is the `[wayback] submitted N ... captured C, net a, server b, refused
+        # c, jobs J, polls P` line below and the same numbers in the `wayback` stamp; the
+        # `[wayback] authenticated: N slots, D of L captures used today` line prints before
+        # the plan and again after the day (its delta is the archive's own count of what
+        # this run captured).
         env:
-          WAYBACK_DAY_CAP: "150"
-          WAYBACK_BOARD_CAP: "25"
-          # 140 -> 220 (`577@infra`, filed by `registry` 2026-09-04 with this exact token).
-          # `_exhausted()` is `rep.requests >= caps.requests` and `requests` counts postings,
-          # boards AND the pending CDX verifications, so at most 140 - 25 boards - up to 40
-          # verifications = ~75-115 postings could go out whatever WAYBACK_DAY_CAP said: the
-          # day cap was documentation. 220 = 150 + 25 + 45, and at WAYBACK_PACE_S 6 that is
-          # 22 minutes of sends -- inside the 30-minute WAYBACK_TIME_BUDGET_MIN and under the
-          # archive's 15-a-minute limit.
-          WAYBACK_REQ_CAP: "220"
-          WAYBACK_TIME_BUDGET_MIN: "30"
-          WAYBACK_PACE_S: "6"
-          WAYBACK_TIMEOUT_S: "60"
-          WAYBACK_WORKERS: "3"
-        timeout-minutes: 40
+          ARCHIVE_ORG_ACCESS_KEY: ${{ secrets.ARCHIVE_ORG_ACCESS_KEY }}
+          ARCHIVE_ORG_SECRET_KEY: ${{ secrets.ARCHIVE_ORG_SECRET_KEY }}
+          # The arithmetic (infra, 2026-09-16, the decision record has the measurement):
+          # sends a minute = min(60 / PACE, workers x 60 / job seconds); at 9 s and 3 slots
+          # the gate binds at ~6.7 a minute, so a 60-minute budget less the verify loop is
+          # ~340 captures. 250 postings + 40 boards (one in six) fit it; `requests` counts
+          # POSTs, retries and the verify lookups (status polls are `polls`, never
+          # `requests`), so 400 = 250 + 40 + 60 + ~50 retries. 6,193 in the backlog on
+          # 09-15 and ~124 new addresses a day: ~25 nights to drain, tier 1 in two. The
+          # step timeout is the budget + the last job's ceiling + a retry wait + two probes.
+          WAYBACK_DAY_CAP: "250"
+          WAYBACK_BOARD_CAP: "40"
+          WAYBACK_VERIFY_CAP: "60"
+          WAYBACK_REQ_CAP: "400"
+          WAYBACK_TIME_BUDGET_MIN: "60"
+          WAYBACK_PACE_S: "9"
+          WAYBACK_TIMEOUT_S: "150"
+          WAYBACK_WORKERS: "6"
+        timeout-minutes: 70
         run: python archive_evidence.py
         continue-on-error: true
 
