@@ -40390,6 +40390,80 @@
    "url": "https://www.airhaifa.com/careers-he/career?position_uid=34.959"
   }
  ],
+ "altshare": [
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "altshare",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://altshare.com/careers-jobs/customer-success",
+   "location": "Tel Aviv District, Israel",
+   "posted_date": "",
+   "title": "Customer Success",
+   "url": "https://altshare.com/careers-jobs/customer-success"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "altshare",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://altshare.com/careers-jobs/risk-credit-referent----exchange-member",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Risk & Credit Referent - Exchange Member",
+   "url": "https://altshare.com/careers-jobs/risk-credit-referent----exchange-member"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "altshare",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://altshare.com/careers-jobs/legal-counsel",
+   "location": "Tel-Aviv, Israel",
+   "posted_date": "",
+   "title": "Legal Counsel",
+   "url": "https://altshare.com/careers-jobs/legal-counsel"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "altshare",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://altshare.com/careers-jobs/account-manager-team-lead",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Account Manager Team Lead",
+   "url": "https://altshare.com/careers-jobs/account-manager-team-lead"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "altshare",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://altshare.com/careers-jobs/director-of-valuation",
+   "location": "Israel",
+   "posted_date": "",
+   "title": "Director of Valuation",
+   "url": "https://altshare.com/careers-jobs/director-of-valuation"
+  },
+  {
+   "_loc_src": "own",
+   "ats_platform": "scrape",
+   "company": "altshare",
+   "country_code": "",
+   "description": "",
+   "job_id": "https://altshare.com/careers-jobs/account-manager-moran-north",
+   "location": "Tel Aviv, Israel",
+   "posted_date": "",
+   "title": "Account Manager [Moran, North]",
+   "url": "https://altshare.com/careers-jobs/account-manager-moran-north"
+  }
+ ],
  "aspectiva": [
   {
    "_jd_attempted": "2026-08-30",

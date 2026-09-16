@@ -2442,3 +2442,9 @@ Sugat Sugar Refineries Ltd,scrape,,https://sugat-group.co.il/career,false,queue-
 Efficient Finance,scrape,,https://www.efficientfinance.com/careers,false,queue-hunt 2026-09-15: careers page documented; monitored candidate
 Ecoplant,scrape,,https://ecoplant.com/careers,false,queue-hunt 2026-09-15: careers page documented; monitored candidate
 Octup,scrape,,https://www.octup.com/careers,false,queue-hunt 2026-09-15: careers page documented; monitored candidate
+Gyro,scrape,https://heygyro.com,https://heygyro.com,false,scanned; no open Israel roles now | own-site 2026-09-16: heygyro.com linkback
+Obligo,greenhouse,obligo,https://boards-api.greenhouse.io/v1/boards/obligo/jobs,true,auto-expand slug-probe; 3/2 IL
+Kin Payments,scrape,https://kinpayments.com,https://kinpayments.com,false,scanned; no open Israel roles now | own-site 2026-09-16: kinpayments.com linkback
+altshare,scrape,https://altshare.com/careers,https://altshare.com/careers,true,auto-expand scrape; 6 IL
+Surense,scrape,https://www.surense.co.il/,https://www.surense.co.il/,false,scanned; no open Israel roles now | own-site 2026-09-16: www.surense.co.il linkback
+Sympera,scrape,https://sympera.ai,https://sympera.ai,false,scanned; no open Israel roles now | own-site 2026-09-16: sympera.ai linkback
