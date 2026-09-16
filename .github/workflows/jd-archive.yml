@@ -135,7 +135,12 @@ jobs:
           WAYBACK_REQ_CAP: "400"
           WAYBACK_TIME_BUDGET_MIN: "60"
           WAYBACK_PACE_S: "9"
-          WAYBACK_TIMEOUT_S: "150"
+          # 150 -> 240 after the first scheduled night (2026-09-16, run 35126457407): the
+          # archive holds the POST itself until a slot frees, and 14 of 56 jobs were still
+          # running at 150 s. This is the ceiling on ONE job -- the POST's wait and the reads
+          # after it -- not a socket timeout; the anonymous fallback reads it as its 60-s wait
+          # would have been.
+          WAYBACK_TIMEOUT_S: "240"
           WAYBACK_WORKERS: "6"
         timeout-minutes: 70
         run: python archive_evidence.py

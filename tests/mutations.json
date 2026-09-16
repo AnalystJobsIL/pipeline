@@ -4048,5 +4048,31 @@
   "killers": [
    "tests/test_units.py::test_wayback_a_keyed_429_without_retry_after_is_a_slot_wait_not_a_pause"
   ]
+ },
+ {
+  "id": "wayback-post-cut-off-at-30s",
+  "file": "archive_evidence.py",
+  "symbol": "_submit_job",
+  "class": "M7-constant-drift",
+  "find": "    status, data, err = _json_call(req, timeout)\n    if status in (401, 403):\n",
+  "replace": "    status, data, err = _json_call(req, 30.0)\n    if status in (401, 403):\n",
+  "why": "the first scheduled night (2026-09-16, run 35126457407): 43 of 154 requests were `net:TimeoutError`, the POST cut off at 30 s while the archive held it for a slot -- each a 15-s retry and a second POST for the same url (infra).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_keyed_post_then_poll_names_the_capture"
+  ]
+ },
+ {
+  "id": "wayback-after-read-silent",
+  "file": "archive_evidence.py",
+  "symbol": "run",
+  "class": "M6-fallback-removal",
+  "find": "        else:                                        # never silent: the first night's line was simply absent\n            print(f\"[wayback] authenticated: the account could not be re-read after the day \"\n                  f\"({status or 'net'} {err.err if err else 'unreadable'})\", flush=True)\n",
+  "replace": "        else:\n            pass\n",
+  "why": "the first scheduled night's after-the-day account line was simply absent, and the morning row that compares its delta to `jobs` had nothing to read (infra, 2026-09-16).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_the_account_probe_sets_workers_and_the_day_before_the_plan"
+  ]
  }
 ]

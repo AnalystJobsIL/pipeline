@@ -31239,7 +31239,7 @@ class _WbSpn2:
     def __init__(self, user=None, post=None, status=None, avail=None):
         self.user = _wb_user() if user is None else user
         self.post, self.status, self.avail = post, status, avail
-        self.calls, self.reads = [], {}
+        self.calls, self.reads, self.timeouts = [], {}, []
 
     def __call__(self, req, timeout):
         import archive_evidence as A
@@ -31247,6 +31247,7 @@ class _WbSpn2:
         import urllib.parse as _up
         m, u = req.get_method(), req.full_url
         self.calls.append((m, u, dict(req.header_items()), req.data))
+        self.timeouts.append((m, u, timeout))
         if u == A.STATUS_URL + "user":
             ans = self.user.pop(0) if isinstance(self.user, list) else self.user
         elif u.startswith(A.STATUS_URL):
@@ -31305,6 +31306,10 @@ def test_wayback_keyed_post_then_poll_names_the_capture(tmp_path, monkeypatch, c
     assert [c[1] for c in arch.calls].count(A.STATUS_URL + "user") == 2                # before the plan, after the day
     assert [c[1] for c in arch.calls if c[1].startswith(A.STATUS_URL + "job-")] == [A.STATUS_URL + "job-1"] * 2
     assert waits.count(A.POLL_S) == 2                                                  # one wait before EVERY read; never a read at t=0
+    # the POST waits the job's ceiling (the archive holds it until a slot frees: 43 of 154
+    # requests on the first scheduled night were a 30-s cut-off), the reads 30 s each
+    assert [t for m, u, t in arch.timeouts if m == "POST"] == [20.0]
+    assert {t for m, u, t in arch.timeouts if m == "GET"} == {30.0}
     lines = [_json.loads(x) for x in open(tmp_path / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
     assert len(lines) == 1 and (lines[0]["snap"], lines[0]["err"], lines[0]["job_id"], lines[0]["http"]) == (ts, "", "job-1", 200)
     assert set(lines[0]) == {"at", "url", "kind", "tier", "attempt", "http", "snap", "err", "job_id"}   # status_ext only on an error end
@@ -31404,6 +31409,13 @@ def test_wayback_the_account_probe_sets_workers_and_the_day_before_the_plan(tmp_
     assert rep2.alarm == "daily-limit: the account's 30000 captures were spent before this run"   # no zero-produce: nothing was planned
     lines = [_json.loads(x) for x in open(tmp_path / "spent" / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
     assert lines[-1]["err"] == "verified"
+    # the read AFTER the day failing is said, not skipped (the first scheduled night's line
+    # was simply absent, and the row that compares its delta to `jobs` had nothing to read)
+    capsys.readouterr()
+    arch3 = _WbSpn2(user=[_wb_user(3, 10), _wb_http_error(503)], status=_wb_success("20260916120000"))
+    monkeypatch.setattr(A, "_open", arch3)
+    rep3 = A.run(_wb_root(tmp_path / "after", roles=_wb_roles(today, urls[:1])), today=today, caps=_wb_caps(), auth=_wb_auth())
+    assert rep3.captured == 1 and "[wayback] authenticated: the account could not be re-read after the day (503 server)" in capsys.readouterr().out
 
 
 def test_wayback_no_keys_or_refused_keys_fall_back_anonymous_and_say_so(tmp_path, monkeypatch, capsys):

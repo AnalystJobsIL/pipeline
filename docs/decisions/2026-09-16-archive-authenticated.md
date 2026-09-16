@@ -50,6 +50,18 @@ then one more ask; a second 429 in a row opens the day's pause at `OUTAGE_WAIT_S
 not five minutes; a 429 that names its `Retry-After` pauses every thread for it, as before.
 The two-pause rule stays the backstop.
 
+## 2b. The first scheduled night, the same evening
+
+Run `35126457407` (`event: schedule`, on `dfb1384`, 17:09–18:13Z): **56 jobs, 37 captured**
+(33 of them `il.linkedin.com`), 4 Indeed refusals, **14 `pending` with a `job_id`**, and **43
+`net:TimeoutError`** in 154 requests — the POST's 30-s socket timeout, set on a machine where
+the POST answered in a second. On the runner the archive holds the POST until a slot frees;
+the cut-off turned a queued job into a failure, a 15-s retry and a second POST. The
+after-the-day account read failed silently. Both fixed the same evening (the POST waits the
+job's ceiling, `WAYBACK_TIMEOUT_S` 240, the failed re-read prints); the 09-18 row in
+`HANDOFF.md` is the proof. The night's honest rate: 56 jobs in 63 minutes with the leak,
+~200 an hour of unpaused sends without it — the §3 estimate stands until measured again.
+
 ## 3. The three corrections to the spawn prompt
 
 | the prompt said | what is true | consequence |

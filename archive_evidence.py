@@ -812,7 +812,12 @@ def _submit_job(url: str, timeout: float, auth: Auth) -> Result:
     body = urllib.parse.urlencode({"url": url}).encode("ascii")
     headers = dict(_auth_headers(auth), **{"Content-Type": "application/x-www-form-urlencoded"})
     req = urllib.request.Request(SAVE_API, data=body, headers=headers, method="POST")
-    status, data, err = _json_call(req, 30.0)
+    # The POST answers in a second from this machine and held for more than 30 s on the
+    # runner 43 times in 154 requests on the first scheduled night (2026-09-16): the archive
+    # holds the POST until a slot frees. Its wait is the job's ceiling, not a socket blip --
+    # a 30-s cut-off turned a queued job into `net:TimeoutError`, a 15-s retry and a second
+    # POST for the same url.
+    status, data, err = _json_call(req, timeout)
     if status in (401, 403):
         return Result(status, "", "server", status_ext="unauthenticated")
     if err is not None:
@@ -1238,12 +1243,16 @@ def run(root: str = ROOT, today: dt.date | None = None, caps: Caps | None = None
     finally:
         out.close()
     if rep.auth == "keyed" and used_before is not None:
-        # the same read after the day: the morning check compares this delta to `captured`
-        _status, data, _err = _user_status(auth)
+        # the same read after the day: the morning check compares this delta to `jobs` (the
+        # archive counts every job it opened, an error end included)
+        status, data, err = _user_status(auth)
         if isinstance(data, dict) and "daily_captures" in data:
             used = int(data.get("daily_captures") or 0)
             print(f"[wayback] authenticated: {int(data.get('available') or 0)} slots, {used} of "
                   f"{int(data.get('daily_captures_limit') or 0)} captures used today (+{used - used_before} this run)", flush=True)
+        else:                                        # never silent: the first night's line was simply absent
+            print(f"[wayback] authenticated: the account could not be re-read after the day "
+                  f"({status or 'net'} {err.err if err else 'unreadable'})", flush=True)
     # `captured`, not `submitted`: a night of timeouts "accepted" 64 and named 0 (09-12), and
     # 37 of those were `unverified` three days later. The token is what the mail check greps,
     # and it composes with the clauses above it (`add_alarm`) rather than yielding to them.
