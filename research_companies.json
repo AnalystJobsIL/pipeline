@@ -1752,12 +1752,6 @@
   "slug": "pick-hr"
  },
  {
-  "name": "Quicklizard",
-  "careers_url": "https://il.linkedin.com/jobs/view/head-of-data-science-at-quicklizard-4459786951",
-  "ats": "unknown",
-  "slug": "quicklizard"
- },
- {
   "name": "Mars Security",
   "careers_url": "https://il.linkedin.com/jobs/view/threat-hunter-at-mars-security-4459734219",
   "ats": "unknown",
@@ -1810,12 +1804,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/operations-and-employee-experience-manager-at-native-4459737084",
   "ats": "unknown",
   "slug": "native-security"
- },
- {
-  "name": "SuperFunnel",
-  "careers_url": "https://il.linkedin.com/jobs/view/growth-lead-at-superfunnel-4461033990",
-  "ats": "unknown",
-  "slug": "superfunnel-ai"
  },
  {
   "name": "RealAState.AI",
@@ -4836,12 +4824,6 @@
   "slug": "horizon-technologies-ltd-"
  },
  {
-  "name": "Efficient Finance",
-  "careers_url": "https://il.linkedin.com/jobs/view/business-assistant-at-efficient-finance-4465290206",
-  "ats": "unknown",
-  "slug": "efficient-finance"
- },
- {
   "name": "LS Technology",
   "careers_url": "https://il.linkedin.com/jobs/view/information-systems-analyst-at-ls-technology-4465215352",
   "ats": "unknown",
@@ -4852,24 +4834,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/senior-campaign-manager-at-blue-water-shield-4465511503",
   "ats": "unknown",
   "slug": "blue-water-shield-ltd"
- },
- {
-  "name": "VMRay",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-outbound-product-manager-europe-or-middle-east-at-vmray-4466510133",
-  "ats": "unknown",
-  "slug": "vmray"
- },
- {
-  "name": "Ecoplant",
-  "careers_url": "https://il.linkedin.com/jobs/view/product-designer-ai-builder-at-ecoplant-4467206690",
-  "ats": "unknown",
-  "slug": "ecoplant-technological-innovation-ltd"
- },
- {
-  "name": "Rail Vision Ltd",
-  "careers_url": "https://il.linkedin.com/jobs/view/deep-learning-research-engineer-at-rail-vision-ltd-4467054951",
-  "ats": "unknown",
-  "slug": "rail-vision"
  },
  {
   "name": "tasq.ai",
@@ -4902,12 +4866,6 @@
   "slug": "torah-live"
  },
  {
-  "name": "Tomedes",
-  "careers_url": "https://il.linkedin.com/jobs/view/english-to-hebrew-on-site-interpretation-translation-at-tomedes-4465227689",
-  "ats": "unknown",
-  "slug": "tomedes.com"
- },
- {
   "name": "Tel Aviv Medical Center",
   "careers_url": "https://il.linkedin.com/jobs/view/human-resources-specialist-at-tel-aviv-medical-center-4373774944",
   "ats": "unknown",
@@ -4920,28 +4878,10 @@
   "slug": "mindtelgloba"
  },
  {
-  "name": "Ananey Paramount",
-  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9B%D7%95%D7%AA%D7%91-%D7%AA-%D7%95%D7%A2%D7%95%D7%A8%D7%9B-%D7%AA-%D7%AA%D7%95%D7%9B%D7%9F-%D7%9C%D7%9E%D7%97%D7%9C%D7%A7%D7%AA-%D7%94%D7%AA%D7%A7%D7%A9%D7%95%D7%A8%D7%AA-%D7%95%D7%94%D7%A9%D7%99%D7%95%D7%95%D7%A7-at-ananey-paramount-4465506621",
-  "ats": "unknown",
-  "slug": "ananey-paramount"
- },
- {
   "name": "Fritz Logistics & Forwarding - Supply Chain Solutions Israel",
   "careers_url": "https://il.linkedin.com/jobs/view/%D7%A8%D7%A4%D7%A8%D7%A0%D7%98-%D7%99%D7%AA-%D7%94%D7%A0%D7%93%D7%A1%D7%94-%D7%AA%D7%A2%D7%A9%D7%99%D7%99%D7%94-%D7%95%D7%A0%D7%99%D7%94%D7%95%D7%9C-at-fritz-logistics-forwarding-supply-chain-solutions-israel-4465517475",
   "ats": "unknown",
   "slug": "fritz-logistics-and-forwarding"
- },
- {
-  "name": "Octup",
-  "careers_url": "https://il.linkedin.com/jobs/view/marketing-content-creator-at-octup-4465510321",
-  "ats": "unknown",
-  "slug": "octup-com"
- },
- {
-  "name": "Sos Children S Villages Israel",
-  "careers_url": "https://secrethunter.io/companies/sos-children-s-villages-israel",
-  "ats": "unknown",
-  "slug": "sos-children-s-villages-israel"
  },
  {
   "name": "Soulmynd AI",
@@ -4962,18 +4902,6 @@
   "slug": "spacialio"
  },
  {
-  "name": "Speak Up Professional English",
-  "careers_url": "https://secrethunter.io/companies/speak-up-professional-english",
-  "ats": "unknown",
-  "slug": "speak-up-professional-english"
- },
- {
-  "name": "Speaknow",
-  "careers_url": "https://secrethunter.io/companies/speaknow",
-  "ats": "unknown",
-  "slug": "speaknow"
- },
- {
   "name": "Speechifyinc",
   "careers_url": "https://secrethunter.io/companies/speechifyinc",
   "ats": "unknown",
@@ -4990,12 +4918,6 @@
   "careers_url": "https://secrethunter.io/companies/spines-technologies-ltd",
   "ats": "unknown",
   "slug": "spines-technologies-ltd"
- },
- {
-  "name": "Spotnet",
-  "careers_url": "https://secrethunter.io/companies/spotnet",
-  "ats": "unknown",
-  "slug": "spotnet"
  },
  {
   "name": "Squareonepropertypartners",
@@ -5070,12 +4992,6 @@
   "slug": "strauss-co"
  },
  {
-  "name": "Streamkey",
-  "careers_url": "https://secrethunter.io/companies/streamkey",
-  "ats": "unknown",
-  "slug": "streamkey"
- },
- {
   "name": "Strugo Pharm",
   "careers_url": "https://secrethunter.io/companies/strugo-pharm",
   "ats": "unknown",
@@ -5094,9 +5010,465 @@
   "slug": "studiomore"
  },
  {
-  "name": "Sugat Sugar Refineries Ltd",
-  "careers_url": "https://secrethunter.io/companies/sugat-sugar-refineries-ltd",
+  "name": "Coface Bdi",
+  "careers_url": "https://il.indeed.com/viewjob?jk=ef7b658c513a185f",
   "ats": "unknown",
-  "slug": "sugat-sugar-refineries-ltd"
+  "slug": ""
+ },
+ {
+  "name": "Abbott Laboratories",
+  "careers_url": "https://il.indeed.com/viewjob?jk=3f199f636b5ae3ca",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Itron",
+  "careers_url": "https://il.indeed.com/viewjob?jk=74aee9ded02315ed",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Flex LTD",
+  "careers_url": "https://il.indeed.com/viewjob?jk=573de41692fec458",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Enercon Technologies Group",
+  "careers_url": "https://il.indeed.com/viewjob?jk=08bae1243e0dfa40",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Inner Balance",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-data-marketing-analyst-at-inner-balance-4466522322",
+  "ats": "unknown",
+  "slug": "inner-balancemd"
+ },
+ {
+  "name": "proman",
+  "careers_url": "https://il.linkedin.com/jobs/view/data-scientist-at-proman-4465548314",
+  "ats": "unknown",
+  "slug": "pro-man"
+ },
+ {
+  "name": "UBTECH",
+  "careers_url": "https://il.linkedin.com/jobs/view/azure-finops-at-ubtech-4467758511",
+  "ats": "unknown",
+  "slug": "u-btech-solutions-ltd"
+ },
+ {
+  "name": "Gyro",
+  "careers_url": "https://il.linkedin.com/jobs/view/marketing-operations-manager-at-gyro-4465972689",
+  "ats": "unknown",
+  "slug": "heygyro"
+ },
+ {
+  "name": "Speedata.io",
+  "careers_url": "https://il.linkedin.com/jobs/view/data-infrastructure-engineer-at-speedata-io-4465639580",
+  "ats": "unknown",
+  "slug": "speedataio"
+ },
+ {
+  "name": "HUNTHEAD",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-strategy-economic-policy-consultant-at-hunthead-4465715184",
+  "ats": "unknown",
+  "slug": "hunthead"
+ },
+ {
+  "name": "NATASHA DENONA IL",
+  "careers_url": "https://il.linkedin.com/jobs/view/marketing-performance-specialist-at-natasha-denona-il-4465683327",
+  "ats": "unknown",
+  "slug": "natasha-denona-il"
+ },
+ {
+  "name": "Guideline Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/crm-ai-solutions-specialist-at-guideline-group-4466560663",
+  "ats": "unknown",
+  "slug": "kav-manche-group"
+ },
+ {
+  "name": "Webselenese",
+  "careers_url": "https://il.linkedin.com/jobs/view/user-acquisition-manager-non-search-at-webselenese-4466187979",
+  "ats": "unknown",
+  "slug": "webselenese"
+ },
+ {
+  "name": "Obligo",
+  "careers_url": "https://il.linkedin.com/jobs/view/product-manager-%E2%80%93-renter-growth-conversion-at-obligo-4467754647",
+  "ats": "unknown",
+  "slug": "depositfree"
+ },
+ {
+  "name": "B&K Management Consulting",
+  "careers_url": "https://il.linkedin.com/jobs/view/economic-strategy-consultant-at-b-k-management-consulting-4465535414",
+  "ats": "unknown",
+  "slug": "bk-management-consulting"
+ },
+ {
+  "name": "M.D. Mechanical Devices Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/operations-process-controller-at-m-d-mechanical-devices-ltd-4467073599",
+  "ats": "unknown",
+  "slug": "m--d--mechanical-devices"
+ },
+ {
+  "name": "Tomax-Think Academy",
+  "careers_url": "https://il.linkedin.com/jobs/view/research-engineer-applied-ml-ai-at-tomax-think-academy-4467746388",
+  "ats": "unknown",
+  "slug": "tomax-think-academy"
+ },
+ {
+  "name": "NGsoft",
+  "careers_url": "https://il.linkedin.com/jobs/view/salesforce-systems-analyst-at-ngsoft-4465510314",
+  "ats": "unknown",
+  "slug": "ngsoft-ltd."
+ },
+ {
+  "name": "Kin Payments",
+  "careers_url": "https://il.linkedin.com/jobs/view/operations-manager-at-kin-payments-4465963517",
+  "ats": "unknown",
+  "slug": "kinpayments"
+ },
+ {
+  "name": "Terrogence",
+  "careers_url": "https://il.linkedin.com/jobs/view/digital-source-development-platform-coverage-analyst-at-terrogence-4464791512",
+  "ats": "unknown",
+  "slug": "terrogence-inc"
+ },
+ {
+  "name": "Comigo.io",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-systems-implementer-%D7%9E%D7%99%D7%99%D7%A9%D7%9D-%D7%AA-%D7%9E%D7%A2%D7%A8%D7%9B%D7%95%D7%AA-at-comigo-io-4465241015",
+  "ats": "unknown",
+  "slug": "comigo-io"
+ },
+ {
+  "name": "BlueBird Aero Systems Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/system-implementation-specialist-at-bluebird-aero-systems-ltd-4463028656",
+  "ats": "unknown",
+  "slug": "bluebird-aero-systems-ltd-"
+ },
+ {
+  "name": "Reelu",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-account-manager-at-reelu-4467949890",
+  "ats": "unknown",
+  "slug": "reelu-app"
+ },
+ {
+  "name": "ERGO NEXT Insurance",
+  "careers_url": "https://il.linkedin.com/jobs/view/ai-engineer-at-ergo-next-insurance-4466189582",
+  "ats": "unknown",
+  "slug": "ergo-next-insurance"
+ },
+ {
+  "name": "PayPlus - The Future of Payments & Commerce",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-payplus-the-future-of-payments-commerce-4466574654",
+  "ats": "unknown",
+  "slug": "payplusltd"
+ },
+ {
+  "name": "Wobi Ltd",
+  "careers_url": "https://il.linkedin.com/jobs/view/digital-product-business-manager-at-wobi-ltd-4463419069",
+  "ats": "unknown",
+  "slug": "wobi-ltd"
+ },
+ {
+  "name": "Magenta Medical Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/director-of-product-medical-device-at-magenta-medical-ltd-4465733600",
+  "ats": "unknown",
+  "slug": "magenta-medical"
+ },
+ {
+  "name": "Bellboy Robotics",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-applied-researcher-at-bellboy-robotics-4465971812",
+  "ats": "unknown",
+  "slug": "bellboy-robotics"
+ },
+ {
+  "name": "Sightful",
+  "careers_url": "https://il.linkedin.com/jobs/view/marketing-director-at-sightful-4464790425",
+  "ats": "unknown",
+  "slug": "heysightful"
+ },
+ {
+  "name": "Cynet Security",
+  "careers_url": "https://il.linkedin.com/jobs/view/cyops-analyst-at-cynet-security-4463442109",
+  "ats": "unknown",
+  "slug": "cynet-security"
+ },
+ {
+  "name": "eTeacher Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/ai-innovation-builder-at-eteacher-group-4465526888",
+  "ats": "unknown",
+  "slug": "eteachergroup"
+ },
+ {
+  "name": "Autobrains Technologies",
+  "careers_url": "https://il.linkedin.com/jobs/view/applied-ai-scientist-ph-d-on-site-at-autobrains-technologies-4466839307",
+  "ats": "unknown",
+  "slug": "autobrains-technologies"
+ },
+ {
+  "name": "TheMarker",
+  "careers_url": "https://il.linkedin.com/jobs/view/backend-ai-developer-at-themarker-4467979722",
+  "ats": "unknown",
+  "slug": "themarker"
+ },
+ {
+  "name": "NVIDIA AI",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-solutions-architect-deep-learning-at-nvidia-ai-4465237158",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Novartis ACC",
+  "careers_url": "https://il.linkedin.com/jobs/view/defensive-cyber-security-researcher-at-novartis-acc-4465205714",
+  "ats": "unknown",
+  "slug": "novartisacc"
+ },
+ {
+  "name": "LumenArtz by ERCO",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%A8%D7%9B%D7%96-%D7%AA-%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98%D7%99%D7%9D-%D7%95%D7%97%D7%93%D7%A9%D7%A0%D7%95%D7%AA-%E2%80%93-%D7%AA%D7%90%D7%95%D7%A8%D7%94-%D7%90%D7%93%D7%A8%D7%99%D7%9B%D7%9C%D7%99%D7%AA-at-lumenartz-by-erco-4465535469",
+  "ats": "unknown",
+  "slug": "lumenartz"
+ },
+ {
+  "name": "in3D Tech",
+  "careers_url": "https://il.linkedin.com/jobs/view/technical-3d-artist-3d-artist-environment-artist-at-in3d-tech-4465551633",
+  "ats": "unknown",
+  "slug": "in3d-tech.com"
+ },
+ {
+  "name": "Texas Instruments Europe",
+  "careers_url": "https://il.linkedin.com/jobs/view/field-applications-program-at-texas-instruments-europe-4440742999",
+  "ats": "unknown",
+  "slug": "texas-instruments-europe"
+ },
+ {
+  "name": "Strauss Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/talent-acquisition-specialist-at-strauss-group-4465959974",
+  "ats": "unknown",
+  "slug": "strauss-group"
+ },
+ {
+  "name": "Baran Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/talent-acquisition-specialist-at-baran-group-at-baran-group-4465966655",
+  "ats": "unknown",
+  "slug": "baran-group"
+ },
+ {
+  "name": "HaGal Sheli",
+  "careers_url": "https://il.linkedin.com/jobs/view/surf-therapy-center-manager-at-hagal-sheli-4465973616",
+  "ats": "unknown",
+  "slug": "hagal-sheli"
+ },
+ {
+  "name": "Meitav - מיטב בית השקעות",
+  "careers_url": "https://il.linkedin.com/jobs/view/compliance-specialist-at-meitav-%D7%9E%D7%99%D7%98%D7%91-%D7%91%D7%99%D7%AA-%D7%94%D7%A9%D7%A7%D7%A2%D7%95%D7%AA-4466191932",
+  "ats": "unknown",
+  "slug": "meitav"
+ },
+ {
+  "name": "Thing or Two",
+  "careers_url": "https://il.linkedin.com/jobs/view/account-manager-at-thing-or-two-4465767470",
+  "ats": "unknown",
+  "slug": "thingortwo"
+ },
+ {
+  "name": "Plus500™",
+  "careers_url": "https://il.linkedin.com/jobs/view/affiliates-team-lead-at-plus500%E2%84%A2-4465966420",
+  "ats": "unknown",
+  "slug": "plus500-official-page"
+ },
+ {
+  "name": "Philip Morris International",
+  "careers_url": "https://il.linkedin.com/jobs/view/brand-specialist-at-philip-morris-international-4467924977",
+  "ats": "unknown",
+  "slug": "insidepmi"
+ },
+ {
+  "name": "Tamooz Marketing Communications",
+  "careers_url": "https://il.linkedin.com/jobs/view/digital-project-manager-%E2%80%93-creative-agency-events-at-tamooz-marketing-communications-4465537175",
+  "ats": "unknown",
+  "slug": "tamooz-marketing-communications"
+ },
+ {
+  "name": "altshare",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-social-media-content-lead-at-altshare-4465538402",
+  "ats": "unknown",
+  "slug": "altshare"
+ },
+ {
+  "name": "Sumitcoil",
+  "careers_url": "https://secrethunter.io/companies/sumitcoil",
+  "ats": "unknown",
+  "slug": "sumitcoil"
+ },
+ {
+  "name": "Sunflowers Npo",
+  "careers_url": "https://secrethunter.io/companies/sunflowers-npo",
+  "ats": "unknown",
+  "slug": "sunflowers-npo"
+ },
+ {
+  "name": "Sungroweurope",
+  "careers_url": "https://secrethunter.io/companies/sungroweurope",
+  "ats": "unknown",
+  "slug": "sungroweurope"
+ },
+ {
+  "name": "Sunrise Israel K",
+  "careers_url": "https://secrethunter.io/companies/sunrise-israel-k",
+  "ats": "unknown",
+  "slug": "sunrise-israel-k"
+ },
+ {
+  "name": "Super Micro Computer Spain S L",
+  "careers_url": "https://secrethunter.io/companies/super-micro-computer-spain-s-l-",
+  "ats": "unknown",
+  "slug": "super-micro-computer-spain-s-l"
+ },
+ {
+  "name": "Supercreator App",
+  "careers_url": "https://secrethunter.io/companies/supercreator-app",
+  "ats": "unknown",
+  "slug": "supercreator-app"
+ },
+ {
+  "name": "Superfunnel AI",
+  "careers_url": "https://secrethunter.io/companies/superfunnel-ai",
+  "ats": "unknown",
+  "slug": "superfunnel-ai"
+ },
+ {
+  "name": "Supergas Power Distribution Co Ltd",
+  "careers_url": "https://secrethunter.io/companies/supergas-power-distribution-co-ltd",
+  "ats": "unknown",
+  "slug": "supergas-power-distribution-co-ltd"
+ },
+ {
+  "name": "Supermicro",
+  "careers_url": "https://secrethunter.io/companies/supermicro",
+  "ats": "unknown",
+  "slug": "supermicro"
+ },
+ {
+  "name": "Surense",
+  "careers_url": "https://secrethunter.io/companies/surense",
+  "ats": "unknown",
+  "slug": "surense"
+ },
+ {
+  "name": "Surgical Science",
+  "careers_url": "https://secrethunter.io/companies/surgical-science",
+  "ats": "unknown",
+  "slug": "surgical-science"
+ },
+ {
+  "name": "Sw Ap",
+  "careers_url": "https://secrethunter.io/companies/sw-ap",
+  "ats": "unknown",
+  "slug": "sw-ap"
+ },
+ {
+  "name": "Sya Import International Trade Ltd",
+  "careers_url": "https://secrethunter.io/companies/sya-import-international-trade-ltd",
+  "ats": "unknown",
+  "slug": "sya-import-international-trade-ltd"
+ },
+ {
+  "name": "Sympera",
+  "careers_url": "https://secrethunter.io/companies/sympera",
+  "ats": "unknown",
+  "slug": "sympera"
+ },
+ {
+  "name": "Sync Me",
+  "careers_url": "https://secrethunter.io/companies/sync-me",
+  "ats": "unknown",
+  "slug": "sync-me"
+ },
+ {
+  "name": "Synergy Integration Ltd Israel",
+  "careers_url": "https://secrethunter.io/companies/synergy-integration-ltd-israel",
+  "ats": "unknown",
+  "slug": "synergy-integration-ltd-israel"
+ },
+ {
+  "name": "Sysaid Technologies Ltd",
+  "careers_url": "https://secrethunter.io/companies/sysaid-technologies-ltd",
+  "ats": "unknown",
+  "slug": "sysaid-technologies-ltd"
+ },
+ {
+  "name": "Systematic Group Of Companies",
+  "careers_url": "https://secrethunter.io/companies/systematic-group-of-companies",
+  "ats": "unknown",
+  "slug": "systematic-group-of-companies"
+ },
+ {
+  "name": "Systematics",
+  "careers_url": "https://secrethunter.io/companies/systematics",
+  "ats": "unknown",
+  "slug": "systematics"
+ },
+ {
+  "name": "Systemedic Ltd",
+  "careers_url": "https://secrethunter.io/companies/systemedic-ltd",
+  "ats": "unknown",
+  "slug": "systemedic-ltd"
+ },
+ {
+  "name": "Szadok",
+  "careers_url": "https://secrethunter.io/companies/szadok",
+  "ats": "unknown",
+  "slug": "szadok"
+ },
+ {
+  "name": "T Odent Ltd",
+  "careers_url": "https://secrethunter.io/companies/t-odent-ltd",
+  "ats": "unknown",
+  "slug": "t-odent-ltd"
+ },
+ {
+  "name": "T3 Defenseinc",
+  "careers_url": "https://secrethunter.io/companies/t3-defenseinc",
+  "ats": "unknown",
+  "slug": "t3-defenseinc"
+ },
+ {
+  "name": "Tabib Ltd",
+  "careers_url": "https://secrethunter.io/companies/tabib-ltd",
+  "ats": "unknown",
+  "slug": "tabib-ltd"
+ },
+ {
+  "name": "Tabor Elc HR",
+  "careers_url": "https://secrethunter.io/companies/tabor-elc-hr",
+  "ats": "unknown",
+  "slug": "tabor-elc-hr"
+ },
+ {
+  "name": "Tabor Electronics",
+  "careers_url": "https://secrethunter.io/companies/tabor-electronics",
+  "ats": "unknown",
+  "slug": "tabor-electronics"
+ },
+ {
+  "name": "daisy",
+  "careers_url": "https://secrethunter.io/jobz/1492614ebc",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "dotcompliance",
+  "careers_url": "https://secrethunter.io/jobz/6e78ed4aa2",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "Energcon Technologies | אנרקון טכנולוגיות בע\"מ",
+  "careers_url": "https://secrethunter.io/jobz/8ece48ef91",
+  "ats": "unknown",
+  "slug": ""
  }
 ]
