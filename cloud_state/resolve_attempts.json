@@ -640,8 +640,8 @@
   "last": "2026-08-26"
  },
  "Sanofi": {
-  "fails": 2,
-  "last": "2026-09-10"
+  "fails": 3,
+  "last": "2026-09-17"
  },
  "Verizon": {
   "fails": 1,
@@ -884,36 +884,36 @@
   "last": "2026-09-16"
  },
  "AlgoSec": {
-  "fails": 2,
-  "last": "2026-09-10"
+  "fails": 3,
+  "last": "2026-09-17"
  },
  "Arrow Components": {
   "fails": 2,
   "last": "2026-09-10"
  },
  "Datos Health": {
-  "fails": 2,
-  "last": "2026-09-10"
+  "fails": 3,
+  "last": "2026-09-17"
  },
  "Kimberly-Clark": {
-  "fails": 2,
-  "last": "2026-09-10"
+  "fails": 3,
+  "last": "2026-09-17"
  },
  "NeuReality": {
-  "fails": 2,
-  "last": "2026-09-10"
+  "fails": 3,
+  "last": "2026-09-17"
  },
  "Siemens Israel": {
   "fails": 2,
   "last": "2026-09-13"
  },
  "Sola Security": {
-  "fails": 2,
-  "last": "2026-09-10"
+  "fails": 3,
+  "last": "2026-09-17"
  },
  "Talenya": {
-  "fails": 2,
-  "last": "2026-09-10"
+  "fails": 3,
+  "last": "2026-09-17"
  },
  "Voyage81": {
   "fails": 2,
@@ -1032,8 +1032,8 @@
   "last": "2026-09-08"
  },
  "Citi": {
-  "fails": 1,
-  "last": "2026-09-09"
+  "fails": 2,
+  "last": "2026-09-17"
  },
  "G Stat": {
   "fails": 1,
@@ -1044,12 +1044,12 @@
   "last": "2026-09-16"
  },
  "IRP Systems": {
-  "fails": 1,
-  "last": "2026-09-09"
+  "fails": 2,
+  "last": "2026-09-17"
  },
  "Keter": {
-  "fails": 1,
-  "last": "2026-09-09"
+  "fails": 2,
+  "last": "2026-09-17"
  },
  "Nirlat": {
   "fails": 1,
@@ -1084,8 +1084,8 @@
   "last": "2026-09-10"
  },
  "Cenevo": {
-  "fails": 1,
-  "last": "2026-09-10"
+  "fails": 2,
+  "last": "2026-09-17"
  },
  "DriveNets": {
   "fails": 1,
@@ -1112,8 +1112,8 @@
   "last": "2026-09-10"
  },
  "Nexite": {
-  "fails": 1,
-  "last": "2026-09-10"
+  "fails": 2,
+  "last": "2026-09-17"
  },
  "Play Perfect": {
   "fails": 1,
@@ -1226,5 +1226,21 @@
  "Valence Security": {
   "fails": 1,
   "last": "2026-09-16"
+ },
+ "Firefly": {
+  "fails": 1,
+  "last": "2026-09-17"
+ },
+ "Moovit": {
+  "fails": 1,
+  "last": "2026-09-17"
+ },
+ "Premium Merchant Funding": {
+  "fails": 1,
+  "last": "2026-09-17"
+ },
+ "Shikun Binui": {
+  "fails": 1,
+  "last": "2026-09-17"
  }
 }
