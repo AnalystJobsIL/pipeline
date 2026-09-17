@@ -2460,3 +2460,7 @@ HaGal Sheli,scrape,,https://hagalsheli.co.il/jobs,false,queue-hunt 2026-09-16: c
 Super Micro Computer Spain S L,scrape,,https://jobs.supermicro.com,false,queue-hunt 2026-09-16: careers page documented; monitored candidate
 LumenArtz by ERCO,scrape,,https://www.erco.com/career,false,queue-hunt 2026-09-16: careers page documented; monitored candidate
 Ntu International,scrape,,https://ntu.eu/jobs,false,queue-hunt 2026-09-16: careers page documented; monitored candidate
+Efficio,scrape,https://getefficio.ai,https://getefficio.ai,false,scanned; no open Israel roles now | own-site 2026-09-17: getefficio.ai linkback
+Tap,smartrecruiters,tapmobile,https://api.smartrecruiters.com/v1/companies/tapmobile/postings,true,auto-expand slug-probe; 1/1 IL
+Tandemg,scrape,https://tandemg.com,https://tandemg.com,false,scanned; no open Israel roles now | own-site 2026-09-17: tandemg.com linkback
+Tappgo,scrape,https://tappgo.com,https://tappgo.com,false,scanned; no open Israel roles now | own-site 2026-09-17: tappgo.com linkback
