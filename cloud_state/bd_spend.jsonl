@@ -352,3 +352,4 @@
 {"at":"2026-09-17T10:40:55Z","cap":250,"capped":false,"ci":true,"credits":31,"pid":2930,"purpose":{"search":5,"unlock":26},"tool":"resolve_broken.py"}
 {"at":"2026-09-17T11:05:05Z","cap":250,"capped":false,"ci":true,"credits":50,"pid":3662,"purpose":{"jd-fill":50},"tool":"run.py"}
 {"at":"2026-09-17T13:32:06Z","cap":250,"capped":false,"ci":true,"credits":1,"pid":2990,"purpose":{"search":1},"tool":"auto_expand.py"}
+{"at":"2026-09-17T18:28:47Z","cap":null,"capped":false,"ci":true,"credits":26,"pid":2972,"purpose":{"jd-fill":26},"tool":"enrich_scrape_jd.py"}
