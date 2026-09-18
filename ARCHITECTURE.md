@@ -5589,6 +5589,41 @@ it is an ordinary English word. Raising `MIN_DESC` instead was rejected: 17 `mat
 under 800 characters are legitimately complete short postings (Menora 452, G Stat 505, Alma
 547); so was demanding a responsibilities family (it kills Points 530, group19 661, Harel 762).
 
+**A held row now says WHY in its own cell (2026-09-18).** `jd_why` was written only when
+text ARRIVED, so a row nothing could read carried an empty cell for ever and the dataset had to
+GUESS a `description_blocker` from the url. `enrich_matched_jd._stamp_failed` writes
+`failed:<fetch reason>:<date>` on a DEFINITIVE miss (the same test `jd_tries` already used, so a
+timeout or a 5xx writes nothing), `_write` clears it exactly as it clears `structural:`, and the
+closure stamp may take that cell because "the page says this posting closed" is strictly better
+information than "one fetch missed today". It is NOT `structural:`, which means every donor
+class was enumerated and failed. The public read (`roles._blocker`, L3094) is the `roles` lane's;
+until it lands, `test_a_definitive_miss_writes_its_reason_and_the_public_blocker_still_ignores_it`
+pins that the blocker ignores it, so nothing is published in between. The reason reaches `save`
+through `run_backfill(reasons={})`, a shared cell in the shape `probe_cell` already uses: a
+fourth positional on the `save` callback would have broken every `save=lambda it, t, s:` in the
+suite.
+
+**Both silent exits of `maybe_fill` are named** (`disabled`, `title-excluded`). The 09-18 digest
+printed `classify 5 superseded verdicts CANNOT be re-judged (not-a-job-url 3, ? 1,
+wrong-address 1)`; the `? 1` was `gong|senior data scientist - ai research & reliability`. The
+other half of that `?` is `roles`': `classify_grouped` calls `maybe_fill(best)` only, so a twin
+carries no `_jd_why` at all (`607`).
+
+**`_store_text` grew ONE arm for the two defects a length ratchet cannot see** (`_defective`),
+and it fires only on a read of the ROW'S OWN address (`canonical=True` — a donor must not get
+it, or a role's posting could be replaced by a sibling's on the strength of one sentence):
+
+| defect | how it is recognised | measured 2026-09-18 |
+|---|---|---|
+| the text opens with the page's own closure sentence | `jdfill.closed_page_at(t) == 0` — `587` puts that sentence at offset 0 and only there | **7** OPEN published rows, 4 of them on a row whose url is the employer's own board (`wix\|business analyst - channels`'s url is SmartRecruiters and its text is LinkedIn's) |
+| the text stops because a CAP stopped it, mid-word | `jdfill.cap_truncated(t)` — within `_TRUNCATION_WINDOW` of 6,000 / 4,000 / 1,800 AND ending on an alphanumeric | **9** of 186 before the repair, **6** after |
+
+`cap_truncated` is a window rather than an exact length because a re-clean can shave a few
+characters off a truncated text (the entity decode takes 8 off TytoCare's 3,999) and the
+truncation is still the reason it stops; the count is the SAME 9 rows at every window from 1 to
+25, so the number is read off a plateau rather than tuned. Ending without punctuation is NOT
+enough on its own — 71 of the 186 do, almost all on the last word of a bullet.
+
 **The share was over the ceiling, so the pass was attended.** `reclean_text` over `matched`
 changes **46 of 272 rows (16.9 %)** against `RECLEAN_MAX_SHARE` 0.15 — 2 cut, 44 decoded — so
 the one-off re-bound the module attribute in-session (the 09-11 precedent) and the nightly is

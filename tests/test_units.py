@@ -30354,7 +30354,12 @@ def test_a_refuted_row_still_only_admits_text_that_names_it_and_the_gate_is_unch
     src = inspect.getsource(emj._donor_pass)
     assert 'kind == "copy"' in src and "doc_names_role" in src, (
         "the donor identity gate left the pass")
-    assert emj._store_text.__defaults__ == (False,), emj._store_text.__defaults__
+    # `(refuted, canonical)` since 2026-09-18. The tuple is asserted rather than the names
+    # because what this guard is about is that NOTHING ELSE defaults its way in: every
+    # parameter here opens a door in the length ratchet, and `canonical=True` opens the
+    # defective-text arm, which a donor must never reach. Both default to the refusing
+    # value, so a caller that forgets one gets the strict behaviour.
+    assert emj._store_text.__defaults__ == (False, False), emj._store_text.__defaults__
 
 
 def test_the_quality_tier_still_writes_no_text_now_that_it_returns_a_refuted_set(monkeypatch):
@@ -35628,3 +35633,131 @@ def test_entities_are_decoded_at_every_door_and_nowhere_else():
     plain = "&#8217;" + _J18_JD
     assert "&#8217;" in jdfill.jd_body(plain)
     assert "&#8217;" in roles.better_description(plain, "")
+
+
+# --------------------------------------------------------------------------------------
+# 2026-09-18, `jd-text` (C2): a held row says WHY in its own cell, and a read of the row's
+# own address beats a stored copy that announces itself closed.
+# --------------------------------------------------------------------------------------
+
+def test_a_definitive_miss_writes_its_reason_and_the_public_blocker_still_ignores_it():
+    """On 2026-09-18 the digest printed `held 5 role(s) off the board and the mail · 5 no
+    usable description` and `classify 5 superseded verdicts CANNOT be re-judged
+    (not-a-job-url 3, ? 1, wrong-address 1)`. `jd_why` was written only when text ARRIVED, so
+    a row nothing could read kept an empty cell for ever and the dataset had to GUESS a
+    `description_blocker` from its url. The operator's bar (2026-09-01) is a description on
+    every row or exclusion with a written, counted reason; an empty cell is neither.
+
+    `failed:` is not `structural:` and nothing here may let it be read as one: `structural:`
+    means every donor class was enumerated and failed. The public read at
+    `roles._blocker` is the `roles` lane's and is not landed yet, so this pins that the
+    blocker IGNORES `failed:` — when that lane takes it, this assertion flips with it and
+    nothing is silently published in between.
+
+    Dates come from the STAMP, never from the clock (`tests/calendar_rot.py`)."""
+    import sqlite3 as _sq
+    import enrich_matched_jd as emj
+    from pipeline import roles
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    for k, why in (("empty", None), ("prev", "failed:timeout:2026-09-11"),
+                   ("ok", "ok:canonical:acme.com"), ("blocked", "structural:gone(donors:0)"),
+                   ("closed", "closed-by-page:2026-09-12")):
+        conn.execute("INSERT INTO matched VALUES (?,'',?)", (k, why))
+    assert emj._stamp_failed(conn, "empty", "js-shell", "2026-09-18") \
+        == "failed:js-shell:2026-09-18"
+    assert emj._stamp_failed(conn, "prev", "http-404", "2026-09-18") \
+        == "failed:http-404:2026-09-18", "a failed: cell is this writer's own to refresh"
+    for k in ("ok", "blocked", "closed"):
+        assert emj._stamp_failed(conn, k, "js-shell", "2026-09-18") == "", k
+    got = dict(conn.execute("SELECT mkey, jd_why FROM matched"))
+    assert got["ok"] == "ok:canonical:acme.com" and got["blocked"] == "structural:gone(donors:0)"
+    assert got["closed"] == "closed-by-page:2026-09-12"
+    # a reason nobody recorded is still a written cell, never a silent one
+    assert emj._stamp_failed(conn, "empty", None, "2026-09-18") == "failed:no-reason:2026-09-18"
+
+    # the moment text lands the claim is false, so the one write choke point clears it
+    jd = _j7_jd(1400)
+    assert emj._write(conn, "empty", jd) is True
+    assert dict(conn.execute("SELECT mkey, jd_why FROM matched"))["empty"] == ""
+
+    # ...and the published blocker does not quote it (yet): `roles` owns that read
+    assert roles._blocker({"jd_why": "failed:js-shell:2026-09-18", "url": ""}, "none") == ""
+    assert roles._blocker({"jd_why": "structural:gone(donors:0)", "url": ""}, "none") \
+        == "structural:gone(donors:0)"
+    conn.close()
+
+
+def test_the_stamp_pass_may_take_a_failed_cell_but_never_a_verdict():
+    """`failed:` says only "one fetch missed today". A page that says the posting closed is
+    strictly better information, so the closure stamp may take that cell — and may still not
+    take an `ok:` or a `structural:` one."""
+    import sqlite3 as _sq
+    import enrich_matched_jd as emj
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    closed = "No longer accepting applications\n" + _j7_jd(1400)
+    for k, why in (("f", "failed:js-shell:2026-09-11"), ("b", "structural:gone(donors:0)")):
+        conn.execute("INSERT INTO matched VALUES (?,?,?)", (k, closed, why))
+    rows = [(k, "ACME", "A", "u", "2026-09-12", "", closed, 0, "2026-09-12") for k in ("f", "b")]
+    assert emj._stamp_closed_pages(conn, rows, dry_run=False) == 1
+    got = dict(conn.execute("SELECT mkey, jd_why FROM matched"))
+    assert got["f"] == "closed-by-page:2026-09-12" and got["b"] == "structural:gone(donors:0)"
+    conn.close()
+
+
+def test_the_own_board_copy_beats_a_stored_text_that_opens_with_the_closure_line():
+    """Seven OPEN published rows carried `No longer accepting applications` as the first line
+    of their stored text on 2026-09-18, four of them on a row whose `url` is the employer's
+    own board — `wix|business analyst - channels`'s url is SmartRecruiters and its text is
+    LinkedIn's. The ratchet compares LENGTHS and LinkedIn's page is longer every morning
+    (it carries the rail; the employer's does not), so the own-board copy could never land.
+
+    Only a read of the ROW'S OWN address earns this (`canonical=True`). A donor or a cache
+    card must not: that would be a way to replace a role's posting with a sibling's on the
+    strength of one sentence. And if the own address ALSO says closed there is nothing to
+    gain and a shorter text to lose."""
+    import sqlite3 as _sq
+    import enrich_matched_jd as emj
+    from pipeline import jdfill
+    conn = _sq.connect(":memory:")
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    linkedin = "No longer accepting applications\n" + _j7_jd(3000)
+    own = _j7_jd(2000)
+    assert jdfill.closed_page_at(linkedin) == 0 and jdfill.closed_page_at(own) is None
+    assert len(own) < len(linkedin) >= 2 * jdfill.MIN_DESC
+    conn.execute("INSERT INTO matched VALUES ('r',?,'')", (linkedin,))
+    # the ratchet on its own: the shorter own-board copy loses, every morning
+    assert emj._store_text(conn, "r", own, linkedin) is False
+    # a DONOR does not get the arm either
+    assert emj._store_text(conn, "r", own, linkedin, canonical=False) is False
+    # the row's own address does
+    assert emj._store_text(conn, "r", own, linkedin, canonical=True) is True
+    assert conn.execute("SELECT description FROM matched WHERE mkey='r'").fetchone()[0] == own
+    # ...and an own address that ALSO says closed changes nothing
+    conn.execute("UPDATE matched SET description=? WHERE mkey='r'", (linkedin,))
+    also = "No longer accepting applications\n" + _j7_jd(2000)
+    assert emj._store_text(conn, "r", also, linkedin, canonical=True) is False
+    # ...nor does a fragment: `HEADED_FLOOR` is the floor, not the ratchet
+    short = _j7_jd(400)
+    assert len(short) < emj.HEADED_FLOOR * len(linkedin)
+    assert emj._store_text(conn, "r", short, linkedin, canonical=True) is False
+
+    # the SECOND defect the same arm names: a text that stops because a cap stopped
+    # it, mid-word. `tytocare|product analytics manager` holds 3,999 characters ending
+    # "...tracking frameworks. Ex" and its own careers page serves 3,943 COMPLETE ones,
+    # so the defective copy wins on length every morning.
+    capped = (_j7_jd(3999))[:3998] + "Ex"
+    complete = _j7_jd(3943) + "."
+    assert jdfill.cap_truncated(capped) and not jdfill.cap_truncated(complete)
+    assert len(complete) < len(capped)
+    conn.execute("UPDATE matched SET description=? WHERE mkey='r'", (capped,))
+    assert emj._store_text(conn, "r", complete, capped) is False
+    assert emj._store_text(conn, "r", complete, capped, canonical=True) is True
+    assert conn.execute("SELECT description FROM matched WHERE mkey='r'"
+                        ).fetchone()[0] == complete
+    # ...and a capture that is ALSO cap-truncated changes nothing
+    conn.execute("UPDATE matched SET description=? WHERE mkey='r'", (capped,))
+    other = (_j7_jd(3999))[:3998] + "Ab"
+    assert emj._store_text(conn, "r", other, capped, canonical=True) is False
+    conn.close()

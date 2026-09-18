@@ -679,6 +679,39 @@ def mid_sentence_head(text):
     return bool(_MID_SENTENCE_HEAD.match(str(text or "")))
 
 
+# The caps a stored text can be truncated at. `DESC_MAX` is this layer's own, 4,000 is
+# `scrape_universal._read_position_page`'s, and 1,800 is an aggregator's own slice.
+# `_TRUNCATION_WINDOW` is not slack for its own sake: a re-clean can shave a handful of
+# characters off a truncated text (the entity decode takes 8 off TytoCare's 3,999) and
+# the truncation is still the reason it stops. Measured over the 186 published rows
+# on 2026-09-18, the count is the SAME 9 rows at every window from 1 to 25, so the
+# number is read off a plateau rather than tuned: 4 at 6,000, 3 at 3,999, 2 at 1,800.
+_TRUNCATION_CAPS = (DESC_MAX, 4000, 1800)
+_TRUNCATION_WINDOW = 12
+
+
+def cap_truncated(text):
+    """Does this text stop because a CAP stopped it, mid-word?
+
+    Sitting exactly on a cap is not enough on its own -- a posting can end on the
+    boundary by chance -- and ending on a letter is not enough either: 71 of the 186
+    published rows end without terminal punctuation, almost all of them on the last word
+    of a bullet. TOGETHER they are a truncation, and measured on 2026-09-18 that is **9**
+    of the 186: four at `DESC_MAX` (doitintl, gamida cell, honeybook, partnerize), three
+    at the scraper's 3,999 (calculum, investing, tytocare) and two at 1,800 (parametrix,
+    trivago -- an aggregator's own slice, not ours).
+
+    This exists because the length ratchet cannot see it. `tytocare|product analytics
+    manager` holds 3,999 characters ending "...tracking frameworks. Ex" and its own
+    careers page serves 3,943 COMPLETE ones ending "...Privacy Notice for California
+    Residents ." -- so the defective copy wins on length, every morning, for ever. The
+    same shape as `mid_sentence_head` (2026-09-11) at the other end of the text."""
+    t = str(text or "")
+    if not t or not t[-1].isalnum():
+        return False
+    return any(c - _TRUNCATION_WINDOW <= len(t) <= c for c in _TRUNCATION_CAPS)
+
+
 def page_slice(text):
     """Is this text a SLICE of a page rather than a posting -- mid-sentence at the front and
     truncated by our own cap at the back? Either alone is ordinary; together they mean the

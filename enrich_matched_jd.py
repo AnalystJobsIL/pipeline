@@ -258,7 +258,21 @@ def _durably_refuted(conn, rows):
             if keyed.get(r[0]) and jdfill.refute_key(r[6]) in keyed[r[0]]}
 
 
-def _store_text(conn, mkey, text, have, refuted=False):
+def _defective(text):
+    """Is this stored text DEFECTIVE in a way the length ratchet cannot see?
+
+    Two named shapes, both measured on 2026-09-18 over the 186 published rows:
+      * it opens with the page's own closure sentence (`closed_page_at(...) == 0`) --
+        seven OPEN rows did, four of them on a row whose url is the employer's own
+        board. `587` puts that sentence at offset 0 and only there, so this is exact.
+      * it stops because a CAP stopped it, mid-word (`cap_truncated`) -- nine rows.
+
+    A text can be longer than the row's own posting and still be the wrong text; these
+    are the two cases where the store can SAY so rather than guess."""
+    return jdfill.closed_page_at(text) == 0 or jdfill.cap_truncated(text)
+
+
+def _store_text(conn, mkey, text, have, refuted=False, canonical=False):
     """Write `text` unless what is already stored is a better JD.
 
     "Never shorten" was the whole rule, and it is right between two job descriptions — but it
@@ -312,6 +326,26 @@ def _store_text(conn, mkey, text, have, refuted=False):
         have = ""
     if looks_like_jd(have) and not looks_like_jd(text):
         return False
+    if (canonical and looks_like_jd(have) and looks_like_jd(text)
+            and _defective(have) and not _defective(text)
+            and len(text) >= HEADED_FLOOR * len(have)):
+        # The two defects the length ratchet cannot see (`_defective`). A stored text
+        # whose FIRST line is the page's own closure sentence is a copy of a page that
+        # had stopped taking applicants when it was captured -- on 2026-09-18 seven OPEN
+        # published rows carried one, four on a row whose `url` is the employer's own
+        # board (`wix|business analyst - channels`'s url is SmartRecruiters and its text
+        # is LinkedIn's). `have` is longer every morning, because LinkedIn's page carries
+        # the rail and the employer's does not, so the own-board copy could never land.
+        # A CAP-truncated text is the same problem at the other end: `tytocare|product
+        # analytics manager` holds 3,999 characters ending "...tracking frameworks. Ex"
+        # against 3,943 COMPLETE ones on its own careers page.
+        #
+        # `canonical`: only a read of the ROW'S OWN address earns this. A donor or a
+        # cache card must not get it -- that would be a way to replace a role's posting
+        # with a sibling's on the strength of one sentence. `closed_page_at(text) != 0`:
+        # if the own address ALSO says closed there is nothing to gain and a shorter
+        # text to lose. `HEADED_FLOOR` stops a 300-character fragment beating 6,000.
+        return _write(conn, mkey, text)
     if (looks_like_jd(have) and looks_like_jd(text)
             and jdfill.mid_sentence_head(have) and not jdfill.mid_sentence_head(text)
             and len(text) >= HEADED_FLOOR * len(have)):
@@ -340,12 +374,17 @@ def _write(conn, mkey, text):
     # false — and the two paths that fill a row without going through the donor pass (the
     # cache-sibling rung, a re-clean) never touched `jd_why`, so a stale blocker outlived the
     # text that disproved it (wave A). This is the one choke point every write passes.
+    # `failed:<reason>:<date>` (2026-09-18) is the same kind of claim about the same row --
+    # "nothing this layer owns could read this address today" -- so it is cleared by the
+    # same clause and for the same reason. It is NOT `structural:`: a structural verdict
+    # means every donor class was enumerated and failed, this one means one fetch missed.
     # ...and the clause is written so a store WITHOUT the column still stores its text: the
     # column is added by `_ensure_columns` at driver start, but `_store_text` is a library
     # function and a caller may hand it any `matched`-shaped table.
     try:
         conn.execute("UPDATE matched SET description=?, "
                      "jd_why=CASE WHEN COALESCE(jd_why,'') LIKE 'structural:%' "
+                     "OR COALESCE(jd_why,'') LIKE 'failed:%' "
                      "THEN '' ELSE COALESCE(jd_why,'') END WHERE mkey=?", (text, mkey))
     except sqlite3.OperationalError:
         conn.execute("UPDATE matched SET description=? WHERE mkey=?", (text, mkey))
@@ -453,6 +492,45 @@ def _capture_why(text, stamp_v, default):
     return "closed-by-page:" + (str(stamp_v or "")[:10] or dt.date.today().isoformat())
 
 
+# An EMPTY `jd_why` and a `failed:` one are the same cell for a writer that has a real
+# verdict: `failed:<reason>:<date>` says only "one fetch missed today", and a page that
+# says the posting closed is strictly better information. `structural:` and `ok:` are
+# not -- those are verdicts somebody else reached and nothing here may overwrite them.
+_STAMP_FREE = ("COALESCE(jd_why,'')='' OR COALESCE(jd_why,'') LIKE 'failed:%'")
+_STAMP_SQL_SELECT = "SELECT 1 FROM matched WHERE mkey=? AND (%s)" % _STAMP_FREE
+_STAMP_SQL_UPDATE = "UPDATE matched SET jd_why=? WHERE mkey=? AND (%s)" % _STAMP_FREE
+
+
+def _stamp_failed(conn, mkey, reason, when):
+    """Record `failed:<reason>:<date>` on a row a DEFINITIVE miss left with no text.
+    Returns the value written, or "" when the cell was already spoken for.
+
+    Until 2026-09-18 `jd_why` was written only when text ARRIVED, so a row nothing could
+    read carried an empty cell for ever: on that morning the `held 5 role(s) off the board
+    and the mail \u00b7 5 no usable description` line named four reasons and the fifth was a
+    literal `?`. The operator's bar (2026-09-01) is "a description on every row, or
+    EXCLUDED with a written, counted reason", and an empty cell is neither.
+
+    It is not `structural:` and must never be read as one: `structural:` means every donor
+    class was enumerated and failed, this means one fetch missed today. `roles._blocker`
+    publishes `structural:` verbatim; the `failed:` read is that lane's and is pinned by
+    test_a_definitive_miss_writes_its_reason_and_the_public_blocker_still_ignores_it until
+    it lands.
+
+    Only onto an empty cell or an earlier `failed:` -- an `ok:`, `closed-by-page:` or
+    `structural:` value is a verdict somebody else reached, and a failed fetch may not
+    overwrite one. `when` is the stamp's date, never today's clock."""
+    if conn is None or not mkey:
+        return ""
+    why = "failed:%s:%s" % (str(reason or "no-reason"), str(when or "")[:10])
+    try:
+        cur = conn.execute("UPDATE matched SET jd_why=? WHERE mkey=? AND (%s)"
+                           % _STAMP_FREE, (why, mkey))
+    except sqlite3.OperationalError:      # a `matched`-shaped table without the column
+        return ""
+    return why if (cur.rowcount or 0) else ""
+
+
 def _stamp_closed_pages(conn, every, dry_run):
     """Stamp `jd_why = closed-by-page:<date>` on every row whose STORED text carries the
     page's closure sentence and whose `jd_why` is empty. Changes `jd_why` only -- never the text
@@ -471,12 +549,10 @@ def _stamp_closed_pages(conn, every, dry_run):
     n = 0
     for mkey, when in todo:
         if dry_run:
-            got = conn.execute("SELECT 1 FROM matched WHERE mkey=? AND COALESCE(jd_why,'')=''",
-                               (mkey,)).fetchone()
+            got = conn.execute(_STAMP_SQL_SELECT, (mkey,)).fetchone()
             n += bool(got)
             continue
-        cur = conn.execute("UPDATE matched SET jd_why=? WHERE mkey=? AND COALESCE(jd_why,'')=''",
-                           ("closed-by-page:" + when, mkey))
+        cur = conn.execute(_STAMP_SQL_UPDATE, ("closed-by-page:" + when, mkey))
         n += cur.rowcount or 0
     if not dry_run:
         conn.commit()
@@ -939,6 +1015,12 @@ def main(argv=None):
                     help="the scrape cache to read sibling text from (never written)")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--reclean-only", action="store_true",
+                    help="only the re-clean over `matched` (611): no stamp pass, no quality "
+                         "tier, no fetch. `--dry-run` to MEASURE a furniture rule before "
+                         "shipping it -- the scrape driver has had this since 09-13 and "
+                         "this one did not, so the share that decides whether the nightly "
+                         "refuses had to be re-derived by hand every time.")
     ap.add_argument("--cooldown-days", type=int, default=RETRY_DAYS)
     ap.add_argument("--archived-bd", action="store_true",
                     help="let CLOSED/PURGED roles reach the Bright Data rung too. Off on "
@@ -987,6 +1069,7 @@ def _run(args, stamp):
     # `matched_cycle_days` says how long one lap takes.
     every.sort(key=lambda r: (r[7], r[4] or "", [-ord(ch) for ch in (r[8] or "")]))
     n_reclean, cut_chars, recleaned = _reclean(conn, every, args.dry_run)
+    reclean_refused, reclean_would = n_reclean < 0, abs(n_reclean)
     if n_reclean < 0:
         # A refusal used to print a `::warning::` into the step log and reach the mail not
         # at all, while `matched_ok` went on saying every row carried the employer own
@@ -1003,6 +1086,20 @@ def _run(args, stamp):
         # phantom length, so 250 characters of junk could overwrite a 6,000-character row.
         every = [(tuple(r[:6]) + (recleaned[r[0]],) + tuple(r[7:]))
                  if r[0] in recleaned else r for r in every]
+    if getattr(args, "reclean_only", False):
+        # the measurement door, and it stops HERE on purpose: the stamp pass, the
+        # quality tier and the fetch all write, and a run whose whole point is to
+        # print a share must not be able to change the store on the way.
+        # the REFUSED count, not the zeroed one: `_run` folds a refusal to 0 for the
+        # counters, and printing that here would say "0 rows would change" about a pass
+        # that refused because 46 would. The number a session needs before it decides
+        # whether to lift the ceiling is the one the ceiling rejected.
+        n_would = reclean_would
+        print(f"reclean-only: {'REFUSED ' if reclean_refused else ''}"
+              f"{n_would} of {len(every)} rows "
+              f"({n_would / float(len(every) or 1):.1%}), -{cut_chars} chars"
+              + (" (dry run, nothing written)" if args.dry_run else ""), flush=True)
+        return 0
     closed_stamped = _stamp_closed_pages(conn, every, args.dry_run)
 
     # The keyword rules first, then the model on what is left ambiguous. A row the tier
@@ -1165,11 +1262,14 @@ def _run(args, stamp):
                                                                    str(BD_CAP))))
 
     have_by_key = {r[0]: r[6] for r in rows}
+    # `run_backfill` fills this before it calls `save`; `save`'s three arguments carry no
+    # reason at all (the stamp says WHEN and whether the miss was transient, never WHY).
+    fetch_reasons = {}
 
     def save(item, text, stamp_v):
         if text:
             _store_text(conn, item.key, text, have_by_key.get(item.key, ""),
-                        refuted=item.key in refuted)
+                        refuted=item.key in refuted, canonical=True)
             refuted.discard(item.key)      # filled: the ratchet closes again
             # the canonical address answered: record THAT, so `jd_why` never leaves a stale
             # `structural:` verdict standing on a row that has since been filled
@@ -1183,6 +1283,8 @@ def _run(args, stamp):
         # Unlocker that was down) says nothing about the address, so widening the backoff on
         # it would let one bad morning push a perfectly readable role out to a month.
         definitive = not text and not stamp_v.endswith(" transient")
+        if definitive:
+            _stamp_failed(conn, item.key, fetch_reasons.get(item.key), stamp_v[:10])
         conn.execute("UPDATE matched SET jd_attempted=?, jd_tries=COALESCE(jd_tries,0)+? "
                      "WHERE mkey=?", (stamp_v, 1 if definitive else 0, item.key))
         conn.commit()
@@ -1198,7 +1300,7 @@ def _run(args, stamp):
     live_minutes = minutes * (1 - ARCHIVED_BUDGET_SHARE) if items_archived else minutes
     probe_cell = set()
     t0 = time.time()
-    c = run_backfill(items, save=save, minutes=live_minutes,
+    c = run_backfill(items, save=save, minutes=live_minutes, reasons=fetch_reasons,
                      bd=bd, dry_run=args.dry_run, retry_days=args.cooldown_days,
                      count_cap=args.limit, log=lambda s: print(s, flush=True),
                      probe_cell=probe_cell)
@@ -1210,6 +1312,7 @@ def _run(args, stamp):
         # `--limit` is an operator saying "do N", not "do N and then all the archived ones"
         left_cap = max(0, args.limit - (c["tried"] - c["probe"])) if args.limit else 0
         c += run_backfill(items_archived, save=save, minutes=left,
+                          reasons=fetch_reasons,
                           bd=bd if args.archived_bd else None, dry_run=args.dry_run,
                           retry_days=args.cooldown_days, count_cap=left_cap,
                           log=lambda s: print(s, flush=True), probe_cell=probe_cell)
