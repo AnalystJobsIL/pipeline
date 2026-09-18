@@ -3396,6 +3396,30 @@ then its overwrite stripped every `error` reason the digest had written): `misco
 `fetch-error` (raised) → `regressed-to-zero` (baseline > 0, now 0; the baseline is the
 all-time high, so this latches) → `empty-board` (0 postings, no baseline).
 
+**`regressed-to-zero` is a board read empty for `health.REGRESSION_NIGHTS` (2) CONSECUTIVE
+nights, not last night's reading (2026-09-18, `ats-fetch`).** The ROW still enters
+`stale.json` on the first such reading — `resolve_broken.candidates` and the targeted
+discovery sweep read that flag and neither may lose a row because the mail is not ready to
+name it — but the entry now carries `nights` (and `last`, the date it was counted on), and
+the MAIL waits: `new:` names the row on the morning its streak reaches 2 (`health._announce`),
+`cleared:` never names one that left the file below 2 because it was never announced, and the
+standing line prints the rest as a quiet `k watching (first night)` (`health._watchful`).
+Measured over the fourteen nights to 2026-09-18, one snapshot per date: **81** runs of the
+reason began inside the window and **41 (51%)** lasted exactly one night; **20** names entered
+the class two or more separate times, IRP Systems, Workiz and Axioma four times each. So the
+mail announced a board on Tuesday and cleared it on Wednesday twenty times over — the 09-16
+mail cleared 10 rows of which 8 had been announced the night before (09-09: 8 of 9; 09-15: 8 of 10) — and the strikes were real: Workiz
+reached 4 of the self-heal's 5, one flap from "discovery covers it". N=3 would have suppressed
+54 of the 81 and was rejected on the second night's delay it costs every true regression.
+The counter is a FIELD and not the scraper's rot `n` because 2 of those 20 are native
+(DoubleVerify on greenhouse, Swimm on comeet) and `scrape_rot.json` says nothing about
+either; a same-date second write does not bump it, because the digest and the Monday
+self-heal both commit this file (4 of 18 snapshots) and together they would otherwise reach
+the threshold inside one morning. An entry with no `nights` at all counts as SETTLED, so the
+first morning on the new code announces and clears exactly as the old rule did. The
+consumers still act on a one-night reading — `docs/BACKLOG.md` 635 is that diff, and it is
+`infra`'s.
+
 **`abandoned-board` — a board is judged on its own freshness, never a role on its age
 (2026-08-30, measured again and landed 2026-09-11, `ats-fetch`).** Nineteen ACTIVE native
 rows pointed at tenants that answer

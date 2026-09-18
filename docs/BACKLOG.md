@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**684 filed · 480 open · 204 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**685 filed · 481 open · 204 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 635.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 636.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -250,7 +250,7 @@ closure convention in the header.
 - **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
 - **633** `633@registry` **The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data Analyst
 
-### infra — 119 open
+### infra — 120 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -371,6 +371,7 @@ closure convention in the header.
 - **620** `620@infra` **The Internet Archive names ~9 captures a night for us, against a backlog of 6,193 and
 - **630** `630@infra` **Bright Data's Unlocker cannot fetch `google.com` at all, so a Google Careers posting is
 - **634** `634@infra` **Every LinkedIn copy we hand the archive is synthesized as `www.linkedin.com/jobs/view/<id>`,
+- **635** `635@infra` **The self-heal and the targeted discovery sweep still spend a strike on a ONE-NIGHT
 
 ### scraper — 33 open
 
@@ -12653,6 +12654,23 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      how often a Comeet/Greenhouse tenant that went to `[]` came back with postings, which the
      `health_baseline.json` history in git can answer without a live call.
 
+     **2026-09-18 (`ats-fetch`): the measurement was taken and half of this is closed.** Over
+     the fourteen nights to 2026-09-18 (`git show <sha>:cloud_state/stale.json`, one snapshot
+     per date), **81** `regressed-to-zero` runs began inside the window and **41 (51 %)**
+     lasted exactly ONE night; **20** names entered the class two or more separate times (IRP
+     Systems, Workiz and Axioma four times each), and 2 of those 20 are NATIVE rows —
+     DoubleVerify on greenhouse, Swimm on comeet — which is why the streak is a field on the
+     stale entry and not the scraper's rot `n`. `health.REGRESSION_NIGHTS = 2` now gates the
+     MAIL only: the row still enters `stale.json` on the first reading, `new:` waits for the
+     second consecutive night, `cleared:` never names a row that left below it, and the rest
+     are a quiet `k watching (first night)`. N=3 was rejected: it suppresses 54 of 81 and costs
+     a second night's delay on every true regression.
+
+     What is still open here is this item's own proposal — an honest native zero (the six
+     Comeet tenants and two converted rows listed above) is still counted under the same word
+     as a board nobody can read, and no threshold fixes that: it needs the SECOND reason.
+     `REGRESSION_NIGHTS` makes the count stop churning; it does not make it mean one thing.
+
 ## From the `jd-text` lane, 2026-09-13 (every door into `matched` cuts)
 
 607. **`classify_grouped` normalises one member of a merge group, so a twin re-installs the
@@ -13542,3 +13560,44 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      match a board that is not its own — that is exactly the `596` failure this lane spent
      2026-09-13 undoing. `company-intel` will re-profile whatever the row points at once
      `registry` has repointed or split it.
+## From the `ats-fetch` lane, 2026-09-18 (a regression is two nights, and the consumers do not know)
+
+635. **The self-heal and the targeted discovery sweep still spend a strike on a ONE-NIGHT
+     reading of `stale.json`** — lane: `infra` (`resolve_broken.py`, `discovery_daily.py`),
+     filed 2026-09-18 by `ats-fetch`. One item on purpose: the two consumers read the same
+     file with the same blind spot and a fix to one alone leaves the other buying strikes.
+
+     Since 2026-09-18 every entry `health.record` writes carries `nights` — how many
+     CONSECUTIVE digests reached this reason (`health.REGRESSION_NIGHTS = 2`, ARCHITECTURE.md
+     §5a) — and the MAIL waits for it. The consumers do not: `resolve_broken.candidates()`
+     (`resolve_broken.py:155-163`) takes EVERY entry whatever its reason or age, and
+     `discovery_daily.py:1014` reads the same file for the targeted LinkedIn rotation. What
+     that cost over the fortnight to 2026-09-18: Workiz sits at **4** of the 5 strikes
+     `give_up_after` allows — one flap from "discovery covers it" — after four separate
+     one-night regressions; Dell, Highcon and SMARTECH were struck `attempt 1 — no working
+     ATS` on a single night's reading; and 41 of the 81 runs in the window were one night
+     long. The six SuccessFactors rows that timed out on 2026-09-18 are the same shape from
+     the other reason: `fetch-error` whose text is `network error … timed out`, five of them
+     with no throttle record at all, so the 2026-09-19 self-heal re-resolves all six and
+     spends ~2 unlocker credits each on a runner blip that cleared next night 5 of 5 times in
+     the preceding fortnight.
+
+     ```diff
+     --- a/resolve_broken.py
+     +++ b/resolve_broken.py
+     @@ def candidates(...)
+     -        for name, v in stale.items():
+     +        for name, v in stale.items():
+     +            # a reading is not a verdict: the mail waits for `health.REGRESSION_NIGHTS`
+     +            # and so must a strike. A transient network error is the same class.
+     +            if int(v.get("nights", 99)) < 2 and (
+     +                    v.get("reason") == "regressed-to-zero"
+     +                    or (v.get("reason") == "fetch-error"
+     +                        and "network error" in (v.get("error") or ""))):
+     +                continue
+     ```
+
+     and the same two-condition skip at `discovery_daily.py:1014`. `nights` defaults to 99
+     here, not to 1: an entry written before the field existed must not be skipped. The check
+     is the `resolve_attempts.json` strike counts one week after it lands — Workiz must not
+     have moved, and the names struck on a single reading must be absent from the log.

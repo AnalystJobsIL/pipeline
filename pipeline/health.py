@@ -16,7 +16,13 @@ Stale reasons, in the order they are decided:
                             (`fetchers.BoardEmpty`) or mis-pointed (ValueError) — or, for a
                             scrape row that HAD postings, last night's scraper could not read
                             the page (`cloud_state/scrape_rot.json` says `why: error`)
-  regressed-to-zero       — had postings before (baseline > 0), now 0
+  regressed-to-zero       — had postings before (baseline > 0), now 0. The ROW enters the
+                            file on the first such reading, always — the self-heal pool and
+                            the targeted discovery sweep read it — but the MAIL waits for
+                            `REGRESSION_NIGHTS` consecutive readings before it calls the row
+                            a regression (`nights` on the entry, `_announce`, `_watchful`):
+                            41 of the 81 runs that started in the fortnight to 2026-09-18
+                            lasted one night
   empty-board             — a real ATS returning literally 0 postings (moved board /
                             stale token / anti-bot) — flagged even with no baseline
 
@@ -127,6 +133,17 @@ _MAIL_MAX_NAMES = 6
 # runner-wide network failure (846 rows × ~135 chars ≈ 114 KB) would silence the very mail that
 # was supposed to report it. 25 names ≈ 3 KB, and the largest real morning on record is 3.
 _MAIL_MAX_ERRORS = 25
+
+# How many CONSECUTIVE digests must read a board empty before the mail announces it as a
+# regression. 1 is last night's reading, which is what the count meant until 2026-09-18 and
+# what made it churn: over the fourteen nights to that morning, 81 `regressed-to-zero` runs
+# began inside the window and 41 of them (51%) lasted exactly one night, while 20 names
+# entered the class two or more separate times (IRP Systems, Workiz and Axioma four times
+# each). N=2 suppresses those 41; N=3 would suppress 54 of 81 and cost a second night's
+# delay on every real regression, which is why it is 2. A plain constant for the same reason
+# `STALE_BOARD_DAYS` is one — flipping it for a run would re-announce or un-announce the
+# whole class at once. Tests pin it with monkeypatch.
+REGRESSION_NIGHTS = 2
 
 # A board whose newest posting is this old is an abandoned tenant. A plain constant, not an
 # environment knob: flipping it for one run would take every abandoned row out of
@@ -264,6 +281,35 @@ def _int(value, default):
         return default
 
 
+def _nights(old, reason, today):
+    """How many consecutive digests have reached THIS reason for this row, counting today.
+
+    1 for a row that was not flagged yesterday or was flagged for a DIFFERENT reason — a
+    board that goes from `fetch-error` to `regressed-to-zero` starts a new streak, because
+    the two say different things and the count is about one claim, not about "unhealthy".
+
+    A SECOND write on a date already written does not bump it: `stale.json` is committed by
+    the digest AND by the Monday self-heal, and 4 of the 18 snapshots in the fortnight to
+    2026-09-18 were a same-day re-write. Without this the two writers together would reach
+    `REGRESSION_NIGHTS` inside one morning and announce a board that had been read empty
+    once."""
+    if not isinstance(old, dict) or old.get("reason") != reason:
+        return 1
+    n = _int(old.get("nights"), 1)
+    return n if str(old.get("last") or "") == today.isoformat() else n + 1
+
+
+def _nights_of(entry):
+    """A stale entry's streak, defaulting to `REGRESSION_NIGHTS` when the field is absent.
+
+    The default is deliberately the SETTLED value, not 1. A `stale.json` written before this
+    field existed carries none, and so does any caller that builds an entry by hand (every
+    older test): reading "cannot tell" as "first night" would have suppressed the whole
+    standing class on the first morning of the new code, and suppressing a real regression is
+    the expensive direction. `_fetched_none` states the same rule for recoveries."""
+    return _int((entry or {}).get("nights"), REGRESSION_NIGHTS)
+
+
 def _scrape_with_empty_cache(r):
     """The one kind of row the rot file has anything to say about."""
     return (r.get("platform") or "").strip().lower() == "scrape" and r.get("status") == "empty"
@@ -362,8 +408,19 @@ def record(results, baseline_path=BASELINE, stale_path=STALE, rot_path=ROT, *, w
     for scrape rows whose cache is empty (`overnight_verdict`); both files are written
     atomically (a kill mid-write used to leave a truncated baseline, which `_load` read as
     `{}` — every high-water mark reset to 0 and `regressed-to-zero` could never fire again).
-    `today` pins the rot freshness clock so a replay of committed files is date-independent."""
+    `today` pins the rot freshness clock so a replay of committed files is date-independent.
+
+    It also reads the PREVIOUS stale file, to carry each entry's `nights` — how many
+    consecutive digests have reached this reason for this row (`_nights`). That is the only
+    reason this function reads the file it writes; `previous()` remains the caller's own read
+    for the mail's delta, because the mail must see the file as it was before this line."""
     baseline = _load(baseline_path)
+    # ONLY the run that rewrites the file may count its streaks: a judge-only call
+    # (`write=False` — a scoped `--only` run, `registry_health`) sees a handful of rows, so a
+    # `nights` counted from the committed file and then thrown away would be a number nobody
+    # can act on, and reading cron-rewritten state is what `tests/live_state.py` refuses.
+    was = _load(stale_path) if write else {}
+    day = today or _dt.date.today()
     rot = _load(rot_path) if any(_scrape_with_empty_cache(r) for r in results.values()) else {}
     stale = {}
     for name, r in results.items():
@@ -383,6 +440,9 @@ def record(results, baseline_path=BASELINE, stale_path=STALE, rot_path=ROT, *, w
                               overnight=verdict[0] if verdict else None, error=r.get("error"))
         if reason:
             stale[name] = {"careers_url": api, "platform": plat, "reason": reason}
+            if write:
+                stale[name]["nights"] = _nights(was.get(name), reason, day)
+                stale[name]["last"] = day.isoformat()
             error = r.get("error") or (verdict[1] if verdict and reason == "fetch-error" else "")
             if error:
                 stale[name]["error"] = str(error)[:120]
@@ -463,6 +523,10 @@ def _names(items, cap=_MAIL_MAX_NAMES):
     return txt
 
 
+# A LABEL, never a stored reason: the standing line's word for a `regressed-to-zero` row
+# whose streak has not reached `REGRESSION_NIGHTS`.
+_WATCHING = "regressed-to-zero-watch"
+
 # The stale reasons in the order the mail meets them, the noun it uses, and how many names
 # it may print. `None` = every name, always: for a fetch error the NAME is the message, and
 # on 2026-08-26 two of three new ones (Greeneye Technology `http:404`, Mobileye) sat inside
@@ -470,6 +534,10 @@ def _names(items, cap=_MAIL_MAX_NAMES):
 _REASONS = (
     ("fetch-error", "fetch error{s}", _MAIL_MAX_ERRORS),
     ("regressed-to-zero", "regressed to zero", _MAIL_MAX_NAMES),
+    # The same reason, one night in: a row that is IN the file (the self-heal reads it) but
+    # has not yet earned the word "regressed". A label only — nothing writes this string to
+    # `stale.json`; `_watchful` re-keys the entry for the standing line and nowhere else.
+    (_WATCHING, "watching (first night)", _MAIL_MAX_NAMES),
     ("empty-board", "empty", _MAIL_MAX_NAMES),
     ("misconfig-scrape-on-ats", "scrape row{s} on an ATS host", _MAIL_MAX_NAMES),
     # last, so the standing line the tests pin for the four above reads the same; the name
@@ -482,8 +550,46 @@ _REASONS = (
 )
 
 # reasons the standing line counts without naming: the same names every morning is the
-# noise the delta line exists to escape (25 misconfig rows; 15 abandoned tenants)
-_QUIET_STANDING = ("misconfig-scrape-on-ats", "abandoned-board")
+# noise the delta line exists to escape (25 misconfig rows; 15 abandoned tenants) — and the
+# first-night watch list, which is a reading and not yet a claim about a board
+_QUIET_STANDING = ("misconfig-scrape-on-ats", "abandoned-board", _WATCHING)
+
+
+def _watchful(rows):
+    """`stale` re-keyed for the STANDING line: a `regressed-to-zero` entry whose streak has
+    not reached `REGRESSION_NIGHTS` is counted under `_WATCHING` instead.
+
+    The row itself is untouched in `stale.json` — the self-heal pool and the targeted
+    discovery sweep both read `regressed-to-zero` and neither should lose a row because the
+    mail is not ready to name it. This is the mail's vocabulary only."""
+    out = {}
+    for name, v in (rows or {}).items():
+        if (isinstance(v, dict) and v.get("reason") == "regressed-to-zero"
+                and _nights_of(v) < REGRESSION_NIGHTS):
+            v = dict(v, reason=_WATCHING)
+        out[name] = v
+    return out
+
+
+def _announce(cur, old):
+    """Is today the morning this row goes under `new:`?
+
+    Every reason but `regressed-to-zero`: the first morning its reason is this one — a fetch
+    error is news on the night it happens, because the endpoint changed and nobody will
+    notice a 404 that waits a day.
+
+    `regressed-to-zero`: the morning its consecutive-night count REACHES
+    `REGRESSION_NIGHTS`, which is a DIFFERENT question from "is the reason new". 41 of the 81
+    runs that began in the fortnight to 2026-09-18 lasted one night, and announcing each of
+    them cost the count its meaning (IRP Systems was announced on 09-08, 09-11, 09-14 and
+    09-16, one night each, with `http 202 · found 0` in the rot file on all four). A row
+    already announced under this reason is not announced again."""
+    reason = (cur or {}).get("reason")
+    was_this = isinstance(old, dict) and old.get("reason") == reason
+    if reason != "regressed-to-zero":
+        return not was_this
+    return _nights_of(cur) >= REGRESSION_NIGHTS and not (
+        was_this and _nights_of(old) >= REGRESSION_NIGHTS)
 
 
 def _judged_by_platform(scanned):
@@ -585,13 +691,19 @@ def mail_lines(stale, previous=None, scanned=None, rot_path=ROT, today=None):
     healthy and nothing changed, so the mail says nothing rather than "0 problems".
     "cleared" means the row left `stale.json`, which is not always a recovery — four things
     it never announces are listed inline below.
+
+    **A regression is `REGRESSION_NIGHTS` consecutive readings, not last night's** (2026-09-18).
+    `new:` names a `regressed-to-zero` row on the morning its `nights` REACHES that number, and
+    `cleared:` never names one that left below it, because it was never announced. The standing
+    line prints the ones still short of it as a quiet `k watching (first night)`. Both rules
+    read the field `record` writes; an entry without it counts as settled (`_nights_of`).
     """
     stale = stale or {}
     delta = []
     if previous is not None:
         previous = {n: v for n, v in previous.items() if isinstance(v, dict)}
         stale = {n: v for n, v in stale.items() if isinstance(v, dict)}
-        new = sorted(n for n in stale if n not in previous or previous[n].get("reason") != stale[n].get("reason"))
+        new = sorted(n for n in stale if _announce(stale[n], previous.get(n)))
         # "cleared" must mean the board recovered. Four things that are not that: a row this
         # run did not scan at all (deactivated overnight — it would read as cleared forever),
         # a row that left because `ATS_HOST` shrank under it (below), an `empty-board` on a
@@ -613,6 +725,13 @@ def mail_lines(stale, previous=None, scanned=None, rot_path=ROT, today=None):
             if v.get("reason") == "abandoned-board":
                 if _int(v.get("age_days"), STALE_BOARD_DAYS) >= STALE_BOARD_DAYS:
                     unrefused.append(n)
+                continue
+            # ...and a `regressed-to-zero` row that never reached `REGRESSION_NIGHTS` is not
+            # "cleared" either, because it was never announced: a blip that vanished would
+            # otherwise be reported as a recovery nobody was told about, which is how the
+            # 09-17 mail cleared 10 rows, 8 of them announced the night before. Pure,
+            # so it runs before the reads below.
+            if v.get("reason") == "regressed-to-zero" and _nights_of(v) < REGRESSION_NIGHTS:
                 continue
             # THE GENERAL RULE, when the caller passed this run's outcomes and not just names
             # (`run.py` and `health_check.py` both pass the results dict): a row flagged for
@@ -664,7 +783,7 @@ def mail_lines(stale, previous=None, scanned=None, rot_path=ROT, today=None):
         mass = None
     # the standing line names the misconfig rows by count only: 25 of them, the same 25 every
     # morning, is exactly the noise the delta line exists to escape
-    parts = _by_reason(stale, quiet=_QUIET_STANDING)
+    parts = _by_reason(_watchful(stale), quiet=_QUIET_STANDING)
     out = []
     if mass:
         out.append(mass)

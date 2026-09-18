@@ -4603,5 +4603,57 @@
   "killers": [
    "tests/test_units.py::test_a_declared_tenant_is_checked_against_the_labels_left_of_the_vendors_own"
   ]
+ },
+ {
+  "id": "regression-nights-back-to-one",
+  "file": "pipeline/health.py",
+  "symbol": "REGRESSION_NIGHTS",
+  "class": "M7-constant-drift",
+  "find": "REGRESSION_NIGHTS = 2",
+  "replace": "REGRESSION_NIGHTS = 1",
+  "why": "1 is last night's reading, which is what `regressed to zero` meant until 2026-09-18 and what made the count churn: over the fourteen nights to that morning 81 runs began inside the window and 41 of them (51%) lasted exactly one night, while 20 names entered the class two or more separate times -- IRP Systems announced 09-08, 09-11, 09-14 and 09-16, one night each, with `http 202 / found 0` in the rot file on all four. At 1 the mail announces a board on Tuesday and clears it on Wednesday, and a reader cannot tell a broken board from an interstitial.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_board_empty_for_one_night_only_is_neither_announced_nor_cleared"
+  ]
+ },
+ {
+  "id": "a-blip-that-vanished-reads-as-cleared",
+  "file": "pipeline/health.py",
+  "symbol": "mail_lines",
+  "class": "M4-guard-removal",
+  "find": "            if v.get(\"reason\") == \"regressed-to-zero\" and _nights_of(v) < REGRESSION_NIGHTS:\n                continue",
+  "replace": "            if False:\n                continue",
+  "why": "`cleared:` must mean a board recovered from something the mail SAID. A one-night regression is never announced, so announcing its disappearance is a recovery from nothing -- and it is the louder half of the churn: the 09-17 mail cleared 10 rows and 8 of them had been announced the night before (the same 8-of-9 shape on 09-09 and 8-of-10 on 09-15). The four other things this loop refuses to call a recovery are each there for the same reason.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_board_empty_for_one_night_only_is_neither_announced_nor_cleared"
+  ]
+ },
+ {
+  "id": "regression-streak-narrowed-to-scrape-rows",
+  "file": "pipeline/health.py",
+  "symbol": "_announce",
+  "class": "M3-branch-narrowing",
+  "find": "    if reason != \"regressed-to-zero\":",
+  "replace": "    if reason != \"regressed-to-zero\" or (cur or {}).get(\"platform\") != \"scrape\":",
+  "why": "the streak is a field on the stale entry precisely so it is platform-blind. 2 of the 20 names that entered the class more than once in the fortnight to 2026-09-18 are NATIVE -- DoubleVerify (greenhouse) and Swimm (comeet) -- and `scrape_rot.json`, the obvious place to read `n` from, has nothing to say about either. A scrape-only rule leaves both flapping and hides that the mechanism is not the scraper's.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_native_board_earns_the_streak_the_same_way_a_scrape_row_does"
+  ]
+ },
+ {
+  "id": "same-day-rewrite-counts-as-another-night",
+  "file": "pipeline/health.py",
+  "symbol": "_nights",
+  "class": "M2-gate-inversion",
+  "find": "    return n if str(old.get(\"last\") or \"\") == today.isoformat() else n + 1",
+  "replace": "    return n + 1 if str(old.get(\"last\") or \"\") == today.isoformat() else n",
+  "why": "two writers commit `stale.json` -- the digest and the Monday self-heal -- and 4 of the 18 snapshots in the fortnight to 2026-09-18 were a second write on a date already written. Counting a re-write as a night lets the pair reach REGRESSION_NIGHTS inside one morning, which announces as a two-night regression a board that was read empty once: the exact churn the threshold exists to stop, reintroduced through the clock.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_second_write_on_the_same_date_is_not_another_night"
+  ]
  }
 ]

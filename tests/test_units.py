@@ -34721,10 +34721,15 @@ def test_an_abandoned_board_is_its_own_reason_not_a_fetch_error(tmp_path):
         "Skin": {"platform": "scrape", "n": 0, "status": "error", "api": "https://boards.greenhouse.io/skin", "error": why},
         "Wix": {"platform": "greenhouse", "n": 40, "status": "ok", "api": "u"},
     }
-    stale = health.record(results, baseline_path=str(tmp_path / "b.json"), stale_path=str(tmp_path / "s.json"))
+    day = _abnd_dt.date(2026, 9, 18)
+    stale = health.record(results, baseline_path=str(tmp_path / "b.json"),
+                          stale_path=str(tmp_path / "s.json"), today=day)
+    # `nights`/`last` joined every written entry on 2026-09-18 (the regression streak); a
+    # frozen `today` is what keeps the stored date out of the real clock's hands
     assert stale["TLVTech"] == {"careers_url": "https://api.smartrecruiters.com/v1/companies/tlvtech/postings",
                                 "platform": "smartrecruiters", "reason": "abandoned-board", "error": why,
-                                "newest": "2024-10-22", "age_days": 677}
+                                "newest": "2024-10-22", "age_days": 677,
+                                "nights": 1, "last": "2026-09-18"}
     assert stale["Decart"]["reason"] == "fetch-error" and stale["Skin"]["reason"] == "misconfig-scrape-on-ats"
     assert "Wix" not in stale
     assert json.load(open(tmp_path / "s.json", encoding="utf-8"))["TLVTech"]["age_days"] == 677
@@ -36353,3 +36358,87 @@ def test_a_declared_tenant_is_checked_against_the_labels_left_of_the_vendors_own
     # plumbing label does not
     assert identity_facts._tenant_labels("careers-bancorpbank.icims.com", plumb, rx) == \
         ["careersbancorpbank"]
+
+
+# --- a regression is a board empty for N consecutive nights (606) -----------------------
+
+_RZ_DAY = _abnd_dt.date(2026, 9, 14)
+
+
+def _rz_run(tmp_path, nights, platform="scrape", n=0, status="empty", baseline=4):
+    """Walk one row through `record` once per night (`nights` is a list of `today` dates, or
+    of `(today, n)` pairs), returning [(stale_after_each_night, mail_lines_that_morning)].
+
+    Real `record` calls against tmp files, because the streak is a property of the file it
+    writes and a hand-built dict cannot exercise it."""
+    base = tmp_path / "b.json"; base.write_text(_af_json.dumps({"Row": baseline}), encoding="utf-8")
+    stale_p = tmp_path / "s.json"
+    from pipeline import health
+    out = []
+    for spec in nights:
+        day, jobs = spec if isinstance(spec, tuple) else (spec, n)
+        res = {"Row": {"platform": platform, "n": jobs, "api": "https://row.example/careers",
+                       "status": "ok" if jobs else status}}
+        was = health.previous(str(stale_p))
+        stale = health.record(res, baseline_path=str(base), stale_path=str(stale_p),
+                              rot_path=str(tmp_path / "rot.json"), today=day)
+        out.append((stale, health.mail_lines(stale, previous=was, scanned=res, today=day)))
+    return out
+
+
+def test_a_board_empty_for_one_night_only_is_neither_announced_nor_cleared(tmp_path):
+    """606. `regressed to zero` was last night's reading, and 41 of the 81 runs that began in
+    the fortnight to 2026-09-18 lasted exactly one night — so the mail announced a board on
+    Tuesday and cleared it on Wednesday, twenty times over (IRP Systems on 09-08, 09-11,
+    09-14 and 09-16, one night each). One empty reading now says nothing at all: the ROW is
+    in the file either way, because the self-heal pool and the targeted discovery sweep read
+    it, but the WORD `regressed` is earned on the second consecutive night."""
+    from pipeline import health
+    nights = _rz_run(tmp_path, [_RZ_DAY, (_RZ_DAY + _abnd_dt.timedelta(days=1), 4)])
+    (s1, m1), (s2, m2) = nights
+    assert s1["Row"]["reason"] == "regressed-to-zero" and s1["Row"]["nights"] == 1
+    assert not any("new:" in l for l in m1), m1
+    assert any("1 watching (first night)" in l for l in m1), m1   # counted, never named
+    assert "Row" not in s2
+    assert not any("cleared" in l for l in m2), m2
+
+
+def test_the_second_consecutive_empty_night_is_the_announcement(tmp_path):
+    """...and the morning after that says nothing new: a row already announced under this
+    reason is not announced again, so the delta stays a delta."""
+    from pipeline import health
+    days = [_RZ_DAY + _abnd_dt.timedelta(days=i) for i in range(3)]
+    (s1, m1), (s2, m2), (s3, m3) = _rz_run(tmp_path, days)
+    assert [s["Row"]["nights"] for s in (s1, s2, s3)] == [1, 2, 3]
+    assert not any("new:" in l for l in m1), m1
+    assert any("new: 1 regressed to zero (Row)" in l for l in m2), m2
+    assert any("1 regressed to zero (Row)" in l and l.startswith("standing:") for l in m2), m2
+    assert not any("new:" in l for l in m3), m3
+    assert health.REGRESSION_NIGHTS == 2
+
+
+def test_a_native_board_earns_the_streak_the_same_way_a_scrape_row_does(tmp_path):
+    """The streak is a field on the stale entry, not the scraper's rot `n`, because 2 of the
+    20 names that entered the class more than once in that fortnight are NATIVE — DoubleVerify
+    (greenhouse) and Swimm (comeet) — and `scrape_rot.json` has nothing to say about either.
+    A rule keyed on the platform would leave both flapping."""
+    from pipeline import health
+    for plat in ("comeet", "greenhouse"):
+        home = tmp_path / plat
+        home.mkdir()                          # its own files, or the second run inherits the streak
+        (s1, m1), (s2, m2) = _rz_run(home, [_RZ_DAY, _RZ_DAY + _abnd_dt.timedelta(days=1)],
+                                     platform=plat)
+        assert s1["Row"]["nights"] == 1 and not any("new:" in l for l in m1), (plat, m1)
+        assert s2["Row"]["nights"] == 2
+        assert any("new: 1 regressed to zero (Row)" in l for l in m2), (plat, m2)
+
+
+def test_a_second_write_on_the_same_date_is_not_another_night(tmp_path):
+    """`stale.json` is committed by the digest AND by the Monday self-heal — 4 of the 18
+    snapshots in that fortnight were a same-day re-write. Without the `last`-date rule the two
+    writers would reach the threshold inside one morning and announce a board that had been
+    read empty once."""
+    (s1, m1), (s2, m2) = _rz_run(tmp_path, [_RZ_DAY, _RZ_DAY])
+    assert s1["Row"]["nights"] == 1 and s2["Row"]["nights"] == 1, s2
+    assert s2["Row"]["last"] == "2026-09-14"
+    assert not any("new:" in l for l in m1 + m2), (m1, m2)
