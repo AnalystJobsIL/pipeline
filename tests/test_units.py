@@ -32353,6 +32353,39 @@ def test_wayback_status_ext_words_land_on_the_two_families(tmp_path, monkeypatch
     assert A.eligible(A.Target("https://s1.io/p", "posting", 1, ""), st["https://s1.io/p"], today + _wb_dt.timedelta(days=1))
 
 
+def test_wayback_an_address_the_archive_cannot_request_waits_thirty_days(tmp_path, monkeypatch, capsys):
+    """`error:bad-request` is the archive saying it cannot form a request for this ADDRESS, so
+    the 7-day `http` cooldown asked the same impossible question every week. Measured over the
+    whole ledger on 2026-09-18: 16 of 16 `bad-request` ends are `il.indeed.com/viewjob?jk=`,
+    0 of 23 keyed Indeed jobs have ever captured, and no other host has answered the word --
+    so it is the 30-day class, and the five-refusals host park bounds the nightly cost at 5.
+    `not-found` (every `www.linkedin.com/jobs/view/<id>` copy, 5 of 5) stays `http`: the one
+    hand POST of 2026-09-18 showed the `il.linkedin.com` form of the same id is NOT refused
+    by the address, so the fix there is the copy's form, not a park (`626`)."""
+    import archive_evidence as A
+    _wb_quiet(monkeypatch, tmp_path)
+    assert A._classify_job({"status": "error", "status_ext": "error:bad-request"}).err == "excluded"
+    assert (A.cooldown_days("excluded", 1), A.cooldown_days("http", 1)) == (30, 7)
+    assert A._classify_job({"status": "error", "status_ext": "error:not-found"}).err == "http"
+    today = _wb_dt.date(2026, 9, 18)
+    urls = ["https://il.indeed.com/viewjob?jk=%02d" % i for i in range(6)] + \
+           ["https://www.linkedin.com/jobs/view/446799%d" % i for i in range(2)]
+    root = _wb_root(tmp_path, roles=_wb_roles(today, urls))
+    arch = _WbSpn2(status=lambda jid, nth: _wb_error("not-found" if "linkedin" in jid or jid.startswith("job-44") else "bad-request")(jid, nth))
+    monkeypatch.setattr(A, "_open", arch)
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock([]))
+    rep = A.run(root, today=today, caps=_wb_caps(host_share=1.0), auth=_wb_auth())
+    assert (rep.host_parked, rep.refused, rep.captured, rep.backlog) == (1, 7, 0, 1)
+    assert "il.indeed.com: 5 consecutive refusals, parked for today" in capsys.readouterr().out
+    st = A.read_ledger(str(tmp_path / "cloud_state" / "wayback_ledger.jsonl"))
+    jk, li = "https://il.indeed.com/viewjob?jk=00", "https://www.linkedin.com/jobs/view/4467990"
+    assert (st[jk]["last_err"], st[li]["last_err"]) == ("excluded", "http")
+    assert not A.eligible(A.Target(jk, "posting", 1, ""), st[jk], today + _wb_dt.timedelta(days=29))
+    assert A.eligible(A.Target(jk, "posting", 1, ""), st[jk], today + _wb_dt.timedelta(days=30))
+    # the LinkedIn copy is NOT parked with it: a week, as before
+    assert A.eligible(A.Target(li, "posting", 1, ""), st[li], today + _wb_dt.timedelta(days=7))
+
+
 def test_wayback_the_account_probe_sets_workers_and_the_day_before_the_plan(tmp_path, monkeypatch, capsys):
     """`/save/status/user` is read before `plan_batch`, because the cap it lowers is the one
     the plan reads: `available` bounds the workers below the ceiling, and what the account

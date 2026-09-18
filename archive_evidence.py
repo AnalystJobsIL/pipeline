@@ -113,7 +113,15 @@ STATUS_EXT = {
     "too-many-daily-captures": "limit-url",
     "blocked-url": "excluded",
     "blocked": "blocked", "too-many-requests": "blocked",
-    "not-found": "http", "no-access": "http", "unauthorized": "http", "bad-request": "http",
+    "not-found": "http", "no-access": "http", "unauthorized": "http",
+    # `bad-request` is the archive saying it cannot form a request for this ADDRESS at all, so
+    # a week's cooldown asks the same impossible question again: it is the 30-day class
+    # (`COOLDOWN["excluded"]`), like an exclusion. Measured 2026-09-18 over the whole ledger:
+    # 16 of 16 `error:bad-request` ends are `il.indeed.com/viewjob?jk=<jk>`, 0 of 23 keyed
+    # Indeed jobs have ever captured, and no other host has ever answered the word. The five
+    # consecutive refusals that park a host for the day bound the cost at 5 of a 250-job
+    # night while the 160 Indeed addresses drain out of the pool (infra, 620).
+    "bad-request": "excluded",
     "bad-gateway": "http", "service-unavailable": "http", "gateway-timeout": "http", "read-timeout": "http",
     "invalid-host-resolution": "http", "invalid-server-response": "http", "protocol-error": "http",
     "too-many-redirects": "http", "browsing-timeout": "http", "filesize-limit": "http",

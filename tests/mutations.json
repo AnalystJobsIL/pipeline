@@ -4460,5 +4460,18 @@
   "killers": [
    "tests/test_units.py::test_wayback_a_job_never_outlives_the_days_remaining_clock"
   ]
+ },
+ {
+  "id": "wayback-bad-request-back-to-a-week",
+  "file": "archive_evidence.py",
+  "symbol": "STATUS_EXT",
+  "class": "M7-constant-drift",
+  "find": "    \"bad-request\": \"excluded\",\n",
+  "replace": "    \"bad-request\": \"http\",\n",
+  "why": "measured 2026-09-18 over the whole ledger: 16 of 16 `error:bad-request` ends are `il.indeed.com/viewjob?jk=`, 0 of 23 keyed Indeed jobs ever captured, and a 7-day cooldown asked the archive the same impossible question every week (infra, 620).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_an_address_the_archive_cannot_request_waits_thirty_days"
+  ]
  }
 ]
