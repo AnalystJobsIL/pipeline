@@ -12677,6 +12677,14 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      so a held row's written reason reaches the public `description_blocker`. `jd-text`
      owns the WRITE (`enrich_matched_jd._stamp_failed`, landed 09-18) and pins that the
      blocker IGNORES it until this lands, so nothing breaks in between.
+     **Put that read BELOW the derived `gone` arm, not above it.** A row whose own board
+     404s is stamped `gone` on `jd_attempted`, and the same miss is definitive, so it
+     also earns `failed:gone:<date>` from the new writer. `gone` is the better published
+     word and the vocabulary readers already have; `failed:` should only speak where
+     nothing else can. Measured 2026-09-18: 3 rows carry the `gone` stamp, 2 of them
+     already `structural:gone(donors:N)` (which wins either way) and 1
+     (`mobileye|experienced data analyst`) carrying `ok:canonical:` — so the collision
+     is 0 rows today and the ordering is cheap to get right before it is not.
 
 608. **21 scraper-built cache cards carry page furniture that no re-clean can keep off, and 7
      Legit Security cards carry their neighbour's link** — lane: `scraper`, filed 2026-09-13
