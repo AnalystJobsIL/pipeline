@@ -18528,12 +18528,17 @@ def test_the_cross_script_census_pairs_two_spellings_and_refuses_a_shared_generi
 
 def test_the_hunt_will_not_activate_a_row_onto_a_host_the_ledger_already_refused(tmp_path,
                                                                                  monkeypatch):
-    """The gate that was missing when `Kima` and `PayPlus` came back.
+    """The gate that was missing when `Kima` and `PayPlus` came back, on BOTH arms.
 
     Both were parked on a model read and re-activated by the 19:00 hunt days later -- `Kima`
     on `careers.akima.com` (refused 09-14, back 09-15), `PayPlus` on `payplus.com` (refused
     09-15, back 09-17). `identity_gate` cannot see it: it is PURE by design and the ledger is
     a state file. The hunt is a WRITER, and writers here already read state files.
+
+    ONE `main()`, both arms, because they are duplicated on purpose (the AST completeness
+    guard does not follow calls) and a test of one proves NOTHING about the other: with only
+    the queue half, `tools/mutate.py --id hunt-ledger-veto-removed` SURVIVED -- and `Kima`
+    and `PayPlus` were ROWS, so the surviving half was the one the incident happened on.
     """
     import csv as _csv
     import json as _j
@@ -18543,77 +18548,52 @@ def test_the_hunt_will_not_activate_a_row_onto_a_host_the_ledger_already_refused
     from pipeline import board_verify as BV
     d = tmp_path / "lh"
     d.mkdir()
+    # the ROW arm: two PARKED rows the hunt re-checks, one on a host the ledger refused
     (d / "companies.csv").write_text(
-        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Kima,scrape,,https://careers.akima.com/,false,"
+        "dark-triage 2026-01-01: no ATS detected\n"
+        "Clean Row,scrape,,https://cleanrow.example/careers,false,"
+        "dark-triage 2026-01-01: no ATS detected\n", encoding="utf-8")
+    # ...and the QUEUE arm: two names with no row at all
     (d / "research_companies.json").write_text(_j.dumps([
-        {"name": "Kima", "careers_url": "https://il.linkedin.com/jobs/view/1"},
+        {"name": "PayPlus", "careers_url": "https://il.linkedin.com/jobs/view/1"},
         {"name": "Clean Co", "careers_url": "https://il.linkedin.com/jobs/view/2"},
     ]), encoding="utf-8")
     monkeypatch.chdir(d)
     monkeypatch.setattr(_sys, "argv", ["listing_hunt.py", "--apply"])
     monkeypatch.setenv("HUNT_QUEUE_CAP", "5")
     answers = {"Kima": ("found", "https://careers.akima.com/jobs/analyst", 2, "ok"),
+               "Clean Row": ("found", "https://cleanrow.example/careers/analyst", 2, "ok"),
+               "PayPlus": ("found", "https://payplus.example/careers", 2, "ok"),
                "Clean Co": ("found", "https://clean.example/careers", 2, "ok")}
-    monkeypatch.setattr(H, "hunt_one", lambda name, seed, **k: answers[name])
-    monkeypatch.setattr(H, "looks_like_a_job_listing_page", lambda u: True)
-    monkeypatch.setattr(H._gate, "identity_ok", lambda name, url: True)
-    monkeypatch.setattr(H, "_BV_STATE", {
-        BV.key("Kima", "https://careers.akima.com/"): _bv_rec("2026-09-14", BV.NOT_THEIRS,
-                                                              "Akima")})
-    H.main()
-    rows = {r[0]: r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))}
-    assert rows["Kima"][4] == "false", rows["Kima"]
-    # ...and not merely inactive: the ADDRESS must not be persisted either, or this tool's
-    # own fast path re-reads it tomorrow night -- the whole reason the address gate exists.
-    assert rows["Kima"][3] == "", rows["Kima"]
-    # positive control: an unrefused host still activates, or this guard would pass by
-    # refusing everything
-    assert rows["Clean Co"][4] == "true" and rows["Clean Co"][3] == (
-        "https://clean.example/careers"), rows["Clean Co"]
-
-
-def test_the_hunts_ROW_arm_will_not_re_activate_a_parked_row_onto_a_refused_host(tmp_path,
-                                                                                 monkeypatch):
-    """`tools/mutate.py --id hunt-ledger-veto-removed` SURVIVED with only the queue-arm test:
-    the sibling test below drives the QUEUE arm, and `Kima` and `PayPlus` were ROWS.
-
-    That is the whole incident, exactly: a parked row carrying an address the ledger has
-    ruled another company's, and the 19:00 hunt's ROW arm setting `fr[4] = "true"` on it a day
-    later. Two arms, two writes, and the duplication between them is deliberate (the AST
-    completeness guard does not follow calls), so a test of one proves nothing about the
-    other.
-    """
-    import csv as _csv
-    import sys as _sys
-
-    import listing_hunt as H
-    from pipeline import board_verify as BV
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "companies.csv").write_text(
-        "company_name,ats_platform,token,api_url,active,notes\n"
-        "Kima,scrape,,https://careers.akima.com/,false,"
-        "dark-triage 2026-01-01: no ATS detected\n"
-        "Clean Co,scrape,,https://clean.example/careers,false,"
-        "dark-triage 2026-01-01: no ATS detected\n", encoding="utf-8")
-    (tmp_path / "research_companies.json").write_text("[]", encoding="utf-8")
-    res = {"Kima": ("found", "https://careers.akima.com/jobs/analyst", 2, "ok"),
-           "Clean Co": ("found", "https://clean.example/careers/analyst", 2, "ok")}
     monkeypatch.setattr(H, "hunt_one",
-                        lambda name, seed, documented=False, mode="": res[name])
+                        lambda name, seed, documented=False, mode="": answers[name])
     monkeypatch.setattr(H, "looks_like_a_job_listing_page", lambda u: True)
     monkeypatch.setattr(H._gate, "identity_ok", lambda name, url, html="": True)
     monkeypatch.setattr(H, "_BV_STATE", {
         BV.key("Kima", "https://careers.akima.com/"): _bv_rec("2026-09-14", BV.NOT_THEIRS,
-                                                              "Akima")})
-    monkeypatch.setattr(_sys, "argv", ["listing_hunt.py", "--apply"])
+                                                              "Akima"),
+        BV.key("PayPlus", "https://payplus.example/"): _bv_rec("2026-09-15", BV.NOT_THEIRS,
+                                                               "PayPlus Software, Inc.")})
     H.main()
-    rows = {r[0]: r for r in _csv.reader(open(tmp_path / "companies.csv", encoding="utf-8"))}
+    rows = {r[0]: r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))}
+
+    # ROW arm -- the incident's own shape: a parked row is NOT re-activated onto the host,
+    # and the refused address is not written into fr[3] either
     assert rows["Kima"][4] == "false", rows["Kima"]
     assert "careers.akima.com/jobs/analyst" not in rows["Kima"][3], rows["Kima"]
-    # positive control: an unrefused host still activates on the same run, or this guard
-    # would pass by refusing everything
-    assert rows["Clean Co"][4] == "true", rows["Clean Co"]
-    assert rows["Clean Co"][3] == "https://clean.example/careers/analyst", rows["Clean Co"]
+    # QUEUE arm -- and not merely inactive: the ADDRESS must not be persisted, or this tool's
+    # own fast path re-reads it tomorrow night, which is the whole reason the address gate
+    # is separate from the activation gate
+    assert rows["PayPlus"][4] == "false", rows["PayPlus"]
+    assert rows["PayPlus"][3] == "", rows["PayPlus"]
+    # positive controls, one per arm: an unrefused host still activates, or this guard would
+    # pass by refusing everything
+    assert rows["Clean Row"][4] == "true", rows["Clean Row"]
+    assert rows["Clean Row"][3] == "https://cleanrow.example/careers/analyst", rows["Clean Row"]
+    assert rows["Clean Co"][4] == "true" and rows["Clean Co"][3] == (
+        "https://clean.example/careers"), rows["Clean Co"]
 
 
 def test_verify_existing_parks_a_ledger_contradicted_row_without_buying_a_read(tmp_path,
