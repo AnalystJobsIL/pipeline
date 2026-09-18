@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**678 filed · 475 open · 203 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**680 filed · 477 open · 203 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 629.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 631.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -249,7 +249,7 @@ closure convention in the header.
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 - **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
 
-### infra — 117 open
+### infra — 118 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -368,6 +368,7 @@ closure convention in the header.
 - **617** `617@infra` **Four of eight mutation shards already walled past the 1,800 s line on 09-13, and the
 - **619** `619@infra` **Eight tests still assert on the state a cron rewrites, and 134 more open it through a code
 - **620** `620@infra` **The Internet Archive names ~9 captures a night for us, against a backlog of 6,193 and
+- **630** `630@infra` **Bright Data's Unlocker cannot fetch `google.com` at all, so a Google Careers posting is
 
 ### scraper — 33 open
 
@@ -545,7 +546,7 @@ closure convention in the header.
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
 - **621** `621@ats-fetch` **`career.adamtotal.co.il` is an Israeli ATS this repo has never heard of, Harel's board
 
-### jd-text — 20 open
+### jd-text — 21 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
 - **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
@@ -567,6 +568,7 @@ closure convention in the header.
 - **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
 - **625** `625@jd-text` **28 cache cards hold one shell page's text under two titles, and both cards own their
 - **627** `627@jd-text` **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
+- **629** `629@jd-text` **A capture can carry the page's own inline module script as its last 657 characters** —
 
 ### classifier — 18 open
 
@@ -12657,6 +12659,25 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      Check: the `matched_recleaned` stamp on the first digest after the commit is ≤ 3, and 0
      once this lands.
 
+     **2026-09-18 (`jd-text`), the diff in full, filed verbatim because no `roles` session
+     answered.** Three parts, all in `classify_grouped`:
+     (a) an own-board member OUTRANKS a member whose text opens with the closure line,
+     whatever the lengths — `jdfill.closed_page_at(text) == 0` is exact (`587` puts that
+     sentence at offset 0 and only there), so the sort key at L1226 becomes
+     `(closed_page_at(text) == 0, -len(text))` and a closed-line copy sorts last.
+     `hibob|ai product data analyst` and `meta|data scientist product analytics` have lost
+     to their LinkedIn member for 21 days on length alone.
+     (b) `jdfill.normalise(m)` on EVERY member, not only on `best`.
+     (c) copy `best["_jd_why"]` onto the text-less members — that is the `? 1` on the 09-18
+     digest (`gong|senior data scientist - ai research & reliability`, run 35330002476,
+     log line `- jd: ?`). The `maybe_fill` half is DONE: both silent exits are named
+     (`disabled`, `title-excluded`).
+     **And one line more, ruled by the operator on 09-18**: `roles._blocker` (L3094)
+     returns only on `why.startswith("structural:")`; add `or why.startswith("failed:")`
+     so a held row's written reason reaches the public `description_blocker`. `jd-text`
+     owns the WRITE (`enrich_matched_jd._stamp_failed`, landed 09-18) and pins that the
+     blocker IGNORES it until this lands, so nothing breaks in between.
+
 608. **21 scraper-built cache cards carry page furniture that no re-clean can keep off, and 7
      Legit Security cards carry their neighbour's link** — lane: `scraper`, filed 2026-09-13
      by `jd-text`, both told to that lane's live session. (a) `reclean_cache` refuses cards
@@ -12680,6 +12701,20 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      apply link. **Reads 8 on 2026-09-18, not 7** (the 7 Legit cards plus one somekhchaikin);
      the same day's `_card_bounds` repoints all 7 Legit cards onto comeet slugs that name their
      own titles on a replay, so the next refresh of that board should leave ≤1. Check: `python -c "import json,sys;sys.path.insert(0,'.');from pipeline.jdfill import address_names_another_role as a;s=json.load(open('scraped_cache.json',encoding='utf-8'));print(sum(1 for v in s.values() if isinstance(v,list) for j in v if isinstance(j,dict) and a(j.get('url'),j.get('title'))))"`.
+
+     **2026-09-18 (`jd-text`), two more asks, and the first is now load-bearing.**
+     (c) `scrape_universal._read_position_page` collapses a capture with a whitespace
+     squeeze, so an own-board capture is ONE line with 0 newlines — and every line-anchored
+     rule in `pipeline/jdfill.py` (`_HEAD_FURNITURE`, `^…seniority level$`,
+     `^…related jobs$`, `_HEAD_SKIP`) is structurally blind to it. Both `אסם` rows were that
+     shape; the 09-18 cut had to be a TOKEN rule (`jdfill.mirrored_nav`) to reach them at
+     all. Keep the newlines the page gives you.
+     (d) the `Google Israel` cards carry the generic results page as their `url`
+     (`_own_url False`) and one card off that page as their text: 21 of them, all refused by
+     `jdfill._is_listing_card` since 09-18. The card should carry the POSTING's link. Note
+     for whoever tries: the results page is fully client-rendered (1,017,871 bytes of HTML
+     → 1,662 characters of text, 0 posting links) and Bright Data's Unlocker refuses
+     `google.com` outright (`630`).
 
 609. **Every accepted Telegram role is held off the board by construction** — lane:
      `discovery` (`discovery_telegram.py`), filed 2026-09-13 by `jd-text`. All 145
@@ -12709,6 +12744,10 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      45 s is 3.75 minutes worst case, and with `600(b)` landed the raw tail is bounded at 30 s
      a call. The number to decide on is how many `bd-render-capped` the `jd-fill:` line prints
      over a week; the inline filler now also names it on the job (`_jd_why`).
+     **The week is in (`jd-text`, 2026-09-18)**: over the six scheduled digests
+     2026-09-13..09-18 the cap bound **0** times — `scrape_render_capped=0` on all six and
+     `matched_bd_rendered` 0 on five (1 on 09-15). Raising it to 5 cost nothing and the
+     clock guard's 3.75-minute term is never claimed. Stays closed.
 
 611. **A WordPress careers post keeps its site navigation and footer, and HTML entities are
      not decoded** — lane: `jd-text`, filed 2026-09-13 against its own parser. The ClixScale
@@ -12731,6 +12770,37 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      staleness question for `586@roles`, not a cutter's) and Ballerine ~300 (three office
      addresses and `Get 5 Free Reports`, a block that appears once). Both need a rule
      nobody has measured yet; neither is worth a marker that fires on prose.
+
+
+## From the `jd-text` lane, 2026-09-18 (own-board chrome, a listing card, an unreachable host)
+
+629. **A capture can carry the page's own inline module script as its last 657 characters** —
+     lane: `jd-text` (`pipeline/jdfill.html_to_text`), filed 2026-09-18. `html_to_text` deletes
+     `<script>…</script>` with a regex that needs the closing tag on the same body; the Webflow
+     page at `calculum.ai/vacancies/junior-data-financial-analyst-position-type` defeats it, and
+     `extract_jd` returns 4,782 characters whose last **657** are JavaScript (`… script.type =
+     'module'; document.body.appendChild(script); } initDbScript(); });`). That is why the
+     09-18 session REFUSED to re-capture that row: machine code shown to a visitor is worse
+     than the mid-word cut it would have replaced (the row keeps 3,995 characters ending
+     `…a structure in which to inn`). Measure before fixing: how many of the 2,421 stored
+     bodies contain `document.` or `function(` after `html_to_text`, and whether the cause is
+     the missing-close-tag regex or a `<script>` written by `document.write`. A tail marker on
+     `document.` would be a cutter with no measurement behind it — do the census first.
+
+630. **Bright Data's Unlocker cannot fetch `google.com` at all, so a Google Careers posting is
+     unreachable by every rung this repo owns** — lane: `infra` (the Bright Data zone), filed
+     2026-09-18 by `jd-text` under the operator's ≤3-credit dispensation for the Waze row.
+     Measured: two RENDERED calls to
+     `www.google.com/about/careers/applications/jobs/results/?q=…&location=Israel` (once with a
+     quoted query, once plain) both returned HTTP 200 with `x-brd-error-code: invalid_path`
+     and a **zero-length body**. **2 credits spent, cap 3, stopped there** — two identical
+     refusals is the answer, not a sample size. The free rung is no better: 1,017,871 bytes of
+     HTML → **1,662** characters of text and **0** posting links (fully client-rendered), and
+     `careers.google.com/api/v3/search/` and its `applications/api/v3/search/` twin both 404.
+     google.com needs Bright Data's SERP zone, which `BRIGHTDATA_ZONE` is not. Decide whether
+     that is worth a zone; until then `google israel|*` rows are held with a written reason,
+     which is the dataset bar, and `_is_listing_card` stops their 573-character result cards
+     being mistaken for postings.
 
 ## From the `registry` lane, 2026-09-13 (wrong boards, Osem-Nestlé, drain capacity)
 
