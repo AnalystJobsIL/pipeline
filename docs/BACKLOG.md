@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**675 filed · 473 open · 202 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**676 filed · 474 open · 202 closed · 9 half · 39 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -91,6 +91,7 @@ closure convention in the header.
 | 446 | `446@classifier` **open** · `446@docs` closed |
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
+| 623 | `623@scraper` **open** · `623@classifier` **open** |
 
 ### registry — 154 open
 
@@ -544,6 +545,28 @@ closure convention in the header.
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
 - **621** `621@ats-fetch` **`career.adamtotal.co.il` is an Israeli ATS this repo has never heard of, Harel's board
 
+### classifier — 19 open
+
+- **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
+- **122** `122@classifier` **The cap and the budget bite the same companies every day**
+- **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
+- **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
+- **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
+- **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
+- **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
+- **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
+- **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
+- **503** `503@classifier` **The contract drain still competes with fresh roles for the same call budget; the deferred
+- **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
+- **541** `541@classifier` **A superseded verdict was chosen by sorting contract HASHES, which is alphabetical and
+- **542** `542@classifier` **The title gate rejects `analytics engineer` outright, and the 2026-09-01 boundary is
+- **548** `548@classifier` **A remote posting is counted as Israeli on the board's `country_code` alone, with no
+- **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
+- **557** `557@classifier` **LTX has not flipped to its own board
+- **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
+- **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
+- **623** `623@classifier` **A `reject` cell has no writer that can flip it back, so a machine withdrawal cannot be
+
 ### jd-text — 19 open
 
 - **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
@@ -565,27 +588,6 @@ closure convention in the header.
 - **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
 - **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
 - **625** `625@jd-text` **28 cache cards hold one shell page's text under two titles, and both cards own their
-
-### classifier — 18 open
-
-- **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
-- **122** `122@classifier` **The cap and the budget bite the same companies every day**
-- **123** `123@classifier` **A quarantined cohort is re-bought every morning until someone reads the mail**
-- **129** `129@classifier` **Keyword-tier gaps the wave-1 title sweep left open**
-- **378** `378@classifier` **`campus` is the one `_NOT_A_JOB` stem with a plausible false positive, and this gate
-- **446** `446@classifier` **Nothing re-measures the title gate's false-negative rate, and 4,080 postings a night are
-- **465** `465@classifier` **A `|jd` verdict is never re-judged when the DESCRIPTION changes, so a verdict made on
-- **466** `466@classifier` **`prompt_slice` truncates before the evidence in exactly the shape the scope rule
-- **486** `486@classifier` **The title hard-excludes are English-only, so a Hebrew-heavy board turns deterministic
-- **503** `503@classifier` **The contract drain still competes with fresh roles for the same call budget; the deferred
-- **529** `529@classifier` **The keyword tier still rejects on the DOMAIN, which the 2026-08-31 ruling says it must
-- **541** `541@classifier` **A superseded verdict was chosen by sorting contract HASHES, which is alphabetical and
-- **542** `542@classifier` **The title gate rejects `analytics engineer` outright, and the 2026-09-01 boundary is
-- **548** `548@classifier` **A remote posting is counted as Israeli on the board's `country_code` alone, with no
-- **551** `551@classifier` **A published `accept` survives the classifier flipping to `0`, and a jd->jd text repair
-- **557** `557@classifier` **LTX has not flipped to its own board
-- **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
-- **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
 
 ### render — 8 open
 
@@ -13024,3 +13026,29 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      Nebius 2, TransPerfect 2, Reeco 1 — so what was stored is a shell or a careers index that
      answered for both, and `_shared_page_texts` re-pools it, which is why the same shell comes
      back. Check: `python -c "import json,collections;s=json.load(open('scraped_cache.json',encoding='utf-8'));g=collections.defaultdict(set);[g[j['description']].add((c,j['title'])) for c,v in s.items() if isinstance(v,list) for j in v if isinstance(j,dict) and len((j.get('description') or '').strip())>=300 and j.get('_own_url') is not False];print(sum(len(t) for t in g.values() if len({x[1] for x in t})>=2))"`.
+## From the `roles` lane, 2026-09-18 (the verdict cell decides membership)
+
+623. **A `reject` cell has no writer that can flip it back, so a machine withdrawal cannot be
+     undone by a verdict** — lane: `classifier` (their file), filed 2026-09-18 by `roles`
+     alongside the withdrawal sweep. `Ledger._withdraw_rejected` (2026-09-18, §7c) withdraws a
+     publishable record whose cell says `reject`, and is reversible BY DESIGN: a cell that no
+     longer says `reject` returns the record to `closed`/`open` with no hand line. But nothing
+     can write that cell. The three writers are the live stamp (`merged`, and a rejected role
+     is never in it), the reject map (`reject_map`, rejects only), and
+     `class_backfill.apply_to`, whose queue is `candidates()` — `class_unjudged(rec) and
+     status in PUBLISHED`, and `class_unjudged` is false for a `reject` cell that names its
+     contract. Measured 2026-09-18: **11 of 186 published rows** carried a `reject` cell, all
+     `closed`, all under the live contract `v3.0f84ab84`, so **0 of 11** are reachable by any
+     writer — the eleven stay withdrawn whatever a re-judge concludes, unless the classifier
+     purges the cache row and re-runs `tools/rejudge_rows.py --judge`. The fix is one predicate
+     in `candidates()`: also offer a record whose cell says `reject` and whose live-contract
+     cache row says YES (the cache is already the cheap read; a re-offer that needs a paid call
+     per withdrawn row is the thing `candidates` was narrowed to avoid in the first place —
+     2026-08-31, 9 of 42 candidates cost 21 % of the pass for cells no reader could see). File
+     the same commit with the second half of the contract the two lanes agreed:
+     **the seam should cache its one-line reason** — ten of the eleven cells say only "cached
+     LLM verdict", and that string is now published as `withdraw_reason` after the mechanism
+     and the contract. Check: `python -c "import json;r=[json.loads(l) for l in
+     open('cloud_state/roles.jsonl',encoding='utf-8') if l.strip()];print(sum(1 for x in r if
+     (x.get('class') or {}).get('decision')=='reject' and x.get('withdrawn_by')=='classifier'))"`
+     — the size of the unreachable pile on any morning.

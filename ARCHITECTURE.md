@@ -7586,14 +7586,55 @@ refusals, and each is a rule rather than a precaution:
   one role_id in both places, and the reject would contradict the board the same run renders.
 * **a withdrawn or purged record is never stamped.** That cell is a human's adjudication;
   a machine verdict must not overwrite one. A superseded record is not published at all.
-* **the status is not touched.** `_alive` is the liveness rule and nothing else is. A
-  rejected posting is simply never upserted, so `last_seen` stops moving and the record
-  closes tomorrow on the ordinary ladder, inside the mass-close guard. Closing it here would
-  skip that guard and misuse `closed`, which the column vocabulary defines as *the posting
-  was gone from the board* — it is not gone, it is not ours.
+* **the status is not touched *here*.** The stamp is a verdict; the membership decision that
+  follows from it is `_withdraw_rejected`'s, at the end of the same run (below).
+
+**The verdict cell decides membership** *(2026-09-18, lane `roles`)*. Until that date the
+status was not touched at all, on the reasoning that a rejected posting is never upserted, so
+`last_seen` stops moving and the record closes tomorrow on the ordinary ladder inside the
+mass-close guard. It does close — and `closed` is a column value, not a way out of the file:
+a closed row publishes for the rest of its 90-day window. **11 of the 186 rows in the
+2026-09-18 `roles.csv` carried `class_decision=reject`** (all eleven `closed`, ten of them
+`llm_cache` "cached LLM verdict"), which is neither of the two states the operator's bar
+allows (memory `dataset-acceptance-test`, 2026-09-01): IN under the live contract, or
+excluded with a written, counted reason.
+
+So `Ledger._withdraw_rejected` runs at the end of every `record_run`, over every record and
+not only this run's map — the eleven cells were stamped days earlier by runs that judged the
+roles while they were still fetched, and a sweep keyed to `class_rejects` would never have
+reached them. A record with status `open` or `closed` whose cell says `reject` becomes:
+
+| field | value |
+|---|---|
+| `status` | `withdrawn` — the same status a hand line writes, so every product already excludes it |
+| `withdrawn_by` | `classifier` — what makes it reversible, and tells it from a human's line |
+| `withdrawn_on` | this run's date; `removed[].on` and the published span read it after `retracted_on` and **before** `closed_on`, or a row closed in August would claim it left the file in August |
+| `withdraw_reason` | `classifier <path> under <contract>: <the cell's reason>` — the mechanism, the rules, then whatever prose the seam cached |
+| `closed_on` | kept if set, else `last_seen` — the day it stopped being live, which is not the day we judged it |
+| `retracted_on` | **never.** That field is a LINE's, and a record carrying one with no line behind it is *lifted* back onto the ladder the next morning by the lift arm above |
+
+It is reversible by the verdict alone: `withdrawn_by == "classifier"` with a cell that no
+longer says `reject` returns the record to `closed`, or to `open` if the run put it back on
+the board, with the three stamps popped. That is the whole re-admission path — the classifier
+re-judges and the row comes back, with no hand line either way, because
+`roles_retractions.jsonl` is where human adjudications live and must not fill with machine
+traffic. (`class_backfill.candidates` cannot yet re-offer a `reject` cell, so today the
+classifier has to purge its cache to produce the flip: `docs/BACKLOG.md 623`, lane
+`classifier`.)
+
+It carries no `judged` gate, unlike the page-closure arm beside it. That gate exists because
+"the posting was gone from the board" is a claim only a run that FETCHED the board may make.
+This sweep makes no claim about any board: it re-reads a verdict already on the record, so a
+scoped `--only` run reaches the same answer as a full one.
+
+`build_rows` refuses a `reject` cell (and an empty one) as a **tripwire, not the mechanism**:
+counted as `reject_refused` / `unjudged_refused`, named in `reconciliation.identity` so the
+count still closes against the store, and alarmed on `Stages:` — a number there means the
+sweep did not run, not that a row was correctly excluded.
 
 The counter is `class-rejected N` on the `Roles:` line, and it is a DELTA: a steady morning
-prints nothing. A keyword-rule change never enters `Classifier.quarantine()` (that reads the
+prints nothing. On a store with no prior reject cells it equals the `withdrawn N` beside it,
+and `roles withdrawn N role(s)` names each row and its reason on `Stages:`. A keyword-rule change never enters `Classifier.quarantine()` (that reads the
 LLM tier only), so a scope edit could in principle flip many rows at once — `roles
 mass-reject (N of M open roles re-judged NO in one run)` is an alarm, deliberately not a
 hold, because holding would republish the very accepts this exists to stop.

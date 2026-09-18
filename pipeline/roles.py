@@ -80,6 +80,13 @@ REPOST_DAYS = 3            # the render rule (digest.py): posted_date jumped >=3
 # its Houston posting was not ours). Both leave every product, both keep their line.
 STATUSES = ("open", "closed", "superseded", "purged", "withdrawn")
 RETRACTABLE = ("withdrawn", "purged")      # the two verdicts a retraction line may carry
+# Who withdrew a record. A hand line (`roles_retractions.jsonl`) writes `retracted_on` and
+# no `withdrawn_by`; the classifier sweep writes `withdrawn_by` and NEVER `retracted_on` —
+# that field is a LINE's, and a withdrawn record carrying one with no line behind it is
+# "lifted" back onto the ordinary ladder the next morning. The two must stay tellable
+# apart: one is reversible by a verdict, the other only by deleting the line.
+WITHDRAWN_BY_CLASSIFIER = "classifier"
+_WITHDRAW_STAMPS = ("withdrawn_by", "withdrawn_on", "withdraw_reason")
 _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # path segments that are ATS plumbing, never a tenant slug — and the ATS hosts themselves:
 # `Smart Shooter` is not named by every smartrecruiters url, nor `Comeet` by every comeet one
@@ -2383,6 +2390,17 @@ class Ledger:
                 else:
                     c["closed"] += 1
             elif rid in onboard:
+                if rec.get("withdrawn_by") == WITHDRAWN_BY_CLASSIFIER:
+                    # a MACHINE withdrawal (the reject sweep below) whose role the run has
+                    # put back on the board: the seam now accepts it, so the stamps come
+                    # off here as well as in the sweep. Without this the record is `open`
+                    # again while still carrying `withdraw_reason`, and `removed_list`
+                    # publishes a withdrawal for a row that is in the file. A HAND
+                    # withdrawal never reaches this branch (its line wins above, and a
+                    # lifted one is caught by the `retracted_on` arm).
+                    for _k in _WITHDRAW_STAMPS:
+                        rec.pop(_k, None)
+                    self._touch(rec)
                 if prev_status != "open":
                     rec["status"], rec["closed_on"] = "open", None
                     self._touch(rec)
@@ -2400,6 +2418,13 @@ class Ledger:
                     rec["_close"] = True
                 elif prev_status == "closed":
                     c["closed"] += 1
+                elif prev_status in RETRACTABLE:
+                    # A machine withdrawal has no retraction line and no `retracted_on`, so
+                    # it reaches this branch every morning its company is scanned and used
+                    # to be counted NOWHERE: the eleven rows would have left the dataset
+                    # while `withdrawn_total` stayed at the hand lines' 60, and the meta's
+                    # `excluded.withdrawn` would have disagreed with the file it describes.
+                    c[prev_status + "_total"] += 1
             elif prev_status in RETRACTABLE:
                 c[prev_status + "_total"] += 1     # a standing verdict is a total, never a delta
             else:
@@ -2410,12 +2435,16 @@ class Ledger:
         #     superseded is never stamped -- the retraction match runs in that loop, and a
         #     stamp inside it would overwrite a standing human verdict with a machine one;
         #   * before the backfill map below, which is fill-only-empty and so cannot undo it.
-        # The STATUS is untouched on purpose. A rejected posting is never upserted, so its
-        # `last_seen` stops moving and it closes tomorrow on the ordinary ladder, inside the
-        # mass-close guard. Closing it here would contradict the board this same run
-        # renders (the role is still in `onboard` for one more morning, on yesterday's
-        # `last_seen`), skip that guard, and misuse `closed`, which the column vocabulary
-        # defines as "the posting was gone from the board" -- it is not gone, it is not ours.
+        # The STATUS is untouched HERE, and settled by `_withdraw_rejected` below. Until
+        # 2026-09-18 it was untouched full stop, on the reasoning that a rejected posting
+        # stops being upserted and so closes tomorrow on the ordinary ladder. Measured on
+        # the published file that morning: 11 of 186 rows shipped `class_decision=reject`
+        # -- `closed` is not a way out of the dataset, it is a column value, and the
+        # 90-day window kept every one of them in front of a reader. The operator's bar
+        # (memory `dataset-acceptance-test`, 2026-09-01) is IN under the live contract, or
+        # EXCLUDED with a written, counted reason; "open+reject for one morning" is exactly
+        # what the sweep removes. The guard against a rules edit flipping the board in one
+        # run is the `roles mass-reject` alarm below, not a day's delay.
         for rid, cls in (class_rejects or {}).items():
             rec = self.records.get(rid)
             if rec is None or rid in by_key:
@@ -2482,6 +2511,13 @@ class Ledger:
                 c["closed_today"] += 1
                 c["closed"] += 1
                 self._touch(rec)
+        # The verdict cell decides membership (2026-09-18). Run AFTER the mass-close block
+        # and not before it, as first drafted: a record this run is about to close carries
+        # `_close` until that block resolves it, and a withdrawal written above it would be
+        # overwritten by the very next loop -- `status` would read `closed` with the
+        # withdrawal stamps still on the record, which is the incoherent row the sweep
+        # exists to stop.
+        self._withdraw_rejected(run_date, onboard, c, withdrawn_lines)
         # The alarm that makes a withdrawal visible where a human reads daily: the day a
         # retraction is first applied, `Stages:` names the row and the reason. A line that
         # matched nothing is ALSO an alarm — a typo in the file must not read as "applied".
@@ -2525,6 +2561,75 @@ class Ledger:
             line += f" · rehydrated {self.report['rehydrated']}"
         return [line]
 
+    def _withdraw_rejected(self, run_date, onboard, c, withdrawn_lines):
+        """A publishable record whose LIVE verdict cell says `reject` leaves the dataset as
+        `withdrawn`, with the reason the seam gave. Both directions, idempotent, run at the
+        end of every `record_run`.
+
+        WHY a status and not an export filter alone: `status` is what every product reads
+        (the board, the mail, the archive, `removed_list`), and a row filtered out of one
+        surface while three others still call it open is the incoherence 543 already cost a
+        day to. The export guard in `build_rows` exists too, but as a TRIPWIRE for a record
+        this sweep did not reach, not as the mechanism.
+
+        Reversible on purpose (the orchestrator's ruling, 2026-09-18): the classifier's
+        re-judge flips the cell back to `accept` and this same sweep restores the record —
+        `closed`, or `open` if the run put it back on the board — with the three stamps
+        popped. Without that, a lane correcting its own NO would have to hand-write a
+        retraction line to undo a machine verdict, which is the file human adjudications
+        live in and must not fill with machine traffic.
+
+        `retracted_on` is NEVER written here: it is a retraction LINE's field, and a record
+        carrying it with no line behind it is lifted back onto the ordinary ladder by the
+        `retracted_on` arm of the status ladder the very next morning.
+
+        No `judged` gate, unlike the page-closure arm beside it. That gate exists because
+        "the posting was gone from the board" is a claim only a run that FETCHED the board
+        may make, and `--only "Wix"` wrote four closures without it. This sweep makes no
+        claim about any board: it reads a verdict already stored on the record, so a scoped
+        run reaches the same answer as a full one and there is nothing for scope to get
+        wrong."""
+        for rid, rec in self.records.items():
+            if not isinstance(rec, dict):
+                continue
+            st_ = rec.get("status") or "open"
+            decision = (rec.get("class") or {}).get("decision")
+            if st_ in ("open", "closed") and decision == "reject":
+                cls = rec.get("class") or {}
+                why = str(cls.get("reason") or "").strip()
+                rec["status"] = "withdrawn"
+                rec["withdrawn_by"] = WITHDRAWN_BY_CLASSIFIER
+                rec["withdrawn_on"] = run_date
+                # The MECHANISM and the CONTRACT, then whatever prose the cell carries. Ten
+                # of the eleven cells on 2026-09-18 said only "cached LLM verdict", which is
+                # a thin published reason -- but a reason that names which seam judged the
+                # row under which rules is a written, counted one, and richer prose is the
+                # classifier's to cache (docs/BACKLOG.md, lane `classifier`).
+                rec["withdraw_reason"] = (
+                    f"classifier {cls.get('path') or 'unknown-path'} under "
+                    f"{cls.get('contract') or 'unknown contract'}: " + (why or "judged NO"))
+                rec["closed_on"] = rec.get("closed_on") or rec.get("last_seen") or run_date
+                self._touch(rec)
+                c[st_] = max(0, c[st_] - 1)   # it is no longer open/closed on the mail line
+                c["withdrawn"] += 1
+                c["withdrawn_total"] += 1
+                withdrawn_lines.append(
+                    f"{rec.get('company')} | {rec.get('title')} — {rec['withdraw_reason']}")
+            elif st_ == "withdrawn" and rec.get("withdrawn_by") == WITHDRAWN_BY_CLASSIFIER \
+                    and decision != "reject":
+                # the seam changed its mind (or the cell was cleared): the record returns to
+                # the ladder it left, no hand line needed either way
+                for k in _WITHDRAW_STAMPS:
+                    rec.pop(k, None)
+                if rid in onboard:
+                    rec["status"], rec["closed_on"] = "open", None
+                else:
+                    rec["status"] = "closed"
+                    rec["closed_on"] = rec.get("closed_on") or rec.get("last_seen") or run_date
+                self._touch(rec)
+                c[rec["status"]] += 1
+                c["withdrawn_total"] = max(0, c["withdrawn_total"] - 1)
+
     @staticmethod
     def _tags(title, desc):
         from . import roleprofile
@@ -2558,6 +2663,16 @@ class Ledger:
             ex = (f"superseded {counts.get('superseded', 0)} · purged {counts.get('purged', 0)}"
                   f" · withdrawn {counts.get('withdrawn', 0)}"
                   f" · outside window {counts.get('outside_window', 0)}")
+            # the export guard fired: `_withdraw_rejected` should have emptied this class
+            # before the file was ever built, so a number here is a mechanism that did not
+            # run, not a row that was correctly excluded
+            for _k, _w in (("reject_refused", "class_decision=reject"),
+                           ("unjudged_refused", "no class_decision")):
+                if counts.get(_k):
+                    ex += f" · {_k} {counts[_k]}"
+                    self.alarms.append(
+                        f"roles dataset refused {counts[_k]} row(s) with {_w} — the "
+                        f"withdrawal sweep did not run (they are excluded, not published)")
             weak = counts.get("text:snippet", 0) + counts.get("text:none", 0)
             wk = (f" · weak text {weak} ({counts.get('text:snippet', 0)} snippet, "
                   f"{counts.get('text:none', 0)} none)") if weak else ""
@@ -3213,6 +3328,30 @@ def build_rows(records, *, run_date, firmographics=None, window_days=WINDOW_DAYS
         if not _iso(ls):
             counts["undatable"] += 1
             continue
+        # The verdict cell decides membership, and this is the tripwire that says the
+        # mechanism did not run (2026-09-18). `Ledger._withdraw_rejected` turns a `reject`
+        # cell into a `withdrawn` record every run, so a publishable record still carrying
+        # one has reached the export by some path that sweep does not cover — a re-derive
+        # from a ledger snapshot older than the sweep, or a bug. Either way the operator's
+        # bar (IN under the live contract, or excluded with a written counted reason) is
+        # not met by publishing it, so the row leaves WITH its reason in the meta, exactly
+        # as a blocked row does. An EMPTY decision is refused on the same rule: an unjudged
+        # row is not a judged-IN one, and 33 of 167 rows shipped with an empty cell before
+        # the backfill existed.
+        #
+        # BELOW the date checks on purpose: a corrupt half-written record has no verdict
+        # cell either, and reporting it as "the classifier never judged this" would send a
+        # reader to the classifier for a record whose real defect is that it has no dates.
+        # ABOVE the window split so it is counted exactly once whether the row is in the
+        # window or in the archive — `reconciliation` adds it to the identity, which only
+        # closes against the store if each record lands in exactly one bucket.
+        decision = (rec.get("class") or {}).get("decision") if isinstance(rec.get("class"), dict) else ""
+        if decision == "reject":
+            counts["reject_refused"] += 1
+            continue
+        if not decision:
+            counts["unjudged_refused"] += 1
+            continue
         if ls < start:
             counts["archived"] += 1          # aged out of the window: the archive's row
             if not archive:
@@ -3377,7 +3516,14 @@ def _published_span(rec, window_days=WINDOW_DAYS):
     if rec.get("status") not in RETRACTABLE:
         return None
     start = max(DATASET_SINCE, _earliest_seen(rec) or DATASET_SINCE)
-    end = str(rec.get("retracted_on") or rec.get("purged_on") or rec.get("closed_on") or "")[:10]
+    # `withdrawn_on` reads AFTER `retracted_on` (a hand line's date, which a machine
+    # withdrawal never has) and BEFORE `closed_on`: the day the sweep withdrew the record
+    # is the day it left the file, while `closed_on` may be weeks earlier — the eleven
+    # 2026-09-18 rows are all `closed` on their own last_seen and were public every day
+    # since. Falling through to `closed_on` would have published a span that ends before
+    # most of the mornings the row was actually in front of a reader.
+    end = str(rec.get("retracted_on") or rec.get("withdrawn_on")
+              or rec.get("purged_on") or rec.get("closed_on") or "")[:10]
     if not _iso(end):
         return None
     ls = str(rec.get("last_seen") or "")[:10]
@@ -3405,7 +3551,11 @@ def removed_list(records, window_days=WINDOW_DAYS):
             "status": rec.get("status"),
             "reason": str((rec.get("withdraw_reason") if rec.get("status") == "withdrawn"
                            else rec.get("purge_reason")) or ""),
-            "on": str(rec.get("retracted_on") or rec.get("purged_on") or rec.get("closed_on") or "")[:10],
+            # the same order as `_published_span`: a hand line's date, then the machine
+            # sweep's, then the purge's, then the closure as a last resort
+            "on": str(rec.get("retracted_on") or rec.get("withdrawn_on")
+                      or rec.get("purged_on") or rec.get("closed_on") or "")[:10],
+            "by": rec.get("withdrawn_by") or ("human" if rec.get("retracted_on") else ""),
             "published_in_roles_csv": _published_span(rec, window_days),
         })
     return out
@@ -3444,9 +3594,12 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
              "outside_window": counts.get("outside_window", 0),
              "undatable": counts.get("undatable", 0),
              "unreadable": counts.get("unreadable", 0)}
-    for k in ("blocked_excluded", "pending_excluded"):
+    for k in ("blocked_excluded", "pending_excluded", "reject_refused", "unjudged_refused"):
         # only under BLOCKED_POLICY == "exclude"; absent otherwise so the identity string
-        # below stays the literal truth on a "mark" day
+        # below stays the literal truth on a "mark" day. `reject_refused` /
+        # `unjudged_refused` are the export guard's, and are absent on every healthy run —
+        # a number here means `_withdraw_rejected` did not reach a record the file would
+        # otherwise have published.
         if counts.get(k):
             parts[k] = counts[k]
     pages = _http_url(pages_url)
@@ -3553,7 +3706,8 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
             "store_records": len(records),
             "identity": "rows + archived + superseded + purged + withdrawn + outside_window "
                         "+ undatable + unreadable"
-                        + "".join(f" + {k}" for k in ("blocked_excluded", "pending_excluded")
+                        + "".join(f" + {k}" for k in ("blocked_excluded", "pending_excluded",
+                                                      "reject_refused", "unjudged_refused")
                                   if k in parts)
                         + " == store_records",
             "holds": sum(parts.values()) == len(records),

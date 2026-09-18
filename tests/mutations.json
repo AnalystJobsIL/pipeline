@@ -3190,7 +3190,7 @@
   "class": "M1-gate-removal",
   "find": "            if rec is None or rid in by_key:\n                continue                      # never seen, or this run accepted it: live wins",
   "replace": "            if rec is None:\n                continue",
-  "why": "543's reject map must never reach a role THIS RUN accepted. A mixed group (some copies rejected, one accepted) puts the same role_id in both the map and `merged`; without the `by_key` guard the reject is applied after the live stamp and the dataset contradicts the board the same run renders. Killed by test_record_run_stamps_the_runs_own_rejects_on_the_records_merged_cannot_reach.",
+  "why": "543's reject map must never reach a role THIS RUN accepted. A mixed group (some copies rejected, one accepted) puts the same role_id in both the map and `merged`; without the `by_key` guard the reject is applied after the live stamp and the dataset contradicts the board the same run renders. Killed by test_record_run_stamps_the_runs_own_rejects_and_withdraws_every_rejected_row.",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -3200,7 +3200,7 @@
   "class": "M4-guard-removal",
   "find": "            if (rec.get(\"status\") or \"open\") not in (\"open\", \"closed\"):\n                continue\n            new_cls = _class_of(cls, self.live_contract)",
   "replace": "            new_cls = _class_of(cls, self.live_contract)",
-  "why": "a withdrawn or purged record carries a HUMAN's standing verdict and a superseded one is not published at all. Stamping a machine reject over any of them overwrites an adjudication with a guess and re-counts rows that left the dataset days ago. Killed by test_record_run_stamps_the_runs_own_rejects_on_the_records_merged_cannot_reach.",
+  "why": "a withdrawn or purged record carries a HUMAN's standing verdict and a superseded one is not published at all. Stamping a machine reject over any of them overwrites an adjudication with a guess and re-counts rows that left the dataset days ago. Killed by test_record_run_stamps_the_runs_own_rejects_and_withdraws_every_rejected_row.",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -4289,6 +4289,58 @@
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_scrape_the_store_door_re_cleans_with_jd_texts_own_rule"
+  ]
+ },
+ {
+  "id": "reject-sweep-skips-a-closed-record",
+  "file": "pipeline/roles.py",
+  "symbol": "_withdraw_rejected",
+  "class": "M3-branch-narrowing",
+  "find": "            if st_ in (\"open\", \"closed\") and decision == \"reject\":",
+  "replace": "            if st_ == \"open\" and decision == \"reject\":",
+  "why": "every one of the 11 rows that shipped `class_decision=reject` on 2026-09-18 was CLOSED -- the cells were stamped days earlier, while the roles were still fetched, and the records then closed on the ordinary ladder. A sweep that reaches only open records leaves exactly the pile it was built for in the file, and would have looked correct on any morning with a live reject in it.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_reject_cell_already_on_a_closed_record_is_withdrawn_on_the_next_run"
+  ]
+ },
+ {
+  "id": "reject-sweep-stamps-retracted-on",
+  "file": "pipeline/roles.py",
+  "symbol": "_withdraw_rejected",
+  "class": "M7-constant-drift",
+  "find": "                rec[\"withdrawn_by\"] = WITHDRAWN_BY_CLASSIFIER\n                rec[\"withdrawn_on\"] = run_date\n",
+  "replace": "                rec[\"withdrawn_by\"] = WITHDRAWN_BY_CLASSIFIER\n                rec[\"withdrawn_on\"] = run_date\n                rec[\"retracted_on\"] = run_date\n",
+  "why": "`retracted_on` is a retraction LINE's field. A record carrying one with no line behind it is LIFTED back onto the ordinary ladder by the lift arm the next morning, alarming `roles retraction lifted for N role(s)` -- so a machine withdrawal that wrote it would un-withdraw itself daily and blame a missing human line for it.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_record_run_stamps_the_runs_own_rejects_and_withdraws_every_rejected_row"
+  ]
+ },
+ {
+  "id": "reject-sweep-is-not-reversible",
+  "file": "pipeline/roles.py",
+  "symbol": "_withdraw_rejected",
+  "class": "M6-fallback-removal",
+  "find": "                for k in _WITHDRAW_STAMPS:\n                    rec.pop(k, None)\n                if rid in onboard:",
+  "replace": "                if rid in onboard:",
+  "why": "the reversal is what lets the classifier re-admit a row with a VERDICT instead of a hand-written retraction line (the 2026-09-18 ruling). Leaving the three stamps on a record the sweep has just returned to open/closed publishes it in `roles.csv` AND in the meta's `removed` list at the same time -- a row that is both in the file and withdrawn from it.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_machine_withdrawal_is_reversed_by_the_verdict_alone"
+  ]
+ },
+ {
+  "id": "export-guard-publishes-a-reject-cell",
+  "file": "pipeline/roles.py",
+  "symbol": "build_rows",
+  "class": "M4-guard-removal",
+  "find": "        if decision == \"reject\":\n            counts[\"reject_refused\"] += 1\n            continue\n        if not decision:\n            counts[\"unjudged_refused\"] += 1\n            continue\n",
+  "replace": "",
+  "why": "the tripwire above the mechanism: `_withdraw_rejected` should have emptied this class before a file was built, so a row reaching the export with a `reject` (or empty) cell means the sweep did not run -- a re-derive from an older ledger snapshot, or a bug. Without the guard that row is published exactly as the 11 rows of 2026-09-18 were, and nothing counts or alarms it.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_export_refuses_a_leaked_reject_and_the_meta_still_reconciles"
   ]
  }
 ]

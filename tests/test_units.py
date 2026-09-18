@@ -5755,6 +5755,22 @@ def test_alarms_stand_above_the_collapsed_audit_in_the_mail():
 # two boards paid two LLM calls and the bare copy could win (BACKLOG 124); nothing recorded
 # closure, reposts, tags or the classifier's verdict; sqlite alone could not be diffed.
 # =========================================================================================
+# The verdict a published row carries. Since 2026-09-18 `build_rows` refuses a row whose
+# `class_decision` is `reject` or empty, so a test that means "this row is in the file"
+# has to say what judged it in — pass `_class=_ACCEPT` to `_role`, or stamp it on the
+# record. A test about the EMPTY cell says so explicitly instead.
+_ACCEPT = {"decision": "accept", "path": "keyword", "contract": "v-test"}
+
+
+def _judged(records, cls=None):
+    """Stamp an accept verdict on every record that has none — for tests whose subject is
+    something else entirely (a retraction, the archive) and whose rows must still publish."""
+    for r in records.values():
+        if isinstance(r, dict) and not (r.get("class") or {}).get("decision"):
+            r["class"] = dict(cls or _ACCEPT)
+    return records
+
+
 def _role(company, title, url, sid, src="greenhouse", desc="", **kw):
     j = {"company": company, "title": title, "location": "Tel Aviv, IL", "url": url,
          "posted_date": kw.pop("posted_date", "2026-08-20"), "ats_platform": src,
@@ -21193,6 +21209,11 @@ def _rec(rid, **kw):
             "seniority": "", "sources": ["greenhouse"], "seen_ids": [f"greenhouse:{c}"],
             "status": "open", "superseded_by": "", "jd_attempted": "", "episodes": [],
             "reposts": [], "sent": {}, "desc_len": 1200, "desc_sha1": "abc",
+            # A PUBLISHABLE record is one the classifier said yes to: since 2026-09-18 the
+            # export refuses a row whose `class_decision` is `reject` or empty, so a
+            # fixture with no verdict cell is not a row the file would ever have carried.
+            # Tests about the empty cell pass `class={}` explicitly.
+            "class": {"decision": "accept", "path": "keyword", "contract": "v-test"},
             "tags": {"v": 1, "skills": [["SQL", "query"], ["Looker", "bi"]],
                      "family": "Data Analyst", "track": "IC", "years": 3,
                      "degree": {"level": "BSc", "status": "required", "fields": ["Statistics"]},
@@ -24347,7 +24368,8 @@ def test_a_retraction_withdraws_the_row_and_the_meta_records_when_it_was_public(
     # survivor row left the CSV for a reason unrelated to what this test pins
     # ...and a real description: since the 2026-09-01 ruling a textless row does not
     # publish, and this test is about the withdrawal, not about text quality
-    k = _role("Wix", "Data Analyst", "https://w.co/jobs/data-analyst/123", "1", desc=_JD_TEXT)
+    k = _role("Wix", "Data Analyst", "https://w.co/jobs/data-analyst/123", "1", desc=_JD_TEXT,
+              _class=_ACCEPT)          # the survivor row must be judged IN to publish (09-18)
     for job in (j, k):
         st.upsert_matched(job, "2026-08-30")
     _retract_file(tmp_path, {"url": "https://jobs.comcast.com/job/houston/manager-2/45483/99862967712",
@@ -24609,7 +24631,8 @@ def test_lifting_a_retraction_off_board_is_loud_and_returns_the_record_to_the_la
     st = store.SeenStore(str(tmp_path / "seen.db"))
     # a real description, so the reinstated row can publish: since the 2026-09-01 ruling a
     # textless one does not, and what this test pins is the LIFT
-    j = _role("Comcast", "Analyst", "https://c.co/houston/1", "x", src="scrape", desc=_JD_TEXT)
+    j = _role("Comcast", "Analyst", "https://c.co/houston/1", "x", src="scrape", desc=_JD_TEXT,
+              _class=_ACCEPT)          # judged IN, or the reinstated row cannot publish (09-18)
     st.upsert_matched(j, "2026-08-30")
     p = _retract_file(tmp_path, {"url": j["url"], "status": "withdrawn", "reason": "mistake",
                                  "on": "2026-08-30"})
@@ -24773,6 +24796,10 @@ def test_the_run_and_the_cli_write_the_same_archive_and_neither_archives_a_remov
                             desc=_JD_TEXT), "2026-08-30")   # textless does not publish (09-01)
     _retract_file(tmp_path, {"url": "https://c.co/houston/1", "status": "withdrawn", "reason": "r", "on": "2026-08-30"})
     lg = roles.Ledger(st, "2026-08-31"); lg.open_sync()
+    # nothing here is in `merged`, so no run stamps a verdict — and since 2026-09-18 an
+    # unjudged record does not publish. Stamped BEFORE `record_run` so the flush carries it
+    # to the ledger file the CLI re-derive below reads.
+    _judged(lg.records); lg.dirty = True
     lg.record_run("2026-08-31", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
                   never_ours={"tel aviv": roles.PURGE_REASON})
     line = lg.export_dataset("2026-08-31")[0]
@@ -27109,7 +27136,7 @@ def test_backfill_verdicts_skips_what_is_judged_and_names_the_rest(tmp_path, mon
     verdict for one would be a call for a row no reader can see."""
     from pipeline import class_backfill, roles, store
     calls = _fake_seam(monkeypatch, lambda p: _ok("NO"))
-    recs = _ledger(4)
+    recs = _ledger(4, **{"class": {}})     # the queue IS the verdict-less records (09-18)
     ids = sorted(recs)
     recs[ids[0]]["class"] = {"decision": "accept", "path": "llm", "reason": "judged already",
                              "contract": "v3.0f84ab84"}
@@ -27153,7 +27180,7 @@ def test_record_run_applies_the_backfill_map_and_never_overwrites_a_live_verdict
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
     lg = roles.Ledger(st, "2026-08-31")
-    recs = _ledger(3)
+    recs = _ledger(3, **{"class": {}})     # the map fills an EMPTY cell: start with none
     ids = sorted(recs)
     for rid in ids:
         recs[rid]["status"] = "closed"
@@ -27177,14 +27204,21 @@ def test_record_run_applies_the_backfill_map_and_never_overwrites_a_live_verdict
     assert lg.records[ids[1]]["class"]["decision"] == "reject"
     assert not (lg.records[ids[2]].get("class") or {})     # not in the map: still empty
     assert any("class-backfilled 1" in ln for ln in lines)
-def test_record_run_stamps_the_runs_own_rejects_on_the_records_merged_cannot_reach(tmp_path):
+def test_record_run_stamps_the_runs_own_rejects_and_withdraws_every_rejected_row(tmp_path):
     """A role the seam re-judges NO is not in `merged`, and `merged` is all the live class
     stamp reads — so the cell kept yesterday's `accept` and the dataset published a false
     accept for the rest of the 90-day window (BACKLOG 543). Twelve rows were in that state
     on 2026-09-01 and each needed a hand-written retraction line instead.
 
-    The map reaches exactly the records the live stamp cannot, and nothing else: never a
-    role this run accepted, never a human's standing verdict, never a status."""
+    RETIRED on 2026-09-18, and this test's old name with it: the map used to leave the
+    STATUS alone, on the reasoning that an unfetched role closes tomorrow anyway. It does
+    — as `closed`, which is a column value and not a way out of the file, so 11 of 186
+    published rows shipped `class_decision=reject` that morning. The verdict cell now
+    decides membership: a publishable record whose live verdict is `reject` becomes
+    `withdrawn` the same run, with the seam's own reason published.
+
+    The map still reaches exactly the records the live stamp cannot, and nothing else:
+    never a role this run accepted, never a human's standing verdict."""
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
     recs = _ledger(5)
@@ -27227,18 +27261,39 @@ def test_record_run_stamps_the_runs_own_rejects_on_the_records_merged_cannot_rea
         "a role THIS RUN accepted keeps the live verdict: the map must not reach it"
     assert lg.records[ids[2]]["class"] == accept and lg.records[ids[2]]["status"] == "withdrawn", \
         "a human's standing verdict is never overwritten by a machine one"
+    assert lg.records[ids[2]]["retracted_on"] == "2026-09-01", "the line's date stands"
+    assert "withdrawn_by" not in lg.records[ids[2]], "a hand withdrawal is not the sweep's"
     assert lg.records[ids[4]]["class"] == accept, "a superseded record is not published at all"
-    # ...and the on-board row is corrected WITHOUT being closed: the board this same run
-    # renders still shows it, and `_alive` is the liveness rule, not this map.
-    assert lg.records[ids[3]]["class"]["decision"] == "reject"
-    assert lg.records[ids[3]]["status"] == "open" and not lg.records[ids[3]].get("closed_on")
+    assert lg.records[ids[4]]["status"] == "superseded", "and the sweep never touches one"
+    # Both rejected rows LEAVE the dataset this same morning — the closed one and the one
+    # still on the board. "open+reject for one more morning" is the retired behaviour.
+    for _rid in (ids[0], ids[3]):
+        _rec = lg.records[_rid]
+        assert _rec["status"] == "withdrawn", _rid
+        assert _rec["withdrawn_by"] == "classifier" and _rec["withdrawn_on"] == "2026-09-12"
+        assert _rec["withdraw_reason"] == ("classifier llm under v3.test: "
+                                           "out of scope on the 09-01 rule")
+        assert "retracted_on" not in _rec, "that field is a LINE's; a lift would follow it"
+        assert _rec["closed_on"], "a row that left names the day it stopped being live"
     assert any("class-rejected 2" in ln for ln in lines), lines
+    assert any("withdrawn 2" in ln for ln in lines), lines
+    assert any(a.startswith("roles withdrawn 2 role(s)") and "out of scope" in a
+               for a in lg.alarms), lg.alarms
+    # ...and the export can no longer carry one: nothing reaches the guard
+    rows, counts = roles.build_rows(lg.records, run_date="2026-09-12")
+    assert counts["withdrawn"] == 3 and not counts["reject_refused"]
+    assert all(r["class_decision"] == "accept" for r in rows)
 
 
-def test_a_reject_stamped_today_closes_tomorrow_on_the_ordinary_ladder(tmp_path):
-    """The reject is a verdict, not a closure — so the record must still close the normal
-    way once it stops being fetched, on the mass-close guard's terms, and re-stamping the
-    same verdict must not re-count it."""
+def test_a_reject_leaves_the_dataset_the_same_morning_and_does_not_re_count_tomorrow(tmp_path):
+    """RETIRED 2026-09-18, with this test's old name (`..._closes_tomorrow_on_the_ordinary_
+    ladder`). The reject WAS a verdict and not a closure, and the record was left to close
+    the ordinary way — but `closed` rows publish for the rest of the 90-day window, which
+    is how 11 rows shipped a `reject` cell. The operator's bar is IN under the live
+    contract or excluded with a written reason, so the row leaves the same morning.
+
+    Day two is the half that has not changed: the same verdict re-offered is not a new
+    flip, is not re-counted, and does not re-alarm."""
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
     recs = _ledger(1)
@@ -27251,17 +27306,179 @@ def test_a_reject_stamped_today_closes_tomorrow_on_the_ordinary_ladder(tmp_path)
     lg._open_sync()
     reject = {"decision": "reject", "path": "llm", "reason": "out of scope"}
     onboard = dict(recs[rid])
-    lg.record_run("2026-09-12", board_jobs=[onboard], merged=[], scanned_ok={onboard["company"]},
-                  failed=set(), paths={}, scoped=True, contract="v3.test",
-                  class_rejects={rid: dict(reject)})
-    assert lg.records[rid]["status"] == "open"
+    first = lg.record_run("2026-09-12", board_jobs=[onboard], merged=[],
+                          scanned_ok={onboard["company"]}, failed=set(), paths={}, scoped=True,
+                          contract="v3.test", class_rejects={rid: dict(reject)})
+    assert lg.records[rid]["status"] == "withdrawn"
+    assert lg.records[rid]["withdraw_reason"] == "classifier llm under v3.test: out of scope"
+    assert lg.records[rid]["closed_on"] == recs[rid]["last_seen"], \
+        "it stopped being live when the board last showed it, not the day we judged it"
+    assert any("withdrawn 1" in ln for ln in first), first
+    assert not any("open 1 " in ln for ln in first), first
     lines = lg.record_run("2026-09-13", board_jobs=[], merged=[], scanned_ok={onboard["company"]},
                           failed=set(), paths={}, scoped=True, contract="v3.test",
                           class_rejects={rid: dict(reject)})
     st.close()
-    assert lg.records[rid]["status"] == "closed" and lg.records[rid]["closed_on"] == "2026-09-13"
+    assert lg.records[rid]["status"] == "withdrawn"
     assert not any("class-rejected" in ln for ln in lines), \
         "the same verdict re-offered is not a new flip and must not be counted again"
+    assert not any("withdrawn 1" in ln for ln in lines), "nor a second withdrawal"
+    assert not any(a.startswith("roles withdrawn") for a in lg.alarms[len(first):]), lg.alarms
+
+
+def test_a_reject_cell_already_on_a_closed_record_is_withdrawn_on_the_next_run(tmp_path):
+    """The eleven rows of 2026-09-18. None was in that morning's `class_rejects` map — the
+    cells were stamped days earlier, by runs that judged the roles while they were still
+    fetched, and then the records closed and stopped being offered to anything. So the
+    sweep reads the CELL on the record, not this run's map, or the rows it was written for
+    would never have left the file. A human line still wins: it reaches the record first,
+    in the status ladder, and carries its own status, reason and date."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs = _ledger(2)
+    a, b = sorted(recs)
+    for rid in (a, b):
+        recs[rid]["status"] = "closed"
+        recs[rid]["closed_on"] = "2026-09-10"
+        recs[rid]["class"] = {"decision": "reject", "path": "llm_cache",
+                              "reason": "cached LLM verdict", "contract": "v3.0f84ab84"}
+    _retract_file(tmp_path, {"url": recs[b]["url"], "role_id": b, "status": "purged",
+                             "reason": "a staffing agency", "on": "2026-09-11"})
+    lg = roles.Ledger(st, "2026-09-18")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid in (a, b):
+        st.insert_matched({**recs[rid], "mkey": rid})
+    lg._open_sync()
+    lines = lg.record_run("2026-09-18", board_jobs=[], merged=[], scanned_ok=set(),
+                          failed=set(), paths={}, scoped=True, contract="v3.0f84ab84",
+                          class_rejects={})            # nothing was re-judged this morning
+    st.close()
+    assert lg.records[a]["status"] == "withdrawn"
+    assert lg.records[a]["withdraw_reason"] == ("classifier llm_cache under v3.0f84ab84: "
+                                                "cached LLM verdict")
+    assert lg.records[a]["closed_on"] == "2026-09-10", "the closure date it already had"
+    assert lg.records[a]["withdrawn_on"] == "2026-09-18"
+    assert lg.records[b]["status"] == "purged" and lg.records[b]["purge_reason"] == "a staffing agency"
+    assert "withdrawn_by" not in lg.records[b], "the human line reached it first"
+    assert not any("class-rejected" in ln for ln in lines), lines
+    assert any("withdrawn 1" in ln for ln in lines), lines
+
+
+def test_the_withdrawal_delta_equals_the_reject_maps_stampable_count(tmp_path):
+    """`class-rejected N` and the withdrawals it produced must be the same N on a store
+    with no prior reject cells — the mail's own arithmetic. A sweep that reached fewer
+    (or more) records than the map stamped is a silent divergence between the number a
+    human reads and the rows that left the file."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs = _ledger(4)
+    ids = sorted(recs)
+    for rid in ids:
+        recs[rid]["class"] = {"decision": "accept", "path": "llm", "reason": "in",
+                              "contract": "v3.test"}
+    recs[ids[3]]["status"] = "superseded"          # never publishable, never stampable
+    lg = roles.Ledger(st, "2026-09-18")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid in ids:
+        st.insert_matched({**recs[rid], "mkey": rid})
+    lg._open_sync()
+    reject = {"decision": "reject", "path": "keyword", "reason": "no analytics signal"}
+    lines = lg.record_run("2026-09-18", board_jobs=[], merged=[], scanned_ok=set(),
+                          failed=set(), paths={}, scoped=True, contract="v3.test",
+                          class_rejects={r: dict(reject) for r in ids})
+    st.close()
+    assert lg.counts["class_rejected"] == 3 == lg.counts["withdrawn"], lg.counts
+    assert "class-rejected 3" in lines[0] and "withdrawn 3" in lines[0], lines
+
+
+def test_a_machine_withdrawal_is_reversed_by_the_verdict_alone(tmp_path):
+    """The orchestrator's ruling (2026-09-18): the classifier re-judges, the record comes
+    back, and no hand line is written either way. A closed record returns CLOSED — the
+    board did not start showing it again just because we changed our mind about it — and
+    one the run put back on the board returns open, with the three stamps gone in both
+    cases."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs = _ledger(2, description=_JD_TEXT)      # textless rows do not publish (09-01)
+    a, b = sorted(recs)
+    for rid in (a, b):
+        recs[rid]["status"] = "withdrawn"
+        recs[rid]["withdrawn_by"] = "classifier"
+        recs[rid]["withdrawn_on"] = "2026-09-17"
+        recs[rid]["withdraw_reason"] = "classifier llm under v3.test: out"
+        recs[rid]["closed_on"] = "2026-09-16"
+        recs[rid]["class"] = {"decision": "accept", "path": "llm", "reason": "re-judged IN",
+                              "contract": "v3.test"}
+    lg = roles.Ledger(st, "2026-09-18")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid in (a, b):
+        st.insert_matched({**recs[rid], "mkey": rid})
+    lg._open_sync()
+    lg.record_run("2026-09-18", board_jobs=[dict(recs[b])], merged=[], scanned_ok=set(),
+                  failed=set(), paths={}, scoped=True, contract="v3.test")
+    st.close()
+    assert lg.records[a]["status"] == "closed" and lg.records[a]["closed_on"] == "2026-09-16"
+    assert lg.records[b]["status"] == "open" and not lg.records[b]["closed_on"]
+    for rid in (a, b):
+        for k in ("withdrawn_by", "withdrawn_on", "withdraw_reason"):
+            assert k not in lg.records[rid], (rid, k)
+    rows, counts = roles.build_rows(lg.records, run_date="2026-09-18")
+    assert sorted(r["role_id"] for r in rows) == [a, b] and not counts["withdrawn"]
+
+
+def test_the_export_refuses_a_leaked_reject_and_the_meta_still_reconciles(tmp_path):
+    """The tripwire, not the mechanism: `_withdraw_rejected` should have emptied this class
+    before a file was ever built, so a row reaching the export with a `reject` cell — or
+    with none at all — means the sweep did not run. It leaves WITH its reason counted, the
+    reconciliation identity names the bucket, and `Stages:` says so."""
+    from pipeline import roles, store
+    recs = _ledger(4, description=_JD_TEXT)
+    ids = sorted(recs)
+    recs[ids[1]]["class"] = {"decision": "reject", "path": "llm_cache",
+                             "reason": "cached LLM verdict", "contract": "v3.0f84ab84"}
+    recs[ids[2]]["class"] = {}
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    assert sorted(r["role_id"] for r in rows) == [ids[0], ids[3]]
+    assert counts["reject_refused"] == 1 and counts["unjudged_refused"] == 1
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
+    rec = meta["reconciliation"]
+    assert rec["reject_refused"] == 1 and rec["unjudged_refused"] == 1
+    assert "+ reject_refused + unjudged_refused" in rec["identity"] and rec["holds"] is True
+    # ...and the same two are refused in the ARCHIVE build, so neither file carries them
+    arch, _ac = roles.build_rows(recs, run_date="2026-12-01", archive=True)
+    assert sorted(r["role_id"] for r in arch) == [ids[0], ids[3]]
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    lg = roles.Ledger(st, "2026-08-30")
+    lg.records = recs
+    lg.export_dataset("2026-08-30", firmographics={})
+    st.close()
+    assert any("refused 1 row(s) with class_decision=reject" in a for a in lg.alarms), lg.alarms
+    assert any("refused 1 row(s) with no class_decision" in a for a in lg.alarms), lg.alarms
+
+
+def test_a_machine_withdrawal_publishes_the_span_it_was_actually_public(tmp_path):
+    """`removed` is what a repeat downloader reconciles against. A machine withdrawal has
+    no `retracted_on`, and reading `closed_on` next would have published a span ending the
+    day the posting left its BOARD — weeks before the row left the FILE. The eleven rows of
+    2026-09-18 were all closed on their own `last_seen` and public every morning since."""
+    from pipeline import roles
+    recs = _ledger(1, status="withdrawn", closed_on="2026-08-29",
+                   withdrawn_by="classifier", withdrawn_on="2026-09-18",
+                   withdraw_reason="classifier llm_cache under v3.0f84ab84: cached LLM verdict")
+    (w,) = roles.removed_list(recs)
+    assert w["status"] == "withdrawn" and w["on"] == "2026-09-18" and w["by"] == "classifier"
+    # `from` is the later of the record's first sighting and the day the FILE began
+    assert roles.DATASET_SINCE == "2026-08-30"
+    assert w["published_in_roles_csv"] == {"from": "2026-08-30", "to": "2026-09-18"}
+    # a HAND line still dates the span by its own `retracted_on`, and says a human did it
+    recs2 = _ledger(1, status="withdrawn", retracted_on="2026-08-30", closed_on="2026-08-29",
+                    withdraw_reason="the operator said so")
+    (h,) = roles.removed_list(recs2)
+    assert h["on"] == "2026-08-30" and h["by"] == "human"
+    assert h["published_in_roles_csv"] == {"from": "2026-08-30", "to": "2026-08-30"}
 
 
 def test_the_class_cell_carries_the_contract_and_never_guesses_one():
@@ -27944,7 +28161,7 @@ def test_the_backfill_queue_is_only_what_the_dataset_publishes(tmp_path):
     relevance — every one needed a paid call, 21 % of the pass, for a cell no reader can
     see. Seven were staffing agencies the pipeline had already purged as never ours."""
     from pipeline import class_backfill
-    recs = _ledger(5)
+    recs = _ledger(5, **{"class": {}})     # the queue IS the verdict-less records (09-18)
     ids = sorted(recs)
     for rid, st_ in zip(ids, ("open", "closed", "superseded", "purged", "withdrawn")):
         recs[rid]["status"] = st_
@@ -34765,7 +34982,7 @@ def test_a_decision_no_contract_stands_behind_is_owed_a_verdict():
     assert roles.class_unjudged({}) and roles.class_unjudged({"class": {"path": "llm"}})
     assert roles.class_unjudged({"class": {"decision": "accept", "path": "llm_cache"}})
     assert not roles.class_unjudged({"class": {"decision": "accept", "contract": "v3.0f84ab84"}})
-    recs = _ledger(3)
+    recs = _ledger(3, **{"class": {}})     # the queue IS the verdict-less records (09-18)
     ids = sorted(recs)
     for rid in ids:
         recs[rid]["status"] = "closed"
