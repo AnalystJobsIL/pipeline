@@ -1447,21 +1447,104 @@ def declared_aliases(rows=None):
     only when `registry` commits."""
     if rows is not None:
         return _declared(rows)
+    return _derived("declared", _declared)
+
+
+def _registry_rows():
+    """`companies.csv` as a list of dicts, cached on the file's mtime — or `None` when it
+    cannot be read, which every caller must treat as "the registry declares nothing".
+
+    ONE reader, because two passes now ask the registry the same question at the same
+    moments (`declared_aliases` and `alias_only_folds`, both on the `save_shared` path):
+    two readers would parse 2,477 rows twice per publish and, worse, could disagree about
+    the file mid-commit."""
     path = os.path.join(_ROOT, "companies.csv")
     try:
         stat = os.stat(path)
     except OSError:                 # no registry beside the store: nothing is declared
-        return {}
+        return None
     key = (path, stat.st_mtime_ns, stat.st_size)
     if _ALIAS_CACHE.get("key") != key:
         try:
             import csv
             with open(path, encoding="utf-8-sig") as f:
-                val = _declared(list(csv.DictReader(f)))
+                rows = list(csv.DictReader(f))
         except Exception:  # noqa: BLE001 -- an unreadable registry declares nothing
+            return None
+        _ALIAS_CACHE.clear()
+        _ALIAS_CACHE.update(key=key, rows=rows)
+    return _ALIAS_CACHE["rows"]
+
+
+def _derived(slot, fn):
+    """`fn(rows)` over the cached registry, memoised per slot beside the rows it was
+    derived from — so the mtime that invalidates the rows invalidates every derivation."""
+    rows = _registry_rows()
+    if rows is None:
+        return {}
+    if slot not in _ALIAS_CACHE:
+        _ALIAS_CACHE[slot] = fn(rows)
+    return dict(_ALIAS_CACHE[slot])
+
+
+def _active_by_identity(rows):
+    """{identity -> {ACTIVE row names answering to it}}. The same fact
+    `roles._alias_fold_target` reads, and for the same purpose: an identity two active rows
+    answer to (Amazon/AWS/Amazon Israel) is not one employer's spelling, and folds onto
+    neither."""
+    out = {}
+    for r in rows or ():
+        name = str(r.get("company_name") or "").strip()
+        if name and str(r.get("active") or "").strip().lower() == "true":
+            out.setdefault(identity_key(name), set()).add(name)
+    return out
+
+
+def alias_only_folds(records, rows=None):
+    """{record key -> the ACTIVE registry row it is a DECLARED spelling of}, for the one
+    class `declared_aliases` cannot reach by construction: a name that is not a
+    `companies.csv` row at all (BACKLOG 618).
+
+    `declared_aliases` asks a PARKED ROW for its own `alias-of <R>` verdict, so it can only
+    ever fold a name the registry holds. `DoiT` is not a row — the row is the Greenhouse
+    tenant slug `doitintl` — and `Flare` is not a row either, the row is `Hello Flare`. Both
+    reached the store as their own record anyway, because the discovery net meets the BRAND
+    and the drain researches whatever name has no facts. Two records, one company, for ever:
+    the 09-13 census found `DoiT`/`doitintl` as the last unfolded identity group of that
+    shape in the whole export.
+
+    The bar is still two facts that must agree, and the second one is stronger here than a
+    parked row's prose: the `ALIASES` declaration (curated, dated, written against the
+    board) AND the registry saying this name is nobody's row while exactly ONE ACTIVE row
+    answers to the identity it points at. A name the registry holds in ANY state is refused
+    here and left to `declared_aliases`, which is what keeps `AWS`, `Investing.com` and
+    `Meta Israel` exactly where they are: this pass must never be the cheaper way in.
+
+    `fold_aliases` applies it, so its own two refusals still govern — a site form is never
+    folded into a non-site survivor, and a survivor with NO record folds nothing (moving the
+    record to the survivor's key would be the key migration `459` refuses)."""
+    if not records:
+        return {}
+    if rows is None:
+        rows = _registry_rows()
+        if rows is None:
             return {}
-        _ALIAS_CACHE.update(key=key, val=val)
-    return dict(_ALIAS_CACHE["val"])
+    names = {str(r.get("company_name") or "").strip() for r in rows} - {""}
+    active = _active_by_identity(rows)
+    out = {}
+    for name in records:
+        plain = " ".join(re.sub(r"[^0-9a-zא-׿]+", " ",
+                                str(name or "").lower()).split())
+        target = ALIASES.get(plain)
+        if not target or name in names:
+            continue
+        holders = active.get(target) or set()
+        if len(holders) != 1:
+            continue
+        survivor = next(iter(holders))
+        if survivor != name:
+            out[name] = survivor
+    return out
 
 
 def fold_aliases(records, aliased=None):
@@ -1552,15 +1635,22 @@ def drop_disowned(records, disowned=None):
 
 
 def settle_keys(records, aliased=None):
-    """Every pass that REMOVES a key from a view, as one call: the declared-alias fold and
-    the disowned drop. Returns the keys it removed.
+    """Every pass that REMOVES a key from a view, as one call: the declared-alias fold (the
+    registry's parked rows, plus the alias-only names of `618`) and the disowned drop.
+    Returns the keys it removed.
+
+    `aliased` overrides the PARKED-ROW half only. `alias_only_folds` is always added,
+    because every production caller passes `aliased` explicitly (`save_shared` and
+    `union_store` both compute `declared_aliases()` once and hand it down) and an arm that
+    an explicit argument switched off would never run at all.
 
     One call because four places must agree on it: `union_store` and `save_shared` (a key
     deleted from the export comes back out of the runner's sqlite copy unless EVERY view
     removes it -- `cloud_state/seen.db` is SINGLE_WRITER), `--display-report` (it reports on
     the keys `--export` will write), and `--export`'s superset guard, which runs this over a
     copy of the file to learn which vanished keys were meant."""
-    folded = fold_aliases(records, declared_aliases() if aliased is None else aliased)
+    declared = declared_aliases() if aliased is None else aliased
+    folded = fold_aliases(records, {**alias_only_folds(records), **declared})
     return [a for a, _s in folded] + drop_disowned(records)
 
 

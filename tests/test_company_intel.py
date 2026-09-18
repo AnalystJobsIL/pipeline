@@ -3541,3 +3541,95 @@ def test_a_searchless_answer_names_the_company_it_guessed(monkeypatch):
     line, warn = CI.audit_lines(rep)
     assert "1 SEARCHLESS (Wix)" in line[0], line
     assert any("no web search" in w and w.endswith(": Wix") for w in warn), warn
+
+
+# --- company-intel, 2026-09-18: BACKLOG 618, the declared name the registry does not hold --
+
+
+def _rows(*specs):
+    """companies.csv rows in the shape `_declared`/`alias_only_folds` read."""
+    return [{"company_name": n, "active": a, "notes": t} for n, a, t in specs]
+
+
+def test_a_declared_name_that_is_nobodys_row_folds_onto_its_one_active_row():
+    """BACKLOG 618. `declared_aliases` asks a PARKED ROW for its own `alias-of` verdict, so
+    it can only fold a name the registry holds -- and `DoiT` (the row is the tenant slug
+    `doitintl`) and `Flare` (the row is `Hello Flare`) are not rows at all. Both reached the
+    store as their own record because the discovery net meets the BRAND.
+
+    The second fact this arm requires instead of the parked row's prose: the registry says
+    the name is nobody's row AND exactly one ACTIVE row answers to the declared identity."""
+    rows = _rows(("doitintl", "true", ""), ("Hello Flare", "true", ""),
+                 ("Investing.com", "false", "alias-of Investing 2026-08-28: dup"),
+                 ("Investing", "true", ""))
+    recs = {"DoiT": dict(REC), "doitintl": dict(REC), "Flare": dict(REC),
+            "Hello Flare": dict(REC), "Investing.com": dict(REC), "Investing": dict(REC)}
+    assert F.alias_only_folds(recs, rows) == {"DoiT": "doitintl", "Flare": "Hello Flare"}, \
+        "a name the registry holds in ANY state belongs to declared_aliases, not here"
+    # ...and `Investing.com` still folds, through the arm that reads its OWN verdict
+    assert F.declared_aliases(rows) == {"Investing.com": "Investing"}
+
+
+def test_the_618_fold_refuses_an_identity_two_active_rows_answer_to():
+    """The refusal `roles._alias_fold_target` makes for the same reason: `AWS`, `Amazon` and
+    `Amazon Israel` are deliberately separate scanner rows, so `aws -> amazon` names a
+    GROUP, not one employer's spelling, and a record must fold onto neither."""
+    two = _rows(("Amazon", "true", ""), ("Amazon Israel", "true", ""))
+    assert F._active_by_identity(two)["amazon"] == {"Amazon", "Amazon Israel"}
+    assert F.alias_only_folds({"AWS": dict(REC), "Amazon": dict(REC)}, two) == {}
+    one = _rows(("Amazon", "true", ""), ("Amazon Israel", "false", ""))
+    assert F.alias_only_folds({"AWS": dict(REC), "Amazon": dict(REC)}, one) == {"AWS": "Amazon"}
+    # a survivor that is PARKED is not an active row either
+    assert F.alias_only_folds({"AWS": dict(REC)}, _rows(("Amazon", "false", ""))) == {}
+
+
+def test_the_618_fold_keeps_fold_aliases_own_two_refusals(monkeypatch):
+    """`settle_keys` applies the new map through `fold_aliases`, so its refusals still
+    govern: a survivor with NO record folds nothing (moving the record to the survivor's key
+    is the key migration `459` refuses), and the alias fills only the survivor's EMPTIES."""
+    rows = _rows(("doitintl", "true", ""))
+    monkeypatch.setattr(F, "_registry_rows", lambda: rows)
+    monkeypatch.setattr(F, "declared_aliases", lambda rows=None: {})
+    only_alias = {"DoiT": dict(REC)}
+    assert F.settle_keys(only_alias) == [] and "DoiT" in only_alias
+    survivor = {"DoiT": {**REC, "founded": 1999, "employees_global": 7},
+                "doitintl": {**REC, "founded": 2011, "employees_global": None}}
+    assert F.settle_keys(survivor) == ["DoiT"]
+    assert survivor["doitintl"]["founded"] == 2011, "the survivor's own value always wins"
+    assert survivor["doitintl"]["employees_global"] == 7, "the alias fills an empty"
+    assert F.settle_keys(survivor) == [], "idempotent"
+
+
+def test_the_618_fold_is_a_meant_deletion_the_export_guard_excuses(env, monkeypatch, tmp_path):
+    """The whole point of `settle_keys` being ONE call (09-13): `--export`'s superset guard
+    runs it over a copy of the file, so a key the views remove is excused and a key that
+    merely vanishes is still the loss the guard exists for."""
+    import research_firmographics as RF
+    st, export, _, _ = env
+    rows = _rows(("doitintl", "true", ""))
+    monkeypatch.setattr(F, "_registry_rows", lambda: rows)
+    monkeypatch.setattr(F, "declared_aliases", lambda rows=None: {})
+    export.write_text(json.dumps({"DoiT": REC, "doitintl": REC}), encoding="utf-8")
+    st.save_firmographics({"DoiT": dict(REC)}, TODAY)          # the runner's copy
+    assert "DoiT" not in F.union_store(st, F.load_shared()), "sqlite cannot resurrect it"
+    monkeypatch.setattr(RF, "EXPORT", str(tmp_path / "state" / "firmographics.json"))
+    monkeypatch.setattr(RF, "SeenStore", lambda *a, **k: st)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--export"])
+    assert RF.main() != 1, "a 618 fold is not a lost record"
+    assert set(json.load(open(export, encoding="utf-8"))) == {"doitintl"}
+
+
+def test_the_two_live_pairs_of_618_fold_against_the_dated_registry():
+    """The two pairs this pass was built for, against the 2026-09-13 registry snapshot (the
+    export itself is cron-rewritten, so the COUNT -- 1,704 -> 1,702 on 09-18 -- is a
+    morning-check row and not an assertion here: `tests/live_state.py`, way out 2).
+
+    `DoiT` is the last unfolded identity group of that shape the 09-13 census found; `Flare`
+    was bought by the 09-17 drain the morning the brand arrived on LinkedIn."""
+    import csv as _c
+    import live_state as _LS
+    rows = list(_c.DictReader(open(_LS.snapshot("companies.csv"), encoding="utf-8")))
+    recs = {"DoiT": dict(REC), "doitintl": dict(REC), "Flare": dict(REC),
+            "Hello Flare": dict(REC)}
+    assert F.alias_only_folds(recs, rows) == {"DoiT": "doitintl", "Flare": "Hello Flare"}, \
+        "a registry row took one of the two brand strings, or a survivor went inactive"

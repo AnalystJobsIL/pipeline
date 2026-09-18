@@ -12929,6 +12929,17 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      registry-row record. Not done that evening: one record, no rendered defect, and a second
      fold rule is a second deletion `--export`'s guard must be taught to excuse.
 
+     **CLOSED 2026-09-18 (`company-intel`)**: `firmographics.alias_only_folds`, applied through
+     `fold_aliases` inside the one `settle_keys` call, so `--export`'s guard excuses it with no
+     new rule. Built on the second pair rather than the first: the 09-17 drain bought `Flare`
+     beside `Hello Flare` the morning LinkedIn published the brand, and that one DOES render —
+     the blurb it came with describes Flare Systems, a Canadian threat-intelligence company.
+     The bar is the `ALIASES` declaration plus the registry saying the name is nobody's row in
+     any state while exactly ONE ACTIVE row answers to the declared identity; an identity two
+     active rows answer to folds onto neither. Export **1,704 → 1,702** (`DoiT`, `Flare`).
+     The `--export` count is the 09-19 morning row; the pairs themselves are pinned against the
+     dated registry snapshot.
+
 ## From the `infra` lane, 2026-09-13 (tests that read live state)
 
 619. **Eight tests still assert on the state a cron rewrites, and 134 more open it through a code

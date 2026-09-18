@@ -4309,6 +4309,25 @@ as ONE call, `settle_keys`, at every view, in `--display-report`, and inside `--
 superset guard, which therefore excuses exactly what the views remove. The export went
 1,651 → **1,649** that evening: three dropped, `Saver1` researched.
 
+**And since 2026-09-18 the same fold reaches a name the registry does NOT hold**
+(`alias_only_folds`, closing `618`). `declared_aliases` asks a PARKED ROW for its own
+`alias-of` verdict, so by construction it can only fold a string the registry carries — and
+the two duplicates in the export were not rows at all. `DoiT` is the brand whose row is the
+Greenhouse tenant slug `doitintl`; `Flare` is the brand whose row is `Hello Flare`. Both
+reached the store as their own record because the discovery net meets the BRAND and the
+nightly drain researches whatever name has no facts: `Flare`'s second record was bought on
+09-17, hours after LinkedIn first published the name. The bar is still two facts that must
+agree, and the registry's half is stronger here than a parked row's prose — the `ALIASES`
+declaration, written against the row's own board, AND the registry saying **this name is
+nobody's row in any state** while **exactly one ACTIVE row** answers to the identity it
+points at. A name the registry holds is refused and left to `declared_aliases`, so this arm
+can never be the cheaper way past the two-declaration bar that keeps `AWS`, `Investing.com`
+and `Meta Israel` where they are; an identity two active rows answer to (Amazon/AWS/Amazon
+Israel) folds onto neither, the refusal `roles._alias_fold_target` makes for the same reason.
+It is applied THROUGH `fold_aliases`, so the four rules above still govern — in particular a
+survivor with no record folds nothing, because moving the record to the survivor's key is
+the key migration `459` refuses. The export went **1,704 → 1,702**.
+
 **The fold also makes an alias's page vouch for the survivor**, because it would otherwise
 delete a brand with the duplicate. `display_plan` (the ONE reading of `board_verify` that
 `apply_display_names` writes from and `--display-report` prints, unified 2026-09-11) lets a
