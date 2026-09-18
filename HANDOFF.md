@@ -55,7 +55,6 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-20 | jd-text | first schedule `jd-archive` on this commit: `scrape_recleaned` <= 274, no `archive:reclean-refused` | | |
 | 2026-09-27 | registry | of rows stamped `zero-confirm 2026-08-28: confirmed`, **<=5%** have `health_baseline > 0` (and on 09-28 the same for `zero-confirm 2026-08-29: confirmed` rows, carried from the 09-05 row); above that, strip that run's verdicts | | |
 | 2026-09-19 | registry | **the Trivago fold fires, or says why not.** The first `event: schedule` digest whose headSha contains this park prints an `alias fold` clause naming `Holisto<-Trivago`, or `left N record(s) in place, no twin` — and `Trivago` is absent from the board and from `roles.csv`'s `company` column while `holisto\|senior data analyst` is still there. NO fold clause at all means `company-intel`'s `ALIASES["trivago"]="holisto"` did not land: that is the 571 shape, a park with no declaration, and it is **FAIL** with the missing half named | | |
-| 2026-09-19 | registry | **the push is green on a runner.** `gh run view 35359064839 --json jobs` (headSha `267e6ac`) reads 16 of 16 success at job level; any red is NAMED with its owner | 2026-09-18 (`registry`) | FAIL — **10 of 16**: `guard`, `guard-kill` and all five `rehearse` SUCCESS; `mutation-gate` 1 and 6 success, **0/2/3/4/5/7 FAILURE, every one `rc 137` at the 40-minute wall with ZERO `SURVIVING` lines** (41/42/42/44/44/48 records done of ~52, all `killed`). Not a dead guard and not this lane's: the catalogue went **391 → 416 on 09-18** across five lanes (`registry` filed 6 of the 25) and the last GREEN run at 391 records already had walls of 30.6–39.1 min against a 40-minute budget — **~1 minute of headroom**. `631`, `infra` |
 | 2026-09-20 | infra | **the mutation gate fits its wall again.** After `631` is applied, the first `tests.yml` run on master reads **16 of 16** (or 16+N with the new matrix entries) and NO `mutation-gate` job exits `rc 137`; each shard's `timing wall` line is under **1,800 s**, the number `tests.yml`'s own comment names as the trigger. A shard over 1,800 s that still passes is FAIL — the headroom is gone again and the per-record cost, not the record count, is the variable (suite 1,766 → 2,072 tests) | | |
 | 2026-09-19 | registry | **a ledger refusal holds through a hunt.** The 09-18 19:00 `listing-hunt` (`event: schedule`, headSha ⊇ this commit): `Kima`, `PayPlus`, `Mars Antennas And Rf Systems`, `Phoenix Financial` and `Ethos` all still `active=false` in `companies.csv` after it, and no `[OK]` line names `careers.akima.com`, `payplus.com` or `arizonafinancial.org`. A `ledger: another company's board` refusal line is the PASS shape; a re-activation is **FAIL — the veto is not in the arm that wrote it** | | |
 | 2026-09-20 | registry | **the queue stamp stops crying wolf and the back-off shows.** The 09-20 `queue:` stamp: **no** `alarm=queue GREW`, `ledger_contradicted=0`, `new_intake` present, `selectable` <= 176, and `direction=lapsed` on any day `delta` > 0 with `new_intake=0`. `delta` is a reading, not a clause. Then on 09-29 `selectable` <= **176** (flat-14 would have read 225) | | |
@@ -68,17 +67,13 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-19 | roles | same digest: `closure text on 2 board-listed row(s) (ignored)`, no HiBob/Meta closure; `twin folds 1` and ONE BioCatch BI-developer row | | |
 | 2026-09-19 | roles | same digest: no `alias fold left` and no `alias folds: N renamed` line — the no-twin rename has no declared pair (`de531b1` parked BOTH Harel rows) | | |
 
-## State at handoff — 2026-09-01 ~17:00 UTC, every number re-derived
-
-Every cell carries the command that re-derives it; the 08-30 table was stale in all five.
+## State at handoff — 2026-09-18 ~20:00 UTC, every number re-derived
 
 | | | how |
 |---|---|---|
-| registry | **2,127+ rows · 1,132+ active · 0 orphans** | `python check_invariants.py` |
-| by tier | **556 native-ATS · 575 scrape · 1 discovery** | `python registry_health.py` |
-| intake queue | **190 OWED** vs a drain of **176/night** (2026-09-13 13:xxZ; 112/night until then) | `python queue_state.py` |
-| last digest | **2026-09-01**, `scanned=1130`, **10 emailed** | `digests/latest.md` |
-| guards | **1,766 passed · 13 skipped · 0 failed** locally | `python -m pytest` (not `-q`) |
+| registry | **2485 rows · 1429 active · 0 orphans** | `python check_invariants.py` |
+| last digest | **2026-09-18**, run `35330002476`, **186 rows / 3 new**; the 09-19 run is the first on today's eight lanes | `digests/latest.md` |
+| guards | **2,096 passed · 13 skipped · 0 failed** locally on `1375311` (`company-intel`); CI runs of 09-18 read 10/16 until `62eab37`'s twenty shards | `python -m pytest` (not `-q`) |
 
 **Green here is not green in CI**, and on a commit master has moved past. Each lane's line names its run.
 
