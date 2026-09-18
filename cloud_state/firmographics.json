@@ -5494,19 +5494,6 @@
     "stage_note": "Publicly traded on Tel Aviv Stock Exchange (TASE: DSCT)",
     "sub_sector": "Banking"
   },
-  "DoiT": {
-    "as_of": "2026-09-02",
-    "business_model": "B2B SaaS platform for cloud management, FinOps, and cost optimization (AWS/GCP/Azure)",
-    "customer_type": "Enterprises and cloud-native businesses (4,000+ customers)",
-    "employees_global": 750,
-    "founded": 2011,
-    "il_center": "Tel Aviv (HQ)",
-    "sector": "cloud/devops &amp; it infrastructure",
-    "size_band": "M",
-    "stage": "growth-private",
-    "stage_note": "Venture-backed; raised ~$267M total, launched $250M fund for M&A in 2025",
-    "sub_sector": "Cloud cost management / FinOps platform"
-  },
   "Dolby Laboratories": {
     "as_of": "2026-08-23",
     "business_model": "patent and technology licensing royalties from consumer-electronics OEMs, plus products and services for cinema, broadcast and streaming",
@@ -6736,19 +6723,6 @@
     "stage": "private-enterprise",
     "stage_note": "Subsidiary of Fives Group, French industrial engineering group owned by management/investors, not VC-backed",
     "sub_sector": "Material Handling / Intralogistics & Warehouse Automation"
-  },
-  "Flare": {
-    "as_of": "2026-09-17",
-    "business_model": "B2B",
-    "customer_type": "Enterprise",
-    "employees_global": null,
-    "founded": null,
-    "il_center": "Tel Aviv (HQ)",
-    "sector": "legal tech",
-    "size_band": "S",
-    "stage": "growth-private",
-    "stage_note": "Series A, $10.6M round, total funding ~$12.78M (Crunchbase)",
-    "sub_sector": "Legal services software / professional services platform"
   },
   "Flashy": {
     "as_of": "2026-09-06",
@@ -8185,6 +8159,7 @@
     "as_of": "2026-08-29",
     "business_model": "B2C/B2B2C SaaS platform connecting consumers with legal professionals",
     "customer_type": "B2C",
+    "display_name": "Flare",
     "employees_global": 150,
     "founded": 2020,
     "il_center": "Tel Aviv (R&D); HQ in San Diego, US",
@@ -8394,6 +8369,7 @@
     "as_of": "2026-08-21",
     "business_model": "Earns booking margins/commissions by reselling hotel rooms assembled via its Split & Match dynamic-pricing engine; now powers trivago's Book & Go direct bookings",
     "customer_type": "consumers",
+    "display_name": "Trivago",
     "employees_global": 200,
     "founded": 2015,
     "il_center": "Rishon LeZion (HQ)",
@@ -19732,19 +19708,6 @@
     "stage": "growth-private",
     "stage_note": "Private; Nov 2025 round with Stratasys (minority stake), Fortissimo Capital and Discount Capital — amount undisclosed",
     "sub_sector": "MoldJet powder-free metal & ceramic additive manufacturing systems for industrial-scale production"
-  },
-  "Trivago": {
-    "as_of": "2026-08-22",
-    "business_model": "Advertisers (OTAs and hotel chains) bid on a cost-per-click/referral basis for traffic from trivago's hotel comparison results; growing share of revenue from direct merchant-of-record bookings via trivago DEALS",
-    "customer_type": "consumers (travelers) on the search side; OTAs and hotel/accommodation advertisers pay",
-    "employees_global": 893,
-    "founded": 2005,
-    "il_center": "Rishon LeZion (trivago DEALS, ex-Holisto, acquired 2024-2025); HQ in Düsseldorf, Germany",
-    "sector": "travel tech",
-    "size_band": "M",
-    "stage": "public",
-    "stage_note": "NASDAQ: TRVG since Dec 2016; majority-controlled by Expedia Group (~59% economic, ~84% voting as of Dec 31, 2025)",
-    "sub_sector": "hotel metasearch and price-comparison marketplace, plus merchant-of-record hotel booking via its trivago DEALS (Holisto) unit"
   },
   "Trullion": {
     "as_of": "2026-08-21",

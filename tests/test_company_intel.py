@@ -3633,3 +3633,37 @@ def test_the_two_live_pairs_of_618_fold_against_the_dated_registry():
             "Hello Flare": dict(REC)}
     assert F.alias_only_folds(recs, rows) == {"DoiT": "doitintl", "Flare": "Hello Flare"}, \
         "a registry row took one of the two brand strings, or a survivor went inactive"
+
+
+def test_holisto_is_trivago_both_ways_and_the_override_survives_the_render_guard(monkeypatch):
+    """2026-09-18. trivago N.V. completed the Holisto acquisition on 2025-07-31 and runs it
+    as its Israel "Innovation Center"; the two rows published one `Senior Data Analyst`
+    twice (Comeet 76.001, Rishon Lezion / Indeed jk=2cbff46345fc2ad1, ראשון לציון) and a
+    second, closed, pair under `Data Analyst`. Holisto survives -- 4 of 6 apply mailboxes on
+    the tenant are `holisto.<uid>@applynow.io` -- and DISPLAYS as `Trivago`, which the
+    tenant's own `company_name` returns on 6 of 6 positions.
+
+    The `Landacorp` half is the point: an override that `rolecard.display_name` would refuse
+    is worse than none. Measured here rather than asserted from the docstring, because the
+    first comment named the wrong mechanism -- the declaration makes the two identities
+    EQUAL, so the guard returns on `its == mine` and the victim scan never runs. Kills:
+    removing either declaration, and adding the override without the fold."""
+    from pipeline import rolecard
+    from pipeline.firmographics import ALIASES, DISPLAY_NAME_OVERRIDES, identity_key
+    assert DISPLAY_NAME_OVERRIDES["Holisto"] == "Trivago"
+    assert identity_key("Trivago") == identity_key("Holisto") == "holisto"
+    rows = _rows(("Holisto", "true", ""),
+                 ("Trivago", "false", "alias-of Holisto 2026-09-18: one employer"))
+    recs = {"Holisto": {**REC, "display_name": "Trivago"}, "Trivago": dict(REC)}
+    assert F.declared_aliases(rows)["Trivago"] == "Holisto"
+    assert F.fold_aliases(recs, F.declared_aliases(rows)) == [("Trivago", "Holisto")]
+    assert "Trivago" not in recs
+    assert rolecard.display_name(recs["Holisto"], "Holisto", recs) == "Trivago"
+    # ...and with the declaration gone the brand becomes another company's name again
+    monkeypatch.setitem(rolecard.__dict__, "identity_key",
+                        lambda n: "trivago" if str(n).strip().lower() == "trivago"
+                        else identity_key(n))
+    victims = {"Holisto": recs["Holisto"], "Trivago": dict(REC)}
+    assert rolecard.display_name(recs["Holisto"], "Holisto", victims) == "", \
+        "an override that cannot render is worse than none (the Landacorp lesson)"
+    assert "trivago" in ALIASES, "the declaration is the second half of the fold"

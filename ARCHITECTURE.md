@@ -4326,7 +4326,8 @@ and `Meta Israel` where they are; an identity two active rows answer to (Amazon/
 Israel) folds onto neither, the refusal `roles._alias_fold_target` makes for the same reason.
 It is applied THROUGH `fold_aliases`, so the four rules above still govern — in particular a
 survivor with no record folds nothing, because moving the record to the survivor's key is
-the key migration `459` refuses. The export went **1,704 → 1,702**.
+the key migration `459` refuses. The export went **1,704 → 1,702**, and **1,701** once the
+parked-row arm took `Trivago` the same evening.
 
 **The fold also makes an alias's page vouch for the survivor**, because it would otherwise
 delete a brand with the duplicate. `display_plan` (the ONE reading of `board_verify` that
@@ -4354,10 +4355,16 @@ both cron paths — from two evidence arms and nothing else: `cloud_state/board_
 `display_name_from_evidence` judges the page's name recognisably the *same* company
 (shared stem, EDGE containment, acronym — **71 records** on 2026-08-31, after two
 adversarial audits cut 33 of the first 104: parent-umbrella words, casing degradations,
-identity collisions — the session record's sections 3b and 3c), and the 4-row
+identity collisions — the session record's sections 3b and 3c), and the 6-row
 `DISPLAY_NAME_OVERRIDES` table whose
-slugs fail containment by construction but carry first-party JD/tenant evidence in the
-comment beside each. A page naming a *different* string — a parent, a product, a mis-read,
+keys fail containment by construction but carry first-party JD/tenant evidence in the
+comment beside each. Four are ATS slugs; two are a registry name that is not the
+employer's — `Kidum Rehab Projects`→`Kidum` and, since 2026-09-18, `Holisto`→`Trivago`,
+whose Comeet tenant 76.001 returns `company_name: "Trivago"` on 6 of 6 positions. The
+second one is only legal because the duplicate went first: an override
+`rolecard.display_name` would refuse is worse than none (the `Landacorp` line, removed
+after one evening), and what makes this one render is the `ALIASES` declaration making the
+brand's identity EQUAL the company's, so the guard returns before its victim scan. A page naming a *different* string — a parent, a product, a mis-read,
 a name whose `identity_key` is another company's (a record's or a registry row's) — is
 printed as `divergent: ... — not
 written` (**56** that day; `python research_firmographics.py --display-report` is the full

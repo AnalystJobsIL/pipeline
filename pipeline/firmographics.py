@@ -360,6 +360,20 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     # rows whose name carries the word are `Hello Flare` itself and `Cloudflare`, whose
     # identity is `cloudflare` -- and no other record or role answers to `flare`.
     "flare": "hello flare",
+    # `Trivago` is `Holisto`: trivago N.V. completed the Holisto acquisition on 2025-07-31
+    # and runs it as its Israel "Innovation Center". The two rows were publishing one
+    # opening twice -- `holisto|senior data analyst` off Comeet 76.001, Rishon Lezion, and
+    # `trivago|senior data analyst` off `il.indeed.com/viewjob?jk=2cbff46345fc2ad1`,
+    # ראשון לציון -- plus a second, closed, pair under `Data Analyst`. Holisto's own board
+    # is the evidence for the DIRECTION: its Comeet postings live under the path segment
+    # `trivago` (`comeet.com/jobs/trivago/76.001/data-analyst/24.E6B`), the tenant's
+    # `company_name` reads `Trivago` on 6 of 6 positions, and 4 of the 6 apply mailboxes are
+    # `holisto.<uid>@applynow.io` -- the Israeli entity is the employer of record, so it is
+    # the survivor. `Trivago` is parked `alias-of Holisto 2026-09-18` (the second, dated
+    # declaration this pair needs, because it IS a registry row), and no coverage was traded:
+    # the greenhouse `trivago` board it held reads 11/0 IL (Düsseldorf), so neither Trivago
+    # role ever came from it -- both were discovered on Indeed.
+    "trivago": "holisto",
     "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
     "vmware broadcom": "vmware",
     "simply joytunes": "simply",
@@ -1722,6 +1736,21 @@ DISPLAY_NAME_OVERRIDES = {
     # `display_name(rec, "Landacorp", firmo)` returns `""` against the real export and
     # `"Landa"` only against a one-record dict. The real defect is the DUPLICATE, and it is
     # registry's: `534`. Do not re-add this line before those two rows are one.
+    #   `Holisto` -> `Trivago` is the Landacorp shape with the duplicate ALREADY REMOVED, and
+    # that is the whole difference. Comeet tenant 76.001 returns `company_name: "Trivago"` on
+    # 6 of 6 positions -- first-party evidence outside board_verify, the reason this table
+    # exists -- and the containment rule cannot use it (`holisto` and `trivago` share no
+    # stem), which is the other reason. The collision that killed `Landacorp` cannot fire
+    # here, and it was MEASURED which mechanism stops it, because the comment above got it
+    # wrong first: `rolecard.display_name` returns early on `its == mine`, and the `ALIASES`
+    # declaration is what makes `identity_key("Trivago")` and `identity_key("Holisto")` the
+    # same identity -- so the victim scan never runs at all. Belt and braces, the fold also
+    # removes the `Trivago` record from the union, and either alone is enough:
+    # `display_name({'display_name': 'Trivago'}, 'Holisto', <union>)` returns `''` only with
+    # the declaration removed AND the duplicate record present. Landacorp had neither --
+    # `Landa Digital Printing` is a different identity nobody has declared, so there the
+    # refusal is right and the duplicate row (`534`) is still the defect.
+    "Holisto":   "Trivago",
 }
 
 # legal tails stripped repeatedly; the leading [\s,.] alternation is what catches
