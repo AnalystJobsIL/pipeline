@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**681 filed · 477 open · 204 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**683 filed · 479 open · 204 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 632.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 634.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 154 open
+### registry — 155 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -248,6 +248,7 @@ closure convention in the header.
 - **604** `604@registry` **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 - **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
+- **633** `633@registry` **The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data Analyst
 
 ### infra — 118 open
 
@@ -591,7 +592,7 @@ closure convention in the header.
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 - **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
 
-### render — 8 open
+### render — 9 open
 
 - **4** `4@render` **`pipeline/jdtext.py`**
 - **119** `119@render` **`digest._LOC_CANON` and the four seniority vocabularies are copies** *(half closed)*
@@ -601,6 +602,7 @@ closure convention in the header.
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
 - **598** `598@render` **After a fold, a role filed under the ALIAS name loses its brand and its `firmo_match`
 - **614** `614@render` **The mail says `render: 1 role(s) hidden
+- **632** `632@render` **`blurb-names-other` has fired 7 times and not one is an impersonation; two three-line
 
 <!-- BACKLOG-INDEX:END -->
 
@@ -13287,3 +13289,104 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      Check: `gh run view <id> --json jobs` — any `mutation-gate` failure whose log has
      `rc 137` and **zero** `SURVIVING` lines is this item, not a dead guard; a failure with a
      `SURVIVING` line is the owning lane's.
+## From the `company-intel` lane, 2026-09-18 (a guard with no true positives, and a group's shared board)
+
+632. **`blurb-names-other` has fired 7 times and not one is an impersonation; two three-line
+     changes take it to 2, and both survivors are real duplicate employers** — lane: `render`
+     (`pipeline/rolecard.py`), filed 2026-09-18 by `company-intel`, which owns the blurb but not
+     the check. Measured over all **210** cached blurbs in `cloud_state/seen.db` against the
+     **1,701**-record export as the victim set, first-match-per-blurb as `cross_check` counts:
+
+     | blurb | names | tokens | why the me-check missed |
+     |---|---|---|---|
+     | `DoiT` | Google Israel | `google` | the blurb names the company `DoiT`; the card's key is `doitintl` |
+     | `doitintl` | Google Israel | `google` | same |
+     | `Pagayais` | Capital One | `capital` | Hebrew-free but the row name is a typo nothing spells |
+     | `בנק דיסקונט` | Air Products | `products` | the key is HEBREW and the blurb is ENGLISH |
+     | `הראל ביטוח ופיננסים` | Air Products | `products` | same |
+     | `מטריקס` | Poc System | `system` | same |
+     | `קבוצת כלמוביל` | REE Automotive | `automotive` | same |
+
+     **Why 0 of the 7 are impersonations.** DoiT really is an AWS/Google-Cloud partner and its
+     blurb says so — `pipeline/rolecard.py:541` already promises "acquirers and customers are
+     named legitimately", which is why this is a COUNT and never a drop. The four Hebrew rows
+     are English blurbs about Israeli companies that happen to use one ordinary English noun.
+     On today's rendered surfaces the count is **1** (board: `doitintl→Google Israel`) and
+     **3** over board+archive, so the mail has been carrying a line with no information in it
+     every morning.
+
+     **Two independent defects, one item because one measurement found both.**
+
+     *(a) the me-check, `pipeline/rolecard.py:628`.* `tokens[me]` is the tokens of the
+     REGISTRY KEY, so a blurb that names the company by the brand the company writes cannot
+     excuse it. Three lines, using the declarations `company-intel` already maintains:
+
+         # before (628):
+         if any(re.search(r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])", about) for t in tokens[me]):
+             continue
+         # after:
+         mine = list(tokens[me])
+         for k, v in ALIASES.items():             # every spelling declared for MY identity
+             if v == identity_key(me):
+                 mine += [t for t in k.split() if len(t) >= 4]
+         if any(re.search(r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])", about) for t in mine):
+             continue
+
+     Measured alone: **7 → 5** (both DoiT rows go).
+
+     *(b) the victim side, `pipeline/rolecard.py:615/618` — the `products`/`system` class, 3 of
+     the 7 (`Air Products` ×2, `Poc System`).* `toks = [t for t in key.split() if len(t) >= 4]`
+     silently reduces a TWO-WORD brand to one ordinary noun whenever the first word is short
+     (`air products` → `products`, `poc system` → `system`, `ae capital` → `capital`,
+     `ree automotive` → `automotive`), and the single-token guard below it only refuses a word
+     that is in `_COMMON_WORDS`. `Google Israel` is the same shape one step earlier:
+     `_ID_SUFFIX` strips the trailing `israel`, leaving `google`. One condition:
+
+         # before (618):
+         if len(toks) == 1 and (toks[0] in _COMMON_WORDS or len(toks[0]) < 5):
+         # after:
+         parts = key.split()                      # (615, beside the existing `toks =` line)
+         if len(toks) == 1 and (toks[0] in _COMMON_WORDS or len(toks[0]) < 5
+                                or len(parts) > 1):   # `Air Products` is not `products`
+
+     Measured alone: **7 → 4**. **Both together: 7 → 2**, and the two survivors are findings,
+     not noise — `Pagayais`'s blurb names `Pagaya` (two rows, one employer, a misspelt key)
+     and `הראל ביטוח ופיננסים`'s names `Harel Insurance & Finance` (the Hebrew/Latin twin
+     `registry` filed as `621`). A guard whose only two hits are both real duplicates is worth
+     reading; today's is not.
+
+     **Not done here, and the reason is not ownership alone.** No `render` session ran on
+     2026-09-18, and this lane may not edit render's file; but the honest reason to leave it is
+     that the WRITE-TIME guard the 09-18 prompt asked for ("a blurb that names another registry
+     company is refused at write time") would be wrong on this measurement — it would refuse 7
+     correct blurbs to prevent 0 impersonations, and DoiT's blurb, which the prompt names, is
+     right. The defect is the reader, not the writer.
+
+     Check: with both changes, `cross_check` over the published board+archive prints
+     `blurb-names-other` **0** times, and the 210-blurb sweep prints exactly the two pairs above.
+
+633. **The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data Analyst
+     card carries a UAV/defence chip on a public-sector Power BI job** — lane: `registry`, filed
+     2026-09-18 by `company-intel`. `Group19 Tech` was re-profiled from its own site this
+     session (1 seam call): the record is RIGHT — the Yeruham engineering subsidiary of the
+     Group19 social business, `defense & aerospace` / `UAV/space software and engineering
+     services`, B2B and government customers. What is wrong is the board on the row.
+     `https://www.group19.org.il/career` is the GROUP's page and its 8 listings belong to
+     several companies inside it: `רפרנט/ית שירות ובקרה חדר המסחר` (trading-desk control),
+     `אנליסט/ית יועץ/ת פיננסי/ת`, `מעצבת סטודיו`, `מנהל/ת לקוחות שיווק דיגיטלי`,
+     `נציג/ת שירות לקוחות`, `רכז/ת בק אופיס`, `סטודנט/ית להנדסת מכונות` and the `Data Analyst`
+     we publish. That analyst posting (`group19.org.il/dataanalyst-1`, 661 chars, first seen
+     2026-09-14, live on the board today) reads `בניית דוחות ודשבורדים בPBI` and
+     `עבודה מול המגזר הציבורי` — public-sector Power BI consulting, not UAV engineering.
+
+     The tell is cheap and general: the record and the blurb DISAGREE about the same name.
+     `cloud_state/seen.db`'s `Group19 Tech` blurb (09-14, written from the board's own job
+     text, which is the blurb loop's only context) says "provides data analytics and business
+     intelligence services ... public sector organizations". Two honest reads of two different
+     companies under one row.
+
+     Not fixed here: which company on that page employs the analyst is a ROW question
+     (`identity_gate`, a sub-page or a second row), and the record must not be re-bought to
+     match a board that is not its own — that is exactly the `596` failure this lane spent
+     2026-09-13 undoing. `company-intel` will re-profile whatever the row points at once
+     `registry` has repointed or split it.
