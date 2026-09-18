@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**672 filed · 470 open · 202 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**675 filed · 473 open · 202 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 623.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 626.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -369,6 +369,42 @@ closure convention in the header.
 - **619** `619@infra` **Eight tests still assert on the state a cron rewrites, and 134 more open it through a code
 - **620** `620@infra` **The Internet Archive names ~9 captures a night for us, against a backlog of 6,193 and
 
+### scraper — 33 open
+
+- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
+- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
+- **90** `90@scraper` **Per-job strategy provenance in the cache**
+- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
+- **219** `219@scraper` **Strategy 5's model, measured once**
+- **220** `220@scraper` **A `links:` carry has no ceiling**
+- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
+- **222** `222@scraper` **`pipeline/llm.py`
+- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
+- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
+- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
+- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
+- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
+- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
+- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
+- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
+- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
+- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
+- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
+- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
+- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
+- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
+- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
+- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
+- **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
+- **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
+- **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
+- **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
+- **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
+- **608** `608@scraper` **21 scraper-built cache cards carry page furniture that no re-clean can keep off, and 7
+- **616** `616@scraper` **A Hebrew careers board whose postings have their own links is still read only by the
+- **623** `623@scraper` **A department heading and a role title inside ONE card anchor are read as two cards** —
+- **624** `624@scraper` **Logica-IT is unreadable from the runner and readable from a laptop, and its position
+
 ### discovery — 31 open
 
 - **3** `3@discovery` **Per-channel Telegram liveness needs a per-key quiet threshold.** *(lane: whoever holds
@@ -402,40 +438,6 @@ closure convention in the header.
 - **537** `537@discovery` **A bought Indeed description is thrown away, so the same `jk` is re-bought every night
 - **569** `569@discovery` **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
 - **609** `609@discovery` **Every accepted Telegram role is held off the board by construction**
-
-### scraper — 31 open
-
-- **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
-- **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
-- **90** `90@scraper` **Per-job strategy provenance in the cache**
-- **208** `208@scraper` **18 scrape rows whose page errored overnight and that never produced surface nowhere but
-- **219** `219@scraper` **Strategy 5's model, measured once**
-- **220** `220@scraper` **A `links:` carry has no ceiling**
-- **221** `221@scraper` **The DOM strategy's `ctx` has no card boundary, so a "place · department · title" grid
-- **222** `222@scraper` **`pipeline/llm.py`
-- **228** `228@scraper` **Four real Israeli openings disappeared from the cache with the junk, and one wall is
-- **243** `243@scraper` **The replay harness cannot see what strategy 4 spends**
-- **244** `244@scraper` **A deadline that cuts strategy 4 short loses the prefix's wall evidence**
-- **247** `247@scraper` **The foreign-place vocabulary is a list, and a list is never finished**
-- **248** `248@scraper` **`page_foreign` reads a shared template, so one foreign sibling can empty an Israeli
-- **261** `261@scraper` **Navan's own board produced 0 cards, so the one live board role we cannot fill has no
-- **262** `262@scraper` **Shopify's careers SPA needs the Chromium rung**
-- **265** `265@scraper` **`refresh_scrape_cache._carry_jd` will carry an address's cooldown onto a promoted card**
-- **345** `345@scraper` **106 of 287 uncached rows render, answer HTTP 200, and carry no jobs signal at all** —
-- **356** `356@scraper` **`--residential --only-missing` is the whole-registry command the `--residential` guard
-- **363** `363@scraper` **A zero-extraction is authoritative on the first night; an error is carried for
-- **377** `377@scraper` **Zipher's own careers page is JS-rendered, so the address is right and unreadable** —
-- **410** `410@scraper` **`Rendered` has no `final_url`, so `confirm_zero`'s cross-host redirect check is dead
-- **431** `431@scraper` **`refresh_scrape_cache._carry_jd` carries `description` and `_jd_attempted` but not a
-- **434** `434@scraper` **450 cards have no per-job address at all: the card's own `url` IS a listing page, and
-- **447** `447@scraper` **`Xpend Global Marketing` has six postings duplicated exactly
-- **536** `536@scraper` **The scraper stores a listing page as nine cards' address when the page links each
-- **546** `546@scraper` **A careers page whose role permalinks are percent-encoded HEBREW yields zero cards, and
-- **552** `552@scraper` **A WordPress board bleeds sibling postings into every job page, so a faithful fetch
-- **565** `565@scraper` **A `scrape:` card binds one posting's address onto ANOTHER record as a `seen_id`, and
-- **573** `573@scraper` **A LinkedIn capture carried 27 OTHER companies' job listings inside one role's stored
-- **608** `608@scraper` **21 scraper-built cache cards carry page furniture that no re-clean can keep off, and 7
-- **616** `616@scraper` **A Hebrew careers board whose postings have their own links is still read only by the
 
 ### docs — 25 open
 
@@ -542,6 +544,28 @@ closure convention in the header.
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
 - **621** `621@ats-fetch` **`career.adamtotal.co.il` is an Israeli ATS this repo has never heard of, Harel's board
 
+### jd-text — 19 open
+
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
+- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
+- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
+- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
+- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
+- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
+- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
+- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
+- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
+- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
+- **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
+- **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
+- **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
+- **625** `625@jd-text` **28 cache cards hold one shell page's text under two titles, and both cards own their
+
 ### classifier — 18 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
@@ -562,27 +586,6 @@ closure convention in the header.
 - **557** `557@classifier` **LTX has not flipped to its own board
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 - **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
-
-### jd-text — 18 open
-
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
-- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
-- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
-- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
-- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
-- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
-- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
-- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
-- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
-- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
-- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
-- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
-- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
-- **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
-- **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
-- **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
 
 ### render — 8 open
 
@@ -12659,11 +12662,22 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      only onto an EMPTY rebuilt card: Amitim Pension Funds ×8, Adscale, Ageera, Practical
      Vision ×2, Simply (JoyTunes) ×3, 4cast AI, Intuition Robotics, Marvell. The cut belongs
      where `scrape_universal` stores the page (`desc[:4000]`): `jdfill.reclean_text(desc) or
-     desc`. (b) 7 of 339 Comeet posting cards, all `legitsecurity.com`, pair a title with
+     desc`.
+     **(a) CLOSED 2026-09-18 (`scraper`)**: `scrape_universal._store_desc` calls exactly that,
+     with a lazy import, at the one door this module writes a card through (`_Adder.__call__`
+     and `_promote`) — the same function at one more door, not a second cutter, so a jd-text
+     change to the rule reaches these cards too. Measured that morning: **19** cards over 8
+     boards (Amitim Pension Funds 9, Adscale 2, Ageera 2, Practical Vision 2, Simply 2,
+     Intuition Robotics, Marvell, Silicom) carrying **15,033** characters of page header and
+     footer. They converge as their boards re-capture, not at once: this is a capture-time cut
+     and `reclean_cache` still will not touch a card with no `_jd_attempted`.
+     (b) 7 of 339 Comeet posting cards, all `legitsecurity.com`, pair a title with
      another posting's url (`AppSec Analyst Team Lead` → `…/account-executive/76.55C`). This
      lane now refuses such an address before a fetch (`jdfill.address_names_another_role`,
      `wrong-address`), so no wrong text is stored — but the card still publishes the wrong
-     apply link. Check: `python -c "import json,sys;sys.path.insert(0,'.');from pipeline.jdfill import address_names_another_role as a;s=json.load(open('scraped_cache.json',encoding='utf-8'));print(sum(1 for v in s.values() if isinstance(v,list) for j in v if isinstance(j,dict) and a(j.get('url'),j.get('title'))))"`.
+     apply link. **Reads 8 on 2026-09-18, not 7** (the 7 Legit cards plus one somekhchaikin);
+     the same day's `_card_bounds` repoints all 7 Legit cards onto comeet slugs that name their
+     own titles on a replay, so the next refresh of that board should leave ≤1. Check: `python -c "import json,sys;sys.path.insert(0,'.');from pipeline.jdfill import address_names_another_role as a;s=json.load(open('scraped_cache.json',encoding='utf-8'));print(sum(1 for v in s.values() if isinstance(v,list) for j in v if isinstance(j,dict) and a(j.get('url'),j.get('title'))))"`.
 
 609. **Every accepted Telegram role is held off the board by construction** — lane:
      `discovery` (`discovery_telegram.py`), filed 2026-09-13 by `jd-text`. All 145
@@ -12960,3 +12974,53 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      firmographics, the roles ledger, `matched` and the board). Each is a
      `firmographics.ALIASES` entry PLUS the parked row's own dated `alias-of <survivor>`
      verdict, in one commit, once its board evidence is in hand.
+## From the `scraper` lane, 2026-09-18 (a card's bounds, a carry's key, a page's anchor)
+
+623. **A department heading and a role title inside ONE card anchor are read as two cards** —
+     lane: `scraper`, filed 2026-09-18 by itself. On a replay of the 119 boards plain HTTP can
+     read, `_card_bounds` (the same day) took the cards sharing a posting url with a different
+     title from 40 / 8 boards to **12 / 3** — the cache still reads 54 / 10 until those boards
+     re-capture — and every one of the 12 is
+     this shape: `<a href=…><h4>Data & Analytics</h4><h2>AI Engineer</h2></a>` (CHEQ 4, HiBob
+     4, Spear UAV 4 — Spear's is the weaker variant, four postings under one dated archive
+     url). Both headings match a card group, so the department ships as a role: CHEQ's `Data &
+     Analytics` carried the AI Engineer posting's description and bought a `v2` classifier
+     verdict on it. The `oneword` filter cannot reach it (`Data & Analytics` is three tokens).
+     The candidate rule is per-anchor, not per-group: when two heading groups produce cards at
+     the SAME address, the one whose heading level is higher in the document (the `<h4>` above
+     the `<h2>` here) is the facet and the other is the role — measure it before taking it,
+     because a board that prints its title above its department inverts it. Check: `python -c
+     "import json,collections;s=json.load(open('scraped_cache.json',encoding='utf-8'));g=collections.defaultdict(set);[g[(c,j['url'])].add(j['title']) for c,v in s.items() if isinstance(v,list) for j in v if isinstance(j,dict) and j.get('_own_url') is not False and j.get('url')];print(sum(len(t) for t in g.values() if len(t)>=2), sorted({c for (c,_u),t in g.items() if len(t)>=2}))"`
+     — 12 cards / CHEQ, HiBob, Spear UAV on 2026-09-18, after `_card_bounds`.
+
+624. **Logica-IT is unreadable from the runner and readable from a laptop, and its position
+     pages name the SITE** — lane: `scraper` (the title half) and `infra` (the reachability
+     half), filed 2026-09-18 by `scraper`. `scrape_rot['Logica-IT']` has read
+     `goto:TimeoutError` every night since 2026-09-14 (`n 5`, `found 0`, `last 2026-09-18`),
+     so the 09-13 chip fix has never run unattended there and the ten cached cards' titles,
+     urls and locations are byte-identical to `d591ce0a`. Replayed here with the same error —
+     `Rendered(error="goto:TimeoutError")`, plain `fetch`, `visit` stubbed,
+     `Deadline.start(150)` — the ladder falls to the links rung and reads **9 postings in
+     28.9 s**, so the 150-s company budget is not the constraint; the runner's datacenter IP
+     cannot reach `logica-it.com` at all. That is the `--residential` class of §1 item 2, and
+     the row is a candidate for it. Second half, and the reason a fix is not just "retry":
+     all nine of those postings come back titled `משרות טכנולוגיות - משרות הייטק - דרושים -
+     חברת Logica-IT`. The pages are a JS shell whose heading is `<h1><span>משרות</span></h1>`,
+     which `_H1_RX`'s `[^<]{3,90}` refuses, so `_parse_position_page` falls to `og:title` —
+     the site's name. Wanted: a position page whose title is identical across ≥3 siblings of
+     the same link group is naming the SITE, not a role, and the group should be refused
+     rather than published. Check: `python -c "import sys;sys.path.insert(0,'.');import
+     scrape_universal as N;h,_=N._fetch_url('https://www.logica-it.com/jobs/19437/',30);import
+     re;print(re.findall(r'<h1[^>]*>(.{0,60}?)</h1>',h,re.S)[:1])"`.
+
+625. **28 cache cards hold one shell page's text under two titles, and both cards own their
+     address** — lane: `jd-text`, filed 2026-09-18 by `scraper` (handed over through the
+     orchestrator; SendMessage resolved no peer). Measured over `scraped_cache.json` at
+     `a96ee8a`: 48 cards / 18 boards carry a byte-identical description of ≥300 characters
+     under two different titles. 20 of them were the scraper's nightly carry and are fixed and
+     repaired (`_addresses(j, listing)`, `tools/void_carried_twins.py`). The other **28 own
+     their own, DIFFERENT page** — Get SAT 6, CHEQ 4, Publicis Groupe Israel 4, AudioCodes 3,
+     Continental Israel 2 (already stamped `_jd_shared_page`), Deloitte 2, Majestic Labs 2,
+     Nebius 2, TransPerfect 2, Reeco 1 — so what was stored is a shell or a careers index that
+     answered for both, and `_shared_page_texts` re-pools it, which is why the same shell comes
+     back. Check: `python -c "import json,collections;s=json.load(open('scraped_cache.json',encoding='utf-8'));g=collections.defaultdict(set);[g[j['description']].add((c,j['title'])) for c,v in s.items() if isinstance(v,list) for j in v if isinstance(j,dict) and len((j.get('description') or '').strip())>=300 and j.get('_own_url') is not False];print(sum(len(t) for t in g.values() if len({x[1] for x in t})>=2))"`.
