@@ -125,3 +125,85 @@ must ask for it); `job_id` in every hand-built ledger state that reads it; `STAT
 table the next `status_ext` word has to be added to (an unknown word is safe, `server`);
 `tests/conftest.py` holding two more names empty; the `wayback_day_cap` Fact, which now
 refuses a §4 row that drifts from the workflow.
+
+## 7. Two scheduled nights later (2026-09-18): the per-host answer, and the cost of a job
+
+### 7a. What one job cost, and what it costs now
+
+The 09-17 run (`35251054872`, `event: schedule`, `bacf07c`) is the measurement. 3 workers ×
+3,733 s of step wall clock = **11,199 worker-seconds** opened **34 jobs** of a 250 day cap and
+named **15** captures — 329 worker-seconds a job, 747 a capture — against the hand run's ~23 s
+a job. Per-job wall time estimated from the ledger's `at` gaps over three workers: median 250 s,
+**p90 305 s**, max 348 s. Against a `WAYBACK_TIMEOUT_S` of 240.
+
+That p90 above the ceiling is the finding: `timeout` was applied TWICE per job — once as the
+POST's socket timeout, once again as `_poll`'s deadline — so 240 was a 480-s per-job ceiling
+and the night's arithmetic in §3 was wrong by a factor of two. The night's last ledger line
+landed at 18:12:24Z, 62 minutes into a 60-minute budget. Shipped 09-18: the POST and the reads
+share ONE budget, the POST taking at most half of it; `_Pool._job_budget` lowers that budget to
+the day's REMAINING clock over the workers, so no address can outlive the step; the workflow's
+value goes **240 → 180** (a 90-s POST — 57 % of the POSTs on 09-16 answered inside 30 s — and
+the reads after it). At the ceiling that is 60 jobs a night; at the ~120 s a job that ends
+normally costs, ~90.
+
+**The budget stays 60 minutes.** A 120-minute step was rejected on that arithmetic: the archive
+allows 7 captures a minute on 3 slots, so a second hour buys jobs only if a job costs what it
+should (23 s of wall clock, not 243), and the step must never run past the 19:00 listing-hunt
+slot. Fix the cost first, then re-read the number.
+
+**`pending` is not a lost address any more.** All 8 of the 09-17 `pending` lines carry a
+`job_id`, as do all 14 of the 09-16 ones, and the verify loop asks `/save/status/<job_id>`
+first: **7 of the 09-16 pendings came back `verified` on 09-17**, none `unverified`. The
+09-17 morning row asked for 0 `pending`; on the keyed rung that was the wrong question. The
+right one is the one the 09-19 row asks: every `pending` carries an id, and the next run
+resolves it.
+
+### 7b. Which addresses capture at all — the per-host table `620` asked for
+
+Every keyed job in the ledger (101 lines, 09-16..09-17), by host:
+
+| host | keyed jobs | named | outcome |
+|---|---|---|---|
+| `il.linkedin.com` | 64 | **47 (73 %)** | 17 `pending`, every one with a `job_id` |
+| `il.indeed.com` | 16 | **0** | 16 × `error:bad-request` |
+| `www.linkedin.com` | 5 | **0** | 5 × `error:not-found` |
+| own careers pages (13 hosts) | 16 | 9 | 4 `pending`, 2 `error:no-request`, 1 `error` |
+
+**The 46.5 % in §5 was wrong, and it mattered.** It counted `il.linkedin.com` — the host with
+the best capture rate in the ledger — together with the two that refuse. Re-measured over
+`collect_targets` on 2026-09-18 (6,984 addresses): `il.linkedin.com` **48.6 %**,
+`www.comeet.com` 6.0 %, `www.linkedin.com` **2.9 %** (200), `il.indeed.com` **2.3 %** (160).
+The hosts that never capture are **5.2 % of the target set**, not 46.5 %. Narrowing the tiers
+to dodge them buys 360 addresses of a 6,300 backlog; **the capacity question is throughput,
+which is 7a, not host composition** — and that is `620`'s answer.
+
+**Decided (operator ruling relayed 2026-09-18).** `il.indeed.com` is parked for 30 days
+through the mechanism that already exists: `STATUS_EXT["bad-request"]` moves from `http`
+(7 days) to `excluded` (30), because `bad-request` is the archive saying it cannot form a
+request for that ADDRESS and a week's wait asks the same impossible question again. 16 of 16
+`bad-request` ends in the whole ledger are `il.indeed.com/viewjob?jk=`; no other host has ever
+answered the word. The five-consecutive-refusals host park bounds the nightly cost at 5 of a
+250-job night while the 160 Indeed addresses drain out of the pool.
+
+**`www.linkedin.com` is NOT parked, and here is the measurement that decided it.** One free
+hand POST from the operator's machine, 2026-09-18 15:34Z, of
+`https://il.linkedin.com/jobs/view/4467993489` — the **bare id** under the `il.` host, where our
+synthesized copy `https://www.linkedin.com/jobs/view/4467993489` had ended `error:not-found` on
+09-17 at 17:23:06Z. The archive opened a job (`spn2-d5854a363cca48e4537be686c4982eca3580dd99`)
+and ended it in 16.7 s with
+
+> `crawling this host is paused because they notified us that they are overloaded right now.
+> (http status=429)`
+
+— which is **not** the address being refused: the archive reached LinkedIn and was told the
+host is paused. So the `il.` form of a bare id is not a 404, and the fix for the 5 refusals is
+the FORM of the copy `jdfill.source_copy_url` synthesizes, not a park of the host. Filed as
+`634` with this measurement; not built here, on the operator's instruction.
+
+One thing the hand POST also showed and one thing it did NOT change: the prose above arrives
+as an `error` end whose `status_ext` is a SENTENCE, not one of the archive's words, so
+`STATUS_EXT.get(...)` maps it to `server` — the archive's side, the outage streak, never a
+park. `_body_class` would have read `crawling this host is paused` as `blocked`, a host
+refusal, and parked `il.linkedin.com` after five of them. It is not wired to the `error` path
+and it stays unwired: 47 of 64 keyed jobs on that host captured, and a transient LinkedIn
+overload must never cost the best host in the ledger.

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**683 filed · 479 open · 204 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**684 filed · 480 open · 204 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 634.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 635.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -250,7 +250,7 @@ closure convention in the header.
 - **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
 - **633** `633@registry` **The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data Analyst
 
-### infra — 118 open
+### infra — 119 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -370,6 +370,7 @@ closure convention in the header.
 - **619** `619@infra` **Eight tests still assert on the state a cron rewrites, and 134 more open it through a code
 - **620** `620@infra` **The Internet Archive names ~9 captures a night for us, against a backlog of 6,193 and
 - **630** `630@infra` **Bright Data's Unlocker cannot fetch `google.com` at all, so a Google Careers posting is
+- **634** `634@infra` **Every LinkedIn copy we hand the archive is synthesized as `www.linkedin.com/jobs/view/<id>`,
 
 ### scraper — 33 open
 
@@ -12812,6 +12813,44 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      which is the dataset bar, and `_is_listing_card` stops their 573-character result cards
      being mistaken for postings.
 
+     **NOT WORTH A ZONE TODAY — `infra`, 2026-09-18, on the count.** `cloud_state/roles.jsonl`
+     holds **one** Google Israel record and it is **open**: `Research Data Scientist II, Waze`.
+     One open card is the whole population a second paid Bright Data zone would serve, and this
+     repo has already refused a second provider on exactly that shape — `620` §4 rejected a
+     second archive on "0 lines of reader code for one". The row is published with a written
+     reason, which the 2026-09-01 dataset bar accepts, so nothing is hidden and nothing is
+     wrong; it is a missing description, not a missing row. **Left open with the number that
+     would reverse it**, because nobody here has priced a SERP zone and the decision needs two
+     figures neither this lane nor `jd-text` has: (a) Bright Data's per-request price for the
+     SERP zone against the Unlocker's, and (b) **five or more OPEN board cards held for want of
+     text behind google.com at once** — today it is one. Ask the operator for (a) when (b) is
+     reached, not before. Check: `python -c "import json,io;print(sum(1 for l in
+     io.open('cloud_state/roles.jsonl',encoding='utf-8') if l.strip() and 'google' in
+     json.loads(l).get('company','').lower() and json.loads(l).get('status')=='open'))"`
+     reads `1` on 2026-09-18.
+
+634. **Every LinkedIn copy we hand the archive is synthesized as `www.linkedin.com/jobs/view/<id>`,
+     the one form LinkedIn answers the archive's crawler with a 404** — lane: `infra`
+     (`archive_evidence` reads `jdfill.source_copy_url`), filed 2026-09-18 by `infra` from the
+     keyed ledger and one hand POST. `jdfill.source_copy_url` turns `linkedin:<id>` into
+     `https://www.linkedin.com/jobs/view/<id>`, and every one of the **5** keyed jobs on that
+     host ended `error:not-found` — the address refused. The SAME ids under
+     `il.linkedin.com/jobs/view/<slug>-<id>`, which reach the ledger from the discovery cards
+     themselves rather than from the synthesizer, captured **47 of 64 (73 %)**. So this is a
+     spelling defect, not a dead host, and it costs ~200 addresses (2.9 % of the target set).
+     The hand POST that proves the host is reachable at the bare id: 2026-09-18 15:34Z,
+     `https://il.linkedin.com/jobs/view/4467993489` (whose `www.` copy was refused on 09-17 at
+     17:23:06Z) opened job `spn2-d5854a363cca48e4537be686c4982eca3580dd99` and ended in 16.7 s
+     with *"crawling this host is paused because they notified us that they are overloaded right
+     now. (http status=429)"* — the archive reached LinkedIn and was told the host is paused,
+     which is the archive's own transient state (`server`), never the address's 404. Not built
+     on 2026-09-18 by the operator's instruction (one free POST, measurement only). The change
+     is one line in `source_copy_url` or a `_copy_url` override in `archive_evidence`, and it
+     needs the second measurement the one POST could not give: a run of ~10 bare-id `il.` POSTs
+     on a night the host is not paused. Do not park `www.linkedin.com` before that. Check: the
+     per-host `ok` share of `il.linkedin.com` vs `www.linkedin.com` in
+     `cloud_state/wayback_ledger.jsonl` (`620`'s command) reads `47/64` and `0/5` on 2026-09-18.
+
 ## From the `registry` lane, 2026-09-13 (wrong boards, Osem-Nestlé, drain capacity)
 
 612. **Two parked registry rows read one board under names that differ only by a diacritic, and
@@ -13026,6 +13065,28 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `il.linkedin.com/jobs/view/<slug>-<id>` captured; the two hosts are 46.5 % of the target
      set. Operator decision after a week of scheduled nights: keep a host that never
      captures in the tiers, or not. Check: `python -c "import json,collections;from urllib.parse import urlsplit as u;c=collections.Counter();[c.update([(u(x['url']).hostname, 'ok' if (x['err']=='' and x['snap']) or x['err'] in ('cached','verified') else x.get('status_ext') or x['err'])]) for x in (json.loads(l) for l in open('cloud_state/wayback_ledger.jsonl',encoding='utf-8') if l.strip()) if x.get('job_id')];print(sorted(c.items(),key=lambda kv:-kv[1])[:20])"` — the per-host outcome of every keyed job; read it on 2026-09-23.
+
+     **ANSWERED 2026-09-18 by `infra`, and the 46.5 % above is WRONG**
+     (`docs/decisions/2026-09-16-archive-authenticated.md` §7 has the tables). The per-host
+     table over all 101 keyed jobs: `il.linkedin.com` **47 of 64 named (73 %)**,
+     `il.indeed.com` **0 of 16** (all `error:bad-request`), `www.linkedin.com` **0 of 5** (all
+     `error:not-found`), own careers pages 9 of 16. The 46.5 % counted `il.linkedin.com` — the
+     BEST host in the ledger — with the two that refuse. Re-measured over `collect_targets`
+     (6,984 addresses, 09-18): `il.linkedin.com` **48.6 %**, `www.comeet.com` 6.0 %,
+     `www.linkedin.com` 2.9 % (200), `il.indeed.com` 2.3 % (160) — **the hosts that never
+     capture are 5.2 % of the target set**, so narrowing the tiers buys 360 addresses of a
+     6,300 backlog and is not the answer. **The answer is throughput**: `WAYBACK_TIMEOUT_S` was
+     applied twice per job (the POST's socket timeout AND the poll's deadline), so 240 was a
+     480-s ceiling and 09-17 spent 11,199 worker-seconds on 34 jobs and 15 captures — a per-job
+     p90 of 305 s from the ledger's `at` gaps, and a last line 62 minutes into a 60-minute
+     budget. One shared budget, bounded by the day's remaining clock over the workers, and 180
+     in the workflow: 60 jobs a night at the ceiling, ~90 at what a job that ends normally
+     costs. **The 60-minute budget stays** — a second hour was rejected on 243 s a job versus
+     the hand run's 23, and the step must never reach the 19:00 listing-hunt slot. `il.indeed.com`
+     is parked 30 days via `STATUS_EXT["bad-request"] = "excluded"`; `www.linkedin.com` is not
+     (`634` — its `il.` form is not refused). What is LEFT of `620` is one number: whether the
+     09-19 and 09-20 nights reach the 60-90 jobs the arithmetic predicts. Check: the two
+     `[wayback]` lines' `jobs` and `captured` on 09-19 and 09-20.
 
 621. **`career.adamtotal.co.il` is an Israeli ATS this repo has never heard of, Harel's board
      is on it, and the identity gate cannot admit a tenant that lives in a QUERY string** —
