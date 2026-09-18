@@ -2421,7 +2421,7 @@ Sony Semicon Il,scrape,,https://www.sonyjobs.com/find-a-job.html,false,listing-h
 Chargeafter,scrape,,https://chargeafter.com/careers/,false,"dark-triage 2026-09-16: extract-gap (LLM found 6: Customer Success Manager, Home Improvement, Enterprise Sales) | listing-hunt 2026-09-17: no IL listing; monitored candidate"
 GT Technologies,scrape,,https://careers-gttechnologies.icims.com/jobs/search?ss=1&searchLocation=Israel,false,"crack-walled 2026-09-15: host documented, 0 IL now | dark-triage 2026-09-16: url-dead (http 405) | listing-hunt 2026-09-17: no IL listing; monitored candidate"
 Hillel Il,scrape,,https://www.hillel.org/careers,true,queue-hunt 2026-09-15: careers page documented; monitored candidate | listing-hunt 2026-09-15: verified 3 IL via www.hillel.org
-Trivago,greenhouse,trivago,https://boards-api.greenhouse.io/v1/boards/trivago/jobs,true,auto-expand; 9/0 IL
+Trivago,greenhouse,trivago,https://boards-api.greenhouse.io/v1/boards/trivago/jobs,false,"alias-of Holisto 2026-09-18: one employer (trivago innovation center, ex-Holisto); Comeet 76.001 says company_name Trivago on 6/6, both Senior Data Analyst at Rishon Lezion; greenhouse trivago 11/0 IL (Dusseldorf)"
 Rocoto,scrape,https://www.rocotosolutions.com/,https://www.rocotosolutions.com/careers,false,scanned; no open Israel roles now | listing-hunt 2026-09-15: no IL listing; monitored candidate | dark-triage 2026-09-16: page-empty (LLM confirms no open roles (Page lists no specific open roles;))
 Sparkbeyond,scrape,https://sparkbeyond.ai/careers,https://sparkbeyond.ai/careers,true,auto-expand scrape; 1 IL
 Spectrum Dynamics,scrape,https://spectrum-dynamics.com/careers/,https://spectrum-dynamics.com/careers/,true,auto-expand scrape; 7 IL
