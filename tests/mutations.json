@@ -1975,7 +1975,7 @@
   "file": "listing_hunt.py",
   "symbol": "main",
   "class": "M1-gate-removal",
-  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else \"\"",
+  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)\n                             and not _ledger_refuses(name, q_url)) else \"\"",
   "replace": "            keep = q_url",
   "why": "refusing to ACTIVATE while still writing the ADDRESS only delays the mistake 24 hours -- this tool's fast path re-reads fr[3] the next night. QuantLR's best candidate was quantlab.com and FairFly's was fireflyspace.com.",
   "must_be_killed_by_behavioural": true
@@ -1985,8 +1985,8 @@
   "file": "listing_hunt.py",
   "symbol": "main",
   "class": "M2-gate-inversion",
-  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else \"\"",
-  "replace": "            keep = q_url if (q_url and not _gate.identity_ok(name, q_url)) else \"\"",
+  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)\n                             and not _ledger_refuses(name, q_url)) else \"\"",
+  "replace": "            keep = q_url if (q_url and not _gate.identity_ok(name, q_url)\n                             and not _ledger_refuses(name, q_url)) else \"\"",
   "why": "refusing to ACTIVATE while still writing the ADDRESS only delays the mistake 24 hours -- this tool's fast path re-reads fr[3] the next night. QuantLR's best candidate was quantlab.com (a US trading firm) and FairFly's was fireflyspace.com.",
   "must_be_killed_by_behavioural": true
  },
@@ -1995,8 +1995,8 @@
   "file": "listing_hunt.py",
   "symbol": "main",
   "class": "M3-branch-narrowing",
-  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else \"\"",
-  "replace": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url) is None) else \"\"",
+  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)\n                             and not _ledger_refuses(name, q_url)) else \"\"",
+  "replace": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url) is None\n                             and not _ledger_refuses(name, q_url)) else \"\"",
   "why": "refusing to ACTIVATE while still writing the ADDRESS only delays the mistake 24 hours -- this tool's fast path re-reads fr[3] the next night. QuantLR's best candidate was quantlab.com (a US trading firm) and FairFly's was fireflyspace.com.",
   "must_be_killed_by_behavioural": true
  },
@@ -3536,18 +3536,18 @@
  },
  {
   "id": "ledger-contradicted-exact-url",
-  "file": "registry_health.py",
-  "symbol": "ledger_contradicted",
+  "file": "pipeline/board_verify.py",
+  "symbol": "_host_reads",
   "class": "M3-branch-narrowing",
-  "find": "        hit = (r[0].strip().lower(), _site(host))",
-  "replace": "        hit = (r[0].strip().lower(), _site(host) + urllib.parse.urlparse(r[3]).path)",
+  "find": "        if kn != n or site((urllib.parse.urlparse(ku).netloc or \"\").lower()) != dom:",
+  "replace": "        if kn != n or ku != (url or \"\").strip().lower():",
   "why": "the ledger is keyed on the url a read happened on and the hunt re-finds a sibling path; an exact-url census misses Mars, the founding case.",
   "must_be_killed_by_behavioural": true
  },
  {
   "id": "ledger-contradicted-bare-label",
-  "file": "registry_health.py",
-  "symbol": "_site",
+  "file": "pipeline/board_verify.py",
+  "symbol": "site",
   "class": "M5-population-widening",
   "find": "            return \".\".join(parts[i:])",
   "replace": "            return parts[i]",
@@ -4074,5 +4074,55 @@
   "killers": [
    "tests/test_units.py::test_wayback_the_account_probe_sets_workers_and_the_day_before_the_plan"
   ]
+ },
+ {
+  "id": "ledger-refuses-ignores-dates",
+  "file": "pipeline/board_verify.py",
+  "symbol": "refuses",
+  "class": "M5-population-widening",
+  "find": "    return bool(reads) and reads[-1].get(\"verdict\") == NOT_THEIRS",
+  "replace": "    return any(v.get(\"verdict\") == NOT_THEIRS for v in reads)",
+  "why": "a stale NO is not a NO: `Hillel Il` was read `ok` on hillel.org/careers on 09-15 and NOT-THEIRS on a BLOG url of the same host on 08-31, and a host-keyed count with no date rule reported it contradicted for three days. Newest read on that host wins, or the fold turns any historical misread into a permanent refusal.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "ledger-refuses-unverifiable-counts",
+  "file": "pipeline/board_verify.py",
+  "symbol": "_host_reads",
+  "class": "M5-population-widening",
+  "find": "        if (v or {}).get(\"verdict\") == UNVERIFIABLE:\n            continue",
+  "replace": "        if False:\n            continue",
+  "why": "UNVERIFIABLE means we failed to LOOK, never an answer -- `cached()` makes the same cut. Counted, a later 'could not read it' silently clears a real NOT-THEIRS and the hunt re-activates the row.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "hunt-ledger-veto-removed",
+  "file": "listing_hunt.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "            elif verdict == \"found\" and _ledger_refuses(name, url):\n                # ...and the same refusal when a MODEL already read this host and said so.\n                refused = \"ledger: another company's board\"",
+  "replace": "            elif False:\n                refused = \"\"",
+  "why": "the veto that was missing when the 19:00 hunt re-activated `Kima` onto careers.akima.com (refused 09-14) and `PayPlus` onto payplus.com (refused 09-15). `identity_gate` cannot see it -- it is pure by design and the ledger is a state file -- so the refusal has to bind in the WRITER.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "queue-lapse-suppression-swallows-an-unmeasured-stamp",
+  "file": "queue_pipeline.py",
+  "symbol": "stamp_queue",
+  "class": "M5-population-widening",
+  "find": "            _measured_lapse = _new is not None and _new == 0 and _sel is not None",
+  "replace": "            _measured_lapse = not _new",
+  "why": "'we could not measure it' is not 'it was zero': `_drain_liveness` swallows a broken queue file and leaves `new_intake` absent, and a suppression that reads an ABSENT number as a reason to stay quiet kills the alarm exactly when it matters.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "search-backoff-uncapped",
+  "file": "queue_resolve_search.py",
+  "symbol": "cadence_days",
+  "class": "M5-population-widening",
+  "find": "    return min(SEARCH_CADENCE_DAYS * (2 ** max(0, len(tries) - 1)), SEARCH_BACKOFF_CAP)",
+  "replace": "    return SEARCH_CADENCE_DAYS * (2 ** max(0, len(tries) - 1))",
+  "why": "the back-off must never become a retirement: 'no candidate was this company's live page' is not 'this company has no board' (operator rule 1). Uncapped, a name refused nine times waits 3,584 days.",
+  "must_be_killed_by_behavioural": true
  }
 ]
