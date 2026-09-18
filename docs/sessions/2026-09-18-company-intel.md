@@ -181,9 +181,12 @@ roles' own reading of them, which agrees.
 
 | | |
 |---|---|
-| `python -m pytest` | see the HANDOFF line |
+| `python -m pytest` (worktree, on the pushed tree) | **2,096 passed, 13 skipped, 0 failed** |
+| `tools/guard_kill.py --base origin/master` | **KILLS 7** of 7 new tests; no CANNOT-FAIL |
+| CI on `dd37f9f` | run `35366756545` — QUEUED behind three lanes at 16:09Z; the job-level verdict is the 09-19 row |
 | `python check_invariants.py --strict` | 2,485 rows · 1,429 active · 0 orphans |
-| `python docs/check_docs.py` | 0 errors, 3 warnings (two are the `1,000+` active-rows floor, not this lane's) |
+| `python docs/check_docs.py` | 0 errors, 2 warnings (the `1,000+` active-rows floor, not this lane's) |
+| mutation records, this session | **0 filed, deliberately.** `631` is open because the catalogue went 391 → 416 in one afternoon and six of eight shards died on the 40-minute wall with zero survivors; `infra` took it to twenty shards in `62eab37` the same evening. Adding records today would spend the headroom that fix just bought. Every new guard was proved to kill instead — `guard_kill` above, plus three hand-aimed mutants (drop `ALIASES["flare"]`; `alias_only_folds` returns `{}`; drop the `Holisto` override), each red on the tests that name it |
 
 Two STANDING tests found the one thing this branch got wrong, and they are worth naming:
 `test_no_override_ships_a_name_that_render_would_refuse` and
