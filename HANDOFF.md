@@ -55,7 +55,9 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-20 | jd-text | first schedule `jd-archive` on this commit: `scrape_recleaned` <= 274, no `archive:reclean-refused` | | |
 | 2026-09-27 | registry | of rows stamped `zero-confirm 2026-08-28: confirmed`, **<=5%** have `health_baseline > 0` (and on 09-28 the same for `zero-confirm 2026-08-29: confirmed` rows, carried from the 09-05 row); above that, strip that run's verdicts | | |
 | 2026-09-19 | registry | **the Trivago fold fires, or says why not.** The first `event: schedule` digest whose headSha contains this park prints an `alias fold` clause naming `Holisto<-Trivago`, or `left N record(s) in place, no twin` — and `Trivago` is absent from the board and from `roles.csv`'s `company` column while `holisto\|senior data analyst` is still there. NO fold clause at all means `company-intel`'s `ALIASES["trivago"]="holisto"` did not land: that is the 571 shape, a park with no declaration, and it is **FAIL** with the missing half named | | |
-| 2026-09-20 | infra | **the mutation gate fits its wall again.** After `631` is applied, the first `tests.yml` run on master reads **16 of 16** (or 16+N with the new matrix entries) and NO `mutation-gate` job exits `rc 137`; each shard's `timing wall` line is under **1,800 s**, the number `tests.yml`'s own comment names as the trigger. A shard over 1,800 s that still passes is FAIL — the headroom is gone again and the per-record cost, not the record count, is the variable (suite 1,766 → 2,072 tests) | | |
+| 2026-09-20 | infra | **the mutation gate fits its wall again.** After `631` is applied, the first `tests.yml` run on master reads **16 of 16** (or 16+N with the new matrix entries) and NO `mutation-gate` job exits `rc 137`; each shard's `timing wall` line is under **1,800 s**, the number `tests.yml`'s own comment names as the trigger. A shard over 1,800 s that still passes is FAIL — the headroom is gone again and the per-record cost, not the record count, is the variable (suite 1,766 → 2,072 tests) | 2026-09-18 (`infra`) | PASS - `35366136014` on `3f31626` (⊇ `62eab37`): **28 of 28** jobs, slowest shard **21 min** |
+| 2026-09-20 | infra | **one ceiling a job.** First schedule `jd-archive` ⊇ this push: `jobs` >= **60** (39 on 09-18), `captured` >= **25**, every `pending` with a `job_id`, <= **5** `il.indeed.com` all `excluded`. `net` rises by design; `jobs` < 60 is **FAIL** | | |
+| 2026-09-19 | infra | **the hidden role has a name.** `digests/latest.md` reads `the title is a card blob: ONE datAI: Business Data Analyst \| SQL & Power BI`, with no `fix the scrape`. A bare count is **FAIL** | | |
 | 2026-09-19 | registry | **a ledger refusal holds through a hunt.** The 09-18 19:00 `listing-hunt` (`event: schedule`, headSha ⊇ this commit): `Kima`, `PayPlus`, `Mars Antennas And Rf Systems`, `Phoenix Financial` and `Ethos` all still `active=false` in `companies.csv` after it, and no `[OK]` line names `careers.akima.com`, `payplus.com` or `arizonafinancial.org`. A `ledger: another company's board` refusal line is the PASS shape; a re-activation is **FAIL — the veto is not in the arm that wrote it** | | |
 | 2026-09-20 | registry | **the queue stamp stops crying wolf and the back-off shows.** The 09-20 `queue:` stamp: **no** `alarm=queue GREW`, `ledger_contradicted=0`, `new_intake` present, `selectable` <= 176, and `direction=lapsed` on any day `delta` > 0 with `new_intake=0`. `delta` is a reading, not a clause. Then on 09-29 `selectable` <= **176** (flat-14 would have read 225) | | |
 | 2026-09-19 | scraper | **the push is green on a runner.** `gh run view 35360358542 --json jobs` (headSha `ca405b7`, the last commit of this session) reads **16 of 16** `success` at JOB level - `guard`, `guard-kill`, six `rehearse`, eight `mutation-gate` shards. The run was still `queued` behind two lanes' runs 50 minutes after the push, which is why this is a row and not a number in the line. A red names its job and whether it is this lane's | | |
@@ -79,11 +81,10 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 
 ## Watch list for the next session
 
-0. **`python digest_watchdog.py` is still not installed** (`292@infra`, operator action) — the only tripwire off GitHub's scheduler.
+0. **`digest_watchdog.py` is not installed** (`292@infra`, operator) — the only off-GitHub tripwire.
 
-0b. **Before writing a patch script that emits YAML**, read
-   `test_no_workflow_run_block_fakes_a_line_continuation`: a literal backslash-n where a
-   continuation was meant is valid YAML, `bash -n` misses it, and it breaks every run.
+0b. **A patch script that emits YAML**: `test_no_workflow_run_block_fakes_a_line_continuation`
+   is the trap (a literal backslash-n passes `bash -n` and breaks every run).
 
 0. **Active rows with an all-time-high of ZERO — a COMMAND, not a number** (it has been wrong
    five times): `python confirm_zero.py --scrape-only` audits the pool and
@@ -99,8 +100,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 2. **`mark_sent` still records intent, not delivery.** `daily-digest.yml` runs it at step
    `Mark digested roles as sent`, before `Persist state back to the repo` and long before the
    06:17 relay. A role can still be burned unsent.
-3. **`cloud_state/seen.db` is 1.54 MB** and still holds a `firmographics` table that also
-   travels as JSON; dropping it and VACUUMing is the biggest single win on the daily binary.
+3. **`cloud_state/seen.db` is 1.54 MB**, duplicating `firmographics`; drop, VACUUM.
 4. **iCIMS is the only unsupported ATS left** — see Open items 2; `registry_health.py
    --ats` is derived and correct. HiBob is at **1** active row, moving away from the
    3-row trigger.
@@ -112,7 +112,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
    parked pool excludes it on `active == false`. `repair_dead_urls` has no active filter but
    selects on a hostname that stops resolving, which a live Workday tenant's does not.
 
-5. **GitHub dispatches these crons when it feels like it** — a dropped or +720-min-late slot is a `cron …` clause on the mail's `Stages:` line (`schedule_census.py --alarm`); the recovery-cron decision is the 09-10 row.
+5. **GitHub dispatches these crons when it feels like it** — a drop or a +720-min lateness is a `cron …` clause on the mail's `Stages:` line (`schedule_census.py --alarm`); the recovery-cron decision is the 09-10 row.
 
 ## Open items — highest value first
 
@@ -122,11 +122,10 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 2. **iCIMS** is the one platform with rows and no native fetcher (recipe: `ARCHITECTURE.md`
    §6). The old "3+ rows earns a fetcher" rule was replaced by the operator on 2026-08-26:
    one row earns it.
-3. **`CLAUDE_CODE_OAUTH_TOKEN` may expire.** Symptom: `LLM calls this run: 0` with a large
-   `llm_failed_fallback`. Re-run `claude setup-token` and reset the secret.
-4. **SerpApi did NOT reset on 2026-09-01** — measured that morning: `total_searches_left: 0`,
-   `this_month_usage: 250`, Free Plan. Five docs say "exhausted until 2026-09-01", which reads as
-   "back today". The working search stays `deep_validate.google_via_unlocker` (`4@discovery`).
+3. **`CLAUDE_CODE_OAUTH_TOKEN` may expire**: `LLM calls this run: 0` with a large
+   `llm_failed_fallback`. `claude setup-token`, reset the secret.
+4. **SerpApi did NOT reset on 2026-09-01** (`total_searches_left: 0`, Free Plan), whatever five
+   docs imply. The working search stays `deep_validate.google_via_unlocker` (`4@discovery`).
 5. **`--census` rewrites its own baseline every digest run**, so a pool alarms at most once
    and a slow drift never alarms at all. `315@registry`.
 
@@ -141,11 +140,11 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-08-24 → 2026-08-31, 63 session lines, ten lanes** — folded to pointers; numbers, CI run ids and defects are in `docs/sessions/2026-08-*.md` (`registry` (d) in `2026-08-30-infra-b.md` §0). NOT finished: 491/501/502, 464/116/503/504, 505-508, 459/511, 500@roles, 529-532, `261`, `512`-`514`, `516`-`520`, `530`, `534`-`538`.
 - **2026-09-01 → 2026-09-04, seven sessions** — folded to pointers, as 2026-08-24→08-31 was: `classifier` x2, `jd-text`, `roles`, `registry` x2, `discovery`, `finisher`, `infra`. Numbers, CI run ids and defects are in `docs/sessions/2026-09-0[1-4]-*.md`. NOT finished: `535`, `542`-`544`, `546`-`557`, `559`-`563`, `565`-`567`, `571`-`574`, `577`, `445`.
 - **2026-09-11 → 2026-09-13, fifteen sessions** — folded to pointers, as 2026-09-01→09-04 was: `registry` x2, `classifier` x2, `roles`, `jd-text` x2, `company-intel` x2, `infra` x3, `ats-fetch` x2, `scraper`. Numbers, CI run ids and defects are in `docs/sessions/2026-09-1[123]-*.md`. NOT finished: `321`, `518`, `548`, `551`, `573`, `578`-`584`, `587`, `589`-`591`, `593`-`619`.
-- **2026-09-15 `infra`** — two `zero-produce` nights were the archive DOWN, read as four hosts refusing (0 refusal lines in 768). Two failure families; `_pause` x2 for a 429 or an 8-streak; boards 1-in-6; `refusals` vs attempts; `captured`/`net`/`server`/`refused` stamped. 0 credits. CI `35026108993` **16/16**. **NOT finished:** `620`. Record: `docs/sessions/2026-09-15-infra.md`.
-- **2026-09-16 `infra`** — the anonymous archive rung named ~9 a night. `9bae94a`: the account's SPN2 API — a job per url read to its end. Schedule run `35126457407`: 56 jobs, 37 captured, `net 43` = a 30-s POST cut-off, fixed in `cf2b775`. 0 credits. CI `35135060150` **16/16**. **NOT finished:** `620` (re-scoped); the 09-18 rows. Record: `docs/sessions/2026-09-16-infra.md`.
+- **2026-09-15 -> 2026-09-16 `infra`** - folded to a pointer by its own lane; numbers and CI ids in `docs/sessions/2026-09-1[56]-infra.md`. NOT finished: `620`.
 - **2026-09-18 `registry`** — a NOT-THEIRS ledger read bound nothing; the hunt re-activated Kima and PayPlus. `board_verify.refuses` vetoes both hunt arms and `--verify-existing`; `ledger_contradicted` **3→0**. Lapse alarm fixed; back-off 14→28→56/90 (09-29 **225→123**). Harel board found, gate refuses (`621`); `Trivago` `alias-of Holisto`. BD **2**, seam **2**. CI `35359064839` **10/16**, 6 shards `rc 137` (`631`). **NOT finished:** `621`, `622`, `459`. Record: `docs/sessions/2026-09-18-registry.md`.
 - **2026-09-18 `classifier`** — the 09-14 data-platform ruling was in no contract, and 11 published rows carried a `reject` cell nothing could flip back. Record; contract `v3.0a439b16` on a measured 2-of-20 flip set; `reject_owed` + `ADJUDICATED`; 7 withdrawn, 6 kept; 13 keys voided. 74 calls, 0 BD. CI `35359208215` **10/16**, six shards walled (`631@infra`). **NOT finished:** `551`. Record: `docs/sessions/2026-09-18-classifier.md`.
 - **2026-09-18 `scraper`** — 54 cards carried a neighbour's link, 20 a sibling's text, אסם its navbar slogan. Card bounds, own-address carry key, h1-anchored place, `608`(a); replays: 447 boards 0 lost / 43 addresses corrected, 452 pages 35 places moved, 10 cards voided. BD 2. CI `35360358542`, verdict owed. **NOT finished:** `616`, `623`-`625`. Record: `docs/sessions/2026-09-18-scraper.md`.
 - **2026-09-18 `jd-text`** — own-board nav bracketed two published texts; 26 rows carried raw entities. Mirror rule, 3 markers, unescape, listing-card veto, `failed:` reasons, defective-text arm; 46 re-cleaned, fixed point proved, 2 credits. CI `35366136014` **28/28**. **NOT finished:** 607, 608, 629, 630. Record: `docs/sessions/2026-09-18-jd-text.md`.
 - **2026-09-18 `roles`** — 11 published rows shipped `class_decision=reject`. Reject→withdrawn sweep (12 records, reversible) + export tripwire; a closure sentence needs the row's OWN address (0 closures, 2 counted); `_rename_record` shared, alias no-twin rename, BioCatch tie-break. 0 BD/seam. CI `35362047730` QUEUED 0/16, verdict owed. **NOT finished:** `627`, `628`. Record: `docs/sessions/2026-09-18-roles.md`.
+- **2026-09-18 `infra`** - `WAYBACK_TIMEOUT_S` applied twice a job: 240 meant 480, and 09-17 spent 11,199 worker-seconds on 34 jobs and 15 captures (p90 305 s). One budget, remaining-clock bound, 180. `bad-request` -> 30 days. Shards 8 -> **20**. `614`(b) names the title. 0 BD/seam. CI `35366136014` **28/28**. **NOT finished:** `634`. Record: `docs/sessions/2026-09-18-infra.md`.
 - **2026-09-18 `company-intel`** — three employers held two records each, and a new brand arrived with a blurb about a Canadian company. `ALIASES` flare/trivago, `alias_only_folds` (`618`), `DISPLAY_NAME_OVERRIDES["Holisto"]`; export **1,704→1,701**, +2 display names. Group19 sector CONFIRMED, its board is `633`. Seam **1**, BD **0**. CI `35366756545` queued. **NOT finished:** `632`, `633`. Record: `docs/sessions/2026-09-18-company-intel.md`.
