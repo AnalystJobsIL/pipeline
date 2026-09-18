@@ -6464,6 +6464,23 @@ for a cache hit (`_lookup` returns it fifth) — so the dataset can say which ru
 cell (`544@roles`), and the superseded verdicts the mail counts as unreachable are printed one
 key per line.
 
+**2026-09-14 — data-platform leadership is OUT, and the ruling went into the contract.** The
+operator ruled that a role which leads data engineers, or owns the data platform, is out even
+when it also leads a BI team (SuperPlay Head of BI stays withdrawn). The boundary, both arms,
+the worked examples and what would reopen it are
+`docs/decisions/2026-09-14-data-platform-leadership.md`, which SUPERSEDES the 09-11 addendum
+to the analytics-engineer record where that addendum read "the platform is the means" on a
+posting whose own stated core IS the platform. It ships as a sentence inside condition (2),
+so it moves the `CONTRACT` hash and the drain re-judges what it invalidates. **Measured
+before it landed, one production-seam call per row over the 20 published BI-developer /
+Head-of-BI / Head-of-Data / analytics-leadership rows plus the two withdrawn anchors: 2
+moved** (`jazz | senior bi developer` — kept IN by the 09-11 addendum — and `upwind | head of
+data`, which the delta audit had read IN), **2 already OUT stayed OUT** (SuperPlay, Guardio),
+**16 unchanged**. Both flips read NO/NO/NO under the candidate contract; under the contract
+live that morning Jazz read YES/YES/YES, which is the number that decided the bump rather
+than a record applied by hand. Artifact:
+`tests/fixtures/classifier/2026-09-18-delta-audit.json`.
+
 **The scope those gates enforce is now a decision, not a phrase**:
 `docs/decisions/2026-08-28-analyst-scope.md`. Two of its five boundaries changed that day and
 both are one named flag rather than scattered conditionals. (1) **The experience bar is

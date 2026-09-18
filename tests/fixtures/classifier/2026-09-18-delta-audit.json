@@ -1,0 +1,690 @@
+{
+ "date": "2026-09-18",
+ "lane": "classifier",
+ "contract_measured": "v3.0f84ab84",
+ "seam_calls": 74,
+ "bright_data_credits": 0,
+ "vote_rule": "2026-09-11: withdraw only on three fresh NO in one sitting, or a documented seam miss. One fresh YES therefore ENDS a withdrawal, which is why the rows expected to keep were bought one vote first and escalated to three only when the first vote was NO. Every vote is uncached (`Classifier._judge`), so none of them entered `llm_cache`.",
+ "rows": [
+  {
+   "role_id": "amitim pension funds|data analyst",
+   "pool": "reject-cell",
+   "url": "https://secrethunter.io/jobz/f07378495a",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES",
+    "YES",
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "three fresh YES against a 2026-09-06 `|jd` NO: the cell is a stale seam verdict, not a reading of this text.",
+   "quote": "'ניתוח מסדי נתונים גדולים ומורכבים'; SQL and Qlik Sense חובה.",
+   "reasons": [
+    "Analyzing large complex databases, deriving business insights, trend/anomaly detection, SQL/Qlik/Power BI work for the company itself (Amitim), a permanent anal",
+    "This is an in-house data analyst role at Amitim Pension Funds involving SQL/BI querying, ETL, and business insight extraction from large databases, meeting all ",
+    "This is a direct hire by Amitim itself for an analyst who derives business insights and trends from large databases using SQL, ETL, and BI tools (Qlik/Power BI)"
+   ]
+  },
+  {
+   "role_id": "clal insurance finance כלל ביטוח ופיננסים|אנליסט ית אשראי",
+   "pool": "reject-cell",
+   "url": "https://il.linkedin.com/jobs/view/%D7%90%D7%A0%D7%9C%D7%99%D7%A1%D7%98-%D7%99%D7%AA-%D7%90%D7%A9%D7%A8%D7%90%D7%99-at-clal-insurance-finance-%D7%9B%D7%9C%D7%9C-%D7%91%D7%99%D7%98%D7%95%D7%97-%D7%95%D7%A4%D7%99%D7%A0%D7%A0%D7%A1%D7%99%D7%9D-4461087109",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "NO",
+    "NO"
+   ],
+   "adjudication": "OUT",
+   "why": "three fresh NO and the auditor agree: financial-statement credit underwriting for a credit committee.",
+   "quote": "'תנתחו דוחות כספיים של חברות פרטיות וציבוריות', 'תכינו ותציגו וועדות אשראי'.",
+   "reasons": [
+    "This is a credit risk analyst role analyzing financial statements and issuing credit recommendations, which is financial/credit risk analysis rather than data a",
+    "This is a credit analyst role analyzing financial statements of companies to issue credit recommendations and present credit committees-closer to financial/cred",
+    "This is a credit analyst role focused on analyzing financial statements and issuing credit recommendations for insurance/finance decisions-financial/credit risk"
+   ]
+  },
+  {
+   "role_id": "glow|data analyst",
+   "pool": "reject-cell",
+   "url": "https://jobs.ashbyhq.com/glow/84a23842-9b5c-4dde-a9a6-11fec0bec06d",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "NO",
+    "NO"
+   ],
+   "adjudication": "OUT",
+   "why": "three fresh NO: the deliverable is the data model and production logic, and the posting says so itself.",
+   "quote": "'This isn't a traditional BI or Product Analytics role', 'Build and modify logic in system components as part of regular delivery'.",
+   "reasons": [
+    "The role centers on data modeling, schema design, and building data infrastructure for engineering/product/data science consumption rather than producing analys",
+    "This role centers on data modeling, schema design, and structuring complex enterprise data to power product features-engineering-oriented work consumed by produ",
+    "This role centers on data modeling, schema design, and structuring enterprise data sources to power product features rather than producing analysis/reporting fo"
+   ]
+  },
+  {
+   "role_id": "migdal|data analyst",
+   "pool": "reject-cell",
+   "url": "https://il.linkedin.com/jobs/view/data-analyst-at-migdal-group-4460873878",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "NO",
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "NO/NO/YES is a flap, and the 09-01 execution record adjudicated THIS posting IN (`2026-09-01-execution-is-not-an-analysis-output.md`, the worked-examples table).",
+   "quote": "'בניית דוחות שוטפים ואד-הוק', 'הצגת ממצאים ותובנות להנהלה'.",
+   "reasons": [
+    "The role is split between business data analysis and CRM system implementation/administration (configuration, testing, user support), making it not a pure analy",
+    "The role is a hybrid of business data analysis and CRM system implementation/administration (configuring tables, permissions, interfaces, testing, user training",
+    "This is a direct hire by Migdal Group's financial division for a role centered on business data analysis, reporting, and insights (with CRM administration as a "
+   ]
+  },
+  {
+   "role_id": "navina|data researcher",
+   "pool": "reject-cell",
+   "url": "https://www.comeet.com/jobs/navina/E6.00C/data-researcher/63.D6A",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "keyword",
+   "votes_live": [
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "the cell is a `keyword` reject stamped by the run's reject map on a morning the card had no text (`_relevance` bare = none); with its own 3,087 characters the same predicate reads `signal`, the live-contract `|jd` cache row says YES (2026-09-04), and a fresh vote agrees.",
+   "quote": "cache `v3.0f84ab84|navina|data researcher|jd => 1`.",
+   "reasons": [
+    "This is an in-house data analyst role at Navina focused on building dashboards, KPIs, and analyzing product/user data to drive insights for decision-makers, whi"
+   ]
+  },
+  {
+   "role_id": "phoenix financial|business analyst 50400095",
+   "pool": "reject-cell",
+   "url": "https://il.linkedin.com/jobs/view/business-analyst-50400095-at-phoenix-financial-4456697931",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES",
+    "YES",
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "three fresh YES against a 2026-09-02 `|jd` NO.",
+   "quote": "'Create analyses, dashboards, and business insights'.",
+   "reasons": [
+    "This role is an actual company (Phoenix Financial) hiring for itself, involves quantitative business/operational and financial analysis, dashboards, KPIs and RO",
+    "This is an in-house analyst role at Phoenix Financial building dashboards, KPIs, ROI models and business insights from data, which is core analytics work, not M",
+    "This is an in-house business/data analyst role at Phoenix Financial building KPIs, dashboards, and ROI/financial analyses on measured data, not an agency postin"
+   ]
+  },
+  {
+   "role_id": "play perfect|fraud analyst",
+   "pool": "reject-cell",
+   "url": "https://www.comeet.com/jobs/play_perfect/69.001/fraud-analyst/14.A44",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "YES",
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "NO/YES/YES — a flap keeps (the 09-11 rule); fraud is a domain and the domain never decides (08-31).",
+   "quote": "",
+   "reasons": [
+    "This is a fraud analytics role focused on investigating fraud patterns-an excluded domain per the guidelines (fraud/SOC-style monitoring and investigations are ",
+    "The role centers on analyzing large datasets to detect fraud trends/patterns and generate actionable insights using SQL, which is quantitative analytics (not SO",
+    "This is a genuine analytic role focused on querying large datasets in SQL to identify fraud trends and generate insights for stakeholders, at a company hiring f"
+   ]
+  },
+  {
+   "role_id": "sunflower|marketing analyst",
+   "pool": "reject-cell",
+   "url": "https://www.comeet.com/jobs/sunflower/AA.009/marketing-analyst/11.F50",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "NO",
+    "NO"
+   ],
+   "adjudication": "OUT",
+   "why": "three fresh NO: the responsibilities lead with running the campaigns the analysis steers — the execution boundary (condition 5), the dentsu/Cato/Paz shape.",
+   "quote": "'Manage and optimise large scale marketing campaigns, in a variety of industries, on an ongoing basis'.",
+   "reasons": [
+    "Leads with managing and optimizing marketing campaigns (execution), with analysis serving that execution rather than being the primary output.",
+    "The role leads with managing and optimizing marketing campaigns and defining marketing goals (execution-oriented), with analysis serving that campaign managemen",
+    "The role leads with managing and optimizing marketing campaigns (execution), with analysis serving that campaign work rather than being the core deliverable for"
+   ]
+  },
+  {
+   "role_id": "team8|briya medical data analyst",
+   "pool": "reject-cell",
+   "url": "https://www.comeet.com/jobs/team8/61.003/briya--medical-data-analyst/13.B6B",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "NO",
+    "NO"
+   ],
+   "adjudication": "IN",
+   "why": "three fresh NO, and all three are the condition-(4) miss `2026-09-01-the-posting-must-describe-a-workplace.md` already names by title: Team8 is a venture builder whose Comeet board carries Briya, not a staffing agency. A record that adjudicated the row on a tell the seam cannot see overrides the seam.",
+   "quote": "",
+   "reasons": [
+    "This role centers on data integration, onboarding, harmonization/standardization of datasets, and building infrastructure/processes for a data marketplace produ",
+    "Core work is data integration, onboarding, standardization/harmonization of datasets (data engineering) for a marketplace product, not producing analysis/dashbo",
+    "This role is primarily data integration/onboarding engineering (harmonizing data sources into FHIR/OMOP format, building configuration/infrastructure) rather th"
+   ]
+  },
+  {
+   "role_id": "zipher|senior data analyst",
+   "pool": "reject-cell",
+   "url": "https://zipher.ai/careers/senior-data-analyst/",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "NO",
+    "NO"
+   ],
+   "adjudication": "OUT",
+   "why": "three fresh NO. The 09-13 triple was NO/YES/NO and a flap kept it; a second triple that is unanimous is a stable NO, not a flap — production-grade pipelines on telemetry and ownership of the data infrastructure.",
+   "quote": "'Build and maintain production-grade data pipelines and models on enterprise-scale telemetry', 'Direct ownership over core data infrastructure'.",
+   "reasons": [
+    "This role centers on building production-grade data pipelines and data models on large-scale telemetry (Databricks/Spark), which is analytics engineering/data e",
+    "The role centers on building production-grade data pipelines/models on Databricks/Spark for enterprise telemetry, i.e. analytics engineering/data engineering wo",
+    "Core output centers on building production-grade data pipelines/models on enterprise telemetry (Databricks/Spark) rather than primarily delivering business anal"
+   ]
+  },
+  {
+   "role_id": "אסם|אנליסט ית בקרת מכירות לקבוצת אסם נסטלה",
+   "pool": "reject-cell",
+   "url": "https://il.indeed.com/viewjob?jk=df9258e4033598ce",
+   "status": "closed",
+   "cell_before": "reject",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "NO",
+    "NO"
+   ],
+   "adjudication": "OUT",
+   "why": "three fresh NO: the responsibilities lead with budget control and trade-spend management — the named FP&A/budgeting exclusion in condition (2).",
+   "quote": "'ניתוח ביצועי מכירות מול תקציב, תחזיות ויעדים', 'בקרה וניהול של תקציבי סחר, הנחות מסחריות והוצאות משתנות'.",
+   "reasons": [
+    "This is a sales/commercial controlling role focused on budget-vs-actual analysis, trade spend budgets, and forecasting/target-setting-core FP&A-style work, whic",
+    "This role centers on sales budget control, trade spend/discount management, and forecast vs. budget variance analysis, which falls under the excluded FP&A/budge",
+    "The role centers on trade budget control, discounts/variable expense management, and reward/target model building for sales-core FP&A/budget-control work rather"
+   ]
+  },
+  {
+   "role_id": "digital turbine|senior data scientist",
+   "pool": "delta-audit",
+   "url": "https://digitalturbine.wd501.myworkdayjobs.com/Digital_Turbine_External_Careers/job/Israel---Petah-Tikva/Senior-Data-Scientist_JR101044",
+   "status": "open",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "one fresh YES; a withdrawal needs 3-of-3 NO, so one YES ends it. The analysis and experimentation half is the person's own output.",
+   "quote": "",
+   "reasons": [
+    "This is a full-time senior analytics role at Digital Turbine itself, driving business analysis, experimentation, and measurement/attribution insights for stakeh"
+   ]
+  },
+  {
+   "role_id": "one zero bank|data analyst",
+   "pool": "delta-audit",
+   "url": "https://il.linkedin.com/jobs/view/data-analyst-at-one-zero-bank-4455087833",
+   "status": "closed",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "one fresh YES.",
+   "quote": "",
+   "reasons": [
+    "This is a direct hire at ONE ZERO Bank for an analytics role building KPIs, semantic layers, and reports consumed by business stakeholders across product, marke"
+   ]
+  },
+  {
+   "role_id": "practical vision|junior web analyst",
+   "pool": "delta-audit",
+   "url": "https://practicalvision.com/career/junior-web-analyst/",
+   "status": "open",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "one fresh YES; the text is thin (half of it is the application process) — jd-text owns the re-clean, not the verdict.",
+   "quote": "",
+   "reasons": [
+    "Web analyst role using GA4, GTM, Looker Studio to analyze data and build dashboards, full-time job at the company's own office, no exclusions apply."
+   ]
+  },
+  {
+   "role_id": "practical vision|web analyst",
+   "pool": "delta-audit",
+   "url": "https://practicalvision.com/career/web-analyst/",
+   "status": "open",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "one fresh YES; same thin text.",
+   "quote": "",
+   "reasons": [
+    "Web analytics role using GA4/GTM/Looker Studio for its own company's hiring, focused on quantitative analysis, full-time position."
+   ]
+  },
+  {
+   "role_id": "ey|מנתח ת נתונים סניור",
+   "pool": "delta-audit",
+   "url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%A0%D7%AA%D7%97-%D7%AA-%D7%A0%D7%AA%D7%95%D7%A0%D7%99%D7%9D-%D7%A1%D7%A0%D7%99%D7%95%D7%A8-at-ey-4385049360",
+   "status": "open",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "YES",
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "NO/YES/YES — a flap keeps. The IS-audit half does not carry three NOs.",
+   "quote": "",
+   "reasons": [
+    "This is EY (consulting firm) hiring analysts to perform IT audits/data analysis for client financial institutions as part of consulting engagements, and the wor",
+    "This is a senior data analyst role at EY itself (consulting firm hiring for its own FSO team), focused on quantitative data analysis and IT systems audit using ",
+    "EY hiring for itself as a Senior Data Analyst on its FSO team, doing data analysis/IT-systems audits with Python, SQL, and BI tools for financial clients-an ana"
+   ]
+  },
+  {
+   "role_id": "edikted|retail analyst team lead",
+   "pool": "delta-audit",
+   "url": "https://il.linkedin.com/jobs/view/retail-analyst-team-lead-at-edikted-4439788645",
+   "status": "open",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "one fresh YES: the named leadership-report deliverable is the withfaye line, and it is what separates this row from the sibling withdrawn on 09-11.",
+   "quote": "'Develop and maintain dashboards and reports to track retail performance and provide actionable insights to leadership'.",
+   "reasons": [
+    "This is an in-house retail analytics leadership role focused on producing reporting, KPIs, and insights on quantitative retail/inventory data for Edikted itself"
+   ]
+  },
+  {
+   "role_id": "koladin|data analysis and ai builder",
+   "pool": "delta-audit",
+   "url": "https://il.linkedin.com/jobs/view/data-analysis-and-ai-builder-at-koladin-4457287268",
+   "status": "closed",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "one fresh YES on the employer's own posted text; a stock template an employer chose is still the employer's posted text.",
+   "quote": "",
+   "reasons": [
+    "This is an in-house analyst role analyzing business data and building visualizations, not ML/engineering, not an internship, not agency staffing, and quantitati"
+   ]
+  },
+  {
+   "role_id": "one datai|incentive compensation analyst",
+   "pool": "delta-audit",
+   "url": "https://il.linkedin.com/jobs/view/incentive-compensation-analyst-at-one-datai-4458835579",
+   "status": "closed",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "one fresh YES; the sibling was kept 09-11 on the same shape.",
+   "quote": "",
+   "reasons": [
+    "This is an analytical HR/compensation analyst role focused on analyzing performance and incentive data, building BI dashboards, and identifying anomalies-quanti"
+   ]
+  },
+  {
+   "role_id": "הראל ביטוח ופיננסים|אנליסט ית תחקור ובקרה",
+   "pool": "delta-audit",
+   "url": "https://il.indeed.com/viewjob?jk=f5f8823c2debd197",
+   "status": "open",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "one fresh YES, and the seam said YES on 09-16 too. The auditor's OUT claim needed 3-of-3 NO and did not get a first one. The registry/roles fold of the Hebrew row into `Harel Insurance & Finance` does not touch this verdict.",
+   "quote": "",
+   "reasons": [
+    "This role is about data quality control, database maintenance, BI/dashboard specification, and business insight extraction at an insurance company (for itself),"
+   ]
+  },
+  {
+   "role_id": "datamind bi ai|business intelligence developer qlik",
+   "pool": "delta-audit",
+   "url": "https://il.linkedin.com/jobs/view/business-intelligence-developer-qlik-at-datamind-bi-ai-4351172162",
+   "status": "open",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_live": [
+    "NO",
+    "YES",
+    "YES"
+   ],
+   "adjudication": "IN",
+   "why": "NO/YES/YES — a flap keeps. The planner predicted NO x3 on the Qlik Israel precedent; the measurement refused it. The title/body mismatch is a jd-text/scraper question, not a scope one.",
+   "quote": "",
+   "reasons": [
+    "This role is project management-heavy Qlik/ETL/BI development at a BI consulting firm hiring for itself, but core focus is BI development/ETL and project manage",
+    "This is a BI Developer role building Qlik dashboards/analytics solutions for the employer itself (a BI/AI consulting firm), which counts as analytics work, is a",
+    "Datamind BI & AI appears to be a consulting/BI firm hiring for itself as a Qlik BI Developer, involving BI solution development and analytics deliverables; it's"
+   ]
+  },
+  {
+   "role_id": "jazz|senior bi developer",
+   "pool": "09-14-ruling",
+   "url": "https://il.linkedin.com/jobs/view/senior-bi-developer-at-jazz-4462687236",
+   "status": "open",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_candidate": [
+    "NO",
+    "NO",
+    "NO"
+   ],
+   "adjudication": "OUT",
+   "why": "the 2026-09-14 operator ruling: the posting's own core is standing up and owning the data platform. Under the LIVE contract the seam bought YES/YES/YES today — the ruling is not in the rules text, which is why the contract is bumped in the same session; under the candidate contract it is NO/NO/NO.",
+   "quote": "'stand up Jazz's data platform end to end - ingestion, modeling, warehouse, orchestration', 'Owning the platform is a huge part of this role', 'Build the platform from zero', 'You're the architect'.",
+   "reasons": [
+    "The role's own core is building and owning the data platform (ingestion, warehouse, orchestration, gold layer) from scratch, which falls under the \"leading/owni",
+    "The role's core is building and owning the entire data platform from scratch (ingestion, warehouse, orchestration, gold layer) rather than being primarily a BI/",
+    "The role's own core is building and owning the data platform (ingestion, warehouse, orchestration) from scratch, i.e., leading/owning data infrastructure, which"
+   ],
+   "votes_live": [
+    "YES",
+    "YES",
+    "YES"
+   ]
+  },
+  {
+   "role_id": "upwind|head of data",
+   "pool": "09-14-ruling",
+   "url": "https://www.comeet.com/jobs/upwind/49.004/head-of-data/EF.071",
+   "status": "closed",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "votes_candidate": [
+    "NO",
+    "NO",
+    "NO"
+   ],
+   "adjudication": "OUT",
+   "why": "the 2026-09-14 ruling's first arm, found by the bump measurement rather than by the audit: the role leads data engineers AND builds the platform, with a BI team on top — the operator's sentence verbatim. NO/NO/NO under the candidate contract.",
+   "quote": "'Lead and develop the BI team, including a team of data engineers and data analysts', 'Build a scalable, reliable data platform and improve data quality and accessibility'.",
+   "reasons": [
+    "This role centers on leading data engineers/analysts and owning the data platform, governance, and infrastructure strategy-leadership of the data platform itsel",
+    "This is a data platform/BI leadership role focused on owning data strategy, building data engineering teams, and platform infrastructure/governance-not the pers",
+    "This role leads data engineers and owns the data platform/infrastructure and governance strategy, which falls under the platform-leadership exclusion rather tha"
+   ]
+  }
+ ],
+ "contract_bump": {
+  "question": "does the 2026-09-14 ruling enter LLM_RULES condition (2), or stay a record applied by hand?",
+  "jazz_under_the_live_contract": [
+   "YES",
+   "YES",
+   "YES"
+  ],
+  "population": "every published BI-developer / Head-of-BI / Head-of-Data / BI-team-lead / analytics-leadership row in the ledger, plus the two withdrawn anchors the ruling must keep OUT",
+  "rows": [
+   {
+    "role_id": "alma|head of data",
+    "status": "closed",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "biocatch|business intelligence developer",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "central bottling company israel|business intelligence developer 17621",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "clalit health services|מנהל ת מרכז מידע ואנליטיקה למחוז דרום 49965",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "connecteam|data analytics team lead",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "ecoppia|senior business intelligence developer",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "guardio|senior bi developer",
+    "status": "withdrawn",
+    "cell": "reject",
+    "votes_candidate": [
+     "NO"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "insightec|bi analyst",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "intelligent business|power bi developer data and business analyst",
+    "status": "closed",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "investing|head of analytics",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "jazz|senior bi developer",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "NO",
+     "NO",
+     "NO"
+    ],
+    "moved": true
+   },
+   {
+    "role_id": "menora mivtachim|head of analysis",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "nebius|business intelligence developer",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "nebius|head of analytics",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "pagayais|bi team lead",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "phoenix financial|digital analytics team lead 50061453",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "sunflower|bi developer",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "sunflower|bi developer payments",
+    "status": "open",
+    "cell": "accept",
+    "votes_candidate": [
+     "YES"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "superplay|head of bi",
+    "status": "withdrawn",
+    "cell": "reject",
+    "votes_candidate": [
+     "NO"
+    ],
+    "moved": false
+   },
+   {
+    "role_id": "upwind|head of data",
+    "status": "closed",
+    "cell": "accept",
+    "votes_candidate": [
+     "NO",
+     "NO",
+     "NO"
+    ],
+    "moved": true
+   }
+  ],
+  "flips": [
+   "jazz|senior bi developer",
+   "upwind|head of data"
+  ],
+  "unchanged": 18,
+  "decision": "BUMP. 2 of 20 rows move and both are the ruling's own arms (Jazz owns the platform; Upwind leads data engineers and builds it). SuperPlay and Guardio stay OUT, and the 16 IN references — BioCatch, Central Bottling, Sunflower x2, Menora, Insightec, Phoenix Digital Analytics Team Lead, Clalit 49965, Alma, Connecteam, Ecoppia, Intelligent Business, Investing, Nebius x2, Pagaya — are unchanged."
+ },
+ "title_gate": {
+  "card": "cal (israel credit cards)|מפתח.ת מודלים",
+  "claim": "the audit read it as the one title-only FALSE NEGATIVE of 491 new rejects",
+  "measured": {
+   "relevance_on_the_title_alone": "none",
+   "relevance_with_its_own_955_characters": "signal",
+   "tools_measure_title_gate_passing_tier": {
+    "signal": 130,
+    "strong": 38,
+    "postings": 168,
+    "boards": 591
+   },
+   "cached_seam_verdict": "v3.0f84ab84|cal (israel credit cards)|מפתח.ת מודלים|jd => 0 (2026-09-14)",
+   "fresh_votes": [
+    "NO",
+    "NO"
+   ]
+  },
+  "adjudication": "NOT a gate miss. `_desc_appealed` already lifts the card on its own text and the seam has read it three times and refused it three times on condition (2). No vocabulary arm: מודל stays out of `_HEBREW_SIGNAL`, which would admit the TASE and max rows the same measurement shows the appeal does NOT lift.",
+  "borderlines": 12,
+  "borderlines_note": "12 borderline rejects, 0 in scope on their own reasons; three of them (Senior AI Enablement, Senior ERP Specialist, Senior Product Designer) share one byte-identical Total-Rewards body — a scraper misattribution, so no verdict on them is anyone's."
+ },
+ "not_adjudicated": {
+  "gamida cell|senior business analyst commercial data analytics": "stays published: the 09-02 record forbids a withdrawal on text that is not the row's, and 566 defers to the board's own Israeli city by design. jd-text re-slices the own posting this batch; the condition-5 line is written then.",
+  "google israel|research data scientist ii waze": "undecidable on a 573-character listing-card stub. The `|jd` verdict bought on it is void; the key is forgotten the day jd-text lands the posting's own text.",
+  "madanes insurance agency|manager bi": "the twelfth published reject cell, outside the 90-day file. Its stored text is 0 characters and every cache row it has is `|bare`, so it cannot be judged on its own text at all — jd-text's, not this lane's."
+ }
+}
