@@ -829,27 +829,6 @@
   "since": "2026-09-13",
   "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
  },
- "test_units.py::test_drain_skips_a_name_whose_retirement_is_live": {
-  "files": [
-   "companies.csv"
-  ],
-  "since": "2026-09-13",
-  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
- },
- "test_units.py::test_drain_stops_scoring_at_the_budget_and_records_nothing_for_the_rest": {
-  "files": [
-   "companies.csv"
-  ],
-  "since": "2026-09-13",
-  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
- },
- "test_units.py::test_drain_targets_never_tried_first_then_stalest": {
-  "files": [
-   "companies.csv"
-  ],
-  "since": "2026-09-13",
-  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
- },
  "test_units.py::test_every_active_scrape_row_points_at_something_that_claims_to_list_jobs": {
   "files": [
    "companies.csv"
@@ -1010,34 +989,6 @@
   "since": "2026-09-13",
   "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
  },
- "test_units.py::test_the_drain_alarm_does_not_fire_on_a_night_that_worked": {
-  "files": [
-   "companies.csv"
-  ],
-  "since": "2026-09-13",
-  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
- },
- "test_units.py::test_the_drain_alarm_is_actually_printed": {
-  "files": [
-   "companies.csv"
-  ],
-  "since": "2026-09-13",
-  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
- },
- "test_units.py::test_the_drain_alarms_when_it_could_have_run_and_did_not": {
-  "files": [
-   "companies.csv"
-  ],
-  "since": "2026-09-13",
-  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
- },
- "test_units.py::test_the_drain_alarms_when_its_selection_set_outruns_a_nights_capacity": {
-  "files": [
-   "companies.csv"
-  ],
-  "since": "2026-09-13",
-  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
- },
  "test_units.py::test_the_drivers_run_on_the_budgets_their_docstrings_promise": {
   "files": [
    "scraped_cache.json"
@@ -1091,20 +1042,6 @@
   "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
  },
  "test_units.py::test_the_queue_is_pruned_even_on_a_morning_with_nothing_new": {
-  "files": [
-   "companies.csv"
-  ],
-  "since": "2026-09-13",
-  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
- },
- "test_units.py::test_the_queue_reports_what_is_owed_not_what_is_merely_unsettled": {
-  "files": [
-   "companies.csv"
-  ],
-  "since": "2026-09-13",
-  "why": "incidental: a code default opens these and the test passes with them emptied (measured 2026-09-13). Redirect the default to tmp_path when the file is next touched."
- },
- "test_units.py::test_the_queue_stamp_carries_capacity_and_the_ledger_contradiction_count": {
   "files": [
    "companies.csv"
   ],

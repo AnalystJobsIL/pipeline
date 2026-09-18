@@ -210,3 +210,64 @@ dataset-critical ones -- `docs/decisions/2026-09-12-jd-fill-caps-unbound.md`. It
 records why the `ALLOWANCES` table built here was left knowingly short of the new cap
 rather than re-cut: the table is a 5,000 split of a 13,560/month measured demand, so no
 re-cut inside `SOFT` can cover it, and `SOFT` is a PRICE line rather than a capacity.
+
+---
+
+## Addendum, 2026-09-18 (`registry`): the search-llm back-off
+
+**The ruling said "optimize once, then spend".** This is a second optimization, approved by
+the orchestrator on 2026-09-18, and it is filed here because it changes a CADENCE this record
+priced and not a cap.
+
+**What was wrong.** `queue_resolve_search` re-asked every name on a flat 14-day cadence,
+including the names it had already REFUSED. Measured on 2026-09-18 over the 869 unsettled
+queue names sitting on cadence:
+
+| last `search-llm` verdict | names |
+|---|---|
+| `no candidate was this company's live page` | 312 |
+| `documented` (carries a proposal) | 243 |
+| `their page, but not a board (...)` | 164 |
+| `no-search-results` | 97 |
+| `found` (carries a proposal) | 75 |
+| `budget hit: searched, not scored` | 6 |
+
+522 names had been searched once, **368 twice, 7 three times** — and a second identical
+refusal was bought again a fortnight later, for ever. The lapse calendar (last search + 14)
+put **162 names on 09-28 and 225 on 09-29** against a nightly capacity of 176: a `queue drain
+BEHIND` alarm guaranteed by arithmetic, on two consecutive nights, for names already answered
+twice.
+
+**The change.** `cadence_days(state, name)` — one function, consumed in one place (the
+`tried_within` call in `ranked_targets`). A name whose NEWEST `search-llm` verdict is one of
+the three REFUSALS waits `min(14 · 2^(attempts-1), 90)` days: 14, 28, 56, then the cap. The
+cap is `SEARCH_BACKOFF_CAP = 90`, the same number as `queue_disposition.REOPEN_DAYS["no-board"]`.
+
+**What is deliberately NOT backed off.** `documented` and `found` keep 14 days: they carry a
+proposal somebody still has to apply, so delaying them delays ROWS, not spend. `budget hit:
+searched, not scored` keeps 14 days too — that is our own clock running out, not an answer
+about the company, and backing it off would punish a name for a bad night.
+
+**It is not a retirement, and must never become one.** "No candidate was this company's live
+page" is not "this company has no board" (operator rule 1, `ARCHITECTURE.md` section 2). Adding
+these verdicts to `queue_state.TERMINAL` was rejected for that reason; the cap is what keeps
+the re-ask alive.
+
+**Measured effect**, run against the live queue before shipping (the same script, the shipped
+function):
+
+| day | flat 14 | under the back-off |
+|---|---|---|
+| 09-19 … 09-25 | 20 / 40 / 25 / 41 / 40 / 82 / 28 | unchanged |
+| 2026-09-27 | 83 | 70 |
+| **2026-09-28** | **162** | **55** |
+| **2026-09-29** | **225** | **123** |
+| 2026-09-30 | 59 | 39 |
+| 2026-10-01 | 64 | 45 |
+
+OWED today falls 74 → 67, nothing is lost (the 869 total is unchanged; 261 names move past
+10-11), and no day in the next fortnight exceeds the 176-name capacity. At the measured
+**~1.4 credits a name** (the 09-17 drain booked 25 + 24 + 31 = 80 credits for ~57 scored
+names) that is **≈ 365 credits deferred over the fortnight, ~26 a night** — worth having, but
+the reason for the change is the false `BEHIND` alarm, not the credits. `SOFT` is still a
+price line and this does not move it.

@@ -2468,6 +2468,36 @@ ever; one slot in five goes to the stalest re-try whenever one is waiting
 cleanup will remove) beside `selectable`, so a `queue GREW` alarm can be read as arrivals or
 as resurrection.
 
+**A RISE IS NOT A BACKLOG, and a refusal is not re-bought for ever** (2026-09-18). Two halves
+of one arithmetic problem.
+
+*The alarm.* `queue GREW by N ... the drain is not keeping pace with intake` fired on ANY
+positive delta. On 2026-09-18 it fired on `owed=28 delta=28`, on a stamp whose own
+`new_intake` was **0** and whose `selectable` was **77** against `capacity` **176** — the 27
+names searched on 09-04 came due, that is all, and the 09-17 drain had taken its entire
+selection set. The alarm now fires only when `new_intake > 0` (names ARRIVING) or
+`selectable > capacity` (a set a night cannot buy); a rise that is neither reads
+`direction=lapsed` — a VALUE, so every reader of `direction` keeps working — and stamps no
+alarm. An alarm that fires on the normal case is the one people learn to skip, which is what
+had already happened to this one twice.
+
+*The cadence.* A `search-llm` REFUSAL was re-asked every 14 days for ever. Measured on
+2026-09-18 over the 869 unsettled names on cadence: 573 carried a refusal as their newest
+verdict (312 `no candidate was this company's live page`, 164 `their page, but not a board`,
+97 `no-search-results`), 368 names had been refused twice and 7 three times, and the lapse
+calendar put **162 on 09-28 and 225 on 09-29** against a capacity of 176 — a `BEHIND` alarm
+guaranteed by arithmetic, twice, on names already answered twice. `queue_resolve_search.cadence_days`
+backs a REFUSED name off **14 → 28 → 56, capped at 90** (`SEARCH_BACKOFF_CAP`, the same 90 as
+`queue_disposition.REOPEN_DAYS["no-board"]`), in ONE place — the `tried_within` call in
+`ranked_targets`, which now also passes the caller's `today` down instead of asking the wall
+clock. Those two days then read **55 and 123**, today's OWED 74 → 67, and 261 names move out
+of the next fortnight (~365 credits at the measured 1.4 a name, ~26 a night). `documented`
+and `found` keep 14 days — they carry a proposal somebody still has to apply, and delaying
+those delays ROWS, not spend — and so does `budget hit: searched, not scored`, which is our
+clock running out, not an answer about the company. **It is never a retirement**: "no
+candidate was this company's live page" is not "this company has no board" (section 2,
+operator rule 1), which is why the cap exists at all.
+
 **A disarmed drain is BUSY, not idle — and until 2026-08-31 no alarm could see it.** The
 stamp's liveness clause named three causes and admitted it could not tell them apart (*a
 disarmed key, an exhausted `DEEP_BD_SEARCH_CAP` or a dead shard all look like this*). It was

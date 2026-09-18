@@ -22234,7 +22234,9 @@ import json as _r830_json
 
 def _r830_tree(tmp_path, monkeypatch, queue, csv_rows=(), qstate=None, disp=None):
     """A whole registry tree in a temp dir: queue file, registry, both ledgers."""
+    import functools
     import queue_state as QS
+    import pipeline.companies as _PC
     monkeypatch.chdir(tmp_path)
     (tmp_path / "cloud_state").mkdir(exist_ok=True)
     (tmp_path / "companies.csv").write_text(
@@ -22247,6 +22249,16 @@ def _r830_tree(tmp_path, monkeypatch, queue, csv_rows=(), qstate=None, disp=None
     (tmp_path / "cloud_state" / "queue_disposition.json").write_text(
         _r830_json.dumps(disp or {}), encoding="utf-8")
     monkeypatch.setattr(QS, "PATH", str(tmp_path / "cloud_state" / "queue_state.json"))
+    # ...and the REGISTRY this tree writes, not the live one. `pipeline.companies.CSV_PATH` is
+    # ABSOLUTE and is bound into `load_companies`' default at def time, so the `chdir` above
+    # never redirected it: every test built on this helper read the real, cron-rewritten
+    # `companies.csv` through `queue_state.registry_names()`, and sixteen of them carry a
+    # 2026-09-13 allowlist entry saying "redirect the default to tmp_path when the file is
+    # next touched". This is that. `registry_names` imports the symbol from the MODULE at call
+    # time, so patching it here is what that import resolves to.
+    monkeypatch.setattr(_PC, "CSV_PATH", str(tmp_path / "companies.csv"))
+    monkeypatch.setattr(_PC, "load_companies",
+                        functools.partial(_PC.load_companies, str(tmp_path / "companies.csv")))
 
 
 def _r830_disp(verdict, day):
@@ -22423,6 +22435,133 @@ def test_the_drain_alarms_when_its_selection_set_outruns_a_nights_capacity(tmp_p
     live = QP._drain_liveness()
     assert live["selectable"] > QP.DRAIN_NIGHTLY_CAP
     assert "BEHIND" in live["drain_alarm"]
+
+
+def _stamp(tmp_path, monkeypatch, *, prev_owed, queue, qstate=None):
+    """Run `stamp_queue` against a temp tree with a PREVIOUS stamp already on file, and hand
+    back the detail dict it stamped."""
+    import queue_pipeline as QP
+    from pipeline import stages
+    _r830_tree(tmp_path, monkeypatch, queue=queue, qstate=qstate or {})
+    sp = tmp_path / "cloud_state" / "stages.json"
+    sp.write_text(_r830_json.dumps(
+        {"queue": {"date": "2026-09-16", "owed": prev_owed}}), encoding="utf-8")
+    monkeypatch.setattr(stages, "PATH", str(sp))
+    return QP.stamp_queue({"buckets": {"owed, a nightly rung retries it": 0},
+                           "unverified_rows": 0, "ledger_contradicted": 0})
+
+
+def test_a_cadence_lapse_inside_capacity_is_not_the_drain_failing_to_keep_pace(tmp_path,
+                                                                              monkeypatch):
+    """`owed` rises for two different reasons and this alarm could not tell them apart.
+
+    2026-09-18: `alarm=queue GREW by 28 since 2026-09-16 -- the drain is not keeping pace
+    with intake`, on a stamp whose own `new_intake` was 0 and whose `selectable` was 77
+    against `capacity` 176. The 27 names searched on 09-04 came due, that is all; the 09-17
+    drain had taken its entire selection set. An alarm that fires on the normal case is the
+    one people learn to skip -- which is what happened to this one twice before.
+    """
+    # every name already searched, INSIDE capacity: a pure lapse wave
+    d = _stamp(tmp_path, monkeypatch, prev_owed=0, queue=["Lapsed %d" % i for i in range(3)],
+               qstate={"Lapsed %d" % i: {"tried": [{"rung": "search-llm", "date": "2026-08-01",
+                                                    "verdict": "no-search-results"}]}
+                       for i in range(3)})
+    assert d["delta"] > 0 and d.get("new_intake") == 0, d
+    assert d["selectable"] <= d["capacity"], d
+    assert "alarm" not in d, d
+    assert d["direction"] == "lapsed", d
+
+
+def test_the_grew_alarm_still_fires_when_names_ARRIVE_or_the_set_outruns_a_night(tmp_path,
+                                                                                 monkeypatch):
+    """The positive control, both arms -- or the fix above would be "delete the alarm".
+
+    New intake is the condition the alarm was written for. A selection set larger than a
+    night's capacity is the other: those names are not merely due, they cannot all be bought.
+    """
+    import queue_pipeline as QP
+    arriving = _stamp(tmp_path, monkeypatch, prev_owed=0, queue=["New Co", "Other Co"])
+    assert arriving["new_intake"] > 0 and "alarm" in arriving, arriving
+    assert arriving["direction"] == "GROWING", arriving
+
+    names = ["Co %d" % i for i in range(QP.DRAIN_NIGHTLY_CAP + 5)]
+    qstate = {n: {"tried": [{"rung": "search-llm", "date": "2026-08-01",
+                             "verdict": "no-search-results"}]} for n in names}
+    big = _stamp(tmp_path, monkeypatch, prev_owed=0, queue=names, qstate=qstate)
+    assert big["new_intake"] == 0 and big["selectable"] > big["capacity"], big
+    assert "alarm" in big, big
+
+    # ...and the third arm: "we could not measure it" is not "it was zero". `_drain_liveness`
+    # swallows a broken queue file and leaves `new_intake`/`selectable` ABSENT; a suppression
+    # that read an absent number as a reason to stay quiet is how an alarm dies unnoticed.
+    monkeypatch.setattr(QP, "_drain_liveness", lambda: {})
+    blind = _stamp(tmp_path, monkeypatch, prev_owed=0, queue=["Any Co"])
+    assert blind["delta"] > 0 and "new_intake" not in blind, blind
+    assert "alarm" in blind and blind["direction"] == "GROWING", blind
+
+
+def test_a_refusal_the_rung_has_repeated_is_re_asked_later_and_never_retired():
+    """A search-llm refusal was re-bought every 14 days for ever.
+
+    On 2026-09-18 the queue held 573 unsettled names whose newest search-llm verdict was a
+    refusal -- 312 `no candidate was this company's live page`, 164 `their page, but not a
+    board`, 97 `no-search-results` -- and the lapse calendar put 162 of them on 09-28 and 225
+    on 09-29 against a nightly capacity of 176: a `BEHIND` alarm guaranteed by arithmetic, on
+    names already answered twice. Under this rule those two days read 55 and 123.
+
+    The cap is 90 days and there is no retirement: "no candidate was this company's live
+    page" is not "this company has no board" (operator rule 1, ARCHITECTURE section 2). And a
+    verdict that carries a PROPOSAL somebody still has to apply keeps the 14-day cadence --
+    backing those off would delay the rows, not the spend.
+    """
+    import queue_resolve_search as QRS
+    import queue_state as QS
+
+    def st(n, verdict="no candidate was this company's live page"):
+        s = {}
+        for i in range(n):
+            QS.record(s, "Co", "search-llm", verdict, day="2026-0%d-01" % (i + 1))
+        return s
+
+    assert QRS.cadence_days(st(1), "Co") == 14
+    assert QRS.cadence_days(st(2), "Co") == 28
+    assert QRS.cadence_days(st(3), "Co") == 56
+    assert QRS.cadence_days(st(4), "Co") == QRS.SEARCH_BACKOFF_CAP == 90
+    assert QRS.cadence_days(st(9), "Co") == 90, "the back-off must never become a retirement"
+    # the other two refusal spellings, including the one with a parenthetical tail
+    assert QRS.cadence_days(st(2, "their page, but not a board (no jobs, no board-shaped url)"),
+                            "Co") == 28
+    assert QRS.cadence_days(st(2, "no-search-results"), "Co") == 28
+    # a verdict carrying a proposal, and our own clock running out, both keep 14
+    assert QRS.cadence_days(st(3, "documented"), "Co") == 14
+    assert QRS.cadence_days(st(3, "found"), "Co") == 14
+    assert QRS.cadence_days(st(3, "budget hit: searched, not scored"), "Co") == 14
+    # ...and the NEWEST verdict decides: two refusals then a proposal is back on 14
+    s = st(2)
+    QS.record(s, "Co", "search-llm", "documented", day="2026-04-01")
+    assert QRS.cadence_days(s, "Co") == 14
+    assert QRS.cadence_days({}, "Never Searched") == 14
+
+
+def test_the_drain_selects_a_twice_refused_name_on_the_back_off_day_not_the_fourteenth(
+        tmp_path, monkeypatch):
+    """The predicate, not just the arithmetic -- and on a FROZEN `today`, which
+    `ranked_targets` now hands down to `tried_within` (it did not, so the cadence question
+    was answered against the wall clock inside a function that takes a date)."""
+    import queue_resolve_search as QRS
+    import queue_state as QS
+    qstate = {}
+    QS.record(qstate, "Once Co", "search-llm", "no-search-results", day="2026-09-01")
+    for day in ("2026-08-18", "2026-09-01"):
+        QS.record(qstate, "Twice Co", "search-llm", "no-search-results", day=day)
+    _r830_tree(tmp_path, monkeypatch, queue=["Once Co", "Twice Co"], qstate=qstate)
+
+    import datetime as _dt
+    # day 15 after the last search: the once-refused name is due, the twice-refused is not
+    got = QRS.targets(today=_dt.date(2026, 9, 16))
+    assert got == ["Once Co"], got
+    # day 29: the 28-day back-off has lapsed and it comes back -- deferred, never retired
+    assert set(QRS.targets(today=_dt.date(2026, 9, 30))) == {"Once Co", "Twice Co"}
 
 
 def _r830_active_tree(tmp_path, monkeypatch, rows, baseline):

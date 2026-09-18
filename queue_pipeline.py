@@ -978,7 +978,27 @@ def stamp_queue(receipt):
             detail["direction"] = ("GROWING" if detail["delta"] > 0
                                    else ("falling" if detail["delta"] < 0 else "flat"))
             detail.pop("alarm", None)
-            if detail["delta"] > 0:
+            # A RISE IS NOT A BACKLOG. `owed` climbs for two different reasons and this alarm
+            # could not tell them apart: names ARRIVING faster than the drain empties them
+            # (the condition it was written for), and names whose cadence simply LAPSED
+            # today, already answered, inside a night's capacity. On 2026-09-18 it fired
+            # `queue GREW by 28 ... the drain is not keeping pace with intake` on a stamp
+            # whose own `new_intake` was 0 and whose selectable set was 77 against a capacity
+            # of 176 -- the 27 names searched on 09-04 came due, and the drain had kept pace
+            # perfectly. An alarm that fires on the normal case is the one people learn to
+            # skip, which is what happened to this one twice.
+            _new = detail.get("new_intake")
+            _sel, _cap = detail.get("selectable"), detail.get("capacity")
+            _outruns = _sel is not None and _cap is not None and _sel > _cap
+            # "we could not measure it" is not "it was zero": `_drain_liveness` swallows a
+            # broken queue file and leaves these keys absent, and a suppression that reads an
+            # ABSENT number as a reason to stay quiet is how an alarm dies unnoticed. Only a
+            # measured 0 may silence it.
+            _measured_lapse = _new is not None and _new == 0 and _sel is not None
+            if detail["delta"] > 0 and _measured_lapse and not _outruns:
+                # a value, not a new key: every reader of `direction` keeps working
+                detail["direction"] = "lapsed"
+            elif detail["delta"] > 0:
                 detail["alarm"] = ("queue GREW by %d since %s -- the drain is not keeping "
                                    "pace with intake" % (detail["delta"], prev.get("date", "?")))
         owed = o

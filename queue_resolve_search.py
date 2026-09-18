@@ -193,6 +193,49 @@ def _never_searched(state, name):
 
 STALE_SHARE = 5          # one in five slots goes to the stalest re-try when both classes wait
 
+SEARCH_CADENCE_DAYS = 14        # the first re-ask, and the ONLY cadence a proposal-bearing
+                                # verdict ever gets
+SEARCH_BACKOFF_CAP = 90         # == queue_disposition.REOPEN_DAYS["no-board"]: the longest
+                                # this project lets any "we looked and found nothing" sleep
+
+# The three verdicts that mean THIS RUNG LOOKED AND FOUND NOTHING. Matched as prefixes
+# because two of them carry a parenthetical tail. `documented` and `found` are deliberately
+# absent: they carry a proposal somebody still has to apply, so they keep the 14-day cadence.
+# `budget hit: searched, not scored` is absent too -- that is OUR clock running out, not an
+# answer about the company, and backing it off would punish a name for a bad night.
+REFUSAL_VERDICTS = ("no candidate was this company's live page",
+                    "their page, but not a board",
+                    "no-search-results")
+
+
+def _is_refusal(verdict):
+    v = str(verdict or "").strip()
+    return any(v.startswith(p) for p in REFUSAL_VERDICTS)
+
+
+def cadence_days(state, name):
+    """How long this rung waits before it re-asks `name`: 14, then 28, then 56, capped at 90.
+
+    ONE refusal is worth re-asking in a fortnight -- the web changes and a company opens a
+    board. The SECOND identical refusal is the rung telling us the first was not a fluke, and
+    at a flat 14 days it is bought again for ever: on 2026-09-18 the queue held 573 names
+    whose last search-llm verdict was a refusal, 312 of them `no candidate was this company's
+    live page`, and the lapse calendar put 162 of them on 09-28 and 225 on 09-29 against a
+    nightly capacity of 176 -- a `BEHIND` alarm guaranteed by arithmetic, twice, on names we
+    had already answered twice. Under this rule those two days read 55 and 123.
+
+    The back-off is on the REFUSALS only and it never becomes a retirement: 90 days is the
+    cap (`queue_disposition.REOPEN_DAYS["no-board"]`), because "no candidate was this
+    company's live page" is not "this company has no board" -- operator rule 1, ARCHITECTURE
+    section 2. Approved 2026-09-18; the addendum is on
+    docs/decisions/2026-09-11-bd-unlimited-optimize-once.md.
+    """
+    import queue_state as QS
+    tries = [a for a in QS.attempts(state, name, "search-llm") if a.get("date")]
+    if not tries or not _is_refusal(sorted(tries, key=lambda a: a["date"])[-1].get("verdict")):
+        return SEARCH_CADENCE_DAYS
+    return min(SEARCH_CADENCE_DAYS * (2 ** max(0, len(tries) - 1)), SEARCH_BACKOFF_CAP)
+
 
 def select(ranked, n):
     """The `n` names a shard takes from its ranked list: the new first, but never ONLY the new.
@@ -255,7 +298,8 @@ def ranked_targets(shard="", today=None, cap=0):
         if QD.is_retired(n, disp, today):
             continue                       # a LIVE answer is already on disk
         reopened = _reopened_since_search(st, n)
-        if QS.tried_within(st, n, "search-llm", 14) and not reopened:
+        if (QS.tried_within(st, n, "search-llm", cadence_days(st, n), today)
+                and not reopened):
             continue                       # this rung's own cadence, like every other pool
         last = "" if reopened else _last_search(st, n)
         ranked.append((1 if last else 0, last, n))
