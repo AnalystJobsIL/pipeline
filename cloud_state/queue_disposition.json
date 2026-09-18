@@ -6213,10 +6213,14 @@
   "why": "Civan Lasers is a real Israeli laser manufacturer with its own Wix site; a 12-path careers probe of civanlasers.com found no careers page or job board."
  },
  "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
-  "date": "2026-09-08",
+  "date": "2026-09-17",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Clal Insurance And Finance",
+  "why": "a rung found this name's board and the registry row 'Clal Insurance And Finance' already reads it (matched on url, never on the name)",
   "evidence": {
-   "matched_on": "url",
    "row": "Clal Insurance And Finance",
+   "matched_on": "url",
    "tried": [
     [
      "search-llm",
@@ -6224,11 +6228,7 @@
      "https://www.clalbit.co.il/careers/"
     ]
    ]
-  },
-  "other_name": "Clal Insurance And Finance",
-  "raw_verdict": "",
-  "verdict": "covered-by-row",
-  "why": "a rung found this name's board and the registry row 'Clal Insurance And Finance' already reads it (matched on url, never on the name)"
+  }
  },
  "Clal Insurance And Finance": {
   "board_url_if_any": "",
@@ -10339,7 +10339,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Guideline Group": {
-  "date": "2026-09-16",
+  "date": "2026-09-17",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Guideline",
@@ -21563,7 +21563,7 @@
   "why": "a registry row now covers this name; the queue entry is spent"
  },
  "Plus500™": {
-  "date": "2026-09-16",
+  "date": "2026-09-17",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Plus500",
@@ -22714,7 +22714,7 @@
   "why": "a rung recorded `already-a-row` for this name; the queue entry is spent"
  },
  "Speedata.io": {
-  "date": "2026-09-16",
+  "date": "2026-09-17",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Speedata",
@@ -22806,7 +22806,7 @@
   "why": "None of the search results identify an employer named \"Strategic Matching\" — they are generic articles about job matching plus an unrelated Match Group careers page. Without evidence of the company's own site or identity, the careers-path probe cannot be attributed to it, so the name remains unresol"
  },
  "Strauss Group": {
-  "date": "2026-09-16",
+  "date": "2026-09-17",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Strauss Water Ltd. שטראוס מים",
@@ -23778,7 +23778,7 @@
   "why": "a registry row under this exact name now covers it; the queue entry is spent"
  },
  "Wobi Ltd": {
-  "date": "2026-09-16",
+  "date": "2026-09-17",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Wobi",
@@ -25618,7 +25618,7 @@
   }
  },
  "Tomax-Think Academy": {
-  "date": "2026-09-16",
+  "date": "2026-09-17",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Tomax Think Academy",
@@ -25776,7 +25776,7 @@
   }
  },
  "Magenta Medical Ltd.": {
-  "date": "2026-09-16",
+  "date": "2026-09-17",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Magenta Medical",
@@ -25926,7 +25926,7 @@
   }
  },
  "eTeacher Group": {
-  "date": "2026-09-16",
+  "date": "2026-09-17",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "eteacher",
@@ -25987,7 +25987,7 @@
   }
  },
  "Itron": {
-  "date": "2026-09-16",
+  "date": "2026-09-17",
   "verdict": "covered-by-row",
   "raw_verdict": "",
   "other_name": "Itron, Inc.",
@@ -26106,6 +26106,179 @@
    "row": "Dot Compliance",
    "matched_on": "name-normalised",
    "tried": []
+  }
+ },
+ "Meitav - מיטב בית השקעות": {
+  "date": "2026-09-17",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Meitav Investment House",
+  "why": "a rung found this name's board and the registry row 'Meitav Investment House' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "Meitav Investment House",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.meitav.co.il/jobs"
+    ]
+   ]
+  }
+ },
+ "Superfunnel AI": {
+  "date": "2026-09-17",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "SuperFunnel",
+  "why": "a rung found this name's board and the registry row 'SuperFunnel' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "SuperFunnel",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://www.superfunnel.ai/careers"
+    ]
+   ]
+  }
+ },
+ "Sw Ap": {
+  "date": "2026-09-17",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "SWAPP.AI",
+  "why": "a rung found this name's board and the registry row 'SWAPP.AI' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "SWAPP.AI",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "found",
+     "https://swapp.ai/careers"
+    ]
+   ]
+  }
+ },
+ "Systematics": {
+  "date": "2026-09-17",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Systematics Ltd. Solutions at work.",
+  "why": "a rung found this name's board and the registry row 'Systematics Ltd. Solutions at work.' already reads it (matched on hostpath, never on the name)",
+  "evidence": {
+   "row": "Systematics Ltd. Solutions at work.",
+   "matched_on": "hostpath",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.systematics.co.il/careers"
+    ]
+   ]
+  }
+ },
+ "Tabor Elc HR": {
+  "date": "2026-09-17",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Tabor Electronics",
+  "why": "a rung found this name's board and the registry row 'Tabor Electronics' already reads it (matched on url, never on the name)",
+  "evidence": {
+   "row": "Tabor Electronics",
+   "matched_on": "url",
+   "tried": [
+    [
+     "search-llm",
+     "documented",
+     "https://www.taborelec.com/careers"
+    ]
+   ]
+  }
+ },
+ "GlassesUSA": {
+  "date": "2026-09-17",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Glassesusa Llc",
+  "why": "the registry row 'Glassesusa Llc' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Glassesusa Llc",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Efficio": {
+  "date": "2026-09-17",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Solidus Labs": {
+  "date": "2026-09-17",
+  "verdict": "covered-by-row",
+  "raw_verdict": "",
+  "other_name": "Soliduslabs",
+  "why": "the registry row 'Soliduslabs' is this employer under another spelling (name-normalised)",
+  "evidence": {
+   "row": "Soliduslabs",
+   "matched_on": "name-normalised",
+   "tried": []
+  }
+ },
+ "Tap": {
+  "date": "2026-09-17",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": []
+  }
+ },
+ "Tandemg": {
+  "date": "2026-09-17",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
+  }
+ },
+ "Tappgo": {
+  "date": "2026-09-17",
+  "verdict": "already-a-row",
+  "raw_verdict": "already-a-row",
+  "other_name": "",
+  "why": "a rung recorded `already-a-row` for this name; the queue entry is spent",
+  "evidence": {
+   "queue_state_verdict": "already-a-row",
+   "tried": [
+    [
+     "listing-hunt",
+     "nolisting"
+    ]
+   ]
   }
  }
 }

@@ -204,29 +204,30 @@
   "scanned": 1422
  },
  "queue": {
+  "alarm": "queue GREW by 28 since 2026-09-16 -- the drain is not keeping pace with intake",
   "answered_on_disk": 2,
   "capacity": 176,
-  "date": "2026-09-16",
-  "delta": 0,
-  "direction": "flat",
-  "empty_search_share": 0.118,
-  "finished_at": "2026-09-16T23:51:56+00:00",
-  "ledger_contradicted": 2,
+  "date": "2026-09-18",
+  "delta": 28,
+  "direction": "GROWING",
+  "empty_search_share": 0.066,
+  "finished_at": "2026-09-18T00:54:32+00:00",
+  "ledger_contradicted": 3,
   "new_intake": 0,
-  "on_cadence": 868,
-  "owed": 0,
-  "retired": 388,
+  "on_cadence": 869,
+  "owed": 28,
+  "retired": 395,
   "retired_in_queue": 2,
-  "rows_from_queue": 698,
-  "searched_recently": 337,
-  "selectable": 0,
+  "rows_from_queue": 702,
+  "searched_recently": 76,
+  "selectable": 28,
   "stuck": 0,
-  "unsettled": 868,
-  "unverified_rows": 48
+  "unsettled": 897,
+  "unverified_rows": 12
  },
  "repair": {
-  "date": "2026-09-16",
-  "finished_at": "2026-09-16T23:52:28+00:00"
+  "date": "2026-09-18",
+  "finished_at": "2026-09-18T00:55:07+00:00"
  },
  "wayback": {
   "auth": "keyed",
