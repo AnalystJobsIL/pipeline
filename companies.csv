@@ -2203,7 +2203,7 @@ Picker Agrobotics,scrape,https://picker-agrobotics.com,https://picker-agrobotics
 Plastics App,scrape,https://plastics-app.com,https://plastics-app.com/careers/,false,scanned; no open Israel roles now | deep-validated 2026-09-13: no ATS detected (rendered) | dark-triage 2026-09-16: js-shell (job XHRs seen during render) | listing-hunt 2026-09-17: no IL listing; monitored candidate
 Plataine,scrape,https://www.plataine.com/careers/,https://www.plataine.com/careers/,true,auto-expand scrape; 2 IL
 ERGO NEXT,scrape,,https://www.nextinsurance.com/careers/,true,queue-drain 2026-09-06 search-llm; 11/11 IL
-"Vessel Technologies, Inc.",scrape,,https://www.vesseltechnologies.com/careers,true,queue-drain 2026-09-06 search-llm; 1/1 IL
+"Vessel Technologies, Inc.",lever,myvessel,https://api.lever.co/v0/postings/myvessel?mode=json,true,queue-drain 2026-09-06 search-llm; 1/1 IL | self-heal 2026-09-18: re-resolved to lever
 Viz.ai,scrape,,https://www.viz.ai/jobs,true,queue-drain 2026-09-06 search-llm; 4/4 IL
 Tripledot Studios,scrape,,http://job-boards.eu.greenhouse.io/tripledotstudios,true,queue-drain 2026-09-06 search-llm; 2/2 IL
 Apartment List,scrape,,https://www.apartmentlist.com/about/careers,true,queue-drain 2026-09-06 search-llm; 1/1 IL

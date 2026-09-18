@@ -620,8 +620,8 @@
   "last": "2026-08-26"
  },
  "Synopsys Israel": {
-  "fails": 1,
-  "last": "2026-08-26"
+  "fails": 2,
+  "last": "2026-09-18"
  },
  "Teradata": {
   "fails": 1,
@@ -688,8 +688,8 @@
   "last": "2026-09-10"
  },
  "Airspan Networks": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "Lam Research": {
   "fails": 3,
@@ -728,40 +728,40 @@
   "last": "2026-09-12"
  },
  "4M Analytics": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "Discount Bank": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "ENI-ONE LTD": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "Exodigo": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "Harmonic": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "Jeen.ai": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "Lema AI": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "Majestic Labs ai": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "Teads": {
-  "fails": 3,
-  "last": "2026-09-11"
+  "fails": 4,
+  "last": "2026-09-18"
  },
  "Swimm": {
   "fails": 3,
@@ -1140,8 +1140,8 @@
   "last": "2026-09-11"
  },
  "Planview": {
-  "fails": 1,
-  "last": "2026-09-11"
+  "fails": 2,
+  "last": "2026-09-18"
  },
  "הפניקס": {
   "fails": 1,
@@ -1242,5 +1242,21 @@
  "Shikun Binui": {
   "fails": 1,
   "last": "2026-09-17"
+ },
+ "Dell": {
+  "fails": 1,
+  "last": "2026-09-18"
+ },
+ "Highcon": {
+  "fails": 1,
+  "last": "2026-09-18"
+ },
+ "SMARTECH - A Hexion Company": {
+  "fails": 1,
+  "last": "2026-09-18"
+ },
+ "TCM Technologies LTD": {
+  "fails": 1,
+  "last": "2026-09-18"
  }
 }
