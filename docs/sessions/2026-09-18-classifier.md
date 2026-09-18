@@ -161,9 +161,115 @@ list it. The fallback now reads **`no-text-unattempted`** at both sites (the pri
 the grouped alarm), so no held row is named `?` again. Making jd-fill stamp a reason on every
 held card is jd-text's half (their prompt's item 3); this is the name, not the plumbing.
 
-## 6. Clause 4
+## 5b. Verdicts bought on another posting's text, voided
 
-* *Deleted or unified?* Nothing deleted. Unified: the "is this cell owed a verdict" question
+The `scraper` session's C1 (`2bb1553`) repointed 87 cards whose stored address was a
+neighbour's and named five `llm_cache` verdicts judged on a DIFFERENT posting's text. A
+verdict on the wrong evidence is not a verdict, and `cache_keys` carries no text hash
+(`551` b), so it is served for ever unless the key is deleted under **every** prefix — the
+`_versioned` lookup answers a job by its suffix, so deleting only the live-contract row
+leaves a superseded one to decide the posting.
+
+**Voided: 13 keys over 4 jobs.** `mer group | data scientist, data & ai` (1 key — the text
+is `Tech Lead, Data & AI`'s); `cheq | data & analytics` (1); `legit security | security team
+analyst lead` (6, legacy + `v2` + four contracts — Head of Engineering's text); `telus
+digital | media search analyst - hebrew (israel)` (5). **Not voided, and named as owners by
+the lane that measured them**: `telus digital | online data analyst - israel` and `medison
+pharma | senior total rewards analyst` (8 keys between them) — one text under two titles
+voids the borrower, never the owner. **0 of the four is a ledger record at all**, so nothing
+published moved and no retraction line is owed. Three sibling spellings of the TELUS
+media-search job (`fully remote: …`, `remote job: … in israel`, `… (hebrew language) in
+israel`) were left alone: scraper named one job, and widening another lane's measurement is
+how a void becomes a guess.
+
+## 6. What shipped, and the three shapes it took
+
+**The ruling entered the contract**: the sentence sits inside condition (2) of `LLM_RULES`,
+`v3.0f84ab84` -> **`v3.0a439b16`**. The 882 cells under the old hash are superseded from
+tonight and the drain re-judges them at the existing 250 NO + 150 YES cap; the cap is NOT
+raised.
+
+**`class_backfill.reject_owed`** is the second pool. A `reject` cell is the one verdict a
+reader can see the consequence of — since this morning `roles.Ledger._withdraw_rejected`
+takes the row out of the dataset on it — so it must be current, and nothing could make it
+current. Three arms, all reject-to-accept only and all self-draining:
+
+1. a **written adjudication** (below) — costs no call;
+2. the cell names a **retired contract**. This is the arm the plan did not have, and the
+   bump is what forced it: a bump supersedes every cached verdict, so the `|jd` arm below
+   would have been empty for exactly the mornings the eleven needed it;
+3. the **live contract's own `|jd` row** says YES, which is Navina and only Navina.
+
+A *superseded* `|jd` YES is deliberately not an arm: it would re-select all eleven every
+morning for ever, because the judge writes `reject` again where it still means it and the
+stale YES is still there tomorrow. Arm 2 reaches the same rows exactly once.
+
+**`roles.class_refillable`** replaces three inline copies of "may this cell be refilled"
+(`candidates`, `apply_to`, `Ledger._record_run`'s backfill loop) — the three disagreeing is
+how the CLI and the in-run hook produced two answers for one role before 09-13. It is
+**one-way**: accept-to-reject is refused in every pool by every arm, because the channel for
+taking a row out is a url-precise line in `roles_retractions.jsonl`. That is the
+`roles.py` edit named to the `roles` session (orchestrator answer 6); it sits in the loop
+that already runs BEFORE their sweep, so a cell refilled to `accept` this morning is never
+withdrawn the same morning.
+
+**`seniority.ADJUDICATED`** is the shape the plan did not anticipate and the roles
+mechanism forced. Two rows — Migdal and Team8/Briya — are IN by a decision record and answer
+**NO to the seam every time**: NO/NO/NO fresh for Team8, and the seam cannot apply either
+record's ground (that Team8's board carries Briya; that the 09-01 execution record already
+read Migdal's split). Until this morning that cost nothing, because a `reject` cell was only
+a label. From this morning it deletes the row, so without a reader for the records the next
+unattended run would have dropped two rows the operator's own records adjudicated IN, and
+the only way back would have been a human re-judging them every morning. It is the
+`recruiters._CONFIRMED` shape (2026-09-11), keyed by `role_id`, **accept-only**, every entry
+naming a `docs/decisions/` file that must exist, and read at BOTH judging sites so a row that
+reopens is not re-rejected by the live path. Three properties, three assertions.
+
+**Not done, and why**: `docs/RUN_LOG.md` carries neither the `backfill:` nor the
+`CANNOT be re-judged` line, so the plan's item there was a no-op — the two strings live in
+`ARCHITECTURE.md`'s alarm table, and the `no-text-unattempted` name is now in it.
+
+## 7. Green, and where
+
+**Locally, from the worktree rebased onto `origin/master` `267e6ac`**, `python -m pytest`
+(not `-q`, and with neither `JD_BD` nor `BD_RUN_CAP` in the environment, which reds paid-rung
+tests on their own): **2,066 passed, 13 skipped, 0 failed**. `python check_invariants.py`
+`companies.csv OK: 2485 rows, 1430 active, 0 orphans, pool=889`. `python docs/check_docs.py`
+**0 errors, 2 warnings over 141 documents** — both inherited (`README.md` and `CLAUDE.md`
+carry a `1,000+` floor for `active_rows`, now 1430; the `docs` lane's, and neither file is
+this lane's to raise). `python docs/backlog.py check` clean.
+
+`python tools/guard_kill.py --base origin/master`: first reading **KILLS 5, CANNOT-FAIL 2**.
+Both CANNOT-FAILs were tests of things that already existed at the base — the decision record
+(added in commit A) and the description appeal (unchanged, because the measurement's answer
+was that no vocabulary arm is warranted). Each was **folded into a test that kills** rather
+than filed: second reading **KILLS 5, CANNOT-FAIL 0**.
+
+`python tools/mutate.py --id <one at a time>` — `--id` is not repeatable, which is worth
+knowing before reading a one-line table as four: **all four killed**,
+`backfill-ignores-a-reject-cell-under-a-retired-contract` (direct),
+`refill-lets-an-accept-cell-become-a-reject` (direct),
+`a-decision-record-stops-outranking-the-seam-on-the-live-path` (direct),
+`unreachable-reason-prints-a-bare-question-mark-again` (behavioural).
+
+**Binding check on the seven lines** (`Retractions.load` -> `bind(records, extra=<sqlite
+matched rows>)` -> `match_all` over the live ledger): **67 lines, 7 new, each new line binds
+exactly 1 record, 0 bad, 0 unmatched.**
+
+**Clause 1 — the lane's number.** *0 role records without a classifier verdict*: 0 before,
+0 after. The number under it: **published rows carrying a `reject` cell, 11 -> 0 predicted**
+(5 by a line, 6 by a refill), and **published `reject` cells that no writer could reach,
+11 -> 0 by construction**.
+
+**Clause 2 — delivered, or a hand-drain.** Delivered: the ruling (it is in the contract, so
+the seam applies it with nobody watching), `reject_owed`, `ADJUDICATED` and the
+`no-text-unattempted` name all run inside `daily-digest.yml` at 05:00 UTC. A hand-drain by
+construction: the seven retraction lines and the two `ADJUDICATED` entries, which are
+deliberately a hand-maintained list of two.
+
+## 8. Clause 4
+
+* *Deleted or unified?* Two test functions deleted, by folding them into tests that kill. Unified: the "is this cell owed a verdict" question
   now has a second half in one place — `class_backfill.candidates` gains the
   cache-contradicted pool rather than a second loop in `run.py`, and `_record_run`'s existing
   backfill loop is the only writer that applies it.
@@ -181,9 +287,12 @@ held card is jd-text's half (their prompt's item 3); this is the name, not the p
 * *Would the next session find it?* `grep -n "cache_contradicted" pipeline/class_backfill.py`;
   `grep -n "no-text-unattempted" pipeline/seniority.py`; `grep -n "2026-09-14" ARCHITECTURE.md`
   lands on the §7b paragraph; `ls tests/fixtures/classifier/` shows the artifact.
-* *Harder for the next lane, counted — four.* (1) A second pool in the backfill, which widens
+* *Cross-lane debt.* The `roles.py` edit was named to the `roles` session by message TWICE and neither reached it — a sibling implementer is not an addressable agent from here (`No agent named …`). Their `_withdraw_rejected` sweep and this refill are coherent only because their sweep runs at the END of `_record_run`, after the backfill loop; if that order ever moves, a cell refilled to `accept` is withdrawn the same morning. `621` is the number THEIR session filed for the class this commit closes, so nothing was filed here — `docs/backlog.py next` returned 621 too, which is the collision the `next` command cannot see.
+* *Harder for the next lane, counted — five.* (1) A second pool in the backfill, which widens
   what a morning may spend and needs the cache in hand (`candidates` now takes `cache` and
   `contract`). (2) A `cache-contradicted N` clause on the `backfill:` line. (3) A reject cell
   is no longer permanent, so "the cell says reject" is not a safe read of "the seam refused
   it today". (4) A contract bump: every `v3.0f84ab84` cell is superseded from tonight and the
-  `classify:` line's stale counts rise for about three mornings.
+  `classify:` line's stale counts rise for about three mornings. (5) `ADJUDICATED`: a
+  hand-maintained list that outranks the seam, which is exactly the kind of thing that
+  rots quietly — it is two entries, accept-only, and each names a record a test opens.
