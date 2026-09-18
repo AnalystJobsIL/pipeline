@@ -22506,29 +22506,26 @@ def test_a_cadence_lapse_inside_capacity_is_not_the_drain_failing_to_keep_pace(t
     assert "alarm" not in d, d
     assert d["direction"] == "lapsed", d
 
-
-def test_the_grew_alarm_still_fires_when_names_ARRIVE_or_the_set_outruns_a_night(tmp_path,
-                                                                                 monkeypatch):
-    """The positive control, both arms -- or the fix above would be "delete the alarm".
-
-    New intake is the condition the alarm was written for. A selection set larger than a
-    night's capacity is the other: those names are not merely due, they cannot all be bought.
-    """
+    # THE THREE POSITIVE CONTROLS, folded in rather than filed as their own test: on their own
+    # they assert only that pre-existing behaviour is PRESERVED, so against `--base` every one
+    # of them passes and `tools/guard_kill.py` would rightly call that a test that cannot fail.
+    # They still have to be here, or the fix above reads as "delete the alarm".
     import queue_pipeline as QP
     arriving = _stamp(tmp_path, monkeypatch, prev_owed=0, queue=["New Co", "Other Co"])
-    assert arriving["new_intake"] > 0 and "alarm" in arriving, arriving
-    assert arriving["direction"] == "GROWING", arriving
+    assert arriving["new_intake"] > 0, arriving         # names ARRIVING: the original condition
+    assert "alarm" in arriving and arriving["direction"] == "GROWING", arriving
 
     names = ["Co %d" % i for i in range(QP.DRAIN_NIGHTLY_CAP + 5)]
     qstate = {n: {"tried": [{"rung": "search-llm", "date": "2026-08-01",
                              "verdict": "no-search-results"}]} for n in names}
     big = _stamp(tmp_path, monkeypatch, prev_owed=0, queue=names, qstate=qstate)
+    # not merely due: a selection set larger than a night's capacity cannot all be bought
     assert big["new_intake"] == 0 and big["selectable"] > big["capacity"], big
     assert "alarm" in big, big
 
-    # ...and the third arm: "we could not measure it" is not "it was zero". `_drain_liveness`
-    # swallows a broken queue file and leaves `new_intake`/`selectable` ABSENT; a suppression
-    # that read an absent number as a reason to stay quiet is how an alarm dies unnoticed.
+    # ...and "we could not measure it" is not "it was zero". `_drain_liveness` swallows a
+    # broken queue file and leaves `new_intake`/`selectable` ABSENT; a suppression that read an
+    # absent number as a reason to stay quiet is how an alarm dies unnoticed.
     monkeypatch.setattr(QP, "_drain_liveness", lambda: {})
     blind = _stamp(tmp_path, monkeypatch, prev_owed=0, queue=["Any Co"])
     assert blind["delta"] > 0 and "new_intake" not in blind, blind
