@@ -372,6 +372,43 @@ def page_closed(row, rec=None):
             and _url_key(rec.get("closed_page")) == _url_key(row.get("url")))
 
 
+def closure_text_ignored(rec, text=""):
+    """An OPEN record whose stored text says the posting is closed, and which `page_closed`
+    refuses BECAUSE THE BOARD STILL LISTS IT. The tripwire for that refusal, counted daily.
+
+    *2026-09-18, lane `roles`.* The brief named seven open rows carrying LinkedIn's
+    `כבר לא מקבלים בקשות` / `No longer accepting applications`. Five of them
+    (Phoenix 50400118, Wix, Analytical Factor, Fiverr, Tailor Brands) were already `closed`
+    — `closed_by=page` stood at 9 records that morning, so the 586 arm was working. Exactly
+    TWO were open, and both failed the same two gates on purpose: `hibob|ai product data
+    analyst` (url `careers.hibob.com`, sources `discovery-linkedin` + `scrape`) and
+    `meta|data scientist product analytics` (`metacareers.com`, four sources including
+    `scrape`). Neither is closable and 0 closures is the right output.
+
+    **The rule: a closure sentence closes a role only when the text's provenance is the
+    row's OWN address.** These two rows carry LinkedIn's COPY — jd-text's length ratchet
+    keeps the longer mirror text over the shorter own-board one (`572`/`607`) — while the
+    row's url and a `scrape` source say the employer's own board lists it today. The board
+    is the authority; a mirror is 21 days stale by construction. Closing on a mirror's
+    chrome would have taken two live roles off the board, which is the 2026-09-13
+    scoped-run lesson in a different costume.
+
+    So nothing closes here and the mismatch is COUNTED instead: it is the visible measure
+    of jd-text's own-board-wins fix, and the day it reaches 0 the class is gone rather than
+    merely unwatched."""
+    if not isinstance(rec, dict) or (rec.get("status") or "open") != "open":
+        return False
+    if not (page_says_closed(rec.get("description")) or page_says_closed(text)):
+        return False
+    srcs = rec.get("sources") or []
+    if isinstance(srcs, str):
+        srcs = srcs.split("+")
+    elif not isinstance(srcs, (list, tuple, set)):
+        return False
+    srcs = [s for s in srcs if s]
+    return bool(srcs) and not all(str(s).startswith("discovery-") for s in srcs)
+
+
 def load(path):
     """({role_id: record}, status, skipped_lines). status: ok | missing | corrupt.
     Tolerates a BOM, CRLF, blank lines and the odd bad line; a duplicate role_id keeps the
@@ -2538,6 +2575,11 @@ class Ledger:
                                f"check the line in {RETRACTIONS}")
         if self.dirty or self.text_dirty:
             self.flush(run_date)
+        # The provenance tripwire (see `closure_text_ignored`): a pure count over the final
+        # statuses, no mutation, so it says the same thing however often it runs.
+        c["closure_text_ignored"] = sum(
+            1 for rid, r in self.records.items()
+            if closure_text_ignored(r, (self.text.get(rid) or {}).get("description") or ""))
         self.counts = dict(c)           # the funnel reads what the mail line reads
         ledger_n, store_n = len(self.records), len(rows)
         if ledger_n != store_n:
@@ -2553,6 +2595,8 @@ class Ledger:
                 + (f" · class-backfilled {c['class_backfilled']}" if c["class_backfilled"] else "")
                 + (f" · class-rejected {c['class_rejected']}" if c["class_rejected"] else "")
                 + (f" · closed by page {c['closed_by_page']}" if c["closed_by_page"] else "")
+                + (f" · closure text on {c['closure_text_ignored']} board-listed row(s) "
+                   f"(ignored)" if c["closure_text_ignored"] else "")
                 + (f" · title folds {len(self.title_folds)}" if self.title_folds else "")
                 + (f" · absorbed {self.report.get('absorbed')} ({c['fresh_closed']} already closed)"
                    if self.report.get("absorbed") else "")

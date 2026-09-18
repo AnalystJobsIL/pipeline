@@ -27481,6 +27481,53 @@ def test_a_machine_withdrawal_publishes_the_span_it_was_actually_public(tmp_path
     assert h["published_in_roles_csv"] == {"from": "2026-08-30", "to": "2026-08-30"}
 
 
+def test_a_closure_sentence_never_closes_a_row_its_own_board_still_lists(tmp_path):
+    """2026-09-18. The brief said seven OPEN rows carried LinkedIn's `כבר לא מקבלים
+    בקשות`; five were already `closed` (`closed_by=page` stood at 9 records) and exactly TWO
+    were open — HiBob and Meta, both with a `scrape` source and their own board's url.
+    Both fail `page_closed`'s host gate and its all-discovery gate BY DESIGN: the stored
+    text is LinkedIn's copy, kept by jd-text's length ratchet (572/607), while the
+    employer's own board lists the role today.
+
+    The rule this pins: a closure sentence closes a role only when the text's provenance is
+    the row's OWN address. 0 closures is the correct output, and the mismatch is counted on
+    the `Roles:` line instead so jd-text's own-board-wins fix is measurable."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    closed_text = "כבר לא מקבלים בקשות\n\n" + _JD_TEXT
+    # the HiBob/Meta shape: the employer's OWN board lists it, a mirror's copy says closed
+    board = _role("HiBob", "AI Product Data Analyst", "https://careers.hibob.com/jobs/77", "77",
+                  src="scrape", desc=closed_text, _class=_ACCEPT)
+    board["sources"] = ["discovery-linkedin", "scrape"]
+    # ...and the 586 shape it must not become: LinkedIn's own address, LinkedIn only
+    mirror = _role("Migdal", "Business Analyst",
+                   "https://il.linkedin.com/jobs/view/business-analyst-at-migdal-1", "1",
+                   src="discovery-linkedin", desc=closed_text, _class=_ACCEPT)
+    for j in (board, mirror):
+        st.upsert_matched(j, "2026-09-18")
+    lg = roles.Ledger(st, "2026-09-18")
+    lg.open_sync()
+    lines = lg.record_run("2026-09-18", board_jobs=[board, mirror], merged=[board, mirror],
+                          scanned_ok={"HiBob", "Migdal"}, failed=set())
+    st.close()
+    bk, mk = store.merge_key(board), store.merge_key(mirror)
+    assert lg.records[bk]["status"] == "open", "the board is the authority, not the mirror"
+    assert "closed_by" not in lg.records[bk]
+    assert lg.records[mk]["status"] == "closed" and lg.records[mk]["closed_by"] == "page"
+    assert "closure text on 1 board-listed row(s) (ignored)" in lines[0], lines
+    assert lg.counts["closure_text_ignored"] == 1
+    # the predicate itself, on the two halves of the rule
+    assert roles.closure_text_ignored(lg.records[bk])
+    assert not roles.closure_text_ignored(lg.records[mk]), "a closed row is not a mismatch"
+    assert not roles.closure_text_ignored({"status": "open", "sources": ["scrape"],
+                                           "description": _JD_TEXT}), "no sentence, no count"
+    assert not roles.closure_text_ignored({"status": "open", "sources": ["discovery-linkedin"],
+                                           "description": closed_text}), \
+        "a LinkedIn-only row is the 586 arm's, and it closed above"
+    # the text may live in the text ledger rather than on the record (a frozen-text day)
+    assert roles.closure_text_ignored({"status": "open", "sources": ["comeet"]}, closed_text)
+
+
 def test_the_class_cell_carries_the_contract_and_never_guesses_one():
     """544: a published verdict must say which contract judged it. The fallback fills the
     key only where the PATH proves it — a cache hit may be current or superseded and only

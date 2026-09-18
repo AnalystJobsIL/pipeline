@@ -7750,6 +7750,29 @@ bad read, not fifty closures. And `run.py` stops upserting a page-closed row, or
 would re-serve the card, `closed_keys()` would read it as a reappearance, and `first_seen`
 would reset with a fresh episode **every morning for up to 21 days**.
 
+**The provenance rule, and its tripwire** *(2026-09-18, lane `roles`)*. Stated plainly,
+because the second gate above is the one a reader is most tempted to widen: **a closure
+sentence closes a role only when the text's provenance is the row's own address. A
+board-listed role is open whatever a mirror's copy says.**
+
+The 2026-09-18 brief named seven OPEN rows carrying the sentence and asked why the arm had
+not closed them. Five of the seven were **already `closed`** (Phoenix 50400118, Wix,
+Analytical Factor, Fiverr, Tailor Brands; `closed_by=page` stood at **9** records that
+morning, so the arm was working). Exactly **two** were open, and both fail the host gate and
+the all-discovery gate on purpose: `hibob|ai product data analyst` (url `careers.hibob.com`,
+sources `discovery-linkedin` + `scrape`) and `meta|data scientist product analytics`
+(`metacareers.com`, four sources including `scrape`). **0 closures is the correct output** —
+closing either would take a live role off the board on a mirror's chrome.
+
+What they really are is a TEXT defect: the row carries LinkedIn's copy because jd-text's
+length ratchet keeps the longer mirror text over the shorter own-board one (`572`/`607`),
+so the row's own board says one thing and its stored description another. `roles.
+closure_text_ignored(rec, text)` counts exactly that population — open, sentence present, at
+least one non-`discovery-*` source — and the `Roles:` line carries
+`closure text on N board-listed row(s) (ignored)`. It measured **2** on 2026-09-18. It is
+the visible measure of jd-text's own-board-wins fix: when it reaches 0 the class is gone,
+rather than merely unwatched.
+
 ### What the mail says
 
 One line in the audit block, from `summary["roles"]`:

@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**676 filed · 474 open · 202 closed · 9 half · 39 numbers name more than one item · 0 items name no lane.**
+**677 filed · 475 open · 202 closed · 9 half · 40 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -92,6 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 | 623 | `623@scraper` **open** · `623@classifier` **open** |
+| 624 | `624@scraper` **open** · `624@jd-text` **open** |
 
 ### registry — 154 open
 
@@ -545,6 +546,29 @@ closure convention in the header.
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
 - **621** `621@ats-fetch` **`career.adamtotal.co.il` is an Israeli ATS this repo has never heard of, Harel's board
 
+### jd-text — 20 open
+
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
+- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
+- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
+- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
+- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
+- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
+- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
+- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
+- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
+- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
+- **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
+- **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
+- **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
+- **624** `624@jd-text` **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
+- **625** `625@jd-text` **28 cache cards hold one shell page's text under two titles, and both cards own their
+
 ### classifier — 19 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
@@ -566,28 +590,6 @@ closure convention in the header.
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 - **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
 - **623** `623@classifier` **A `reject` cell has no writer that can flip it back, so a machine withdrawal cannot be
-
-### jd-text — 19 open
-
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
-- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
-- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
-- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
-- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
-- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
-- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
-- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
-- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
-- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
-- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
-- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
-- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
-- **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
-- **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
-- **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
-- **625** `625@jd-text` **28 cache cards hold one shell page's text under two titles, and both cards own their
 
 ### render — 8 open
 
@@ -13052,3 +13054,24 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      open('cloud_state/roles.jsonl',encoding='utf-8') if l.strip()];print(sum(1 for x in r if
      (x.get('class') or {}).get('decision')=='reject' and x.get('withdrawn_by')=='classifier'))"`
      — the size of the unreachable pile on any morning.
+
+624. **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
+     so the stored description contradicts the row's own address** — lane: `jd-text` (the
+     ratchet is theirs; the tripwire is `roles`'), filed 2026-09-18 by `roles`. The length
+     ratchet keeps the LONGER text at every door into the store (`572`, `607`), and a
+     LinkedIn card's page chrome is reliably longer than a clean own-board JD — so
+     `hibob|ai product data analyst` (url `careers.hibob.com`, sources `discovery-linkedin` +
+     `scrape`) and `meta|data scientist product analytics` (`metacareers.com`, four sources
+     including `scrape`) both store LinkedIn's copy, and both copies open with
+     `כבר לא מקבלים בקשות`. The roles are NOT closed and must not be (§7c, the provenance
+     rule: the board is the authority, a mirror is 21 days stale by construction), so the
+     defect is invisible in the status — it is in the text a reader is shown, and in the
+     verdict the classifier made on it. The fix is the ratchet's: a capture from the row's
+     OWN address wins over a longer mirror, whatever the length. Measured 2026-09-18: **2**
+     of 186 published rows, counted on the `Roles:` line as `closure text on N board-listed
+     row(s) (ignored)` — that clause reaching 0 is the proof. Check: `python -c "import
+     json;from pipeline import roles;r=[json.loads(l) for l in
+     open('cloud_state/roles.jsonl',encoding='utf-8') if l.strip()];t={x['role_id']:x for x in
+     (json.loads(l) for l in open('cloud_state/roles_text.jsonl',encoding='utf-8') if
+     l.strip())};print(sum(1 for x in r if
+     roles.closure_text_ignored(x,(t.get(x['role_id']) or {}).get('description') or '')))"`.
