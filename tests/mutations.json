@@ -4186,5 +4186,44 @@
   "killers": [
    "tests/test_units.py::test_the_unreachable_alarm_names_why_each_role_had_no_description"
   ]
+ },
+ {
+  "id": "scrape-card-closed-anchor-counts",
+  "file": "scrape_universal.py",
+  "symbol": "_card_bounds",
+  "class": "M1-gate-removal",
+  "find": "    for m in _A_OPEN.finditer(win):\n        if \"</a>\" not in win[m.end():]:      # still open at the heading: it wraps the card\n            lo = base + m.start()\n",
+  "replace": "    for m in _A_OPEN.finditer(win):\n        if True:\n            lo = base + m.start()\n",
+  "why": "measured 2026-09-18: an anchor already CLOSED before the heading is the previous card's -- 54 cached cards across 10 boards carried a neighbour's url, Deloitte's `AI Engineer- R&D and Innovation Center` the Administrative Assistant's `df-070-en`. Dropping the open/closed test restores that (scraper).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_scrape_a_closed_anchor_before_the_heading_is_the_neighbours_not_the_cards"
+  ]
+ },
+ {
+  "id": "scrape-card-end-ignored",
+  "file": "scrape_universal.py",
+  "symbol": "_card_bounds",
+  "class": "M7-constant-drift",
+  "find": "    hi = max(pos, end)\n    base = max(0, pos - 600)\n",
+  "replace": "    hi = pos + 1600\n    base = max(0, pos - 600)\n",
+  "why": "the after-search must stop at the NEXT SIBLING heading; `pos + 1600` reaches past it, which is how a card with no link of its own took the next card's (2026-09-18, scraper).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_scrape_a_closed_anchor_before_the_heading_is_the_neighbours_not_the_cards"
+  ]
+ },
+ {
+  "id": "scrape-card-window-cut-inside-the-tag",
+  "file": "scrape_universal.py",
+  "symbol": "_card_bounds",
+  "class": "M8-argument-mis-passing",
+  "find": "    for m in _A_OPEN.finditer(win):\n        if \"</a>\" not in win[m.end():]:      # still open at the heading: it wraps the card\n            lo = base + m.start()\n    return lo, hi\n",
+  "replace": "    for m in _A_OPEN.finditer(win):\n        if \"</a>\" not in win[m.end():]:      # still open at the heading: it wraps the card\n            lo = base + m.end() - 1\n    return lo, hi\n",
+  "why": "the window is handed to `_card_anchor_for`, whose `_ANCHOR_RX` needs the whole `<a ...>...</a>`: a `lo` inside the open tag silently costs every `<a href=own><h3>T</h3></a>` card its address (Centrical 3 of 6, measured 2026-09-18, scraper).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_scrape_a_closed_anchor_before_the_heading_is_the_neighbours_not_the_cards"
+  ]
  }
 ]

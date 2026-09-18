@@ -10870,14 +10870,97 @@ def test_scrape_a_card_takes_the_nearest_href_not_the_previous_cards():
     """`_HREF.search(page_html[pos-600:pos+1600])` returned the EARLIEST link in the window,
     which on a list of cards is the PREVIOUS card's: Gett shipped "Senior Director of Service
     Excellence" under the Customer Service Representative posting's address, and 36 cached
-    postings across 13 companies shared a url with a different title (2026-08-26)."""
+    postings across 13 companies shared a url with a different title (2026-08-26).
+
+    2026-09-18: the fixture is the real shape of that list — each card's own link sits INSIDE
+    it, after the heading — and `end` (the next sibling) is what keeps the read inside one
+    card. Taking the LAST href before the heading instead of the first, which is what
+    2026-08-26 shipped, still answers `Second Role` with `/careers/first/` here."""
     import scrape_universal as N
-    html = ('<a href="/careers/first/"></a><h3>First Role</h3><p>Tel Aviv, Israel</p>'
-            '<a href="/careers/second/"></a><h3>Second Role</h3><p>Tel Aviv, Israel</p>')
-    assert N._card_href(html, html.index("<h3>Second Role")) == "/careers/second/"
-    assert N._card_href(html, html.index("<h3>First Role")) == "/careers/first/"
-    assert N._card_href("<h3>Role</h3><a href='/careers/inside/'>apply</a>", 0) == "/careers/inside/"
-    assert N._card_href("<h3>Role</h3>", 0) == ""
+    html = ('<div><h3>First Role</h3><p>Tel Aviv, Israel</p><a href="/careers/first/">apply</a>'
+            '</div><div><h3>Second Role</h3><p>Tel Aviv, Israel</p>'
+            '<a href="/careers/second/">apply</a></div>')
+    p1, p2 = html.index("<h3>First Role"), html.index("<h3>Second Role")
+    assert N._card_href(html, p2, len(html)) == "/careers/second/"
+    assert N._card_href(html, p1, p2) == "/careers/first/"
+    assert N._card_href("<h3>Role</h3><a href='/careers/inside/'>apply</a>", 0, 60) \
+        == "/careers/inside/"
+    assert N._card_href("<h3>Role</h3>", 0, 13) == ""
+
+
+def test_scrape_a_closed_anchor_before_the_heading_is_the_neighbours_not_the_cards():
+    """Deloitte/Camtek/888: `…<a href=PREV>svg</a></span></div><div class=row><h3>T</h3>…<a
+    href=OWN>` — the previous card's CLOSED anchor sits ~140 bytes before the heading and the
+    card's own link ~400 after, so byte distance answered with the neighbour. 54 cached cards
+    across 10 boards shared a url with a different title on 2026-09-18; `AI Engineer- R&D and
+    Innovation Center` carried the Administrative Assistant's `df-070-en`, `PM & System
+    Engineer` an `Operativer Einkäufer` page.
+
+    An anchor that is still OPEN at the heading wraps the card and keeps its old power (434),
+    and `end` stops the after-search at the next sibling."""
+    import scrape_universal as N
+    html = ('<div><a href="/p/prev/">x</a><h3>Prev Role</h3></div>'
+            '<div><a href="/p/PREV-IMG/">i</a></div><div><h3>Mine</h3>'
+            '<a href="/p/mine/">apply</a></div><div><a href="/p/next/">n</a>'
+            '<h3>Next Role</h3></div>')
+    pos, end = html.index("<h3>Mine"), html.index("<h3>Next Role")
+    assert N._card_bounds(html, pos, end) == (pos, end), \
+        "no anchor is open at the heading, so the card begins at its own heading"
+    assert N._card_href(html, pos, end) == "/p/mine/"
+    # the wrapping shape still declares its address, from the `<a` and not from `href=`
+    wrap = '<ul><li><a href="/p/own/" class="card"><h3>Mine</h3><span>Tel Aviv</span></a></li>'
+    w_pos = wrap.index("<h3>Mine")
+    assert N._card_bounds(wrap, w_pos, len(wrap))[0] == wrap.index('<a href="/p/own/"')
+    assert N._card_href(wrap, w_pos, len(wrap)) == "/p/own/"
+    # ...and `end` is honoured: with nothing of its own, a card takes no address at all
+    bare = '<div><h3>Mine</h3></div><div><a href="/p/next/">n</a><h3>Next</h3></div>'
+    assert N._card_href(bare, bare.index("<h3>Mine"), bare.index("<div><a")) == ""
+
+
+def test_scrape_card_pairing_is_one_to_one_on_a_deloitte_shaped_and_a_camtek_shaped_list():
+    """The full `_from_cards` read, not the primitive: three id-slugged cards (no anchor text,
+    no ROLE word, so `_card_anchor_for` returns nothing and the byte fallback decides) pair
+    1:1 with their own links in both real shapes. On 2026-09-18 the replay over 447
+    own-address boards moved 87 addresses, 43 of them from a page naming a DIFFERENT role to
+    the card's own, and none the other way."""
+    import scrape_universal as N
+    deloitte = "".join(
+        f'<div class="row"><a href="/position/prev-{i}-en/"><svg/></a></div>'
+        f'<div class="position-row"><h3 class="pt">{t}</h3><span>Tel Aviv, Israel</span>'
+        f'<a href="/position/{i}-en/">Read more</a></div>'
+        for i, t in enumerate(["Data Analyst", "Audit Associate", "Systems Engineer"]))
+    add, jobs = N._make_adder("Deloitte", "https://careers.deloitte.co.il/positions/")
+    N._from_cards(deloitte, False, add)
+    assert [(j["title"], j["url"]) for j in jobs] == [
+        ("Data Analyst", "https://careers.deloitte.co.il/position/0-en/"),
+        ("Audit Associate", "https://careers.deloitte.co.il/position/1-en/"),
+        ("Systems Engineer", "https://careers.deloitte.co.il/position/2-en/")]
+    camtek = "".join(
+        f'<h3>{t}</h3><p>Migdal Haemek, Israel</p><a href="/careers/open-positions/{i}.ABC/">'
+        f'Apply</a>' for i, t in enumerate(["Data Analyst", "Support Engineer", "Integrator"]))
+    add2, jobs2 = N._make_adder("Camtek", "https://www.camtek.com/careers/open-positions/")
+    N._from_cards(camtek, False, add2)
+    assert [(j["title"], j["url"]) for j in jobs2] == [
+        ("Data Analyst", "https://www.camtek.com/careers/open-positions/0.ABC/"),
+        ("Support Engineer", "https://www.camtek.com/careers/open-positions/1.ABC/"),
+        ("Integrator", "https://www.camtek.com/careers/open-positions/2.ABC/")]
+
+
+def test_scrape_a_page_wide_link_is_not_a_cards_address():
+    """Ngsoft's instagram profile, Moveo's one monday.com form, Spear UAV's category page:
+    a single link OUTSIDE every card was the byte-nearest href for all of them — 21 of the 54
+    shared-url cards on 2026-09-18. Bounded, the card takes no address, which lets
+    `_card_own_text` keep its own window as the description (20 of the 21 gained one)."""
+    import scrape_universal as N
+    html = ('<a href="https://www.instagram.com/co/">follow us</a>'
+            '<div><h3>Data Analyst</h3><p>Tel Aviv, Israel</p><p>' + "x" * 200 + '</p></div>'
+            '<div><h3>Backend Developer</h3><p>Tel Aviv, Israel</p><p>' + "y" * 200 + '</p></div>'
+            '<div><h3>Product Manager</h3><p>Tel Aviv, Israel</p><p>' + "z" * 200 + '</p></div>')
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    N._from_cards(html, False, add)
+    assert [j["url"] for j in jobs] == ["https://co.example/careers"] * 3, \
+        "no card owns the page-wide link; the listing is the honest fallback"
+    assert all(j["description"] for j in jobs), "an address-less card keeps its own window"
 
 
 def test_scrape_llm_gate_skips_only_what_the_adder_could_not_accept(monkeypatch):

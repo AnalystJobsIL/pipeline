@@ -507,7 +507,21 @@ including the claim "none".
    Director of Service Excellence` and `Senior Product Manager - Billing`, which pointed at
    the NEIGHBOURING card's posting — 18 cached postings across 5 companies share a url with
    a different title, the signature of a card-href window that took the earliest link before
-   the heading instead of the nearest. Measured: the cloud run of 2026-08-25 (`gh run view
+   the heading instead of the nearest. **Taking the nearest was still the neighbour's link**
+   (2026-09-18): on a row layout the previous card's anchor closes ~140 bytes before the
+   heading and the card's own opens ~400 after, so byte distance answers with the neighbour —
+   54 cached cards across 10 boards shared a url with a different title again, and `jdfill`
+   stored the neighbour's page as their description (`AI Engineer- R&D and Innovation Center`
+   carried Deloitte's Administrative Assistant, `PM & System Engineer` an `Operativer
+   Einkäufer` posting at Camtek). `_card_bounds` gives each card a RANGE: it begins at the
+   anchor that WRAPS its heading (still open at `pos`, the shape that declares its own
+   address) and ends at the next sibling heading, never `pos + 1600` past it; an anchor
+   already closed before the heading is not the card's. Replayed over the 447 own-address
+   boards (2,179 cards; 119 read by plain HTTP, 636 cards): **0 cards lost, 0 addresses lost,
+   87 moved** — 43 from a page naming a DIFFERENT role to the card's own and none the other
+   way, 21 page-wide non-posting links refused (an instagram profile, one monday.com form, a
+   category page), and 20 of those 21 gained their own card window as a description.
+   Measured: the cloud run of 2026-08-25 (`gh run view
    32915943062 --log`) did 438 rows in 28 min, `via cards56+dom48+links42+structured35+
    llm34+structured-dom2`, `llm_calls=128 llm_won=34 unlock_calls=48 unlock_ok=42`; 08-25's
    (`32794469465`) 440 rows in 32 min, median 13 s, p95 39 s, max 150 s (Ford); the last

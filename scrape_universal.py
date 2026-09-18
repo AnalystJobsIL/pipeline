@@ -213,6 +213,10 @@ _CARD_SENTENCE = re.compile(r"(we|our|join|about|why|what|how|let)\b", re.I)
 # strategy 4: a link prefix that names positions
 _LINK_PREFIX = re.compile(r"(job|position|opening|vacanc|career|role)[^/]*/$", re.I)
 _HREF = re.compile(r'href=["\']([^"\']+)["\']')
+# ...and the `<a>` element that carries one, from its own `<` — `_card_bounds` cuts a card's
+# window at the anchor that wraps it, and a window starting at the `href=` attribute is a
+# window `_ANCHOR_RX` cannot read (Centrical, 2026-09-18)
+_A_OPEN = re.compile(r"<a\b[^>]*?href=[\"']([^\"']+)[\"'][^>]*>", re.I)
 # strategy 5 fires only on a page that announces openings — never on a marketing page
 _JOBS_SIGNAL = re.compile(r"open positions|current openings|apply now|we'?re hiring|משרות", re.I)
 # a posting date written on the card: "Posted 3 days ago", "Published: 2026-08-20", "2 weeks ago"
@@ -1323,22 +1327,49 @@ def il_host(url):
     return host.endswith(".il")
 
 
-def _card_href(page_html, pos):
-    """The card's OWN link: the nearest `<a href>` to its heading — the anchor that wraps it
-    (just before) or the one inside it (just after), whichever is closer. Until 2026-08-26
-    this was the FIRST href in `[pos-600, pos+1600]`, i.e. the EARLIEST in the window, which
-    on a list of cards is the PREVIOUS card's link: Gett shipped "Senior Director of Service
-    Excellence" under the Customer Service Representative posting's address, and 36 cached
-    postings across 13 companies shared a url with a different title."""
-    before = None
-    for m in _HREF.finditer(page_html[max(0, pos - 600):pos]):
-        before = m                                   # the LAST one before the heading wins
-    after = _HREF.search(page_html[pos:pos + 1600])
-    if before is None or after is None:
-        m = before or after
-        return m.group(1) if m else ""
-    return (before if len(page_html[max(0, pos - 600):pos]) - before.end() <= after.start()
-            else after).group(1)
+def _card_bounds(page_html, pos, end):
+    """The byte range of ONE card around the heading at `pos` — `(lo, hi)`.
+
+    `lo` is the start of the anchor that WRAPS the heading (`<a href=own><h3>T</h3>`, the 434
+    shape that declares its own address) and `pos` when there is none. An anchor before the
+    heading that is already CLOSED at `pos` is the PREVIOUS card's, never this one's: on a
+    row layout `…<a href=PREV>svg</a></span></div><div class=position-row><span>T</span>…<a
+    href=OWN>` the neighbour's closed anchor sits ~140 bytes before the heading and the card's
+    own link ~400 after, so byte distance answers with the neighbour (2026-09-18: 54 cached
+    cards across 10 boards shared a url with a different title; Deloitte's `AI Engineer- R&D
+    and Innovation Center` carried the Administrative Assistant's `df-070-en`).
+
+    `hi` is the NEXT SIBLING heading, which the caller already computed as `ends`. It has no
+    default ON PURPOSE: `_from_cards` is the only caller and it always knows that position,
+    while a defaulted `pos + 1600` is the unbounded window this replaces — it reaches past
+    the next heading and reads the next card's link as this one's.
+
+    `lo` is the `<a` itself and not its `href=` attribute: the window is handed to
+    `_card_anchor_for`, whose `_ANCHOR_RX` needs the whole element, and cutting inside the
+    open tag cost Centrical's three `<a href=own><h3>T</h3></a>` cards their address."""
+    hi = max(pos, end)
+    base = max(0, pos - 600)
+    win = page_html[base:pos]
+    lo = pos
+    for m in _A_OPEN.finditer(win):
+        if "</a>" not in win[m.end():]:      # still open at the heading: it wraps the card
+            lo = base + m.start()
+    return lo, hi
+
+
+def _card_href(page_html, pos, end):
+    """The card's OWN link by byte proximity, the guarded fallback under `_card_anchor_for`:
+    the anchor that wraps the heading, else the first one inside the card's own bounds. Until
+    2026-08-26 this was the FIRST href in `[pos-600, pos+1600]`, i.e. the EARLIEST in the
+    window, which on a list of cards is the PREVIOUS card's link: Gett shipped "Senior
+    Director of Service Excellence" under the Customer Service Representative posting's
+    address, and 36 cached postings across 13 companies shared a url with a different title.
+    Taking the LAST one before the heading instead only moved the error one card along —
+    `_card_bounds` is what ends it."""
+    lo, hi = _card_bounds(page_html, pos, end)
+    m = _A_OPEN.search(page_html[lo:pos]) if lo < pos else None
+    m = m or _HREF.search(page_html[pos:hi])
+    return m.group(1) if m else ""
 
 
 def _slug_text(href):
@@ -1444,9 +1475,12 @@ def _from_cards(page_html, url_is_il, add, promote_only=False):
         # layout is the neighbour's link, and a wrong address is worse than none)
         hrefs = []
         for (pos, t, carried, _r), end in zip(items, ends):
-            href = carried or _card_anchor_for(t, page_html[max(0, pos - 600):end])
+            # ...within THIS card's bounds: an anchor closed before the heading belongs to the
+            # previous card, and `end` (the next sibling) is where this one stops
+            lo, hi = _card_bounds(page_html, pos, end)
+            href = carried or _card_anchor_for(t, page_html[lo:hi])
             if not href:
-                near = _card_href(page_html, pos)
+                near = _card_href(page_html, pos, end)
                 href = "" if _card_slug_names(t, near) == -1 else near
             hrefs.append(href)
         if hebrew and any(hrefs):
