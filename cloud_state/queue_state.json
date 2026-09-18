@@ -51751,7 +51751,7 @@
   "verdict": "already-a-row"
  },
  "Pliops": {
-  "last": "2026-09-17",
+  "last": "2026-09-18",
   "tried": [
    {
     "date": "2026-09-06",
@@ -51790,9 +51790,15 @@
     "verdict": "nolisting",
     "date": "2026-09-17",
     "url": "https://pliops.com/careers/"
+   },
+   {
+    "rung": "bd-rescue",
+    "verdict": "validated",
+    "date": "2026-09-18",
+    "url": "https://pliops.com/careers"
    }
   ],
-  "verdict": "nolisting"
+  "verdict": "validated"
  },
  "Pluri": {
   "last": "2026-09-13",
