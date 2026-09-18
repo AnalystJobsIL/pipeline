@@ -32288,9 +32288,9 @@ def test_wayback_keyed_post_then_poll_names_the_capture(tmp_path, monkeypatch, c
     assert [c[1] for c in arch.calls].count(A.STATUS_URL + "user") == 2                # before the plan, after the day
     assert [c[1] for c in arch.calls if c[1].startswith(A.STATUS_URL + "job-")] == [A.STATUS_URL + "job-1"] * 2
     assert waits.count(A.POLL_S) == 2                                                  # one wait before EVERY read; never a read at t=0
-    # the POST waits the job's ceiling (the archive holds it until a slot frees: 43 of 154
-    # requests on the first scheduled night were a 30-s cut-off), the reads 30 s each
-    assert [t for m, u, t in arch.timeouts if m == "POST"] == [20.0]
+    # the POST waits HALF the job's budget (the archive holds it until a slot frees: 43 of
+    # 154 requests on the first scheduled night were a 30-s cut-off), the reads 30 s each
+    assert [t for m, u, t in arch.timeouts if m == "POST"] == [10.0]
     assert {t for m, u, t in arch.timeouts if m == "GET"} == {30.0}
     lines = [_json.loads(x) for x in open(tmp_path / "cloud_state" / "wayback_ledger.jsonl", encoding="utf-8")]
     assert len(lines) == 1 and (lines[0]["snap"], lines[0]["err"], lines[0]["job_id"], lines[0]["http"]) == (ts, "", "job-1", 200)
@@ -32651,6 +32651,72 @@ def test_wayback_polls_are_not_requests_and_the_pace_gate_fronts_the_post(tmp_pa
     monkeypatch.setattr(A, "_open", lambda req, timeout: (_ for _ in ()).throw(TimeoutError("timed out")))
     assert A.submit("https://x.io/p", 1.0, _wb_auth()).err == "net:TimeoutError"
     assert A.submit("https://x.io/p", 1.0).err == "pending"
+
+
+def test_wayback_the_post_and_the_reads_share_one_job_budget(monkeypatch):
+    """`timeout` is ONE job's whole wait. Until 2026-09-18 the POST got the whole value and
+    then `_poll` got it again, so `WAYBACK_TIMEOUT_S` 240 was a 480-s per-job ceiling -- the
+    night's arithmetic was wrong by a factor of two and the 09-17 run (35251054872) spent
+    11,199 worker-seconds on 34 jobs. The POST gets HALF the budget (it answers in a second
+    from a dev machine and holds on the runner until a slot frees) and the reads get what is
+    LEFT of it: a POST that held 150 s of a 180-s job leaves 30 s of reads, and the job is
+    carried as `pending` WITH its id -- never a second full ceiling."""
+    import archive_evidence as A
+    clock = [1000.0]
+    monkeypatch.setattr(A.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(A, "_sleep", lambda s: clock.__setitem__(0, clock[0] + s))
+    seen = []
+
+    def opener(req, timeout):
+        seen.append((req.get_method(), timeout))
+        if req.get_method() == "POST":
+            clock[0] += 150.0                       # the archive held the POST until a slot freed
+            return _WbResp(200, {}, '{"url": "x", "job_id": "job-x"}', req.full_url)
+        return _WbResp(200, {}, '{"status": "pending", "job_id": "job-x", "resources": []}', req.full_url)
+    monkeypatch.setattr(A, "_open", opener)
+    res = A._submit_job("https://a.io/1", 180.0, _wb_auth())
+    assert seen[0] == ("POST", 90.0)                # half the job's budget, never the whole of it
+    assert (res.err, res.job_id, res.polls) == ("pending", "job-x", 3)   # 30 s left = three POLL_S reads
+    assert clock[0] - 1000.0 == 180.0               # the job held its worker for its budget ONCE
+    # and a job whose POST answers at once still gets the whole remainder to read with
+    clock[0], seen[:] = 1000.0, []
+    monkeypatch.setattr(A, "_open", lambda req, timeout: (
+        seen.append((req.get_method(), timeout)) or
+        _WbResp(200, {}, '{"url": "x", "job_id": "job-y"}' if req.get_method() == "POST"
+                else '{"status": "success", "job_id": "job-y", "timestamp": "20260918120000"}', req.full_url)))
+    res2 = A._submit_job("https://a.io/1", 180.0, _wb_auth())
+    assert (res2.err, res2.snap, res2.polls) == ("", "20260918120000", 1)
+    assert [t for m, t in seen if m == "POST"] == [90.0] and clock[0] - 1000.0 == 10.0
+
+
+def test_wayback_a_job_never_outlives_the_days_remaining_clock(tmp_path, monkeypatch):
+    """No address may hold a worker past the night. On 2026-09-17 the last ledger line landed
+    at 18:12:24Z, 62 minutes into a 60-minute budget, because a job started near the end still
+    got the whole ceiling -- and a step that overruns its `timeout-minutes` is ABANDONED, not
+    stopped (infra, 2026-09-12). `_job_budget` is the ceiling bounded by the day's REMAINING
+    clock over the workers, and it is what the pool hands the rung."""
+    import archive_evidence as A
+    _wb_quiet(monkeypatch, tmp_path)
+    clock = [1000.0]
+    monkeypatch.setattr(A.time, "monotonic", lambda: clock[0])
+    pool = A._Pool([], {}, None, A.Report(), _wb_caps(timeout_s=180.0, workers=3), 1000.0, 3600.0)
+    assert pool._job_budget() == 180.0              # 3,600 / 3 workers is above the ceiling
+    clock[0] = 1000.0 + 3300.0
+    assert pool._job_budget() == 100.0              # five minutes left over three workers, not 180
+    clock[0] = 1000.0 + 3600.0
+    assert pool._job_budget() == 0.0                # nothing left: never a job that outlives the step
+    # the pool HANDS that number to the rung: one worker, a 15-second night, two addresses
+    today = _wb_dt.date(2026, 9, 18)
+    root = _wb_root(tmp_path, roles=_wb_roles(today, ["https://a.io/1", "https://b.io/2"]))
+    waits = []
+    monkeypatch.setattr(A, "_sleep", lambda s: waits.append(s))
+    monkeypatch.setattr(A.time, "monotonic", _wb_clock(waits))
+    arch = _WbSpn2(status=_wb_success("20260918120000"))
+    monkeypatch.setattr(A, "_open", arch)
+    rep = A.run(root, today=today, caps=_wb_caps(timeout_s=30.0, workers=1, time_min=0.25, pace_s=0.0),
+                auth=_wb_auth())
+    assert [t for m, u, t in arch.timeouts if m == "POST"] == [7.5, 2.5]   # half of 15, then half of 5
+    assert (rep.captured, rep.submitted, rep.backlog) == (2, 2, 0)
 
 
 # =====================================================================================

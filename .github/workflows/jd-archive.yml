@@ -140,7 +140,13 @@ jobs:
           # running at 150 s. This is the ceiling on ONE job -- the POST's wait and the reads
           # after it -- not a socket timeout; the anonymous fallback reads it as its 60-s wait
           # would have been.
-          WAYBACK_TIMEOUT_S: "240"
+          # 240 -> 180 on 2026-09-18: until that day the POST and the reads each got the whole
+          # value, so this was a 480-s per-job ceiling and the night was bounded by slow
+          # failures -- 09-17 (run 35251054872) spent 11,199 worker-seconds on 34 jobs, 329 a
+          # job, and named 15. One shared budget at 180 s is a 90-s POST (57 % of the POSTs
+          # on 09-16 answered inside 30 s) and the reads after it, so 3 workers x 3,600 s can
+          # open 60 jobs at the ceiling and ~90 at the 120 s a job that ends normally costs.
+          WAYBACK_TIMEOUT_S: "180"
           WAYBACK_WORKERS: "6"
         timeout-minutes: 70
         run: python archive_evidence.py

@@ -812,12 +812,19 @@ def _submit_job(url: str, timeout: float, auth: Auth) -> Result:
     body = urllib.parse.urlencode({"url": url}).encode("ascii")
     headers = dict(_auth_headers(auth), **{"Content-Type": "application/x-www-form-urlencoded"})
     req = urllib.request.Request(SAVE_API, data=body, headers=headers, method="POST")
-    # The POST answers in a second from this machine and held for more than 30 s on the
-    # runner 43 times in 154 requests on the first scheduled night (2026-09-16): the archive
-    # holds the POST until a slot frees. Its wait is the job's ceiling, not a socket blip --
-    # a 30-s cut-off turned a queued job into `net:TimeoutError`, a 15-s retry and a second
-    # POST for the same url.
-    status, data, err = _json_call(req, timeout)
+    # `timeout` is the whole job's budget, and the POST and the reads after it SHARE it.
+    # Until 2026-09-18 each half got the full value, so `WAYBACK_TIMEOUT_S` 240 was a 480-s
+    # per-job ceiling and the night's arithmetic was wrong by a factor of two: on 09-17 (run
+    # 35251054872) 3 workers x 3,733 s of wall clock -- 11,199 worker-seconds -- opened 34
+    # jobs and named 15 captures, and the per-job wall time estimated from the ledger's `at`
+    # gaps had a p90 of 305 s against a ceiling that was supposed to be 240.
+    # The POST answers in a second from this machine and holds on the runner until a slot
+    # frees (43 of 154 requests were a 30-s cut-off on 2026-09-16), so it gets HALF the
+    # budget: past that the reads would have nothing left, and a job whose POST never
+    # answered is `net:TimeoutError` -- retried once, then tomorrow -- never `pending`,
+    # which has no job to re-read and would route the address to `unverified`.
+    t0 = time.monotonic()
+    status, data, err = _json_call(req, max(0.0, timeout / 2.0))
     if status in (401, 403):
         return Result(status, "", "server", status_ext="unauthenticated")
     if err is not None:
@@ -827,7 +834,7 @@ def _submit_job(url: str, timeout: float, auth: Auth) -> Result:
                 return Result(status, "", cls, status_ext="message:" + str(data["message"])[:80])
         return err
     if data and data.get("job_id"):
-        res = _poll(str(data["job_id"]), auth, timeout)
+        res = _poll(str(data["job_id"]), auth, max(0.0, timeout - (time.monotonic() - t0)))
         res.http = status
         return res
     return _classify_job(data, status)
@@ -1016,11 +1023,22 @@ class _Pool:
                 res, sent = self._retry(t, res, sent)
             self.record(t, attempt, res, sent)
 
+    def _job_budget(self) -> float:
+        """What ONE address may hold a worker for, now: the ceiling, but never more than the
+        day's REMAINING clock divided by the workers. A job started near the end of the night
+        used to get the whole ceiling -- on 2026-09-17 the last ledger line landed 62 minutes
+        into a 60-minute budget -- and three workers each doing that overrun the step's own
+        `timeout-minutes`, which ABANDONS the process (infra, 2026-09-12). Not floored: when
+        there is no clock left `slot()` has already refused, and a caller that sets a ceiling
+        below POLL_S means it (`_poll` reads once and carries the job)."""
+        left = self.budget_s - (time.monotonic() - self.started)
+        return min(self.caps.timeout_s, max(0.0, left) / max(1, self.caps.workers))
+
     def _submit(self, t: Target) -> Result:
         """One capture on the run's rung, its status reads counted where the stamp can
         show them (`jobs`, `polls`) -- here, because the first result of a retried pair
         never reaches `record`."""
-        res = submit(t.url, self.caps.timeout_s, self.auth)
+        res = submit(t.url, self._job_budget(), self.auth)
         with self.lock:
             self.rep.polls += res.polls
             if res.job_id:

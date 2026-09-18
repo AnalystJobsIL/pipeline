@@ -3329,6 +3329,18 @@ anonymous rung and its numbers are that rung's. `stop=unauthenticated` is the ar
 answering 401/403 to a capture request mid-run. A `status_ext` on a line is the archive's
 word for why that job ended `error`; `archive_evidence.STATUS_EXT` says which family it is.
 
+**What one job may cost (2026-09-18).** `WAYBACK_TIMEOUT_S` is ONE job's whole wait — the
+POST and the status reads after it SHARE it, the POST taking at most half — and
+`_Pool._job_budget` lowers it further to the day's REMAINING clock over the workers, so no
+address can hold a worker past the night. Until 09-18 each half got the full value, so the
+240 in the workflow was a 480-s per-job ceiling: the 09-17 night (run `35251054872`) spent
+11,199 worker-seconds — 3 workers × 3,733 s — on 34 jobs and named 15, a per-job p90 of 305 s
+estimated from the ledger's `at` gaps, and its last line landed 62 minutes into a 60-minute
+budget. The value is 180 since 09-18 (a 90-s POST; 57 % of the POSTs on 09-16 answered inside
+30 s), which is 60 jobs a night at the ceiling and ~90 at what a job that ends normally costs.
+A job whose POST answered but whose end this run could not read is `pending` WITH its
+`job_id`, and the next run resolves it exactly (7 of the 09-16 night's 14 did).
+
 **Reading a zero night (2026-09-15).** The `wayback` stamp's `net` / `server` are the
 archive failing to answer (a connection error, a 5xx); `refused` is the archive refusing
 OUR address (a 4xx, a block, an exclusion); `captured` is what it NAMED — `submitted` also

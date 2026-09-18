@@ -4028,9 +4028,9 @@
   "file": "archive_evidence.py",
   "symbol": "_submit_job",
   "class": "M7-constant-drift",
-  "find": "    status, data, err = _json_call(req, timeout)\n    if status in (401, 403):\n",
+  "find": "    status, data, err = _json_call(req, max(0.0, timeout / 2.0))\n    if status in (401, 403):\n",
   "replace": "    status, data, err = _json_call(req, 30.0)\n    if status in (401, 403):\n",
-  "why": "the first scheduled night (2026-09-16, run 35126457407): 43 of 154 requests were `net:TimeoutError`, the POST cut off at 30 s while the archive held it for a slot -- each a 15-s retry and a second POST for the same url (infra).",
+  "why": "the first scheduled night (2026-09-16, run 35126457407): 43 of 154 requests were `net:TimeoutError`, the POST cut off at 30 s while the archive held it for a slot -- each a 15-s retry and a second POST for the same url (infra). Re-anchored 2026-09-18: the POST's wait is now HALF the job's budget, not a constant and not the whole of it.",
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_wayback_keyed_post_then_poll_names_the_capture"
@@ -4420,6 +4420,45 @@
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_a_google_results_card_is_not_a_job_description"
+  ]
+ },
+ {
+  "id": "wayback-poll-gets-a-second-full-budget",
+  "file": "archive_evidence.py",
+  "symbol": "_submit_job",
+  "class": "M7-constant-drift",
+  "find": "        res = _poll(str(data[\"job_id\"]), auth, max(0.0, timeout - (time.monotonic() - t0)))\n",
+  "replace": "        res = _poll(str(data[\"job_id\"]), auth, timeout)\n",
+  "why": "the shape of the leak measured on 2026-09-17 (run 35251054872): the POST and the reads each got the whole `WAYBACK_TIMEOUT_S`, so 240 was a 480-s per-job ceiling -- 11,199 worker-seconds opened 34 jobs and named 15, and the per-job p90 from the ledger's `at` gaps was 305 s against a cap of 240 (infra).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_the_post_and_the_reads_share_one_job_budget"
+  ]
+ },
+ {
+  "id": "wayback-job-ignores-the-remaining-clock",
+  "file": "archive_evidence.py",
+  "symbol": "_Pool._submit",
+  "class": "M1-gate-removal",
+  "find": "        res = submit(t.url, self._job_budget(), self.auth)\n",
+  "replace": "        res = submit(t.url, self.caps.timeout_s, self.auth)\n",
+  "why": "2026-09-17: the night's last ledger line landed at 18:12:24Z, 62 minutes into a 60-minute budget, because a job started near the end still got the whole ceiling -- and a step that overruns its `timeout-minutes` is ABANDONED, not stopped (infra, 2026-09-12).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_a_job_never_outlives_the_days_remaining_clock"
+  ]
+ },
+ {
+  "id": "wayback-budget-not-divided-by-the-workers",
+  "file": "archive_evidence.py",
+  "symbol": "_Pool._job_budget",
+  "class": "M7-constant-drift",
+  "find": "        return min(self.caps.timeout_s, max(0.0, left) / max(1, self.caps.workers))\n",
+  "replace": "        return min(self.caps.timeout_s, max(0.0, left))\n",
+  "why": "the bound is the remaining clock over the WORKERS: three workers each taking the whole remainder is three times the clock that is left, which is how 09-17 ran to 62 minutes of a 60-minute budget (infra).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_wayback_a_job_never_outlives_the_days_remaining_clock"
   ]
  }
 ]
