@@ -4225,5 +4225,31 @@
   "killers": [
    "tests/test_units.py::test_scrape_a_closed_anchor_before_the_heading_is_the_neighbours_not_the_cards"
   ]
+ },
+ {
+  "id": "refresh-carry-keys-on-the-listing",
+  "file": "refresh_scrape_cache.py",
+  "symbol": "_addresses",
+  "class": "M1-gate-removal",
+  "find": "    if listing and not _is_own_address(j, listing):\n        url = \"\"\n",
+  "replace": "    if False:\n        url = \"\"\n",
+  "why": "measured 2026-09-18: a url-less card's url IS the listing, shared by every url-less card on the board -- keyed on it the carry handed one card's text to any new title (20 cards / 9 boards; Medison 1 -> 5 titles, one a night from 2026-08-31) (scraper).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_refresh_the_listing_url_is_not_a_name_a_carry_may_match_on"
+  ]
+ },
+ {
+  "id": "refresh-carried-twins-counts-nothing",
+  "file": "refresh_scrape_cache.py",
+  "symbol": "_carried_twins",
+  "class": "M6-fallback-removal",
+  "find": "    return sum(len(ts) for ts in by_desc.values() if len(set(ts)) >= 2)\n",
+  "replace": "    return 0\n",
+  "why": "the `carried_twins` token on the `collect:` stamp is the only thing that would say the listing-keyed carry is back; a counter that always reads 0 reports a clean night on the night it returns (scraper, 2026-09-18).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_refresh_the_listing_url_is_not_a_name_a_carry_may_match_on"
+  ]
  }
 ]

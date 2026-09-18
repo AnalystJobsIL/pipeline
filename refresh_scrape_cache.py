@@ -394,9 +394,24 @@ def _title_key(j):
     return "T:%s|%s" % (title, (j.get("location") or "").strip().lower()) if title else ""
 
 
-def _addresses(j):
-    """The names a card keeps between nights: its address and its id."""
-    return [x for x in (j.get("url") or "", j.get("job_id") or "") if x]
+def _addresses(j, listing=""):
+    """The names a card keeps between nights: its OWN address and its id.
+
+    A url-less card's `url` is the LISTING (`_Adder.__call__`), which EVERY url-less card on
+    that board shares. Keyed on it, `prev[listing]` is whichever old card came last and
+    `_carry_jd` hands that card's text to any new title with an empty description: 20 cached
+    cards across 9 boards carried a sibling's on 2026-09-18 (Medison 5, Cal 2, Discount 2,
+    Magic 2, Mikud 2, Omnisys 2, TELUS 2, Leumi 2, Reeco 1), and git shows Medison's Total
+    Rewards body spreading to one more title a night from 2026-09-07.
+
+    The id stays, and it is the honest key: for a url-less card `_Adder` hashes
+    company|title|location into it, so it names the CARD and not the board. An unknown listing
+    still means "cannot tell" (`_is_own_address`) and keeps the url, so nothing changes for a
+    caller that cannot say what the board's address is."""
+    url = j.get("url") or ""
+    if listing and not _is_own_address(j, listing):
+        url = ""
+    return [x for x in (url, j.get("job_id") or "") if x]
 
 
 def _carry_jd(new_jobs, old_jobs, listing=""):
@@ -413,11 +428,15 @@ def _carry_jd(new_jobs, old_jobs, listing=""):
     (wave-1 attacker C), which is also what `pipeline/seniority.py` would classify.
 
     Two openings of one role at one place are common, so a non-unique title falls back to
-    the address. The 7-day `_jd_attempted` cooldown follows the ADDRESS rather than the
+    the address — its OWN address (`_addresses`, 2026-09-18): the listing every url-less card
+    on the board shares is not a name, and keyed on it the fallback handed one card's text to
+    every new title the board grew.
+
+    The 7-day `_jd_attempted` cooldown follows the ADDRESS rather than the
     match: an unchanged one is certainly the same posting, while a moved one may be a
     re-post, which from here looks exactly like a promotion — and jdfill must stay free to
     read a posting that is really new (wave-1 attacker B)."""
-    prev = {k: j for j in old_jobs if isinstance(j, dict) for k in _addresses(j)}
+    prev = {k: j for j in old_jobs if isinstance(j, dict) for k in _addresses(j, listing)}
     by_title, new_titles = {}, _Counter(_title_key(j) for j in new_jobs)
     for j in old_jobs:
         if isinstance(j, dict) and (k := _title_key(j)):
@@ -427,10 +446,10 @@ def _carry_jd(new_jobs, old_jobs, listing=""):
         twins = by_title.get(k) or []
         pj = twins[0] if k and len(twins) == 1 and new_titles[k] == 1 else None
         if pj is None:
-            pj = next((prev[a] for a in _addresses(j) if a in prev), None)
+            pj = next((prev[a] for a in _addresses(j, listing) if a in prev), None)
         if pj is None:
             continue
-        same_address = bool(set(_addresses(j)) & set(_addresses(pj)))
+        same_address = bool(set(_addresses(j, listing)) & set(_addresses(pj, listing)))
         # A title match across TWO DIFFERENT addresses that each name their own page is a
         # re-post, not a promotion: yesterday's `Data Analyst / Tel Aviv` closed and a new one
         # opened. Carrying the text there put a dead role's description on a live opening and
@@ -873,6 +892,26 @@ def _alarm(st: RunState, *, mass_failure=False, shrink=None, rot_unreadable=Fals
     return "+".join(tokens)
 
 
+def _carried_twins(jobs, listing=""):
+    """Url-less cards on this board whose description is byte-identical to a SIBLING's under
+    a different title — the state `_carry_jd`'s listing key used to produce, counted over what
+    is written rather than over the event, so a re-introduction shows up whatever produced it.
+
+    Only url-less cards: two cards that each name their own page and still hold identical text
+    are jd-text's shell-page class (28 cards on 2026-09-18), not this one. 300 characters is
+    the same floor `enrich_scrape_jd` calls a description."""
+    if not listing:
+        return 0
+    by_desc = {}
+    for j in jobs or []:
+        if not isinstance(j, dict) or _is_own_address(j, listing):
+            continue
+        d = (j.get("description") or "").strip()
+        if len(d) >= 300:
+            by_desc.setdefault(d, []).append((j.get("title") or "").strip().lower())
+    return sum(len(ts) for ts in by_desc.values() if len(set(ts)) >= 2)
+
+
 def _unprovenanced(jobs):
     """Postings carrying the bare word "Israel" with none of the three provenance values —
     pre-2026-08-30 stamps in carried entries (`legacy_loc`, must ratchet to 0 as boards
@@ -1186,6 +1225,11 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     listings = {r["company_name"]: r.get("api_url", "") for r in rows}
     ownless = sum(1 for name, listing in listings.items()
                   for j in written.get(name) or [] if not _is_own_address(j, listing))
+    # ...and, among them, the ones holding a SIBLING's text (2026-09-18): `_carry_jd` keyed
+    # on the listing, so one card's description spread to every new title the board grew.
+    # 20 cards / 9 boards when it was found; 0 is the level this must keep.
+    carried_twins = sum(_carried_twins(written.get(name) or [], listing)
+                        for name, listing in listings.items())
     alarm = _alarm(st, mass_failure=mass_failure, shrink=shrink,
                    rot_unreadable=rot_state == "unreadable",
                    uncached=uncached, unvisited=unvisited,
@@ -1200,7 +1244,8 @@ def run(argv=None, *, pool_cls=None, worker=None, clock=time.time):
     embeds_won = sum(1 for _, s in st.embeds if s.endswith(":won"))
     detail = dict(rows=len(rows), **c, parked=parks, uncached=uncached,
                   unvisited=unvisited, uncached_base=base_u, rows_base=base_r,
-                  legacy_loc=legacy_loc, ownless=ownless, ownless_base=own_u,
+                  legacy_loc=legacy_loc, carried_twins=carried_twins,
+                  ownless=ownless, ownless_base=own_u,
                   ownless_rows_base=own_r,
                   embeds=len(st.embeds), embeds_won=embeds_won,
                   workers=o.workers, minutes=minutes, via=_via(st.strategies))

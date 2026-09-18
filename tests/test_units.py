@@ -11517,6 +11517,66 @@ def test_refresh_a_reposted_role_does_not_inherit_the_closed_ones_description():
     assert out[0]["description"] == "the JD"
 
 
+def test_refresh_the_listing_url_is_not_a_name_a_carry_may_match_on():
+    """2026-09-18: a url-less card's `url` is the LISTING (`_Adder.__call__`), which every
+    url-less card on that board shares. `prev` was keyed by it, so `prev[listing]` was
+    whichever old card came last and `_carry_jd` handed its text to any NEW title with an
+    empty description — 20 cached cards across 9 boards, and git shows Medison's
+    compensation body going from one title on 2026-08-31 to five by 09-16, one a night.
+
+    The card's ID still keys the carry: for a url-less card `_Adder` hashes
+    company|title|location into it, so it names the card and not the board."""
+    import refresh_scrape_cache as R
+    listing = "https://co.example/careers"
+
+    def urlless(title, desc, jid=None):
+        return {"title": title, "location": "Tel Aviv", "url": listing,
+                "job_id": jid or ("h:" + title), "description": desc}
+
+    old = [urlless("Senior Total Rewards Analyst", "COMPENSATION AND BENEFITS: " + "x" * 300),
+           urlless("Data Engineer", "the data engineering JD " + "y" * 300)]
+    new = [urlless("Senior AI Enablement", ""), urlless("Senior ERP Specialist", "")]
+    assert [j["description"] for j in R._carry_jd(new, old, listing)] == ["", ""], \
+        "a brand-new title on a url-less board inherits nothing from the listing key"
+    # ...while the card's OWN id still carries its own text, cooldown and all
+    prev = dict(urlless("Data Engineer", "the JD"), _jd_attempted="2026-09-10")
+    out = R._carry_jd([urlless("Data Engineer", "")], [prev], listing)
+    assert out[0]["description"] == "the JD" and out[0]["_jd_attempted"] == "2026-09-10"
+    # the counter that says the class is back: url-less cards holding one body under two
+    # titles. An own-address pair is jd-text's shell-page class and is not counted here.
+    body = "z" * 400
+    assert R._carried_twins([urlless("A", body), urlless("B", body),
+                             urlless("C", "other" + body)], listing) == 2
+    assert R._carried_twins([urlless("A", body), urlless("B", body)], "") == 0
+    own = [{"title": t, "url": f"{listing}/jobs/{t}", "job_id": t, "description": body}
+           for t in ("A", "B")]
+    assert R._carried_twins(own, listing) == 0
+
+
+def test_void_carried_twins_names_an_owner_and_voids_only_a_card_still_holding_its_text():
+    """The one-off repair beside the capture fix (2026-09-18): a url-less card has no page
+    any layer can re-read (`not_job_url`), so the wrong copies on disk are voided ONCE, by
+    name, and the card git shows holding the text FIRST keeps it. A named card that has since
+    been re-read, or lost the text, is skipped rather than blanked."""
+    from tools.void_carried_twins import plan, VOID
+    assert VOID["Medison Pharma"][0] == "Senior Total Rewards Analyst"
+    body = "COMPENSATION AND BENEFITS " + "x" * 400
+    owner, victims = VOID["Medison Pharma"]
+    cache = {"Medison Pharma": [{"title": owner, "description": body}]
+             + [{"title": t, "description": body} for t in victims]
+             + [{"title": "Data Engineer", "description": "its own JD"}]}
+    hits, misses = plan(cache)
+    assert sorted(t for _c, t, _j in hits) == sorted(victims)
+    assert misses and all("no cache entry" in m for m in misses), misses
+    # a victim that has since been re-read holds its OWN text and is left alone
+    cache["Medison Pharma"][1]["description"] = "the real ERP posting"
+    hits2, _ = plan(cache)
+    assert len(hits2) == len(victims) - 1
+    # ...and with no owner there is nothing to compare against, so nothing is voided
+    cache["Medison Pharma"][0]["description"] = ""
+    assert plan(cache)[0] == []
+
+
 def test_scrape_the_foreign_vocabulary_covers_the_cities_a_sales_bench_is_named_for():
     """BACKLOG 247 (`scraper` 2026-08-26 evening) stays open — a list of places is never
     finished — but the wave-2 confirmer named the gap it could reach through, and a role

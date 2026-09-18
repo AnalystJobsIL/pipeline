@@ -3705,7 +3705,18 @@ anchor `ownless_base=A ownless_rows_base=R` (postings whose url IS the listing t
 found on — no fetch layer can ever read them a description, BACKLOG 434; each anchor
 carries its own rows because the two ratchet on different nights; the `cache-unreadable`
 exit — which measured nothing — stamps none of the derived keys, and never did stamp the
-anchors), and, on a run
+anchors), and, from 2026-09-18, `carried_twins=N` — url-less cards holding a SIBLING's
+description byte for byte under a different title. `_carry_jd` keyed its address fallback on
+a card's `url`, and a url-less card's url is the LISTING that every url-less card on the
+board shares, so `prev[listing]` was whichever old card came last and its text went to any
+new title with an empty description: 20 cards across 9 boards, Medison's compensation body
+spreading from one title on 2026-08-31 to five by 09-16, one a night. `_addresses(j,
+listing)` now drops that key (an unknown listing still means "cannot tell" and keeps it), and
+the ten wrong copies on disk were voided once by name (`tools/void_carried_twins.py`) because
+a url-less card has no page any layer can re-read. **The level settles at 2, not 0**: Cal's
+`נציג/ת שירות ומכירה` cards for Ashdod and Bnei Brak are one posting at two branches whose
+card windows are identical, and both arrived holding it in the same commit. A rise above 2 is
+the carry returning), and, on a run
 with the flags set, `llm_calls llm_won llm_fail llm_skipped` (`SCRAPE_LLM`) and
 `unlock_calls unlock_ok unlock_won`
 (`SCRAPE_VIA_UNLOCKER`) — the two shared quotas this step spends, counted nowhere until
