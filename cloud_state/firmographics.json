@@ -7745,17 +7745,17 @@
     "sub_sector": "mycorrhizal fungi inoculants (Rootella) for crop nutrient uptake and soil carbon sequestration"
   },
   "Group19 Tech": {
-    "as_of": "2026-08-30",
-    "business_model": "B2B engineering/software services for UAV, satellite, and defense sectors",
-    "customer_type": "Defense, aerospace, and robotics companies",
+    "as_of": "2026-09-18",
+    "business_model": "Engineering and software services/projects",
+    "customer_type": "B2B / Government (defense, aerospace, drone companies)",
     "employees_global": 23,
     "founded": null,
     "il_center": "Yeruham (HQ)",
-    "sector": "aerospace & defense tech",
+    "sector": "defense & aerospace",
     "size_band": "S",
-    "stage": "early-private",
-    "stage_note": "Small privately-held engineering services firm; no public funding details found",
-    "sub_sector": "UAV/Drone Engineering & Software Services"
+    "stage": "private-enterprise",
+    "stage_note": "Social-business subsidiary of Group19, founded by Hana Rado and Inbar Cohen; no venture funding found",
+    "sub_sector": "UAV/space software and engineering services"
   },
   "GuardKnox": {
     "as_of": "2026-08-22",
