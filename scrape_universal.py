@@ -1541,6 +1541,11 @@ class LinksOutcome:
         return f"links:unread:{top}"
 
 
+# what a position page calls itself, and where on the page it says it. One definition for
+# both readings: `_parse_position_page` takes the title from `ph` and ANCHORS the place
+# search at the same heading's position inside the tag-stripped body (2026-09-18).
+_H1_RX = re.compile(r"<h1[^>]*>\s*([^<]{3,90})\s*</h1>", re.S)
+_OG_TITLE_RX = re.compile(r'property=["\']og:title["\'][^>]*content=["\']([^"\']{3,90})')
 # a position link that lands on an error page: opened, read, not a job ("Page not found -
 # Massivit" was a title the replay produced on 2026-08-26)
 _NOT_A_POSITION = re.compile(
@@ -1606,6 +1611,13 @@ def _stated_place(txt):
     return val if (ISRAEL_LOC.search(val) or _FOREIGN_PAGE_RX.search(val)) else ""
 
 
+def _bare_country(loc):
+    """Does this reading name the COUNTRY and nothing else? `Israel`, `ישראל`, and the
+    `Israel Israel` a page titled "Israel" reads back through `_LOC_SUFFIX` — the absence of
+    a place, dressed as one."""
+    return bool(loc) and len(re.sub(r"(?i)israel|ישראל|[\W_]+", "", loc)) < 2
+
+
 def _parse_position_page(ph, u2):
     """What one opened position page says — `{title, url, loc, desc, il, foreign}` — or None
     when it is not a posting at all. Pure. The judgement call it used to make on its own:
@@ -1622,8 +1634,7 @@ def _parse_position_page(ph, u2):
     for the whole group: a board that named a foreign place anywhere is not one where "no
     place" means Israel. Foreign is judged over the title too — it comes from an attribute
     on a JS-shell page, so it is not in the visible text this used to search."""
-    mt = (re.search(r"<h1[^>]*>\s*([^<]{3,90})\s*</h1>", ph, re.S)
-          or re.search(r'property=["\']og:title["\'][^>]*content=["\']([^"\']{3,90})', ph))
+    mt = _H1_RX.search(ph) or _OG_TITLE_RX.search(ph)
     if not mt or _NOT_A_POSITION.search(mt.group(1)):
         return None
     # an og:title/h1 that leads with the site's own chrome ("lakeFS Careers: Director of
@@ -1636,7 +1647,15 @@ def _parse_position_page(ph, u2):
     body = re.sub(r"<(script|style|noscript|svg)[^>]*>.*?</\1>", " ", ph, flags=re.S | re.I)
     txt = re.sub(r"<[^>]+>", " ", body)
     title = mt_title
-    at = txt.find(title)
+    # WHERE the role's own heading sits in that text. `txt.find(title)` answered 0 — the
+    # `<title>` element's copy, which is the first thing in the document — so the place
+    # nearest the anchor was whatever chrome lies between `<title>` and the `<h1>`: אסם's
+    # navbar slogan ("אסם נסטלה יוצרת עתיד בשדרות") placed 10 of its 12 postings in שדרות
+    # while their own pages say Petah Tikva and Modiin (proved live through the unlocker,
+    # 2026-09-18). Mapped from the h1's position in `body`, so the offset is `txt`'s; a page
+    # with no h1 at all (the og:title branch, which lives in the head) keeps the old anchor.
+    mb = _H1_RX.search(body)
+    at = len(re.sub(r"<[^>]+>", " ", body[:mb.start()])) if mb else txt.find(title)
     # what the page CLAIMS this role is: the heading plus the document title, which is where
     # a board that does not print the place in its markup puts it — Checkmarx's
     # `<title>Application Security Research Team Leader in Braga, Portugal</title>` over an
@@ -1648,6 +1667,16 @@ def _parse_position_page(ph, u2):
     # is how an office address became a US role's location
     stated = _stated_place(txt)
     claim = f"{claim} {stated}"
+    # the bare country is not a place, it is the absence of one: when the heading's own
+    # neighbourhood offers nothing better, the role's CLAIM may still name a city. Anchoring
+    # at the h1 made this reachable — `<title>DevOps Engineer in Ramat Gan, Israel</title>`
+    # over a bare `<h1>` puts `Israel` nearer the heading than `Ramat Gan` (10 of the 27
+    # readings that moved on the 2026-09-18 replay, Safefields and Xtholdings among them).
+    # `_loc_from_ctx` only ever returns an Israeli match, so a Braga title still yields "".
+    by_anchor = _loc_from_ctx(txt, anchor=at if at >= 0 else None)
+    if _bare_country(by_anchor):
+        named = _loc_from_ctx(claim)
+        by_anchor = named if named and not _bare_country(named) else by_anchor
     return {"title": title, "url": u2,
             # anchored at the END of the label, so `Israel, Hod HaSharon (Hybrid)` reads as
             # the city rather than the country it is prefixed with. A multi-region label
@@ -1659,7 +1688,7 @@ def _parse_position_page(ph, u2):
             "loc": ((_loc_from_ctx(stated, anchor=len(stated))
                      or (_clean_loc(_html.unescape(stated))
                          if _LIST_ISRAEL.search(stated) else "")) if stated else
-                    (_loc_from_ctx(txt, anchor=at if at >= 0 else None) or _loc_from_ctx(claim))),
+                    (by_anchor or _loc_from_ctx(claim))),
             "desc": re.sub(r"\s+", " ", txt)[:4000],
             "il": bool(ISRAEL_LOC.search(txt)),
             # what this role SAYS it is — never a page-wide scan, which measured useless:

@@ -459,7 +459,23 @@ including the claim "none".
    France, Grenoble` — is making that role's own claim, and it settles the question over any
    place found by proximity, including when it names nowhere in Israel: Weebit Nano prints
    its Hod Hasharon office on every page, so its USA and France roles were cached as Israeli
-   until 2026-08-26. A label whose value names no place is not a label. **The LISTING URL is
+   until 2026-08-26. A label whose value names no place is not a label. **With no label, the
+   proximity search is anchored at the role's own HEADING** (2026-09-18) — not at the
+   `<title>` element's copy of the title, which is the first thing in the document, so
+   "the place nearest the role's name" was the place nearest byte 0, i.e. whatever chrome
+   lies between `<title>` and the `<h1>`. אסם's navbar slogan ("אסם נסטלה יוצרת עתיד
+   בשדרות") placed 10 of its 12 postings in שדרות while their own pages say Petah Tikva and
+   אזור תעשיה חבל מודיעין — proved live through the unlocker (the pages answer plain HTTP
+   with 403). Replayed over **452 real position pages: 35 readings move, 24 to a named place,
+   11 to the bare country, 0 to nothing, and 0 change either `il` or `foreign`**. The bare
+   country is the absence of a place dressed as one (`_bare_country`, which also catches the
+   `Israel Israel` a page titled "Israel" reads back through `_LOC_SUFFIX`), so where the
+   anchored reading yields only that, the role's own CLAIM — its heading plus the document
+   title — may still name a city. Stripping `<nav>/<header>/<footer>/<aside>` from the
+   search text instead was REJECTED on the same replay: it cost Bright Data 8 correct places
+   and Ram Aderet 4, each to "". A place that lies BEFORE the heading with nothing after it
+   is still read, as it always was: the anchor moved, the reading did not become
+   chrome-blind. **The LISTING URL is
    never a location** (2026-08-30): an Israel token in the query
    (`jobs.comcast.com/search-jobs?location=Israel` — 14 US postings stamped `Israel`, two
    published and retracted) or the path (`careers.arm.com/location/israel-jobs/` — 17 more)

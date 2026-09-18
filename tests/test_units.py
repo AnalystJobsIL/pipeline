@@ -11259,6 +11259,51 @@ def test_scrape_a_position_page_is_judged_on_what_it_claims_not_on_its_body():
     assert "var x" not in N._parse_position_page(js, "https://co.example/job-openings/c/")["desc"]
 
 
+def test_scrape_a_position_pages_place_is_anchored_at_its_heading_not_at_the_title_copy():
+    """אסם's twelve postings: ten read `שדרות` from the navbar slogan `אסם נסטלה יוצרת עתיד
+    בשדרות` while their own pages say Petah Tikva and אזור תעשיה חבל מודיעין (proved live
+    through the unlocker on 2026-09-18, 2 credits).
+
+    `at = txt.find(title)` found the `<title>` element's copy, which is the first thing in
+    the document — so "the place nearest the role's name" was the place nearest byte 0, i.e.
+    whatever chrome lies between `<title>` and the `<h1>`. The anchor is now the on-page
+    heading, mapped into the same tag-stripped text.
+
+    Replayed over 452 real position pages: 35 readings move, 24 to a named place and 11 to
+    the bare country; 0 change `il` and 0 change `foreign`."""
+    import scrape_universal as N
+    osem = ("<html><head><title>Data Analyst למחלקת השיווק</title></head><body>"
+            "<nav>תחילת תוכן מרכזי אודות אסם נסטלה יוצרת עתיד בשדרות מותגים</nav>"
+            "<h1>Data Analyst למחלקת השיווק</h1><p>משרה מספר 414885 Petah Tikva, IL</p>"
+            "<p>נספרסו מגייסת Data Analyst למחלקת השיווק</p></body></html>")
+    assert N._parse_position_page(osem, "https://co.example/p/1")["loc"] == "Petah Tikva"
+    # the anchor MOVED; the reading did not become chrome-blind. A page whose only place
+    # lies before the heading still reads it — `_loc_from_ctx` takes a hit before the anchor
+    # when nothing follows, and stripping `<nav>/<header>/<footer>` instead was rejected on
+    # the replay (Bright Data lost 8 correct places to "", Ram Aderet 4).
+    chrome_only = ("<html><head><title>QA Engineer</title></head><body>"
+                   "<nav>אסם נסטלה יוצרת עתיד בשדרות</nav><h1>QA Engineer</h1>"
+                   "<p>Join the team.</p></body></html>")
+    assert N._parse_position_page(chrome_only, "https://co.example/p/2")["loc"] == "שדרות"
+    # ...and a place of the posting's OWN, after the heading, beats it
+    both = chrome_only.replace("<p>Join the team.", "<p>חיפה. Join the team.")
+    assert N._parse_position_page(both, "https://co.example/p/2")["loc"] == "חיפה"
+    # the bare country is the absence of a place, so the role's own CLAIM may still name a
+    # city: `<title>… in Ramat Gan, Israel</title>` over a bare `<h1>` puts `Israel` nearer
+    # the heading than the city (10 of the 27 readings that moved on the first replay)
+    doc_title = ("<html><head><title>DevOps Engineer in Ramat Gan, Israel</title></head>"
+                 "<h1>DevOps Engineer</h1><p>We build in Israel.</p></html>")
+    assert "Ramat Gan" in N._parse_position_page(doc_title, "https://co.example/p/3")["loc"]
+    assert N._bare_country("Israel") and N._bare_country("ישראל")
+    assert N._bare_country("Israel Israel"), "what `_LOC_SUFFIX` reads back off a page titled Israel"
+    assert not N._bare_country("Ramat Gan, Israel") and not N._bare_country("")
+    # a page with NO h1 (the og:title branch lives in the head) keeps the old anchor
+    og = ('<html><head><title>Analyst</title>'
+          '<meta property="og:title" content="Analyst"></head>'
+          '<body><p>Analyst, Haifa, Israel</p></body></html>')
+    assert "Haifa" in N._parse_position_page(og, "https://co.example/p/4")["loc"]
+
+
 def test_scrape_a_role_in_two_cities_keeps_each_citys_own_address():
     """Wave-1 attacker A (HIGH): `_weak` was keyed on the title alone, so the second reading
     of a role that runs in two cities overwrote the first's index — VAST Data lists

@@ -4251,5 +4251,31 @@
   "killers": [
    "tests/test_units.py::test_refresh_the_listing_url_is_not_a_name_a_carry_may_match_on"
   ]
+ },
+ {
+  "id": "scrape-position-anchor-at-the-title-copy",
+  "file": "scrape_universal.py",
+  "symbol": "_parse_position_page",
+  "class": "M8-argument-mis-passing",
+  "find": "    mb = _H1_RX.search(body)\n    at = len(re.sub(r\"<[^>]+>\", \" \", body[:mb.start()])) if mb else txt.find(title)\n",
+  "replace": "    mb = None\n    at = len(re.sub(r\"<[^>]+>\", \" \", body[:mb.start()])) if mb else txt.find(title)\n",
+  "why": "`txt.find(title)` is the `<title>` element's copy at byte 0, so the place nearest the anchor is whatever chrome lies between it and the h1: אסם's navbar slogan placed 10 of 12 postings in שדרות while their own pages say Petah Tikva and Modiin (unlocker, 2026-09-18) (scraper).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_scrape_a_position_pages_place_is_anchored_at_its_heading_not_at_the_title_copy"
+  ]
+ },
+ {
+  "id": "scrape-bare-country-counts-as-a-place",
+  "file": "scrape_universal.py",
+  "symbol": "_bare_country",
+  "class": "M1-gate-removal",
+  "find": "    return bool(loc) and len(re.sub(r\"(?i)israel|ישראל|[\\W_]+\", \"\", loc)) < 2\n",
+  "replace": "    return False\n",
+  "why": "the bare country is the absence of a place: with the anchor at the h1, a `<title>DevOps Engineer in Ramat Gan, Israel</title>` over a bare h1 puts `Israel` nearer the heading than the city, and 10 of the 27 readings that first moved lost their city that way (scraper, 2026-09-18).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_scrape_a_position_pages_place_is_anchored_at_its_heading_not_at_the_title_copy"
+  ]
  }
 ]
