@@ -197,6 +197,89 @@ def is_ok(state, name, url, days=BOARD_VERIFY_DAYS):
     return bool(rec and rec.get("verdict") == OK)
 
 
+def site(host):
+    """The registrable domain WITH its suffix: `careers.mars.com` -> `mars.com`,
+    `jobs.johnbryce.co.il` -> `johnbryce.co.il`. `company_identity.registrable` returns the
+    bare label, which folds `adscale.com` (AdScale's own board, ledger `ok`) into
+    `adscale.tech` (Adscale Tech, NOT-THEIRS) -- measured, it put an innocent row in the
+    census. Reuses that function's suffix rule rather than keeping a second list.
+
+    Moved here from `registry_health._site` on 2026-09-18 (one copy, not two): the host fold
+    is what makes a ledger verdict reusable at all, and three WRITERS now need it, not one
+    reporter.
+    """
+    from pipeline.company_identity import registrable
+    h = (host or "").lower().split(":")[0]
+    h = h[4:] if h.startswith("www.") else h
+    parts = [p for p in h.split(".") if p]
+    lab = registrable(h)
+    for i in range(len(parts) - 1, -1, -1):
+        if parts[i] == lab:
+            return ".".join(parts[i:])
+    return h
+
+
+def _host_reads(state, name, url):
+    """Every non-UNVERIFIABLE record this ledger holds for `name` on `url`'s registrable
+    site, newest last. `UNVERIFIABLE` is "we failed to look", never an answer: it may not
+    unseat a real verdict and may not stand in for one (`cached` makes the same cut)."""
+    import urllib.parse
+    dom = site((urllib.parse.urlparse(url or "").netloc or "").lower())
+    n = (name or "").strip().lower()
+    got = []
+    if not dom:
+        return got
+    for k, v in (state or {}).items():
+        if "|" not in k:
+            continue
+        kn, ku = k.split("|", 1)
+        if kn != n or site((urllib.parse.urlparse(ku).netloc or "").lower()) != dom:
+            continue
+        if (v or {}).get("verdict") == UNVERIFIABLE:
+            continue
+        got.append(v or {})
+    got.sort(key=lambda v: str(v.get("date") or ""))
+    return got
+
+
+def refuses(state, name, url):
+    """Has this ledger ruled `url`'s HOST not this company's -- and is that still its
+    newest word on that host?
+
+    HOST-level, because the ledger is keyed on the exact url a read happened on and the hunt
+    re-finds a sibling path: `Mars Antennas And Rf Systems` was read NOT-THEIRS on
+    `careers.mars.com/us/en/search-results?keywords=Israel` and re-activated on
+    `/us/search-results` four nights later, with the refusal on disk the whole time. Two more
+    followed while nothing consumed it -- `Kima` re-activated on `careers.akima.com` by the
+    09-15 hunt, `PayPlus` on `payplus.com` by the 09-17 one -- and `queue_pipeline.needs_verify`
+    could not catch either, because `board_verify.due` sees a FRESH verdict on that exact url
+    and skips the row.
+
+    NEWEST WINS, and that clause is the difference between a census and a gate. The
+    host-keyed count that shipped on 2026-09-13 ignored dates, so `Hillel Il` -- read `ok` on
+    `hillel.org/careers` on 09-15 and NOT-THEIRS on a BLOG url of the same host on 08-31 --
+    was reported contradicted for three days. A stale NO is not a NO.
+
+    A host the company DECLARES its own (`identity_facts` `domains`) is never refused: a
+    declaration beats a page read, which is that table's own contract and the settlement for
+    a model that keeps misreading one row.
+    """
+    import urllib.parse
+    from pipeline import identity_facts as F
+    host = (urllib.parse.urlparse(url or "").netloc or "").lower()
+    if not host or F.host_matches(host, F.domains(name)):
+        return False
+    reads = _host_reads(state, name, url)
+    return bool(reads) and reads[-1].get("verdict") == NOT_THEIRS
+
+
+def refused_employer(state, name, url):
+    """The employer the newest refusing read on that host named, or "" -- the evidence a park
+    quotes. Split from `refuses` so the predicate stays a predicate."""
+    reads = [v for v in _host_reads(state, name, url) if v.get("verdict") == NOT_THEIRS]
+    return (reads[-1].get("employer_named") if reads else "") or ""
+
+
 # ---------------------------------------------------------------------------- the page
 def _encode(url):
     """Percent-encode a URL's non-ASCII path. `urllib` cannot request a raw Hebrew URL, and

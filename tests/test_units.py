@@ -18392,6 +18392,179 @@ def test_the_queue_stamp_carries_capacity_and_the_ledger_contradiction_count(tmp
     assert q["capacity"] == QP.DRAIN_NIGHTLY_CAP and q["ledger_contradicted"] == 7, q
 
 
+# --- registry, 2026-09-18: the ledger answered and three writers threw the answer away. ----
+def _bv_rec(date, verdict, employer="", url=""):
+    return {"date": date, "verdict": verdict, "employer_named": employer, "url": url}
+
+
+def test_a_newer_ok_on_a_host_beats_an_older_not_theirs_read_of_the_same_host():
+    """`Hillel Il` was reported contradicted for three days by a count with no date rule.
+
+    The ledger held `ok` on `hillel.org/careers` (2026-09-15, the row's live address) and
+    NOT-THEIRS on a BLOG url of the same host (2026-08-31). The host fold is right -- that is
+    what catches `Mars`' sibling path -- but folding without ORDERING turns any historical
+    misread into a permanent refusal. A stale NO is not a NO.
+    """
+    from pipeline import board_verify as BV
+    state = {
+        BV.key("Hillel Il", "https://hillel.org/blog/some-post"):
+            _bv_rec("2026-08-31", BV.NOT_THEIRS, "Hillel International"),
+        BV.key("Hillel Il", "https://hillel.org/careers"): _bv_rec("2026-09-15", BV.OK),
+    }
+    assert BV.refuses(state, "Hillel Il", "https://hillel.org/careers") is False
+    # ...and the order really is what decides: swap the dates and the same host refuses.
+    flipped = {
+        BV.key("Hillel Il", "https://hillel.org/blog/some-post"):
+            _bv_rec("2026-09-15", BV.NOT_THEIRS, "Hillel International"),
+        BV.key("Hillel Il", "https://hillel.org/careers"): _bv_rec("2026-08-31", BV.OK),
+    }
+    assert BV.refuses(flipped, "Hillel Il", "https://hillel.org/careers") is True
+    assert BV.refused_employer(flipped, "Hillel Il",
+                               "https://hillel.org/careers") == "Hillel International"
+
+
+def test_a_ledger_refusal_binds_on_a_sibling_path_and_yields_to_a_declaration(monkeypatch):
+    """The two halves the exact-url key could not do, on one predicate.
+
+    `Mars Antennas And Rf Systems` was read NOT-THEIRS on
+    `careers.mars.com/us/en/search-results?keywords=Israel` and re-activated four nights
+    later on `/us/search-results` -- same host, different path, and the refusal on disk the
+    whole time. The mirror clause is the settlement: a host the company DECLARES its own
+    (`identity_facts` `domains`) is never refused, because a declaration beats a page read.
+    """
+    from pipeline import board_verify as BV
+    from pipeline import identity_facts as F
+    state = {BV.key("Mars Antennas And Rf Systems",
+                    "https://careers.mars.com/us/en/search-results?keywords=Israel"):
+             _bv_rec("2026-09-01", BV.NOT_THEIRS, "Mars, Incorporated")}
+    assert BV.refuses(state, "Mars Antennas And Rf Systems",
+                      "https://careers.mars.com/us/search-results") is True
+    # a DIFFERENT registrable site is untouched -- the fold keeps the suffix, so
+    # `adscale.com` may not inherit `adscale.tech`'s refusal
+    assert BV.refuses(state, "Mars Antennas And Rf Systems",
+                      "https://mars-antennas.com/careers/") is False
+    monkeypatch.setitem(F._INDEX, F._key("Mars Antennas And Rf Systems"),
+                        {"domains": ("mars.com",), "why": "test-only declaration"})
+    assert BV.refuses(state, "Mars Antennas And Rf Systems",
+                      "https://careers.mars.com/us/search-results") is False
+
+
+def test_an_unverifiable_record_neither_unseats_nor_stands_in_for_a_verdict():
+    """`UNVERIFIABLE` means "we failed to look" -- `cached()` already refuses to return one
+    as an answer, and the host rule has to make the same cut, in both directions."""
+    from pipeline import board_verify as BV
+    st = {BV.key("Kima", "https://careers.akima.com/jobs"):
+          _bv_rec("2026-09-14", BV.NOT_THEIRS, "Akima"),
+          BV.key("Kima", "https://careers.akima.com/"): _bv_rec("2026-09-17", BV.UNVERIFIABLE)}
+    assert BV.refuses(st, "Kima", "https://careers.akima.com/") is True, (
+        "a later 'we could not read it' must not clear a refusal")
+    only = {BV.key("Kima", "https://careers.akima.com/"):
+            _bv_rec("2026-09-17", BV.UNVERIFIABLE)}
+    assert BV.refuses(only, "Kima", "https://careers.akima.com/") is False
+
+
+def test_the_ledger_contradiction_census_counts_only_rows_the_predicate_refuses(tmp_path,
+                                                                                monkeypatch):
+    """The census and the park must mean the same rows, so the census is now a REPORT over
+    `board_verify.refuses` and carries no host fold of its own (it had a second copy and no
+    date rule). Live measurement 2026-09-18: 3 -> 2, and the one that left was the false one.
+    """
+    import csv as _csv
+    import registry_health as RH
+    from pipeline import board_verify as BV
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Kima,scrape,,https://careers.akima.com/,true,listing-hunt 2026-09-15: verified 2 IL\n"
+        "Hillel Il,scrape,,https://hillel.org/careers,true,"
+        "listing-hunt 2026-09-15: verified 1 IL\n"
+        "Parked Co,scrape,,https://careers.akima.com/,false,monitored candidate\n",
+        encoding="utf-8")
+    state = {
+        BV.key("Kima", "https://careers.akima.com/jobs"):
+            _bv_rec("2026-09-14", BV.NOT_THEIRS, "Akima"),
+        BV.key("Hillel Il", "https://hillel.org/blog/x"):
+            _bv_rec("2026-08-31", BV.NOT_THEIRS, "Hillel International"),
+        BV.key("Hillel Il", "https://hillel.org/careers"): _bv_rec("2026-09-15", BV.OK),
+    }
+    rows = [r for r in _csv.reader(open("companies.csv", encoding="utf-8"))][1:]
+    assert RH.ledger_contradicted(rows, state) == [("Kima", "Akima")]
+
+
+def test_the_hunt_will_not_activate_a_row_onto_a_host_the_ledger_already_refused(tmp_path,
+                                                                                 monkeypatch):
+    """The gate that was missing when `Kima` and `PayPlus` came back.
+
+    Both were parked on a model read and re-activated by the 19:00 hunt days later -- `Kima`
+    on `careers.akima.com` (refused 09-14, back 09-15), `PayPlus` on `payplus.com` (refused
+    09-15, back 09-17). `identity_gate` cannot see it: it is PURE by design and the ledger is
+    a state file. The hunt is a WRITER, and writers here already read state files.
+    """
+    import csv as _csv
+    import json as _j
+    import sys as _sys
+
+    import listing_hunt as H
+    from pipeline import board_verify as BV
+    d = tmp_path / "lh"
+    d.mkdir()
+    (d / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n", encoding="utf-8")
+    (d / "research_companies.json").write_text(_j.dumps([
+        {"name": "Kima", "careers_url": "https://il.linkedin.com/jobs/view/1"},
+        {"name": "Clean Co", "careers_url": "https://il.linkedin.com/jobs/view/2"},
+    ]), encoding="utf-8")
+    monkeypatch.chdir(d)
+    monkeypatch.setattr(_sys, "argv", ["listing_hunt.py", "--apply"])
+    monkeypatch.setenv("HUNT_QUEUE_CAP", "5")
+    answers = {"Kima": ("found", "https://careers.akima.com/jobs/analyst", 2, "ok"),
+               "Clean Co": ("found", "https://clean.example/careers", 2, "ok")}
+    monkeypatch.setattr(H, "hunt_one", lambda name, seed, **k: answers[name])
+    monkeypatch.setattr(H, "looks_like_a_job_listing_page", lambda u: True)
+    monkeypatch.setattr(H._gate, "identity_ok", lambda name, url: True)
+    monkeypatch.setattr(H, "_BV_STATE", {
+        BV.key("Kima", "https://careers.akima.com/"): _bv_rec("2026-09-14", BV.NOT_THEIRS,
+                                                              "Akima")})
+    H.main()
+    rows = {r[0]: r for r in _csv.reader(open(d / "companies.csv", encoding="utf-8"))}
+    assert rows["Kima"][4] == "false", rows["Kima"]
+    # ...and not merely inactive: the ADDRESS must not be persisted either, or this tool's
+    # own fast path re-reads it tomorrow night -- the whole reason the address gate exists.
+    assert rows["Kima"][3] == "", rows["Kima"]
+    # positive control: an unrefused host still activates, or this guard would pass by
+    # refusing everything
+    assert rows["Clean Co"][4] == "true" and rows["Clean Co"][3] == (
+        "https://clean.example/careers"), rows["Clean Co"]
+
+
+def test_verify_existing_parks_a_ledger_contradicted_row_without_buying_a_read(tmp_path,
+                                                                               monkeypatch):
+    """`needs_verify` can never reach these rows: `board_verify.due` sees a FRESH verdict on
+    the exact url the hunt re-activated the row on and answers "not due". So the nightly step
+    parks them from the ledger FIRST and buys nothing -- the verdict, the employer it names
+    and its date are already on disk."""
+    import queue_pipeline as QP
+    from pipeline import board_verify as BV
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cloud_state").mkdir(exist_ok=True)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Kima,scrape,,https://careers.akima.com/,true,"
+        "listing-hunt 2026-09-15: verified 2 IL\n", encoding="utf-8")
+    state = {BV.key("Kima", "https://careers.akima.com/"):
+             _bv_rec("2026-09-14", BV.NOT_THEIRS, "Akima")}
+    monkeypatch.setattr(BV, "load", lambda path=BV.PATH: dict(state))
+    monkeypatch.setattr(BV, "save", lambda st, path=BV.PATH: None)
+    bought = []
+    monkeypatch.setattr(BV, "verify", lambda *a, **k: bought.append(a) or {"verdict": BV.OK})
+    stats = QP.verify_existing(apply=True)
+    assert bought == [], "a page was read for a row the ledger had already answered"
+    assert stats["ledger-parked"] == 1, dict(stats)
+    row = [r for r in QP.rows() if r and r[0] == "Kima"][0]
+    assert row[4] == "false" and row[3] == "", row
+    assert "wrong-url" in row[5] and "Akima" in row[5], row[5]
+
+
 def test_the_israeli_job_boards_stay_on_the_aggregator_host_list():
     """`pipeline/aggregators.py` is DISCOVERY's file; these six entries are `registry`'s,
     added 2026-08-28 (340@discovery), and this pins them so they cannot be dropped silently.

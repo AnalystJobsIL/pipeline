@@ -878,51 +878,26 @@ def alarms(rows=None, live=False, res=None, prev=None):
 _RECRUITER_VERDICT = re.compile(r"^recruiter \d{4}-\d{2}-\d{2}\s*:", re.I)
 
 
-def _site(host):
-    """The registrable domain WITH its suffix: `careers.mars.com` -> `mars.com`,
-    `jobs.johnbryce.co.il` -> `johnbryce.co.il`. `company_identity.registrable` returns the
-    bare label, which folds `adscale.com` (AdScale's own board, ledger `ok`) into
-    `adscale.tech` (Adscale Tech, NOT-THEIRS) -- measured, it put an innocent row in the
-    census. Reuses that function's suffix rule rather than keeping a second list."""
-    from pipeline.company_identity import registrable
-    h = (host or "").lower().split(":")[0]
-    h = h[4:] if h.startswith("www.") else h
-    parts = [p for p in h.split(".") if p]
-    lab = registrable(h)
-    for i in range(len(parts) - 1, -1, -1):
-        if parts[i] == lab:
-            return ".".join(parts[i:])
-    return h
-
-
 def ledger_contradicted(rows, state=None):
-    """ACTIVE rows reading a host `pipeline/board_verify` already ruled NOT-THEIRS for that
-    very name -- on ANY url of that host, because the ledger is keyed on the exact url a read
-    happened on and the hunt re-finds a sibling path (`Mars Antennas And Rf Systems`: read on
-    `/us/en/search-results?keywords=Israel`, re-activated on `/us/search-results`). A host the
-    company DECLARES its own (`identity_facts` `domains`) is excluded: that is how a misread
-    row is settled. Returns [(name, employer_named)], report-only (BACKLOG 596; 12 on
-    2026-09-13, before the parks)."""
-    import urllib.parse
+    """ACTIVE rows whose address sits on a host `pipeline/board_verify` has ruled NOT-THEIRS
+    for that very name, and has not said anything newer.
+
+    The host fold and the newest-wins rule both live in `board_verify.refuses` since
+    2026-09-18 -- this is a REPORT over that predicate, and the two hunt arms and
+    `queue_pipeline.verify_existing` are its other three readers, so a row can no longer be
+    re-activated onto a board the ledger already refused. Before the move this function
+    carried its own host fold and NO date rule at all, which is why `Hillel Il` (`ok` on
+    `hillel.org/careers` 09-15, NOT-THEIRS on a blog url of that host 08-31) was counted a
+    contradiction: 3 on 09-18, of which 2 were real. Returns [(name, employer_named)]
+    (BACKLOG 596; 12 on 2026-09-13, before the parks)."""
     from pipeline import board_verify as BV
-    from pipeline import identity_facts as F
     state = BV.load() if state is None else state
-    ruled = {}
-    for k, v in (state or {}).items():
-        if (v or {}).get("verdict") != BV.NOT_THEIRS or "|" not in k:
-            continue
-        n, u = k.split("|", 1)
-        dom = _site((urllib.parse.urlparse(u).netloc or "").lower())
-        if dom:
-            ruled.setdefault((n, dom), v.get("employer_named") or "")
     out = []
     for r in rows:
         if len(r) < 6 or r[4] != "true" or not (r[3] or "").startswith("http"):
             continue
-        host = (urllib.parse.urlparse(r[3]).netloc or "").lower()
-        hit = (r[0].strip().lower(), _site(host))
-        if hit in ruled and not F.host_matches(host, F.domains(r[0])):
-            out.append((r[0], ruled[hit]))
+        if BV.refuses(state, r[0], r[3]):
+            out.append((r[0], BV.refused_employer(state, r[0], r[3])))
     return out
 
 

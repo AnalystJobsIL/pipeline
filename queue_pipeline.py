@@ -204,6 +204,19 @@ def park_unverified(name, employer, apply=False, verdict=""):
     return True
 
 
+def ledger_contradicted_rows(state):
+    """ACTIVE rows on a host the ledger already refused for that name, [(name, employer)].
+
+    One import of `registry_health.ledger_contradicted` -- which is itself a report over
+    `board_verify.refuses` -- so the census in the mail and the park in this step can never
+    disagree about which rows they mean."""
+    try:
+        import registry_health as _RH
+        return _RH.ledger_contradicted(rows(), state)
+    except Exception:                                             # noqa: BLE001
+        return []
+
+
 def verify_existing(limit=0, apply=False, allow_paid=True, shard=""):
     from pipeline import board_verify as BV
     state = BV.load()
@@ -219,6 +232,22 @@ def verify_existing(limit=0, apply=False, allow_paid=True, shard=""):
     print("rows with a live address and no fresh verdict: %d%s"
           % (len(todo), " (shard %s)" % shard if shard else ""), flush=True)
     stats = collections.Counter()
+    # THE LEDGER ALREADY ANSWERED, so park before paying for a page. An ACTIVE row whose
+    # host `board_verify` ruled NOT-THEIRS can never reach the loop below: `needs_verify`
+    # asks `BV.due`, which sees a FRESH verdict on the exact url the hunt re-activated the
+    # row on and answers "not due". That is how `Kima` (refused 09-14, re-activated on
+    # `careers.akima.com` 09-15) and `PayPlus` (refused 09-15, re-activated 09-17) sat
+    # contradicted until a session read the census. No new read is bought: the verdict, the
+    # employer it names and its date are already on disk, and `park_unverified` is the same
+    # writer the loop below uses.
+    for _nm, _emp in ledger_contradicted_rows(state):
+        _ok = park_unverified(_nm, _emp, apply=apply, verdict=BV.NOT_THEIRS)
+        stats["ledger-parked" if (_ok and apply)
+              else "ledger-would-park" if _ok else "ledger-park-refused"] += 1
+        print("  [--] %-30s %-6s %-13s %-22s %s"
+              % (_nm[:30], "ACTIVE", "ledger", (_emp or "")[:22],
+                 "-> PARKED, address cleared (no read bought)" if apply
+                 else "-> would park (no read bought)"), flush=True)
     for i, r in enumerate(todo, 1):
         rec = BV.verify(r[0], r[3], state=state, allow_paid=allow_paid,
                         seed_context=seed_for(r[0]))

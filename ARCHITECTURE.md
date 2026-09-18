@@ -1781,6 +1781,24 @@ Three changes, and the first is the rule:
   `park_unverified` **only on the ledger's own refusing read**, and writes a replacement
   address only where the ledger reads that url `ok` AND `identity_ok` admits it.
 
+**...and a declaration nothing CONSUMES is a census** (2026-09-18). `ledger_contradicted` was
+report-only, so the class re-filled from the tool that had caused it: the 19:00 hunt
+re-activated `Kima` onto `careers.akima.com` on 09-15 (refused 09-14) and `PayPlus` onto
+`payplus.com` on 09-17 (refused 09-15), and `--verify-existing` could not correct either,
+because `board_verify.due` sees a FRESH verdict on the exact url the hunt wrote and answers
+"not due". 0 on 09-13, 3 by 09-18. The rule now lives in ONE predicate,
+`pipeline/board_verify.refuses(state, name, url)` — the registrable-site fold (`board_verify.site`,
+moved here from `registry_health._site`, one copy) plus **newest read on that host wins**, and
+a `domains` declaration is never refused. `UNVERIFIABLE` is skipped in both directions: it may
+not clear a refusal and may not stand in for one. Four readers: the census (which had no date
+rule at all, and counted `Hillel Il` — `ok` on `/careers` 09-15, NOT-THEIRS on a BLOG url of
+that host 08-31 — for three days: **3 → 2, both true**), the hunt's two activation arms
+(activation AND the documented address, because the fast path re-reads `fr[3]` the next
+night), and `--verify-existing`, which parks the contradicted rows FIRST and **buys no page**:
+the verdict, the employer it names and its date are already on disk. The 09-13 rejection
+stands and is the reason this is not in `identity_ok`: the gates are pure and offline, the
+WRITERS read state files.
+
 The same day: a social page and a VC's portfolio-jobs page joined `aggregators.HOSTS`
 (`facebook.com`, `instagram.com`, `greylock.com/jobs` — each named the company correctly, so
 only the host list could refuse it), and three placement firms' own boards with them

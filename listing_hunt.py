@@ -52,6 +52,7 @@ from resolve_llm import _ask_claude
 # which is how two fixtures silently started hitting the live network instead of their
 # stub. Attribute access resolves at call time, so there is exactly one place to patch.
 from pipeline import identity_gate as _gate
+from pipeline import board_verify as _bv
 from pipeline.atomic import write_csv_rows
 from pipeline.notes import append as _note_append, replace_own as _note_replace
 import queue_state as QS
@@ -68,6 +69,30 @@ for _s in (sys.stdout, sys.stderr):
 
 
 TODAY = dt.date.today().isoformat()
+
+_BV_STATE = None
+
+
+def _ledger_refuses(name, url):
+    """Has `pipeline/board_verify` already ruled this HOST not this company's board?
+
+    The identity gates above are PURE -- they read the url, the name and the page, never a
+    state file -- and that is deliberate (2026-09-13 rejected putting the ledger inside
+    `identity_ok`). This is the other half: the hunt is a WRITER, writers already read state
+    files here (`queue_state`, the disposition ledger), and a refusal a model paid for is
+    evidence this tool was throwing away nightly. Twice in three days it re-activated a row
+    onto a host the ledger had refused -- `Kima` onto `careers.akima.com` (09-15, refused
+    09-14), `PayPlus` onto `payplus.com` (09-17, refused 09-15) -- and `board_verify.due`
+    then skipped both, because the exact url carried a fresh verdict.
+
+    Read once per process: the ledger is ~2,400 records and this is asked per row.
+    """
+    global _BV_STATE
+    if _BV_STATE is None:
+        _BV_STATE = _bv.load()
+    return _bv.refuses(_BV_STATE, name, url)
+
+
 _LINKISH = re.compile(r"job|position|opening|vacanc|search|career|role|משרות|דרושים|join", re.I)
 _IL = re.compile(r"israel|tel.?aviv|herzliya|haifa|jerusalem|ramat|petah|netanya|beer.?sheva", re.I)
 
@@ -571,6 +596,9 @@ def main():
                 # page" - no identity test whatsoever, on the tool whose documented
                 # fast-path re-checks rows every night.
                 refused = "another company's board"
+            elif verdict == "found" and _ledger_refuses(name, url):
+                # ...and the same refusal when a MODEL already read this host and said so.
+                refused = "ledger: another company's board"
             elif verdict == "found" and _active_twin(name, "scrape", "", url, rows):
                 # The board can be this company's and still be one another ACTIVE row is
                 # already reading -- every identity gate above says yes to both halves of a
@@ -715,11 +743,15 @@ def main():
                 q_refused = "not a listings page"
             elif verdict == "found" and not _gate.identity_ok(name, q_url):
                 q_refused = "another company's board"
+            elif verdict == "found" and _ledger_refuses(name, q_url):
+                q_refused = "ledger: another company's board"
             # the ADDRESS gate, separate from the ACTIVATION gate: refusing to activate while
             # still storing the address only delays the mistake 24 hours, because this tool's
             # fast path re-reads it the next night (QuantLR -> quantlab.com, a US trading
-            # firm; FairFly -> fireflyspace.com).
-            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else ""
+            # firm; FairFly -> fireflyspace.com). The ledger refusal binds here too, for the
+            # same reason: a documented address is an activation on a timer.
+            keep = q_url if (q_url and _gate.identity_ok(name, q_url)
+                             and not _ledger_refuses(name, q_url)) else ""
             if q_url and not keep:
                 q_refused = q_refused or "another company's board"
             refused = q_refused
