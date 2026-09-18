@@ -34624,7 +34624,14 @@ def test_rejudge_rows_finds_and_forgets_a_jobs_verdict_under_every_prefix(tmp_pa
 def test_the_unreachable_alarm_names_why_each_role_had_no_description(monkeypatch):
     """jd-text leaves `_jd_why` on the job at every refusal; six unreachable verdicts on
     2026-09-13 had three different owners (a listing-page url, another role's address, a
-    render cap) and the alarm said only "6"."""
+    render cap) and the alarm said only "6".
+
+    2026-09-18: the card jd-fill never ATTEMPTED carries no `_jd_why` at all, and this
+    assertion used to pin the bare `"?"` the alarm printed for it -- which reads as "the
+    reason was lost" rather than "nothing ran". `NO_JD_WHY` names it. The retired assertion
+    was `"(? 1, not-a-job-url 1)"`; it is folded here rather than left beside the new one,
+    because a test that pins a string the code no longer produces cannot fail for the right
+    reason."""
     calls = _fake_seam(monkeypatch, lambda p: _ok("YES"))
     cache = {"v3.deadbeef|acme|data analyst|jd": True, "v3.deadbeef|acme|bi analyst|jd": False}
     clf = seniority.Classifier(llm_cache=cache)
@@ -34632,7 +34639,8 @@ def test_the_unreachable_alarm_names_why_each_role_had_no_description(monkeypatc
     clf.classify({"company": "Acme", "title": "BI Analyst"})
     assert clf.stale_unreachable == 2 and not calls
     line = next(a for a in clf.alarms() if "CANNOT be re-judged" in a)
-    assert "(? 1, not-a-job-url 1)" in line, line
+    assert f"({seniority.NO_JD_WHY} 1, not-a-job-url 1)" in line, line
+    assert "?" not in line, line
 
 
 def test_the_unknown_contract_withdrawals_are_exactly_the_stable_nos_of_the_artifact(tmp_path):
@@ -34660,3 +34668,212 @@ def test_the_unknown_contract_withdrawals_are_exactly_the_stable_nos_of_the_arti
     assert sorted(e["role_id"] for e in mine) == out
     assert all(e["status"] == "withdrawn" and e["url"].startswith("https://") for e in mine)
     assert all(e["label"] == "right" for e in art["geo_566"]["flips"])
+
+
+# --------------------------------------------------------------------------- #
+# 2026-09-18 (classifier): the data-platform ruling, the reject-cell pool, the gate
+# --------------------------------------------------------------------------- #
+def _artifact_0918():
+    import json
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(repo, "tests", "fixtures", "classifier",
+                           "2026-09-18-delta-audit.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def test_the_rules_carry_the_2026_09_14_data_platform_ruling_in_condition_two():
+    """The operator ruled on 2026-09-14 that leading data engineers or owning the data
+    platform is OUT. It ships INSIDE condition (2) rather than as a record applied by hand,
+    because the seam bought `jazz|senior bi developer` YES three times out of three under
+    the rules that were live on 2026-09-18 -- a ruling the seam cannot see is a hand-drain
+    for ever. Both arms and the IC/analyst-leadership carve-out must be in the text, and the
+    text must stay ONE line (cmd.exe truncates an argv element at a newline)."""
+    rules = seniority.LLM_RULES
+    assert "\n" not in rules
+    assert "LEADING OR OWNING THE DATA PLATFORM IS OUT" in rules
+    for arm in ("leading data engineers", "owning the ingestion",
+                "even when a BI team", "head of analysis or analytics who leads ANALYSTS"):
+        assert arm in rules, arm
+    # ...and the sentence it extends is still there: this is an addition to the 09-01
+    # analytics-engineer boundary, not a replacement for it.
+    assert "weigh which side the posting" in rules
+
+
+def test_the_data_platform_record_names_jazz_and_superplay_and_both_arms():
+    """`docs/decisions/2026-09-14-data-platform-leadership.md` is the record the rules
+    sentence points at. A reader who finds a row surprising must be able to date the ruling,
+    read both arms, and see the worked example on each side -- the 09-11 addendum kept Jazz
+    IN and this record reverses it, which is exactly the kind of reversal that goes wrong
+    silently when only the code moves."""
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = os.path.join(repo, "docs", "decisions", "2026-09-14-data-platform-leadership.md")
+    assert os.path.exists(path)
+    with open(path, encoding="utf-8") as f:
+        text = f.read().replace(chr(92) + "|", "|")     # markdown tables escape the pipe
+    for token in ("jazz | senior bi developer", "upwind | head of data",
+                  "superplay | head of bi",
+                  "biocatch", "leads data engineers", "owning the ingestion",
+                  "2026-09-01-analytics-engineer-boundary.md"):
+        assert token in text, token
+    # the measurement that justified the bump, both numbers
+    assert "20 rows, 2 moved" in text and "YES / YES / YES" in text
+
+
+def test_the_0918_withdrawals_are_exactly_the_rows_no_fresh_yes_rescued(tmp_path):
+    """2026-09-18 (classifier): 11 published rows carried a `reject` cell and the weekly
+    delta audit returned 5 OUT + 10 BORDERLINE claims. The withdrawal rule is the 09-11 one
+    -- three fresh NO in one sitting, or a documented seam miss -- so a single fresh YES
+    ends the question, and every row this session withdrew must have three NOs behind it or
+    rest on the 09-14 ruling.
+
+    The artifact carries the seven lines as they were appended, so this asserts inside one
+    hand-written file: `cloud_state/` is cron-rewritten and `tests/live_state.py` locks it.
+    The binding against the real ledger (`Retractions.load` -> `bind` -> `match_all`) was run
+    once and its result is `binding_check` here and in the session record."""
+    art = _artifact_0918()
+    assert art["seam_calls"] == 74 and art["bright_data_credits"] == 0
+    out = sorted(r["role_id"] for r in art["rows"] if r["adjudication"] == "OUT")
+    assert len(out) == 7, out
+    for r in art["rows"]:
+        votes = r.get("votes_live") or []
+        if r["adjudication"] == "OUT" and r["pool"] != "09-14-ruling":
+            assert votes.count("NO") == 3 and "YES" not in votes, r["role_id"]
+        elif r["adjudication"] == "IN" and votes and r["role_id"] not in (
+                "migdal|data analyst", "team8|briya medical data analyst"):
+            assert "YES" in votes, r["role_id"]           # something rescued it
+    # the two the seam refuses and a decision record keeps: both are in `ADJUDICATED`
+    for rid in ("migdal|data analyst", "team8|briya medical data analyst"):
+        assert seniority.ADJUDICATED[rid][0] == "accept"
+    # the ruling's two rows carry three candidate-contract NOs each
+    for r in art["rows"]:
+        if r["pool"] == "09-14-ruling":
+            assert r["votes_candidate"] == ["NO", "NO", "NO"], r["role_id"]
+    mine = art["retraction_lines"]
+    assert sorted(e["role_id"] for e in mine) == out
+    assert all(e["status"] == "withdrawn" and e["url"].startswith("https://")
+               and e["role_id"] and e["reason"].strip() and e["on"] == "2026-09-18"
+               and e["by"].startswith("classifier") for e in mine)
+    assert "each new line binds exactly 1 record, 0 bad" in art["binding_check"]
+
+
+def test_a_decision_record_outranks_the_seam_on_the_role_ids_it_names():
+    """`ADJUDICATED` is the `recruiters._CONFIRMED` shape: the handful of postings a written
+    decision record settles on a tell the seam provably cannot read. Team8's board carries
+    Briya, which condition (4) reads as "a different company is the workplace" every time it
+    is asked -- NO/NO/NO on three fresh calls on 2026-09-18. It became code that morning
+    because `roles.Ledger._withdraw_rejected` now DELETES the row on a reject cell, so
+    without a reader for the record the next unattended run would have dropped two rows the
+    operator's own records adjudicated IN.
+
+    Three properties, and each is the reason it is safe: it may only ACCEPT, every entry
+    names a decision record that exists, and it is keyed by `role_id` so it cannot
+    generalise to another posting at the same employer."""
+    repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    assert seniority.ADJUDICATED, "an empty map would make this test vacuous"
+    for rid, (decision, record, why) in seniority.ADJUDICATED.items():
+        assert decision == "accept", rid           # one-way, by construction
+        assert os.path.exists(os.path.join(repo, record)), record
+        assert why.strip() and "|" in rid
+    job = {"role_id": "team8|briya medical data analyst", "company": "Team8",
+           "title": "Briya- Medical Data Analyst", "description": "x" * 400, "url": "u"}
+    clf = seniority.Classifier(use_llm=False)
+    for got in (clf._classify(dict(job)), clf.judge_backfill(dict(job))):
+        assert got["decision"] == "accept" and got["path"] == "adjudicated"
+        assert "2026-09-01-the-posting-must-describe-a-workplace.md" in got["reason"]
+    assert clf.adjudicated == 2
+    # a posting at the SAME employer under another title is not covered
+    other = dict(job, role_id="team8|data engineer", title="Data Engineer")
+    assert seniority.adjudicated(other) is None
+
+
+def test_a_published_reject_cell_is_owed_a_live_verdict_and_only_ever_upwards():
+    """2026-09-18 (`621`): `reject_map` stamps a NO onto a closed record, and from that
+    morning `roles.Ledger._withdraw_rejected` takes the row out of the dataset on it -- but
+    NO writer could put one back. `class_unjudged` read "has a decision naming some
+    contract" as judged, and the drain only reaches roles the run fetched. Eleven published
+    rows were stuck there.
+
+    `reject_owed` is the pool and `roles.class_refillable` is the one-way rule. The arms are
+    tested separately because they fail differently: the retired-contract arm is the only
+    one that survives a contract bump (which supersedes every cached verdict), and the `|jd`
+    arm must ignore a `|bare` row -- two of the three cells that disagreed with SOME
+    live-contract row that morning were contradicted only by a provisional `|bare` verdict
+    while their own `|jd` row agreed with the cell."""
+    from pipeline import class_backfill, roles
+    live = seniority.CONTRACT
+    rec = {"title": "Data Researcher", "company": "Navina", "status": "closed", "url": "u",
+           "description": "x" * 500,
+           "class": {"decision": "reject", "path": "keyword", "contract": live,
+                     "reason": "no analytics signal in title"}}
+    rid = "navina|data researcher"
+    jd_key = seniority.cache_keys(class_backfill._job(rid, rec), True, live)[1]
+    bare_key = seniority.cache_keys(class_backfill._job(rid, rec), True, live)[2]
+
+    assert class_backfill.reject_owed(rid, rec, {jd_key: True}, live) is True
+    assert class_backfill.reject_owed(rid, rec, {jd_key: False}, live) is False
+    assert class_backfill.reject_owed(rid, rec, {bare_key: True}, live) is False, \
+        "a |bare verdict is provisional and is not an authority over a |jd cell"
+    # the retired-contract arm, with no cache at all
+    stale = dict(rec, **{"class": dict(rec["class"], contract="v3.deadbeef")})
+    assert class_backfill.reject_owed(rid, stale, None, live) is True
+    # an ACCEPT cell is never in this pool, whatever the cache says
+    ok = dict(rec, **{"class": {"decision": "accept", "contract": live, "path": "llm"}})
+    assert class_backfill.reject_owed(rid, ok, {jd_key: False}, live) is False
+
+    # ...and the pool reaches it only when the cache is handed over
+    recs = {rid: rec}
+    assert [r for r, _ in class_backfill.candidates(recs)] == []
+    assert [r for r, _ in class_backfill.candidates(
+        recs, cache={jd_key: True}, contract=live)] == [rid]
+
+    # the one-way rule: reject -> accept yes, accept -> reject never
+    assert roles.class_refillable(rec, {"decision": "accept", "contract": live,
+                                        "path": "llm_cache"}) is True
+    assert roles.class_refillable(rec, {"decision": "reject", "contract": live,
+                                        "path": "llm"}) is False
+    assert roles.class_refillable(ok, {"decision": "reject", "contract": live,
+                                       "path": "llm"}) is False
+    assert roles.class_refillable(rec, {"decision": "accept", "path": "llm"}) is False, \
+        "a refill must name the contract it was decided under"
+    # the 2026-08-31 behaviour an empty cell has always had: it takes anything
+    assert roles.class_refillable({"class": {}}, {"decision": "accept", "path": "llm"}) is True
+
+
+def test_a_refilled_reject_cell_reaches_the_record_and_a_matching_one_does_not():
+    """`apply_to` and `Ledger._record_run`'s backfill loop read the same predicate, because
+    the two disagreeing is how the CLI and the in-run hook produced two answers for one role
+    before 2026-09-13. A cell that AGREES with the verdict offered is left alone: rewriting
+    it would move `updated` every morning for no change and churn the daily binary."""
+    from pipeline import class_backfill
+    live = seniority.CONTRACT
+    rid = "navina|data researcher"
+    recs = {rid: {"title": "Data Researcher", "company": "Navina", "status": "closed",
+                  "class": {"decision": "reject", "path": "keyword", "contract": live,
+                            "reason": "no analytics signal in title"}}}
+    accept = {"decision": "accept", "path": "llm_cache", "contract": live,
+              "reason": "cached LLM verdict"}
+    assert class_backfill.apply_to(recs, {rid: accept}, "2026-09-18") == [rid]
+    assert recs[rid]["class"]["decision"] == "accept"
+    assert class_backfill.apply_to(recs, {rid: accept}, "2026-09-19") == []
+
+
+def test_the_model_developer_title_is_lifted_by_its_own_text_not_by_a_hebrew_stem():
+    """The 2026-09-18 gate audit read 491 new title-only rejects and called ONE a false
+    negative: Cal's `מפתח.ת מודלים`. It is not a gate miss. `_desc_appealed` already lifts
+    the card on its own 955 characters (a data-analytics phrase, a `דוחות` output, SQL), the
+    seam has read it and refused it on condition (2) three times -- a cached NO of 09-14 and
+    NO/NO fresh -- and the miss, if any, is the seam's.
+
+    So `מודל` stays OUT of `_HEBREW_SIGNAL`. The arm would admit exactly the cards the
+    auditor itself leans OUT on: TASE's `כלכלן/ית ליחידת מודלים ונגזרים` reads `none` WITH
+    its text, which is the measurement that refused the vocabulary change."""
+    art = _artifact_0918()
+    card = art["title_gate"]["card_text"]               # the card as the cache held it
+    title, text = card["title"].lower(), card["description"]
+    assert len(text) == 955
+    assert seniority._relevance(title, card["company"].lower()) == "none"
+    assert seniority._relevance(title, card["company"].lower(), text) == "signal"
+    assert "מודל" not in seniority._HEBREW_SIGNAL.pattern, \
+        "the appeal already reaches this card; a stem arm would admit the risk-model rows"
+    assert art["title_gate"]["measured"]["fresh_votes"] == ["NO", "NO"]
+    assert art["title_gate"]["borderlines"] == 12

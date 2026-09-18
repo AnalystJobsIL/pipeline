@@ -4134,5 +4134,57 @@
   "replace": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else \"\"",
   "why": "the ADDRESS half of the ledger veto on the queue arm. Refusing to ACTIVATE while still storing the address only delays the mistake 24 hours -- this tool's own fast path re-reads fr[3] the next night, which is how a refused host comes back.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "backfill-ignores-a-reject-cell-under-a-retired-contract",
+  "file": "pipeline/class_backfill.py",
+  "symbol": "reject_owed",
+  "class": "M6-fallback-removal",
+  "find": "    if cls.get(\"contract\") != (contract or _seniority().CONTRACT):\n        return True\n",
+  "replace": "    if False:\n        return True\n",
+  "why": "2026-09-18 (classifier): the retired-contract arm is the only one that survives a contract bump -- a bump supersedes every cached verdict, so the `|jd` arm is empty for the mornings the drain takes to refill it. Without it the 11 published `reject` cells found that morning are stranded again, and from the same day a `reject` cell DELETES the row.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_published_reject_cell_is_owed_a_live_verdict_and_only_ever_upwards"
+  ]
+ },
+ {
+  "id": "refill-lets-an-accept-cell-become-a-reject",
+  "file": "pipeline/roles.py",
+  "symbol": "class_refillable",
+  "class": "M4-guard-removed",
+  "find": "    return (cls.get(\"decision\") == \"reject\" and new_cls.get(\"decision\") == \"accept\"\n            and bool(new_cls.get(\"contract\")))\n",
+  "replace": "    return bool(new_cls.get(\"contract\"))\n",
+  "why": "2026-09-18 (classifier): the second arm of the refill is ONE-WAY on purpose. Widening it to accept-to-reject would let a backlog pass take a live role off the board with no retraction line and no reader -- the channel for that is `roles_retractions.jsonl`, url-precise and reversible.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_published_reject_cell_is_owed_a_live_verdict_and_only_ever_upwards"
+  ]
+ },
+ {
+  "id": "a-decision-record-stops-outranking-the-seam-on-the-live-path",
+  "file": "pipeline/seniority.py",
+  "symbol": "_classify",
+  "class": "M6-fallback-removal",
+  "find": "        ruled = adjudicated(job)\n        if ruled:\n            self.adjudicated += 1\n            return {**base, \"decision\": ruled[\"decision\"], \"path\": ruled[\"path\"],\n                    \"reason\": ruled[\"reason\"]}\n        if rel == \"excluded\":\n",
+  "replace": "        if rel == \"excluded\":\n",
+  "why": "2026-09-18 (classifier): `ADJUDICATED` must be read at BOTH judging sites. `team8|briya medical data analyst` answers NO to the seam every time it is asked (NO/NO/NO on three fresh calls), and since that morning a `reject` cell removes the row -- so a live path that skips the map drops a posting the 2026-09-01 workplace record adjudicated IN, the morning it reopens.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_decision_record_outranks_the_seam_on_the_role_ids_it_names"
+  ]
+ },
+ {
+  "id": "unreachable-reason-prints-a-bare-question-mark-again",
+  "file": "pipeline/seniority.py",
+  "symbol": "_classify",
+  "class": "M7-constant-drift",
+  "find": "                    self.unreachable_why[\"shared text\" if shared\n                                         else (job.get(\"_jd_why\") or NO_JD_WHY)] += 1\n",
+  "replace": "                    self.unreachable_why[\"shared text\" if shared\n                                         else (job.get(\"_jd_why\") or \"?\")] += 1\n",
+  "why": "2026-09-18 (classifier): `classify N superseded verdicts CANNOT be re-judged (not-a-job-url 3, ? 1, wrong-address 1)` printed every morning and the `?` told a reader the reason had been LOST, when in fact jd-fill had never attempted the card. A grouped alarm whose largest bucket is punctuation is an alarm nobody can act on.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_unreachable_alarm_names_why_each_role_had_no_description"
+  ]
  }
 ]

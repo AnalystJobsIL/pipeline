@@ -832,6 +832,45 @@ def class_unjudged(rec):
     return not cls.get("decision") or not cls.get("contract")
 
 
+def class_refillable(rec, new_cls):
+    """May the backfill's verdict `new_cls` replace this record's `class` cell?
+
+    One predicate, three callers (`class_backfill.candidates` and `apply_to`, and
+    `Ledger._record_run`'s backfill loop), because the three disagreeing is how the CLI and
+    the in-run hook produced two different answers for one role before 2026-09-13.
+
+    Three arms:
+
+    * the cell is EMPTY. It takes any verdict, contract or no contract — that is the
+      2026-08-31 backfill this module was written for, and a verdict with no contract is
+      still better than a blank `class_decision` nobody can check.
+    * the cell has a decision that no contract stands behind, and the new one names its
+      contract and differs. "Unknown" is never swapped for another "unknown".
+    * **the cell says `reject` and the new verdict is an `accept` naming the live contract**
+      (2026-09-18, `621`). A cell with a contract is otherwise the drain's and is left alone
+      — but the drain only ever reaches a record the run FETCHED, and these are closed ones.
+      Measured that morning: 11 published rows carried a `reject` cell, `reject_map` had
+      stamped them days earlier, and NO writer in the system could put one back. One of the
+      eleven (`navina|data researcher`) held a `reject/keyword` cell reading "no analytics
+      signal in title" while the live contract's own `|jd` cache row said YES — the cell was
+      stamped on a morning the run's card carried no text, and the appeal that lifts the
+      title needs the text.
+
+    Deliberately ONE-WAY. An accept is never turned into a reject here: that is the reject
+    map's job on a run that judged the role, and a withdrawal's is a line in
+    `roles_retractions.jsonl`. Widening this to accept→reject would let a backlog pass take
+    a live role off the board with no line and no reader."""
+    cls = rec.get("class") or {}
+    if not new_cls or not new_cls.get("decision"):
+        return False
+    if not cls.get("decision"):
+        return True
+    if class_unjudged(rec):
+        return bool(new_cls.get("contract")) and new_cls != cls
+    return (cls.get("decision") == "reject" and new_cls.get("decision") == "accept"
+            and bool(new_cls.get("contract")))
+
+
 def same_role_twin(a, b, weak_ids=frozenset()):
     """Two SAME-company jobs/records that are provably one posting — the retitle class the
     seen-id collision alarm counts (`id_collisions`: HoneyBook's `product data analyst`
@@ -2405,15 +2444,18 @@ class Ledger:
         # names its contract, so "unknown" is never swapped for another "unknown", and never
         # on a record this run judged itself (`by_key`: the live stamp; `class_rejects`: the
         # run's own NOs), whatever that stamp carries. A cell with a contract is never
-        # touched: re-judging one is the contract drain's job, under the drain's caps.
+        # touched, with one exception the classifier lane owns and `class_refillable`
+        # states: a `reject` cell may be replaced by an `accept` that names the live
+        # contract. Nothing else could reach one, and 11 published rows were stuck in that
+        # state on 2026-09-18. This loop runs BEFORE `_withdraw_rejected`, which is what
+        # makes the two coherent: a cell refilled to `accept` this morning is not withdrawn
+        # the same morning.
         for rid, cls in (class_backfill or {}).items():
             rec = self.records.get(rid)
             if rec is None or not cls or rid in by_key or rid in (class_rejects or {}):
                 continue
             new_cls = _class_of(cls, self.live_contract)
-            if (rec.get("class") or {}) and (not class_unjudged(rec)
-                                             or not new_cls.get("contract")
-                                             or new_cls == rec.get("class")):
+            if (rec.get("class") or {}) and not class_refillable(rec, new_cls):
                 continue
             rec["class"] = new_cls
             self._touch(rec)

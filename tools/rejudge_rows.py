@@ -11,7 +11,16 @@ has to delete the job's key under EVERY prefix, and until today that was hand-ru
 (`551`'s three `techbiz global` keys). This is that SQL made repeatable and reviewable.
 
 It never bumps the contract (which re-supersedes ~560 cells to reach a handful) and never
-writes the role ledger: the next digest stamps the record from the cache it finds.
+writes the role ledger: the next digest stamps the record from the cache it finds -- WITH
+ONE CLASS OF EXCEPTION, corrected here on 2026-09-18 after it cost a session a wrong
+prediction. A record that is `closed` and whose cell already NAMES a contract is reached by
+nothing: the drain only re-judges roles the run fetched, and `class_backfill.candidates`
+read "has a decision under the live contract" as "judged". Forgetting such a row's keys and
+re-judging leaves the ledger cell exactly as it was. Since 2026-09-18 the backfill has a
+second pool for the one direction that is safe (a `reject` cell against a live-contract
+`|jd` YES, or against a written adjudication in `seniority.ADJUDICATED`), so a
+`--forget --judge` that lands a YES is picked up the next morning; an accept-to-reject
+still needs `roles_retractions.jsonl`.
 
     python tools/rejudge_rows.py --role-id "ballerine|ai fraud data analyst senior"
     python tools/rejudge_rows.py --role-id "<id>" --forget --judge --votes 2

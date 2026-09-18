@@ -614,7 +614,12 @@ def _rules(bar=None):
         "infrastructure or model-training data, consumed by other engineers, data scientists, "
         "researchers or product features, with no reporting or analysis output of the person's "
         "own. Naming a dashboard somewhere does not settle it: weigh which side the posting "
-        "itself puts the core on.\n"
+        "itself puts the core on. LEADING OR OWNING THE DATA PLATFORM IS OUT: answer NO "
+        "when the posting's own core is leading data engineers, or owning the ingestion, "
+        "warehouse, orchestration or data infrastructure itself, even when a BI team, "
+        "reports or executive dashboards sit on top of it. An individual contributor who "
+        "owns the BI tool and the dashboards, with pipelines beneath as the means, is "
+        "still IN, and so is a head of analysis or analytics who leads ANALYSTS.\n"
         + third +
         "(4) THE EMPLOYER'S OWN ROLE — answer NO if the posting is a staffing agency, a "
         "recruitment firm or an IT-outsourcing house advertising a position at a CLIENT company: "
@@ -785,6 +790,74 @@ MASS_YES_RATE = 0.55       # cache base rate is 18 % (45/247 on 2026-08-24)
 BREAKER_CONSECUTIVE = 3    # transient failures in a row that open the breaker
 BREAKER_WINDOW = 10        # ...or at least half of the last N attempts, with at least 5 failures
 
+# The reason printed for a held verdict nobody tried to fill. `_jd_why` is stamped only by
+# `jdfill.maybe_fill`'s exits, so a card jd-fill never ATTEMPTED carries none -- and the
+# unreachable alarm printed a bare "?" for it every morning, which reads as "the reason was
+# lost" rather than "there is no reason because nothing ran". `gong|senior data scientist -
+# ai research & reliability` is the standing instance: a LinkedIn discovery card with 0
+# characters, no matched row, and no posting on Gong's own Greenhouse board. Naming it is
+# this lane's half; making jd-fill stamp a reason on every held card is `jd-text`'s.
+NO_JD_WHY = "no-text-unattempted"
+
+# --------------------------------------------------------------------------- #
+# the adjudications a decision record made AGAINST the seam
+# --------------------------------------------------------------------------- #
+# `{role_id: (decision, record, why)}` -- the handful of postings a written decision record
+# settles on a tell the seam provably cannot read. It is the `recruiters._CONFIRMED` shape
+# (2026-09-11) and it exists for the same reason: a model told the company is "Team8" cannot
+# know that Team8 is a venture builder whose Comeet board carries Briya, any more than it
+# could know `pickpeak.co` is a recruiter's mailbox.
+#
+# Why it had to become code on 2026-09-18: `roles.Ledger._withdraw_rejected` now takes a
+# `reject` cell out of the dataset the same night. Two rows whose records say IN answer NO
+# to the seam every time it is asked -- Migdal NO/NO/YES, Team8/Briya NO/NO/NO on three
+# fresh calls -- so without a reader for the records, the next unattended run would have
+# deleted two rows the operator's own records adjudicated IN, and the only way back would
+# have been a human re-judging them by hand every morning. A hand-drain is not delivered.
+#
+# The rules that keep it small, and each is a test:
+#   * every entry NAMES an existing file in `docs/decisions/`, so the reasoning is readable
+#     and datable by whoever finds the row surprising;
+#   * it may only ever ACCEPT. A record that wants a row out writes a line in
+#     `cloud_state/roles_retractions.jsonl`, which is url-precise, reversible and already
+#     the sanctioned channel;
+#   * it is keyed by `role_id` (`store.merge_key`), never by title, so it cannot generalise
+#     to another posting at the same employer.
+ADJUDICATED = {
+    "migdal|data analyst": (
+        "accept", "docs/decisions/2026-09-01-execution-is-not-an-analysis-output.md",
+        "the worked-examples table adjudicates THIS posting IN: the CRM implementation is "
+        "split from the person's own reporting output ('bniyat dochot' and presenting "
+        "findings to management)"),
+    "team8|briya medical data analyst": (
+        "accept", "docs/decisions/2026-09-01-the-posting-must-describe-a-workplace.md",
+        "the record's own section says this row is NOT condition (4): Team8 is a venture "
+        "builder whose board carries the companies it co-founds, and Briya is one of them"),
+}
+
+
+def adjudicated(job):
+    """The written verdict for this posting, or None. One reader, two call sites.
+
+    The key is the job's `role_id` when it carries one (the backfill builds it from the
+    ledger key) and `store.merge_key` otherwise, which is the same key `roles.reject_map`
+    stamps a rejection under -- so the live path and the backlog path cannot disagree about
+    which record a decision record was written about."""
+    rid = job.get("role_id")
+    if not rid:
+        try:
+            from .store import merge_key
+            rid = merge_key(job)
+        except Exception:                      # a job shape merge_key cannot key is not ours
+            return None
+    hit = ADJUDICATED.get(rid)
+    if not hit:
+        return None
+    decision, record, why = hit
+    return {"decision": decision, "path": "adjudicated", "record": record,
+            "reason": f"adjudicated {decision} by {record}: {why}"}
+
+
 
 class Classifier:
     """One per run. `classify(job)` decides; `commit()` moves this run's verdicts into the
@@ -796,6 +869,7 @@ class Classifier:
                  cache_dates=None):
         self.use_llm = use_llm
         self.cache = llm_cache if llm_cache is not None else {}
+        self.adjudicated = 0          # cells a decision record decided, not the seam
         # `{title_key: updated}` for the same rows, so a superseded lookup can prefer the
         # verdict judged most RECENTLY rather than the one whose contract hash happens to
         # sort highest. Optional: without it the tie-break below is the old behaviour.
@@ -923,6 +997,16 @@ class Classifier:
         # this run (keyword head included: it is the deterministic head under the live
         # rules); a cache hit overrides it with the prefix that answered (544@roles).
         base = {"relevance": rel, "seniority": sen, "contract": self.contract}
+        # A decision record that ruled on a tell the seam cannot read outranks the seam and
+        # the cache both, on the handful of `ADJUDICATED` role_ids and nowhere else. It sits
+        # above the deterministic head deliberately: `team8|briya- medical data analyst`
+        # would otherwise be re-judged NO by every path that reaches it and taken out of the
+        # dataset by `roles.Ledger._withdraw_rejected` the same night.
+        ruled = adjudicated(job)
+        if ruled:
+            self.adjudicated += 1
+            return {**base, "decision": ruled["decision"], "path": ruled["path"],
+                    "reason": ruled["reason"]}
         if rel == "excluded":
             return {**base, "decision": "reject", "path": "keyword",
                     "reason": "engineering/ML/non-data-analyst title"}
@@ -1106,14 +1190,14 @@ class Classifier:
                 self.stale_unreachable += stale and not drainable
                 if stale and not drainable:
                     self.unreachable_why["shared text" if shared
-                                         else (job.get("_jd_why") or "?")] += 1
+                                         else (job.get("_jd_why") or NO_JD_WHY)] += 1
                 if stale and not drainable:
                     # the mail counts these ("N superseded verdicts CANNOT be re-judged")
                     # and until 2026-09-11 nothing named them; one greppable line each
                     why = "shared text" if shared else "no description this run"
                     print(f"  [classify] superseded verdict cannot be re-judged ({why}): "
                           f"{_ascii(jd_key, 120)} <- {prior[4]} - jd: "
-                          f"{_ascii(job.get('_jd_why') or '?', 40)}", flush=True)
+                          f"{_ascii(job.get('_jd_why') or NO_JD_WHY, 40)}", flush=True)
                 return {**base, "decision": "accept" if prior[0] else "reject",
                         "path": "llm_cache", "contract": prior[4],
                         "reason": ("cached LLM verdict" if prior[3] else
@@ -1229,6 +1313,16 @@ class Classifier:
         # this run (keyword head included: it is the deterministic head under the live
         # rules); a cache hit overrides it with the prefix that answered (544@roles).
         base = {"relevance": rel, "seniority": sen, "contract": self.contract}
+        # A decision record that ruled on a tell the seam cannot read outranks the seam and
+        # the cache both, on the handful of `ADJUDICATED` role_ids and nowhere else. It sits
+        # above the deterministic head deliberately: `team8|briya- medical data analyst`
+        # would otherwise be re-judged NO by every path that reaches it and taken out of the
+        # dataset by `roles.Ledger._withdraw_rejected` the same night.
+        ruled = adjudicated(job)
+        if ruled:
+            self.adjudicated += 1
+            return {**base, "decision": ruled["decision"], "path": ruled["path"],
+                    "reason": ruled["reason"]}
 
         def _reject(path, reason):
             self.backfill_no += bool(published)

@@ -680,11 +680,84 @@
   },
   "adjudication": "NOT a gate miss. `_desc_appealed` already lifts the card on its own text and the seam has read it three times and refused it three times on condition (2). No vocabulary arm: מודל stays out of `_HEBREW_SIGNAL`, which would admit the TASE and max rows the same measurement shows the appeal does NOT lift.",
   "borderlines": 12,
-  "borderlines_note": "12 borderline rejects, 0 in scope on their own reasons; three of them (Senior AI Enablement, Senior ERP Specialist, Senior Product Designer) share one byte-identical Total-Rewards body — a scraper misattribution, so no verdict on them is anyone's."
+  "borderlines_note": "12 borderline rejects, 0 in scope on their own reasons; three of them (Senior AI Enablement, Senior ERP Specialist, Senior Product Designer) share one byte-identical Total-Rewards body — a scraper misattribution, so no verdict on them is anyone's.",
+  "card_text": {
+   "company": "Cal (Israel Credit Cards)",
+   "title": "מפתח.ת מודלים",
+   "location": "Israel",
+   "url": "https://www.cal-online.co.il/about/jobs/",
+   "description": "תיאור המשרה ​​ביצוע אנליזות מורכבות לתהליכים עסקיים, הסקת מסקנות וגיבוש המלצות לשיפור אחריות על תהליכי ניטור ובקרת יישום מודלי חיזוי ומודלי החלטה דרך בניית מערך דוחות פיתוח ויישום מודלי חיזוי ומודלי החלטה תוך מיצוי מאגרי מידע זמינים ושיטות מחקר מתקדמות תכנון וביצוע מערכי בדיקות בלוגיקת קבלת החלטות וניהול תקלות בהתאם ניהול מערך תיעוד מודלים (חיזוי והחלטה) וניהול תיעוד שינויים דרישות ​השכלה אקדמית בתחום רלוונטי (הנדסת תעשיה וניהול/כלכלה/מערכות מידע וכד') ניסיון מעשי לפחות 3 שנים בכתיבת שאילתות מורכבות בSQL מול DB בארגונים גדולים הכשרה וניסיון לפחות שנה בפיתוח python לצרכי Data Analytics, Predictive Analytics ו-ML ניסיון בניתוח מערכות ותהליכים עסקיים מורכבים לצד יסודיות וירידה לפרטים היכרות וניסיון עבודה לפי מתודולוגיית Agile והיכרות עם מערכות כמו Jira / Monday - יתרון הבנה וניסיון בפיתוחי Visual Analytics בכלים כמו Tableau - יתרון סקרנות ואסרטיביות, יכולת הנעה ועבודה מול ריבוי ממשקים כושר ניסוח בכתב ויכולת הבעה בעל פה בעברית ואנגלית ברמה טובה​"
+  }
  },
  "not_adjudicated": {
   "gamida cell|senior business analyst commercial data analytics": "stays published: the 09-02 record forbids a withdrawal on text that is not the row's, and 566 defers to the board's own Israeli city by design. jd-text re-slices the own posting this batch; the condition-5 line is written then.",
   "google israel|research data scientist ii waze": "undecidable on a 573-character listing-card stub. The `|jd` verdict bought on it is void; the key is forgotten the day jd-text lands the posting's own text.",
   "madanes insurance agency|manager bi": "the twelfth published reject cell, outside the 90-day file. Its stored text is 0 characters and every cache row it has is `|bare`, so it cannot be judged on its own text at all — jd-text's, not this lane's."
- }
+ },
+ "retraction_lines": [
+  {
+   "url": "https://il.linkedin.com/jobs/view/%D7%90%D7%A0%D7%9C%D7%99%D7%A1%D7%98-%D7%99%D7%AA-%D7%90%D7%A9%D7%A8%D7%90%D7%99-at-clal-insurance-finance-%D7%9B%D7%9C%D7%9C-%D7%91%D7%99%D7%98%D7%95%D7%97-%D7%95%D7%A4%D7%99%D7%A0%D7%A0%D7%A1%D7%99%D7%9D-4461087109",
+   "role_id": "clal insurance finance כלל ביטוח ופיננסים|אנליסט ית אשראי",
+   "status": "withdrawn",
+   "reason": "out of scope (conditions 1 and 5): the output is a credit recommendation on financial statements presented to a credit committee, not analysis of measured data; no SQL, BI, dashboard or metric appears anywhere in the posting.",
+   "on": "2026-09-18",
+   "evidence": "JD: 'תנתחו דוחות כספיים של חברות פרטיות וציבוריות בארץ ובחו\"ל', 'תתנו המלצות אשראי לפעילות עסקית', 'תכינו ותציגו וועדות אשראי'; the requirement is a degree in economics/business/accounting. Published with a reject cell under v3.0f84ab84 (cached `|jd` NO of 2026-09-02); fresh seam NO/NO/NO on 2026-09-18. Artifact tests/fixtures/classifier/2026-09-18-delta-audit.json.",
+   "by": "classifier adjudication 2026-09-18"
+  },
+  {
+   "url": "https://jobs.ashbyhq.com/glow/84a23842-9b5c-4dde-a9a6-11fec0bec06d",
+   "role_id": "glow|data analyst",
+   "status": "withdrawn",
+   "reason": "out of scope (condition 2): the posting says it is not a BI or product-analytics role; the person designs the data model and modifies production system logic as regular delivery, consumed by engineering and data science.",
+   "on": "2026-09-18",
+   "evidence": "JD: 'This isn't a traditional BI or Product Analytics role', 'Design and evolve Glow's data models', 'Build and modify logic in system components as part of regular delivery, not just spec it for someone else to build'. Published with a reject cell under v3.0f84ab84 (cached `|jd` NO of 2026-09-03); fresh seam NO/NO/NO on 2026-09-18. Artifact tests/fixtures/classifier/2026-09-18-delta-audit.json.",
+   "by": "classifier adjudication 2026-09-18"
+  },
+  {
+   "url": "https://www.comeet.com/jobs/sunflower/AA.009/marketing-analyst/11.F50",
+   "role_id": "sunflower|marketing analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on the execution boundary (condition 5): the responsibilities lead with managing and optimising the marketing campaigns the analysis steers.",
+   "on": "2026-09-18",
+   "evidence": "JD: 'Manage and optimise large scale marketing campaigns, in a variety of industries, on an ongoing basis' leads the responsibilities. Published with a reject cell under v3.0f84ab84 (cached `|jd` NO of 2026-09-02); fresh seam NO/NO/NO on 2026-09-18. Artifact tests/fixtures/classifier/2026-09-18-delta-audit.json.",
+   "by": "classifier adjudication 2026-09-18"
+  },
+  {
+   "url": "https://zipher.ai/careers/senior-data-analyst/",
+   "role_id": "zipher|senior data analyst",
+   "status": "withdrawn",
+   "reason": "out of scope (condition 2): production-grade pipelines and models on enterprise telemetry, with direct ownership of the core data infrastructure.",
+   "on": "2026-09-18",
+   "evidence": "JD: 'Build and maintain production-grade data pipelines and models on enterprise-scale telemetry (Databricks/Spark, logs, metrics, traces)', 'Direct ownership over core data infrastructure and product KPIs'. Kept on 2026-09-13 as a flap (NO/YES/NO); the second triple is unanimous — fresh seam NO/NO/NO on 2026-09-18, which is a stable NO, not a flap. Artifact tests/fixtures/classifier/2026-09-18-delta-audit.json.",
+   "by": "classifier adjudication 2026-09-18"
+  },
+  {
+   "url": "https://il.indeed.com/viewjob?jk=df9258e4033598ce",
+   "role_id": "אסם|אנליסט ית בקרת מכירות לקבוצת אסם נסטלה",
+   "status": "withdrawn",
+   "reason": "out of scope (condition 2, the named FP&A and budgeting exclusion): the responsibilities lead with sales-versus-budget control and the management of trade budgets, commercial discounts and variable spend.",
+   "on": "2026-09-18",
+   "evidence": "JD: 'ניתוח ביצועי מכירות מול תקציב, תחזיות ויעדים', 'בקרה וניהול של תקציבי סחר, הנחות מסחריות והוצאות משתנות', and the posting sells itself as a career 'בעולם הכספים'. Published with a reject cell under v3.0f84ab84 (cached `|jd` NO of 2026-09-12); fresh seam NO/NO/NO on 2026-09-18. Artifact tests/fixtures/classifier/2026-09-18-delta-audit.json.",
+   "by": "classifier adjudication 2026-09-18"
+  },
+  {
+   "url": "https://il.linkedin.com/jobs/view/senior-bi-developer-at-jazz-4462687236",
+   "role_id": "jazz|senior bi developer",
+   "status": "withdrawn",
+   "reason": "out of scope under the 2026-09-14 operator ruling (data-platform leadership is out): the posting's own stated core is standing up and owning Jazz's data platform end to end; the executive dashboards are the second half.",
+   "on": "2026-09-18",
+   "evidence": "JD: 'stand up Jazz's data platform end to end - ingestion, modeling, warehouse, orchestration, cost control', 'Owning the platform is a huge part of this role', 'Build the platform from zero', 'You're the architect'. Under the contract live today the seam bought YES/YES/YES on 2026-09-18 — the ruling is not in the rules text, which is the measurement that justified the contract bump; under the candidate contract carrying the ruling it is NO/NO/NO. Record docs/decisions/2026-09-14-data-platform-leadership.md, worked OUT example. Artifact tests/fixtures/classifier/2026-09-18-delta-audit.json.",
+   "by": "classifier adjudication 2026-09-18"
+  },
+  {
+   "url": "https://www.comeet.com/jobs/upwind/49.004/head-of-data/EF.071",
+   "role_id": "upwind|head of data",
+   "status": "withdrawn",
+   "reason": "out of scope under the 2026-09-14 operator ruling (data-platform leadership is out): the role leads a team of data engineers and builds the data platform, with a BI organisation on top — the ruling's first arm.",
+   "on": "2026-09-18",
+   "evidence": "JD: 'Lead and develop the BI team, including a team of data engineers and data analysts', 'Build a scalable, reliable data platform and improve data quality and accessibility', 'Raise Upwind's data governance maturity'. Not in the delta audit — found by the contract-bump measurement; NO/NO/NO under the candidate contract. Record docs/decisions/2026-09-14-data-platform-leadership.md. Artifact tests/fixtures/classifier/2026-09-18-delta-audit.json.",
+   "by": "classifier adjudication 2026-09-18"
+  }
+ ],
+ "binding_check": "Retractions.load -> bind(records, extra=<sqlite matched rows>) -> match_all over cloud_state/roles.jsonl on 2026-09-18: 67 lines, 7 new, each new line binds exactly 1 record, 0 bad, 0 unmatched."
 }
