@@ -2476,3 +2476,10 @@ Imprint,scrape,,https://jobs.ashbyhq.com/imprint,false,queue-hunt 2026-09-18: ca
 Taliaz Health,scrape,,https://taliazhealth.co.il/careers,false,queue-hunt 2026-09-18: careers page documented; monitored candidate
 Global Payments Inc.,scrape,,https://www.globalpaymentsintegrated.com/en/careers,false,queue-hunt 2026-09-18: careers page documented; monitored candidate
 Techsee,scrape,,https://careers.techsee.me,false,queue-hunt 2026-09-18: careers page documented; monitored candidate
+Daylight Security,greenhouse,daylightsecurity,https://boards-api.greenhouse.io/v1/boards/daylightsecurity/jobs,true,auto-expand slug-probe; 10/5 IL
+Remote CoWorker,scrape,https://remotecoworker.com,https://remotecoworker.com,false,scanned; no open Israel roles now | own-site 2026-09-18: remotecoworker.com linkback
+airSlate,scrape,https://www.airslate.com/careers/all-jobs,https://www.airslate.com/careers/all-jobs,true,auto-expand scrape; 1 IL
+Teramount,scrape,https://teramount.com,https://teramount.com,false,scanned; no open Israel roles now | own-site 2026-09-18: teramount.com linkback
+Teridion,scrape,https://www.teridion.com/,https://www.teridion.com/,false,scanned; no open Israel roles now | own-site 2026-09-18: www.teridion.com linkback
+Tether,scrape,https://tether.io,https://tether.io,false,scanned; no open Israel roles now | own-site 2026-09-18: tether.io linkback
+Tfactor,scrape,https://tfactor.com,https://tfactor.com,false,scanned; no open Israel roles now | own-site 2026-09-18: tfactor.com linkback
