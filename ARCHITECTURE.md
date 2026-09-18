@@ -7476,9 +7476,7 @@ sqlite row, the ledger record, every `superseded_by` pointer aimed at the old ke
 `roles_text.jsonl` line — four stores, four chances to leave one behind — and returns False
 without changing anything when the key is taken, by a sqlite row OR by a ledger record
 sqlite has lost. The caller then names it as `alias fold left N record(s) in place, the
-canonical key is taken`. It is measured EMPTY on the committed store and fires the first
-digest after registry parks `הראל ביטוח ופיננסים` `alias-of Harel Insurance & Finance`
-with the matching `ALIASES` entry — the two declarations the `declared` gate needs. `merge_key` itself never
+canonical key is taken`. It is measured EMPTY on the committed store and stays empty until some pair carries BOTH declarations the `declared` gate needs — a parked row's own dated `alias-of` verdict AND an `ALIASES` entry. **The Harel pair this was written for is not that pair**: registry's `de531b1` left `Harel Insurance & Finance` AND `הראל ביטוח ופיננסים` both PARKED (the real board is `career.adamtotal.co.il`, which the identity gate cannot admit — `621@ats-fetch`), and `_alias_fold_target` needs exactly one ACTIVE row, so neither declaration exists. This is a mechanism, not a fix for one employer. `merge_key` itself never
 changed: a pure key function has nowhere to put an evidence gate, and identity_key
 equality alone merges the AppSec pair — the decision record is
 `docs/decisions/2026-08-31-roles-alias-fold.md`.

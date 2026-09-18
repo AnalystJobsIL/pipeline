@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**678 filed · 476 open · 202 closed · 9 half · 41 numbers name more than one item · 0 items name no lane.**
+**678 filed · 475 open · 203 closed · 9 half · 41 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -91,7 +91,7 @@ closure convention in the header.
 | 446 | `446@classifier` **open** · `446@docs` closed |
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
-| 623 | `623@scraper` **open** · `623@classifier` **open** |
+| 623 | `623@scraper` **open** · `623@classifier` closed |
 | 624 | `624@scraper` **open** · `624@jd-text` **open** |
 | 625 | `625@jd-text` **open** · `625@roles` **open** |
 
@@ -571,7 +571,7 @@ closure convention in the header.
 - **624** `624@jd-text` **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
 - **625** `625@jd-text` **28 cache cards hold one shell page's text under two titles, and both cards own their
 
-### classifier — 19 open
+### classifier — 18 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -591,7 +591,6 @@ closure convention in the header.
 - **557** `557@classifier` **LTX has not flipped to its own board
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 - **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
-- **623** `623@classifier` **A `reject` cell has no writer that can flip it back, so a machine withdrawal cannot be
 
 ### render — 8 open
 
@@ -13032,9 +13031,16 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      back. Check: `python -c "import json,collections;s=json.load(open('scraped_cache.json',encoding='utf-8'));g=collections.defaultdict(set);[g[j['description']].add((c,j['title'])) for c,v in s.items() if isinstance(v,list) for j in v if isinstance(j,dict) and len((j.get('description') or '').strip())>=300 and j.get('_own_url') is not False];print(sum(len(t) for t in g.values() if len({x[1] for x in t})>=2))"`.
 ## From the `roles` lane, 2026-09-18 (the verdict cell decides membership)
 
-623. **A `reject` cell has no writer that can flip it back, so a machine withdrawal cannot be
-     undone by a verdict** — lane: `classifier` (their file), filed 2026-09-18 by `roles`
-     alongside the withdrawal sweep. `Ledger._withdraw_rejected` (2026-09-18, §7c) withdraws a
+623. ~~**A `reject` cell has no writer that can flip it back, so a machine withdrawal cannot be
+     undone by a verdict**~~ — **CLOSED 2026-09-18 (`classifier`)**: `1655a97` added
+     `class_backfill.reject_owed` (a published `reject` cell that a decision record adjudicates,
+     or that names a retired contract, or that the live contract's own `|jd` cache row
+     contradicts — a `|bare` row is not an authority) and `roles.class_refillable`, one one-way
+     predicate for three callers, running BEFORE `_withdraw_rejected` so a cell refilled this
+     morning is never withdrawn the same morning. Their commit cites this item as `621`, the
+     number it was filed under before a same-evening rebase moved it to 623. Filed and closed
+     within hours; kept for the reasoning. — lane: `classifier` (their file), filed 2026-09-18
+     by `roles` alongside the withdrawal sweep. `Ledger._withdraw_rejected` (2026-09-18, §7c) withdraws a
      publishable record whose cell says `reject`, and is reversible BY DESIGN: a cell that no
      longer says `reject` returns the record to `closed`/`open` with no hand line. But nothing
      can write that cell. The three writers are the live stamp (`merged`, and a rejected role

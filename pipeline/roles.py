@@ -2101,8 +2101,12 @@ class Ledger:
                 # answers to the same question. `_rename_record` is the shared body, so the
                 # text line, the sqlite row and every `superseded_by` pointer move together;
                 # it refuses (and we fall through to `left`) when a row already owns the key.
-                # Measured empty on the committed store — it fires the first digest after
-                # registry parks `הראל ביטוח ופיננסים` `alias-of Harel Insurance & Finance`.
+                # Measured empty on the committed store, and it stays empty until some
+                # pair carries BOTH declarations the `declared` gate needs. The Harel
+                # pair this was written for is NOT that pair: registry's `de531b1` left
+                # both rows PARKED, and `_alias_fold_target` needs exactly one ACTIVE
+                # row, so no `alias-of` verdict and no `ALIASES` entry were written.
+                # This branch is a mechanism, not a fix for one employer.
                 renamed.append(f"{r}<-{orig}")
             else:
                 # sqlite refused the key (a retired row owns it): leaving the record is the
