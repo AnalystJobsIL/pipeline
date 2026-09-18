@@ -3236,11 +3236,11 @@
  {
   "id": "title-rename-orphans-the-description",
   "file": "pipeline/roles.py",
-  "symbol": "_fold_titles",
+  "symbol": "_rename_record",
   "class": "M6-fallback-removal",
-  "find": "            t = self.text.pop(rid, None)\n            if t is not None:",
-  "replace": "            t = self.text.get(rid)\n            if False:",
-  "why": "roles_text.jsonl joins on role_id. A rename that leaves the text line under the OLD key orphans the description, and `flush`'s orphan prune then DELETES it - the role loses the text that took a paid fetch to get, and the export publishes it as description-less. Killed by test_the_title_sweep_renames_the_record_across_all_three_stores.",
+  "find": "        t = self.text.pop(rid, None)\n        if t is not None:",
+  "replace": "        t = self.text.get(rid)\n        if False:",
+  "why": "roles_text.jsonl joins on role_id. A rename that leaves the text line under the OLD key orphans the description, and `flush`'s orphan prune then DELETES it - the role loses the text that took a paid fetch to get, and the export publishes it as description-less. RE-ANCHORED 2026-09-18 onto `_rename_record`, the body `_fold_titles` and `_fold_aliases` now share: the same mutant, one record, so the alias sweep's rename is covered by it too (a second record aimed at the same lines would be an equivalent mutant, not a second guard). Killed by test_the_title_sweep_renames_the_record_across_all_three_stores; also killed by test_alias_sweep_renames_a_foldable_record_with_no_twin.",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -4341,6 +4341,45 @@
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_the_export_refuses_a_leaked_reject_and_the_meta_still_reconciles"
+  ]
+ },
+ {
+  "id": "rename-overwrites-an-occupied-key",
+  "file": "pipeline/roles.py",
+  "symbol": "_rename_record",
+  "class": "M4-guard-removal",
+  "find": "        if new_key in self.records:\n",
+  "replace": "        if False:\n",
+  "why": "sqlite refuses a rename onto an existing mkey, but a record the LEDGER holds and sqlite has lost (the rehydration case) slips past that check and is clobbered by the moved record -- a history deleted by a rename, which is the one thing this seam exists to avoid. Retention is the product.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_rename_refuses_rather_than_destroy_a_history"
+  ]
+ },
+ {
+  "id": "alias-no-twin-leaves-the-record",
+  "file": "pipeline/roles.py",
+  "symbol": "_fold_aliases",
+  "class": "M3-branch-narrowing",
+  "find": "            elif self._rename_record(rid, new_key, company=r):",
+  "replace": "            elif False:",
+  "why": "the retired behaviour (2026-09-18). Leaving the record means the canonical key arrives from intake every morning and mints a BRAND-NEW record with today's `first_seen`, while this one stops being fed and closes as if the posting had gone: one posting published twice, with a false closure and a false `new`. `_fold_titles` refuses that trap (585); the alias sweep used to walk into it.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_alias_sweep_renames_a_foldable_record_with_no_twin"
+  ]
+ },
+ {
+  "id": "twin-tie-break-ignores-the-description",
+  "file": "pipeline/roles.py",
+  "symbol": "_twin_winner_at_rest",
+  "class": "M4-guard-removal",
+  "find": "        if len(shas) == 1 and shas != {\"\"} and len(urls) == 1 and urls != {\"\"}:",
+  "replace": "        if True:",
+  "why": "the third key is licensed ONLY by one address AND one description -- the narrowest statement of `one posting` this store can make. Without that conjunction the tie-break crowns an incumbent over two genuinely different roles: measured on the committed store, `autods` carries `data analyst` beside `senior marketing analyst` under one greenhouse id, 1 of the 2 non-BioCatch platform-id groups, and folding it would delete a live opening from every product.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_twin_tie_on_two_different_postings_is_still_refused"
   ]
  }
 ]

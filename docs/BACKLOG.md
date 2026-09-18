@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**677 filed · 475 open · 202 closed · 9 half · 40 numbers name more than one item · 0 items name no lane.**
+**678 filed · 476 open · 202 closed · 9 half · 41 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -93,6 +93,7 @@ closure convention in the header.
 | 462 | `462@classifier` closed · `462@registry` **open** |
 | 623 | `623@scraper` **open** · `623@classifier` **open** |
 | 624 | `624@scraper` **open** · `624@jd-text` **open** |
+| 625 | `625@jd-text` **open** · `625@roles` **open** |
 
 ### registry — 154 open
 
@@ -441,6 +442,35 @@ closure convention in the header.
 - **569** `569@discovery` **Five agency-shaped names walked past `is_recruiter` again, and one near-miss shows why
 - **609** `609@discovery` **Every accepted Telegram role is held off the board by construction**
 
+### roles — 26 open
+
+- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
+- **3** `3@roles` **`pipeline/dates.py`**
+- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
+- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
+- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
+- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
+- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
+- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
+- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
+- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
+- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
+- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
+- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
+- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
+- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
+- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
+- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
+- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
+- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
+- **534** `534@roles` **One posting, two `merge_key`s
+- **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
+- **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
+- **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
+- **583** `583@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
+- **607** `607@roles` **`classify_grouped` normalises one member of a merge group, so a twin re-installs the
+- **625** `625@roles` **Three Mobileye records share one lever uuid and no arm can tell a re-title from two
+
 ### docs — 25 open
 
 - **87** `87@docs` **Retire `cache_new_rows.py`**
@@ -468,34 +498,6 @@ closure convention in the header.
 - **469** `469@docs` **The brief's lane table does not name the files the mutation gate failed on**
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 - **563** `563@docs` **Nothing checks that a `NNN@lane` reference resolves to an item that still exists** —
-
-### roles — 25 open
-
-- **2** `2@roles` Relative-date parsing exists in 5 places with different capabilities (none handle
-- **3** `3@roles` **`pipeline/dates.py`**
-- **13** `13@roles` **The `(company,title)` dedup key costs ~1.1% of real postings.** *(lane: shared —
-- **132** `132@roles` **Retire `matched` once its four SQL readers read the ledger**
-- **143** `143@roles` **`roles.tenant_slug` is not a tenant**
-- **160** `160@roles` **`roles*.jsonl` and `seen.db` have exactly one cloud writer, which is why `ours` is
-- **243** `243@roles` **`firmo_failed` has no reason column, and the reason now exists**
-- **250** `250@roles` **Tomorrow morning ~45 scrape postings arrive with a NEW `seen_id`, and one board's
-- **312** `312@roles` **`roles.classify_grouped` copies the group's longest description onto an inherited
-- **384** `384@roles` **Three more `__file__`-relative `secrets.env` loaders**
-- **429** `429@roles` **The `_jd_attempted` stamp on a cache card never reaches the ledger's `jd_attempted`** —
-- **454** `454@roles` **`llm_cache` keeps 745 verdicts with no evidence, and the table is in `pipeline/store.py`**
-- **460** `460@roles` **28 of the 116 companies in the role store have no ACTIVE registry row, and each needs a
-- **488** `488@roles` **The claim guard does not unify one posting id under two source prefixes, or a url that
-- **489** `489@roles` **`bounce|data analyst` in the public CSV is Bounce AI's posting under the luggage company's
-- **500** `500@roles` **11 store records carry the bare location `Israel`, the weakest string the store holds and
-- **504** `504@roles` **The public dataset still ships `withfaye` where the board and mail now show "Faye"** —
-- **518** `518@roles` **A terminal registry verdict does not reach the roles purge path, so an agency's role
-- **530** `530@roles` **`withdrawn` now means two different things, and the note a downloader reads says only
-- **534** `534@roles` **One posting, two `merge_key`s
-- **555** `555@roles` **`_twin_winner_at_rest` elects the OPEN row, which can be the WEAKER source**
-- **556** `556@roles` **A role's employer is the board's TENANT, not always the row that fetched it**
-- **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
-- **583** `583@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
-- **607** `607@roles` **`classify_grouped` normalises one member of a merge group, so a twin re-installs the
 
 ### company-intel — 22 open
 
@@ -13075,3 +13077,27 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      (json.loads(l) for l in open('cloud_state/roles_text.jsonl',encoding='utf-8') if
      l.strip())};print(sum(1 for x in r if
      roles.closure_text_ignored(x,(t.get(x['role_id']) or {}).get('description') or '')))"`.
+
+625. **Three Mobileye records share one lever uuid and no arm can tell a re-title from two
+     real roles** — lane: `roles`, filed 2026-09-18 by itself, with the arm it REJECTED.
+     `mobileye|algorithm data analyst` (open, 09-18), `mobileye|algorithm performance data
+     analyst` (open, `last_seen` 09-17) and `mobileye|algorithm performance data analyst full
+     time` (closed 09-16) all carry `lever:510d7b7d-4d58-4411-99c0-02a91022a7c6`.
+     `same_role_twin` refuses the group: one platform id is not two, and the titles neither
+     agree under `_titles_agree` nor differ only by a seniority word. The obvious arm — one
+     platform-issued id plus titles that differ only by ADDITIVE words — was rejected on a
+     measurement, not on taste: of the **2** same-company platform-id groups with ≥ 2 live
+     records that are not BioCatch, **1** is `autods` under `greenhouse:5417867008`, carrying
+     `data analyst` beside `senior marketing analyst` — two real, separately-published roles
+     that the arm would fold, deleting a live opening from the board, the mail and the
+     dataset. 50 % of the population it would touch is a false fold. The two variants close
+     on the ordinary ladder within days and cost nothing while they do, so nothing was
+     changed. What would decide it is evidence this store does not hold: the LEVER posting's
+     own title today (a fetch of the uuid), or one description shared byte for byte — the
+     2026-09-18 twin tie-break takes exactly that second route and it does not fire here,
+     because the three records' `desc_sha1` differ. Check: `python -c "import
+     json,collections;r=[json.loads(l) for l in
+     open('cloud_state/roles.jsonl',encoding='utf-8') if
+     l.strip()];c=collections.defaultdict(set);[c[(x.get('company'),s)].add(x['role_id']) for
+     x in r if (x.get('status') or 'open') in ('open','closed') for s in (x.get('seen_ids') or
+     [])];print({k:sorted(v) for k,v in c.items() if len(v)>1})"`.

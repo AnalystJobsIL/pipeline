@@ -7195,7 +7195,26 @@ second `retitle folds` line (the fold is logged on its own day, once). A `supers
 that points OUTSIDE the group is not this group's verdict to apply and still refuses the
 whole group — and `sweep_store`
 folds the pair whose stale half never returns (winner: open beats closed, then later
-`last_seen`, full tie refuses). A twin-superseded record also never RECLAIMS itself (the
+`last_seen`, then — *2026-09-18* — the earlier `first_seen` where the members are PROVABLY
+one posting, and a tie surviving all three refuses).
+
+**The third key, and why it is so narrow.** `biocatch|business intelligence developer` and
+`biocatch|senior business intelligence developer` tied on the first two every morning (both
+open, both `last_seen` 2026-09-18) and BOTH rows published while the sweep refused the group.
+They are one posting: identical `desc_sha1` (`e72ab470…`), identical url
+(`il.indeed.com/viewjob?jk=f17c9e415778b697`), the same two `seen_ids`, the same `sent` mark.
+**One address AND one description** is the narrowest statement of "one posting" this store
+can make, and it is the whole licence for the tie-break — on `last_seen` alone the pair is
+genuinely undecidable. The counter-example is what keeps it narrow: `autods` carries `data
+analyst` beside `senior marketing analyst` under one `greenhouse:5417867008` (1 of the 2
+non-BioCatch same-company platform-id groups on 2026-09-18), and a key that read a shared id
+as one posting would delete a live opening. The survivor is the INCUMBENT — `_winner`'s
+rule 2 — because the earlier `first_seen` carries the emailed history and is the role_id a
+reader may already hold. Measured: 1 twin group at rest, 1 same-company identical-`desc_sha1`
+group, the same group. Also rejected, on the same autods number: a "same platform id +
+additive title words" arm for `mobileye|algorithm data analyst` / `… performance data
+analyst` / `… full time` — three records under one lever uuid whose two variants simply
+close on the ordinary ladder. A twin-superseded record also never RECLAIMS itself (the
 reclaim path is for cross-company parking; the twin's winner record IS the role). Losers
 supersede with their seen_ids and `sent` mirror unioned into the winner, so `filter_new`
 keeps seeing every delivery and nothing is re-emailed. The mail says
@@ -7441,12 +7460,25 @@ re-judge under the canonical key on a folded name's first sighting), and
 `Ledger.fold_aliases` applies the same gate to the records the store already holds: a
 casefold twin is a FIELD repair (`_norm` lowercases, so the role_id never moves), a twin
 under the canonical key is superseded with seen_ids and `sent` mirror unioned (nothing
-re-emailed), and a foldable record with NO twin is left in place and named on the mail —
-a role_id rename is a full-store migration (`roles_text.jsonl` joins on it; the shrink
-guard reads a rename as a drop), while future sightings arrive folded and `_alive` ages
-the relic out with its ids already in `sent`. Measured on the 2026-08-31 store: 3
+re-emailed), and a foldable record with NO twin is **RENAMED onto the canonical key**
+*(2026-09-18, lane `roles`)*. Measured on the 2026-08-31 store: 3
 casefold repairs (Appcharge, GE HEALTHCARE, Helfy), 1 supersede (NVIDIA AI), 0 left. The
-mail says `alias folds: N superseded (…) · M renamed (…)`. `merge_key` itself never
+mail says `alias folds: N superseded (…) · M renamed (…)`.
+
+The no-twin branch used to LEAVE the record, on the reasoning that a role_id rename is a
+full-store migration and that future sightings would arrive folded anyway. **They do — under
+the CANONICAL key**, which mints a brand-new record with today's `first_seen`, while the
+relic stops being fed and closes as if the posting had gone: one posting published twice,
+with a false closure and a false "new". `fold_titles` documents exactly that trap (585,
+below) and refuses to walk into it, so the two at-rest sweeps held opposite answers to one
+question. They now share a body: `Ledger._rename_record(rid, new_key, **fields)` moves the
+sqlite row, the ledger record, every `superseded_by` pointer aimed at the old key, and the
+`roles_text.jsonl` line — four stores, four chances to leave one behind — and returns False
+without changing anything when the key is taken, by a sqlite row OR by a ledger record
+sqlite has lost. The caller then names it as `alias fold left N record(s) in place, the
+canonical key is taken`. It is measured EMPTY on the committed store and fires the first
+digest after registry parks `הראל ביטוח ופיננסים` `alias-of Harel Insurance & Finance`
+with the matching `ALIASES` entry — the two declarations the `declared` gate needs. `merge_key` itself never
 changed: a pure key function has nowhere to put an evidence gate, and identity_key
 equality alone merges the AppSec pair — the decision record is
 `docs/decisions/2026-08-31-roles-alias-fold.md`.
@@ -7684,15 +7716,18 @@ It runs at INTAKE, beside `fold_company_aliases` and for the same reason (the 20
 decision: canonicalise where the string enters the record, never migrate the key afterwards).
 The raw string rides `_raw_title`; the mail says `title canon at intake: hiring-call x2, …`.
 
-**At rest, `Ledger.fold_titles()` RENAMES** — and here "leave it in place", which the alias
-sweep chooses when it finds no twin, is not available. The canonical key now arrives from
+**At rest, `Ledger.fold_titles()` RENAMES** — and "leave it in place" is not available here.
+(Nor, since 2026-09-18, in the alias sweep: the two share `_rename_record` and the same
+reasoning. This paragraph is where that reasoning was first written down.)
+The canonical key now arrives from
 intake every morning, so an uncanonical record would stop being fed, close as if the posting
 had gone, and be replaced by a new record with today's `first_seen`: one posting published
 twice, with a false closure and a false "new". So the record either folds into a live twin
 (`_fold_into_twin`, the seam this shares with the alias sweep: union the `seen_ids` and the
-`sent` marks, then supersede) or it is renamed across all three stores in one seam —
-`store.rekey_matched` (which REFUSES a key another row owns, so a rename can never destroy a
-history), the ledger record, and its `roles_text.jsonl` line, which joins on `role_id` and
+`sent` marks, then supersede) or it is renamed across all three stores in one seam,
+`_rename_record` — `store.rekey_matched` (which REFUSES a key another row owns, so a rename
+can never destroy a history), the ledger record, every `superseded_by` pointer aimed at the
+old key, and its `roles_text.jsonl` line, which joins on `role_id` and
 would otherwise be orphaned and then pruned. `renamed_from` stays on the record: it is what
 lets a retraction line naming the old key keep binding, and it is published in the meta's
 `store.renamed`, because a role_id is a public join key and a silent change of one reads as a

@@ -1639,8 +1639,24 @@ class Ledger:
     @staticmethod
     def _twin_winner_at_rest(recs, idxs):
         """The sweep's winner rule: an `open` record beats a closed one, then the later
-        `last_seen` (the title the board still showed most recently). A full tie refuses
-        (None) — the run-time arm owns live ties, this one never guesses."""
+        `last_seen` (the title the board still showed most recently), then — only where the
+        members are PROVABLY one posting — the earlier `first_seen`. A tie that survives all
+        three refuses (None): the run-time arm owns live ties, and this one never guesses.
+
+        The third key is 2026-09-18's. `biocatch|business intelligence developer` and
+        `biocatch|senior business intelligence developer` were a full tie on the first two
+        (both open, both `last_seen` 2026-09-18) and the group was refused every morning
+        while both rows published. They are not two roles: identical `desc_sha1`
+        (`e72ab470…`), identical url (`il.indeed.com/viewjob?jk=f17c9e415778b697`), the same
+        two `seen_ids` and the same `sent` mark. That conjunction — one address AND one
+        description — is the narrowest statement of "one posting" this store can make, and
+        it is what licenses a tie-break at all; on `last_seen` alone the pair is genuinely
+        undecidable and must stay so.
+
+        The survivor is then the INCUMBENT (`_winner`'s rule 2, incumbency): the earlier
+        `first_seen` carries the emailed history and is the id a reader may already hold.
+        Measured on the committed store: 1 twin group at rest, 1 same-company
+        identical-`desc_sha1` group, and they are the same group."""
         def srank(i):
             return 0 if (recs[i].get("status") or "open") == "open" else 1
         best = min(srank(i) for i in idxs)
@@ -1649,7 +1665,17 @@ class Ledger:
             return tier[0]
         top = max(str(recs[i].get("last_seen") or "") for i in tier)
         lead = [i for i in tier if str(recs[i].get("last_seen") or "") == top]
-        return lead[0] if len(lead) == 1 else None
+        if len(lead) == 1:
+            return lead[0]
+        shas = {str(recs[i].get("desc_sha1") or "") for i in lead}
+        urls = {_url_key(recs[i].get("url")) for i in lead}
+        if len(shas) == 1 and shas != {""} and len(urls) == 1 and urls != {""}:
+            firsts = [(str(recs[i].get("first_seen") or "9999"), i) for i in lead]
+            oldest = min(f for f, _ in firsts)
+            first_lead = [i for f, i in firsts if f == oldest]
+            if len(first_lead) == 1:
+                return first_lead[0]
+        return None
 
     @staticmethod
     def _winner(jobs, idxs, held):
@@ -1684,6 +1710,51 @@ class Ledger:
                     len(identity_key(name)),
                     name)
         return min(idxs, key=rank)
+
+    def _rename_record(self, rid, new_key, **fields):
+        """Move one record to a new `role_id`, in ALL THREE stores, or do nothing.
+
+        Extracted from `_fold_titles` on 2026-09-18 so the alias sweep's no-twin branch can
+        use the same body. It was never "the title canon's private helper": a rename is a
+        rename whatever renamed it, and the four things it has to move — the sqlite row, the
+        records dict, the `superseded_by` pointers aimed at the old key, and the text line
+        — are four chances to leave a store behind. `roles_text.jsonl` joins on `role_id`,
+        so a text line left under the old key is orphaned and `flush`'s prune then DELETES
+        it; a `superseded_by` still naming the old key is a record pointing at nothing.
+
+        Returns False and changes NOTHING when sqlite refuses (a row already owns the new
+        key): renaming onto an existing key destroys a history, and the caller names the
+        record on its mail line instead of losing it quietly.
+
+        `renamed_from` / `renamed_on` are what tell a reader of the public meta that a
+        `role_id` changed rather than one row vanishing and another appearing (585)."""
+        if rid == new_key or rid not in self.records:
+            return False          # a same-key "rename" would name the record its own parent
+        if new_key in self.records:
+            # sqlite would usually refuse this itself, but a record the ledger holds and
+            # sqlite has lost (the rehydration case) would slip past that and be CLOBBERED
+            # by the moved record — a history deleted by a rename, which is the one thing
+            # this seam exists to avoid.
+            return False
+        if not self.st.rekey_matched(rid, new_key, **fields):
+            return False
+        rec = self.records.pop(rid)
+        for other in self.records.values():
+            if other.get("superseded_by") == rid:
+                other["superseded_by"] = new_key
+                self._touch(other)
+        rec["role_id"] = new_key
+        rec.update(fields)
+        rec["renamed_from"] = sorted(set(rec.get("renamed_from") or []) | {rid})
+        rec["renamed_on"] = self.run_date
+        self.records[new_key] = rec
+        t = self.text.pop(rid, None)
+        if t is not None:
+            self.text[new_key] = dict(t, role_id=new_key)
+            self.text_dirty = True
+        self.renamed[rid] = new_key
+        self._touch(rec)
+        return True
 
     def _fold_into_twin(self, loser_key, loser, winner_key, winner, claimed=""):
         """One record folds into a live twin at rest — the shared body of both at-rest
@@ -2018,11 +2089,24 @@ class Ledger:
                 # seeing every delivery, name the folded string on the winner
                 self._fold_into_twin(rid, rec, new_key, w, claimed=orig)
                 self.alias_folds.append(f"{r}<-{orig}")
+            elif self._rename_record(rid, new_key, company=r):
+                # No twin under the canonical name: RENAME the record onto it. Until
+                # 2026-09-18 this branch left the record in place, on the reasoning that a
+                # role_id rename is a full-store migration and that future sightings would
+                # arrive folded anyway. They do — under the CANONICAL key, which mints a
+                # BRAND-NEW record with today's `first_seen`, while this one stops being fed
+                # and closes as if the posting had gone: one posting published twice, with a
+                # false closure and a false "new". That is exactly the trap `_fold_titles`
+                # documents (585) and refuses to walk into, and the two sweeps had opposite
+                # answers to the same question. `_rename_record` is the shared body, so the
+                # text line, the sqlite row and every `superseded_by` pointer move together;
+                # it refuses (and we fall through to `left`) when a row already owns the key.
+                # Measured empty on the committed store — it fires the first digest after
+                # registry parks `הראל ביטוח ופיננסים` `alias-of Harel Insurance & Finance`.
+                renamed.append(f"{r}<-{orig}")
             else:
-                # no twin: leave the record — a role_id rename is a full-store migration
-                # (roles_text joins on it, a rename reads as a drop to the shrink guard),
-                # while future sightings arrive folded and `_alive` ages this one out with
-                # its seen_ids already in `sent`. Measured empty on the committed store.
+                # sqlite refused the key (a retired row owns it): leaving the record is the
+                # conservative answer, and the mail line names it so it cannot rot unseen.
                 left.append(orig)
         lines = []
         if self.alias_folds or renamed:
@@ -2035,8 +2119,12 @@ class Ledger:
                              f"({', '.join(sorted(set(renamed)))})")
             lines.append("alias folds: " + " · ".join(parts))
         if left:
-            lines.append(f"alias fold left {len(left)} record(s) in place, no twin "
-                         f"({', '.join(sorted(set(left))[:5])})")
+            lines.append(f"alias fold left {len(left)} record(s) in place, the canonical key "
+                         f"is taken ({', '.join(sorted(set(left))[:5])})")
+        if self.dirty or self.text_dirty:
+            # a rename has already moved the sqlite rows; the two stores must not end the
+            # call split (the same reason `_fold_titles` flushes here)
+            self.flush()
         return lines
 
     def fold_titles(self):
@@ -2078,29 +2166,12 @@ class Ledger:
                 self._fold_into_twin(rid, rec, new_key, w)
                 folded.append(f"{canon}<-{old_title}")
                 continue
-            if w is not None or not self.st.rekey_matched(rid, new_key, title=canon):
+            if w is not None or not self._rename_record(rid, new_key, title=canon):
                 # a retired record, or a sqlite row, already owns the key. Renaming onto it
                 # would destroy a history; leaving this one is the conservative answer and
                 # it is named on the mail line so it cannot rot unseen.
                 left.append(rid)
                 continue
-            self.records.pop(rid)
-            for other in self.records.values():
-                if other.get("superseded_by") == rid:
-                    other["superseded_by"] = new_key
-                    self._touch(other)
-            rec["role_id"], rec["title"] = new_key, canon
-            rec["renamed_from"] = sorted(set(rec.get("renamed_from") or []) | {rid})
-            rec["renamed_on"] = self.run_date
-            self.records[new_key] = rec
-            t = self.text.pop(rid, None)
-            if t is not None:
-                # the text file joins on role_id; leaving it behind would orphan the
-                # description and `flush`'s prune would then DELETE it
-                self.text[new_key] = dict(t, role_id=new_key)
-                self.text_dirty = True
-            self.renamed[rid] = new_key
-            self._touch(rec)
             renamed.append(f"{canon}<-{old_title}")
         self.title_folds = renamed + folded
         lines = []

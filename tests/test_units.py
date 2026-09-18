@@ -29491,23 +29491,146 @@ def test_alias_sweep_casefold_rename_keeps_the_role_id(tmp_path):
     st.close()
 
 
-def test_alias_sweep_leaves_a_foldable_record_with_no_twin(tmp_path):
-    """No twin under the canonical name: the record stays (a role_id rename is a
-    full-store migration — roles_text joins on it and the shrink guard reads a rename as
-    a drop), the mail says so, and future sightings arrive already folded."""
+def test_alias_sweep_renames_a_foldable_record_with_no_twin(tmp_path):
+    """RETIRED 2026-09-18 (`..._leaves_a_foldable_record_with_no_twin`). The branch used to
+    LEAVE the record, on the reasoning that a role_id rename is a full-store migration and
+    that future sightings would arrive already folded. They do — under the CANONICAL key,
+    which mints a brand-new record with today's `first_seen`, while this one stops being fed
+    and closes as if the posting had gone: one posting published twice, with a false closure
+    and a false "new". `_fold_titles` documents that trap (585) and refuses to walk into it;
+    the two sweeps had opposite answers to the same question, and now share one body.
+
+    The rename moves all three stores — the ledger record, the sqlite row, and the text line
+    that joins on `role_id` and would be pruned as an orphan if left behind."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    j = _role("NVIDIA AI", "Analytics Lead", "https://il.linkedin.com/jobs/view/9",
+              "linkedin:9", src="discovery-linkedin", desc=_JD_TEXT)
+    st.upsert_matched(j, "2026-08-30")
+    L = roles.Ledger(st, "2026-09-18")
+    L.open_sync()
+    old_key, new_key = "nvidia ai|analytics lead", "nvidia|analytics lead"
+    assert L.text[old_key]["description"] == _JD_TEXT, "the text line joins on role_id"
+    rn, abi, org = _fold_env()
+    lines = L.fold_aliases(lambda n, u: roles._alias_fold_target(n, u, rn, abi, org))
+    assert any("alias folds" in x and "1 renamed (NVIDIA<-NVIDIA AI)" in x for x in lines), lines
+    assert old_key not in L.records and new_key in L.records
+    rec = L.records[new_key]
+    assert rec["company"] == "NVIDIA" and rec["status"] == "open"
+    assert rec["role_id"] == new_key and rec["renamed_from"] == [old_key]
+    assert rec["renamed_on"] == "2026-09-18" and L.renamed[old_key] == new_key
+    assert old_key not in L.text and L.text[new_key]["description"] == _JD_TEXT
+    assert L.text[new_key]["role_id"] == new_key
+    assert [r["mkey"] for r in st.get_matched_since("0000-01-01")] == [new_key]
+    assert st.conn.execute("select company from matched").fetchone() == ("NVIDIA",)
+    # ...and the ledger on disk did not shrink: one record out, one record in
+    back, status, _bad = roles.load(L.path)
+    assert status == "ok" and list(back) == [new_key]
+    st.close()
+
+
+def test_a_rename_refuses_rather_than_destroy_a_history(tmp_path):
+    """`_rename_record` returns False and changes NOTHING when the canonical key is taken
+    — by a sqlite row, or (the rehydration case sqlite cannot see) by a ledger record it
+    has lost. Renaming onto either deletes a history, and the caller names the record on
+    its mail line instead of losing it quietly."""
     from pipeline import roles, store
     st = store.SeenStore(str(tmp_path / "t.db"))
     j = _role("NVIDIA AI", "Analytics Lead", "https://il.linkedin.com/jobs/view/9",
               "linkedin:9", src="discovery-linkedin")
     st.upsert_matched(j, "2026-08-30")
-    L = roles.Ledger(st)
+    # the canonical key is a RETIRED record: live twin -> no, so the sweep tries the rename
+    k = _role("NVIDIA", "Analytics Lead", "https://il.linkedin.com/jobs/view/8", "linkedin:8",
+              src="discovery-linkedin")
+    st.upsert_matched(k, "2026-08-30")
+    L = roles.Ledger(st, "2026-09-18")
     L.open_sync()
+    L.records["nvidia|analytics lead"]["status"] = "purged"
     rn, abi, org = _fold_env()
     lines = L.fold_aliases(lambda n, u: roles._alias_fold_target(n, u, rn, abi, org))
-    assert any("left 1 record" in x and "NVIDIA AI" in x for x in lines), lines
-    assert L.records["nvidia ai|analytics lead"]["status"] == "open"
+    assert any("alias fold left 1 record" in x and "NVIDIA AI" in x for x in lines), lines
     assert L.records["nvidia ai|analytics lead"]["company"] == "NVIDIA AI"
+    assert L.records["nvidia|analytics lead"]["status"] == "purged", "the history is intact"
+    # the same refusal on a key only the LEDGER holds (sqlite lost the row)
+    st.conn.execute("delete from matched where mkey='nvidia|analytics lead'")
+    st.conn.commit()
+    assert L._rename_record("nvidia ai|analytics lead", "nvidia|analytics lead",
+                            company="NVIDIA") is False
+    assert L.records["nvidia|analytics lead"]["status"] == "purged"
+    assert L._rename_record("nvidia ai|analytics lead", "nvidia ai|analytics lead") is False
+    assert "renamed_from" not in L.records["nvidia ai|analytics lead"], \
+        "a same-key rename would name the record its own parent"
     st.close()
+
+
+def test_one_posting_under_two_titles_folds_on_the_incumbent(tmp_path):
+    """2026-09-18. `biocatch|business intelligence developer` and `biocatch|senior business
+    intelligence developer` were a full tie on the sweep's first two keys (both open, both
+    `last_seen` 2026-09-18), so the group was refused every morning while BOTH rows
+    published. They are one posting: identical `desc_sha1`, identical url, the same two
+    `seen_ids`, the same `sent` mark. That conjunction — one address AND one description —
+    is what licenses the third key; the survivor is the INCUMBENT, which carries the
+    emailed history and is the role_id a reader may already hold."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    url = "https://il.indeed.com/viewjob?jk=f17c9e415778b697"
+    a = _role("BioCatch", "Business Intelligence Developer", url, "f17c9e415778b697",
+              src="discovery-indeed", desc=_JD_TEXT)
+    b = _role("BioCatch", "Senior Business Intelligence Developer", url, "f17c9e415778b697",
+              src="discovery-indeed", desc=_JD_TEXT)
+    st.upsert_matched(a, "2026-09-15")
+    st.upsert_matched(b, "2026-09-17")
+    st.upsert_matched(a, "2026-09-18")
+    st.upsert_matched(b, "2026-09-18")
+    L = roles.Ledger(st, "2026-09-18")
+    L.open_sync()
+    inc, newer = "biocatch|business intelligence developer", \
+        "biocatch|senior business intelligence developer"
+    # the committed store's shape: BOTH records carry BOTH platform ids (the id union), so
+    # `same_role_twin`'s two-shared-strong-ids arm is what forms the group
+    for k in (inc, newer):
+        L.records[k]["seen_ids"] = sorted(
+            set(L.records[k]["seen_ids"]) | {"discovery-indeed:indeed:f17c9e415778b697",
+                                             "discovery-linkedin:linkedin:4467714663"})
+    L.records[newer]["sent"] = {"discovery-linkedin:linkedin:4467714663": "2026-09-15"}
+    assert L.records[inc]["first_seen"] < L.records[newer]["first_seen"]
+    assert L.records[inc]["desc_sha1"] == L.records[newer]["desc_sha1"]
+    L.sweep_store()
+    assert L.twin_folds == 1
+    assert L.records[inc]["status"] == "open"
+    assert L.records[newer]["status"] == "superseded"
+    assert L.records[newer]["superseded_by"] == inc
+    assert "discovery-linkedin:linkedin:4467714663" in L.records[inc]["seen_ids"]
+    assert "discovery-linkedin:linkedin:4467714663" in L.records[inc]["sent"], \
+        "the loser's delivery must travel, or the survivor is emailed a second time"
+    st.close()
+
+
+def test_a_twin_tie_on_two_different_postings_is_still_refused(tmp_path):
+    """The counter-example that keeps the third key narrow. `last_seen` alone is not
+    evidence of one posting: two live records of one employer that share a platform id but
+    NOT a description are two roles — measured on the committed store, `autods`'
+    `greenhouse:5417867008` carries `data analyst` beside `senior marketing analyst`, 1 of
+    the 2 non-BioCatch platform-id groups. A tie that survives all three keys refuses."""
+    from pipeline import roles
+    base = dict(status="open", last_seen="2026-09-18",
+                url="https://il.indeed.com/viewjob?jk=1", desc_sha1="aaa")
+    same = [dict(base, role_id="a", first_seen="2026-09-15"),
+            dict(base, role_id="b", first_seen="2026-09-17")]
+    assert roles.Ledger._twin_winner_at_rest(same, [0, 1]) == 0, "one posting: the incumbent"
+    for broke in ({"desc_sha1": "bbb"}, {"url": "https://il.indeed.com/viewjob?jk=2"},
+                  {"desc_sha1": ""}, {"url": ""}):
+        recs = [dict(same[0]), dict(same[1], **broke)]
+        assert roles.Ledger._twin_winner_at_rest(recs, [0, 1]) is None, broke
+    # ...and an equal `first_seen` is no tie-break either
+    both = [dict(base, role_id="a", first_seen="2026-09-15"),
+            dict(base, role_id="b", first_seen="2026-09-15")]
+    assert roles.Ledger._twin_winner_at_rest(both, [0, 1]) is None
+    # the first two keys are untouched: open beats closed, then the later last_seen
+    assert roles.Ledger._twin_winner_at_rest(
+        [dict(base, role_id="a", status="closed"), dict(base, role_id="b")], [0, 1]) == 1
+    assert roles.Ledger._twin_winner_at_rest(
+        [dict(base, role_id="a", last_seen="2026-09-17"), dict(base, role_id="b")], [0, 1]) == 1
 
 
 def test_two_shared_strong_ids_fold_a_retitled_twin_and_keep_the_native_titled_job(tmp_path):
