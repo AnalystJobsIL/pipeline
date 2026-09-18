@@ -1,9 +1,9 @@
 {
  "dataset": "roles.csv",
- "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
+ "download_url": "https://analystjobsil.github.io/board/roles.csv",
  "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
- "published_on_pages": false,
- "generated_at": "2026-09-18T14:45:01Z",
+ "published_on_pages": true,
+ "generated_at": "2026-09-18T15:00:32Z",
  "run_date": "2026-09-18",
  "rows": 185,
  "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
@@ -992,8 +992,8 @@
   "rows": 0,
   "rule": "status open or closed AND last_seen < 2026-06-21 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
-  "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
-  "published_on_pages": false
+  "download_url": "https://analystjobsil.github.io/board/roles_archive.csv",
+  "published_on_pages": true
  },
  "reconciliation": {
   "rows": 185,
@@ -1038,8 +1038,8 @@
   "why": "the full text is up to 6,000 characters per role with embedded newlines: it breaks naive parsers, and this file is committed to git every day",
   "file": "roles_text.jsonl",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_text.jsonl",
-  "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_text.jsonl",
-  "published_on_pages": false,
+  "download_url": "https://analystjobsil.github.io/board/roles_text.jsonl",
+  "published_on_pages": true,
   "join": "role_id",
   "columns_here": [
    "description_len",
