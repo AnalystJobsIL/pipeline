@@ -420,24 +420,22 @@ def _reclean(conn, every, dry_run):
     cut = 0
     for mkey, old, new, when in todo:
         cut += len(old) - len(new)
-        # The page said this posting had stopped taking applicants, and the cut is about to
-        # remove the sentence that said so -- it lives in the header block, at offsets
-        # 260-501 on the five rows that carry it. `roles.page_closed` reads it to close a
-        # LinkedIn-only row, so the cut stamps the verdict where that lane can still find it
-        # (contract agreed live with the `roles` session, 2026-09-11). Only onto an EMPTY
-        # `jd_why`: a `structural:` value is a blocker the dataset publishes, and this may
-        # not overwrite one.
-        closing = (closed_page_at(old) is not None and closed_page_at(new) is None)
+        # The stamp used to be written HERE as well, on the theory that the cut was about
+        # to remove the page's closure sentence with the rest of the header. Since
+        # 2026-09-18 it cannot: `jdfill.strip_head` re-attaches that line through
+        # `with_closed_line` after every cut it makes (587 -- the mirror's head cut was the
+        # first rule in this module able to reach a line sitting at offset 0). So the
+        # condition `closed_page_at(old) is not None and closed_page_at(new) is None` is
+        # unreachable, and an unreachable writer of a published verdict is worse than no
+        # writer: it reads as a guarantee. The stamp now has exactly two writers --
+        # `_capture_why` for a fresh capture, `_stamp_closed_pages` for stored text that
+        # carries the sentence -- and the second runs over THIS pass's output, six lines
+        # below in `_run`. Proved by
+        # test_the_cut_keeps_the_closing_sentence_and_the_stamp_pass_writes_the_verdict.
         if not dry_run:
-            if closing:
-                conn.execute("UPDATE matched SET description=?, jd_why=CASE "
-                             "WHEN COALESCE(jd_why,'')='' THEN ? ELSE jd_why END "
-                             "WHERE mkey=?", (new, "closed-by-page:" + (when or ""), mkey))
-            else:
-                conn.execute("UPDATE matched SET description=? WHERE mkey=?", (new, mkey))
+            conn.execute("UPDATE matched SET description=? WHERE mkey=?", (new, mkey))
         print(f"  [CUT] {mkey[:58]:<58} {len(old):>5} -> {len(new):<5} "
-              f"(-{len(old) - len(new)} of page furniture"
-              f"{'; closed-by-page ' + (when or '?') if closing else ''})", flush=True)
+              f"(-{len(old) - len(new)} of page furniture)", flush=True)
     if not dry_run:
         conn.commit()
     return len(todo), cut, {k: new for k, _old, new, _d in todo}

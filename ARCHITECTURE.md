@@ -5522,6 +5522,78 @@ listing pages, `legit security|appsec analyst team lead` is another role's Comee
 significant token between slug and title after folding `AI/ML`→`aiml` and `V&V`→`vv`, ASCII
 title. It fires on 7 of 339 Comeet posting cards, all Legit Security, and on 0 elsewhere.
 
+### Own-board chrome renders TWICE, and that is what identifies it — 2026-09-18
+
+*lane: `jd-text`. Record: `docs/sessions/2026-09-18-jd-text.md`. BACKLOG `611` mostly closed.*
+
+**Every marker in this module was measured on LinkedIn.** A company's own careers page has no
+login wall, no similar-jobs rail and, above the posting, no application form — so
+`_PAGE_FURNITURE` and `form_at` both answered None over it. On 2026-09-18 that published
+`אסם|אנליסט ית אפקטיביות מסחרית` with its first marker word at **2,005 of 3,059** characters and
+`אסם|data analyst … נספרסו` at **1,916 of 2,745** — 62-70 % site chrome, and the classifier's
+prompt slice is 1,400 characters, so the seam judged navigation.
+
+**What identifies the chrome is the REPETITION, not a word.** `jdfill.mirrored_nav(text, k=8)`
+returns `(head_end, tail_start)` for a run of `NAV_K` whitespace tokens carrying no
+`_JD_MARKERS` word that occurs BOTH before the first marker hit (inside `HEAD_WINDOW`) and
+after the last: the menu the site renders above the posting and again in the footer. Every
+K-gram of a long nav matches, so the extremes are taken and a thirty-token menu is cut whole.
+It has to be a TOKEN rule: `scrape_universal` collapses a capture with `re.sub(r"\s+", " ")`,
+so both `אסם` texts are ONE line and every `re.M` anchor in this module is structurally
+blind to them (`608@scraper`).
+
+**The two halves live in different places, for the reason the 09-11 section gives.** The TAIL
+half is in `furniture_at`, so `jd_body` — every reader — stops at the footer. The HEAD half is
+a cut and runs only at the doors that create or rewrite text (`strip_head`, which now takes the
+PAGE as `whole=` because `jd_body` has already deleted the footer copy the rule recognises the
+menu by). `strip_head` re-attaches the closure sentence through `with_closed_line` after the
+cut: that line sits at offset 0, ABOVE the head menu, so 2026-09-18 is the first time any rule
+in this module could reach it (`587`).
+
+| measured over all 2,421 stored bodies at `a96ee8a` | |
+|---|---|
+| bodies whose `jd_body` shortens (tail half + the three new markers) | **196**, 128,909 characters |
+| rows that STOP passing `looks_like_jd` because of it | **0** |
+| bodies the full rule changes through `reclean_text`'s shape | 149, 170,812 characters |
+| `אסם … cdt` / `אסם … נספרסו` `description_len` | 3,059 → **1,679** · 2,745 → **1,389** |
+
+**Three own-board tail markers, each with its number**: `share this job` 33 fires / 0 below the
+bar, a line-anchored `related jobs|related positions` heading 12/0, and the Ivory search widget
+(`generic selectors|exact matches only|search in title`) 4/0 — Cognyte's shape. **Rejected on
+the same corpus**: an unrestricted marker-free-run rule (no recurrence required) 407 fires /
+**175** below the bar; the tail half with no head anchor 125; a "block of ≥6 short lines" head
+menu rule 115/66 (it took Ballerine from 1,662 to 229); footer-label density at need=3 232/6,
+and it reached only 65 characters of the `אסם` tail; `share this position` 20/3 (eToro),
+`apply for position` 29/2, `all rights reserved` 171/6, a bare `©` 253/8, `job category` 20/3,
+`back to jobs` 90/68.
+
+**Entities are decoded at the two doors that CREATE text and at no reader.** `html_to_text`
+spelled out the four entities LinkedIn uses and left every numeric one a WordPress careers page
+renders: 26 of the 186 published rows carried a raw entity, `&#8211;` on 320 stored bodies and
+`&#8217;` on 153. `html.unescape` (plus `\xa0` back to a space) now runs in `html_to_text` and
+at the top of `reclean_text`, which changes **40 of 267** `matched` texts, 867 characters, and
+flips **0** verdicts. Never in `jd_body` or `better_description`: `refute_key` and the dataset's
+`description_sha1` are taken over stored bytes, and re-deriving them at a reader re-keys the
+whole store.
+
+**A listing CARD is not a posting.** `google israel|research data scientist ii waze` published
+573 characters reading `corporate_fare Google place Tel Aviv, Israel bar_chart Early … Minimum
+qualifications …` — one card off Google's careers RESULTS page, with `url` still
+`/about/careers/applications/jobs/results/`. It cleared `looks_like_jd` on
+{qualification, experience}, so `maybe_fill` returned at its first line every morning and the
+seam bought a fresh `llm` verdict on a snippet. `_is_listing_card` refuses a text carrying two
+DISTINCT Material Symbols ligatures (`corporate_fare|bar_chart|location_on|work_outline`) in
+its first 400 characters, in `looks_like_jd` and in `extract_jd`. Measured: **21 of 2,421**
+bodies, every one a Google Israel card, 0 elsewhere. `place` is deliberately not in the set —
+it is an ordinary English word. Raising `MIN_DESC` instead was rejected: 17 `matched` texts
+under 800 characters are legitimately complete short postings (Menora 452, G Stat 505, Alma
+547); so was demanding a responsibilities family (it kills Points 530, group19 661, Harel 762).
+
+**The share was over the ceiling, so the pass was attended.** `reclean_text` over `matched`
+changes **46 of 272 rows (16.9 %)** against `RECLEAN_MAX_SHARE` 0.15 — 2 cut, 44 decoded — so
+the one-off re-bound the module attribute in-session (the 09-11 precedent) and the nightly is
+~0 after. The cache pass needed no lift: **274 of 2,154 cards (12.7 %)**, 60,843 characters.
+
 ### Which mechanism fills what — read this before believing a cache is empty
 
 *Corrected 2026-08-30. Both the orchestrator and this lane misread it, and a session reading

@@ -12720,6 +12720,18 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      only when its lines repeat (this one renders the menu twice), and `© All rights reserved`
      is a tail marker only if it never precedes a posting.
 
+     **Mostly closed 2026-09-18** (`jdfill.mirrored_nav` + three own-board tail markers +
+     `html.unescape` at both creating doors; ARCHITECTURE §7a). The measurement the item
+     asked for, over all 2,421 stored bodies: the repetition IS the rule (a marker-free
+     8-token run rendered above AND below the posting) — 196 bodies shorten, 0 fall below
+     the bar, and `אסם` 3,059 → 1,679 / 2,745 → 1,389. `© All rights reserved` was
+     measured and REFUSED: 171 fires, 6 below the bar (a bare `©` 253/8).
+     **What is left**: ClixScale still carries ~210 characters of footer (its menu ORDER
+     differs head vs foot, so no 8-gram repeats; the `© 2022` line stays and is a
+     staleness question for `586@roles`, not a cutter's) and Ballerine ~300 (three office
+     addresses and `Get 5 Free Reports`, a block that appears once). Both need a rule
+     nobody has measured yet; neither is worth a marker that fires on prose.
+
 ## From the `registry` lane, 2026-09-13 (wrong boards, Osem-Nestlé, drain capacity)
 
 612. **Two parked registry rows read one board under names that differ only by a diacritic, and

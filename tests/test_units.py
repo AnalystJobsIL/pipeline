@@ -33025,15 +33025,21 @@ def test_a_head_repair_is_handed_back_unless_the_ledger_line_is_retracted():
                      {"description": tail, "last_seen": "2026-09-11"})["description"] == jd
 
 
-def test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed():
-    """The contract agreed live with the `roles` session on 2026-09-11. `roles.page_closed`
-    closes a LinkedIn-only row on `No longer accepting applications`, and that sentence sits
-    in the header block this cut removes — at offsets 260-501 on the five rows that carry it.
-    A text can be re-captured; a verdict about a day that has passed cannot, so the cut writes
-    it where the other lane can still read it.
+def test_the_cut_keeps_the_closing_sentence_and_the_stamp_pass_writes_the_verdict():
+    """The contract agreed live with the `roles` session on 2026-09-11, through the mechanism
+    that replaced it on 2026-09-18. `roles.page_closed` closes a row on `No longer accepting
+    applications`, and that sentence used to live in the header block the cut removes — so the
+    cut stamped `closed-by-page:<date>` on its way past.
+
+    It cannot any more, and that is the point: `jdfill.strip_head` re-attaches the line after
+    every cut it makes (`with_closed_line`), because the mirror's head cut is the first rule in
+    that module that can reach a line sitting at offset 0. So the cut's stamp branch became
+    unreachable and was DELETED rather than left standing as a promise, and the verdict has
+    exactly two writers: `_capture_why` for a fresh capture, `_stamp_closed_pages` for stored
+    text carrying the sentence. This test walks the two in the order `_run` walks them.
 
     Only onto an EMPTY `jd_why`: a `structural:` value is a blocker the published dataset
-    quotes verbatim, and this may not overwrite one."""
+    quotes verbatim, and neither writer may overwrite one."""
     import enrich_matched_jd as emj
     from pipeline.jdfill import closed_page_at
     import sqlite3 as _sq
@@ -33047,7 +33053,13 @@ def test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed():
     rows = [("c", "ACME", "Analyst", "u", "2026-09-11", "", old, 0, "2026-09-11"),
             ("b", "ACME", "Analyst", "u", "2026-09-11", "", old, 0, "2026-09-11")]
     rows += [("f%d" % i, "ACME", "A", "u", "", "", jd, 0, "2026-09-11") for i in range(18)]
-    emj._reclean(conn, rows, dry_run=False)
+    n, _chars, recleaned = emj._reclean(conn, rows, dry_run=False)
+    assert n == 2 and closed_page_at(recleaned["c"]) == 0, "the cut lost the sentence"
+    assert conn.execute("SELECT jd_why FROM matched WHERE mkey='c'").fetchone()[0] is None
+    # ...and `_run` hands the CUT text straight to the stamp pass, six lines below the cut
+    rows = [(k, c, t, u, a, si, recleaned.get(k, d), tr, ls)
+            for k, c, t, u, a, si, d, tr, ls in rows]
+    assert emj._stamp_closed_pages(conn, rows, dry_run=False) == 1
     assert conn.execute("SELECT jd_why FROM matched WHERE mkey='c'").fetchone()[0] \
         == "closed-by-page:2026-09-11"
     assert conn.execute("SELECT jd_why FROM matched WHERE mkey='b'").fetchone()[0] \
@@ -35479,3 +35491,140 @@ def test_a_refilled_reject_cell_reaches_the_record_and_a_matching_one_does_not()
     assert class_backfill.apply_to(recs, {rid: accept}, "2026-09-18") == [rid]
     assert recs[rid]["class"]["decision"] == "accept"
     assert class_backfill.apply_to(recs, {rid: accept}, "2026-09-19") == []
+
+# --------------------------------------------------------------------------------------
+# 2026-09-18, `jd-text`: own-board chrome renders TWICE (611), a listing card is not a
+# posting, and every door decodes entities.
+# --------------------------------------------------------------------------------------
+
+# The `אסם` shape, as the scraper stores it: ONE line, because
+# `scrape_universal._read_position_page` collapses a capture with `re.sub(r"\s+", " ")`.
+# Not one token below is a `_JD_MARKERS` word (`אחריות` and `ניסיון` are, so the menu
+# deliberately does not carry them).
+_J18_NAV = ("אסם נסטלה בית קריירה מותגים שלנו חדשות צור קשר תקנונים הצהרת נגישות מפת אתר")
+_J18_JD = ("תיאור המשרה: ניהול ובקרה של דוחות מכירה שבועיים, בניית דשבורדים בפאוור בי איי, "
+           "עבודה מול ממשקים עסקיים רחבים והובלת תהליכי שיפור מתמשכים ביחידה. "
+           "דרישות: ניסיון של שנתיים לפחות בתפקיד דומה, שליטה מלאה באקסל ובשפת שאילתות, "
+           "יכולת עבודה עצמאית, ראייה מערכתית ויכולת הצגה מול הנהלה ומול מנהלי המכירות. "
+           "תואר ראשון רלוונטי מטעם מוסד אקדמי מוכר.")
+
+
+def _j18_one_line(jd=None):
+    """nav · posting · the SAME nav — one line, the way the store holds it."""
+    return _J18_NAV + " " + (jd or _J18_JD) + " " + _J18_NAV
+
+
+def test_a_nav_rendered_twice_brackets_the_posting_and_both_halves_go():
+    """`611`. A company's own careers page has no login wall, no similar-jobs rail and no
+    application form, so every marker rule this module had answered None over it: both `אסם`
+    rows published 62-70 % site chrome (the first marker word sat at 2,005 of 3,059 and at
+    1,916 of 2,745) and the classifier's 1,400-character prompt slice never reached the
+    posting.
+
+    What identifies the chrome is the REPETITION, not a word: the menu is rendered above the
+    posting and again in the footer. And it has to be a token rule rather than a line rule,
+    which is what this fixture pins — the stored text is ONE line, so `_HEAD_FURNITURE`,
+    `^...seniority level$` and every other `re.M` anchor in this module are structurally
+    blind to it."""
+    from pipeline import jdfill
+    t = _j18_one_line()
+    assert "\n" not in t and jdfill._HEAD_FURNITURE.search(t) is None
+    nav = jdfill.mirrored_nav(t)
+    assert nav is not None
+    head_end, tail_start = nav
+    assert head_end == len(_J18_NAV) and tail_start == len(t) - len(_J18_NAV)
+    # the TAIL half is `jd_body`'s, so every reader sees the posting and not the footer
+    assert jdfill.jd_body(t) == _J18_NAV + " " + _J18_JD
+    # the HEAD half is a cut, so it runs only at a door that rewrites the store
+    clean = jdfill.reclean_text(t)
+    assert clean == _J18_JD, clean
+    assert jdfill.looks_like_jd(clean)
+    # and the whole of it is chrome that no word rule could have named
+    assert jdfill.furniture_at(_J18_JD) is None and jdfill.reclean_text(_J18_JD) is None
+
+
+def test_the_mirror_rule_never_fires_on_a_posting_that_repeats_its_own_sentence():
+    """The deciding number for `NAV_K`. A posting legitimately repeats short phrases -- its
+    own company name, "data analyst", a values line quoted in the intro and again in the
+    closing paragraph -- and an unrestricted repetition rule cuts real text: measured over
+    the 2,421 stored bodies, a marker-free-run rule with no requirement that the run RECUR
+    fires on 407 bodies and pushes 175 below the bar.
+
+    Eight tokens is where a repeat stops being prose and becomes a menu. At three it fires on
+    the shape below and deletes the posting's opening section and its closing paragraph."""
+    from pipeline import jdfill
+    phrase = "we build for the long run"                     # 6 tokens, marker-free
+    t = (phrase + ". About the role: you will own the analytics stack and the weekly "
+         "reporting cycle. Requirements: three years of SQL, one of Python, and the "
+         "ownership to carry a question from a stakeholder to a dashboard nobody has to "
+         "ask about twice. We hire for curiosity and we " + phrase + ".")
+    assert len(t) >= jdfill.MIN_DESC and jdfill.looks_like_jd(t)
+    assert jdfill.mirrored_nav(t) is None
+    assert jdfill.reclean_text(t) is None and jdfill.jd_body(t) == t
+    # ...and this is the boundary that decides it, stated as a number rather than a hope
+    assert jdfill.mirrored_nav(t, k=3) is not None
+    assert jdfill.NAV_K == 8
+
+
+def test_the_mirrored_head_cut_gives_the_closing_sentence_back():
+    """`587` through the new cut. The closure sentence lives at offset 0 of a stored text --
+    ABOVE the head menu -- so the mirror's head cut is the first rule in this module that
+    can reach it (`_HEAD_FURNITURE`'s markers are the page's own header and are long gone by
+    the time text is stored). Losing it would re-blind `roles.page_closed` on exactly the
+    own-board rows `611` is about."""
+    from pipeline import jdfill
+    t = "No longer accepting applications\n" + _j18_one_line()
+    assert jdfill.closed_page_at(t) == 0
+    clean = jdfill.reclean_text(t)
+    assert clean is not None and clean.startswith("No longer accepting applications\n")
+    assert clean.endswith(_J18_JD) and _J18_NAV not in clean
+    assert jdfill.closed_page_at(clean) == 0
+
+
+def test_a_google_results_card_is_not_a_job_description():
+    """`google israel|research data scientist ii waze` published a 573-character listing CARD
+    as its description: `corporate_fare Google place Tel Aviv, Israel bar_chart Early ...`
+    plus the minimum qualifications, with `url` still the generic results page. It cleared
+    `looks_like_jd` on {qualification, experience} and 573 > `MIN_DESC`, so `maybe_fill`
+    returned at its first line every morning and the seam bought a fresh verdict on a
+    snippet.
+
+    The tell is the Material Symbols ligature -- the icon font's name rendered as text. TWO
+    distinct ones; `place` alone is an ordinary English word and vetoing on it would refuse
+    real postings, which is why it is not in the set."""
+    from pipeline import jdfill
+    stub = ("corporate_fare Google place Tel Aviv, Israel bar_chart Early Early Experience "
+            "completing work as directed, and collaborating with teammates. "
+            "Minimum qualifications Master's degree in Statistics or a related quantitative "
+            "field. 2 years of experience using data engineering and machine learning to "
+            "solve product or business problems, coding (e.g., Python, R, SQL), querying "
+            "databases or statistical analysis or a PhD degree.")
+    assert len(stub) > jdfill.MIN_DESC and len(jdfill._marker_families(stub)) >= 2
+    assert not jdfill.looks_like_jd(stub)
+    assert jdfill.extract_jd("<html><body><p>%s</p></body></html>" % stub) == ""
+    # one ordinary `place` and no second ligature: an ordinary posting, untouched
+    ok = ("About the role: this is a place where you own the analytics stack. "
+          "Requirements: three years of SQL and the curiosity to ask why. " * 4)
+    assert jdfill.looks_like_jd(ok) and jdfill.extract_jd("<p>%s</p>" % ok)
+
+
+def test_entities_are_decoded_at_every_door_and_nowhere_else():
+    """26 of the 186 published rows carried a raw HTML entity on 2026-09-18 (`&#8211;` on 320
+    stored bodies, `&#8217;` on 153): `html_to_text` decoded the four spellings LinkedIn uses
+    and left every numeric one a company's own careers page renders.
+
+    Decoding belongs at the two doors that CREATE text and at no reader. `refute_key` and the
+    dataset's `description_sha1` are taken over stored bytes, so a reader that re-decoded
+    would re-key the store at every call -- the same rule that keeps `strip_head` out of
+    `jd_body`."""
+    from pipeline import jdfill, roles
+    raw = "It&#8217;s a Data &#038; BI role – see below.&nbsp;"
+    assert jdfill.html_to_text("<p>%s</p>" % raw) == "It’s a Data & BI role – see below."
+    speckled = raw + " " + _J18_JD + " " + _J18_NAV
+    clean = jdfill.reclean_text(speckled)
+    assert clean is not None and "&#" not in clean and "&nbsp;" not in clean
+    assert clean.startswith("It’s a Data & BI role – see below.")
+    # the readers leave the bytes alone
+    plain = "&#8217;" + _J18_JD
+    assert "&#8217;" in jdfill.jd_body(plain)
+    assert "&#8217;" in roles.better_description(plain, "")

@@ -3084,8 +3084,8 @@
   "file": "pipeline/jdfill.py",
   "symbol": "looks_like_jd",
   "class": "M1-gate-removal",
-  "find": "    if _is_markup_soup(text) or page_slice(text):\n",
-  "replace": "    if _is_markup_soup(text):\n",
+  "find": "    if _is_markup_soup(text) or _is_listing_card(text) or page_slice(text):\n",
+  "replace": "    if _is_markup_soup(text) or _is_listing_card(text):\n",
   "why": "`567`: a capture that begins mid-sentence AND ends on the cap is a slice of a page -- `gamida cell|senior business analyst commercial data analytics` is 6,000 characters carrying six field-sales bullets from another posting, and it turned a classifier verdict to NO. Without the guard it reads as a job description to every keyword rule. Killed by test_a_page_slice_is_not_a_job_description.",
   "must_be_killed_by_behavioural": true,
   "killers": [
@@ -3142,32 +3142,6 @@
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_a_mid_sentence_head_reaches_the_todo_and_buys_no_model_call"
-  ]
- },
- {
-  "id": "jd-reclean-drops-the-closed-by-page-stamp",
-  "file": "enrich_matched_jd.py",
-  "symbol": "_reclean",
-  "class": "M4-guard-removal",
-  "find": "        closing = (closed_page_at(old) is not None and closed_page_at(new) is None)\n",
-  "replace": "        closing = False\n",
-  "why": "the cut removes the sentence in which LinkedIn says the posting stopped taking applicants, and `roles.page_closed` reads that sentence to close a LinkedIn-only row. Without the stamp the strip blinds the other lane's arm silently -- the text can be re-captured, a verdict about a day that has passed cannot. Contract agreed with the roles session 2026-09-11. Killed by test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed.",
-  "must_be_killed_by_behavioural": true,
-  "killers": [
-   "tests/test_units.py::test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed"
-  ]
- },
- {
-  "id": "jd-reclean-stamp-overwrites-a-blocker",
-  "file": "enrich_matched_jd.py",
-  "symbol": "_reclean",
-  "class": "M4-guard-removal",
-  "find": "                conn.execute(\"UPDATE matched SET description=?, jd_why=CASE \"\n                             \"WHEN COALESCE(jd_why,'')='' THEN ? ELSE jd_why END \"\n                             \"WHERE mkey=?\", (new, \"closed-by-page:\" + (when or \"\"), mkey))",
-  "replace": "                conn.execute(\"UPDATE matched SET description=?, jd_why=? \"\n                             \"WHERE mkey=?\", (new, \"closed-by-page:\" + (when or \"\"), mkey))",
-  "why": "a `structural:` value is a blocker the published dataset quotes verbatim into `description_blocker`; overwriting it with this stamp deletes the only record that every donor class was enumerated and failed. Killed by test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed.",
-  "must_be_killed_by_behavioural": true,
-  "killers": [
-   "tests/test_units.py::test_the_cut_stamps_what_it_removes_when_the_page_says_the_posting_closed"
   ]
  },
  {
@@ -3380,9 +3354,9 @@
   "file": "enrich_matched_jd.py",
   "symbol": "_stamp_closed_pages",
   "class": "M4-guard-removal",
-  "find": "        cur = conn.execute(\"UPDATE matched SET jd_why=? WHERE mkey=? AND COALESCE(jd_why,'')=''\",\n",
-  "replace": "        cur = conn.execute(\"UPDATE matched SET jd_why=? WHERE mkey=?\",\n",
-  "why": "a `structural:` value is a blocker the published dataset quotes verbatim, and an `ok:` value is the fetch's own verdict; the stamp pass may only fill an EMPTY cell. Without the clause it rewrites every row carrying the sentence every night. Killed by test_rows_that_already_carry_the_closing_sentence_are_stamped_without_a_cut.",
+  "find": "_STAMP_FREE = (\"COALESCE(jd_why,'')='' OR COALESCE(jd_why,'') LIKE 'failed:%'\")\n",
+  "replace": "_STAMP_FREE = (\"1=1\")\n",
+  "why": "a `structural:` value is a blocker the published dataset quotes verbatim, and an `ok:` value is the fetch's own verdict; the stamp pass may only fill an EMPTY cell. Without the clause it rewrites every row carrying the sentence every night. Killed by test_rows_that_already_carry_the_closing_sentence_are_stamped_without_a_cut. Re-anchored 2026-09-18: the `WHERE … AND COALESCE(jd_why,'')=''` clause became the shared `_STAMP_FREE` predicate when `failed:` joined the empty cell as a value this writer may take. Widening it to `1=1` is the same defeat through the new spelling.",
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_rows_that_already_carry_the_closing_sentence_are_stamped_without_a_cut"
@@ -4380,6 +4354,72 @@
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_a_twin_tie_on_two_different_postings_is_still_refused"
+  ]
+ },
+ {
+  "id": "jd-mirror-k-too-small",
+  "file": "pipeline/jdfill.py",
+  "symbol": "mirrored_nav",
+  "class": "M5-population-widening",
+  "find": "NAV_K = 8\n",
+  "replace": "NAV_K = 3\n",
+  "why": "`611`: eight tokens is where a repeated marker-free run stops being prose and becomes a menu. Measured over the 2,421 stored bodies, dropping the requirement that the run recur at all fires on 407 bodies and pushes 175 below `looks_like_jd`; at K=3 an ordinary posting that quotes its own values line in the intro and again in the closing paragraph loses both sections. Killed by test_the_mirror_rule_never_fires_on_a_posting_that_repeats_its_own_sentence.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_mirror_rule_never_fires_on_a_posting_that_repeats_its_own_sentence"
+  ]
+ },
+ {
+  "id": "jd-mirror-tail-left-in-the-body",
+  "file": "pipeline/jdfill.py",
+  "symbol": "furniture_at",
+  "class": "M1-gate-removal",
+  "find": "    cuts = [x for x in (m.start() if m else None, form_at(text),\n                        nav[1] if nav else None) if x is not None]\n",
+  "replace": "    cuts = [x for x in (m.start() if m else None, form_at(text)) if x is not None]\n",
+  "why": "`611`: an own-board careers page renders no login wall, no similar-jobs rail and no application form, so `_PAGE_FURNITURE` and `form_at` both answer None over it -- and both `אסם` rows published 62-70 % site chrome, the first marker word at 2,005 of 3,059. The footer is recognised by being the same block the page rendered above the posting. Without this the tail stays in `jd_body` and every reader sees it. Killed by test_a_nav_rendered_twice_brackets_the_posting_and_both_halves_go.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_nav_rendered_twice_brackets_the_posting_and_both_halves_go"
+  ]
+ },
+ {
+  "id": "jd-mirror-head-cut-eats-the-closing-line",
+  "file": "pipeline/jdfill.py",
+  "symbol": "strip_head",
+  "class": "M6-fallback-removal",
+  "find": "    body = with_closed_line(t, body)\n",
+  "replace": "",
+  "why": "`587` through the 2026-09-18 cut. The page's closure sentence is kept as the text's FIRST line, which is ABOVE the head menu -- so the mirror's head cut is the first rule in this module that can reach it (`_HEAD_FURNITURE`'s markers are the page's own header and are long gone by the time text is stored). Losing it re-blinds `roles.page_closed` on exactly the own-board rows `611` is about. Killed by test_the_mirrored_head_cut_gives_the_closing_sentence_back.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_mirrored_head_cut_gives_the_closing_sentence_back",
+   "tests/test_units.py::test_the_cut_keeps_the_closing_sentence_and_the_stamp_pass_writes_the_verdict"
+  ]
+ },
+ {
+  "id": "jd-entities-left-undecoded",
+  "file": "pipeline/jdfill.py",
+  "symbol": "html_to_text",
+  "class": "M6-fallback-removal",
+  "find": "    h = _html_mod.unescape(h).replace(\"\\xa0\", \" \")\n",
+  "replace": "    h = h.replace(\"&nbsp;\", \" \").replace(\"&amp;\", \"&\").replace(\"&#39;\", \"'\").replace(\"&quot;\", '\"')\n",
+  "why": "The four spellings LinkedIn uses were decoded by hand and every numeric entity a company's own careers page renders was not: measured 2026-09-18, 26 of the 186 published rows carried a raw entity, `&#8211;` on 320 stored bodies and `&#8217;` on 153, and `html.unescape` changes 40 of 267 `matched` texts. Killed by test_entities_are_decoded_at_every_door_and_nowhere_else.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_entities_are_decoded_at_every_door_and_nowhere_else"
+  ]
+ },
+ {
+  "id": "jd-listing-card-reads-as-a-posting",
+  "file": "pipeline/jdfill.py",
+  "symbol": "looks_like_jd",
+  "class": "M1-gate-removal",
+  "find": "    if _is_markup_soup(text) or _is_listing_card(text) or page_slice(text):\n",
+  "replace": "    if _is_markup_soup(text) or page_slice(text):\n",
+  "why": "`google israel|research data scientist ii waze` published a 573-character card off Google's careers RESULTS page -- `corporate_fare Google place Tel Aviv, Israel bar_chart Early` plus the minimum qualifications -- with `url` still the results page. It cleared the bar on {qualification, experience}, so `maybe_fill` returned at its first line every morning and the seam bought a fresh verdict on a snippet. 21 of the 2,421 stored bodies are this shape and every one is a Google listing card. Killed by test_a_google_results_card_is_not_a_job_description.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_google_results_card_is_not_a_job_description"
   ]
  }
 ]

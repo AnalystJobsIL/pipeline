@@ -205,7 +205,17 @@ def html_to_text(html):
                " ", html, flags=re.S | re.I)
     h = re.sub(r"<br\s*/?>|</p>|</div>|</li>|</h[1-6]>", "\n", h, flags=re.I)
     h = _strip_tags(h)
-    h = h.replace("&nbsp;", " ").replace("&amp;", "&").replace("&#39;", "'").replace("&quot;", '"')
+    # EVERY entity, not the four that were spelled out here. A company's own careers page
+    # renders `&#8217;` / `&#x27;` / `&#038;` / `&#8211;` where LinkedIn renders the plain
+    # character, so the hand-written list decoded LinkedIn and left the employer's own
+    # capture speckled: measured 2026-09-18 over the 186 published rows, **26** carried a
+    # raw entity, `&#8211;` on 320 stored bodies and `&#8217;` on 153. `\xa0` back to a
+    # plain space is the one thing the old list did that `unescape` does not (it yields the
+    # non-breaking character), and `\s+` below would keep it. Decoding lives HERE and in
+    # `reclean_text` -- the two doors that CREATE text -- and never in `jd_body` or
+    # `better_description`, which are readers: `refute_key` and `description_sha1` are taken
+    # over stored bytes, and re-deriving them at a reader re-keys the whole store.
+    h = _html_mod.unescape(h).replace("\xa0", " ")
     lines = [re.sub(r"\s+", " ", ln).strip() for ln in h.split("\n")]
     return "\n".join(ln for ln in lines if ln)
 
@@ -289,7 +299,90 @@ _PAGE_FURNITURE = re.compile(
     r"הפניות מגדילות את סיכוייכם|"
     r"ראה את מי שאתה מכיר|"
     r"היכנס כדי ליצור התראת עבודה|"
-    r"הצג עוד מקומות תעסוקה)", re.I | re.M)
+    r"הצג עוד מקומות תעסוקה|"
+    # --- 2026-09-18, the OWN-BOARD rail. Everything above this line was measured on
+    # LinkedIn; `611` is what a company's own careers page renders under the posting, and
+    # these three are the shapes that survived the same test over the 2,421 stored bodies
+    # (267 `matched`, 2,154 `scraped_cache` cards). Fires / rows pushed below
+    # `looks_like_jd`: `share this job` 33/0, the line-anchored related-jobs heading 12/0,
+    # the Ivory search widget 4/0 (Cognyte's shape: "Generic selectors / Exact matches only
+    # / Search in title", a WordPress search form rendered beneath every posting).
+    # `related jobs` is LINE-ANCHORED for the reason `seniority level` is: "related jobs"
+    # appears mid-sentence in a real posting about adjacent teams, a heading does not.
+    # Rejected on the same corpus, each with the number that killed it: `share this
+    # position` 20 fires / 3 below the bar (eToro), `apply for position` 29/2, `all rights
+    # reserved` 171/6, a bare `©` 253/8, `job category` 20/3, `back to jobs` 90/68 -- the
+    # `apply for this job` lesson (20) all over again, a phrase that is a button at the TOP
+    # of a posting as often as a footer under it.
+    r"share this job|"
+    r"^\W{0,3}related (jobs|positions)\s*$|"
+    r"generic selectors|exact matches only|search in title)", re.I | re.M)
+
+
+# --------------------------------------------------------------- the nav rendered TWICE
+# A company's own careers page has no login wall and no similar-jobs rail, so not one marker
+# above fires on it -- and on 2026-09-18 the two `אסם` rows published 62-70 % site chrome:
+# `אסם|אנליסט ית אפקטיביות מסחרית` reached its first marker word at offset 2,005 of 3,059,
+# `אסם|data analyst ... נספרסו` at 1,916 of 2,745. The prompt slice the classifier buys is
+# 1,400 characters, so the seam judged navigation.
+#
+# What identifies that chrome is not a WORD, it is a REPETITION: the site renders the same
+# menu above the posting and again in the footer below it. `mirrored_nav` looks for a run of
+# `NAV_K` whitespace tokens carrying no `_JD_MARKERS` word that occurs BOTH before the first
+# marker hit (and inside `HEAD_WINDOW`) and after the last one. A posting does not repeat
+# eight consecutive marker-free words verbatim across its own body; a navigation bar does.
+#
+# This is why it is a repetition rule and not another marker list. The scraper collapses a
+# capture with `re.sub(r"\s+", " ")`, so both `אסם` texts are ONE line (0 newlines) and every
+# line-anchored rule above is structurally blind to them (`608@scraper`). A token rule is not.
+#
+# Measured over all 2,421 stored bodies at a96ee8a: the mirror's TAIL half alone changes
+# `jd_body` on 147 bodies and **0** rows stop passing `looks_like_jd`; together with the
+# three own-board markers above it is 196 bodies and 128,909 characters, still 0 below the
+# bar. Through `reclean_text`'s whole shape (both halves and the entity decode) 149 bodies
+# change. Two `matched` rows move: `אסם ... cdt` 3,059 -> 1,679 and `אסם ... נספרסו`
+# 2,745 -> 1,389, both still passing.
+#
+# Rejected, each on its number over the same corpus: K=8 with NO requirement that the run
+# recur -- i.e. "a marker-free stretch is chrome" -- 407 fires and 175 rows below the bar;
+# the tail half alone with no head anchor, 125; "a block of >=6 short lines" as a head menu
+# rule 115 fires / 66 below the bar (it took Ballerine from 1,662 to 229); a footer-label
+# density rule at need=3, 232/6, and it reached only 65 characters of the `אסם` tail.
+NAV_K = 8
+_NAV_TOKEN = re.compile(r"\S+")
+
+
+def mirrored_nav(text, k=NAV_K):
+    """`(head_end, tail_start)` of a navigation block this page rendered BOTH above and below
+    the posting, or None.
+
+    `head_end` is the end of the LAST head token of the repeated run, `tail_start` the start
+    of the FIRST tail token of it, so a nav of thirty tokens is found by its eight-token
+    signature and cut whole: every K-gram of it matches, and the extremes are taken.
+
+    Deliberately anchored on `_JD_MARKERS`: the run must end before the first marker word and
+    restart after the last, which is the definition of "brackets the posting". A page with no
+    marker word at all gets no answer here (`looks_like_jd` is already False for it)."""
+    t = str(text or "")
+    hits = [m.start() for m in _JD_MARKERS.finditer(t)]
+    if not hits:
+        return None
+    first, last = hits[0], hits[-1]
+    toks = [(m.group(0).lower(), m.start(), m.end()) for m in _NAV_TOKEN.finditer(t)]
+    if len(toks) < k:
+        return None
+    head, tail = {}, {}
+    for i in range(len(toks) - k + 1):
+        a, b = toks[i][1], toks[i + k - 1][2]
+        if b <= first and a < HEAD_WINDOW:
+            head.setdefault(" ".join(w for w, _s, _e in toks[i:i + k]), []).append((a, b))
+        elif a > last:
+            tail.setdefault(" ".join(w for w, _s, _e in toks[i:i + k]), []).append((a, b))
+    common = set(head) & set(tail)
+    if not common:
+        return None
+    return (max(b for g in common for _a, b in head[g]),
+            min(a for g in common for a, _b in tail[g]))
 
 
 # An application FORM is the other thing that follows a posting, and on a company's own
@@ -337,9 +430,16 @@ def furniture_at(text):
 
     Since 2026-09-11 an application FORM is chrome too (`form_at`), and the earliest of the
     two answers -- a careers page renders the form under the posting exactly where LinkedIn
-    renders its rail."""
+    renders its rail. Since 2026-09-18 the page's own FOOTER is too, when the same block was
+    rendered above the posting as well (`mirrored_nav`): an own-board page carries no login
+    wall and no form, so on `אסם` the two rules above answered None over 1,000 characters of
+    site chrome. Only the TAIL half of the mirror lives here -- `furniture_at` is read by
+    `jd_body`, and `jd_body` is read by every caller in the repo; the head half is a cut and
+    belongs at the doors that create text (`strip_head`)."""
     m = _PAGE_FURNITURE.search(text or "")
-    cuts = [x for x in (m.start() if m else None, form_at(text)) if x is not None]
+    nav = mirrored_nav(text)
+    cuts = [x for x in (m.start() if m else None, form_at(text),
+                        nav[1] if nav else None) if x is not None]
     return min(cuts) if cuts else None
 
 
@@ -474,22 +574,45 @@ def with_closed_line(page_text, text):
     return (m.group(1) + "\n" + t) if m else t
 
 
-def strip_head(text):
+def strip_head(text, whole=None):
     """`text` with the page's own header cut off the FRONT, or `text` unchanged.
 
     The cut runs to the end of the LAST head marker inside `HEAD_WINDOW` -- the markers
     interleave with the page's title/company/location echo, and the last of them is where the
     page stops describing itself. It is accepted only when what remains still passes the two
     tests `extract_jd` applies to a fetched body, so a marker firing inside a short posting
-    can never empty it."""
+    can never empty it.
+
+    `whole` is the PAGE text `text` was cut out of, when the caller still has it, and it
+    exists for exactly one rule: `mirrored_nav` recognises the head menu by the footer copy
+    of it, and `jd_body` has already deleted that footer from `text`. Both callers that
+    compose the two (`reclean_text`, `extract_jd`) pass it. `text` must be a PREFIX of
+    `whole` for the offset to mean anything, which is what `jd_body` returns; the
+    `head_end < len(t)` guard is what makes a caller that breaks that assumption harmless
+    rather than destructive."""
     t = text or ""
     cut = 0
     for m in _HEAD_FURNITURE.finditer(t[:HEAD_WINDOW]):
         cut = max(cut, t.find("\n", m.end()) + 1 or m.end())
-    body = t[cut:].lstrip("\n")
+    nav = mirrored_nav(t if whole is None else whole)
+    if nav and nav[0] < len(t):
+        cut = max(cut, nav[0])
+    # `.lstrip()` and not `.lstrip(\\n)` once something was cut: the mirror's head
+    # cut ends on a TOKEN boundary, and an own-board capture the scraper collapsed is ONE
+    # line, so what follows that boundary is a space rather than a newline. With no cut
+    # the old spelling stands, so a text that merely begins with whitespace is still not
+    # "changed" and provokes no re-clean.
+    body = t[cut:].lstrip() if cut else t.lstrip("\n")
     pb = _POSTER_BLOCK.search(body)
     if pb:
         body = body[pb.end():]
+    # 587, and it became reachable on 2026-09-18: the closure sentence sits at offset 0 of a
+    # stored text, which is ABOVE the head nav, so the mirror's head cut would take it with
+    # the menu. `_HEAD_FURNITURE` could never reach offset 0 (its markers are the page's own
+    # header, already gone by the time text is stored), so this line is new work, not a
+    # re-statement. Restoring it here rather than forbidding the cut keeps one rule: a cutter
+    # may cut, and the sentence the store is not allowed to forget comes back on top.
+    body = with_closed_line(t, body)
     if body != t and len(body) >= MIN_DESC and len(_marker_families(body)) >= 2:
         return body
     return t
@@ -581,9 +704,15 @@ def reclean_text(old):
     `scraped_cache.json` had no re-clean at all, so the cache kept exactly the furniture the
     store had been cut free of -- and a card is what the digest upserts and the `cache` donor
     offers. The floor is `looks_like_jd`, never a length: see `_reclean` for the three rows a
-    length floor destroyed."""
+    length floor destroyed.
+
+    The entity decode (2026-09-18) is here and not in `jd_body`: this is a door that REWRITES
+    the store under a floor and a ceiling, and `&#8217;` in stored text is a capture defect,
+    not a reading of it. `new != old` compares against the text as STORED, so a row whose
+    only defect is its entities is still a change worth writing."""
     old = old or ""
-    new = strip_head(jd_body(old))
+    whole = _html_mod.unescape(old).replace("\xa0", " ")
+    new = strip_head(jd_body(whole), whole=whole)
     return new if (new != old and looks_like_jd(new)) else None
 
 
@@ -658,7 +787,10 @@ def extract_jd(html):
     A WALL-FIRST page — sign-in block above the posting — gets one more look through
     `_after_the_wall` before the "" verdict."""
     full = html_to_text(html)
-    text = strip_head(jd_body(full))
+    text = strip_head(jd_body(full), whole=full)
+    if _is_listing_card(full) or _is_listing_card(text):
+        # A RESULTS page, not a posting (2026-09-18). See `_is_listing_card`.
+        return ""
     if _is_markup_soup(full) or _is_markup_soup(text):
         # A serialized object is not a posting however many marker words the prose INSIDE it
         # carries, and the ladder must say so rather than book it as a successful parse. This
@@ -697,6 +829,38 @@ def _is_markup_soup(text):
     return len(_MARKUP_SOUP.findall(str(text or "")[:_SOUP_HEAD])) >= _SOUP_HITS
 
 
+# A listing CARD is the third thing that is not a posting however many marker words it
+# carries, and `google israel|research data scientist ii waze` is the row that proves the
+# cost: 573 characters reading `corporate_fare Google place Tel Aviv, Israel bar_chart
+# Early ... Minimum qualifications ...`, which is Google's careers RESULTS page rendered as
+# text -- one card off a list of hundreds, with the `url` still pointing at
+# `/about/careers/applications/jobs/results/`. It cleared `looks_like_jd` on
+# {qualification, experience} and 573 > `MIN_DESC`, so `maybe_fill` returned at its first
+# line every morning, nothing ever fetched the posting, and the seam bought a fresh `llm`
+# verdict on a snippet.
+#
+# The tell is the Material Symbols LIGATURE: the icon font renders `corporate_fare` /
+# `place` / `bar_chart` as pictures in a browser and as their literal names in text. Two
+# DISTINCT ones inside `_LISTING_HEAD` characters is a card header. `place` is deliberately
+# NOT in the set -- it is an ordinary English word ("a place where you can grow") and on its
+# own it would veto real postings; the four below are compound identifiers no posting writes.
+# Measured 2026-09-18 over all 2,421 stored bodies: 21 hits, every one a Google Israel
+# listing card, 0 anywhere else. Raising `MIN_DESC` instead was rejected on the same corpus
+# -- 17 `matched` texts under 800 characters are legitimately complete short postings
+# (Menora 452, G Stat 505, Alma 547) -- and so was demanding a responsibilities family,
+# which kills Points (530), group19 (661) and Harel (762).
+_LISTING_LIGATURE = re.compile(r"(corporate_fare|bar_chart|location_on|work_outline)")
+_LISTING_HEAD = 400
+_LISTING_HITS = 2
+
+
+def _is_listing_card(text):
+    """Is this text a card off a RESULTS page rather than a posting? One function so
+    `extract_jd` (a fetched body) and `looks_like_jd` (stored text) cannot drift apart."""
+    return len(set(_LISTING_LIGATURE.findall(
+        str(text or "")[:_LISTING_HEAD]))) >= _LISTING_HITS
+
+
 def looks_like_jd(text):
     """Would `extract_jd` accept this text as a job description? The same two tests it applies
     to a freshly fetched body — long enough, and carrying at least two distinct section
@@ -725,7 +889,7 @@ def looks_like_jd(text):
     words INSIDE the markup, so it clears the marker bar on prose it is not presenting —
     `techbiz global|data analyst` published 6,000 characters of Recruitee offer JSON."""
     body = jd_body(text)
-    if _is_markup_soup(text) or page_slice(text):
+    if _is_markup_soup(text) or _is_listing_card(text) or page_slice(text):
         # A page-slice has no beginning and no end (`page_slice`, 2026-09-11): it is text we
         # truncated at both ends, and the middle it leaves reads as a posting to every
         # keyword rule. `567` is the row that proves the cost -- 6,000 characters carrying
@@ -2701,13 +2865,21 @@ class Item(NamedTuple):
 
 def run_backfill(items, *, save, minutes, count_cap=0, bd=None, dry_run=False, today=None,
                  retry_days=RETRY_DAYS, timeout=25, log=print, probe_cell=None,
-                 free_rungs_ignore_cooldown=False):
+                 free_rungs_ignore_cooldown=False, reasons=None):
     """Walk `items` (already gated by the driver's own relevance/url rules) through `fetch_jd`
     inside a wall-clock budget (`minutes=None` for none; 0 attempts nothing).
     `save(item, text_or_None, stamp)` is the driver's one
     persistence callback. Returns a Counter: todo, filled, bd, fail, bd_unavailable, cooldown,
     unfillable, skipped_budget (= skipped_cap + skipped_clock), tried, probe, probe_ok,
     jsonld, via:<v>, reason:<r>, native:<why>.
+
+    `reasons`, when a driver passes a dict, is filled with `{item.key: jd.reason}` for every
+    item this loop actually fetched, BEFORE `save` is called for it. It is a shared cell in
+    the shape `probe_cell` already uses, and it exists because `save`'s three arguments carry
+    no reason at all: the stamp says WHEN and whether the miss was transient, never WHY, so
+    `enrich_matched_jd.save` could record `ok:` on a hit and nothing whatever on a definitive
+    miss. Adding a fourth positional to the callback would have broken every `save=lambda it,
+    t, s: ...` in the suite; a cell breaks nothing and is opt-in.
 
     `todo` and the split skip counters exist because a partially-walked list used to be
     arithmetically identical to a fully-walked one, and an empty todo identical to a healthy
@@ -2821,6 +2993,8 @@ def run_backfill(items, *, save, minutes, count_cap=0, bd=None, dry_run=False, t
         log(f"  [{'OK ' if jd.text else '-- '}] {item.label[:64]:<64} {jd.via}/{jd.reason} {len(jd.text)}")
         if jd.reason == "gone":
             c["gone"] += 1
+        if reasons is not None:
+            reasons[item.key] = jd.reason
         if not dry_run:
             save(item, jd.text or None,
                  stamp_value(today, jd.transient, gone=jd.reason == "gone"))
@@ -3064,6 +3238,16 @@ class JDFiller:
         # furniture text to the upsert that re-lengthens a re-cleaned row
         self.normalise(job)
         if not self.enabled:
+            # NAMED since 2026-09-18. These were the two exits that returned without setting
+            # `_jd_why`, and the classifier prints whatever it finds: `classify 5 superseded
+            # verdicts CANNOT be re-judged (not-a-job-url 3, ? 1, wrong-address 1)` on the
+            # 09-18 digest, where the `? 1` was `gong|senior data scientist - ai research &
+            # reliability`. An unnamed exit is indistinguishable from a bug in the plumbing,
+            # which is the whole reason the `_jd_why` channel exists.
+            if not looks_like_jd(str(job.get("description") or "").strip()):
+                job["_jd_why"] = "disabled"
+            else:
+                job.pop("_jd_why", None)
             return False
         if looks_like_jd(str(job.get("description") or "").strip()):
             job.pop("_jd_why", None)
@@ -3074,6 +3258,10 @@ class JDFiller:
             return False
         from .seniority import _relevance
         if _relevance(str(job.get("title") or "").lower()) in ("excluded", "none"):
+            # not a failure: this lane declines to spend a fetch on a title the classifier
+            # has already ruled out. It is still a REASON, and the reader of the alarm needs
+            # to be able to tell it from a fetch nobody attempted.
+            job["_jd_why"] = "title-excluded"
             return False
         # the gate BEFORE the clock and the counter: an auth-walled host and a search page cost
         # a 15-second fetch every morning and were booked as failed fetches, which is how
