@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**680 filed · 477 open · 203 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**681 filed · 478 open · 203 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 631.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 632.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -249,7 +249,7 @@ closure convention in the header.
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 - **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
 
-### infra — 118 open
+### infra — 119 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -369,6 +369,7 @@ closure convention in the header.
 - **619** `619@infra` **Eight tests still assert on the state a cron rewrites, and 134 more open it through a code
 - **620** `620@infra` **The Internet Archive names ~9 captures a night for us, against a backlog of 6,193 and
 - **630** `630@infra` **Bright Data's Unlocker cannot fetch `google.com` at all, so a Google Careers posting is
+- **631** `631@infra` **Six of eight mutation shards blew the 40-minute wall on 2026-09-18, and nothing failed
 
 ### scraper — 33 open
 
@@ -13209,3 +13210,51 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      l.strip()];c=collections.defaultdict(set);[c[(x.get('company'),s)].add(x['role_id']) for
      x in r if (x.get('status') or 'open') in ('open','closed') for s in (x.get('seen_ids') or
      [])];print({k:sorted(v) for k,v in c.items() if len(v)>1})"`.
+
+631. **Six of eight mutation shards blew the 40-minute wall on 2026-09-18, and nothing failed
+     — the gate went red on WALL CLOCK with 0 surviving mutants** — lane: `infra` (the
+     calibration is its number), filed 2026-09-18 by `registry`, which hit it.
+
+     Run `35359064839` (headSha `267e6ac`): `guard` **success**, `guard-kill` **success**, all
+     five `rehearse` **success**, `mutation-gate` **1 and 6 success, 0/2/3/4/5/7 FAILURE**. Every
+     one of the six is `rc 137` — killed after the INT grace at its 40-minute budget — and
+     across all six there are **0 `SURVIVING` lines**: they got through **41, 42, 42, 44, 44, 48**
+     records of the ~52 each shard now holds, every line reading `killed`. A red mutation gate
+     that means "the clock ran out" and not "a guard is dead" is the most expensive kind of red
+     in this repo, because the next five sessions will each read it as inherited and push past it.
+
+     **It is not one lane's records.** The catalogue went **391 → 416 on 2026-09-18** — five
+     lanes filed that day (`registry` 6 of the 25, the rest `roles`/`classifier`/`scraper`/
+     `docs`) — and on the last GREEN run before them (`35352954012`, `37f308a`, 391 records) the
+     eight walls already read **30.6 / 31.2 / 36.3 / 36.6 / 37.7 / 38.5 / 38.8 / 39.1 min**
+     against a 40-minute budget. The gate had **~1 minute of headroom** and the file's own
+     comment says the trigger is ~1,800 s, so it was **30 % past its own stated line before
+     anybody pushed**. The arithmetic at 416 records and the observed 50-58 s a record:
+
+     | shards | records/shard | wall @50 s | wall @58 s |
+     |---|---|---|---|
+     | 8 (today) | 52.0 | 2,600 s | 3,016 s |
+     | 10 | 41.6 | 2,080 s | 2,413 s |
+     | 11 | 37.8 | 1,891 s | 2,193 s |
+     | **12** | **34.7** | **1,733 s** | 2,011 s |
+     | 13 | 32.0 | 1,600 s | 1,856 s |
+
+     `tests.yml`'s own instruction is *"add a matrix entry AND bump SHARDS — never the budget"*
+     and the 09-01 comment block calibrated **41.3 s per record**. Two things have moved since:
+     the catalogue (260 → 416) and the **per-record cost**, because every record runs a SUBSET
+     of the suite and the suite went **1,766 → 2,072 tests** in the same period. So a shard bump
+     alone buys weeks, not months, and the comment's own prediction ("the ceiling returns at
+     ~318 records") has already come true twice.
+
+     **Not done here, deliberately.** `registry` held the lane that hit this, not `infra`, and
+     the number needs the owner who tracks the growth rate: anything picked at 18:00 while four
+     lanes are still filing records is stale by the next push (391 → 416 inside one afternoon).
+     The choice is also not purely mechanical — more shards spend runner concurrency, and the
+     alternative is to cut the per-record cost (narrow each record's subset, or skip records
+     whose `find` is untouched by the diff), which is a design change and `infra`'s to make.
+     What `registry` did do: verify that **no mutant survived** (so no lane has to re-derive
+     that), and name it in `HANDOFF.md` so the six reds are not filed as "inherited".
+
+     Check: `gh run view <id> --json jobs` — any `mutation-gate` failure whose log has
+     `rc 137` and **zero** `SURVIVING` lines is this item, not a dead guard; a failure with a
+     `SURVIVING` line is the owning lane's.
