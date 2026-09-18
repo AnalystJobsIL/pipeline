@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**678 filed · 475 open · 203 closed · 9 half · 41 numbers name more than one item · 0 items name no lane.**
+**678 filed · 475 open · 203 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 626.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 629.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -91,9 +91,6 @@ closure convention in the header.
 | 446 | `446@classifier` **open** · `446@docs` closed |
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
-| 623 | `623@scraper` **open** · `623@classifier` closed |
-| 624 | `624@scraper` **open** · `624@jd-text` **open** |
-| 625 | `625@jd-text` **open** · `625@roles` **open** |
 
 ### registry — 154 open
 
@@ -469,7 +466,7 @@ closure convention in the header.
 - **580** `580@roles` **`store.upsert_matched`'s length ratchet is refutation-blind, and `reconcile` cannot see
 - **583** `583@roles` **A url-only retraction line loses its record the day LinkedIn re-posts the placement
 - **607** `607@roles` **`classify_grouped` normalises one member of a merge group, so a twin re-installs the
-- **625** `625@roles` **Three Mobileye records share one lever uuid and no arm can tell a re-title from two
+- **628** `628@roles` **Three Mobileye records share one lever uuid and no arm can tell a re-title from two
 
 ### docs — 25 open
 
@@ -568,8 +565,8 @@ closure convention in the header.
 - **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
 - **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
 - **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
-- **624** `624@jd-text` **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
 - **625** `625@jd-text` **28 cache cards hold one shell page's text under two titles, and both cards own their
+- **627** `627@jd-text` **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
 
 ### classifier — 18 open
 
@@ -13031,7 +13028,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      back. Check: `python -c "import json,collections;s=json.load(open('scraped_cache.json',encoding='utf-8'));g=collections.defaultdict(set);[g[j['description']].add((c,j['title'])) for c,v in s.items() if isinstance(v,list) for j in v if isinstance(j,dict) and len((j.get('description') or '').strip())>=300 and j.get('_own_url') is not False];print(sum(len(t) for t in g.values() if len({x[1] for x in t})>=2))"`.
 ## From the `roles` lane, 2026-09-18 (the verdict cell decides membership)
 
-623. ~~**A `reject` cell has no writer that can flip it back, so a machine withdrawal cannot be
+626. ~~**A `reject` cell has no writer that can flip it back, so a machine withdrawal cannot be
      undone by a verdict**~~ — **CLOSED 2026-09-18 (`classifier`)**: `1655a97` added
      `class_backfill.reject_owed` (a published `reject` cell that a decision record adjudicates,
      or that names a retired contract, or that the live contract's own `|jd` cache row
@@ -13063,7 +13060,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      (x.get('class') or {}).get('decision')=='reject' and x.get('withdrawn_by')=='classifier'))"`
      — the size of the unreachable pile on any morning.
 
-624. **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
+627. **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
      so the stored description contradicts the row's own address** — lane: `jd-text` (the
      ratchet is theirs; the tripwire is `roles`'), filed 2026-09-18 by `roles`. The length
      ratchet keeps the LONGER text at every door into the store (`572`, `607`), and a
@@ -13084,7 +13081,7 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      l.strip())};print(sum(1 for x in r if
      roles.closure_text_ignored(x,(t.get(x['role_id']) or {}).get('description') or '')))"`.
 
-625. **Three Mobileye records share one lever uuid and no arm can tell a re-title from two
+628. **Three Mobileye records share one lever uuid and no arm can tell a re-title from two
      real roles** — lane: `roles`, filed 2026-09-18 by itself, with the arm it REJECTED.
      `mobileye|algorithm data analyst` (open, 09-18), `mobileye|algorithm performance data
      analyst` (open, `last_seen` 09-17) and `mobileye|algorithm performance data analyst full

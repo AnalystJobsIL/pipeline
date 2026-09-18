@@ -7649,7 +7649,7 @@ the board, with the three stamps popped. That is the whole re-admission path —
 re-judges and the row comes back, with no hand line either way, because
 `roles_retractions.jsonl` is where human adjudications live and must not fill with machine
 traffic. (`class_backfill.candidates` cannot yet re-offer a `reject` cell, so today the
-classifier has to purge its cache to produce the flip: `docs/BACKLOG.md 623`, lane
+classifier has to purge its cache to produce the flip: `docs/BACKLOG.md 626`, lane
 `classifier`.)
 
 It carries no `judged` gate, unlike the page-closure arm beside it. That gate exists because
