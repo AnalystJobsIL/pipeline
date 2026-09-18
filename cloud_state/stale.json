@@ -31,7 +31,7 @@
  },
  "Aeronautics": {
   "careers_url": "https://career.aeronautics-sys.com/open-positions/",
-  "error": "scrape: http:403 (18 nights)",
+  "error": "scrape: http:403 (19 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -44,6 +44,12 @@
   "careers_url": "https://www.algosec.com/company/careers/find-a-job",
   "platform": "scrape",
   "reason": "regressed-to-zero"
+ },
+ "Alstom": {
+  "careers_url": "https://jobsearch.alstom.com/tile-search-results/",
+  "error": "HttpError: network error for https://jobsearch.alstom.com/tile-search-results/ <u",
+  "platform": "successfactors",
+  "reason": "fetch-error"
  },
  "Amazon Israel": {
   "careers_url": "https://www.amazon.jobs/en/search",
@@ -67,7 +73,7 @@
  },
  "Ayalon Highways": {
   "careers_url": "https://www.ayalonhw.co.il/career/jobs-page",
-  "error": "scrape: http:403 (20 nights)",
+  "error": "scrape: http:403 (21 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -146,12 +152,6 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Databricks": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/databricks/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/databrick",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
- },
  "Datos Health": {
   "careers_url": "https://www.datos-health.com/join-us/",
   "platform": "scrape",
@@ -162,10 +162,15 @@
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
- "Dell": {
-  "careers_url": "https://iawmqy.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions",
-  "error": "HttpError: network error for https://iawmqy.fa.ocs.oraclecloud.com/hcmRestApi/res",
-  "platform": "oraclehcm",
+ "DeepKeep": {
+  "careers_url": "https://www.deepkeep.ai/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Dentsply Sirona": {
+  "careers_url": "https://careers.dentsplysirona.com/tile-search-results/",
+  "error": "HttpError: network error for https://careers.dentsplysirona.com/tile-search-resul",
+  "platform": "successfactors",
   "reason": "fetch-error"
  },
  "Deutsche Telekom": {
@@ -187,6 +192,12 @@
   "careers_url": "https://careers.epam.com/en/jobs",
   "platform": "scrape",
   "reason": "regressed-to-zero"
+ },
+ "EY": {
+  "careers_url": "https://careers.ey.com/ey/tile-search-results/",
+  "error": "HttpError: network error for https://careers.ey.com/ey/tile-search-results/ <urlo",
+  "platform": "successfactors",
+  "reason": "fetch-error"
  },
  "Echo": {
   "careers_url": "https://www.comeet.com/jobs/echo/9A.006",
@@ -240,8 +251,9 @@
  },
  "Hilti Israel": {
   "careers_url": "https://careers.hilti.group/en/jobs/",
+  "error": "scrape: http:429 (1 night)",
   "platform": "scrape",
-  "reason": "regressed-to-zero"
+  "reason": "fetch-error"
  },
  "IAI - Israel Aerospace Industries": {
   "careers_url": "https://jobs.iai.co.il/jobs/",
@@ -250,7 +262,7 @@
  },
  "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ": {
   "careers_url": "https://careers.iec.co.il/",
-  "error": "scrape: http:403 (24 nights)",
+  "error": "scrape: http:403 (25 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -311,7 +323,7 @@
  },
  "NSO Group": {
   "careers_url": "https://www.nsogroup.com/job/web-security-researcher/",
-  "error": "scrape: http:403 (21 nights)",
+  "error": "scrape: http:403 (22 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -342,7 +354,7 @@
  },
  "PAPAYA": {
   "careers_url": "https://www.papayaglobal.com/careers/",
-  "error": "scrape: http:403 (21 nights)",
+  "error": "scrape: http:403 (22 nights)",
   "platform": "scrape",
   "reason": "fetch-error"
  },
@@ -376,6 +388,12 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "SAP": {
+  "careers_url": "https://jobs.sap.com/tile-search-results/",
+  "error": "HttpError: network error for https://jobs.sap.com/tile-search-results/ <urlopen e",
+  "platform": "successfactors",
+  "reason": "fetch-error"
+ },
  "SMARTECH - A Hexion Company": {
   "careers_url": "https://careers.hexion.com/job/Herzliya-QA-Lead-M/1426309900/",
   "platform": "scrape",
@@ -386,8 +404,19 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Sapiens": {
+  "careers_url": "https://careers.sapiens.com/tile-search-results/",
+  "error": "HttpError: network error for https://careers.sapiens.com/tile-search-results/ <ur",
+  "platform": "successfactors",
+  "reason": "fetch-error"
+ },
  "Sensos": {
   "careers_url": "https://www.sensos.io/careers",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
+ },
+ "Shikun Binui": {
+  "careers_url": "https://careers.shikunbinui.com/jobs/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
@@ -431,11 +460,6 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "TCM Technologies LTD": {
-  "careers_url": "https://en.tcm.co.il/jobs/",
-  "platform": "scrape",
-  "reason": "regressed-to-zero"
- },
  "TLVTech": {
   "careers_url": "https://api.smartrecruiters.com/v1/companies/tlvtech/postings",
   "platform": "scrape",
@@ -446,16 +470,18 @@
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
+ "Tap": {
+  "age_days": 1341,
+  "careers_url": "https://api.smartrecruiters.com/v1/companies/tapmobile/postings",
+  "error": "BoardAbandoned: newest posting 2023-01-16 (1341 days old), 1 posting",
+  "newest": "2023-01-16",
+  "platform": "smartrecruiters",
+  "reason": "abandoned-board"
+ },
  "Teads": {
   "careers_url": "https://job-boards.eu.greenhouse.io/teads1",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
- },
- "Triple Whale": {
-  "careers_url": "https://boards-api.greenhouse.io/v1/boards/triplewhale/jobs",
-  "error": "HttpError: network error for https://boards-api.greenhouse.io/v1/boards/triplewha",
-  "platform": "greenhouse",
-  "reason": "fetch-error"
  },
  "Tripledot Studios": {
   "careers_url": "http://job-boards.eu.greenhouse.io/tripledotstudios",
@@ -476,6 +502,12 @@
   "careers_url": "https://jobs.volkswagen-group.com/cariad/search/",
   "platform": "scrape",
   "reason": "regressed-to-zero"
+ },
+ "West Pharmaceutical Services": {
+  "careers_url": "https://careers.westpharma.com/tile-search-results/",
+  "error": "HttpError: network error for https://careers.westpharma.com/tile-search-results/ ",
+  "platform": "successfactors",
+  "reason": "fetch-error"
  },
  "Whalo": {
   "careers_url": "https://www.whalo.com/careers",
@@ -521,5 +553,10 @@
   "careers_url": "https://www.comeet.com/jobs/somekhchaikin/F3.007",
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
+ },
+ "הפניקס": {
+  "careers_url": "https://www.fnx.co.il/career/open-positions",
+  "platform": "scrape",
+  "reason": "regressed-to-zero"
  }
 }

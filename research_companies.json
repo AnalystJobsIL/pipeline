@@ -2118,12 +2118,6 @@
   "slug": "galitechonline"
  },
  {
-  "name": "Econergy Ltd.",
-  "careers_url": "https://il.linkedin.com/jobs/view/financial-modeller-at-econergy-ltd-4460608948",
-  "ats": "unknown",
-  "slug": "econergy-ltd"
- },
- {
   "name": "NTU International A/S",
   "careers_url": "https://il.linkedin.com/jobs/view/transport-experts-at-ntu-international-a-s-4461065114",
   "ats": "unknown",
@@ -2146,12 +2140,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/head-of-revenue-growth-marketing-at-morning-by-green-invoice-4461788836",
   "ats": "unknown",
   "slug": "greeninvoice"
- },
- {
-  "name": "Oriient",
-  "careers_url": "https://il.linkedin.com/jobs/view/marketing-manager-at-oriient-4459937241",
-  "ats": "unknown",
-  "slug": "oriient"
  },
  {
   "name": "McCann TLV",
@@ -5220,34 +5208,16 @@
   "slug": ""
  },
  {
-  "name": "Datamind BI & AI",
-  "careers_url": "https://il.linkedin.com/jobs/view/business-intelligence-developer-qlik-at-datamind-bi-ai-4351172162",
-  "ats": "unknown",
-  "slug": "datamind-bi-ai"
- },
- {
   "name": "W Group",
   "careers_url": "https://il.linkedin.com/jobs/view/pricing-specialist-import-coordinator-at-w-group-4468386962",
   "ats": "unknown",
   "slug": "w-group-worldwide"
  },
  {
-  "name": "Global Payments Inc.",
-  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-global-payments-inc-4468278489",
-  "ats": "unknown",
-  "slug": "global-payments"
- },
- {
   "name": "Redwood International Sports ⚽️",
   "careers_url": "https://il.linkedin.com/jobs/view/full-stack-engineer-at-redwood-international-sports-%E2%9A%BD%EF%B8%8F-4468358703",
   "ats": "unknown",
   "slug": "redwood-international-sports"
- },
- {
-  "name": "Blaise",
-  "careers_url": "https://il.linkedin.com/jobs/view/technical-product-manager-at-blaise-4465985724",
-  "ats": "unknown",
-  "slug": "blaisetechnologies"
  },
  {
   "name": "SMSCRM",
@@ -5272,12 +5242,6 @@
   "careers_url": "https://il.linkedin.com/jobs/view/corporate-development-strategy-m-a-strategic-partnerships-at-colmobil-4467985449",
   "ats": "unknown",
   "slug": "colmobil"
- },
- {
-  "name": "B2Tech",
-  "careers_url": "https://il.linkedin.com/jobs/view/security-operations-engineer-at-b2tech-4466899491",
-  "ats": "unknown",
-  "slug": "b2tech-com"
  },
  {
   "name": "Goldjobs מבינים באנשים",
@@ -5322,34 +5286,10 @@
   "slug": "dataworks---online-strategies"
  },
  {
-  "name": "Imprint",
-  "careers_url": "https://il.linkedin.com/jobs/view/community-manager-at-imprint-4465977994",
-  "ats": "unknown",
-  "slug": "imprint-social"
- },
- {
   "name": "Tag Video Systems Ltd",
   "careers_url": "https://secrethunter.io/companies/tag-video-systems-ltd",
   "ats": "unknown",
   "slug": "tag-video-systems-ltd"
- },
- {
-  "name": "Taglit Birthright Israel Brasil",
-  "careers_url": "https://secrethunter.io/companies/taglit-birthright-israel-brasil",
-  "ats": "unknown",
-  "slug": "taglit-birthright-israel-brasil"
- },
- {
-  "name": "Takeda Pharmaceuticals",
-  "careers_url": "https://secrethunter.io/companies/takeda-pharmaceuticals",
-  "ats": "unknown",
-  "slug": "takeda-pharmaceuticals"
- },
- {
-  "name": "Taliaz Health",
-  "careers_url": "https://secrethunter.io/companies/taliaz-health",
-  "ats": "unknown",
-  "slug": "taliaz-health"
  },
  {
   "name": "Talking English",
@@ -5430,12 +5370,6 @@
   "slug": "techloq"
  },
  {
-  "name": "Technion",
-  "careers_url": "https://secrethunter.io/companies/technion",
-  "ats": "unknown",
-  "slug": "technion"
- },
- {
   "name": "Technion Research And Development Foundation",
   "careers_url": "https://secrethunter.io/companies/technion-research-and-development-foundation",
   "ats": "unknown",
@@ -5448,12 +5382,6 @@
   "slug": "technopulm1"
  },
  {
-  "name": "Techsee",
-  "careers_url": "https://secrethunter.io/companies/techsee",
-  "ats": "unknown",
-  "slug": "techsee"
- },
- {
   "name": "Tectu",
   "careers_url": "https://secrethunter.io/companies/tectu",
   "ats": "unknown",
@@ -5464,5 +5392,431 @@
   "careers_url": "https://secrethunter.io/jobz/406202c2e4",
   "ats": "unknown",
   "slug": ""
+ },
+ {
+  "name": "SkyGini",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-marketing-data-growth-manager-at-skygini-4468385925",
+  "ats": "unknown",
+  "slug": "skygini"
+ },
+ {
+  "name": "HUNTHEAD",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-strategy-economic-policy-consultant-at-hunthead-4465715184",
+  "ats": "unknown",
+  "slug": "hunthead"
+ },
+ {
+  "name": "Guideline Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/crm-ai-solutions-specialist-at-guideline-group-4466560663",
+  "ats": "unknown",
+  "slug": "kav-manche-group"
+ },
+ {
+  "name": "Data Pool Ltd",
+  "careers_url": "https://il.linkedin.com/jobs/view/purchasing-coordinator-at-data-pool-ltd-4466254426",
+  "ats": "unknown",
+  "slug": "data-pool-ltd1"
+ },
+ {
+  "name": "Strauss Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/consumer-insights-research-director-at-strauss-group-4466271071",
+  "ats": "unknown",
+  "slug": "strauss-group"
+ },
+ {
+  "name": "Trilogy Equity Partners",
+  "careers_url": "https://il.linkedin.com/jobs/view/founding-learning-scientist-at-trilogy-equity-partners-4467820963",
+  "ats": "unknown",
+  "slug": "trilogy-equity-partners-llc"
+ },
+ {
+  "name": "Pillar Technology Ventures",
+  "careers_url": "https://il.linkedin.com/jobs/view/budget-manager-at-pillar-technology-ventures-4466681106",
+  "ats": "unknown",
+  "slug": "pillar-solid-offshore"
+ },
+ {
+  "name": "Wivo - eCommerce Wisdom",
+  "careers_url": "https://il.linkedin.com/jobs/view/campaign-manager-at-wivo-ecommerce-wisdom-4466248823",
+  "ats": "unknown",
+  "slug": "wivo---social-traffic-wisdom"
+ },
+ {
+  "name": "STRA - שיווק דיגיטלי - digital marketing",
+  "careers_url": "https://il.linkedin.com/jobs/view/ppc-at-stra-%D7%A9%D7%99%D7%95%D7%95%D7%A7-%D7%93%D7%99%D7%92%D7%99%D7%98%D7%9C%D7%99-digital-marketing-4468664554",
+  "ats": "unknown",
+  "slug": "stra-co-il"
+ },
+ {
+  "name": "M.D. Mechanical Devices Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/operations-process-controller-at-m-d-mechanical-devices-ltd-4467073599",
+  "ats": "unknown",
+  "slug": "m--d--mechanical-devices"
+ },
+ {
+  "name": "Tomax-Think Academy",
+  "careers_url": "https://il.linkedin.com/jobs/view/research-engineer-applied-ml-ai-at-tomax-think-academy-4467746388",
+  "ats": "unknown",
+  "slug": "tomax-think-academy"
+ },
+ {
+  "name": "Comigo.io",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-systems-implementer-%D7%9E%D7%99%D7%99%D7%A9%D7%9D-%D7%AA-%D7%9E%D7%A2%D7%A8%D7%9B%D7%95%D7%AA-at-comigo-io-4465241015",
+  "ats": "unknown",
+  "slug": "comigo-io"
+ },
+ {
+  "name": "Samsung Semiconductor",
+  "careers_url": "https://il.linkedin.com/jobs/view/machine-learning-engineer-at-samsung-semiconductor-4434983896",
+  "ats": "unknown",
+  "slug": "samsungsemiconductor"
+ },
+ {
+  "name": "PwC | NEXT Technology Solutions",
+  "careers_url": "https://il.linkedin.com/jobs/view/ai-adoption-implementation-consultant-jb-762-at-pwc-next-technology-solutions-4468397415",
+  "ats": "unknown",
+  "slug": "pwc-digital-technology-services"
+ },
+ {
+  "name": "ERGO NEXT Insurance",
+  "careers_url": "https://il.linkedin.com/jobs/view/backend-engineer-at-ergo-next-insurance-4457645660",
+  "ats": "unknown",
+  "slug": "ergo-next-insurance"
+ },
+ {
+  "name": "Solidus Labs",
+  "careers_url": "https://il.linkedin.com/jobs/view/head-of-data-at-solidus-labs-4467998364",
+  "ats": "unknown",
+  "slug": "soliduslabs"
+ },
+ {
+  "name": "LTS Device Technologies",
+  "careers_url": "https://il.linkedin.com/jobs/view/director-of-finance-and-accounting-at-lts-device-technologies-4468394476",
+  "ats": "unknown",
+  "slug": "lts-device-technologies"
+ },
+ {
+  "name": "Walmart",
+  "careers_url": "https://il.linkedin.com/jobs/view/ai-platform-product-manager-at-walmart-4468622302",
+  "ats": "unknown",
+  "slug": "walmart"
+ },
+ {
+  "name": "Daylight Security",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-daylight-security-4468636984",
+  "ats": "unknown",
+  "slug": "daylightsecurity"
+ },
+ {
+  "name": "jobforallhr",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%93%D7%A8%D7%95%D7%A9-%D7%94-%D7%9E%D7%A0%D7%94%D7%9C-%D7%AA-%D7%AA%D7%97%D7%95%D7%9D-%D7%9E%D7%95%D7%AA%D7%92%D7%99%D7%9D-%D7%9C%D7%97%D7%91%D7%A8%D7%AA-%D7%9E%D7%95%D7%A6%D7%A8%D7%99-%D7%A6%D7%A8%D7%99%D7%9B%D7%94-%D7%95%D7%9E%D7%96%D7%95%D7%9F-%D7%9E%D7%95%D7%91%D7%99%D7%9C%D7%94-at-jobforallhr-4466227137",
+  "ats": "unknown",
+  "slug": "jobforallhr"
+ },
+ {
+  "name": "Magenta Medical Ltd.",
+  "careers_url": "https://il.linkedin.com/jobs/view/director-of-product-medical-device-at-magenta-medical-ltd-4465733600",
+  "ats": "unknown",
+  "slug": "magenta-medical"
+ },
+ {
+  "name": "Cyera Identity",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-product-manager-at-cyera-identity-4422470186",
+  "ats": "unknown",
+  "slug": "oasissecurity"
+ },
+ {
+  "name": "Bellboy Robotics",
+  "careers_url": "https://il.linkedin.com/jobs/view/junior-applied-researcher-at-bellboy-robotics-4465971812",
+  "ats": "unknown",
+  "slug": "bellboy-robotics"
+ },
+ {
+  "name": "NVIDIA AI",
+  "careers_url": "https://il.linkedin.com/jobs/view/performance-modeling-architect-at-nvidia-ai-4466654759",
+  "ats": "unknown",
+  "slug": ""
+ },
+ {
+  "name": "eTeacher Group",
+  "careers_url": "https://il.linkedin.com/jobs/view/ai-innovation-builder-at-eteacher-group-4465526888",
+  "ats": "unknown",
+  "slug": "eteachergroup"
+ },
+ {
+  "name": "On The Spot Development",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-ai-engineer-at-on-the-spot-development-4466266421",
+  "ats": "unknown",
+  "slug": "on-the-spot-dev"
+ },
+ {
+  "name": "Novartis ACC",
+  "careers_url": "https://il.linkedin.com/jobs/view/defensive-cyber-security-researcher-at-novartis-acc-4465205714",
+  "ats": "unknown",
+  "slug": "novartisacc"
+ },
+ {
+  "name": "Clal Insurance & Finance- כלל ביטוח ופיננסים",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%90%D7%A0%D7%9C%D7%99%D7%A1%D7%98-%D7%99%D7%AA-%D7%94%D7%92%D7%A0%D7%AA-%D7%A4%D7%A8%D7%98%D7%99%D7%95%D7%AA-%D7%9C%D7%90%D7%92%D7%A3-%D7%A0%D7%99%D7%94%D7%95%D7%9C-%D7%A1%D7%99%D7%9B%D7%95%D7%A0%D7%99%D7%9D-at-clal-insurance-finance-%D7%9B%D7%9C%D7%9C-%D7%91%D7%99%D7%98%D7%95%D7%97-%D7%95%D7%A4%D7%99%D7%A0%D7%A0%D7%A1%D7%99%D7%9D-4467994512",
+  "ats": "unknown",
+  "slug": "clal-insurance-"
+ },
+ {
+  "name": "Texas Instruments Europe",
+  "careers_url": "https://il.linkedin.com/jobs/view/field-applications-program-at-texas-instruments-europe-4440742999",
+  "ats": "unknown",
+  "slug": "texas-instruments-europe"
+ },
+ {
+  "name": "YIT - Yedioth Tech",
+  "careers_url": "https://il.linkedin.com/jobs/view/quality-assurance-specialist-at-yit-yedioth-tech-4468362479",
+  "ats": "unknown",
+  "slug": "yit---yedioth-information-technology"
+ },
+ {
+  "name": "Meitav - מיטב בית השקעות",
+  "careers_url": "https://il.linkedin.com/jobs/view/compliance-specialist-at-meitav-%D7%9E%D7%99%D7%98%D7%91-%D7%91%D7%99%D7%AA-%D7%94%D7%A9%D7%A7%D7%A2%D7%95%D7%AA-4466191932",
+  "ats": "unknown",
+  "slug": "meitav"
+ },
+ {
+  "name": "TRIO CONSULTING LTD",
+  "careers_url": "https://il.linkedin.com/jobs/view/%D7%9E%D7%98%D7%9E%D7%99%D7%A2%D7%99-%D7%9E%D7%A2%D7%A8%D7%9B%D7%AA-%D7%9C%D7%A4%D7%A8%D7%95%D7%99%D7%A7%D7%98-%D7%96%D7%9E%D7%A0%D7%99-%D7%90%D7%99%D7%96%D7%95%D7%A8-%D7%94%D7%A9%D7%A4%D7%9C%D7%94-%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D-%D7%9E%D7%A8%D7%9B%D7%96-%D7%A6%D7%A4%D7%95%D7%9F-at-trio-consulting-ltd-4466299029",
+  "ats": "unknown",
+  "slug": "trio-consulting-ltd"
+ },
+ {
+  "name": "אדאקטיב | Adactive",
+  "careers_url": "https://il.linkedin.com/jobs/view/facebook-campaign-manager-at-%D7%90%D7%93%D7%90%D7%A7%D7%98%D7%99%D7%91-adactive-4466268690",
+  "ats": "unknown",
+  "slug": "-adactive"
+ },
+ {
+  "name": "Thing or Two",
+  "careers_url": "https://il.linkedin.com/jobs/view/account-manager-at-thing-or-two-4465767470",
+  "ats": "unknown",
+  "slug": "thingortwo"
+ },
+ {
+  "name": "Remote CoWorker",
+  "careers_url": "https://il.linkedin.com/jobs/view/head-of-growth-at-remote-coworker-4466262262",
+  "ats": "unknown",
+  "slug": "remotecoworker"
+ },
+ {
+  "name": "Nextage",
+  "careers_url": "https://il.linkedin.com/jobs/view/business-operations-3114-at-nextage-4466261706",
+  "ats": "unknown",
+  "slug": "nextage-ltd-"
+ },
+ {
+  "name": "airSlate",
+  "careers_url": "https://il.linkedin.com/jobs/view/email-marketing-head-at-airslate-4466109855",
+  "ats": "unknown",
+  "slug": "airslate"
+ },
+ {
+  "name": "Plus500™",
+  "careers_url": "https://il.linkedin.com/jobs/view/affiliates-team-lead-at-plus500%E2%84%A2-4465966420",
+  "ats": "unknown",
+  "slug": "plus500-official-page"
+ },
+ {
+  "name": "Cliganic",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-social-media-manager-at-cliganic-4468637817",
+  "ats": "unknown",
+  "slug": "cliganic"
+ },
+ {
+  "name": "Speedata.io",
+  "careers_url": "https://il.linkedin.com/jobs/view/marketing-assistant-at-speedata-io-4467990329",
+  "ats": "unknown",
+  "slug": "speedataio"
+ },
+ {
+  "name": "Sentrycs | Counter-Drone Solutions Adapting at the Speed of Threats",
+  "careers_url": "https://il.linkedin.com/jobs/view/senior-channel-marketing-manager-at-sentrycs-counter-drone-solutions-adapting-at-the-speed-of-threats-4468606679",
+  "ats": "unknown",
+  "slug": "sentrycs"
+ },
+ {
+  "name": "City Roofing & Planning",
+  "careers_url": "https://il.linkedin.com/jobs/view/sales-marketing-officer-city-roofing-and-planning-at-city-roofing-planning-4468850838",
+  "ats": "unknown",
+  "slug": "city-roofing-planning"
+ },
+ {
+  "name": "Tehiru Aerial Systems",
+  "careers_url": "https://secrethunter.io/companies/tehiru-aerial-systems",
+  "ats": "unknown",
+  "slug": "tehiru-aerial-systems"
+ },
+ {
+  "name": "Tel Aviv Cinematheque",
+  "careers_url": "https://secrethunter.io/companies/tel-aviv-cinematheque",
+  "ats": "unknown",
+  "slug": "tel-aviv-cinematheque"
+ },
+ {
+  "name": "Tel Aviv Museum Of Art",
+  "careers_url": "https://secrethunter.io/companies/tel-aviv-museum-of-art",
+  "ats": "unknown",
+  "slug": "tel-aviv-museum-of-art"
+ },
+ {
+  "name": "Tel Aviv Sourasky University Medical Center Ichilov",
+  "careers_url": "https://secrethunter.io/companies/tel-aviv-sourasky-university-medical-center-ichilov",
+  "ats": "unknown",
+  "slug": "tel-aviv-sourasky-university-medical-center-ichilov"
+ },
+ {
+  "name": "Telefire Fire And Gas Detectors",
+  "careers_url": "https://secrethunter.io/companies/telefire-fire-%26-gas-detectors",
+  "ats": "unknown",
+  "slug": "telefire-fire-and-gas-detectors"
+ },
+ {
+  "name": "Telemessage",
+  "careers_url": "https://secrethunter.io/companies/telemessage",
+  "ats": "unknown",
+  "slug": "telemessage"
+ },
+ {
+  "name": "Telor Caradi Group",
+  "careers_url": "https://secrethunter.io/companies/telor-caradi-group",
+  "ats": "unknown",
+  "slug": "telor-caradi-group"
+ },
+ {
+  "name": "Telsys",
+  "careers_url": "https://secrethunter.io/companies/telsys",
+  "ats": "unknown",
+  "slug": "telsys"
+ },
+ {
+  "name": "Telzar 019",
+  "careers_url": "https://secrethunter.io/companies/telzar-019",
+  "ats": "unknown",
+  "slug": "telzar-019"
+ },
+ {
+  "name": "Tempo Beverages Ltd",
+  "careers_url": "https://secrethunter.io/companies/tempo-beverages-ltd",
+  "ats": "unknown",
+  "slug": "tempo-beverages-ltd"
+ },
+ {
+  "name": "Ten Petroleum",
+  "careers_url": "https://secrethunter.io/companies/ten-petroleum",
+  "ats": "unknown",
+  "slug": "ten-petroleum"
+ },
+ {
+  "name": "Tenableisrael",
+  "careers_url": "https://secrethunter.io/companies/tenableisrael",
+  "ats": "unknown",
+  "slug": "tenableisrael"
+ },
+ {
+  "name": "Tenzai Inc",
+  "careers_url": "https://secrethunter.io/companies/tenzai-inc",
+  "ats": "unknown",
+  "slug": "tenzai-inc"
+ },
+ {
+  "name": "Teralight Ltd",
+  "careers_url": "https://secrethunter.io/companies/teralight-ltd",
+  "ats": "unknown",
+  "slug": "teralight-ltd"
+ },
+ {
+  "name": "Teramount",
+  "careers_url": "https://secrethunter.io/companies/teramount",
+  "ats": "unknown",
+  "slug": "teramount"
+ },
+ {
+  "name": "Teridion",
+  "careers_url": "https://secrethunter.io/companies/teridion",
+  "ats": "unknown",
+  "slug": "teridion"
+ },
+ {
+  "name": "Terminal X Com",
+  "careers_url": "https://secrethunter.io/companies/terminal-x-com",
+  "ats": "unknown",
+  "slug": "terminal-x-com"
+ },
+ {
+  "name": "Terrificapp",
+  "careers_url": "https://secrethunter.io/companies/terrificapp",
+  "ats": "unknown",
+  "slug": "terrificapp"
+ },
+ {
+  "name": "Tether",
+  "careers_url": "https://secrethunter.io/companies/tether",
+  "ats": "unknown",
+  "slug": "tether"
+ },
+ {
+  "name": "Tfactor",
+  "careers_url": "https://secrethunter.io/companies/tfactor",
+  "ats": "unknown",
+  "slug": "tfactor"
+ },
+ {
+  "name": "Tfs Cro",
+  "careers_url": "https://secrethunter.io/companies/tfs-cro",
+  "ats": "unknown",
+  "slug": "tfs-cro"
+ },
+ {
+  "name": "The African Digest",
+  "careers_url": "https://secrethunter.io/companies/the-african-digest",
+  "ats": "unknown",
+  "slug": "the-african-digest"
+ },
+ {
+  "name": "The Apex Group Ltd",
+  "careers_url": "https://secrethunter.io/companies/the-apex-group-ltd",
+  "ats": "unknown",
+  "slug": "the-apex-group-ltd"
+ },
+ {
+  "name": "The Cause Match",
+  "careers_url": "https://secrethunter.io/companies/the-cause-match",
+  "ats": "unknown",
+  "slug": "the-cause-match"
+ },
+ {
+  "name": "The Center For Educational Technology Cet",
+  "careers_url": "https://secrethunter.io/companies/the-center-for-educational-technology-cet-",
+  "ats": "unknown",
+  "slug": "the-center-for-educational-technology-cet"
+ },
+ {
+  "name": "The Estee Lauder Companies Inc",
+  "careers_url": "https://secrethunter.io/companies/the-estee-lauder-companies-inc",
+  "ats": "unknown",
+  "slug": "the-estee-lauder-companies-inc"
+ },
+ {
+  "name": "The Finder Global",
+  "careers_url": "https://secrethunter.io/companies/the-finder-global",
+  "ats": "unknown",
+  "slug": "the-finder-global"
+ },
+ {
+  "name": "The Israel Museum Jerusalem",
+  "careers_url": "https://secrethunter.io/companies/the-israel-museum-jerusalem",
+  "ats": "unknown",
+  "slug": "the-israel-museum-jerusalem"
+ },
+ {
+  "name": "The Israel Ports Company",
+  "careers_url": "https://secrethunter.io/companies/the-israel-ports-company",
+  "ats": "unknown",
+  "slug": "the-israel-ports-company"
  }
 ]

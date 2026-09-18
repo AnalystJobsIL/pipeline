@@ -364,4 +364,6 @@
 {"at":"2026-09-18T00:54:30Z","cap":250,"capped":false,"ci":true,"credits":13,"pid":52429,"purpose":{"unlock":13},"tool":"queue_pipeline.py"}
 {"at":"2026-09-18T00:55:06Z","cap":250,"capped":false,"ci":true,"credits":1,"pid":55063,"purpose":{"search":1},"tool":"crack_walled.py"}
 {"at":"2026-09-18T07:34:30Z","cap":250,"capped":false,"ci":true,"credits":5,"pid":2931,"purpose":{"unlock":5},"tool":"bd_rescue.py"}
+{"at":"2026-09-18T09:50:13Z","cap":250,"capped":false,"ci":true,"credits":5,"pid":2295,"purpose":{"discovery":5},"tool":"discovery_daily.py"}
 {"at":"2026-09-18T10:20:49Z","cap":250,"capped":false,"ci":true,"credits":37,"pid":2942,"purpose":{"search":10,"unlock":27},"tool":"resolve_broken.py"}
+{"at":"2026-09-18T10:44:58Z","cap":250,"capped":false,"ci":true,"credits":51,"pid":3292,"purpose":{"jd-fill":51},"tool":"run.py"}
