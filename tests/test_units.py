@@ -35683,8 +35683,9 @@ def test_the_0918_withdrawals_are_exactly_the_rows_no_fresh_yes_rescued(tmp_path
     """2026-09-18 (classifier): 11 published rows carried a `reject` cell and the weekly
     delta audit returned 5 OUT + 10 BORDERLINE claims. The withdrawal rule is the 09-11 one
     -- three fresh NO in one sitting, or a documented seam miss -- so a single fresh YES
-    ends the question, and every row this session withdrew must have three NOs behind it or
-    rest on the 09-14 ruling.
+    ends the question, and every row this session withdrew must have three NOs behind it,
+    or rest on the 09-14 ruling, or -- Gamida Cell -- on a geography the seam is never asked
+    about.
 
     The artifact carries the seven lines as they were appended, so this asserts inside one
     hand-written file: `cloud_state/` is cron-rewritten and `tests/live_state.py` locks it.
@@ -35693,14 +35694,22 @@ def test_the_0918_withdrawals_are_exactly_the_rows_no_fresh_yes_rescued(tmp_path
     art = _artifact_0918()
     assert art["seam_calls"] == 74 and art["bright_data_credits"] == 0
     out = sorted(r["role_id"] for r in art["rows"] if r["adjudication"] == "OUT")
-    assert len(out) == 7, out
+    assert len(out) == 8, out
     for r in art["rows"]:
         votes = r.get("votes_live") or []
-        if r["adjudication"] == "OUT" and r["pool"] != "09-14-ruling":
+        if r["adjudication"] == "OUT" and r["pool"] in ("reject-cell", "delta-audit"):
             assert votes.count("NO") == 3 and "YES" not in votes, r["role_id"]
+        elif r["adjudication"] == "OUT" and r["pool"] == "geography":
+            # Gamida Cell: NOT a scope question and therefore not a seam question at all --
+            # `LLM_RULES` asks nothing about geography (the 566 finding), so a vote here
+            # would measure the wrong thing. It rests on the row's OWN re-sliced text.
+            assert not votes and "Location: US - Remote" in r["quote"], r["role_id"]
         elif r["adjudication"] == "IN" and votes and r["role_id"] not in (
                 "migdal|data analyst", "team8|briya medical data analyst"):
             assert "YES" in votes, r["role_id"]           # something rescued it
+    # a verdict outlives its evidence unless the key goes under EVERY prefix (551 b)
+    assert art["keys_forgotten"]["scraper_carried_text"] == {"jobs": 4, "keys": 13}
+    assert art["keys_forgotten"]["jd_text_recleaned"] == {"jobs": 7, "keys": 20}
     # the two the seam refuses and a decision record keeps: both are in `ADJUDICATED`
     for rid in ("migdal|data analyst", "team8|briya medical data analyst"):
         assert seniority.ADJUDICATED[rid][0] == "accept"

@@ -457,6 +457,18 @@
     "This is a data platform/BI leadership role focused on owning data strategy, building data engineering teams, and platform infrastructure/governance-not the pers",
     "This role leads data engineers and owns the data platform/infrastructure and governance strategy, which falls under the platform-leadership exclusion rather tha"
    ]
+  },
+  {
+   "role_id": "gamida cell|senior business analyst commercial data analytics",
+   "pool": "geography",
+   "url": "https://il.linkedin.com/jobs/view/%D7%90%D7%A0%D7%9C%D7%99%D7%A1%D7%98-%D7%99%D7%AA-%D7%90%D7%A9%D7%A8%D7%90%D7%99-at-clal-insurance-finance-%D7%9B%D7%9C%D7%9C-%D7%91%D7%99%D7%98%D7%95%D7%97-%D7%95%D7%A4%D7%99%D7%A0%D7%A0%D7%A1%D7%99%D7%9D-4461087109",
+   "status": "closed",
+   "cell_before": "accept",
+   "cell_path_before": "llm_cache",
+   "adjudication": "OUT",
+   "why": "NOT a scope question and therefore NOT a seam question: `LLM_RULES` asks nothing about geography (the 566 finding). Deferred on 2026-09-18 because the 09-02 rule forbids a withdrawal on text that is not the row's, and written the moment jd-text re-sliced the own posting (5,963 chars). `israel.stated_foreign_place` returns None here BY DESIGN: its description arm is silenced by the board's own strong Israeli location, which is the rule that protects a company board from sibling-posting bleed. The board is wrong about this one posting and only a reader of the text can say so.",
+   "quote": "'Office: usa | Location: US - Remote' (offset 421/435), 'Location: US - Remote' (640), 'Company Gamida Cell, Inc.'; `Kiryat Gat`, `Israel`, `ישראל` and `Tel Aviv` all ABSENT from 5,963 chars.",
+   "reasons": []
   }
  ],
  "contract_bump": {
@@ -690,9 +702,8 @@
   }
  },
  "not_adjudicated": {
-  "gamida cell|senior business analyst commercial data analytics": "stays published: the 09-02 record forbids a withdrawal on text that is not the row's, and 566 defers to the board's own Israeli city by design. jd-text re-slices the own posting this batch; the condition-5 line is written then.",
-  "google israel|research data scientist ii waze": "undecidable on a 573-character listing-card stub. The `|jd` verdict bought on it is void; the key is forgotten the day jd-text lands the posting's own text.",
-  "madanes insurance agency|manager bi": "the twelfth published reject cell, outside the 90-day file. Its stored text is 0 characters and every cache row it has is `|bare`, so it cannot be judged on its own text at all — jd-text's, not this lane's."
+  "google israel|research data scientist ii waze": "HELD, not judged: jd-text could not land the posting's own text (Bright Data refuses google.com, `630`) and the 573-character listing-card stub now fails the bar, so the row is `pending_excluded`. Its `|jd` verdict was bought on that stub and is void; the key was forgotten on 2026-09-18 and no text is coming.",
+  "madanes insurance agency|manager bi": "the twelfth published reject cell, outside the 90-day file. jd-text excluded it with `failed:no-markers:2026-09-18` -- the LinkedIn guest page carries no body at all -- so it cannot be judged on its own text and this lane has nothing to adjudicate."
  },
  "retraction_lines": [
   {
@@ -757,7 +768,28 @@
    "on": "2026-09-18",
    "evidence": "JD: 'Lead and develop the BI team, including a team of data engineers and data analysts', 'Build a scalable, reliable data platform and improve data quality and accessibility', 'Raise Upwind's data governance maturity'. Not in the delta audit — found by the contract-bump measurement; NO/NO/NO under the candidate contract. Record docs/decisions/2026-09-14-data-platform-leadership.md. Artifact tests/fixtures/classifier/2026-09-18-delta-audit.json.",
    "by": "classifier adjudication 2026-09-18"
+  },
+  {
+   "url": "https://www.gamida-cell.com/job-opportunities/senior-business-analyst-commercial-data-analytics/",
+   "role_id": "gamida cell|senior business analyst commercial data analytics",
+   "status": "withdrawn",
+   "reason": "out of scope: the posting places itself outside Israel. Its own page says `Office: usa | Location: US - Remote` and, under `Company Gamida Cell, Inc.`, `Location: US - Remote` again; no Israeli place is named anywhere in it. On scope alone the role would be IN.",
+   "on": "2026-09-18",
+   "evidence": "Deferred on 2026-09-18 and written only once the row's OWN text existed: the 2026-09-02 rule forbids a withdrawal on text that is not the row's, and the 09-18 audit read this capture as the 567 page-slice carrying a second posting's field-sales bullets. jd-text re-sliced the own posting the same day (5,963 chars, `ok:canonical:www.gamida-cell.com`) and it still says `Office: usa | Location: US - Remote` at offset 421/435 and `Location: US – Remote` at 640, with `Kiryat Gat`, `Israel`, `ישראל` and `Tel Aviv` all ABSENT from 5,963 characters. `israel.stated_foreign_place` returns None on this record BY DESIGN (566): its description arm is silenced because the board's own location field is a strong Israeli place, `On Site - Kiryat Gat, Israel`, which is the rule that protects a company board from sibling-posting bleed. The board is wrong about this posting and only a reader of the text can say so, which is why this is a line and not a code change. Artifact tests/fixtures/classifier/2026-09-18-delta-audit.json.",
+   "by": "classifier adjudication 2026-09-18"
   }
  ],
- "binding_check": "Retractions.load -> bind(records, extra=<sqlite matched rows>) -> match_all over cloud_state/roles.jsonl on 2026-09-18: 67 lines, 7 new, each new line binds exactly 1 record, 0 bad, 0 unmatched."
+ "binding_check": "Retractions.load -> bind(records, extra=<sqlite matched rows>) -> match_all over cloud_state/roles.jsonl on 2026-09-18: 68 lines, 8 new, each new line binds exactly 1 record, 0 bad, 0 unmatched.",
+ "keys_forgotten": {
+  "why": "`cache_keys` carries no hash of the text it judged (`551` b) and `_versioned` answers a job by its SUFFIX, so a verdict outlives its evidence unless the key goes under EVERY prefix. 0 seam calls: the next digest re-judges each row from the text it actually has.",
+  "scraper_carried_text": {
+   "jobs": 4,
+   "keys": 13
+  },
+  "jd_text_recleaned": {
+   "jobs": 7,
+   "keys": 20
+  },
+  "note": "20, not 19: re-reading the store after the delete found a SECOND company spelling of the Waze stub's verdict (`v3.0f84ab84|google|research data scientist ii, waze|jd`). It could not have been served to the record (`_norm_company` gives `google israel`) but it is a verdict on text that no longer exists."
+ }
 }

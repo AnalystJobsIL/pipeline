@@ -97,7 +97,7 @@ row, escalated on a NO):
 | `אסם \| אנליסט/ית בקרת מכירות` | NO/NO/NO | **withdrawn** — leads with budget control and trade-spend management, the named FP&A exclusion |
 | `madanes insurance agency \| manager bi` | — | **not adjudicable**: 0 stored characters, every cache row `\|bare`. jd-text's, not this lane's |
 
-**6 IN, 5 withdrawn, 1 undecidable.** The withdrawal rule is the 09-11 one and it was not
+**6 IN, 5 withdrawn, 1 undecidable** — that is the eleven; Gamida Cell below is a twelfth withdrawal and not one of them. The withdrawal rule is the 09-11 one and it was not
 bent: a withdrawal needs three fresh NO in one sitting or a documented seam miss, which is
 also why a row expected to keep was bought ONE vote first — a single fresh YES makes 3-of-3
 impossible and ends the question. That protocol is what kept the pass inside 75 calls.
@@ -118,13 +118,26 @@ ruling (Jazz).**
   intelligence developer qlik` **NO/YES/YES** — the plan predicted NO×3 on the Qlik Israel
   precedent and the measurement refused it. The title/body mismatch ("Business Intelligence
   Developer" over a project-manager body) is a jd-text/scraper question, not a scope one.
-* **Held, deliberately**: `gamida cell | senior business analyst commercial data analytics`
-  stays published — the 09-02 rule forbids a withdrawal on text that is not the row's, and
-  566's description arm is silenced by the board's own Kiryat Gat BY DESIGN. jd-text
-  re-slices the own posting this batch; the condition-5 line is written then, not before.
-  `google israel | research data scientist ii waze` is undecidable on a 573-character
-  listing-card stub; its `|jd` verdict is void and the key is forgotten the day jd-text lands
-  the posting's own text (`551` b).
+* **Deferred, then written the same evening**: `gamida cell | senior business analyst
+  commercial data analytics`. It was held because the 09-02 rule forbids a withdrawal on text
+  that is not the row's, and the capture the audit read was the 567 page-slice. jd-text
+  re-sliced the OWN posting later that day — 5,963 characters, `ok:canonical:www.gamida-cell.
+  com` — and it still says `Office: usa | Location: US - Remote` at offset 421/435 and
+  `Location: US – Remote` at 640 under `Company Gamida Cell, Inc.`, with **`Kiryat Gat`,
+  `Israel`, `ישראל` and `Tel Aviv` all ABSENT from 5,963 characters** (re-derived here, not
+  taken on report). So the line is written: **the eighth**.
+
+  It is a LINE and not a rule change, and the reason is 566's own design.
+  `israel.stated_foreign_place` returns `None` on this record because its description arm is
+  silenced whenever the card's own location is a strong Israeli place — here the board's `On
+  Site - Kiryat Gat, Israel` — and that silencing is what protects a company board from
+  sibling-posting bleed. The board is wrong about this one posting and only a reader of the
+  text can say so. It is also not a seam question: `LLM_RULES` asks nothing about geography.
+* **Held, and no text is coming**: `google israel | research data scientist ii waze`. jd-text
+  could not reach the posting (Bright Data refuses `google.com`, `630`), the 573-character
+  listing-card stub now fails the bar and the row is `pending_excluded`. Its `|jd` verdict was
+  bought on that stub and is void — key forgotten below, no line written, because a row
+  nobody can read is not a row anybody can withdraw on scope.
 
 ## 4. The gate: the "false negative" was not one
 
@@ -182,6 +195,38 @@ media-search job (`fully remote: …`, `remote job: … in israel`, `… (hebrew
 israel`) were left alone: scraper named one job, and widening another lane's measurement is
 how a void becomes a guess.
 
+## 5c. Verdicts whose EVIDENCE no longer exists, forgotten
+
+`cache_keys` carries no hash of the text it judged (`551` b) and `_versioned` answers a job by
+its SUFFIX, so a verdict outlives its evidence unless the key is deleted under **every**
+prefix. Two causes, one remedy, **0 seam calls** — the next digest re-judges each row from the
+text it actually has:
+
+* **the text was another posting's** (scraper's `2bb1553`): 13 keys over 4 jobs, §5b.
+* **the text was re-cleaned under it** (jd-text, same afternoon): **19 keys over 7 jobs** —
+  `אסם|…אפקטיביות מסחרית…` 3,059→1,678 (4 keys), `אסם|data analyst…נספרסו` 2,745→1,388 (1),
+  `clixscale|bi analyst` 2,737→2,524 (2 — including the `|bare` row of the 94-character
+  snippet the 09-13 session measured and left alone), `cognyte|data analyst` 3,055→2,940 (6),
+  `investing|head of analytics` 3,999→5,236 (2), `tytocare|product analytics manager`
+  3,999→3,943 (3), and `google israel|research data scientist ii, waze` (1, the 573-character
+  stub) — **and a second company spelling of the same stub**, `v3.0f84ab84|google|research
+  data scientist ii, waze|jd`, found only by re-reading the store after the delete: it does
+  not answer this record (`_norm_company` gives `google israel`, not `google`) and would
+  never have been served to it, but it is a verdict on text that no longer exists and it
+  would answer any row whose company string normalises to `google`. **20 keys, 7 jobs.**
+
+**One of them is mine to re-read.** `investing|head of analytics` was a row in this session's
+contract-bump population and its candidate-contract YES was bought on the 3,999-character
+text, which no longer exists; the 5,236-character text is 31 % longer. The bump's flip set is
+unaffected — the row is unchanged either way and the two flips are elsewhere — but the vote in
+the artifact is labelled with the length it was bought at, and the digest re-judges it under
+`v3.0a439b16` tomorrow with no cell to serve.
+
+`madanes insurance agency | manager bi`, the twelfth reject cell, now has its reason from
+jd-text: `failed:no-markers:2026-09-18` — the LinkedIn guest page carries no body at all. It
+is excluded with a written reason, which is the operator's bar, and there is nothing here to
+adjudicate.
+
 ## 6. What shipped, and the three shapes it took
 
 **The ruling entered the contract**: the sentence sits inside condition (2) of `LLM_RULES`,
@@ -234,7 +279,17 @@ reopens is not re-rejected by the live path. Three properties, three assertions.
 **Locally, from the worktree rebased onto `origin/master` `267e6ac`**, `python -m pytest`
 (not `-q`, and with neither `JD_BD` nor `BD_RUN_CAP` in the environment, which reds paid-rung
 tests on their own): **2,066 passed, 13 skipped, 0 failed**. `python check_invariants.py`
-`companies.csv OK: 2485 rows, 1430 active, 0 orphans, pool=889`. `python docs/check_docs.py`
+`companies.csv OK: 2485 rows, 1429 active, 0 orphans, pool=889`.
+
+**One inherited red, named with its owner.** The follow-up run (after the rebase onto
+`a0aab6d`) reads **1 failed, 2095 passed, 13 skipped**, and the one is
+`tests/test_registry.py::test_the_sunday_audit_escalates_what_its_cheap_rung_left_dark`:
+*"the deep rung must render exactly the dark rows due a render (Fresh Ltd was deep-validated
+6 days ago)"*, which renders three rows and expects two. It is **calendar rot** — the fixture
+is dated against the real clock and the clock rolled to 2026-09-19 while this session ran —
+and it is **red on pristine `origin/master`**, proved in a detached worktree at `a0aab6d`
+before anything of this lane's was applied. Lane `registry`; `tests/calendar_rot.py` is the
+guard that is meant to catch exactly this shape. `python docs/check_docs.py`
 **0 errors, 2 warnings over 141 documents** — both inherited (`README.md` and `CLAUDE.md`
 carry a `1,000+` floor for `active_rows`, now 1430; the `docs` lane's, and neither file is
 this lane's to raise). `python docs/backlog.py check` clean.
@@ -246,8 +301,10 @@ was that no vocabulary arm is warranted). Each was **folded into a test that kil
 than filed: second reading **KILLS 5, CANNOT-FAIL 0**.
 
 **In CI, on the sha that carries every line of this code (`f64b393`): run `35359208215`,
-conclusion `failure`, 10 of 16 jobs green** — `guard` (the full suite), `guard-kill` and all
-seven `rehearse` shards. The six reds are mutation shards 0, 1, 3, 5, 6 and 7 and **not one
+conclusion `failure`, 10 of 16 jobs green** — `guard` (the full suite), `guard-kill`, all
+**six** `rehearse` shards (five `mixed` seeds and one `worst`; an earlier draft of this
+record and the 09-19 morning row both said seven, which was a miscount of the matrix) and
+mutation shards 2 and 4. The six reds are mutation shards 0, 1, 3, 5, 6 and 7 and **not one
 of them is a surviving mutant**: each ended on `mutation shard N of 8 exceeded its 40-minute
 budget … rc 137`, the condition `631@infra`, filed by the `docs` lane the same afternoon (and brushed
 by `617@infra` on 09-13), whose remedy the workflow's own error text states ("add a matrix entry and bump SHARDS rather than minutes"). Shard 0 printed
@@ -259,6 +316,17 @@ are named in the 09-19 morning-check row. The catalogue passed **401** records t
 taken 4 from this lane and about a dozen from `registry` and `scraper` in the same hours,
 which is what pushed five shards past a wall that four were already brushing.
 
+**And on the final sha (`dd0c894`): run `35362343421`, 8 of 16 green** — `guard`,
+`guard-kill` and all six `rehearse` — with **all eight** mutation shards on the same
+`exceeded its 40-minute budget … rc 137` and **0 surviving mutants**. Worse than `f64b393`
+for one reason: the catalogue kept growing through the afternoon, so a shard that fitted at
+16:00 did not at 17:00. The 09-19 row that predicted this is answered **FAIL** in
+`docs/morning-checks.md`, and the reason is named there rather than softened: the clause
+counted **seven** `rehearse` shards against a matrix of **six** and could never have passed,
+while the property it meant — every non-mutation job green, every red a shard on the wall
+with no survivor — is true. A prediction that miscounts its own matrix is one nobody could
+answer PASS.
+
 `python tools/mutate.py --id <one at a time>` — `--id` is not repeatable, which is worth
 knowing before reading a one-line table as four: **all four killed**,
 `backfill-ignores-a-reject-cell-under-a-retired-contract` (direct),
@@ -266,8 +334,8 @@ knowing before reading a one-line table as four: **all four killed**,
 `a-decision-record-stops-outranking-the-seam-on-the-live-path` (direct),
 `unreachable-reason-prints-a-bare-question-mark-again` (behavioural).
 
-**Binding check on the seven lines** (`Retractions.load` -> `bind(records, extra=<sqlite
-matched rows>)` -> `match_all` over the live ledger): **67 lines, 7 new, each new line binds
+**Binding check on the eight lines** (`Retractions.load` -> `bind(records, extra=<sqlite
+matched rows>)` -> `match_all` over the live ledger): **68 lines, 8 new, each new line binds
 exactly 1 record, 0 bad, 0 unmatched.**
 
 **Clause 1 — the lane's number.** *0 role records without a classifier verdict*: 0 before,
