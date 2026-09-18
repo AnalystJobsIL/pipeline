@@ -18572,6 +18572,50 @@ def test_the_hunt_will_not_activate_a_row_onto_a_host_the_ledger_already_refused
         "https://clean.example/careers"), rows["Clean Co"]
 
 
+def test_the_hunts_ROW_arm_will_not_re_activate_a_parked_row_onto_a_refused_host(tmp_path,
+                                                                                 monkeypatch):
+    """`tools/mutate.py --id hunt-ledger-veto-removed` SURVIVED with only the queue-arm test:
+    the sibling test below drives the QUEUE arm, and `Kima` and `PayPlus` were ROWS.
+
+    That is the whole incident, exactly: a parked row carrying an address the ledger has
+    ruled another company's, and the 19:00 hunt's ROW arm setting `fr[4] = "true"` on it a day
+    later. Two arms, two writes, and the duplication between them is deliberate (the AST
+    completeness guard does not follow calls), so a test of one proves nothing about the
+    other.
+    """
+    import csv as _csv
+    import sys as _sys
+
+    import listing_hunt as H
+    from pipeline import board_verify as BV
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "companies.csv").write_text(
+        "company_name,ats_platform,token,api_url,active,notes\n"
+        "Kima,scrape,,https://careers.akima.com/,false,"
+        "dark-triage 2026-01-01: no ATS detected\n"
+        "Clean Co,scrape,,https://clean.example/careers,false,"
+        "dark-triage 2026-01-01: no ATS detected\n", encoding="utf-8")
+    (tmp_path / "research_companies.json").write_text("[]", encoding="utf-8")
+    res = {"Kima": ("found", "https://careers.akima.com/jobs/analyst", 2, "ok"),
+           "Clean Co": ("found", "https://clean.example/careers/analyst", 2, "ok")}
+    monkeypatch.setattr(H, "hunt_one",
+                        lambda name, seed, documented=False, mode="": res[name])
+    monkeypatch.setattr(H, "looks_like_a_job_listing_page", lambda u: True)
+    monkeypatch.setattr(H._gate, "identity_ok", lambda name, url, html="": True)
+    monkeypatch.setattr(H, "_BV_STATE", {
+        BV.key("Kima", "https://careers.akima.com/"): _bv_rec("2026-09-14", BV.NOT_THEIRS,
+                                                              "Akima")})
+    monkeypatch.setattr(_sys, "argv", ["listing_hunt.py", "--apply"])
+    H.main()
+    rows = {r[0]: r for r in _csv.reader(open(tmp_path / "companies.csv", encoding="utf-8"))}
+    assert rows["Kima"][4] == "false", rows["Kima"]
+    assert "careers.akima.com/jobs/analyst" not in rows["Kima"][3], rows["Kima"]
+    # positive control: an unrefused host still activates on the same run, or this guard
+    # would pass by refusing everything
+    assert rows["Clean Co"][4] == "true", rows["Clean Co"]
+    assert rows["Clean Co"][3] == "https://clean.example/careers/analyst", rows["Clean Co"]
+
+
 def test_verify_existing_parks_a_ledger_contradicted_row_without_buying_a_read(tmp_path,
                                                                                monkeypatch):
     """`needs_verify` can never reach these rows: `board_verify.due` sees a FRESH verdict on

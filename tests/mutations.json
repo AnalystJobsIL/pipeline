@@ -4124,5 +4124,15 @@
   "replace": "    return SEARCH_CADENCE_DAYS * (2 ** max(0, len(tries) - 1))",
   "why": "the back-off must never become a retirement: 'no candidate was this company's live page' is not 'this company has no board' (operator rule 1). Uncapped, a name refused nine times waits 3,584 days.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "hunt-queue-ledger-address-ungated",
+  "file": "listing_hunt.py",
+  "symbol": "main",
+  "class": "M1-gate-removal",
+  "find": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)\n                             and not _ledger_refuses(name, q_url)) else \"\"",
+  "replace": "            keep = q_url if (q_url and _gate.identity_ok(name, q_url)) else \"\"",
+  "why": "the ADDRESS half of the ledger veto on the queue arm. Refusing to ACTIVATE while still storing the address only delays the mistake 24 hours -- this tool's own fast path re-reads fr[3] the next night, which is how a refused host comes back.",
+  "must_be_killed_by_behavioural": true
  }
 ]
