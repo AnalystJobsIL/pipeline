@@ -121,12 +121,12 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     # The body's sections. The header (title, subtitle, board link, zero-copy) is built
     # LAST, from what these sections actually carry — see `head` below.
     lines = []
-    email_hidden = [0]
+    email_hidden = []                                 # the cards, not a count: the alarm names them (614)
 
     def _cards(jobs_c):
         cards = [rolecard.build(j, run_date, ledger_rec=ledger.get(j.get("mkey")),
                                 company_info=company_info, firmographics=firmographics) for j in jobs_c]
-        email_hidden[0] += sum(1 for c in cards if c["mangled"])
+        email_hidden.extend(c for c in cards if c["mangled"])
         return [c for c in cards if not c["mangled"]]      # a card blob is not a role, in the mail either
 
     def _render(company, cards, out, sink, dated=True):
@@ -263,7 +263,7 @@ def build_markdown(jobs, run_date, stats, company_info=None, board_url="",
     s = stats
     alarms = []
     # _email_issues was computed above, before the headings were written (see the note there)
-    _email_frag, _email_alarms = rolecard.report(email_cards, email_hidden[0])
+    _email_frag, _email_alarms = rolecard.report(email_cards, email_hidden)
     if _email_issues:
         _email_frag += ", " + _capped(_email_issues, 6)
         _email_alarms += _wrong_name_alarms(_email_issues)
@@ -396,7 +396,7 @@ def build_board_html(jobs, run_date, stats, company_info=None, analytics_html=""
     # so a scrape that mangles titles is a number in the mail, not a silent hole
     cards = [rolecard.build(j, run_date, ledger_rec=ledger.get(j.get("mkey")), company_info=company_info,
                             firmographics=firmographics, archived=archived) for j in jobs]
-    hidden = sum(1 for c in cards if c["mangled"])
+    hidden = [c for c in cards if c["mangled"]]
     cards = [c for c in cards if not c["mangled"]]
     branded = {c["company"] for c in cards if c["display_name"]}
     issues = rolecard.cross_check(cards)
@@ -953,7 +953,7 @@ if(ds&&window.fetch){fetch('roles.csv.meta.json').then(function(r){if(!r.ok)thro
     page = (head + top + insights + table + legend + foot + '</div>' + js
             + analytics_html + '</body></html>')
     if isinstance(report, dict):        # only once the page exists: a raise above leaves it empty
-        report.update(cards=cards, hidden=hidden, issues=issues, frag=frag, alarms=alarms,
+        report.update(cards=cards, hidden=len(hidden), hidden_cards=hidden, issues=issues, frag=frag, alarms=alarms,
                       display_demoted=demoted)
     return page
 

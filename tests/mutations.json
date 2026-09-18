@@ -4473,5 +4473,18 @@
   "killers": [
    "tests/test_units.py::test_wayback_an_address_the_archive_cannot_request_waits_thirty_days"
   ]
+ },
+ {
+  "id": "render-hidden-title-back-to-a-count",
+  "file": "pipeline/rolecard.py",
+  "symbol": "report",
+  "class": "M6-fallback-removal",
+  "find": "        alarms.append(f\"{len(hidden)} role(s) hidden — the title is a card blob: {named[:200]}\")\n",
+  "replace": "        alarms.append(f\"{len(hidden)} role(s) hidden — the scraped title is a card blob, fix the scrape\")\n",
+  "why": "614: the mail printed `1 role(s) hidden` every morning from 2026-09-12 and named nothing, so identifying the one role cost a session a re-derivation over the ledger and both caches -- and the alarm's own text sent that work to the wrong lane (infra, 2026-09-18).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_render_report_names_the_hidden_titles_not_a_count"
+  ]
  }
 ]

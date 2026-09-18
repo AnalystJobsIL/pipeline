@@ -637,10 +637,17 @@ def cross_check(cards):
     return sorted(set(issues), key=issues.index)
 
 
-def report(cards, hidden=0):
-    """Counts for one product: (line fragment, alarms). `hidden` = cards not rendered because
-    their title was a scraped blob — they are named so the number is never silent. Alarm
-    text carries no prefix; the renderer labels the line."""
+def report(cards, hidden=()):
+    """Counts for one product: (line fragment, alarms). `hidden` is the CARDS not rendered
+    because their title was a scraped blob. Alarm text carries no prefix; the renderer
+    labels the line.
+
+    It was a count until 2026-09-18 (`614`): `1 role(s) hidden — the scraped title is a card
+    blob, fix the scrape` printed every morning from 09-12 and named nothing, so the one role
+    behind it cost a session a re-derivation over `roles.jsonl` and both caches to identify —
+    `ONE datAI | Business Data Analyst | SQL & Power BI`, whose pipe is the EMPLOYER's own and
+    which no scraper can fix. So the alarm names the titles and no longer sends the reader to
+    the scrape. The fragment keeps its count: it is one clause of a `·`-joined line."""
     degraded = [c for c in cards if c.get("issues")]
     why = Counter(i.split(" (")[0] for c in degraded for i in c["issues"])
     frag = f"{len(cards)} cards"
@@ -650,6 +657,8 @@ def report(cards, hidden=0):
         alarms.append(f"{len(degraded)} card(s) degraded — "
                       + ", ".join(sorted(set(i for c in degraded for i in c["issues"])))[:160])
     if hidden:
-        frag += f", {hidden} hidden: mangled title"
-        alarms.append(f"{hidden} role(s) hidden — the scraped title is a card blob, fix the scrape")
+        frag += f", {len(hidden)} hidden: mangled title"
+        named = "; ".join(sorted({f"{c.get('company') or '?'}: {c.get('title') or '(untitled)'}"
+                                  for c in hidden}))
+        alarms.append(f"{len(hidden)} role(s) hidden — the title is a card blob: {named[:200]}")
     return frag, alarms

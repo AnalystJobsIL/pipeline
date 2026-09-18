@@ -12869,6 +12869,22 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      folds already name their strings (`pipeline/run.py:582`). Check: the digest log's `render`
      group names each hidden title.
 
+     **(b) DONE 2026-09-18 (`infra`, under the unification clause; the orchestrator told the
+     `roles` session).** `rolecard.report(cards, hidden)` takes the hidden CARDS, not a count,
+     and the alarm reads `N role(s) hidden — the title is a card blob: <company>: <title>; …`
+     (deduplicated, sorted, capped at 200 characters); `pipeline/digest.py` collects the cards
+     on both paths (`email_hidden` is a list now) and the board report carries `hidden_cards`
+     beside its count. **`fix the scrape` is gone from the text**: no scraper can fix a pipe
+     the employer put in its own title, and the words sent three sessions to the wrong lane.
+     The `·`-joined fragment keeps its `N hidden: mangled title` count, which is what the board
+     footer and the audit line read. Measured the same day over `cloud_state/roles.jsonl`: TWO
+     records carry a mangled title — `ONE datAI | Business Data Analyst | SQL & Power BI`
+     (closed) and `Bank Leumi | Business Analyst | Corporate Banking Division Headquarters
+     3103` (withdrawn) — and only the first reaches a rendered section, so the 09-19 mail's
+     clause is `1 role(s) hidden — the title is a card blob: ONE datAI: Business Data Analyst |
+     SQL & Power BI`. **(a) is still open and is `roles`/`render`'s**: whether the canon should
+     cut one ` | ` followed by a short skills segment so both layers agree.
+
 615. **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
      place patterns have no Hebrew word edges** — lane: `classifier` (`pipeline/israel.py`).
      Filed 2026-09-13 by `scraper`, agreed live with that day's `classifier` session, which is

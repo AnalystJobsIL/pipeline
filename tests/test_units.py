@@ -7098,13 +7098,44 @@ def test_a_mangled_title_is_hidden_from_the_mail_too_and_counted():
     from pipeline import digest
     blob = _job(title="Data Analyst ⋅ Tel Aviv ⋅ Apply", url="https://x.io/2", mkey="acme|2")
     r = digest.render_all([blob, _job(desc=_JD)], [], [], "2026-08-25", {"paths": {}}, {})
-    assert "⋅ Apply" not in r["md_body"] and "email 1 cards, 1 hidden: mangled title" in r["md_body"]
+    assert "**Data Analyst ⋅ Tel Aviv ⋅ Apply**" not in r["md_body"]          # never a bullet
+    assert "email 1 cards, 1 hidden: mangled title" in r["md_body"]
+    # ...and since 614 the alarm NAMES what was withheld, so the reader is not sent to the
+    # ledger to find out which role `1 role(s) hidden` meant
+    assert ("- **Render:** 1 role(s) hidden — the title is a card blob: "
+            "Acme: Data Analyst ⋅ Tel Aviv ⋅ Apply") in r["md_body"]
     assert r["render_lines"] == ["board 0 cards", "archive 0 cards", "email 1 cards, 1 hidden: mangled title"]
     from pipeline import jdtext
     for t in ("Data Analyst / Tel Aviv / Full time / Apply", "BI Analyst > Tel Aviv > Apply now",
               "Data Analyst\nTel Aviv\nApply Now", "Data Analyst – Apply now"):
         assert jdtext._MANGLED_TITLE.search(t), t
     assert not jdtext._MANGLED_TITLE.search("BI Developer – Defense company, Northern Israel")
+
+
+def test_the_render_report_names_the_hidden_titles_not_a_count():
+    """`614`: `1 role(s) hidden — the scraped title is a card blob, fix the scrape` printed in
+    the mail every morning from 2026-09-12 and named NOTHING, so identifying the one role it
+    withheld cost a session a re-derivation over `roles.jsonl` and both caches — and the
+    alarm's own words sent that work to the scraper, which cannot fix a pipe the EMPLOYER put
+    in its own title (`ONE datAI | Business Data Analyst | SQL & Power BI`). The alarm now
+    names company and title, deduplicated and capped; the `·`-joined fragment keeps its count,
+    which is what the board footer and the audit line read."""
+    from pipeline import rolecard
+    cards = [dict(rolecard._LAST_RESORT, company="Acme", title="Data Analyst"),
+             dict(rolecard._LAST_RESORT, company="ONE datAI", title="Business Data Analyst | SQL & Power BI"),
+             dict(rolecard._LAST_RESORT, company="Bank Leumi", title="Business Analyst | Corporate Banking 3103")]
+    frag, alarms = rolecard.report(cards[:1], cards[1:])
+    assert frag == "1 cards, 2 hidden: mangled title"
+    assert alarms == ["2 role(s) hidden — the title is a card blob: "
+                      "Bank Leumi: Business Analyst | Corporate Banking 3103; "
+                      "ONE datAI: Business Data Analyst | SQL & Power BI"]
+    assert "fix the scrape" not in alarms[0]              # no scraper can fix the employer's own pipe
+    # two cards of the same withheld role are named once, and a card with no title still reads
+    twice = [cards[1], dict(cards[1]), dict(rolecard._LAST_RESORT, company="", title="")]
+    frag2, alarms2 = rolecard.report([], twice)
+    assert frag2 == "0 cards, 3 hidden: mangled title"
+    assert alarms2[0].endswith("?: (untitled); ONE datAI: Business Data Analyst | SQL & Power BI")
+    assert rolecard.report([], []) == ("0 cards", [])     # nothing hidden: no clause, no alarm
 
 
 def test_newlines_backslashes_and_stray_chips_cannot_break_the_mails_structure():
