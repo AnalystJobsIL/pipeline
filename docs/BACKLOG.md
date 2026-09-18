@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**670 filed · 468 open · 202 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**672 filed · 470 open · 202 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 621.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 623.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 153 open
+### registry — 154 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -247,6 +247,7 @@ closure convention in the header.
 - **596** `596@registry` **Five active rows publish another company's careers board, and the intel that names
 - **604** `604@registry` **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
+- **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
 
 ### infra — 117 open
 
@@ -517,7 +518,7 @@ closure convention in the header.
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 - **618** `618@company-intel` **`DoiT` and `doitintl` are one employer with two firmographics records, and the fold
 
-### ats-fetch — 20 open
+### ats-fetch — 21 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
 - **1** `1@ats-fetch` **`pipeline/ats.py` platform registry.** One frozen dataclass per platform (host regex,
@@ -539,6 +540,7 @@ closure convention in the header.
 - **507** `507@ats-fetch` **A board-freshness verdict for a `scrape` row must consult `scrape_rot.json` before
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
+- **621** `621@ats-fetch` **`career.adamtotal.co.il` is an Israeli ATS this repo has never heard of, Harel's board
 
 ### classifier — 18 open
 
@@ -12362,6 +12364,34 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      every view, dated 2026-09-13 so a record re-bought later stays; the export went 1,651 →
      1,649 with `Saver1` researched the same evening.
 
+     **Follow-up 2026-09-18 (`registry`) — the four names this item left in the hunt pool,
+     answered from their own evidence.** `Mars Antennas And Rf Systems`: it has NO board. Its
+     own site's nav is Company / About Us / Contact, the sitemap has no careers url, three
+     hunts (08-29, 09-13, 09-14) read `nolisting`, and one `board_verify` read of
+     `mars-antennas.com/` on 09-18 answers `not-a-board (page_kind=about)` naming
+     `MARS Antennas and RF Systems, Ltd.` — so the row is parked `wrong-url 2026-09-18: not a
+     job board; needs re-resolution`, the products page it was fetching daily is gone, and it
+     STAYS in the hunt pool under the new search-llm back-off (at most 90 days). No new
+     terminal token: a company with no board today is not a company with no board (the 09-13
+     rejection stands). Its roles keep publishing through discovery, and `company-intel`'s
+     held-class row for it is answerable now — the answer is "no board", not N/A.
+     `Ethos`: RETIRED `redundant 2026-09-18: LinkedIn seeds are expert-network gig posts;
+     ethoslife/ethos.com are Ethos Life (US)` — the three cards are `Expert Opportunity -
+     Venture Capital Analyst ($100/hr, up to $2,000/week)` and two siblings, an expert-network
+     marketplace, not an Israeli employer; the greenhouse tenant `ethoslife` is Ethos Life
+     (US). `DataCore`: NOT redundant and left open — its two discovery cards are real Israeli
+     postings (`Data Engineer` Herzliya, `ראש.ת צוות BI` Netanya), so the name needs its own
+     board found; `datacore.com/company/careers/openings/` is still the JS embed the 09-13
+     read named. `Bdo International` and `Greylock`: the 09-13 answers stand, no write.
+     Also parked the same day, from the same ledger route: `Kima` (`careers.akima.com` ->
+     Akima) and `PayPlus` (`payplus.com` -> PayPlus Software, Inc.), both re-activated by the
+     hunt AFTER their refusal — see the 2026-09-18 half of this class in `ARCHITECTURE.md`
+     section 2 and the `board_verify.refuses` consumers.
+     `Phoenix Financial`: parked on a fresh read of `www.arizonafinancial.org/Careers`
+     (`NOT-THEIRS`, `Arizona Financial Credit Union`), and its TOKEN column cleared too —
+     `park_unverified` clears `api_url` only, and this row's token was
+     `secrethunter.io/jobz/25a919ad8b`, an aggregator.
+
 597. ~~**A searchless research answer is counted and never named**~~ — **CLOSED 2026-09-13
      (`company-intel`)**: `ask` marks a searchless answer on the result it returns,
      `research_company_detail` keeps the company in `meta["searchless_names"]`, and the job's
@@ -12861,3 +12891,72 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `il.linkedin.com/jobs/view/<slug>-<id>` captured; the two hosts are 46.5 % of the target
      set. Operator decision after a week of scheduled nights: keep a host that never
      captures in the tiers, or not. Check: `python -c "import json,collections;from urllib.parse import urlsplit as u;c=collections.Counter();[c.update([(u(x['url']).hostname, 'ok' if (x['err']=='' and x['snap']) or x['err'] in ('cached','verified') else x.get('status_ext') or x['err'])]) for x in (json.loads(l) for l in open('cloud_state/wayback_ledger.jsonl',encoding='utf-8') if l.strip()) if x.get('job_id')];print(sorted(c.items(),key=lambda kv:-kv[1])[:20])"` — the per-host outcome of every keyed job; read it on 2026-09-23.
+
+621. **`career.adamtotal.co.il` is an Israeli ATS this repo has never heard of, Harel's board
+     is on it, and the identity gate cannot admit a tenant that lives in a QUERY string** —
+     lane: `ats-fetch` (the platform) with `registry` (the row), filed 2026-09-18 by
+     `registry`, MEASURED not guessed.
+
+     `Harel Insurance & Finance` is a large Israeli insurer whose own careers page,
+     `www.harel-group.co.il/careers`, scrapes **0 cards** (status `empty`, http 200, 20 s):
+     the openings are not in that page, they are in an iframe. The board behind it,
+     `https://career.adamtotal.co.il/?token=6675d401-0dee-428a-a776-5d41885d16b0-harel`,
+     reads **23 jobs / 23 Israel** through the EXISTING universal scraper on 2026-09-18
+     (`via=links`, 28 s, 0 credits), including `Data Analyst` and `אנליסט/ית תחקור ובקרה` —
+     the second is the exact posting the LinkedIn discovery name `הראל ביטוח ופיננסים`
+     publishes, which is also the proof that the two registry names are one employer.
+
+     So the extraction is solved and the GATE is the blocker, correctly:
+     `is_foreign("Harel Insurance & Finance", "career.adamtotal.co.il") = True`,
+     `company_identity.ATS_HOST` does not know the host, `identity_gate.board_vouches` is
+     `None`, and `identity_ok` / `activation_verdict` refuse. The tenant is the trailing
+     `-harel` label of the `?token=` value — a QUERY parameter, which nothing in
+     `checkable_token`, `tenant_is_this_company` or `_slug_candidates` reads (they read
+     subdomain labels and path slugs). `identity_facts.domains` was REJECTED for this on
+     2026-09-18: `adamtotal.co.il` is one multi-tenant host, a `domains` declaration is
+     host-level and admit-only, and it would let a later hunt point Harel at another tenant's
+     board — the 09-13 `not_domains` incident in reverse.
+
+     What is wanted: `adamtotal.co.il` recognised as an ATS host, its token's trailing label
+     read as the tenant (so `board_vouches` can answer BOTH ways on it), and then a row —
+     Harel first. Job-detail urls are `career.adamtotal.co.il/Jobs/JobDetails?token=<base64>`;
+     the listings token is `<uuid>-<tenant>`. Census before building: this is the only tenant
+     of it in the registry today. Until then the row stays PARKED on its own careers page
+     with the board named in its note, and `roles`' alias fold cannot fire for Harel (it needs
+     exactly ONE ACTIVE row, and both Harel rows are parked).
+
+622. **Seven registry pairs are one employer under two scripts, and only the census exists** —
+     lane: `registry`, filed 2026-09-18 by itself.
+
+     `firmographics.identity_key` normalizes CHARACTERS, so a Hebrew spelling and a Latin one
+     share nothing and every such twin has been found by a human reading rows (eBay, Menora
+     Mivtachim, Nestlé/Osem). `registry_health.cross_script_twins` is now the census — 40
+     stems, an anchor rule, report-only, printed by a bare `python registry_health.py`. A
+     transliteration MODULE was rejected on the measurement: only **30** registry rows carry
+     Hebrew at all and the whole class is six registry-internal pairs plus two discovery
+     names, each of which still needs the crowning argument a transliterator cannot supply —
+     the two names reading ONE BOARD (the 2026-09-11 rule).
+
+     The seven, with the evidence still missing for each:
+
+     * `הראל ביטוח ופיננסים` ↔ `Harel Insurance & Finance` — **proven** one employer (both
+       read `www.harel-group.co.il/careers` `ok`, and the adamtotal board carries the Hebrew
+       row's own posting). Blocked on `621`: both rows are parked, and an `alias-of` park is
+       terminal, so folding now would take the employer out of every pool for a fold that
+       cannot fire.
+     * `הפניקס` (ACTIVE, `fnx.co.il`, 10 IL) ↔ `Phoenix Financial` (parked 2026-09-18,
+       `arizonafinancial.org` was another company's). Same insurer, almost certainly; needs
+       the Latin row shown to have no board of its own before it is folded, not merely parked.
+     * `בנק דיסקונט` (parked, no address) ↔ `Discount Bank` (ACTIVE, oraclecloud) and
+       ↔ `Discount Bank בנק דיסקונט` (parked). THREE rows, one bank — the fold has to pick a
+       survivor and the oraclecloud tenant is the only one with a board.
+     * `מטריקס` (ACTIVE, `matrixdna.ai`) ↔ `Matrix` (ACTIVE, comeet) ↔ `Matrix IT` (ACTIVE).
+       Possibly THREE REAL ENTITIES (Matrix IT is a large integrator; `Matrix` is also on
+       `recruiters`' radar as a staffing name) — do not fold without the boards.
+     * `Clal Insurance & Finance- כלל ביטוח ופיננסים` (a DISCOVERY name, not a row) ↔
+       `Clal Insurance And Finance` (a row). The cheapest of the seven: one name, one row.
+
+     None of these is a rename (`459`'s rule: `company_name` is the join key for the
+     firmographics, the roles ledger, `matched` and the board). Each is a
+     `firmographics.ALIASES` entry PLUS the parked row's own dated `alias-of <survivor>`
+     verdict, in one commit, once its board evidence is in hand.

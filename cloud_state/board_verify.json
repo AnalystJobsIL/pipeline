@@ -36634,5 +36634,38 @@
   "employer_named": "TandemG",
   "page_kind": "careers-landing",
   "states_no_openings": false
+ },
+ "mars antennas and rf systems|https://mars-antennas.com/": {
+  "date": "2026-09-18",
+  "url": "https://mars-antennas.com/",
+  "name": "Mars Antennas And Rf Systems",
+  "model": "opus",
+  "route": "plain",
+  "chars": 44137,
+  "text_chars": 2385,
+  "verdict": "not-a-board",
+  "why": "page_kind=about",
+  "employer_named": "MARS Antennas and RF Systems, Ltd.",
+  "page_kind": "about",
+  "states_no_openings": false,
+  "second_read": {
+   "verdict": "not-a-board",
+   "why": "page_kind=about",
+   "mechanical_said": true
+  }
+ },
+ "phoenix financial|https://www.arizonafinancial.org/careers": {
+  "date": "2026-09-18",
+  "url": "https://www.arizonafinancial.org/Careers",
+  "name": "Phoenix Financial",
+  "model": "opus",
+  "route": "plain",
+  "chars": 315588,
+  "text_chars": 9000,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Arizona Financial Credit Union",
+  "employer_named": "Arizona Financial Credit Union",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
  }
 }

@@ -18491,6 +18491,41 @@ def test_the_ledger_contradiction_census_counts_only_rows_the_predicate_refuses(
     assert RH.ledger_contradicted(rows, state) == [("Kima", "Akima")]
 
 
+def test_the_cross_script_census_pairs_two_spellings_and_refuses_a_shared_generic_word():
+    """`identity_key` normalizes CHARACTERS, so two spellings of one employer share none: six
+    such pairs (eBay, Menora Mivtachim, Nestle/Osem, ...) were each found by a human reading
+    rows. This is the census, and the whole of its difficulty is the second half.
+
+    A stem that is a word every second Israeli company carries cannot be what makes two names
+    the same company. Without the ANCHOR rule the first cut paired `קבוצת שיבולת` with
+    `group19tech` and `max מקס` with `maxlinear`, on three shared characters -- a census whose
+    noise is its own output is a census nobody reads.
+    """
+    import registry_health as RH
+
+    def row(name):
+        return [name, "scrape", "", "https://x.example/careers", "false", ""]
+
+    rows = [row("Harel Insurance & Finance"), row("הראל ביטוח ופיננסים"),
+            row("Discount Bank"), row("בנק דיסקונט"),
+            row("group19tech"), row("קבוצת שיבולת"),
+            row("maxlinear"), row("max מקס"),
+            row("Fiverr")]
+    got = {tuple(sorted(p)) for p in RH.cross_script_twins(rows)}
+    assert ("Harel Insurance & Finance", "הראל ביטוח ופיננסים") in got, got
+    # word ORDER flips across the scripts (`bank discount` <-> `discountbank`), so the anchor
+    # opens the Latin name and the rest need only appear in it
+    assert ("Discount Bank", "בנק דיסקונט") in got, got
+    assert len(got) == 2, got            # and NOTHING else: no group19tech, no maxlinear
+    # the second population: a discovery name that is not a row at all still pairs
+    disc = RH.cross_script_twins([row("Clal Insurance And Finance")],
+                                 ["Clal Insurance & Finance- כלל ביטוח ופיננסים"])
+    assert disc == [("Clal Insurance & Finance- כלל ביטוח ופיננסים",
+                     "Clal Insurance And Finance")], disc
+    # a name with no known Hebrew stem is not a candidate, and never a false pair
+    assert RH.cross_script_twins([row("Fiverr"), row("חברה כלשהי")]) == []
+
+
 def test_the_hunt_will_not_activate_a_row_onto_a_host_the_ledger_already_refused(tmp_path,
                                                                                  monkeypatch):
     """The gate that was missing when `Kima` and `PayPlus` came back.

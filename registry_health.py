@@ -901,6 +901,86 @@ def ledger_contradicted(rows, state=None):
     return out
 
 
+# One employer under a Hebrew name AND a Latin one is a registry twin `firmographics.identity_key`
+# cannot see: it normalizes characters, and the two spellings share none. Six such pairs were
+# settled by hand before this existed (eBay, Menora Mivtachim, Nestle/Osem, ...), each found by
+# a human reading rows. This is the CENSUS -- 40 stems, report-only, no transliterator.
+#
+# Why not a transliteration module (2026-09-18, measured): 30 registry rows carry Hebrew at
+# all, the whole class is 6 registry-internal pairs + 2 discovery names, and every one of them
+# still needs the crowning argument a transliterator cannot supply -- the two names reading ONE
+# BOARD (the 2026-09-11 rule). A stem table finds the candidates; `identity_facts` and an
+# `alias-of` verdict settle them.
+HEBREW_STEMS = {
+    "הראל": "harel", "הפניקס": "phoenix", "מגדל": "migdal", "מנורה": "menora",
+    "מבטחים": "mivtachim", "כלל": "clal", "ביטוח": "insurance", "ופיננסים": "finance",
+    "פיננסים": "finance", "בנק": "bank", "לאומי": "leumi", "דיסקונט": "discount",
+    "הפועלים": "hapoalim", "מזרחי": "mizrahi", "טפחות": "tefahot", "מטריקס": "matrix",
+    "אסם": "osem", "שטראוס": "strauss", "מים": "water", "נס": "ness",
+    "טכנולוגיות": "technologies", "החזקות": "holdings", "קבוצת": "group",
+    "בית": "house", "השקעות": "investment", "נעמת": "naamat", "מקס": "max",
+    "מבנה": "mivne", "יוניסטרים": "unistream", "אדרת": "aderet", "רם": "ram",
+    "כלמוביל": "colmobil", "החשמל": "electric", "הבורסה": "exchange",
+    "אלקטרה": "electra", "מלם": "malam", "תים": "team", "מרטנס": "mertens",
+    "ישראל": "israel", "היום": "hayom",
+}
+
+# A stem that is a WORD every second Israeli company carries cannot be the thing that makes two
+# names the same company. Without this the census paired `קבוצת שיבולת` with `group19tech` and
+# `max מקס` with `maxlinear` on three shared characters. The ANCHOR -- the first non-generic
+# stem, four characters or more -- has to open the other name; the rest need only appear in it.
+_GENERIC_STEM = {"insurance", "finance", "bank", "group", "technologies", "holdings",
+                 "house", "investment", "water", "israel", "electric", "exchange", "team",
+                 "max", "ram"}
+_HEBREW_RUN = re.compile("[\u0590-\u05FF]+")
+
+
+def hebrew_stems(name):
+    """The Latin stems `name`'s Hebrew words map to, in order; [] when none are known."""
+    return [HEBREW_STEMS[t] for t in _HEBREW_RUN.findall(name or "") if t in HEBREW_STEMS]
+
+
+def _stem_anchor(stems):
+    return next((s for s in stems if s not in _GENERIC_STEM and len(s) >= 4), "")
+
+
+def _flat(name):
+    return re.sub(r"[^a-z0-9]+", "", (name or "").lower())
+
+
+def cross_script_twins(rows, names=()):
+    """Candidate ONE-EMPLOYER-TWO-SCRIPTS pairs, [(hebrew_name, latin_row_name)].
+
+    `rows` are the 6-field registry rows; `names` is any extra population to check against
+    them (discovery company names, a queue). Report-only, and CANDIDATES only: a pair is a
+    declaration (`firmographics.ALIASES` + the parked row's own dated `alias-of <name>`
+    verdict) once its two names are shown to read ONE BOARD, and never before -- `Phoenix
+    Financial`'s address was `arizonafinancial.org`, another company's, which is a park and
+    not a fold. 2026-09-18: 6 registry-internal pairs, 2 discovery names."""
+    flat = {}
+    for r in rows:
+        if r and len(r) >= 6:
+            flat.setdefault(_flat(r[0]), []).append(r[0])
+    out, seen = [], set()
+    for subject in [r[0] for r in rows if r and len(r) >= 6] + [n for n in names if n]:
+        stems = hebrew_stems(subject)
+        anchor = _stem_anchor(stems)
+        if not anchor:
+            continue
+        for n, twins in flat.items():
+            if not n or n == _flat(subject):
+                continue
+            if not (n.startswith(anchor) and all(s in n for s in stems)):
+                continue
+            for twin in twins:
+                pair = (subject, twin)
+                if pair[::-1] in seen or pair in seen:
+                    continue
+                seen.add(pair)
+                out.append(pair)
+    return out
+
+
 def recruiter_verdicts_without_a_mechanism(rows):
     """Rows a human judged a staffing agency whose NAME nothing in code recognises.
 
@@ -959,6 +1039,16 @@ def _report(rows, live=False, want_ats=False, ladder=True):
         print("  (park with `python queue_pipeline.py --park \"<name>\" --apply`, then declare the")
         print("   host in `pipeline/identity_facts` `not_domains`/`not_tenants` so no hunt re-opens it;")
         print("   if the read was WRONG, declare the host in `domains` instead)")
+
+    twins = cross_script_twins(rows)
+    print(f"\nONE EMPLOYER UNDER TWO SCRIPTS (candidates, never a verdict): {len(twins)}")
+    for a, b in twins:
+        print(f"  {a}  <->  {b}")
+    if twins:
+        print("  (`identity_key` normalizes characters, so two spellings of one employer share")
+        print("   nothing. Each pair needs the crowning argument -- both names reading ONE BOARD")
+        print("   -- and is then a `firmographics.ALIASES` entry PLUS the parked row's own dated")
+        print("   `alias-of <surviving name>` verdict. Never fold on the names alone.)")
 
     print("\nre-check ownership (recomputed from each tool's own filter):")
     for label, members in pools(rows).items():
