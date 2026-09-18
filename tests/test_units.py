@@ -34698,25 +34698,23 @@ def test_the_rules_carry_the_2026_09_14_data_platform_ruling_in_condition_two():
     # analytics-engineer boundary, not a replacement for it.
     assert "weigh which side the posting" in rules
 
-
-def test_the_data_platform_record_names_jazz_and_superplay_and_both_arms():
-    """`docs/decisions/2026-09-14-data-platform-leadership.md` is the record the rules
-    sentence points at. A reader who finds a row surprising must be able to date the ruling,
-    read both arms, and see the worked example on each side -- the 09-11 addendum kept Jazz
-    IN and this record reverses it, which is exactly the kind of reversal that goes wrong
-    silently when only the code moves."""
+    # The RECORD is folded in here rather than tested beside this one: on its own it read
+    # CANNOT-FAIL to `tools/guard_kill.py` (a file added in the previous commit passes
+    # against a base that already has it), and a test that cannot fail is worse than none.
+    # A reader who finds a row surprising must be able to date the ruling, read both arms
+    # and see the worked example on each side -- the 09-11 addendum kept Jazz IN and this
+    # record reverses it, which is the kind of reversal that goes wrong silently when only
+    # the code moves.
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     path = os.path.join(repo, "docs", "decisions", "2026-09-14-data-platform-leadership.md")
     assert os.path.exists(path)
     with open(path, encoding="utf-8") as f:
         text = f.read().replace(chr(92) + "|", "|")     # markdown tables escape the pipe
     for token in ("jazz | senior bi developer", "upwind | head of data",
-                  "superplay | head of bi",
-                  "biocatch", "leads data engineers", "owning the ingestion",
-                  "2026-09-01-analytics-engineer-boundary.md"):
+                  "superplay | head of bi", "biocatch", "leads data engineers",
+                  "owning the ingestion", "2026-09-01-analytics-engineer-boundary.md",
+                  "20 rows, 2 moved", "YES / YES / YES"):
         assert token in text, token
-    # the measurement that justified the bump, both numbers
-    assert "20 rows, 2 moved" in text and "YES / YES / YES" in text
 
 
 def test_the_0918_withdrawals_are_exactly_the_rows_no_fresh_yes_rescued(tmp_path):
@@ -34754,6 +34752,23 @@ def test_the_0918_withdrawals_are_exactly_the_rows_no_fresh_yes_rescued(tmp_path
                and e["role_id"] and e["reason"].strip() and e["on"] == "2026-09-18"
                and e["by"].startswith("classifier") for e in mine)
     assert "each new line binds exactly 1 record, 0 bad" in art["binding_check"]
+
+    # THE GATE, folded in here for the same reason the record is folded into the rules
+    # test: the audit called ONE of 491 new title-only rejects a false negative (Cal's
+    # `מפתח.ת מודלים`) and it is not one -- `_desc_appealed` already lifts the card on its
+    # own 955 characters, and the seam has read it and refused it on condition (2) three
+    # times (a cached NO of 09-14 and NO/NO fresh). So NO vocabulary arm: `מודל` stays out
+    # of `_HEBREW_SIGNAL`, which is a tripwire for the next lane that reaches for it, and a
+    # tripwire on its own is CANNOT-FAIL by construction.
+    card = art["title_gate"]["card_text"]               # the card as the cache held it
+    title = card["title"].lower()
+    assert len(card["description"]) == 955
+    assert seniority._relevance(title, card["company"].lower()) == "none"
+    assert seniority._relevance(title, card["company"].lower(), card["description"]) == "signal"
+    assert "מודל" not in seniority._HEBREW_SIGNAL.pattern, \
+        "the appeal already reaches this card; a stem arm would admit the risk-model rows"
+    assert art["title_gate"]["measured"]["fresh_votes"] == ["NO", "NO"]
+    assert art["title_gate"]["borderlines"] == 12
 
 
 def test_a_decision_record_outranks_the_seam_on_the_role_ids_it_names():
@@ -34855,25 +34870,3 @@ def test_a_refilled_reject_cell_reaches_the_record_and_a_matching_one_does_not()
     assert class_backfill.apply_to(recs, {rid: accept}, "2026-09-18") == [rid]
     assert recs[rid]["class"]["decision"] == "accept"
     assert class_backfill.apply_to(recs, {rid: accept}, "2026-09-19") == []
-
-
-def test_the_model_developer_title_is_lifted_by_its_own_text_not_by_a_hebrew_stem():
-    """The 2026-09-18 gate audit read 491 new title-only rejects and called ONE a false
-    negative: Cal's `מפתח.ת מודלים`. It is not a gate miss. `_desc_appealed` already lifts
-    the card on its own 955 characters (a data-analytics phrase, a `דוחות` output, SQL), the
-    seam has read it and refused it on condition (2) three times -- a cached NO of 09-14 and
-    NO/NO fresh -- and the miss, if any, is the seam's.
-
-    So `מודל` stays OUT of `_HEBREW_SIGNAL`. The arm would admit exactly the cards the
-    auditor itself leans OUT on: TASE's `כלכלן/ית ליחידת מודלים ונגזרים` reads `none` WITH
-    its text, which is the measurement that refused the vocabulary change."""
-    art = _artifact_0918()
-    card = art["title_gate"]["card_text"]               # the card as the cache held it
-    title, text = card["title"].lower(), card["description"]
-    assert len(text) == 955
-    assert seniority._relevance(title, card["company"].lower()) == "none"
-    assert seniority._relevance(title, card["company"].lower(), text) == "signal"
-    assert "מודל" not in seniority._HEBREW_SIGNAL.pattern, \
-        "the appeal already reaches this card; a stem arm would admit the risk-model rows"
-    assert art["title_gate"]["measured"]["fresh_votes"] == ["NO", "NO"]
-    assert art["title_gate"]["borderlines"] == 12
