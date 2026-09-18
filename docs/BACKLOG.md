@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**681 filed · 478 open · 203 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**681 filed · 477 open · 204 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -249,7 +249,7 @@ closure convention in the header.
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 - **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
 
-### infra — 119 open
+### infra — 118 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -369,7 +369,6 @@ closure convention in the header.
 - **619** `619@infra` **Eight tests still assert on the state a cron rewrites, and 134 more open it through a code
 - **620** `620@infra` **The Internet Archive names ~9 captures a night for us, against a backlog of 6,193 and
 - **630** `630@infra` **Bright Data's Unlocker cannot fetch `google.com` at all, so a Google Careers posting is
-- **631** `631@infra` **Six of eight mutation shards blew the 40-minute wall on 2026-09-18, and nothing failed
 
 ### scraper — 33 open
 
@@ -13211,9 +13210,28 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      x in r if (x.get('status') or 'open') in ('open','closed') for s in (x.get('seen_ids') or
      [])];print({k:sorted(v) for k,v in c.items() if len(v)>1})"`.
 
-631. **Six of eight mutation shards blew the 40-minute wall on 2026-09-18, and nothing failed
-     — the gate went red on WALL CLOCK with 0 surviving mutants** — lane: `infra` (the
-     calibration is its number), filed 2026-09-18 by `registry`, which hit it.
+631. ~~**Six of eight mutation shards blew the 40-minute wall on 2026-09-18, and nothing failed
+     — the gate went red on WALL CLOCK with 0 surviving mutants**~~ — **CLOSED 2026-09-18
+     (`infra`)**: the matrix is **twenty** shards and `SHARDS: "20"`, on the calibration the
+     item asked for. Two runs of the same afternoon measure it: the last green one
+     (`35352954012`, 391 records, 49 a shard) walled 1,823-2,332 s, and the red one
+     (`35359064839`, 416 records) completed 41/42/42/44/44/48 records in 2,400 s before the
+     kill. The baseline (wall minus `pytest time` / 4 workers) is 172-210 s, so the worst
+     observed per-record cost is (2,400 − 210) / 41 = **53.5 s**, not the 41.3 s of the 09-01
+     comment — the suite grew 1,766 → 2,083 tests and every record runs a subset of it. A
+     shard may therefore hold (1,440 − 210) / 53.5 = **22 records** to sit 20 % under this
+     file's own 1,800-s line, and 419 + 20 of headroom over **20** shards is exactly 22
+     (~1,387 s, 23 % under). The table above stops at 13 because it priced 58 s a record
+     with NO baseline; 14 shards is 32 records and ~1,922 s, over the line before the next
+     push. The ceiling returns at 29 a shard (~594 records), about a week at the 25 a day
+     five lanes filed on 09-18, and `MUTATE_WALL_WARN` names that day. **Rejected here, on
+     paper**, both as design changes for a later session: (a) narrowing each record's
+     per-record subset — the subsets already read min/median/max 1/1,486/1,533, so the
+     median record runs nearly the whole file and the win is real but needs a per-record
+     dependency map nobody has measured; (b) skipping a record whose `find` string the
+     pushed diff does not touch — it makes the gate's answer depend on the diff, and the
+     defects this catalogue was seeded from were found by records the diff did NOT name.
+     Filed 2026-09-18 by `registry`, which hit it.
 
      Run `35359064839` (headSha `267e6ac`): `guard` **success**, `guard-kill` **success**, all
      five `rehearse` **success**, `mutation-gate` **1 and 6 success, 0/2/3/4/5/7 FAILURE**. Every

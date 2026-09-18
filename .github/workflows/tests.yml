@@ -171,19 +171,33 @@ jobs:
   # 5 -> 8 on 2026-09-01. Measured over the nine shards that finished on 08-31 (run
   # 33406913948, `af7b104`, success, walls 2014-2317 s; run 33409190938, `9554c4c`, failure,
   # four walls 2096-2154 s and shard 3 killed at 40 min): 242 records / 5 = 48-49 a shard,
-  # baseline 125-201 s, and **41.3 s per record** (worst shard 44.7). At today's 260 records
-  # SIX shards land at ~1,970 s -- still over, so one entry buys nothing. Eight gives
-  # ~1,520 s (~1,680 on the worst shard). Headroom is NOT a week: the ceiling returns at
-  # ~318 records, 58 away, and the catalogue grew 105 -> 260 in eight days (19.4/day; 13.3
-  # over the last four), so expect to add entries again within the week. `MUTATE_WALL_WARN`
-  # is what names the day instead of a fortnight passing unnoticed again.
+  # baseline 125-201 s, and **41.3 s per record** (worst shard 44.7).
+  #
+  # 8 -> 20 on 2026-09-18 (BACKLOG 631). The 09-01 calibration was stale in both terms: the
+  # catalogue went 260 -> 419 and the SUITE went 1,766 -> 2,083 tests, and every record runs a
+  # SUBSET of the suite, so the per-record cost grew with it. Two runs of 2026-09-18 measure it:
+  # the last green one (35352954012, 391 records, 49 a shard) walled 1,823-2,332 s -- one minute
+  # of headroom against the 40-minute budget and already 30 % past this file's own 1,800-s line
+  # -- and the next (35359064839, 416 records) killed SIX shards at the budget with **zero
+  # SURVIVING lines**, having completed 41, 42, 42, 44, 44 and 48 records. The worst of those is
+  # (2,400 - 210 baseline) / 41 = **53.5 s per record**, and the baseline (wall minus
+  # `pytest time`/4 workers) reads 172-210 s.
+  # At 53.5 s and a 210-s baseline, a shard must hold at most (1,440 - 210) / 53.5 = 22 records
+  # to sit 20 % under the 1,800-s line, and 419 + 20 records of headroom over 20 shards is 22.
+  # Twenty gives **~1,387 s (23 % under)**; 14 -- the first guess -- gives 32 records and
+  # ~1,922 s, over the line before the next push, because 416/14 x 58 s omitted the baseline.
+  # The ceiling returns at 29 records a shard (~594 in the catalogue), which at the 25 records a
+  # day the five lanes of 09-18 filed is about a week. `MUTATE_WALL_WARN` is what names that day
+  # instead of a fortnight passing unnoticed again. Rejected here, on paper, as design changes
+  # for a later session (631's follow-up): narrowing each record's per-record subset, and
+  # skipping a record whose `find` string the pushed diff does not touch.
   mutation-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
     steps:
       - uses: actions/checkout@v5
         # FULL history (591): a failing record's line names the commit that added it
@@ -199,7 +213,7 @@ jobs:
       - name: Every mutation dies and every writer is covered
         env:
           SHARD: ${{ matrix.shard }}
-          SHARDS: "8"
+          SHARDS: "20"
         run: |
           rc=0
           timeout --signal=INT --kill-after=60 40m python -u tools/mutate.py --all --shard "$SHARD/$SHARDS" || rc=$?
