@@ -1088,7 +1088,7 @@ class _Adder:
         j["url"] = _abs_url(url_, self.url)
         j["job_id"] = jid or j["url"]
         j["posted_date"] = j["posted_date"] or _norm_date(date)
-        j["description"] = j["description"] or (desc or "")[:6000]
+        j["description"] = j["description"] or _store_desc(desc)
         self.strong += 1
         return True
 
@@ -1230,8 +1230,35 @@ class _Adder:
                           "_loc_src": loc_src or "own",
                           "job_id": (jid or (url_ if url_ and url_ != url else "")
                                      or _hashlib.sha1(f"{company}|{title}|{loc}".encode("utf-8")
-                                                      ).hexdigest()[:16]), "description": (desc or "")[:6000]})
+                                                      ).hexdigest()[:16]),
+                          "description": _store_desc(desc)})
         return True
+
+
+def _store_desc(desc):
+    """The description this module STORES on a card, with `jd-text`'s own re-clean rule
+    applied at the one door the cache is written through (BACKLOG 608(a), filed by that lane
+    on 2026-09-13). `reclean_cache` cannot reach these cards: it refuses any card without
+    `_jd_attempted`, and a scraper-built description never has one. 19 cached cards across 8
+    boards still carried 15,033 characters of page header and footer on 2026-09-18 (Amitim
+    Pension Funds 9, Adscale 2, Ageera 2, Practical Vision 2, Simply 2, Intuition Robotics,
+    Marvell, Silicom) — the same function at one more door, not a second cutter, so a change
+    jd-text makes to the rule reaches these too.
+
+    `reclean_text` returns None when the cut changes nothing or leaves something that no
+    longer reads as a job description, and the original stands — which is what protects an
+    address-less card's own window (`_card_own_text`, Cal's 27 of 29).
+
+    The import is LAZY: `pipeline.jdfill` is the owner and this module is read by tools that
+    must not pull the enrichment stack in to parse a page."""
+    text = (desc or "")[:6000]
+    if not text:
+        return ""
+    try:
+        from pipeline.jdfill import reclean_text
+    except Exception:                       # noqa: BLE001 — a parse must never need jdfill
+        return text
+    return reclean_text(text) or text
 
 
 def _make_adder(company, url):

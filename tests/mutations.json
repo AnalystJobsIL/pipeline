@@ -4277,5 +4277,18 @@
   "killers": [
    "tests/test_units.py::test_scrape_a_position_pages_place_is_anchored_at_its_heading_not_at_the_title_copy"
   ]
+ },
+ {
+  "id": "scrape-store-door-skips-the-reclean",
+  "file": "scrape_universal.py",
+  "symbol": "_store_desc",
+  "class": "M6-fallback-removal",
+  "find": "    return reclean_text(text) or text\n",
+  "replace": "    return text\n",
+  "why": "BACKLOG 608(a): `reclean_cache` refuses any card without `_jd_attempted` and a scraper-built description never has one, so 19 cards over 8 boards carried 15,033 characters of page header and footer on 2026-09-18 (Amitim Pension Funds 9). This door is the only place the cut can happen (scraper).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_scrape_the_store_door_re_cleans_with_jd_texts_own_rule"
+  ]
  }
 ]

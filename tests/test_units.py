@@ -10946,6 +10946,40 @@ def test_scrape_card_pairing_is_one_to_one_on_a_deloitte_shaped_and_a_camtek_sha
         ("Integrator", "https://www.camtek.com/careers/open-positions/2.ABC/")]
 
 
+def test_scrape_the_store_door_re_cleans_with_jd_texts_own_rule():
+    """BACKLOG 608(a), filed by `jd-text` on 2026-09-13: `reclean_cache` refuses any card
+    without `_jd_attempted`, and a scraper-built description never has one — so 19 cards over
+    8 boards still carried 15,033 characters of page header and footer on 2026-09-18 (Amitim
+    Pension Funds 9, Adscale 2, Ageera 2 …). The cut belongs at the door this module writes a
+    card through, and it is `jdfill.reclean_text`, the SAME function jd-text already applies
+    at four others — not a second cutter.
+
+    `reclean_text` answers None when the cut leaves something that no longer reads as a job
+    description, and then the original stands: that is what protects an address-less card's
+    own window (`_card_own_text`, Cal's 27 of 29)."""
+    import scrape_universal as N
+    from pipeline.jdfill import reclean_text
+    jd = ("Responsibilities:\n- own the BI layer and build dashboards for the business teams\n"
+          "- partner with product on the metrics\n\nRequirements:\n- 3 years of SQL and Python\n"
+          "- experience with a BI tool\n\nWe offer a hybrid model in Tel Aviv.\n") * 3
+    furnished = "Skip to main content\nHome About Careers\n" + jd + "\nSimilar jobs\nPrivacy"
+    assert reclean_text(furnished), "the fixture must be one the rule actually cuts"
+    add, jobs = N._make_adder("Co", "https://co.example/careers")
+    add("Data Analyst", "Tel Aviv, Israel", "https://co.example/careers/da", desc=furnished)
+    assert jobs[0]["description"] == reclean_text(furnished)
+    assert len(jobs[0]["description"]) < len(furnished)
+    # ...and a promotion writes through the same door
+    add2, jobs2 = N._make_adder("Co", "https://co.example/careers")
+    add2("Data Analyst", "Tel Aviv, Israel", "")
+    assert add2.promote_or_skip("Data Analyst", "Tel Aviv, Israel",
+                                "https://co.example/careers/da", desc=furnished)
+    assert jobs2[0]["description"] == reclean_text(furnished)
+    # a card window that is not a job description is left exactly as it was
+    window = "Send us your CV and we will be in touch."
+    assert N._store_desc(window) == window
+    assert N._store_desc("") == "" and N._store_desc(None) == ""
+
+
 def test_scrape_a_page_wide_link_is_not_a_cards_address():
     """Ngsoft's instagram profile, Moveo's one monday.com form, Spear UAV's category page:
     a single link OUTSIDE every card was the byte-nearest href for all of them — 21 of the 54
