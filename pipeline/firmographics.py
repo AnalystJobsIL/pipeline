@@ -346,6 +346,20 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     #   edge), the class-A shape of 2026-09-11. Checked before declaring (522): no other
     #   row, record or role answers to `saverone`. 2026-09-13, `company-intel`.
     "saver1": "saverone",
+    # --- 2026-09-18, `company-intel`. `Flare` is `Hello Flare`, and the row's OWN board
+    # says so three ways: the Comeet board on the row is tenant `36.00F`, whose public
+    # postings live at `comeet.com/jobs/`**`flare`**`/36.00F/...`; `board_verify`'s reading
+    # of that feed names the employer `Flare`; and the 2026-09-18 verify of the DISCOVERED
+    # name `Flare` resolved it to `www.helloflare.com/careers` -- the row's own domain --
+    # `ok`, `employer_named: "Flare"`. The LinkedIn discovery net met the brand on
+    # 2026-09-17 (`senior-data-analyst-at-flare-4432756905`) and filed a second employer:
+    # one `Senior Data Analyst` in Tel Aviv-Yafo under two names, with byte-identical
+    # `tags` (same eight skills, family `Data Analyst`, years 4, track IC), and a SECOND
+    # firmographics record bought for a company already on file. Checked before declaring,
+    # the Oak lesson (522): `Flare` is NOT a `companies.csv` row in any state -- the only
+    # rows whose name carries the word are `Hello Flare` itself and `Cloudflare`, whose
+    # identity is `cloudflare` -- and no other record or role answers to `flare`.
+    "flare": "hello flare",
     "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
     "vmware broadcom": "vmware",
     "simply joytunes": "simply",

@@ -35761,3 +35761,35 @@ def test_the_own_board_copy_beats_a_stored_text_that_opens_with_the_closure_line
     other = (_j7_jd(3999))[:3998] + "Ab"
     assert emj._store_text(conn, "r", other, capped, canonical=True) is False
     conn.close()
+
+def test_flare_is_hello_flare_by_declaration_and_cloudflare_is_untouched(monkeypatch):
+    """LIVE DATA, 2026-09-18. `Hello Flare`'s own Comeet board publishes at
+    `comeet.com/jobs/flare/36.00F/...` and `board_verify` reads its employer as `Flare`, so
+    when the LinkedIn net met the brand on 09-17 it filed a SECOND employer for one
+    `Senior Data Analyst` -- and a second firmographics record. `Flare` is not a
+    `companies.csv` row, so the registry refusal never fires and the `declared` gate is the
+    whole of the fold. Kills: dropping the declaration (the fold stops), and widening it to
+    a containment or stem relation, which would take `Cloudflare` with it."""
+    import live_state as _LS   # a dated registry snapshot, never the live file (infra, 2026-09-13)
+    import csv as _c
+    from pipeline import roles
+    from pipeline.firmographics import ALIASES, identity_key
+    rows = [r for r in list(_c.reader(open(_LS.snapshot("companies.csv"),
+                                           encoding="utf-8")))[1:] if r]
+    names = {r[0] for r in rows}
+    abi = {}
+    for r in rows:
+        if (r[4] or "").strip().lower() == "true":
+            abi.setdefault(identity_key(r[0]), set()).add(r[0])
+    assert "Flare" not in names, "a registry row took the string: re-check the declaration"
+    assert "Hello Flare" in abi.get("hello flare", set()), "the survivor stopped being active"
+    assert identity_key("Flare") == identity_key("Hello Flare") == "hello flare"
+    assert roles._alias_fold_target("Flare", "", names, abi, {}) == ("Hello Flare", "declared")
+    # the lookalike that shares the word and must NOT move (522, checked before declaring)
+    assert identity_key("Cloudflare") == "cloudflare"
+    assert roles._alias_fold_target("Cloudflare", "", names, abi, {}) is None
+    # the declaration, not a relation, is what folds it
+    import pipeline.firmographics as _F
+    monkeypatch.setattr(_F, "ALIASES", {k: v for k, v in ALIASES.items() if k != "flare"})
+    assert _F.identity_key("Flare") == "flare"
+    assert roles._alias_fold_target("Flare", "", names, abi, {}) is None
