@@ -454,9 +454,9 @@
   "file": "pipeline/company_identity.py",
   "symbol": "ATS_HOST",
   "class": "M7-constant-drift",
-  "find": "    r\"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats|jobvite|taleo\\.net)\", re.I)",
-  "replace": "    r\"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats)\", re.I)",
-  "why": "dropping jobvite/taleo from ATS_HOST re-opens docs/BACKLOG.md 42: is_foreign compares the company against the ATS VENDOR's domain again and refuses Varonis' and Radware's own boards -- the URLs crack_walled.listing_urls() builds itself. Re-aimed from the deleted identity_ok special branch when the closure landed.",
+  "find": "    r\"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats|jobvite|taleo\\.net|\"",
+  "replace": "    r\"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats|\"",
+  "why": "dropping jobvite/taleo from ATS_HOST re-opens docs/BACKLOG.md 42: is_foreign compares the company against the ATS VENDOR's domain again and refuses Varonis' and Radware's own boards -- the URLs crack_walled.listing_urls() builds itself. Re-aimed from the deleted identity_ok special branch when the closure landed. Re-anchored 2026-09-18 when `adamtotal` was appended to the pattern (the line the record held stopped being the last one).",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -4563,6 +4563,45 @@
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_a_failed_fill_reason_reaches_the_public_blocker_but_never_outranks_gone"
+  ]
+ },
+ {
+  "id": "adamtotal-token-belt-dropped",
+  "file": "pipeline/fetchers.py",
+  "symbol": "fetch_adamtotal",
+  "class": "M4-guard-removal",
+  "find": "    if (row.get(\"token\") or \"\").strip().lower() != tenant:",
+  "replace": "    if False:",
+  "why": "the only company-bearing string on an AdamTotal address is the `?token=<uuid>-<tenant>` label, and NO gate reads a query string: `identity_gate.board_vouches` judges registry column 2. Without this belt the two can drift apart and the row publishes another tenant's 83 postings under a name the gate vouched for -- the 2026-08-23 FairFly/fireflyspace shape, reached through the one field nothing else checks. It also raises BEFORE the first GET, so a mismatched row costs no request.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_an_adamtotal_row_whose_token_is_not_its_boards_tenant_is_refused"
+  ]
+ },
+ {
+  "id": "adamtotal-il-stamp-needs-a-place-cell",
+  "file": "pipeline/fetchers.py",
+  "symbol": "fetch_adamtotal",
+  "class": "M1-gate-narrowed",
+  "find": "            if not stated_foreign_place(job):",
+  "replace": "            if job[\"location\"] and not stated_foreign_place(job):",
+  "why": "the stamp is unconditional on purpose. Measured 2026-09-18 over the whole board: 83 of 83 cards are Israeli, 10 carry no `fa-map-marker-alt` span at all, and `israel.is_israel_job` recognises only 37 of the 83 Hebrew region names on its own -- so gating the stamp on the place cell drops those 10 rows outright and leaves the other 36 to a vocabulary that cannot read `גוש דן`. The veto that keeps it safe is the card's OWN foreign statement, not the presence of a cell.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_an_adamtotal_card_with_no_place_cell_is_still_an_israeli_posting"
+  ]
+ },
+ {
+  "id": "declared-tenant-labels-keep-the-vendors-own",
+  "file": "pipeline/identity_facts.py",
+  "symbol": "validate",
+  "class": "M5-population-widening",
+  "find": "                labels = _tenant_labels(host, plumbing, ats_host_rx)",
+  "replace": "                labels = [_norm(l) for l in host.split(\".\")[:-2] if not plumbing(l)]",
+  "why": "the retired expression (2026-09-18). `[:-2]` drops exactly a two-part suffix, so on `career.adamtotal.co.il` the VENDOR's own label enters the tenant population and a declaration for a tenant that lives in the query string refuses itself: `declared tenants ['harel'] match none of the board's subdomain labels ['adamtotal']`. A label the ATS pattern itself matches is the vendor, never a tenant. Measured on the committed registry: `validate` returns the same 0 problems either way and exactly 1 of 667 active ATS rows' label list differs (`Workday` on workday.wd5, undeclared), and the refusal still fires on a two-part-suffix board that is somebody else's.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_declared_tenant_is_checked_against_the_labels_left_of_the_vendors_own"
   ]
  }
 ]

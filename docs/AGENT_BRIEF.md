@@ -57,7 +57,7 @@ mode this whole documentation set is arranged against.
    │  lane: registry ✱  │   park what is genuinely dark   ──▶ companies.csv  (1,100+ active)
    └────────┬───────────┘
             ▼
-   ┌── 3 FETCH ─────────┐   ats-fetch · native ATS APIs   (18 platforms)
+   ┌── 3 FETCH ─────────┐   ats-fetch · native ATS APIs   (19 platforms)
    │ lanes: ats-fetch   │   scraper   · the browser scraper (the rest)
    │       + scraper    │                                 ──▶ scraped_cache.json
    └────────┬───────────┘

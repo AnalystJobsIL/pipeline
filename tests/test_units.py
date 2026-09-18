@@ -9526,8 +9526,8 @@ def test_jazzhr_is_retired_and_a_scrape_row_on_applytojob_is_not_a_misconfig():
     grid = {l.split()[0] for l in buf.getvalue().splitlines() if l}
     assert "jazzhr" not in grid and "greenhouse" in grid
     # 15 until the evening of 2026-08-26, when `successfactors` and `jobvite` were added;
-    # 17 until 2026-09-13, when `teamtailor` was
-    assert "18 platforms" in buf.getvalue()
+    # 17 until 2026-09-13, when `teamtailor` was; 18 until 2026-09-18, when `adamtotal` was
+    assert "19 platforms" in buf.getvalue()
 
 
 def test_scrape_cache_in_points_the_digest_at_a_scratch_cache(tmp_path, monkeypatch):
@@ -34557,8 +34557,10 @@ def test_no_scoped_or_pseudo_platform_is_ever_judged_on_freshness():
     scoped = sorted(k for k, f in fetchers.FETCHERS.items() if getattr(f, "israel_scoped", False))
     unscoped = sorted(k for k, f in fetchers.FETCHERS.items()
                       if k not in ("scrape", "discovery") and not getattr(f, "israel_scoped", False))
-    # 13 since 2026-09-13: `teamtailor` dates every posting from its feed, so it is judged
-    assert len(unscoped) == 13 and "smartrecruiters" in unscoped and "workday" in scoped
+    # 13 from 2026-09-13 (`teamtailor` dates every posting from its feed, so it is judged);
+    # 14 from 2026-09-18 with `adamtotal`, whose cards carry no date at all — `undated` is a
+    # declaration `platform_check` reads, and `abandoned` still judges whatever IS dated
+    assert len(unscoped) == 14 and "smartrecruiters" in unscoped and "workday" in scoped
     ancient = [_abnd_job(4000)]
     for plat in scoped + ["scrape", "discovery"]:
         assert health.abandoned(plat, "https://x.example/board", ancient, today=_ABND_TODAY) is None, plat
@@ -36129,3 +36131,216 @@ def test_flare_is_hello_flare_by_declaration_and_cloudflare_is_untouched(monkeyp
     monkeypatch.setattr(_F, "ALIASES", {k: v for k, v in ALIASES.items() if k != "flare"})
     assert _F.identity_key("Flare") == "flare"
     assert roles._alias_fold_target("Flare", "", names, abi, {}) is None
+
+# =====================================================================================
+# ats-fetch lane, 2026-09-18 — `adamtotal`, a board whose only company-bearing string is
+# in the QUERY (`?token=<uuid>-harel`), so the fetcher's belt and the row's DECLARED token
+# are what keep the address and the company together. Record:
+# docs/sessions/2026-09-18-ats-fetch.md
+# =====================================================================================
+
+_ADAM_URL = ("https://career.adamtotal.co.il/?token="
+             "6675d401-0dee-428a-a776-5d41885d16b0-harel")
+# 26 of these are inlined on every page, which is what makes one page 23 MB
+_ADAM_LOGO = "data:image/png;base64," + "A" * 260
+_ADAM_PLACE = ('<span><i class="fas fa-map-marker-alt" aria-hidden="true"></i>%s</span>')
+_ADAM_CARD = """<article class="job-card" data-job-id="%(jid)s" data-job-title="%(title)s" aria-labelledby="job-title-%(jid)s">
+                <div class="job-card-header">
+                        <div class="job-card-logo">
+                            <img src="%(logo)s" alt="לוגו הראל ביטוח ופיננסים, כן מצטרפים למשפחת הראל" />
+                        </div>
+                    <div class="job-card-main-info">
+                        <h4 class="job-title-button" id="job-title-%(jid)s" role="button" tabindex="0">
+                            %(title)s
+                        </h4>
+                        <div class="job-meta">
+                                <span><i class="fas fa-hashtag" aria-hidden="true"></i>מס' משרה: %(jid)s</span>
+                                <span><i class="fas fa-building" aria-hidden="true"></i> %(team)s</span>
+                                %(place)s
+                        </div>
+                        <p class="job-snippet">%(snippet)s</p>
+                    </div>
+                        <div class="job-card-action">
+                            <a role="button" href="/Jobs/JobDetails?token=%(dtok)s&amp;shr=&amp;eid="
+                               class="btn-details job-detail-link ">
+                                לפרטים והגשת מועמדות
+                            </a>
+                        </div>
+                </div>
+            </article>"""
+
+
+def _adam_card(jid, title, place=None, team="אגף דאטה", snippet="איך ייראה היומיום שלך?", dtok=None):
+    """One real card's markup, verbatim but for the values. `place=None` is the shape 10 of
+    the 83 cards on 2026-09-18 have: no `fa-map-marker-alt` span at all."""
+    return _ADAM_CARD % {"jid": jid, "title": title, "logo": _ADAM_LOGO, "team": team,
+                         "place": "" if place is None else _ADAM_PLACE % place,
+                         "snippet": snippet, "dtok": "ZHRvay0%s" % jid if dtok is None else dtok}
+
+
+def _adam_page(*cards):
+    return ('<!DOCTYPE html><html dir="rtl" lang="he"><body><section class="jobs-list">'
+            + "".join(cards) + "</section></body></html>")
+
+
+_ADAM_PAGE_1 = _adam_page(
+    _adam_card("5570", "רפרנט/ית בנקים", 'גוש דן | השפלה | ירושלים יו&quot;ש | ',
+               team="צוות דסק יועצים"),
+    _adam_card("20700", "נציג/ת שירות מוקד אלמנטרי", "גוש דן | ", team="צוות מוקד אלמנטרי"),
+    _adam_card("5471", "מנתח/ת מערכות"),
+)
+
+
+def _adam_row(token="harel", url=_ADAM_URL):
+    return {"company_name": "Harel Insurance & Finance", "ats_platform": "adamtotal",
+            "token": token, "api_url": url}
+
+
+def test_an_adamtotal_board_is_read_from_its_own_server_rendered_cards(monkeypatch):
+    """`621`. Harel's board is an AdamTotal site: 83 server-rendered cards over four
+    `Home/Index?page=` reads (page 5 answers 0), no JSON anywhere, no posted date, and
+    Hebrew REGION names as the place — `is_israel_job` recognises 37 of the 83 on its own,
+    so the unconditional `IL` stamp is what carries the other 46. The detail href is
+    per-posting (83 unique on 2026-09-18, and a second GET minutes later returned the same
+    tokens, so the roles ledger's url key does not churn)."""
+    from pipeline import fetchers, health, israel
+    asked = []
+    pages = {_ADAM_URL: _ADAM_PAGE_1}
+
+    def get_text(u, **k):
+        asked.append(u)
+        return pages.get(u, _adam_page())
+    monkeypatch.setattr(fetchers.http, "get_text", get_text)
+    jobs = fetchers.fetch_company(_adam_row())
+    assert asked == [_ADAM_URL,
+                     "https://career.adamtotal.co.il/Home/Index?page=2&token="
+                     "6675d401-0dee-428a-a776-5d41885d16b0-harel"], asked
+    assert [j["job_id"] for j in jobs] == ["5570", "20700", "5471"]
+    assert [j["title"] for j in jobs] == ["רפרנט/ית בנקים", "נציג/ת שירות מוקד אלמנטרי",
+                                          "מנתח/ת מערכות"]
+    # the cell joins regions with `|` and leaves a trailing one when the building is blank;
+    # the entity in `ירושלים יו&quot;ש` is decoded, and no card is dated
+    assert jobs[0]["location"] == 'גוש דן | השפלה | ירושלים יו"ש'
+    assert jobs[1]["location"] == "גוש דן" and jobs[2]["location"] == ""
+    assert {j["posted_date"] for j in jobs} == {""}
+    assert {j["country_code"] for j in jobs} == {"IL"}
+    assert {j["ats_platform"] for j in jobs} == {"adamtotal"}
+    assert jobs[0]["url"] == ("https://career.adamtotal.co.il/Jobs/JobDetails"
+                             "?token=ZHRvay05570&shr=&eid=")
+    assert len({j["url"] for j in jobs}) == 3
+    assert all(israel.is_israel_job(j) for j in jobs)
+    assert jobs[0]["description"].startswith("איך ייראה")
+    # the platform's own wiring: an empty read is evidence, and no board can be judged fresh
+    assert fetchers.fetch_adamtotal.israel_scoped is False
+    assert fetchers.fetch_adamtotal.undated is True
+    assert health.stale_reason("adamtotal", "", 0, "empty", 0) == "empty-board"
+    assert health.abandoned("adamtotal", _ADAM_URL, jobs) is None
+
+
+def test_an_adamtotal_card_with_no_place_cell_is_still_an_israeli_posting(monkeypatch):
+    """The stamp is UNCONDITIONAL, not "when the card states a place": 10 of the 83 cards
+    carry no `fa-map-marker-alt` span at all, and a stamp gated on the place cell would
+    hand those ten to a place-name scan that cannot read `גוש דן` either — they would be
+    dropped. Admit-only, so a foreign place the card's OWN text states still vetoes it
+    (`israel.stated_foreign_place`), which leaves `""` and the text scan decides."""
+    from pipeline import fetchers, israel
+    monkeypatch.setattr(fetchers.http, "get_text",
+                        lambda u, **k: (_adam_page(_adam_card("5471", "מנתח/ת מערכות"))
+                                        if "page=" not in u else _adam_page()))
+    job = fetchers.fetch_adamtotal(_adam_row())[0]
+    assert job["location"] == "" and job["country_code"] == "IL"
+    assert israel.is_israel_job(job)
+    assert not israel.is_israel_job(dict(job, country_code=""))   # the stamp is what carries it
+    monkeypatch.setattr(fetchers.http, "get_text",
+                        lambda u, **k: (_adam_page(_adam_card(
+                            "9001", "Data Analyst", snippet="Location: Boston, MA. Join us."))
+                            if "page=" not in u else _adam_page()))
+    foreign = fetchers.fetch_adamtotal(_adam_row())[0]
+    assert israel.stated_foreign_place(foreign)
+    assert foreign["country_code"] == "" and not israel.is_israel_job(foreign)
+
+
+def test_adamtotal_paging_stops_on_a_page_that_adds_no_fresh_id(monkeypatch):
+    """Two ways a pager ends, and the fetcher must survive both: a page with no cards, and
+    a page that CLAMPS and re-serves page 1 for ever (the `fetch_successfactors` lesson).
+    The hard stop is 20 reads whatever the board does."""
+    from pipeline import fetchers
+    asked = []
+    monkeypatch.setattr(fetchers.http, "get_text",
+                        lambda u, **k: (asked.append(u), _ADAM_PAGE_1)[1])
+    jobs = fetchers.fetch_adamtotal(_adam_row())
+    assert len(asked) == 2 and len(jobs) == 3          # page 2 repeated page 1: stop
+    asked.clear()
+    monkeypatch.setattr(fetchers.http, "get_text", lambda u, **k: (
+        asked.append(u), _adam_page(_adam_card(str(9000 + len(asked)), "אנליסט/ית")))[1])
+    jobs = fetchers.fetch_adamtotal(_adam_row())
+    assert len(asked) == 20 and len(jobs) == 20, len(asked)
+
+
+def test_an_adamtotal_row_whose_token_is_not_its_boards_tenant_is_refused(monkeypatch):
+    """The belt. `identity_gate.board_vouches` judges registry column 2 and never reads a
+    query string, so column 2 and the `?token=<uuid>-<tenant>` label could drift apart and
+    the row would publish another tenant's postings under a vouched name. Nothing is
+    fetched before the two agree — a refused row costs no request."""
+    from pipeline import fetchers
+    import pytest as _pt
+    asked = []
+    monkeypatch.setattr(fetchers.http, "get_text",
+                        lambda u, **k: (asked.append(u), _ADAM_PAGE_1)[1])
+    for token in ("clal", "", "harelx"):
+        with _pt.raises(ValueError):
+            fetchers.fetch_adamtotal(_adam_row(token=token))
+    with _pt.raises(ValueError):                       # an address with no token at all
+        fetchers.fetch_adamtotal(_adam_row(url="https://career.adamtotal.co.il/Home/Index"))
+    assert asked == []
+    assert len(fetchers.fetch_adamtotal(_adam_row())) == 3     # ...and the real pair reads
+
+
+def test_the_adamtotal_board_vouches_for_the_one_tenant_the_row_declares(monkeypatch):
+    """The host is shared software on a `.co.il`, so nothing about the DOMAIN says whose
+    board it is: `company_identity.ATS_HOST` carries it precisely so `is_foreign` stops
+    answering that question, and the declared token answers it instead — in both
+    directions. The Hebrew twin cannot be the surviving row: `board_vouches` can only
+    answer None for a name it has no ASCII target for (`509`)."""
+    from pipeline import company_identity, identity_facts, identity_gate
+    assert company_identity.ATS_HOST.search("career.adamtotal.co.il")
+    assert company_identity.is_foreign("Harel Insurance & Finance", _ADAM_URL) is False
+    assert identity_facts.tenants("Harel Insurance & Finance") == frozenset({"harel"})
+    assert identity_gate.tenant_is_this_company("Harel Insurance & Finance", _ADAM_URL) is True
+    for token, want in (("harel", True), ("clal", False), ("", False)):
+        assert identity_gate.board_vouches("Harel Insurance & Finance", token, _ADAM_URL) is want, token
+        assert identity_gate.embedded_board_ok("Harel Insurance & Finance", token, _ADAM_URL) is (
+            want is True), token
+    assert identity_gate.board_vouches("הראל ביטוח ופיננסים", "harel", _ADAM_URL) is None
+
+
+def test_a_declared_tenant_is_checked_against_the_labels_left_of_the_vendors_own(monkeypatch):
+    """`validate` derived a board's candidate tenant labels as `host.split(".")[:-2]`, which
+    on a multi-part suffix keeps the VENDOR's label: `career.adamtotal.co.il` yielded
+    `['adamtotal']`, so declaring Harel's query-string tenant refused itself with "matched
+    none of the board's subdomain labels". A label the ATS pattern itself matches is the
+    vendor and never a tenant — and the refusal still works, on both suffix shapes."""
+    from pipeline import company_identity, identity_facts, identity_gate
+
+    def problems(rows):
+        # every OTHER declared row is absent from a scratch registry, and "is not a registry
+        # row" is that, not a label verdict
+        return [p for p in identity_facts.validate(rows, company_identity.ATS_HOST,
+                                                   identity_gate._plumbing)
+                if ("Harel" in p or "Itamar" in p) and "is not a registry row" not in p]
+    live = ["Harel Insurance & Finance", "adamtotal", "harel", _ADAM_URL, "true", "n"]
+    assert problems([live]) == []
+    # the same declaration on somebody else's two-part-suffix board is still refused...
+    assert problems([["Harel Insurance & Finance", "adamtotal", "harel",
+                      "https://clal.wd3.myworkdayjobs.com/en-US/careers", "true", "n"]])
+    # ...and a real two-part-suffix row's verdict does not move
+    assert problems([live, ["Itamar Medical", "workday", "zoll",
+                            "https://zoll.wd5.myworkdayjobs.com/wday/cxs/zoll/x/jobs",
+                            "true", "n"]]) == []
+    rx, plumb = company_identity.ATS_HOST, identity_gate._plumbing
+    assert identity_facts._tenant_labels("career.adamtotal.co.il", plumb, rx) == []
+    assert identity_facts._tenant_labels("zoll.wd5.myworkdayjobs.com", plumb, rx) == ["zoll"]
+    # the vendor's label goes even when it leads the host; a tenant that merely LOOKS like a
+    # plumbing label does not
+    assert identity_facts._tenant_labels("careers-bancorpbank.icims.com", plumb, rx) == \
+        ["careersbancorpbank"]

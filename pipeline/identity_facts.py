@@ -65,7 +65,9 @@ declared row never builds `_name_targets`, so the generic-adjacent-parenthetical
 prints every ACTIVE ATS row the tenant rule refuses. Each is either an acquisition to
 declare (with evidence) or a wrong board to park — never a reason to loosen the rule.
 
-This module imports nothing from `pipeline/` and never reads `companies.csv` at import:
+This module imports nothing from `pipeline/` -- the gates' own helpers (`ATS_HOST`,
+`_plumbing`) are INJECTED into `validate`, and a lazy import would be the import cycle the
+layering test refuses -- and never reads `companies.csv` at import:
 the behavioural fixtures chdir into three-row scratch registries. `validate(rows)` below
 is what the test suite runs against the real one.
 """
@@ -265,6 +267,18 @@ DECLARED = {
         "why": "https://boards-api.greenhouse.io/v1/boards/ethoslife/jobs is Ethos Life's (US "
                "insurance) -- board_verify 2026-09-02 NOT-THEIRS; the re-audit 2026-09-13 "
                "counted 67/0 IL on it"},
+
+    # --- a QUERY-STRING tenant: the only thing on the address that names a company is the
+    #     `?token=<uuid>-<tenant>` label, which no gate reads. The declaration is what makes
+    #     the row's own token (registry column 2) decide, in both directions.
+    "Harel Insurance & Finance": {
+        "tenants": ("harel",),
+        "why": "https://career.adamtotal.co.il/?token=6675d401-0dee-428a-a776-5d41885d16b0-harel "
+               "is Harel's AdamTotal board: 83 postings read 2026-09-18, every card's logo alt "
+               "text reads `לוגו הראל ביטוח ופיננסים`, and the row's OWN careers page "
+               "www.harel-group.co.il/careers links exactly this token in plain HTML (2 hits, "
+               "measured 2026-09-18). The host is shared software, so the declaration is what "
+               "refuses any other tenant's token on it -- in both directions"},
 }
 
 # Deliberately NOT declared, and why -- so the next reader does not "fix" them:
@@ -324,6 +338,32 @@ def host_matches(host, suffixes):
                            for d in ((x or "").strip().lower() for x in suffixes) if d)
 
 
+def _tenant_labels(host, plumbing, ats_host_rx):
+    """A board host's labels that could be a TENANT: neither the ATS's plumbing nor the ATS
+    VENDOR's own label.
+
+    `host.split(".")[:-2]` drops exactly the two-part suffix, which is right for
+    `zoll.wd5.myworkdayjobs.com` (-> `['zoll', 'wd5']`) and wrong for a multi-part one:
+    `career.adamtotal.co.il` kept `['career', 'adamtotal']`, so the VENDOR's label entered
+    the tenant set and a declaration for a tenant that lives in the QUERY string
+    (Harel/`harel`) refused itself -- "declared tenants ['harel'] match none of the board's
+    subdomain labels ['adamtotal']". The vendor is named by `ats_host_rx`, which this
+    function is already handed and which is the only thing that got us into this branch, so
+    the fix needs no public-suffix table and no import: a label the ATS pattern itself
+    matches is the vendor, never a tenant.
+
+    Measured over the committed registry 2026-09-18: `validate` returns the SAME 0 problems
+    either way, and exactly 1 of the 667 active ATS rows has a different label list --
+    `Workday`, the company, on `workday.wd5.myworkdayjobs.com`, where its own name is also
+    the vendor's. That row is undeclared, so nothing reads the list; were it declared, the
+    empty list falls through to the row's-own-token branch below and still answers `workday`.
+
+    The `not_tenants` block in `validate` deliberately does NOT use this: that one asks
+    "what tokens does this address carry at all", is refuse-only, and must stay broad."""
+    return [_norm(l) for l in (host or "").split(".")[:-2]
+            if not plumbing(l) and not ats_host_rx.search(l)]
+
+
 def validate(rows, ats_host_rx, plumbing):
     """Self-consistency of DECLARED against the real registry. Returns a list of problems
     (empty = consistent). Called by the test suite, never at import.
@@ -371,7 +411,7 @@ def validate(rows, ats_host_rx, plumbing):
                 continue
             host = (urllib.parse.urlparse(row[3] or "").netloc or "").lower()
             if host and ats_host_rx.search(host):
-                labels = [_norm(l) for l in host.split(".")[:-2] if not plumbing(l)]
+                labels = _tenant_labels(host, plumbing, ats_host_rx)
                 tok = _norm((row[2] or "").split("/")[0])
                 declared = {_norm(t) for t in d["tenants"]}
                 if labels and not (declared & set(labels)):

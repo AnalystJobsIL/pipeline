@@ -31,7 +31,12 @@ ATS_HOST = re.compile(
     r"workable|bamboohr|breezy\.hr|jazzhr|applytojob|icims|oraclecloud|successfactors|"
     r"phenom|eightfold|avature|careers-page\.com|rippling|hibob|teamtailor|willhire|"
     r"comeet\.com|jobs\.ashbyhq|jobs\.gem\.com|ultipro|trinethire|inflightcloud|"
-    r"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats|jobvite|taleo\.net)", re.I)
+    r"zohorecruit|myworkdaysite|paylocity|dayforcehcm|ripplingats|jobvite|taleo\.net|"
+    # adamtotal.co.il carries the tenant in the `?token=<uuid>-<tenant>` QUERY, so its
+    # domain says nothing about whose board it is either — the vouch is the row's own
+    # declared token (`identity_facts`), never this host. Listed here so `is_foreign` stops
+    # reading `career.adamtotal.co.il` as "provably somebody else's domain" (2026-09-18).
+    r"adamtotal)", re.I)
 
 # Brand/parent DOMAINS (AWS -> amazon.jobs) are declared in pipeline/identity_facts.py --
 # the one table for company identity facts -- and read through `domains()` below.

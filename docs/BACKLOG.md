@@ -12610,6 +12610,15 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      returns None for a public URL that names no site, so a bare tenant host is never a match.
      `resolve_one`'s first-candidate-wins control flow (09-11 record §4: Digital Turbine's
      page offered a dead Lever slug first) is the neighbouring half and is not in this diff.
+
+     2026-09-18 (`ats-fetch`): `adamtotal` joins the same class the day it lands — all **five**
+     of its source cells read MISSING in `python -m pipeline.platform_check` (the grid is now
+     19 platforms / 36 missing wirings), exactly as `teamtailor`'s do. Deliberate, and the same
+     reason: `health.ATS_HOST` deliberately does not gain `adamtotal.co.il` either, because a
+     `misconfig-scrape-on-ats` flag routes a row into a self-heal that has no detector for the
+     platform, which buys strikes and nothing else. Today the platform has 0 registry rows, so
+     there is nothing for a resolver to find; the entry here is so the MISSING cells are not
+     read as an oversight when the count is next taken.
 605. ~~**`paid residential rung: ON/OFF` is written to the step SUMMARY only, so no log search can
      answer whether the 00:00 refresh bought the rung**~~ — lane: `infra`. **CLOSED 2026-09-13
      (`infra`)**: the diff below, and the same shape at `jd-archive.yml` (`Bright Data cap this
@@ -13156,6 +13165,36 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      with the board named in its note, and `roles`' alias fold cannot fire for Harel (it needs
      exactly ONE ACTIVE row, and both Harel rows are parked).
 
+     **2026-09-18, `ats-fetch`: the PLATFORM half is built; the row is not.** `adamtotal` is a
+     fetcher (`fetchers.fetch_adamtotal`, `FETCHERS["adamtotal"]`): it pages
+     `Home/Index?page=N&token=…` until a page adds no fresh `data-job-id` and read **83
+     postings over four pages** on 2026-09-18 (page 5 answers 0 cards) — not the 23 the
+     scraper read, which was page 1 through `via=links`. 73 of the 83 carry a place cell, all
+     of them Hebrew REGIONS; `country_code` is stamped `IL` unconditionally (vetoed only by
+     `israel.stated_foreign_place`) because `is_israel_job` recognises only **37 of the 83**
+     on its own. 83 unique per-posting detail urls, and a second GET minutes later returned
+     the same `?token=` blobs, so the roles ledger's url key does not churn. Six analyst-ish
+     titles are on it today (`Data Analyst`, `אנליסט/ית תחקור ובקרה` ×2, `אנליסט\ית מחקר`,
+     `מוביל ארכיטקטורת דאטה`, `אנליסט/ית PE`). The gate half: `company_identity.ATS_HOST`
+     knows the host (so `is_foreign` is False), `identity_facts.DECLARED["Harel Insurance &
+     Finance"] = {"tenants": ("harel",)}` makes `board_vouches` answer True for `harel` and
+     **False** for `clal` and for an empty token, and the fetcher raises `ValueError` before
+     its first GET unless registry column 2 equals the address's trailing token label — the
+     belt that keeps the vouched token and the fetched board from drifting apart, since no
+     gate reads a query string. `identity_facts.validate` now derives a board's candidate
+     tenant labels from `company_identity.registrable` instead of `host.split(".")[:-2]`,
+     which on a `.co.il` kept the VENDOR's own label and refused this declaration (0 active
+     rows move; every two-part-suffix verdict is unchanged).
+
+     **What is left, and it is a registry write:** activate `Harel Insurance & Finance` with
+     `ats_platform=adamtotal`, `token=harel`, `api_url=https://career.adamtotal.co.il/?token=
+     6675d401-0dee-428a-a776-5d41885d16b0-harel`, through `apply_resolved`'s gate after
+     `fetch_company` verifies, with a `pipeline/notes.py` segment; and in the SAME commit park
+     `הראל ביטוח ופיננסים` `alias-of Harel Insurance & Finance` (`622`'s proven pair) so
+     exactly one row is active — the Hebrew row cannot be the survivor, `board_vouches`
+     answers None for a name with no ASCII target (`509`). Company-intel owns the
+     `firmographics.ALIASES` entry. `621` closes when that row is active.
+
 622. **Seven registry pairs are one employer under two scripts, and only the census exists** —
      lane: `registry`, filed 2026-09-18 by itself.
 
@@ -13166,7 +13205,8 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      transliteration MODULE was rejected on the measurement: only **30** registry rows carry
      Hebrew at all and the whole class is six registry-internal pairs plus two discovery
      names, each of which still needs the crowning argument a transliterator cannot supply —
-     the two names reading ONE BOARD (the 2026-09-11 rule).
+     the two names reading ONE BOARD (the 2026-09-11 rule). (`621`'s platform half landed
+     2026-09-18, so the Harel pair is now blocked only on the registry activation.)
 
      The seven, with the evidence still missing for each:
 

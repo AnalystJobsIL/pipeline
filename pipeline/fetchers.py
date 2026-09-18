@@ -1325,7 +1325,118 @@ def fetch_oraclehcm(row):
 fetch_oraclehcm.israel_scoped = False
 
 
+# One `<article class="job-card" data-job-id="20700" data-job-title="…">` per posting. The
+# two data attributes are read from the tag itself rather than from the rendered heading:
+# the heading repeats the title inside an `h4` whose id carries the same number, so a
+# heading-based parse would need the id first anyway.
+_ADAM_CARD = _re.compile(
+    r'<article[^>]*class="[^"]*job-card[^"]*"[^>]*data-job-id="(\d+)"[^>]*data-job-title="([^"]*)"',
+    _re.I)
+# the `job-meta` place cell: `<span><i class="fas fa-map-marker-alt"></i>גוש דן | בית הראל</span>`
+_ADAM_LOC = _re.compile(r'<i[^>]*class="[^"]*fa-map-marker-alt[^"]*"[^>]*>\s*</i>\s*(.*?)</span>',
+                        _re.I | _re.S)
+_ADAM_HREF = _re.compile(r'href="(/Jobs/JobDetails\?[^"]*)"', _re.I)
+_ADAM_SNIPPET = _re.compile(r'<p[^>]*class="[^"]*job-snippet[^"]*"[^>]*>(.*?)</p>', _re.I | _re.S)
+# 26 logos are inlined as base64 on EVERY page, which is what makes one page 23 MB. Cut them
+# before any of the regexes above walks the document: the `.*?` in `_ADAM_LOC` would
+# otherwise scan across a megabyte of base64 per card.
+_ADAM_INLINE_DATA = _re.compile(r'data:[a-z]+/[^"\')\s]{200,}', _re.I)
+_ADAM_TOKEN = _re.compile(r'[?&]token=([^&#]+)', _re.I)
+
+
+def fetch_adamtotal(row):
+    """AdamTotal — an Israeli recruitment-software careers site (Harel Insurance & Finance):
+
+        GET https://career.adamtotal.co.il/?token=<uuid>-<tenant>          (page 1)
+        GET https://career.adamtotal.co.il/Home/Index?page=<n>&token=<…>   (page 2..)
+
+    `api_url` is the listing URL with its `?token=`; the tenant is the token's trailing
+    label and must equal the row's own token (registry column 2), or this raises — that
+    belt is what keeps the address and the vouched tenant from drifting apart, because
+    `identity_gate.board_vouches` judges column 2 and never reads a query string.
+
+    Server-rendered cards, no JSON: the page's own `$.ajax` calls are for its profession
+    picker only. 25 cards a page, paging until a page adds no fresh `data-job-id`
+    (measured 2026-09-18: pages 1-4 → 83 unique ids, page 5 → 0 cards). Each card carries
+    the place as a `fa-map-marker-alt` span of Hebrew REGIONS (`גוש דן | בית הראל רמת גן`),
+    73 of the 83 non-empty, and no posted date at all — hence `undated = True`, and hence a
+    board this fetcher reads can never be refused as abandoned (`health.abandoned` is strict
+    about an undated posting), exactly like Comeet and Jobvite.
+
+    **`country_code` is stamped `IL` unconditionally**, vetoed only by a foreign place the
+    card's own text states (`israel.stated_foreign_place`). This host is a `.co.il` Hebrew-only
+    Israeli site whose every card is an Israeli posting: measured 2026-09-18, the 83 cards use
+    exactly ten place tokens and every one is an Israeli region or building (גוש דן, השפלה,
+    השרון, חיפה והקריות, ירושלים יו"ש, פתח תקוה, צפון, דרום, בית הראל רמת גן, בית מ.א.ה), 0
+    name a foreign place, and `israel.is_israel_job` recognises only 37 of the 83 on its own —
+    so the 46 the vocabulary misses, including the 10 cards with no place cell at all, would
+    be dropped without the stamp. Admit-only, like
+    `_sf_country`: a foreign code is authoritative as a NEGATIVE and would let this fetcher
+    delete a posting, so the veto leaves `""` and hands the row to the text scan.
+
+    Not `israel_scoped`: the board is not asked for Israel, so an empty read is an empty
+    board and a zero IS evidence."""
+    from .israel import stated_foreign_place
+    base = row["api_url"]
+    parts = urlsplit(base)
+    m = _ADAM_TOKEN.search(base)
+    if not m:
+        raise ValueError(f"adamtotal api_url carries no ?token=: {base[:60]}")
+    token = m.group(1)
+    tenant = token.rsplit("-", 1)[-1].strip().lower()
+    if (row.get("token") or "").strip().lower() != tenant:
+        raise ValueError(f"adamtotal token {row.get('token')!r} is not the board's tenant "
+                         f"{tenant!r} — the row and its address name different companies")
+    out, seen = [], set()
+    for page in range(1, 21):                  # hard stop: 20 pages
+        url = base if page == 1 else f"{parts.scheme}://{parts.netloc}/Home/Index?page={page}&token={token}"
+        html_txt = _ADAM_INLINE_DATA.sub("", http.get_text(url) or "")
+        fresh = 0
+        for block in _re.split(r'(?=<article[^>]*class="[^"]*job-card)', html_txt):
+            c = _ADAM_CARD.search(block)
+            if not c:
+                continue
+            jid, title = c.group(1), _clean(_strip_html(c.group(2)))
+            if not title or jid in seen:
+                continue
+            seen.add(jid)
+            fresh += 1
+            loc = _ADAM_LOC.search(block)
+            href = _ADAM_HREF.search(block)
+            snip = _ADAM_SNIPPET.search(block)
+            job = {
+                "company": row["company_name"],
+                "title": title,
+                # the cell joins regions with `|` and leaves a trailing one when the
+                # building is blank (`גוש דן | `) — cut it, keep the regions
+                "location": _clean(_strip_html(loc.group(1))).strip(" |") if loc else "",
+                "country_code": "",
+                "url": (_html.unescape(href.group(1)) if href else ""),
+                "posted_date": "",             # the cards carry none
+                "ats_platform": "adamtotal",
+                "job_id": jid,
+                "description": _snippet(snip.group(1)) if snip else "",
+            }
+            if job["url"] and not job["url"].startswith("http"):
+                job["url"] = f"{parts.scheme}://{parts.netloc}{job['url']}"
+            if not stated_foreign_place(job):
+                job["country_code"] = "IL"
+            out.append(job)
+        if not fresh:
+            break
+    return out
+
+
+# Declared, not scoped: the listing is the whole board, so an empty read IS evidence.
+fetch_adamtotal.israel_scoped = False
+# Declared undated: the cards publish no date, so the board-freshness verdict can never
+# judge this platform — `platform_check` shows the blind spot rather than letting it pass
+# as "healthy" (the `fetch_jobvite` precedent).
+fetch_adamtotal.undated = True
+
+
 FETCHERS = {
+    "adamtotal": fetch_adamtotal,
     "comeet": fetch_comeet,
     "oraclehcm": fetch_oraclehcm,
     "greenhouse": fetch_greenhouse,

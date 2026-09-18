@@ -150,7 +150,7 @@ Changing one is a say-so-loudly event (`docs/AGENT_BRIEF.md`).
 | `pipeline/company_intel.py` | the digest hook: blurbs + facts for one run, bounded and never raising, and the `Company intel:` line in the mail's run audit (ARCHITECTURE.md section 7) |
 | `pipeline/digest.py` | renders cards into the board, the archive and the email; `render_all` is run.py's one entry |
 | `pipeline/discovery_queue.py` | the research_companies.json queue, read and written safely (ABSENT is not CORRUPT; atomic writes) - written only by the two discovery bridges |
-| `pipeline/fetchers.py` | one normalizer per ATS platform -> the common job shape. 18 platforms, plus the two pseudo-platforms `scrape` and `discovery` |
+| `pipeline/fetchers.py` | one normalizer per ATS platform -> the common job shape. 19 platforms, plus the two pseudo-platforms `scrape` and `discovery` |
 | `pipeline/firmographics.py` | the company record (sector / stage / size / founded), its identity key, the `claude` seam and the shared export both stores converge through (ARCHITECTURE.md section 7) |
 | `pipeline/health.py` | per-company ATS health -> cloud_state/stale.json + health_baseline.json |
 | `pipeline/http.py` | **shared** - the zero-dependency HTTP helper |

@@ -68,6 +68,9 @@ PLATFORM_HOST = {
     "jobvite": r"jobvite\.com",
     "taleo": r"taleo\.net",
     "avature": r"avature\.net",
+    # one vendor, one host: every AdamTotal board is a `?token=` on career.adamtotal.co.il,
+    # so unlike the five above the host IS checkable (added 2026-09-18 with the fetcher)
+    "adamtotal": r"adamtotal\.co\.il",
     # recruitee supports custom domains, so its host is not checkable
 }
 # deliberate, permanent deactivations — keep this list short and dated in the notes

@@ -35,7 +35,7 @@ every lane imports and no lane owns — changing it is a report-it-loudly event.
   └────────────────────────────────────── run check_invariants.py, or registry_health.py --census, for today's counts ──┘
                    │
   ┌ 3 FETCH ──────────────────────────── lanes: ats-fetch (API) · scraper (page) ┐
-  │  pipeline/fetchers.py  18 platforms with a native API  live, every digest    │
+  │  pipeline/fetchers.py  19 platforms with a native API  live, every digest    │
   │  scrape_universal.py   5 escalating strategies, + 1 discovery row            │
   │  refresh_scrape_cache.py 00:00                          ──▶ scraped_cache.json
   └── the API/page split moves daily: registry_health.py --census prints it ─────┘
@@ -571,7 +571,7 @@ including the claim "none".
    companies with no readable board — and the intake that feeds NEW companies into
    resolution (below).
 
-Full `FETCHERS` map — **20 keys, 18 platforms** (this line said 19 / 17 until 2026-09-13, when `teamtailor` was added; 16 keys until 2026-08-24, 17 / 15 until the evening of 2026-08-26
+Full `FETCHERS` map — **21 keys, 19 platforms** (this line said 20 / 18 until 2026-09-18, when `adamtotal` was added, and 19 / 17 until 2026-09-13, when `teamtailor` was; 16 keys until 2026-08-24, 17 / 15 until the evening of 2026-08-26
 and 18 / 16 until 2026-08-26, when `jazzhr` — no public JSON, a fetcher that returned `[]`
 by design — was retired with its last row converted to `scrape`, and `applytojob.com` left
 `health.ATS_HOST` with it so that row is not flagged as a misconfiguration;
@@ -594,7 +594,17 @@ under the name its rows have always carried, because the store keys roles on
 `/jobs.rss`, added 2026-09-13: one GET carries every posting the paginated HTML lists —
 Netafim 56 of 56 — with its full description and a `tt:country` per location, so
 `fetch_teamtailor` stamps `IL` the `_sf_country` way and is not `israel_scoped`; Netafim went
-0 → 24 Israel postings), plus the pseudo-platforms `scrape` and `discovery`. **A Workday row
+0 → 24 Israel postings), **adamtotal** (an Israeli recruitment-software site, added
+2026-09-18: 25 server-rendered `<article class="job-card">` per `Home/Index?page=`, no JSON
+and no posted date — so it is `undated = True` and its boards can never be judged abandoned,
+like Comeet and Jobvite. Harel's board read **83 postings over four pages**, 73 with a place
+cell, and this is the one platform whose tenant lives in the URL's **query string**
+(`?token=<uuid>-harel`), which no identity gate reads: the fetcher raises unless registry
+column 2 equals that trailing label, and `pipeline/identity_facts` declares the token so
+`board_vouches` decides both ways. `country_code` is stamped `IL` unconditionally — the cards
+name Hebrew REGIONS and `israel.is_israel_job` knows 37 of the 83 on its own — vetoed only by
+a foreign place the card's own text states), plus the pseudo-platforms `scrape` and
+`discovery`. **A Workday row
 may carry the public careers-site URL** since the same day: `fetchers.workday_cxs_url` derives
 `/wday/cxs/<tenant>/<site>/jobs` from `https://<tenant>.wdN.myworkdayjobs.com[/xx-XX]/<site>`,
 where `fetch_workday` used to POST the public URL verbatim at an HTML page (the registry still
