@@ -1288,6 +1288,31 @@ def reconcile(row, rec):
 # --------------------------------------------------------------------------- #
 # classify once per role (docs/BACKLOG.md 124)
 # --------------------------------------------------------------------------- #
+def _member_rank(job, closed_page_at):
+    """Sort key for the copies of one role: an own-board copy OUTRANKS one whose page says
+    the posting is closed, and only then does length decide.
+
+    *Landed 2026-09-19 on the 2026-09-18 store; docs/BACKLOG.md `607`, filed by `jd-text`.*
+    "Longest text wins" was the whole
+    rule, and a LinkedIn card's page chrome is reliably longer than a clean own-board JD — so
+    `hibob|ai product data analyst` and `meta|data scientist product analytics` had published
+    LinkedIn's copy, opening `כבר לא מקבלים בקשות`, for 21 days while their employers' own
+    boards still listed them. The text a reader is shown said the opposite of the row's own
+    status, and the classifier judged on it.
+
+    `closed_page_at(text) == 0` is exact rather than a search: `587` puts that sentence at
+    offset 0 of the capture and only there, so this reads a POSITION, not a phrase anywhere in
+    a body ("we are no longer accepting applications by email" 2,000 characters in is a
+    sentence about the job). A copy that merely MENTIONS it still sorts on length.
+
+    It does not close anything and it does not choose whose posting this is — `page_closed`
+    (§7c) owns the status and refuses these two rows by design. This only decides which copy's
+    words the reader and the seam see. Measured on the committed store: **4** groups change
+    `best` — hibob and meta (open), fiverr and wix (closed, still inside the window)."""
+    text = str(job.get("description") or "")
+    return (closed_page_at(text) == 0, -len(text))
+
+
 def classify_grouped(candidates, clf, jdfill, stats, paths):
     """One judgment per ROLE per distinct text. A role listed twice is grouped by
     `merge_key`; every copy that carries its own description is judged (two listings with
@@ -1304,14 +1329,40 @@ def classify_grouped(candidates, clf, jdfill, stats, paths):
             groups[k] = []
             order.append(k)
         groups[k].append(j)
+    # `closed_page_at` is the ONE reader of that sentence's position (jd-text's, `587`), and
+    # importing it here rather than at module scope keeps the enrich layer out of the tools
+    # that read this module without paying for it — the same rule `better_description` follows.
+    from .jdfill import closed_page_at
     accepted = []
     for k in order:
-        members = sorted(groups[k], key=lambda j: -len(str(j.get("description") or "")))
+        group = groups[k]
+        # EVERY member, not just `best` (docs/BACKLOG.md 607, filed by jd-text). `normalise`
+        # used to run only inside `maybe_fill(best)`, so an un-normalised twin kept its longer
+        # furniture text; the inherit branch below copies `best`'s text onto a member only when
+        # the member's is SHORTER, so the twin's furniture survived and whichever copy
+        # `merge_duplicates` made canonical carried it into `upsert_matched` — a row cut every
+        # night and re-lengthened every morning. It also has to happen BEFORE the sort, or the
+        # ranking compares a cut text against an uncut one. Measured on the committed store:
+        # 0 of 183 published texts still move, which is what a fixed point looks like.
+        for m in group:
+            jdfill.normalise(m)
+        members = sorted(group, key=lambda j: _member_rank(j, closed_page_at))
         best = members[0]
         # the JD is what the LLM tier reads; most list endpoints carry none, so fetch it
         # before judging (budgeted, title-gated) — once per role, on the fullest copy
         if jdfill.maybe_fill(best):
             stats["jd_filled_inline"] += 1
+        # ...and the REASON travels to the copies that have no text of their own (607(c)).
+        # `maybe_fill` runs once per group, on `best`, and names why it could not fill in
+        # `_jd_why`; a text-less sibling was therefore reasonless, and the classifier printed
+        # `superseded verdicts CANNOT be re-judged (… ? 1)` about it — an unnamed exit is
+        # indistinguishable from a bug in the plumbing. A member that HAS text keeps its own
+        # silence: its verdict was made on its own words, not on `best`'s failure.
+        if best.get("_jd_why"):
+            for m in members:
+                if m is not best and not str(m.get("description") or "").strip() \
+                        and not m.get("_jd_why"):
+                    m["_jd_why"] = best["_jd_why"]
         verdict, seen_texts, judged = None, set(), 0
         for m in members:
             text = str(m.get("description") or "").strip()
@@ -3380,6 +3431,24 @@ def _blocker(rec, dq):
         from .jdfill import GONE_MARK, unfillable   # enrich layer: import only when weak
         if str(rec.get("jd_attempted") or "").endswith(GONE_MARK):
             return "gone"
+        if why.startswith("failed:"):
+            # jd-text's per-row FAILURE verdict (`enrich_matched_jd._stamp_failed`, 2026-09-18),
+            # reaching the public column on the operator's ruling that day: a row held back has
+            # a written, counted reason or it has none at all. Copied verbatim like
+            # `structural:` above, and it carries its date (`failed:shell:2026-09-18`) because
+            # WHEN we last tried is half of what the reason means.
+            #
+            # BELOW the derived `gone` arm on purpose. A row whose own board 404s is stamped
+            # `gone` on `jd_attempted`, and the same miss is definitive, so it now ALSO earns
+            # `failed:gone:<date>` from the new writer — `gone` is the better published word
+            # and the vocabulary readers already have, and `failed:` should only speak where
+            # nothing else can. Measured 2026-09-18: 3 records carry the `gone` stamp (2 already
+            # `structural:gone(donors:N)`, which wins either way; `mobileye|experienced data
+            # analyst` carries `ok:canonical:`), 1 record carries a `failed:` reason
+            # (`הפניקס|דאטה אנליסט ית`, `failed:shell:2026-09-18`), and the two sets do not
+            # intersect — **collision 0 rows** — so the ordering is free to get right today and
+            # would not be tomorrow.
+            return why
         url = str(rec.get("url") or "")
         if url:
             u = unfillable(url)

@@ -5914,6 +5914,10 @@ def test_one_role_on_two_boards_is_judged_once_on_its_longest_text():
     class Fill:
         def maybe_fill(self, j):
             return False
+
+        def normalise(self, j):
+            from pipeline.jdfill import normalise      # pure text work: no fetch, no spend
+            return bool(normalise(j))
     a = _role("Wix", "Data Analyst", "u1", "1", src="comeet")
     b = _role("Wix", "Data Analyst", "u2", "2", src="greenhouse", desc="J" * 800)
     c = _role("Wix", "BI Developer", "u3", "3", src="comeet")
@@ -6335,6 +6339,10 @@ def test_a_bare_card_that_inherited_its_verdict_is_never_the_canonical_but_its_d
     class Fill:
         def maybe_fill(self, j):
             return False
+
+        def normalise(self, j):
+            from pipeline.jdfill import normalise      # pure text work: no fetch, no spend
+            return bool(normalise(j))
     card = _role("Acme", "Senior Data Analyst", "https://www.linkedin.com/jobs/view/x-4400000001",
                  "https://www.linkedin.com/jobs/view/x-4400000001", src="discovery-linkedin", posted_date="2026-08-10")
     board = _role("Acme", "Senior Data Analyst", "https://boards.greenhouse.io/acme/jobs/1", "1",
@@ -6344,6 +6352,194 @@ def test_a_bare_card_that_inherited_its_verdict_is_never_the_canonical_but_its_d
     m = store.merge_duplicates(acc)
     assert len(m) == 1 and m[0]["url"] == board["url"] and m[0]["posted_date"] == "2026-08-10"
     assert m[0]["seen_ids"] == sorted({store.seen_id(card), store.seen_id(board)})
+
+
+def test_an_own_board_copy_outranks_a_longer_copy_whose_page_says_it_is_closed():
+    """`607`, filed by jd-text. "Longest text wins" picked which copy of a role the reader
+    and the seam see, and a LinkedIn card's page chrome is reliably longer than a clean
+    own-board JD — so `hibob|ai product data analyst` and `meta|data scientist product
+    analytics` published LinkedIn's copy, opening `כבר לא מקבלים בקשות`, for 21 days
+    while their employers' own boards still listed them. Measured on the committed store:
+    **4** groups change `best` — those two, plus fiverr and wix (closed, still in window).
+
+    It reads a POSITION, not a phrase: `587` puts that sentence at offset 0 of the capture
+    and only there, so a copy that merely mentions it mid-body still sorts on length. And it
+    changes NO status — `page_closed` (§7c) refuses both rows by design; this decides whose
+    words are shown, not whether the role is open."""
+    from collections import Counter
+    from pipeline import roles
+
+    class Clf:
+        def __init__(self):
+            self.seen = []
+
+        def classify(self, j):
+            self.seen.append(str(j.get("description") or "")[:24])
+            return {"decision": "accept", "path": "keyword", "reason": "r", "seniority": ""}
+
+    class Fill:
+        def maybe_fill(self, j):
+            return False
+
+        def normalise(self, j):
+            from pipeline.jdfill import normalise
+            return bool(normalise(j))
+
+    own = _JD_TEXT                                  # the employer's own, shorter copy
+    mirror = "\u05db\u05d1\u05e8 \u05dc\u05d0 \u05de\u05e7\u05d1\u05dc\u05d9\u05dd \u05d1\u05e7\u05e9\u05d5\u05ea\n\n" + _JD_TEXT + ("X" * 900)
+    board = _role("HiBob", "AI Product Data Analyst", "https://careers.hibob.com/jobs/77", "77",
+                  src="scrape", desc=own)
+    card = _role("HiBob", "AI Product Data Analyst",
+                 "https://il.linkedin.com/jobs/view/ai-product-data-analyst-at-hibob-1", "1",
+                 src="discovery-linkedin", desc=mirror)
+    assert len(mirror) > len(own), "the premise: the mirror is the LONGER copy"
+    clf = Clf()
+    roles.classify_grouped([card, board], clf, Fill(), Counter(), Counter())
+    assert clf.seen[0] == own[:24], "the own-board copy is judged FIRST, not the mirror"
+    assert "_inherited" not in board
+    # the shape the rule turns on, directly: the closure line only counts at offset 0
+    from pipeline.jdfill import closed_page_at
+    assert roles._member_rank({"description": mirror}, closed_page_at) == (True, -len(mirror))
+    assert roles._member_rank({"description": own}, closed_page_at) == (False, -len(own))
+    mid = _JD_TEXT + "\n\nWe are no longer accepting applications by email.\n" + ("Y" * 900)
+    assert roles._member_rank({"description": mid}, closed_page_at)[0] is False, \
+        "a sentence ABOUT the job, 2,000 characters in, is not the page's verdict"
+    # ...and between two ordinary copies the rule is unchanged: longest wins
+    assert (roles._member_rank({"description": "A" * 10}, closed_page_at)
+            < roles._member_rank({"description": "A" * 5}, closed_page_at))
+
+
+def test_every_member_of_a_group_is_normalised_not_only_the_one_that_is_judged():
+    """`607`. `normalise` ran only inside `maybe_fill(best)`, so an un-normalised twin kept
+    its longer furniture text; the inherit branch copies `best`'s text onto a member only
+    when the member's is SHORTER, so the twin's furniture survived and whichever copy
+    `merge_duplicates` made canonical carried it into `upsert_matched` — a row cut every
+    night and re-lengthened every morning, the 09-11 fixed-point defect through a third
+    door. Measured on the committed store: 0 of 183 published texts still move, which is
+    what a fixed point looks like; this pins the seam, not the backlog."""
+    from collections import Counter
+    from pipeline import roles
+
+    class Clf:
+        def classify(self, j):
+            return {"decision": "accept", "path": "keyword", "reason": "r", "seniority": ""}
+
+    class Fill:
+        def __init__(self):
+            self.seen = []
+
+        def maybe_fill(self, j):
+            return False
+
+        def normalise(self, j):
+            self.seen.append(str(j.get("url") or ""))
+            return False
+
+    a = _role("Wix", "Data Analyst", "https://w.co/jobs/data-analyst/1", "1", desc=_JD_TEXT)
+    b = _role("Wix", "Data Analyst", "https://w.co/jobs/data-analyst/2", "2", desc=_JD_TEXT + "!")
+    f = Fill()
+    roles.classify_grouped([a, b], Clf(), f, Counter(), Counter())
+    assert sorted(f.seen) == sorted([a["url"], b["url"]]), \
+        "every copy is offered to the cutter, not just the one that gets judged"
+
+
+def test_a_text_less_copy_inherits_the_reason_its_group_could_not_be_filled():
+    """`607(c)`. `maybe_fill` runs once per group, on `best`, and names why it could not
+    fill in `_jd_why`; a text-less sibling was therefore reasonless, and the classifier
+    printed `superseded verdicts CANNOT be re-judged (… ? 1)` about it. An unnamed exit is
+    indistinguishable from a bug in the plumbing, which is the whole reason that channel
+    exists. A copy that HAS text keeps its own silence: its verdict rests on its own words."""
+    from collections import Counter
+    from pipeline import roles
+
+    class Clf:
+        def classify(self, j):
+            return {"decision": "accept", "path": "keyword", "reason": "r", "seniority": ""}
+
+    class Fill:
+        def maybe_fill(self, j):
+            j["_jd_why"] = "not-a-job-url"
+            return False
+
+        def normalise(self, j):
+            return False
+
+    bare = _role("Gong", "Senior Data Scientist", "https://g.co/careers", "1",
+                 src="discovery-linkedin")
+    twin = _role("Gong", "Senior Data Scientist", "https://g.co/careers?x=2", "2",
+                 src="discovery-indeed")
+    roles.classify_grouped([bare, twin], Clf(), Fill(), Counter(), Counter())
+    assert bare["_jd_why"] == twin["_jd_why"] == "not-a-job-url", \
+        "both copies of a group nothing could fill name the same reason"
+
+    # ...and a NON-best sibling that has its own text is left alone: only the text-less
+    # copies inherit, because a copy judged on its own words is not one nothing could fill
+    class Fill2(Fill):
+        def maybe_fill(self, j):
+            j["_jd_why"] = "budget"
+            return False
+    best = _role("Gong", "Data Analyst", "https://g.co/jobs/data-analyst/9", "9",
+                 src="scrape", desc=_JD_TEXT + ("Z" * 50))
+    shorter = _role("Gong", "Data Analyst", "https://g.co/jobs/data-analyst/8", "8",
+                    src="scrape", desc=_JD_TEXT)
+    empty = _role("Gong", "Data Analyst", "https://g.co/careers", "3", src="discovery-linkedin")
+    roles.classify_grouped([empty, shorter, best], Clf(), Fill2(), Counter(), Counter())
+    assert best["_jd_why"] == "budget", "the stub wrote it on the copy `maybe_fill` was given"
+    assert empty["_jd_why"] == "budget", "the text-less copy inherits the group's reason"
+    assert "_jd_why" not in shorter, "a copy judged on its own words carries no failure reason"
+
+
+def test_a_failed_fill_reason_reaches_the_public_blocker_but_never_outranks_gone():
+    """The operator's 2026-09-18 ruling (`607`): a row held back has a written, counted
+    reason or it has none at all. jd-text owns the WRITE (`_stamp_failed`); this is the
+    READ, and it sits BELOW the derived `gone` arm — a row whose own board 404s now also
+    earns `failed:gone:<date>`, and `gone` is the better published word and the vocabulary
+    readers already have. Measured 2026-09-18: 3 records carry the `gone` stamp, 1 carries a
+    `failed:` reason (`הפניקס|דאטה אנליסט ית`, `failed:shell:2026-09-18`), and the two
+    sets do not intersect — **collision 0 rows** — so the ordering is free today and would
+    not be tomorrow."""
+    from pipeline import roles
+    from pipeline.jdfill import GONE_MARK
+
+    rec = {"jd_why": "failed:shell:2026-09-18", "url": "https://p.co/jobs/analyst/9"}
+    assert roles._blocker(rec, "snippet") == "failed:shell:2026-09-18", \
+        "copied VERBATIM, date and all: WHEN we last tried is half of what the reason means"
+    assert roles._blocker(rec, "none") == "failed:shell:2026-09-18"
+    assert roles._blocker(rec, "jd") == "", "a row with a real description is not blocked"
+    # `gone` wins the collision, and `structural:` still wins over both
+    both = dict(rec, jd_attempted="2026-09-18" + GONE_MARK)
+    assert roles._blocker(both, "snippet") == "gone"
+    assert roles._blocker(dict(both, jd_why="structural:gone(donors:0)"),
+                          "snippet") == "structural:gone(donors:0)"
+    # ...and the reasons that are NOT failures stay silent
+    for why in ("ok:canonical:jobs.eu.lever.co", "refused:auth", "", "budget"):
+        b = roles._blocker({"jd_why": why, "url": "https://p.co/jobs/analyst/9"}, "snippet")
+        assert not b.startswith("failed:"), (why, b)
+
+
+def test_a_failed_row_is_excluded_under_its_own_reason_not_as_an_anonymous_pending():
+    """What the ruling actually buys a reader. The row is weak, so `BLOCKED_POLICY=exclude`
+    keeps it out of `roles.csv` either way — the change is WHICH bucket the meta counts it
+    in: `pending` (nobody has got to it yet) against `blocked:failed:shell:<date>` (we
+    tried, and this is what happened). Re-derived over the committed store on 2026-09-18:
+    `pending` 3 -> 2, `structural` 6 -> 7, and the identity still closes."""
+    from pipeline import roles
+    recs = _ledger(2, description=_JD_TEXT)
+    ids = sorted(recs)
+    recs[ids[1]]["description"] = "too short"
+    recs[ids[1]]["desc_len"] = 9
+    recs[ids[1]]["jd_why"] = "failed:shell:2026-09-18"
+    rows, counts = roles.build_rows(recs, run_date="2026-08-30")
+    assert [r["role_id"] for r in rows] == [ids[0]]
+    assert counts["blocked:failed:shell:2026-09-18"] == 1 and not counts["pending"]
+    assert counts["blocked_excluded"] == 1 and not counts["pending_excluded"]
+    meta = roles.build_meta(rows, counts, recs, run_date="2026-08-30")
+    assert meta["description_text"]["blocked"]["failed:shell:2026-09-18"] == 1
+    assert meta["reconciliation"]["holds"] is True
+    # the ARCHIVE keeps the row whatever the policy, and there the cell itself is readable
+    arch, _ac = roles.build_rows(recs, run_date="2026-12-01", archive=True)
+    assert {r["role_id"]: r["description_blocker"] for r in arch}[ids[1]] == \
+        "failed:shell:2026-09-18"
 
 
 def test_two_listings_with_different_texts_are_each_judged_and_either_can_qualify():
@@ -6366,6 +6562,10 @@ def test_two_listings_with_different_texts_are_each_judged_and_either_can_qualif
     class Fill:
         def maybe_fill(self, j):
             return False
+
+        def normalise(self, j):
+            from pipeline.jdfill import normalise      # pure text work: no fetch, no spend
+            return bool(normalise(j))
     ml = _role("Acme", "Data Scientist", "u1", "1", desc="deep learning models " * 40)
     an = _role("Acme", "Data Scientist", "u2", "2", desc="product analytics, SQL " * 10)
     bare = _role("Acme", "Data Scientist", "u3", "3")
@@ -21350,6 +21550,10 @@ def test_seniority_reaches_the_record_from_the_classifier_and_from_the_title(tmp
     class _JD:
         def maybe_fill(self, j):
             return False
+
+        def normalise(self, j):
+            from pipeline.jdfill import normalise      # pure text work: no fetch, no spend
+            return bool(normalise(j))
     out = roles.classify_grouped(jobs, clf, _JD(), Counter(), Counter())
     assert out, "the no-LLM path must still accept a strong senior title"
     for j in out:
@@ -35770,7 +35974,7 @@ def test_entities_are_decoded_at_every_door_and_nowhere_else():
 # own address beats a stored copy that announces itself closed.
 # --------------------------------------------------------------------------------------
 
-def test_a_definitive_miss_writes_its_reason_and_the_public_blocker_still_ignores_it():
+def test_a_definitive_miss_writes_its_reason_and_the_public_blocker_quotes_it():
     """On 2026-09-18 the digest printed `held 5 role(s) off the board and the mail · 5 no
     usable description` and `classify 5 superseded verdicts CANNOT be re-judged
     (not-a-job-url 3, ? 1, wrong-address 1)`. `jd_why` was written only when text ARRIVED, so
@@ -35780,9 +35984,10 @@ def test_a_definitive_miss_writes_its_reason_and_the_public_blocker_still_ignore
 
     `failed:` is not `structural:` and nothing here may let it be read as one: `structural:`
     means every donor class was enumerated and failed. The public read at
-    `roles._blocker` is the `roles` lane's and is not landed yet, so this pins that the
-    blocker IGNORES `failed:` — when that lane takes it, this assertion flips with it and
-    nothing is silently published in between.
+    `roles._blocker` LANDED 2026-09-19 (`607`) and the assertion at the foot of this test
+    FLIPPED with it, exactly as this docstring said it would — nothing was silently
+    published in between. `structural:` still outranks `failed:`, and so does the derived
+    `gone`: one fetch missing today is the weakest of the three claims.
 
     Dates come from the STAMP, never from the clock (`tests/calendar_rot.py`)."""
     import sqlite3 as _sq
@@ -35811,8 +36016,9 @@ def test_a_definitive_miss_writes_its_reason_and_the_public_blocker_still_ignore
     assert emj._write(conn, "empty", jd) is True
     assert dict(conn.execute("SELECT mkey, jd_why FROM matched"))["empty"] == ""
 
-    # ...and the published blocker does not quote it (yet): `roles` owns that read
-    assert roles._blocker({"jd_why": "failed:js-shell:2026-09-18", "url": ""}, "none") == ""
+    # ...and since 2026-09-19 the published blocker DOES quote it: `roles` took that read
+    # (`607`, the operator's ruling). This is the assertion this test said would flip with it.
+    assert roles._blocker({"jd_why": "failed:js-shell:2026-09-18", "url": ""}, "none")         == "failed:js-shell:2026-09-18"
     assert roles._blocker({"jd_why": "structural:gone(donors:0)", "url": ""}, "none") \
         == "structural:gone(donors:0)"
     conn.close()

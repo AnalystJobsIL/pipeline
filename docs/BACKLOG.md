@@ -12689,6 +12689,41 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      (`mobileye|experienced data analyst`) carrying `ok:canonical:` — so the collision
      is 0 rows today and the ordering is cheap to get right before it is not.
 
+     **CLOSED 2026-09-19 (`roles`)**, all four parts in one commit, each measured on the
+     committed store before it was written:
+     (a) `roles._member_rank(job, closed_page_at)` is the new sort key — a named function
+     rather than a lambda, because the rule now has a reason worth reading. **4** groups
+     change `best`, not the 2 the relay predicted: `hibob|ai product data analyst` and
+     `meta|data scientist product analytics` (both open, the rows the item names) AND
+     `fiverr|senior business data analyst` + `wix|business analyst channels`, both `closed`
+     but still inside the 90-day window, so their published text changes too. It reads a
+     POSITION (`== 0`), not a phrase: a body that merely quotes the sentence still sorts on
+     length, and the mutation record `member-rank-reads-the-closure-line-anywhere` is what
+     keeps it that way. It changes no status — `page_closed` (§7c) still refuses both open
+     rows by design, and 0 closures remains the right output.
+     (b) `normalise` on every member, BEFORE the sort (or the ranking compares a cut text
+     against an uncut one). Measured: **0 of 183** published texts still move, which is what
+     a fixed point looks like — so this changes no published text today and exists to stop
+     the next twin re-installing furniture. The four in-test filler stubs gained `normalise`,
+     delegating to the real `jdfill.normalise` (pure text work, no fetch, no spend).
+     (c) `best["_jd_why"]` travels to the text-less copies only. Measured: **1** publishable
+     record has no stored text and an empty `jd_why` — `madanes insurance agency|manager bi`,
+     not the `gong|…` the item named, which jd-text's own 09-18 commits had already given a
+     reason. A copy that HAS text keeps its silence: its verdict rests on its own words.
+     (d) the `failed:` arm, below `gone`. The row is weak, so `BLOCKED_POLICY=exclude` keeps
+     it out of `roles.csv` either way — what changes is WHICH bucket the meta counts it in.
+     Re-derived over the committed store: `pending` **3 -> 2**, `structural` **6 -> 7**,
+     `blocked_excluded` **6 -> 7**, and `description_text.blocked` gains
+     `failed:shell:2026-09-18: 1`; the reconciliation identity still holds. The row-level
+     cell is readable in `roles_archive.csv` once the row ages out.
+     NOT done, and deliberately: the item's other half — `roles._PAGE_CLOSED` duplicating
+     `jdfill._CLOSED_PAGE` with its own 600 window. Deduping it moves `page_says_closed`,
+     `page_closed` and `closure_text_ignored` together, which is not this commit. **One
+     observation for whoever takes it:** a `failed:` blocker carries its DATE, so
+     `description_text.blocked` gets one key per (reason, date) pair — 1 row today, a
+     histogram nobody can read at scale. `structural:` values are dateless. Worth a decision
+     before the population grows.
+
 608. **21 scraper-built cache cards carry page furniture that no re-clean can keep off, and 7
      Legit Security cards carry their neighbour's link** — lane: `scraper`, filed 2026-09-13
      by `jd-text`, both told to that lane's live session. (a) `reclean_cache` refuses cards

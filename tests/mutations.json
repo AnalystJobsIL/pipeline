@@ -4486,5 +4486,83 @@
   "killers": [
    "tests/test_units.py::test_the_render_report_names_the_hidden_titles_not_a_count"
   ]
+ },
+ {
+  "id": "member-rank-ignores-the-closure-line",
+  "file": "pipeline/roles.py",
+  "symbol": "_member_rank",
+  "class": "M4-guard-removal",
+  "find": "    return (closed_page_at(text) == 0, -len(text))",
+  "replace": "    return (False, -len(text))",
+  "why": "the retired `longest text wins` rule (607). A LinkedIn card's page chrome is reliably longer than a clean own-board JD, so `hibob|ai product data analyst` and `meta|data scientist product analytics` published the mirror's copy -- opening with the closure sentence -- for 21 days while their employers' own boards still listed them. The text a reader was shown said the opposite of the row's own status, and the seam judged on it. Measured: 4 groups change `best`.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_an_own_board_copy_outranks_a_longer_copy_whose_page_says_it_is_closed"
+  ]
+ },
+ {
+  "id": "member-rank-reads-the-closure-line-anywhere",
+  "file": "pipeline/roles.py",
+  "symbol": "_member_rank",
+  "class": "M5-population-widening",
+  "find": "    return (closed_page_at(text) == 0, -len(text))",
+  "replace": "    return (closed_page_at(text) is not None, -len(text))",
+  "why": "the rule reads a POSITION, not a phrase. `587` puts the page's own closure sentence at offset 0 of the capture and only there; a description that merely quotes it (`we are no longer accepting applications by email`, 2,000 characters into the body) is a sentence ABOUT the job, and demoting that copy would pick a shorter, worse text on evidence that says nothing about the posting. Widening this to `is not None` is the same over-reach `PAGE_CLOSED_WINDOW` exists to stop one layer up.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_an_own_board_copy_outranks_a_longer_copy_whose_page_says_it_is_closed"
+  ]
+ },
+ {
+  "id": "group-normalise-only-the-best-member",
+  "file": "pipeline/roles.py",
+  "symbol": "classify_grouped",
+  "class": "M3-branch-narrowing",
+  "find": "        for m in group:\n            jdfill.normalise(m)\n",
+  "replace": "",
+  "why": "607. `normalise` ran only inside `maybe_fill(best)`, so an un-normalised twin kept its longer furniture text; the inherit branch copies `best`'s text onto a member only when the member's is SHORTER, so the twin's furniture survived and whichever copy `merge_duplicates` made canonical carried it into `upsert_matched`. Measured on the 09-13 run: `matched_recleaned` 7 rows / 3,752 characters cut every night and re-lengthened every morning -- the 09-11 fixed-point defect through a third door.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_every_member_of_a_group_is_normalised_not_only_the_one_that_is_judged"
+  ]
+ },
+ {
+  "id": "text-less-member-keeps-no-fill-reason",
+  "file": "pipeline/roles.py",
+  "symbol": "classify_grouped",
+  "class": "M6-fallback-removal",
+  "find": "        if best.get(\"_jd_why\"):\n            for m in members:\n                if m is not best and not str(m.get(\"description\") or \"\").strip() \\\n                        and not m.get(\"_jd_why\"):\n                    m[\"_jd_why\"] = best[\"_jd_why\"]\n",
+  "replace": "",
+  "why": "607(c). `maybe_fill` runs once per group, on `best`, and names why it could not fill; a text-less sibling was therefore reasonless and the classifier printed `superseded verdicts CANNOT be re-judged (... ? 1)` about it on the 09-18 digest (`gong|senior data scientist - ai research & reliability`). An unnamed exit is indistinguishable from a bug in the plumbing, which is the whole reason the `_jd_why` channel exists.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_text_less_copy_inherits_the_reason_its_group_could_not_be_filled"
+  ]
+ },
+ {
+  "id": "failed-reason-never-reaches-the-blocker",
+  "file": "pipeline/roles.py",
+  "symbol": "_blocker",
+  "class": "M4-guard-removal",
+  "find": "        if why.startswith(\"failed:\"):",
+  "replace": "        if False:",
+  "why": "the operator's 2026-09-18 ruling (607): a row held back out of the dataset carries a written, counted reason or it has none at all. Without this arm the Phoenix row (`הפניקס|דאטה אנליסט ית`) and its `failed:shell:2026-09-18` is invisible and the row is counted as an anonymous `pending` -- 'nobody has got to it yet' -- when the truth is 'we tried, and the page is a JS shell'. jd-text owns the WRITE; this is the only READ.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_failed_fill_reason_reaches_the_public_blocker_but_never_outranks_gone"
+  ]
+ },
+ {
+  "id": "failed-reason-outranks-gone",
+  "file": "pipeline/roles.py",
+  "symbol": "_blocker",
+  "class": "M2-order-swap",
+  "find": "        if str(rec.get(\"jd_attempted\") or \"\").endswith(GONE_MARK):\n            return \"gone\"\n        if why.startswith(\"failed:\"):",
+  "replace": "        if why.startswith(\"failed:\"):\n            return why\n        if str(rec.get(\"jd_attempted\") or \"\").endswith(GONE_MARK):\n            return \"gone\"\n        if False:",
+  "why": "the ordering the operator ruled on and the reason it is cheap to get right TODAY: a row whose own board 404s is stamped `gone` on `jd_attempted` and the same definitive miss now ALSO earns `failed:gone:<date>` from the new writer, so the two arms compete. `gone` is the better published word and the vocabulary readers already have; `failed:` should only speak where nothing else can. Measured 2026-09-18: 3 records carry the `gone` stamp, 1 carries a `failed:` reason, and the sets do not intersect -- collision 0 rows, which will not stay true.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_failed_fill_reason_reaches_the_public_blocker_but_never_outranks_gone"
+  ]
  }
 ]
