@@ -370,3 +370,4 @@
 {"at":"2026-09-18T14:19:02Z","cap":2,"capped":false,"ci":false,"credits":2,"pid":26612,"purpose":{"unlock":2},"tool":"-c"}
 {"at":"2026-09-18T14:29:25Z","cap":3,"capped":false,"ci":false,"credits":1,"pid":21956,"purpose":{"jd-fill":1},"tool":"probe_waze_paid.py"}
 {"at":"2026-09-18T14:29:38Z","cap":3,"capped":false,"ci":false,"credits":1,"pid":17276,"purpose":{"jd-fill":1},"tool":"probe_waze_paid.py"}
+{"at":"2026-09-18T21:28:48Z","cap":null,"capped":false,"ci":true,"credits":9,"pid":2588,"purpose":{"jd-fill":9},"tool":"enrich_scrape_jd.py"}
