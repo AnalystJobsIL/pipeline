@@ -367,3 +367,6 @@
 {"at":"2026-09-18T09:50:13Z","cap":250,"capped":false,"ci":true,"credits":5,"pid":2295,"purpose":{"discovery":5},"tool":"discovery_daily.py"}
 {"at":"2026-09-18T10:20:49Z","cap":250,"capped":false,"ci":true,"credits":37,"pid":2942,"purpose":{"search":10,"unlock":27},"tool":"resolve_broken.py"}
 {"at":"2026-09-18T10:44:58Z","cap":250,"capped":false,"ci":true,"credits":51,"pid":3292,"purpose":{"jd-fill":51},"tool":"run.py"}
+{"at":"2026-09-18T14:19:02Z","cap":2,"capped":false,"ci":false,"credits":2,"pid":26612,"purpose":{"unlock":2},"tool":"-c"}
+{"at":"2026-09-18T14:29:25Z","cap":3,"capped":false,"ci":false,"credits":1,"pid":21956,"purpose":{"jd-fill":1},"tool":"probe_waze_paid.py"}
+{"at":"2026-09-18T14:29:38Z","cap":3,"capped":false,"ci":false,"credits":1,"pid":17276,"purpose":{"jd-fill":1},"tool":"probe_waze_paid.py"}

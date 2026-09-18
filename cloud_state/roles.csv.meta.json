@@ -1,11 +1,11 @@
 {
  "dataset": "roles.csv",
- "download_url": "https://analystjobsil.github.io/board/roles.csv",
+ "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
  "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
- "published_on_pages": true,
- "generated_at": "2026-09-18T10:44:51Z",
+ "published_on_pages": false,
+ "generated_at": "2026-09-18T14:45:01Z",
  "run_date": "2026-09-18",
- "rows": 186,
+ "rows": 185,
  "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
  "window": {
   "days": 90,
@@ -18,7 +18,7 @@
  },
  "classifier_contract": {
   "live": "v3.0f84ab84",
-  "rows_current": 186,
+  "rows_current": 185,
   "rows_stale": 0,
   "rows_unknown": 0,
   "note": "rows_unknown is not a defect in the row: it is a cell stamped before the contract was recorded (2026-09-11), or a verdict served from the classifier cache without the seam reporting which contract answered. It means 'we cannot say', which is the honest reading and not 'stale'."
@@ -992,11 +992,11 @@
   "rows": 0,
   "rule": "status open or closed AND last_seen < 2026-06-21 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
-  "download_url": "https://analystjobsil.github.io/board/roles_archive.csv",
-  "published_on_pages": true
+  "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
+  "published_on_pages": false
  },
  "reconciliation": {
-  "rows": 186,
+  "rows": 185,
   "archived": 0,
   "superseded": 17,
   "purged": 17,
@@ -1004,7 +1004,7 @@
   "outside_window": 0,
   "undatable": 0,
   "unreadable": 0,
-  "blocked_excluded": 5,
+  "blocked_excluded": 6,
   "pending_excluded": 4,
   "store_records": 289,
   "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable + blocked_excluded + pending_excluded == store_records",
@@ -1038,8 +1038,8 @@
   "why": "the full text is up to 6,000 characters per role with embedded newlines: it breaks naive parsers, and this file is committed to git every day",
   "file": "roles_text.jsonl",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_text.jsonl",
-  "download_url": "https://analystjobsil.github.io/board/roles_text.jsonl",
-  "published_on_pages": true,
+  "download_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_text.jsonl",
+  "published_on_pages": false,
   "join": "role_id",
   "columns_here": [
    "description_len",
@@ -1049,7 +1049,7 @@
    "description_blocker"
   ],
   "quality": {
-   "jd": 186,
+   "jd": 185,
    "snippet": 0,
    "none": 0,
    "unmeasured": 0,
@@ -1057,9 +1057,10 @@
   },
   "blocked": {
    "policy": "exclude",
-   "structural": 5,
+   "structural": 6,
    "pending": 4,
    "structural:not-a-job-url(donors:0)": 3,
+   "listing-page": 1,
    "structural:js-shell(donors:0)": 1,
    "structural:gone(donors:1)": 1
   }
@@ -1103,7 +1104,7 @@
   },
   "posted_date": {
    "doc": "The date the EMPLOYER states the role was posted. Empty when the board publishes none.",
-   "nulls": 20
+   "nulls": 19
   },
   "first_seen": {
    "doc": "The first day this pipeline ever saw the role, across all of its spells. Not a posting date.",
@@ -1132,7 +1133,7 @@
   },
   "closed_on": {
    "doc": "The day we recorded it closed. Empty while open.",
-   "nulls": 131
+   "nulls": 130
   },
   "emailed": {
    "doc": "true if this role went out in a daily digest email.",
@@ -1140,7 +1141,7 @@
   },
   "emailed_on": {
    "doc": "The date it was first emailed. Empty if never emailed.",
-   "nulls": 42
+   "nulls": 39
   },
   "episodes": {
    "doc": "How many separate spells we have seen this role open (a reappearance after an absence starts a new one).",
@@ -1152,7 +1153,7 @@
   },
   "repost_dates": {
    "doc": "The posted_date values those bumps landed on, separated by ';'.",
-   "nulls": 141
+   "nulls": 140
   },
   "sources": {
    "doc": "Which fetchers saw it (greenhouse, comeet, scrape, ...), separated by ';'.",
@@ -1233,7 +1234,7 @@
   },
   "ai": {
    "doc": "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned.",
-   "nulls": 135,
+   "nulls": 132,
    "enum": {
     "AI for efficiency": "Expected to use AI tools (Copilot, ChatGPT, Cursor…) to work faster",
     "AI for automation": "Using AI to automate processes and workflows",
@@ -1284,7 +1285,7 @@
   },
   "description_blocker": {
    "doc": "Why a weak text (description_quality snippet/none) is structurally hard to complete, or empty. Recorded verdicts (jd-text's matched.jd_why, 'structural:*') verbatim; else derived: 'gone' (the posting 404s on the employer's own board), 'unfillable:<why>' (a host no rung we own can read), 'listing-page' (the only address we hold is a shared listing, not the posting's own). Under the live policy (meta description_text.blocked.policy — 'exclude' since the operator's 2026-09-01 ruling) a blocked row is excluded from this file with its reason counted in the meta; a weak row with NO blocker is pending a fill and stays; the archive keeps history either way.",
-   "nulls": 186
+   "nulls": 185
   },
   "sector": {
    "doc": "Company sector (firmographics).",
@@ -1354,7 +1355,7 @@
   },
   "skills_bi": {
    "doc": "Skills of category 'bi' only, separated by ';' — group by this without parsing.",
-   "nulls": 56
+   "nulls": 55
   },
   "skills_query": {
    "doc": "Skills of category 'query' only, separated by ';' — group by this without parsing.",
@@ -1362,11 +1363,11 @@
   },
   "skills_de": {
    "doc": "Skills of category 'de' only, separated by ';' — group by this without parsing.",
-   "nulls": 111
+   "nulls": 110
   },
   "skills_pa": {
    "doc": "Skills of category 'pa' only, separated by ';' — group by this without parsing.",
-   "nulls": 157
+   "nulls": 156
   },
   "skills_prog": {
    "doc": "Skills of category 'prog' only, separated by ';' — group by this without parsing.",
@@ -1378,11 +1379,11 @@
   },
   "skills_cloud": {
    "doc": "Skills of category 'cloud' only, separated by ';' — group by this without parsing.",
-   "nulls": 168
+   "nulls": 167
   },
   "skills_lang": {
    "doc": "Skills of category 'lang' only, separated by ';' — group by this without parsing.",
-   "nulls": 133
+   "nulls": 132
   }
  }
 }
