@@ -245,6 +245,20 @@ Both CANNOT-FAILs were tests of things that already existed at the base — the 
 was that no vocabulary arm is warranted). Each was **folded into a test that kills** rather
 than filed: second reading **KILLS 5, CANNOT-FAIL 0**.
 
+**In CI, on the sha that carries every line of this code (`f64b393`): run `35359208215`,
+conclusion `failure`, 10 of 16 jobs green** — `guard` (the full suite), `guard-kill` and all
+seven `rehearse` shards. The six reds are mutation shards 0, 1, 3, 5, 6 and 7 and **not one
+of them is a surviving mutant**: each ended on `mutation shard N of 8 exceeded its 40-minute
+budget … rc 137`, the condition `631@infra`, filed by the `docs` lane the same afternoon (and brushed
+by `617@infra` on 09-13), whose remedy the workflow's own error text states ("add a matrix entry and bump SHARDS rather than minutes"). Shard 0 printed
+**46 records killed, 0 surviving** before the wall. Two of this session's four records were
+reached before their shards ran out and both were killed there:
+`a-decision-record-stops-outranking-the-seam-on-the-live-path` (shard 0) and
+`refill-lets-an-accept-cell-become-a-reject` (shard 1); the other two were killed locally and
+are named in the 09-19 morning-check row. The catalogue passed **401** records today, having
+taken 4 from this lane and about a dozen from `registry` and `scraper` in the same hours,
+which is what pushed five shards past a wall that four were already brushing.
+
 `python tools/mutate.py --id <one at a time>` — `--id` is not repeatable, which is worth
 knowing before reading a one-line table as four: **all four killed**,
 `backfill-ignores-a-reject-cell-under-a-retired-contract` (direct),
