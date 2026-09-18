@@ -13116,6 +13116,21 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      Nebius 2, TransPerfect 2, Reeco 1 — so what was stored is a shell or a careers index that
      answered for both, and `_shared_page_texts` re-pools it, which is why the same shell comes
      back. Check: `python -c "import json,collections;s=json.load(open('scraped_cache.json',encoding='utf-8'));g=collections.defaultdict(set);[g[j['description']].add((c,j['title'])) for c,v in s.items() if isinstance(v,list) for j in v if isinstance(j,dict) and len((j.get('description') or '').strip())>=300 and j.get('_own_url') is not False];print(sum(len(t) for t in g.values() if len({x[1] for x in t})>=2))"`.
+
+     **Measured at this lane's door, 2026-09-18 (`jd-text`), and the door already holds.**
+     `enrich_scrape_jd._shared_page_texts` re-pools exactly this class: **27 cards over 10
+     distinct texts** on the rebased cache, and every one of the ten companies above is in
+     it (Get SAT 6, CHEQ 4, Publicis 4, AudioCodes 3, Continental 2, Deloitte 2, Majestic
+     2, Nebius 2, TransPerfect 2). The driver counts them `shared_page` and REFUSES them --
+     it does not treat a shared shell as "already has a description", it does not fill them,
+     and `reclean_cache` never touches a `_jd_shared_page` card. So nothing is being
+     installed from this class today and there is no fix owed at the fetch door.
+     Reeco's single card is the one that is NOT re-pooled, and cannot be: sharing needs two
+     titles, and one card is a singleton -- it is judged on its own text by `looks_like_jd`
+     like any other. **What is left is the scraper's**: the 27 are refused every night for
+     ever, so the roles behind them have no description at all until the CAPTURE stores the
+     posting's own page instead of the shell that answered for two.
+
 ## From the `roles` lane, 2026-09-18 (the verdict cell decides membership)
 
 626. ~~**A `reject` cell has no writer that can flip it back, so a machine withdrawal cannot be
