@@ -13324,9 +13324,27 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      * `הפניקס` (ACTIVE, `fnx.co.il`, 10 IL) ↔ `Phoenix Financial` (parked 2026-09-18,
        `arizonafinancial.org` was another company's). Same insurer, almost certainly; needs
        the Latin row shown to have no board of its own before it is folded, not merely parked.
-     * `בנק דיסקונט` (parked, no address) ↔ `Discount Bank` (ACTIVE, oraclecloud) and
-       ↔ `Discount Bank בנק דיסקונט` (parked). THREE rows, one bank — the fold has to pick a
-       survivor and the oraclecloud tenant is the only one with a board.
+     * ~~`בנק דיסקונט` ↔ `Discount Bank` ↔ `Discount Bank בנק דיסקונט`~~ — **DONE 2026-09-19,
+       and the registry half was never the gap.** Both Hebrew rows have carried
+       `alias-of Discount Bank` since 2026-09-01 and 2026-08-28; what was missing is the
+       `ALIASES` half, so the fold has been inert for eighteen days — the `571` shape, a park
+       with no declaration, found by looking for the ALIASES keys rather than the parks.
+       `company-intel` owns `"בנק דיסקונט"` and `"discount bank בנק דיסקונט"` → `discount bank`.
+       The survivor's ROW was the defect instead: it was `ats_platform=scrape` on the human
+       Oracle page (`hcmUI/CandidateExperience/he/sites/CX_3001/requisitions`), a JS shell, so
+       one bank's 67 openings were being scraped as a page. Repointed to `oraclehcm` on the
+       list API (`recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=CX_3001`),
+       measured through the production fetcher from the shared checkout: **67 jobs, 67 Israel**
+       (`is_israel_job`, on Hebrew place strings; `country_code` is unset on this platform),
+       and `/job/5108` is among the cards carrying exactly the title the held role record
+       waits on (`אנליסט.ית אשראי ראש.ת צוות- ענף אנליזת אשראי וחיתום- חטיבה עסקית`, `ישראל`).
+       **0 credits.** The gate admits on the PAGE, as it does for the six existing `oraclehcm`
+       rows: `is_foreign` False, `tenant_is_this_company` False (the Oracle pod `ehsb` is
+       opaque — 22 active rows are in that documented class), `board_vouches` None both ways,
+       `activation_verdict(…, 67, html=<the human page, 101,375 chars, naming the bank in both
+       scripts>)` = `ok`. **No `identity_facts` declaration was added** — `tenants: ("ehsb",)`
+       would change no behaviour today and would put a vendor pod in a table that is meant for
+       company facts.
      * `מטריקס` (ACTIVE, `matrixdna.ai`) ↔ `Matrix` (ACTIVE, comeet) ↔ `Matrix IT` (ACTIVE).
        Possibly THREE REAL ENTITIES (Matrix IT is a large integrator; `Matrix` is also on
        `recruiters`' radar as a staffing name) — do not fold without the boards.
