@@ -13761,6 +13761,35 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      match a board that is not its own — that is exactly the `596` failure this lane spent
      2026-09-13 undoing. `company-intel` will re-profile whatever the row points at once
      `registry` has repointed or split it.
+
+     **CLOSED 2026-09-19 by `registry` on the registry half; the `ALIASES` + record half is
+     `company-intel`'s and lands the same day.** The split crowns the GROUP, not a subsidiary,
+     because the board is the group's by its own evidence: no subsidiary page lists jobs
+     (`/data` and `/tech` carry 0 posting links, `/finance` carries 1), and one seam read of
+     `/career` under the new name answers `ok`, `employer_named: "Group19"`, *"Group19's own
+     careers page on its Israeli domain (.org.il), titled `קריירה | Group19`"*. So a new ACTIVE
+     row `Group19` takes the board (`identity_ok` True offline, `verdict` `match`), and
+     `Group19 Tech` is parked `alias-of Group19 2026-09-19` with the subsidiary fact in the
+     note — the `/dataanalyst-1` page names **`Group19 Data` 11 times** against `Group19 Tech`
+     8 (navigation only) and puts the job in `אופקים`, so the employer of record is a
+     subsidiary the board does not expose as a page.
+
+     **Coverage is name-independent, and that was measured rather than assumed**: the same url
+     scrapes the SAME number under both names (0 and 0 from this machine today, where the page
+     needs a rung this checkout has not got — production's `health_baseline` and yesterday's
+     cache both read **8**, including the `Data Analyst` card with a 658-character description).
+     A local zero is not a measurement; what the test settles is that only the ROW name moved.
+     The 00:00 UTC `scrape-refresh` re-scrapes every active scrape row, so `Group19` is cached
+     before the 09-20 digest — that is the morning check.
+
+     **Rejected**: a RENAME (`459` — `company_name` is the join key for the firmographics, the
+     roles ledger, `matched` and the board, and this row has 1 role record and 1 record);
+     a second ACTIVE row `Group19 Data` on the same url (`audit_empty_rows.active_twin` refuses
+     two active rows on one board, and the scraper would then attribute all 8 cards to it);
+     parking `Group19 Tech` `wrong-url` (the ledger reads that board `ok` FOR the row, and a
+     live analyst card would drop). The note cost: the append evicted
+     `queue-hunt 2026-08-29: … monitored candidate` to seat the alias at 200 of 220 characters —
+     free, because `alias-of` is terminal and no pool reads the row again.
 ## From the `ats-fetch` lane, 2026-09-18 (a regression is two nights, and the consumers do not know)
 
 635. **The self-heal and the targeted discovery sweep still spend a strike on a ONE-NIGHT
