@@ -1400,9 +1400,9 @@ def classify_grouped(candidates, clf, jdfill, stats, paths):
     return accepted
 
 
-def reject_map(jobs):
-    """`{role_id: class}` for every judged copy the classifier REJECTED this run
-    (docs/BACKLOG.md 543).
+def reject_map(jobs, contract=""):
+    """`{role_id: class}` for every judged copy the classifier REJECTED **this run** under
+    `contract` (docs/BACKLOG.md 543, narrowed by 647).
 
     `classify_grouped` stamps `_class` on every member of a judged group and then returns
     only the accepts, so a role the seam re-judges NO is not in `merged` -- and `merged` is
@@ -1415,12 +1415,37 @@ def reject_map(jobs):
     A reject here is a VERDICT, not a closure. `_record_run` writes the cell and leaves the
     status alone, because the liveness rule is `_alive` in run.py and nothing else; a
     rejected role is simply never upserted, so `last_seen` stops moving and it closes on the
-    ordinary ladder tomorrow, mass-close guard included."""
+    ordinary ladder tomorrow, mass-close guard included.
+
+    **`contract` is what makes this THIS RUN'S reject** (2026-09-19, `647`). Since 09-18 the
+    cell is a withdrawal, so "the classifier said NO" has to mean the classifier said NO
+    *today*: `seniority._classify` also returns a `reject` for a verdict it merely SERVED
+    from the cache under a RETIRED contract (`path: llm_cache`, `contract: prior[4]`, reason
+    "cached LLM verdict (superseded contract)"), and 254 verdicts were served stale on the
+    first unattended sweep, 40 of them unreachable because the card carried no description.
+    Two rows left the dataset on one of those — `Amitim Pension Funds | Data Analyst`, whose
+    live-contract `|jd` row said YES the same morning, and `Menora Mivtachim | אנליסט.ית
+    סיכונים פיננסיים`, withdrawn off a 09-14 `|bare` NO with **zero live votes** — and a
+    third (`הפניקס | 50400095`) was lost to a rename. A stale NO is not evidence under the
+    rules live today; it is the drain's queue.
+
+    So a `_class` whose `contract` is not `contract` is skipped, which covers a retired
+    prefix and the legacy `""`. Read from the `contract` KEY and never from the reason
+    string, the rule `_class_of` already states. The keyword head and a paid `llm` verdict
+    both stamp `self.contract` (`seniority.py`), so neither is affected; an `llm_cache` hit
+    under the live contract still counts, because that IS the live contract's answer. Pass
+    nothing and every reject counts, as before.
+
+    The ACCEPT direction is untouched: a stale YES keeps a row published, which is `543`'s
+    own gap for that subclass and `648`'s to close."""
     out = {}
     for j in jobs:
         cls = j.get("_class") or {}
-        if cls.get("decision") == "reject":
-            out[_store.merge_key(j)] = cls
+        if cls.get("decision") != "reject":
+            continue
+        if contract and (cls.get("contract") or "") != contract:
+            continue
+        out[_store.merge_key(j)] = cls
     return out
 
 
@@ -1761,6 +1786,32 @@ class Ledger:
                     len(identity_key(name)),
                     name)
         return min(idxs, key=rank)
+
+    def _current_id(self, rid):
+        """`rid` as THIS RUN's renames left it — the key the records dict answers to now.
+
+        `self.renamed` was written for `flush`'s `may_drop` and read nowhere else, and that
+        cost a row (2026-09-19, `647`). The two verdict maps `record_run` applies are built
+        BEFORE the at-rest folds: `class_backfill.candidates` reads `ledger.records` at
+        `run.py:553` and `fold_aliases` renames records at 636, so on the morning
+        `phoenix financial|data analyst 50400095` became `הפניקס|data analyst 50400095` the
+        backfill's `accept` for it was looked up under the old key, `records.get` returned
+        None, and the map entry was dropped SILENTLY — leaving the stale `reject` cell on the
+        record for `_withdraw_rejected` to act on. One row, no alarm, no counter.
+
+        A fixed point rather than one hop: two sweeps can rename the same record in one run
+        (the alias fold, then the title canon), and the chain is bounded at 8 hops so a cycle
+        a future writer introduces cannot hang the digest. Renaming is rare and the map is
+        empty on most mornings, so this is a dict lookup that usually misses."""
+        seen = {rid}
+        cur = rid
+        for _ in range(8):
+            nxt = self.renamed.get(cur)
+            if not nxt or nxt in seen:
+                break
+            cur = nxt
+            seen.add(cur)
+        return cur
 
     def _rename_record(self, rid, new_key, **fields):
         """Move one record to a new `role_id`, in ALL THREE stores, or do nothing.
@@ -2612,10 +2663,16 @@ class Ledger:
         # EXCLUDED with a written, counted reason; "open+reject for one morning" is exactly
         # what the sweep removes. The guard against a rules edit flipping the board in one
         # run is the `roles mass-reject` alarm below, not a day's delay.
+        # ...and `_current_id` because a map built before this run's at-rest folds is keyed on
+        # the names the ledger had THEN (`647`). Both `by_key` spellings are refused, so a
+        # live accept wins whichever of the two the run's own jobs were folded to.
         for rid, cls in (class_rejects or {}).items():
-            rec = self.records.get(rid)
-            if rec is None or rid in by_key:
+            key = self._current_id(rid)
+            rec = self.records.get(key)
+            if rec is None or key in by_key or rid in by_key:
                 continue                      # never seen, or this run accepted it: live wins
+            if key != rid:
+                c["class_rekeyed"] += 1
             if (rec.get("status") or "open") not in ("open", "closed"):
                 continue
             new_cls = _class_of(cls, self.live_contract)
@@ -2646,10 +2703,17 @@ class Ledger:
         # state on 2026-09-18. This loop runs BEFORE `_withdraw_rejected`, which is what
         # makes the two coherent: a cell refilled to `accept` this morning is not withdrawn
         # the same morning.
+        # the run's own NOs under BOTH spellings, for the same reason the loop above resolves
+        # them: the two maps are keyed on different sides of this run's renames.
+        _rejected = set(class_rejects or ()) | {self._current_id(k) for k in (class_rejects or ())}
         for rid, cls in (class_backfill or {}).items():
-            rec = self.records.get(rid)
-            if rec is None or not cls or rid in by_key or rid in (class_rejects or {}):
+            key = self._current_id(rid)
+            rec = self.records.get(key)
+            if rec is None or not cls or key in by_key or rid in by_key \
+                    or key in _rejected or rid in _rejected:
                 continue
+            if key != rid:
+                c["class_rekeyed"] += 1
             new_cls = _class_of(cls, self.live_contract)
             if (rec.get("class") or {}) and not class_refillable(rec, new_cls):
                 continue
@@ -2724,6 +2788,7 @@ class Ledger:
                 + (f" · twin folds {self.twin_folds}" if self.twin_folds else "")
                 + (f" · class-backfilled {c['class_backfilled']}" if c["class_backfilled"] else "")
                 + (f" · class-rejected {c['class_rejected']}" if c["class_rejected"] else "")
+                + (f" · re-keyed {c['class_rekeyed']}" if c["class_rekeyed"] else "")
                 + (f" · closed by page {c['closed_by_page']}" if c["closed_by_page"] else "")
                 + (f" · closure text on {c['closure_text_ignored']} board-listed row(s) "
                    f"(ignored)" if c["closure_text_ignored"] else "")

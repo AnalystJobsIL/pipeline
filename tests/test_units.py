@@ -28161,6 +28161,168 @@ def test_a_machine_withdrawal_is_reversed_by_the_verdict_alone(tmp_path):
     assert sorted(r["role_id"] for r in rows) == [a, b] and not counts["withdrawn"]
 
 
+# --------------------------------------------------------------------------------------
+# 2026-09-19, `roles` (`647`): the first UNATTENDED reject sweep withdrew three rows the
+# same run had no live NO for. `reject_map` counted a verdict the cache merely SERVED under
+# a retired contract (Amitim, Menora), and an alias rename in the same run orphaned the
+# backfill's `accept` before `record_run` could apply it (הפניקס 50400095).
+# --------------------------------------------------------------------------------------
+_STALE_NO = {"decision": "reject", "path": "llm_cache", "contract": "v3.0f84ab84",
+             "reason": "cached LLM verdict (superseded contract)"}
+
+
+def test_a_served_stale_no_is_not_this_runs_reject_and_the_backfill_accept_stands(tmp_path):
+    """The Amitim shape. `seniority._classify` returns `reject` for a verdict it SERVED from
+    the cache under a retired contract — 254 such verdicts on the morning of 2026-09-19, 40
+    of them unreachable for want of a description — and `reject_map` took any `decision ==
+    "reject"`. So the run stamped a NO it had not made, the backfill loop below then SKIPPED
+    the record (`rid in class_rejects`) and discarded the `accept` that the live contract's
+    own `|jd` cache row had just produced, and `_withdraw_rejected` deleted the row.
+
+    The contract check is what separates them, and it reads the `contract` KEY: a cache hit
+    under the LIVE contract is still the live contract's answer and still counts."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs = _ledger(1, description=_JD_TEXT)
+    (a,) = sorted(recs)
+    recs[a]["status"] = "closed"
+    recs[a]["closed_on"] = "2026-09-10"
+    recs[a]["class"] = dict(_STALE_NO)
+    job = {**recs[a], "_class": dict(_STALE_NO)}
+    assert roles.reject_map([job]) == {a: _STALE_NO}, "unfiltered, every reject counts"
+    assert roles.reject_map([job], contract="v3.0a439b16") == {}, "not THIS run's NO"
+    # ...and a live-contract cache hit IS this run's answer
+    live_no = {**_STALE_NO, "contract": "v3.0a439b16", "reason": "cached LLM verdict"}
+    assert roles.reject_map([{**recs[a], "_class": live_no}],
+                            contract="v3.0a439b16") == {a: live_no}
+    lg = roles.Ledger(st, "2026-09-19")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    st.insert_matched({**recs[a], "mkey": a})
+    lg._open_sync()
+    lines = lg.record_run("2026-09-19", board_jobs=[], merged=[], scanned_ok=set(),
+                          failed=set(), paths={}, scoped=True, contract="v3.0a439b16",
+                          class_rejects=roles.reject_map([job], contract="v3.0a439b16"),
+                          class_backfill={a: {"decision": "accept", "path": "llm_cache",
+                                              "contract": "v3.0a439b16",
+                                              "reason": "cached LLM verdict"}})
+    st.close()
+    rec = lg.records[a]
+    assert rec["class"]["decision"] == "accept", rec["class"]
+    assert rec["status"] == "closed" and rec["closed_on"] == "2026-09-10"
+    for k in ("withdrawn_by", "withdrawn_on", "withdraw_reason"):
+        assert k not in rec, k
+    assert not lg.counts.get("class_rejected") and not lg.counts.get("withdrawn"), lg.counts
+    assert not any("withdrawn" in ln for ln in lines), lines
+    rows, _c = roles.build_rows(lg.records, run_date="2026-09-19")
+    assert [r["role_id"] for r in rows] == [a], "the row is still in the dataset"
+
+
+def test_a_served_stale_no_leaves_a_published_accept_cell_exactly_as_it_was(tmp_path):
+    """The Menora shape, and the reason the fix is a refusal rather than a re-decision: this
+    record was `closed` with an `accept` cell and it was served a stale BARE NO dated 09-14 —
+    zero live votes of any kind — which flipped the cell and withdrew the row the same run.
+
+    After the narrowing the cell is left where it was, which keeps a published row standing
+    on a verdict no longer current. That is the known gap (`648`, lane `classifier`: judge a
+    text-less card on the ledger's stored text), and it is the right side to fail on: 73 of
+    the published cells already name a non-live contract, against three wrong deletions."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs = _ledger(1, description=_JD_TEXT)
+    (a,) = sorted(recs)
+    recs[a]["status"] = "closed"
+    recs[a]["class"] = {"decision": "accept", "path": "llm", "contract": "v3.0f84ab84",
+                        "reason": "in scope"}
+    before = dict(recs[a]["class"])
+    bare_stale = {"decision": "reject", "path": "llm_cache", "contract": "v3.0f84ab84",
+                  "reason": "cached LLM verdict (superseded contract)"}
+    lg = roles.Ledger(st, "2026-09-19")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    st.insert_matched({**recs[a], "mkey": a})
+    lg._open_sync()
+    lg.record_run("2026-09-19", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
+                  paths={}, scoped=True, contract="v3.0a439b16",
+                  class_rejects=roles.reject_map([{**recs[a], "_class": bare_stale}],
+                                                 contract="v3.0a439b16"))
+    st.close()
+    assert lg.records[a]["class"] == before and lg.records[a]["status"] == "closed"
+    assert not lg.counts.get("withdrawn"), lg.counts
+
+
+def test_the_backfill_map_follows_a_rename_this_same_run_made(tmp_path):
+    """The הפניקס shape. `class_backfill.candidates` reads `ledger.records` at `run.py:553`;
+    `fold_aliases` renames records at 636; `record_run` applies the map at 948. So the map
+    is keyed on the name the ledger had BEFORE the fold, `records.get(old)` returned None,
+    and the `accept` for `phoenix financial|…50400095` was dropped with no counter and no
+    alarm — leaving the stale `reject` cell for `_withdraw_rejected` to delete the row on.
+
+    `Ledger.renamed` held the answer the whole time and only `flush` read it."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs = {"phoenix financial|data analyst": _rec("phoenix financial|data analyst",
+                                                  description=_JD_TEXT)}
+    old = "phoenix financial|data analyst"
+    new = "הפניקס|data analyst"
+    recs[old]["status"] = "closed"
+    recs[old]["class"] = dict(_STALE_NO)
+    lg = roles.Ledger(st, "2026-09-19")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    st.insert_matched({**recs[old], "mkey": old})
+    lg._open_sync()
+    assert lg._rename_record(old, new, company="הפניקס") is True
+    assert lg.renamed == {old: new} and lg._current_id(old) == new
+    lg.record_run("2026-09-19", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
+                  paths={}, scoped=True, contract="v3.0a439b16",
+                  class_backfill={old: {"decision": "accept", "path": "llm",
+                                        "contract": "v3.0a439b16", "reason": "re-judged IN"}})
+    st.close()
+    assert old not in lg.records
+    assert lg.records[new]["class"]["decision"] == "accept", lg.records[new]["class"]
+    assert lg.records[new]["status"] == "closed" and not lg.counts.get("withdrawn")
+    assert lg.counts["class_rekeyed"] == 1 and lg.counts["class_backfilled"] == 1
+    # a chain of renames in one run resolves to the end of it, and a cycle terminates
+    lg.renamed = {"a": "b", "b": "c"}
+    assert lg._current_id("a") == "c"
+    lg.renamed = {"a": "b", "b": "a"}
+    assert lg._current_id("a") in ("a", "b"), "a cycle must not hang the digest"
+
+
+def test_a_live_contract_no_still_withdraws_and_still_beats_the_backfill(tmp_path):
+    """The narrowing must not disarm the sweep `543`/`621` built. A NO the run made TODAY —
+    keyword head or a paid `llm` call, both of which stamp the live contract — withdraws the
+    row exactly as before, and the backfill map may not undo it the same morning: that skip
+    is what stops a backlog pass from overruling the verdict of a run that judged the role."""
+    from pipeline import roles, store
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    recs = _ledger(1, description=_JD_TEXT)
+    (a,) = sorted(recs)
+    live_no = {"decision": "reject", "path": "llm", "contract": "v3.0a439b16",
+               "reason": "out of scope (condition 2)"}
+    lg = roles.Ledger(st, "2026-09-19")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    st.insert_matched({**recs[a], "mkey": a})
+    lg._open_sync()
+    rej = roles.reject_map([{**recs[a], "_class": live_no}], contract="v3.0a439b16")
+    assert rej == {a: live_no}, "a live NO survives the contract filter"
+    lines = lg.record_run("2026-09-19", board_jobs=[], merged=[], scanned_ok=set(),
+                          failed=set(), paths={}, scoped=True, contract="v3.0a439b16",
+                          class_rejects=rej,
+                          class_backfill={a: {"decision": "accept", "path": "llm",
+                                              "contract": "v3.0a439b16", "reason": "IN"}})
+    st.close()
+    assert lg.records[a]["class"] == live_no, "the run's own NO is not backfilled away"
+    assert lg.records[a]["status"] == "withdrawn"
+    assert lg.records[a]["withdraw_reason"] == ("classifier llm under v3.0a439b16: "
+                                                "out of scope (condition 2)")
+    assert lg.counts["class_rejected"] == 1 == lg.counts["withdrawn"], lg.counts
+    assert any("roles withdrawn 1 role(s)" in x for x in lg.alarms), lg.alarms
+    assert "class-rejected 1" in lines[0] and "re-keyed" not in lines[0], lines
+
+
 def test_the_export_refuses_a_leaked_reject_and_the_meta_still_reconciles(tmp_path):
     """The tripwire, not the mechanism: `_withdraw_rejected` should have emptied this class
     before a file was ever built, so a row reaching the export with a `reject` cell — or

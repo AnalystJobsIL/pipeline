@@ -4318,6 +4318,33 @@
   ]
  },
  {
+  "id": "reject-map-counts-a-served-stale-no",
+  "file": "pipeline/roles.py",
+  "symbol": "reject_map",
+  "class": "M5-population-widening",
+  "find": "        if contract and (cls.get(\"contract\") or \"\") != contract:\n            continue\n",
+  "replace": "",
+  "why": "647: since 2026-09-18 a `reject` cell is a WITHDRAWAL, so the map must hold only the NOs this run made. `seniority._classify` also returns `reject` for a verdict it merely SERVED from the cache under a retired contract (254 of them on 2026-09-19, 40 unreachable for want of a description) -- without the contract check two rows left the public dataset on zero live votes (Amitim, whose live `|jd` row said YES the same morning; Menora, on a 09-14 `|bare` NO) and the backfill's own `accept` for them was then discarded by the `rid in class_rejects` skip.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_served_stale_no_is_not_this_runs_reject_and_the_backfill_accept_stands",
+   "tests/test_units.py::test_a_served_stale_no_leaves_a_published_accept_cell_exactly_as_it_was"
+  ]
+ },
+ {
+  "id": "backfill-map-ignores-this-runs-rename",
+  "file": "pipeline/roles.py",
+  "symbol": "_current_id",
+  "class": "M6-fallback-removal",
+  "find": "        seen = {rid}\n        cur = rid\n        for _ in range(8):\n            nxt = self.renamed.get(cur)\n            if not nxt or nxt in seen:\n                break\n            cur = nxt\n            seen.add(cur)\n        return cur\n",
+  "replace": "        return rid\n",
+  "why": "647: the two verdict maps `record_run` applies are built BEFORE this run's at-rest folds -- `class_backfill.candidates` reads `ledger.records` at run.py:553 and `fold_aliases` renames at 636 -- so the identity function makes `records.get(old_key)` return None and the map entry is dropped SILENTLY, with no counter and no alarm. That is how `הפניקס|...50400095` kept a stale `reject` cell and was withdrawn from the dataset on a morning the backfill had judged it accept.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_backfill_map_follows_a_rename_this_same_run_made"
+  ]
+ },
+ {
   "id": "rename-overwrites-an-occupied-key",
   "file": "pipeline/roles.py",
   "symbol": "_rename_record",

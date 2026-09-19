@@ -534,7 +534,10 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
     # ledger keeps yesterday's `accept` — published as a false accept for the rest of the
     # 90-day window, and removable only by a hand-written retraction line. Read from the
     # CANDIDATE lists, which still hold every judged copy with its `_class` stamped on it.
-    _class_rejects = roles.reject_map(candidates + gcands)
+    # `contract=` is what makes it THIS RUN'S reject (2026-09-19, `647`): a verdict SERVED
+    # from the cache under a retired contract is the drain's queue, not today's NO, and three
+    # rows left the dataset on one on the first unattended sweep.
+    _class_rejects = roles.reject_map(candidates + gcands, contract=clf.contract)
 
     # THE DATASET BACKFILL (lane: classifier, ARCHITECTURE §7b; hook applied 2026-08-31 with
     # the operator's ruling, and it is `infra`'s file — the whole body is one call).
