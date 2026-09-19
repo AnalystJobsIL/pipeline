@@ -3790,3 +3790,39 @@ def test_clal_is_the_discovery_spelling_so_it_folds_without_a_registry_row():
     # ...and the two-ACTIVE-rows refusal
     assert F.alias_only_folds(
         recs, rows + _rows(("Clal Insurance and Finance Ltd", "true", ""))) == {}
+
+
+def test_a_survivor_bought_this_run_excuses_its_aliass_deletion(env, monkeypatch, tmp_path):
+    """`--export`'s superset guard asked `settle_keys` over a copy of the FILE, so it could not
+    see a fold whose survivor is a record bought in the SAME run: `fold_aliases` refuses a
+    survivor with no record, the alias key was therefore never excused, and the guard refused to
+    publish a deletion the union had itself performed. Measured on `Group19` / `Group19 Tech`,
+    2026-09-19 -- the first fold in this repo whose survivor was a brand-new record, which is
+    why eighteen declarations had never met it (`DoiT`, `Flare` and every parked pair had both
+    records in the file already).
+
+    The population is now `{**recs, **shared}`: the survivors the export actually holds, with
+    the file winning on value. The second half of this test is that it is still a GUARD -- a key
+    that vanishes with no view removing it is exactly the loss it exists for (19 records at risk
+    2026-08-24, 22 destroyed 2026-08-26)."""
+    import research_firmographics as RF
+    st, export, _calls, _fake = env
+    rows = _rows(("Group19", "true", ""))
+    monkeypatch.setattr(F, "_registry_rows", lambda: rows)
+    monkeypatch.setattr(F, "declared_aliases", lambda rows=None: {"Group19 Tech": "Group19"})
+    export.write_text(json.dumps({"Group19 Tech": REC, "Wix": REC}), encoding="utf-8")
+    # the file ALONE folds nothing, which is what made the old expression blind
+    assert F.settle_keys({"Group19 Tech": dict(REC), "Wix": dict(REC)},
+                         {"Group19 Tech": "Group19"}) == []
+    st.save_firmographics({"Group19": dict(REC)}, TODAY)      # bought THIS run
+    monkeypatch.setattr(RF, "EXPORT", str(tmp_path / "state" / "firmographics.json"))
+    monkeypatch.setattr(RF, "SeenStore", lambda *a, **k: st)
+    monkeypatch.setattr(sys, "argv", ["research_firmographics.py", "--export"])
+    assert RF.main() != 1, "the guard refused a fold the union had itself performed"
+    assert set(json.load(open(export, encoding="utf-8"))) == {"Group19", "Wix"}
+    # ...and a key nothing removed is still refused, with the file byte-identical after
+    export.write_text(json.dumps({"Group19 Tech": REC, "Wix": REC}), encoding="utf-8")
+    before = export.read_text(encoding="utf-8")
+    monkeypatch.setattr(RF, "union_store", lambda _st, shared=None: {"Group19": dict(REC)})
+    assert RF.main() == 1, "a record that vanished for no reason must still refuse the publish"
+    assert export.read_text(encoding="utf-8") == before

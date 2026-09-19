@@ -7705,18 +7705,18 @@
     "stage_note": "~$30-41M raised total; last round Dec 2023 (investors incl. Israel Cleantech Ventures, Middleland Capital)",
     "sub_sector": "mycorrhizal fungi inoculants (Rootella) for crop nutrient uptake and soil carbon sequestration"
   },
-  "Group19 Tech": {
-    "as_of": "2026-09-18",
-    "business_model": "Engineering and software services/projects",
-    "customer_type": "B2B / Government (defense, aerospace, drone companies)",
+  "Group19": {
+    "as_of": "2026-09-19",
+    "business_model": "Services and outsourcing: employs teams in peripheral sites and delivers digital, software, robotics, data and customer-service work for client companies",
+    "customer_type": "B2B",
     "employees_global": 23,
     "founded": null,
-    "il_center": "Yeruham (HQ)",
-    "sector": "defense & aerospace",
+    "il_center": "Sderot (HQ); branches in Safed, Mitzpe Ramon, Ofakim, Yeruham, Be'er Sheva",
+    "sector": "it services / outsourcing",
     "size_band": "S",
     "stage": "private-enterprise",
-    "stage_note": "Social-business subsidiary of Group19, founded by Hana Rado and Inbar Cohen; no venture funding found",
-    "sub_sector": "UAV/space software and engineering services"
+    "stage_note": "Privately held social-enterprise company founded by Chana Rado; no venture funding or public listing found",
+    "sub_sector": "Peripheral-region tech, digital and back-office services"
   },
   "GuardKnox": {
     "as_of": "2026-08-22",

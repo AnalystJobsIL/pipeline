@@ -441,7 +441,16 @@ def main():
         # ...and a DISOWNED record (`F.drop_disowned`) is the same kind of meant deletion.
         # `settle_keys` is the one call every view makes, so the guard excuses exactly what
         # the views remove and nothing a declaration merely names.
-        _settled = set(F.settle_keys(dict(shared)))
+        # ...and the population the views are evaluated over has to be the one the UNION was
+        # built from, not the FILE alone. `fold_aliases` refuses a survivor with no record, so
+        # a survivor whose record is bought in THIS run is invisible to `settle_keys(shared)`:
+        # the fold really happened in `recs`, the alias key was never excused, and the guard
+        # refused to publish a deletion it had itself performed (`Group19` / `Group19 Tech`,
+        # 2026-09-19 — the first fold in this repo whose survivor was a brand-new record).
+        # `{**recs, **shared}` adds exactly the survivors the export actually holds and lets
+        # `shared` win on value, so a key that vanished for a BAD reason still has no survivor
+        # record to enable a fold and is still flagged.
+        _settled = set(F.settle_keys({**recs, **shared}))
         lost = sorted(set(shared) - set(recs) - _settled)
         if lost:
             print("::error::company-intel refusing to publish: the union DROPS %d record(s) "
