@@ -3286,7 +3286,7 @@ alarm lines (2026-08-25 against `dcca442`: exactly `+ - **Stages:** repair never
 
 | path | rule |
 |---|---|
-| `companies.csv` | rows by company name, note segments unioned per tool (`merge_csv_rows.merge`); a segment the run deleted on purpose (`probe-woken` strips the hunt/triage stamps) stays deleted unless origin rewrote it (BACKLOG 15/60) |
+| `companies.csv` | rows by company name, then THREE ways against the checkout (`merge_csv_rows.merge`; 2026-09-19, BACKLOG 644). Per COLUMN (`ats_platform`, `token`, `api_url`, `active`): the side that changed it wins, and when BOTH changed it ORIGIN's value stands -- with a `::warning::merge-conflict <row> <col>` line, a `merge-conflict` record in `persist_log.jsonl` and a `Stages:` clause in the next mail saying so (`run.py::_merge_conflict_alarms`, 24 h). Per NOTE SEGMENT: ours is written onto origin's cell through `pipeline.notes.replace_own`, so the 220-char cap is spent by the append-log's own rule; a segment the run deleted on purpose (`probe-woken` strips the hunt/triage stamps) stays deleted unless origin rewrote it (BACKLOG 15/60); and a `listing-hunt` / `dark-triage` / `queue-hunt` / `wrong-url` verdict of OURS is dropped when origin moved `api_url`, because it was made against a page the row no longer points at |
 | `scraped_cache.json`, `cloud_state/firmographics.json`, `health_baseline.json`, `stale.json`, `scan_seen.json` | per company key (`merge_json_cache.merge`); a key the run dropped and origin left alone stays dropped (BACKLOG 95) — unless the run dropped more than a quarter of the base (a broken run, not deletions: kept, with a warning); a corrupt side yields to the other, never `{}` |
 | `cloud_state/pipeline_stages.json` | per stage key; the side that did not touch a stage yields, both touched → the newer `finished_at`; a stamp is never deleted |
 | `cloud_state/persist_log.jsonl` | the **union of the lines**, oldest first, capped at 400. An append-only log has no conflict to resolve — two runs that appended different lines both said something true — which is why it can have many writers and needs no single-writer claim. Identical lines dedupe, so a replayed rebase does not double one |
@@ -8902,6 +8902,24 @@ is the most reusable page in the repo: **a green workflow means nothing here.**
    token, add it to `_TOOL` in `merge_csv_rows.py` too** — an unrecognised segment is keyed
    by its first 28 chars, so two different runs of it collide and one is dropped.
    Guarded by `test_merge_unions_note_segments_from_both_writers`.
+3c. **A merge with a ONE-SIDED base reverts the other writer, and no gate can see it.** The
+   base has been there since 3b and was asked one question — *what did OURS change* — so
+   "changed from a snapshot that is now three hours old" and "changed authoritatively" looked
+   identical, and ours' four identity columns were copied wholesale. On 2026-09-18 the 19:00
+   `listing-hunt` (checked out 21:23Z, pushed 00:25Z as `7f960cd … (row-merged)`) put
+   `scrape,,www.harel-group.co.il/careers,false` back over the activation a session had pushed
+   at 00:08Z — `adamtotal`, 83 postings, 83 Israel — and `check_invariants` passed, because a
+   parked row carrying a pool token is a legal row. The hunt's own read was true of the row it
+   read; what was missing was the third input. Since 2026-09-19 every column and every note
+   segment is merged against the base (§5's conflict table has the rule), a column both sides
+   moved keeps ORIGIN's and reaches the morning mail, and replaying that night leaves Harel's
+   row byte-identical to the session's while all 76 other rows the hunt wrote are unchanged.
+   **The exposure was the WINDOW, not the hour**: the seven state-writing crons' real
+   completion windows cover about 21 of 24 hours, and 19 of 19 session pushes of
+   `companies.csv` since 2026-09-01 landed inside one — so no push-hour rule could have fixed
+   it. Guarded by `test_a_row_origin_activated_survives_a_stale_stamp_from_the_cron`,
+   `test_both_sides_changing_api_url_keeps_origin_and_says_so` and
+   `tests/rehearse_infra.py --conflict`.
 4. **Search results will hand you another company's board** — and it verifies, with real
    jobs. `_slug_matches` guards it. But note the inverse: CyberArk→PANW and Imperva→Thales
    looked like false matches and were actually **real acquisitions**. Check before "fixing".

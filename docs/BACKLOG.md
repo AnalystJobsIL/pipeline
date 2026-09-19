@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**695 filed · 488 open · 207 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**696 filed · 488 open · 208 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 646.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 647.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -375,7 +375,7 @@ closure convention in the header.
 - **630** `630@infra` **Bright Data's Unlocker cannot fetch `google.com` at all, so a Google Careers posting is
 - **634** `634@infra` **Every LinkedIn copy we hand the archive is synthesized as `www.linkedin.com/jobs/view/<id>`,
 - **638** `638@infra` **`jd-archive.yml` installs no Chromium, so the 12:30 pass cannot reach the free render it
-- **644** `644@infra` **A cron that runs for three hours writes `companies.csv` from its START-OF-RUN snapshot,
+- **646** `646@infra` **`merge_json_cache` merges 13 keyed caches with the same ONE-SIDED base `merge_csv_rows`
 
 ### scraper — 35 open
 
@@ -14048,10 +14048,12 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      the table — and a subdomain-shaped host outside the pattern is a THIRD case it could not
      express; it now computes `_SUBDOMAIN_TENANT_HOST.search(host)`. Positive control kept:
      `Riskified`/novartis and `Bancor`/bancorpbank are in scope and still assert False.
-644. **A cron that runs for three hours writes `companies.csv` from its START-OF-RUN snapshot,
+644. ~~**A cron that runs for three hours writes `companies.csv` from its START-OF-RUN snapshot,
      so the row-level merge lets a STALE verdict beat a newer push — measured, one row lost the
-     same night** — lane: `infra` (`persist_state.merge_csv_rows`) with `registry`, filed
-     2026-09-19 by `registry` after finding its own previous session's work gone.
+     same night**~~ — **CLOSED 2026-09-19 (`infra`)**: `merge_csv_rows.merge` is three-way per
+     column and per note segment; see the closure note at the end of this item. Lane: `infra`
+     (`persist_state.merge_csv_rows`) with `registry`, filed 2026-09-19 by `registry` after
+     finding its own previous session's work gone.
 
      The incident, from the commits: `91b9676` (registry, pushed **00:08:04Z**) activated
      `Harel Insurance & Finance` on the `adamtotal` board — 83 postings, 83 Israel through the
@@ -14090,6 +14092,70 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      no longer matches origin's SKIPS that row and says so in its step log, which turns a silent
      revert into a line a reader sees. Measure over the 81 cron commits in the fortnight: how
      many rows differ between each run's base and the origin it commits onto.
+
+     **CLOSED 2026-09-19 (`infra`).** `merge_csv_rows.merge` reads the base on BOTH sides. Per
+     column (`ats_platform`, `token`, `api_url`, `active`) the side that changed it wins and
+     ORIGIN wins when both did; per note segment, ours is written onto origin's cell through
+     `pipeline.notes.replace_own` (so the cap is spent oldest-unprotected-first, never sliced),
+     a deliberate deletion still stands, and a `listing-hunt` / `dark-triage` / `queue-hunt` /
+     `wrong-url` verdict of ours is DROPPED when origin moved `api_url` — the verdict was about
+     a page the row no longer points at (the orchestrator's ruling on `registry`'s behalf; the
+     09-13/18 lesson that a ledger read is keyed by url). A conflict is resolved toward origin
+     and REPORTED, never refused: `::warning::merge-conflict <row> <col>`, one
+     `{"kind": "merge-conflict"}` record in `cloud_state/persist_log.jsonl`, and from there a
+     `Stages:` clause in the next morning's mail for 24 hours
+     (`pipeline/run.py::_merge_conflict_alarms` — a stamp would have been overwritten by the
+     night's next clean commit).
+
+     **The proof is the replay of the night itself**, `merge(base=f3d0ebd, ours=7f960cd,
+     target=5dbec81)` over the three real files from `git show`: Harel comes out
+     **byte-identical to `5dbec81`**, the session's row — `adamtotal,harel,<token url>,true`
+     with `platform-fix 2026-09-19: adamtotal cards; 83/83 IL` intact — the one conflict is
+     reported (`notes/listing-hunt (address moved)`), and all **76** other rows the hunt
+     changed are byte-identical to what it pushed on the night. The exposure re-derived over
+     19 days (2026-09-01 → 09-19): **29** `(row-merged)` cron commits against **19** session
+     commits, **2** pairs sharing a row, **15** rows, **1 reverted** (this one) and 14 not — the
+     14 are the 09-12 `468a6cf`/`60a4a29` pair, where the hunt's checkout (`3828c29`, 20:50Z)
+     already CONTAINED the session's 20:21Z park, so origin's columns equal the base on every
+     one of them and the three-way merge yields the same output the old one did. The measured
+     rate is what says a 20-second read-to-write window would not have been enough: the damage
+     is the RULE, not the age of the read (`persist_state` had fetched origin 3 s before
+     merging Harel away).
+
+     **Not closed by this:** the same one-sided rule still merges the 13 keyed JSON caches
+     (`merge_json_cache`), where it is now only COUNTED — `646`.
+
+## From the `infra` lane, 2026-09-19 (the merge rule the registry got and the caches did not)
+
+646. **`merge_json_cache` merges 13 keyed caches with the same ONE-SIDED base `merge_csv_rows`
+     had until `644`, and six of the 13 have a session writer** — lane: `infra`, filed
+     2026-09-19 by itself while closing `644`.
+
+     The rule is one line: `if k not in base or base[k] != v: out[k] = v`. Ours wins every key
+     it changed, whether or not ORIGIN changed that same key since — which is exactly what
+     reverted Harel's row one file along. It is deliberately unchanged this round, because
+     nothing in this repo has ever measured how often two writers rewrite the SAME key of one
+     cache inside one window, and a rule nobody needs is a rule that can be wrong. So this
+     round counts: `merge_json_cache.CONFLICTS` holds the keys both sides moved to different
+     values and a `::warning::merge_json_cache: N key(s) changed by BOTH …` names up to five
+     of them, beside the `merged <path>` line that says which cache.
+
+     Session (`ajil-bot`, non-`row-merged`) commits per path since 2026-09-01 — the population
+     at risk, since two crons almost always write disjoint keys: `cloud_state/firmographics.json`
+     **7**, `cloud_state/board_verify.json` **3**, `scraped_cache.json` **2**,
+     `cloud_state/firmo_failed.json` **2**, `cloud_state/queue_state.json` **1**,
+     `cloud_state/queue_disposition.json` **1**; and **0** for `health_baseline.json`,
+     `stale.json`, `scan_seen.json`, `auto_expand_seen.json`, `audit_seen.json`,
+     `discovered_cache.json`, `research_companies.json`. `firmographics` and `board_verify` are
+     the two to watch: each holds a record a session RESEARCHED against a cron that rewrites
+     the same key nightly.
+
+     **Re-measure on or after 2026-10-03** (a fortnight at ~1.5 conflict paths a day):
+     `git log origin/master --since=2026-09-19 -S'"kind":"merge-conflict"' -- cloud_state/persist_log.jsonl`
+     for the registry half, and `gh run view <id> --log | grep "changed by BOTH"` over the
+     conflict-path runs for this one. If it has fired, give `firmographics` and `board_verify`
+     the per-key origin-wins rule and a record in the same log; if it has fired 0 times, say so
+     and close this.
 
 ## From the `company-intel` lane, 2026-09-19 (a headcount two companies claim)
 
