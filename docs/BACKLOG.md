@@ -13183,6 +13183,31 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      with the board named in its note, and `roles`' alias fold cannot fire for Harel (it needs
      exactly ONE ACTIVE row, and both Harel rows are parked).
 
+     **CLOSED 2026-09-19** — `ats-fetch` built the fetcher (`fetch_adamtotal`, `2b59be3`:
+     `?token=<uuid>-<tenant>` for page 1, `/Home/Index?page=<n>&token=…` after it, the tenant
+     read off the token's trailing label and REFUSED if it is not the row's token) and put
+     `adamtotal` in `company_identity.ATS_HOST`; `registry` declared the tenant
+     (`identity_facts.DECLARED["Harel Insurance & Finance"]` → `tenants ("harel",)`) and
+     activated the row. Measured through the production fetcher from the shared checkout:
+     **83 jobs, 83 Israel**, `country_code` IL on all 83, every location an Israeli region
+     (`גוש דן` ×16, `בית הראל רמת גן` ×15 — the company's own building), five analyst titles
+     including `Data Analyst` and two `אנליסט/ית תחקור ובקרה`. **0 credits** (free GETs).
+     The gate vouches ON THE TOKEN: `board_vouches(name,'harel',api)` **True**,
+     `activation_verdict(…, token='harel')` **ok**, `embedded_board_ok` **True**, and neither
+     `apply_resolved`'s expression nor `resolve_llm._verify`'s clause refuses. Row:
+     `adamtotal` / `harel` / the token URL / `active=true`, `platform-fix 2026-09-19: adamtotal
+     cards; 83/83 IL`. Note the second half of 622's Harel pair closed with it.
+
+     **One gap this exposed, NOT fixed here** — lane: `registry`, and it will bite the next
+     declared path-tenant row: `activation_ok`, `identity_ok` and `ok_to_write` return **False**
+     for this row, while `activation_verdict(..., token=…)` returns `ok`. Their signatures take
+     no `token`, so `checkable_token("", api)` never sees `harel` and `board_vouches` refuses a
+     DECLARED row for "carrying a tenant it did not declare". The three wrappers are the ones a
+     future tool is most likely to reach for — `activation_ok`'s own docstring says *"for tools
+     that verified jobs first"*, which is exactly this case — and each would silently refuse a
+     legitimate board. The write paths all pass the token today, so nothing is broken; the
+     wrappers are wrong about a row they cannot ask about.
+
      **2026-09-18, `ats-fetch`: the PLATFORM half is built; the row is not.** `adamtotal` is a
      fetcher (`fetchers.fetch_adamtotal`, `FETCHERS["adamtotal"]`): it pages
      `Home/Index?page=N&token=…` until a page adds no fresh `data-job-id` and read **83
@@ -13228,11 +13253,12 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
      The seven, with the evidence still missing for each:
 
-     * `הראל ביטוח ופיננסים` ↔ `Harel Insurance & Finance` — **proven** one employer (both
-       read `www.harel-group.co.il/careers` `ok`, and the adamtotal board carries the Hebrew
-       row's own posting). Blocked on `621`: both rows are parked, and an `alias-of` park is
-       terminal, so folding now would take the employer out of every pool for a fold that
-       cannot fire.
+     * ~~`הראל ביטוח ופיננסים` ↔ `Harel Insurance & Finance`~~ — **DONE 2026-09-19**, the
+       first of the seven to close. The Latin row is ACTIVE on the `adamtotal` fetcher (83/83
+       IL) and the Hebrew row is parked `alias-of Harel Insurance & Finance 2026-09-19`, with
+       `ALIASES["הראל ביטוח ופיננסים"] = "harel insurance finance"` beside Menora — the two
+       declarations `firmographics._declared` requires, so `declared_aliases` resolves the pair
+       and exactly ONE row is active on the identity. Unblocked by `621`.
      * `הפניקס` (ACTIVE, `fnx.co.il`, 10 IL) ↔ `Phoenix Financial` (parked 2026-09-18,
        `arizonafinancial.org` was another company's). Same insurer, almost certainly; needs
        the Latin row shown to have no board of its own before it is folded, not merely parked.

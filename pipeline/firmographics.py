@@ -293,6 +293,20 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     # so the Latin name's stem and its plain form differ and the declared gate (which tests
     # the plain form) could not bridge them without a second key.
     "מנורה מבטחים החזקות": "menora mivtachim",
+    # --- 2026-09-19, `registry` (BACKLOG 621/622). The same class one host further on: Harel
+    # publishes under `Harel Insurance & Finance` and, on LinkedIn, under `הראל ביטוח ופיננסים`
+    # (first seen 09-16, publishing `אנליסט/ית תחקור ובקרה`). One employer, proven on the BOARD
+    # rather than on the names: `career.adamtotal.co.il/?token=<uuid>-harel` -- linked from
+    # `www.harel-group.co.il/careers`, which `board_verify` read `ok` for BOTH spellings
+    # (08-29 Hebrew, 09-02 Latin, `employer_named` "הראל ביטוח ופיננסים (Harel Insurance &
+    # Finance)") -- returns 83 postings, 83 Israel, including that exact Hebrew title AND a
+    # `Data Analyst`, with 15 of them located `בית הראל רמת גן`, the company's own building.
+    # The Latin row is crowned (it holds the board, on the `adamtotal` fetcher since 09-19,
+    # tenant `harel` DECLARED in `identity_facts`); the Hebrew row is parked `alias-of`, which
+    # is the second declaration this gate needs. `_plain_norm` of the Hebrew name is a FIXED
+    # POINT (the stripper keeps \u05d0-\u05ff), so one key bridges both forms -- unlike Menora
+    # above, where `Group` made the Latin stem and plain form differ.
+    "הראל ביטוח ופיננסים": "harel insurance finance",
     # --- 2026-09-13, `registry` (BACKLOG 517). Osem (`אסם`) is Nestlé's Israeli operating
     # company and the advertiser of record: Indeed files one Osem posting under BOTH `אסם`
     # and `Nestlé` (`claim conflicts 1 (אסם<-Nestlé)` every morning), and the two Nestle rows
