@@ -4881,13 +4881,18 @@ def test_the_sunday_audit_escalates_what_its_cheap_rung_left_dark(tmp_path, monk
     import deep_validate as DV
     from pipeline import identity_gate as G
     monkeypatch.chdir(tmp_path)
+    # RELATIVE, not a literal: the deep rung skips a row validated inside its window, and a
+    # fixture dated 2026-08-20 went red on 2026-09-19 on a tree nobody touched (the `599`
+    # class again). Six days ago is inside the window on every date this test will ever run.
+    import datetime as _dt
+    _fresh = (_dt.date.today() - _dt.timedelta(days=6)).isoformat()
     _registry(tmp_path, [
         ["Fiverr", "scrape", "", "https://www.fiverr.com/jobs", "false",
          "listing-hunt 2026-08-01: no listing found"],
         ["DarkCo", "scrape", "", "https://www.darkco.example/careers", "false",
          "listing-hunt 2026-08-01: no listing found"],
         ["Fresh Ltd", "scrape", "", "https://www.fresh.example/careers", "false",
-         "listing-hunt 2026-08-01: no listing found | deep-validated 2026-08-20: no ATS detected (rendered)"],
+         "listing-hunt 2026-08-01: no listing found | deep-validated %s: no ATS detected (rendered)" % _fresh],
     ])
     monkeypatch.setattr(A, "_load_secrets", lambda *a, **k: None)
     monkeypatch.setattr(A, "fetch", lambda u, timeout=20: "")          # the cheap rung finds nothing
@@ -4915,7 +4920,7 @@ def test_the_sunday_audit_escalates_what_its_cheap_rung_left_dark(tmp_path, monk
         "deep-validated 6 days ago): %r" % (rendered,))
     assert out["Fiverr"][4] == "true" and "deep-verified 40/12 IL" in out["Fiverr"][5], out["Fiverr"]
     assert out["DarkCo"][4] == "false" and "deep-validated 20" in out["DarkCo"][5], out["DarkCo"]
-    assert "deep-validated 2026-08-20" in out["Fresh Ltd"][5]
+    assert "deep-validated %s" % _fresh in out["Fresh Ltd"][5]
     # the rotation key is COMMITTED state now (BACKLOG 38/164), keyed by name
     seen = json.loads((tmp_path / "cloud_state" / "audit_seen.json").read_text(encoding="utf-8"))
     assert set(seen) >= {"Fiverr", "DarkCo", "Fresh Ltd"}
