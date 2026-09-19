@@ -1449,6 +1449,58 @@ def reject_map(jobs, contract=""):
     return out
 
 
+WITHDRAWN_CLAUSE_CAP = 400      # per group, and the whole join when it fits
+WITHDRAWN_NAME_CAP = 48         # one `Company | Title` in the names-only form
+
+
+def _cut_names(names, cap=WITHDRAWN_CLAUSE_CAP, width=WITHDRAWN_NAME_CAP):
+    """`names`, each trimmed to `width`, joined until `cap` — cut at a WHOLE name, and the
+    remainder counted rather than dropped. A half-spelt company is a name a reader cannot
+    grep, which is the whole failure this exists to end."""
+    out, used = [], 0
+    for n in names:
+        s = n if len(n) <= width else n[:width - 1].rstrip() + "…"
+        add = len(s) + (2 if out else 0)
+        if used + add > cap:
+            return ", ".join(out) + f" +{len(names) - len(out)} more"
+        out.append(s)
+        used += add
+    return ", ".join(out)
+
+
+def withdrawn_clause(lines):
+    """The `Stages:` alarm for every role a run took out of the dataset — and it NAMES them.
+
+    `lines` is `[(name, reason, by)]`; `by` is `WITHDRAWN_BY_CLASSIFIER` for a machine
+    verdict and anything else for a retraction line.
+
+    The alarm used to be one `"; ".join(...)[:400]`, and on 2026-09-19 that slice named **2 of
+    16** withdrawn rows in a 470-character clause, cutting the second's reason mid-word — the
+    first morning the count was ever above one. A reason is 120-250 characters of the classifier's
+    prose, so the cap was spent on three sentences while thirteen companies went unnamed in
+    the one place a human reads daily. `docs/BACKLOG.md` asks for the ROW and its reason; a
+    truncated list answers neither, and the reasons are all in `roles.csv.meta.json`'s
+    `removed` either way.
+
+    So: if the full `name — reason` join fits, the output is byte-identical to before (that
+    is every ordinary morning, and the two tests that pin the one-row shape). Otherwise the
+    clause goes names-only and groups them BY AUTHOR inside the one alarm — machine verdicts
+    and hand lines are different events and a reader triages them differently — with the head
+    `roles withdrawn N role(s)` unchanged so nothing downstream reads a new shape. Replayed
+    over the real 09-19 withdrawals (a 3,172-character join): the two groups need **329 and
+    273** characters, so all 16 are named and no group reaches ` +N more`."""
+    head = f"roles withdrawn {len(lines)} role(s) from every product and the public dataset"
+    full = "; ".join(f"{n} — {r}" for n, r, _b in lines)
+    if len(full) <= WITHDRAWN_CLAUSE_CAP:
+        return f"{head}: " + full
+    groups = []
+    for label, mine in (("classifier", True), ("retraction line", False)):
+        names = [n for n, _r, b in lines if (b == WITHDRAWN_BY_CLASSIFIER) is mine]
+        if names:
+            groups.append(f"{label} {len(names)}: " + _cut_names(names))
+    return f"{head} (reasons: roles.csv.meta.json removed) — " + "; ".join(groups)
+
+
 # --------------------------------------------------------------------------- #
 # the ledger
 # --------------------------------------------------------------------------- #
@@ -2532,7 +2584,8 @@ class Ledger:
                     rec["closed_on"] = rec.get("closed_on") or ret["on"]
                     self._touch(rec)
                     c[want] += 1                      # a delta, like `closed today`
-                    withdrawn_lines.append(f"{rec.get('company')} | {rec.get('title')} — {reason}")
+                    withdrawn_lines.append((f"{rec.get('company')} | {rec.get('title')}",
+                                            reason, "line"))
                 c[want + "_total"] += 1
             elif held and prev_status == "purged":
                 c["purged_total"] += 1            # a hold HOLDS: the verdict stands unjudged
@@ -2753,8 +2806,7 @@ class Ledger:
         # retraction is first applied, `Stages:` names the row and the reason. A line that
         # matched nothing is ALSO an alarm — a typo in the file must not read as "applied".
         if withdrawn_lines:
-            self.alarms.append(f"roles withdrawn {len(withdrawn_lines)} role(s) from every "
-                               f"product and the public dataset: " + "; ".join(withdrawn_lines)[:400])
+            self.alarms.append(withdrawn_clause(withdrawn_lines))
         if purged_lines:
             # the automatic verdict is the quiet one, so it is named too — a predicate that
             # starts catching real employers must be visible the morning it does
@@ -2852,8 +2904,8 @@ class Ledger:
                 c[st_] = max(0, c[st_] - 1)   # it is no longer open/closed on the mail line
                 c["withdrawn"] += 1
                 c["withdrawn_total"] += 1
-                withdrawn_lines.append(
-                    f"{rec.get('company')} | {rec.get('title')} — {rec['withdraw_reason']}")
+                withdrawn_lines.append((f"{rec.get('company')} | {rec.get('title')}",
+                                        rec["withdraw_reason"], WITHDRAWN_BY_CLASSIFIER))
             elif st_ == "withdrawn" and rec.get("withdrawn_by") == WITHDRAWN_BY_CLASSIFIER \
                     and decision != "reject":
                 # the seam changed its mind (or the cell was cleared): the record returns to
@@ -3944,7 +3996,7 @@ def build_meta(rows, counts, records, *, run_date, window_days=WINDOW_DAYS, earl
                     "that points at an aggregator; a name intake rejected as an agency). "
                     "withdrawn = the employer is real but THIS posting was never in scope "
                     "(not in Israel, or not this employer's) — it was published in error and "
-                    "is listed under `withdrawn` with its reason and the days it was public. "
+                    "is listed under `removed` with its reason and the days it was public. "
                     "Rows that aged out of the window are not excluded: they are in "
                     f"{ARCHIVE}.",
         },

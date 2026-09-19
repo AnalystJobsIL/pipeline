@@ -28323,6 +28323,45 @@ def test_a_live_contract_no_still_withdraws_and_still_beats_the_backfill(tmp_pat
     assert "class-rejected 1" in lines[0] and "re-keyed" not in lines[0], lines
 
 
+def test_the_withdrawn_clause_names_every_role_once_the_reasons_no_longer_fit():
+    """2026-09-19: the first morning the withdrawal count went above one, `"; ".join(...)[:400]`
+    named **2 of 16** rows in a 470-character clause, cutting the second's reason mid-word. A
+    reason is 120-250
+    characters of the classifier's prose, so the cap was spent on three sentences while
+    thirteen companies went unnamed in the one place a human reads daily — and the reasons are
+    all in `roles.csv.meta.json`'s `removed` either way.
+
+    One alarm still, with the head byte-identical so nothing downstream reads a new shape, and
+    the names grouped by AUTHOR: a machine verdict and a hand line are different events."""
+    from pipeline import roles
+    reason = ("out of scope (condition 2, the named FP&A and budgeting exclusion): the "
+              "responsibilities lead with sales-versus-budget control and the management of "
+              "trade budgets, commercial discounts and variable spend.")
+    lines = ([(f"Machine Co {i} | Data Analyst", reason, "classifier") for i in range(8)]
+             + [(f"Hand Co {i} | BI Developer", reason, "line") for i in range(8)])
+    got = roles.withdrawn_clause(lines)
+    assert got.startswith("roles withdrawn 16 role(s) from every product and the public dataset")
+    assert "(reasons: roles.csv.meta.json removed)" in got
+    for name, _r, _b in lines:
+        assert name in got, name              # every one of the 16, not 3
+    assert "classifier 8:" in got and "retraction line 8:" in got
+    assert reason not in got and "more" not in got
+    mach, _, hand = got.split("classifier 8: ", 1)[1].partition("; retraction line 8: ")
+    assert len(mach) <= roles.WITHDRAWN_CLAUSE_CAP and len(hand) <= roles.WITHDRAWN_CLAUSE_CAP
+    assert (len(mach), len(hand)) == (230, 206), (len(mach), len(hand))
+    # ...and an ordinary morning is byte-identical to what it printed before
+    one = [("Comcast | Manager 2", "the posting is in Houston, Texas", "line")]
+    assert roles.withdrawn_clause(one) == (
+        "roles withdrawn 1 role(s) from every product and the public dataset: "
+        "Comcast | Manager 2 — the posting is in Houston, Texas")
+    # a name too long for the row is cut at the row, never mid-list, and the rest is counted
+    many = [(f"{'C' * 80} {i} | Analyst", reason, "classifier") for i in range(40)]
+    out = roles.withdrawn_clause(many)
+    body, _, tail = out.split("classifier 40: ", 1)[1].partition(" +")
+    assert tail == f"{40 - len(body.split(', '))} more" and out.count("…") >= 1
+    assert all(len(n) <= roles.WITHDRAWN_NAME_CAP for n in body.split(", ")), body
+
+
 def test_a_machine_withdrawal_is_re_offered_and_a_hand_one_is_never(tmp_path):
     """`626` was closed on the reversal ARM existing; the POOL that feeds it did not, because
     `class_backfill.candidates` only ever looked at `open`/`closed` records and a withdrawal

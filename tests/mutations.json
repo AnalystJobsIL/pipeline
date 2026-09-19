@@ -3162,9 +3162,9 @@
   "file": "pipeline/roles.py",
   "symbol": "_record_run",
   "class": "M1-gate-removal",
-  "find": "            if rec is None or rid in by_key:\n                continue                      # never seen, or this run accepted it: live wins",
+  "find": "            if rec is None or key in by_key or rid in by_key:\n                continue                      # never seen, or this run accepted it: live wins",
   "replace": "            if rec is None:\n                continue",
-  "why": "543's reject map must never reach a role THIS RUN accepted. A mixed group (some copies rejected, one accepted) puts the same role_id in both the map and `merged`; without the `by_key` guard the reject is applied after the live stamp and the dataset contradicts the board the same run renders. Killed by test_record_run_stamps_the_runs_own_rejects_and_withdraws_every_rejected_row.",
+  "why": "543's reject map must never reach a role THIS RUN accepted. A mixed group (some copies rejected, one accepted) puts the same role_id in both the map and `merged`; without the `by_key` guard the reject is applied after the live stamp and the dataset contradicts the board the same run renders. Killed by test_record_run_stamps_the_runs_own_rejects_and_withdraws_every_rejected_row. Re-anchored 2026-09-19 (`647`): the guard now refuses BOTH spellings of the key, because the reject map and the backfill map are keyed on opposite sides of this run's at-rest renames, and removing it is the same defeat it always was.",
   "must_be_killed_by_behavioural": true
  },
  {
@@ -4368,6 +4368,19 @@
   "must_be_killed_by_behavioural": true,
   "killers": [
    "tests/test_units.py::test_a_machine_withdrawal_is_re_offered_and_a_hand_one_is_never"
+  ]
+ },
+ {
+  "id": "withdrawn-clause-cuts-names",
+  "file": "pipeline/roles.py",
+  "symbol": "withdrawn_clause",
+  "class": "M7-constant-drift",
+  "find": "    full = \"; \".join(f\"{n} — {r}\" for n, r, _b in lines)\n    if len(full) <= WITHDRAWN_CLAUSE_CAP:\n        return f\"{head}: \" + full\n",
+  "replace": "    full = \"; \".join(f\"{n} — {r}\" for n, r, _b in lines)\n    return f\"{head}: \" + full[:WITHDRAWN_CLAUSE_CAP]\n",
+  "why": "the retired behaviour, and what it cost on 2026-09-19: the first morning the withdrawal count went above one, the single `[:400]` slice named 2 of 16 rows in a 470-character clause and cut the second's reason mid-word. A reason is 120-250 characters of the classifier's prose, so the cap buys two sentences instead of sixteen names -- in the one place a human reads daily, about rows that have just left the public dataset. The reasons are in `roles.csv.meta.json`'s `removed` either way; the NAMES are only here.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_withdrawn_clause_names_every_role_once_the_reasons_no_longer_fit"
   ]
  },
  {
