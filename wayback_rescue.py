@@ -127,7 +127,10 @@ def main():
             r = rescue(name, url)
         except Exception:  # noqa: BLE001
             r = None
-        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])
+        # `token=r[1]` (2026-09-19) is the tenant the next line already hands
+        # `embedded_board_ok`; withheld from the gate it refused a DECLARED row whose tenant
+        # no url parse can recover (docs/BACKLOG.md 621).
+        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])
                       and _gate.embedded_board_ok(name, r[1], r[2])):
             # An archived snapshot is the oldest evidence in the pipeline, and this branch
             # had no identity check at all; then it had the no-html gate, which is the

@@ -238,7 +238,11 @@ def _row_for(name, url, kind, payload, cache, note=""):
     """
     if kind == "ats":
         nm, plat, tok, api, n_all, il = payload
-        if not _gate.activation_ok(nm, api, n_all):
+        # `token=tok` (2026-09-19): the resolved tenant, which this branch already writes into
+        # column 2 on accept. Dropping it refused a DECLARED row whose tenant is not derivable
+        # from its url (docs/BACKLOG.md 621). The `scrape` branch below has no tenant and
+        # needs none -- an ordinary host is decided by `is_foreign` and the page.
+        if not _gate.activation_ok(nm, api, n_all, token=tok):
             # The refusal note MUST carry a re-check-pool token. The first version of
             # this string carried none and REPLACED the whole cell, so the 9 rows whose
             # only token was `unreachable` left every pool at once -- including this

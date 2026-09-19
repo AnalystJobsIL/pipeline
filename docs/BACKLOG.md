@@ -13240,15 +13240,35 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `adamtotal` / `harel` / the token URL / `active=true`, `platform-fix 2026-09-19: adamtotal
      cards; 83/83 IL`. Note the second half of 622's Harel pair closed with it.
 
-     **One gap this exposed, NOT fixed here** — lane: `registry`, and it will bite the next
-     declared path-tenant row: `activation_ok`, `identity_ok` and `ok_to_write` return **False**
-     for this row, while `activation_verdict(..., token=…)` returns `ok`. Their signatures take
-     no `token`, so `checkable_token("", api)` never sees `harel` and `board_vouches` refuses a
-     DECLARED row for "carrying a tenant it did not declare". The three wrappers are the ones a
-     future tool is most likely to reach for — `activation_ok`'s own docstring says *"for tools
-     that verified jobs first"*, which is exactly this case — and each would silently refuse a
-     legitimate board. The write paths all pass the token today, so nothing is broken; the
-     wrappers are wrong about a row they cannot ask about.
+     **One gap this exposed — CLOSED 2026-09-19 by `registry`.** It would have bitten the next
+     declared path-tenant row: `activation_ok`, `identity_ok` and `ok_to_write` returned
+     **False** for this row while `activation_verdict(..., token=…)` returned `ok`. Their
+     signatures took no `token`, so `checkable_token("", api)` never saw `harel` and
+     `board_vouches` refused a DECLARED row for "carrying a tenant it did not declare". The
+     three wrappers are the ones a future tool is most likely to reach for — `activation_ok`'s
+     own docstring says *"for tools that verified jobs first"*, which is exactly this case —
+     and each would silently refuse a legitimate board.
+
+     The fix is a forwarded argument, not a new parse: the three wrappers take `token=""` and
+     pass it to the verdict function they already wrap, and the **four** ATS activators
+     (`auto_expand._row_for_ats`, `retry_unreachable._row_for`, `bd_rescue`, `wayback_rescue`)
+     pass the row's column 2 — every one of them had it in scope and dropped it, and two were
+     already handing the same token to `embedded_board_ok` on the adjacent line. Measured on
+     the Harel row shape with the page in hand (0 credits): all three wrappers **True** on
+     `token="harel"`, **False** on `""` and on `"clal"`, `n_jobs=0` still False. Class size:
+     **1 of the 14 declared-tenant rows** — for the other 13 the empty token and the row's own
+     token agree, because `checkable_token` recovers a Workday/Eightfold tenant from the
+     subdomain and greenhouse's from the path. The scrape-branch calls
+     (`auto_expand:560`, `retry_unreachable:255`) pass no token and need none. `listing_hunt`'s
+     `identity_ok(name, url)` calls are deliberately untouched — `tests/test_registry.py`
+     asserts that exact spelling as a source-string count, the hunt never touches an active
+     row, and 0 rows move. **Rejected**: teaching `_slug_candidates`/`checkable_token` the
+     `?token=…-<tenant>` form (1 host, 1 row, and it would move `company_identity.verdict()`
+     for every future adamtotal row while the fetcher's own belt already refuses drift); and
+     returning `None` for an empty token on a declared row (a WIDENING — a hunt could then
+     activate Harel onto any adamtotal tenant, the 09-13 `not_domains` incident in reverse).
+     Mutation records: `activation-ok-token-dropped`, `write-ok-token-dropped`,
+     `identity-ok-token-dropped`, `auto-expand-ats-token-dropped`.
 
      **2026-09-18, `ats-fetch`: the PLATFORM half is built; the row is not.** `adamtotal` is a
      fetcher (`fetchers.fetch_adamtotal`, `FETCHERS["adamtotal"]`): it pages

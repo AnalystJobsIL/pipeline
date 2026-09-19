@@ -36390,6 +36390,75 @@ def test_the_adamtotal_board_vouches_for_the_one_tenant_the_row_declares(monkeyp
     assert identity_gate.board_vouches("הראל ביטוח ופיננסים", "harel", _ADAM_URL) is None
 
 
+def _adam_page_naming_harel():
+    """A page long enough to be evidence (>= 2000 chars) that names the company in BOTH
+    scripts, so `page_names_company` answers True without a fetch. ALWAYS pass a page to a
+    gate call in a test: a bare gate call on this url is the PAID unlocker rung -- the
+    2026-09-18 session spent 2 credits on exactly that one-liner."""
+    return ("הראל ביטוח ופיננסים Harel Insurance & Finance is hiring. " * 60)
+
+
+def test_the_three_gate_wrappers_forward_the_rows_token(monkeypatch):
+    """`activation_ok`, `ok_to_write` and `identity_ok` took no `token` until 2026-09-19, so
+    `checkable_token("", api)` read the LAST slug candidate of `career.adamtotal.co.il` --
+    `'il'` -- and `board_vouches` refused a DECLARED row for "carrying a tenant it did not
+    declare". The three wrappers are what a future tool reaches for first (`activation_ok`'s
+    own docstring says *for tools that verified jobs first*, which is this exact case), and
+    each silently refused Harel's own board before any page was read (`621`'s gate note).
+
+    Harel is the ONLY one of the 14 declared-tenant rows where the empty token and the row's
+    own token disagree -- Workday/Eightfold tenants live in the subdomain and greenhouse's in
+    the path, so `checkable_token` recovers them from the url. That is why the class is one
+    row and why the fix is a forwarded argument rather than a new parse."""
+    from pipeline import identity_gate as G
+    page = _adam_page_naming_harel()
+    assert len(page) >= 2000
+    name = "Harel Insurance & Finance"
+    for gate in (lambda tok: G.activation_ok(name, _ADAM_URL, 83, html=page, token=tok),
+                 lambda tok: G.ok_to_write(name, _ADAM_URL, html=page, token=tok),
+                 lambda tok: G.identity_ok(name, _ADAM_URL, html=page, token=tok)):
+        assert gate("harel") is True, "the declared token must admit the declared board"
+        # the documented refusal, unchanged: a caller that drops column 2 still cannot
+        # activate a declared query-tenant row -- it is refused, never quietly admitted
+        assert gate("") is False
+        # and the declaration refuses in the other direction too
+        assert gate("clal") is False
+    # the empty-board clause is untouched by the new argument
+    assert G.activation_ok(name, _ADAM_URL, 0, html=page, token="harel") is False
+
+
+def test_every_ats_activator_hands_the_gate_the_rows_token(monkeypatch):
+    """Four tools build an ATS row and gate it, and all four had the token in scope and
+    dropped it. The two with an extracted row builder are driven here; `bd_rescue` and
+    `wayback_rescue` gate inside `main()` beside an `embedded_board_ok(name, tok, api)` call
+    that was already given the same token, so the guard for those two is that the two
+    arguments agree in the source."""
+    import auto_expand as E
+    import retry_unreachable as RU
+    seen = []
+
+    def only_with_the_token(nm, api, n=0, html="", token=""):
+        seen.append((nm, token))
+        return token == "harel"
+
+    monkeypatch.setattr(E._gate, "activation_ok", only_with_the_token)
+    monkeypatch.setattr(RU._gate, "activation_ok", only_with_the_token)
+    row = E._row_for_ats(("Harel Insurance & Finance", "adamtotal", "harel", _ADAM_URL,
+                          83, 83), "https://www.harel-group.co.il/careers")
+    assert row[1] == "adamtotal" and row[4] == "true", row
+    row = RU._row_for("Harel Insurance & Finance", "https://www.harel-group.co.il/careers",
+                      "ats", ("Harel Insurance & Finance", "adamtotal", "harel", _ADAM_URL,
+                              83, 83), {}, note="unreachable")
+    assert row[1] == "adamtotal" and row[4] == "true", row
+    assert [t for _, t in seen] == ["harel", "harel"], seen
+    for path, call in (
+            ("bd_rescue.py", "_gate.activation_ok(name, api, v[0], html=html, token=tok)"),
+            ("wayback_rescue.py", "_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])")):
+        src = open(os.path.join(_REPO, path), encoding="utf-8").read()
+        assert call in src, "%s no longer hands the gate the token it hands " \
+                            "embedded_board_ok" % path
+
+
 def test_a_declared_tenant_is_checked_against_the_labels_left_of_the_vendors_own(monkeypatch):
     """`validate` derived a board's candidate tenant labels as `host.split(".")[:-2]`, which
     on a multi-part suffix keeps the VENDOR's label: `career.adamtotal.co.il` yielded

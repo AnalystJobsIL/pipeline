@@ -385,7 +385,10 @@ def main():
                 # finds whatever board a page embeds, and a company page that embeds another
                 # company's board (or a bot-wall interstitial that embeds the vendor's own)
                 # activated that board under this company's name.
-                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)
+                # `token=tok` (2026-09-19) is the same token `embedded_board_ok` is given on
+                # the next line -- the gate below it had been asked to judge the board with
+                # the tenant withheld (docs/BACKLOG.md 621).
+                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html, token=tok)
                                        and _gate.embedded_board_ok(name, tok, api)):
                     print(f"  [XX] {name}: {plat} verified {v[0]} but {api[:44]} is not "
                           f"this company's board", flush=True)

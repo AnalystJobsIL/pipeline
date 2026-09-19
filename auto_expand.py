@@ -585,7 +585,11 @@ def _row_for_ats(payload, seed_url, via="", html=""):
     if _is_agg_url(api or ""):
         return [nm, "scrape", seed_url, seed_url, "false",
                 "auto-expand: aggregator URL; no listing found"]
-    if not _gate.activation_ok(nm, api, n_all, html=html):
+    # `token=tok` is the row's own column 2, which this builder has had in scope since it was
+    # extracted and dropped until 2026-09-19: without it `checkable_token` cannot see a tenant
+    # that lives in a query string, and a DECLARED row is refused for "a tenant it did not
+    # declare" (docs/BACKLOG.md 621, the adamtotal shape).
+    if not _gate.activation_ok(nm, api, n_all, html=html, token=tok):
         # SEED url in cols 2-3, never the refused board. Persisting the refused `api` put
         # a FOREIGN host into the row's address, and `identity_gate.is_walled` derives
         # crack_walled's pool membership from that host -- so a row parked this way joined

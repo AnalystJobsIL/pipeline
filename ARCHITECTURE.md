@@ -1884,8 +1884,8 @@ the active rows whose tenant cannot vouch, as a warn — the hand-check list, ne
 (`python check_invariants.py | grep 'tenant cannot vouch'`); the number moves whenever a row
 changes platform, so read it rather than quoting this sentence.
 
-1. **`activation_ok(name, api_url, n_jobs, html="")` = `activation_verdict(...) == "ok"`;
-   the verdicts are `ok` · `empty` · `not-listing` · `not-ours` · `unverified`.** A declared
+1. **`activation_ok(name, api_url, n_jobs, html="", token="")` = `activation_verdict(...) ==
+   "ok"`; the verdicts are `ok` · `empty` · `not-listing` · `not-ours` · `unverified`.** A declared
    negative refuses first (a declaration beats a page: Cogniteam's own page carried
    Riskified's embed). Then a page the caller already holds decides in BOTH directions when
    readable. Then the tenant: `board_vouches` True admits, False refuses, None sends one GET to
@@ -1912,6 +1912,18 @@ changes platform, so read it rather than quoting this sentence.
 
 On ordinary domains `is_foreign` still does the work, because a page test there would refuse
 every JS-rendered careers page — the same silent-exclusion trap in the other direction.
+
+**All three wrappers take the row's `token`** (`activation_ok`, `ok_to_write`,
+`identity_ok(name, url, html="", token="")`) and forward it to the verdict function, which is
+the only thing a wrapper adds over it. They took none until 2026-09-19 and that was a silent
+refusal, not a safe default: `checkable_token("", api)` falls through to the last slug
+candidate of the host, so on the one declared row of 14 whose tenant lives in a QUERY string
+(`career.adamtotal.co.il/?token=<uuid>-harel`) `board_vouches` answered False for "a tenant it
+did not declare" and the gate refused Harel's own board before reading a page. The four ATS
+activators (`auto_expand._row_for_ats`, `retry_unreachable._row_for`, `bd_rescue`,
+`wayback_rescue`) all had the token in scope and all four dropped it; two of them were already
+handing the same token to `embedded_board_ok` on the adjacent line. The scrape-branch calls
+pass no token and need none — an ordinary host is decided by `is_foreign` and the page.
 
 ### The single-writer rule (most dangerous rule here — read before any write)
 

@@ -184,7 +184,7 @@
   "file": "bd_rescue.py",
   "symbol": "main",
   "class": "M1-gate-removal",
-  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html, token=tok)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
   "replace": "                if v and v[0] and not (True\n                                       and _gate.embedded_board_ok(name, tok, api)):",
   "why": "bd_rescue's state before this refactor: it activated Bancor onto The Bancorp Bank's board",
   "must_be_killed_by_behavioural": true
@@ -194,8 +194,8 @@
   "file": "bd_rescue.py",
   "symbol": "main",
   "class": "M2-gate-inversion",
-  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
-  "replace": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html) is None\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html, token=tok)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+  "replace": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html, token=tok) is None\n                                       and _gate.embedded_board_ok(name, tok, api)):",
   "why": "truthiness inverted with the token intact",
   "must_be_killed_by_behavioural": true
  },
@@ -204,8 +204,8 @@
   "file": "bd_rescue.py",
   "symbol": "main",
   "class": "M3-branch-narrowing",
-  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
-  "replace": "                if v and v[0] < 0 and not (_gate.activation_ok(name, api, v[0], html=html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html, token=tok)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+  "replace": "                if v and v[0] < 0 and not (_gate.activation_ok(name, api, v[0], html=html, token=tok)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
   "why": "narrows the guard to an impossible job count",
   "must_be_killed_by_behavioural": true
  },
@@ -214,7 +214,7 @@
   "file": "wayback_rescue.py",
   "symbol": "main",
   "class": "M1-gate-removal",
-  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
   "replace": "        if r and not (True\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
   "why": "resurrects an archived board with no identity check -- its state before this refactor",
   "must_be_killed_by_behavioural": true
@@ -224,8 +224,8 @@
   "file": "wayback_rescue.py",
   "symbol": "main",
   "class": "M2-gate-inversion",
-  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
-  "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5]) is None\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1]) is None\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
   "why": "truthiness inverted with the token intact",
   "must_be_killed_by_behavioural": true
  },
@@ -234,8 +234,8 @@
   "file": "wayback_rescue.py",
   "symbol": "main",
   "class": "M3-branch-narrowing",
-  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
-  "replace": "        if r and r[4] < 0 and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "replace": "        if r and r[4] < 0 and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
   "why": "narrows the guard to an impossible job count",
   "must_be_killed_by_behavioural": true
  },
@@ -274,7 +274,7 @@
   "file": "retry_unreachable.py",
   "symbol": "_row_for",
   "class": "M1-gate-removal",
-  "find": "        if not _gate.activation_ok(nm, api, n_all):",
+  "find": "        if not _gate.activation_ok(nm, api, n_all, token=tok):",
   "replace": "        if False:",
   "why": "returns an active row straight from resolve()'s payload -- its state before this refactor",
   "must_be_killed_by_behavioural": true
@@ -284,8 +284,8 @@
   "file": "retry_unreachable.py",
   "symbol": "_row_for",
   "class": "M2-gate-inversion",
-  "find": "        if not _gate.activation_ok(nm, api, n_all):",
-  "replace": "        if _gate.activation_ok(nm, api, n_all) is None:",
+  "find": "        if not _gate.activation_ok(nm, api, n_all, token=tok):",
+  "replace": "        if _gate.activation_ok(nm, api, n_all, token=tok) is None:",
   "why": "truthiness inverted with the token intact",
   "must_be_killed_by_behavioural": true
  },
@@ -294,8 +294,8 @@
   "file": "retry_unreachable.py",
   "symbol": "_row_for",
   "class": "M3-branch-narrowing",
-  "find": "        if not _gate.activation_ok(nm, api, n_all):",
-  "replace": "        if n_all < 0 and not _gate.activation_ok(nm, api, n_all):",
+  "find": "        if not _gate.activation_ok(nm, api, n_all, token=tok):",
+  "replace": "        if n_all < 0 and not _gate.activation_ok(nm, api, n_all, token=tok):",
   "why": "narrows the guard to an impossible job count",
   "must_be_killed_by_behavioural": true
  },
@@ -304,7 +304,7 @@
   "file": "auto_expand.py",
   "symbol": "_row_for_ats",
   "class": "M1-gate-removal",
-  "find": "    if not _gate.activation_ok(nm, api, n_all, html=html):",
+  "find": "    if not _gate.activation_ok(nm, api, n_all, html=html, token=tok):",
   "replace": "    if False:",
   "why": "auto_expand runs TWICE daily and APPENDS new rows; this was its state before the refactor",
   "must_be_killed_by_behavioural": true
@@ -314,8 +314,8 @@
   "file": "auto_expand.py",
   "symbol": "_row_for_ats",
   "class": "M2-gate-inversion",
-  "find": "    if not _gate.activation_ok(nm, api, n_all, html=html):",
-  "replace": "    if _gate.activation_ok(nm, api, n_all, html=html) is None:",
+  "find": "    if not _gate.activation_ok(nm, api, n_all, html=html, token=tok):",
+  "replace": "    if _gate.activation_ok(nm, api, n_all, html=html, token=tok) is None:",
   "why": "truthiness inverted with the token intact",
   "must_be_killed_by_behavioural": true
  },
@@ -324,8 +324,8 @@
   "file": "auto_expand.py",
   "symbol": "_row_for_ats",
   "class": "M3-branch-narrowing",
-  "find": "    if not _gate.activation_ok(nm, api, n_all, html=html):",
-  "replace": "    if n_all < 0 and not _gate.activation_ok(nm, api, n_all, html=html):",
+  "find": "    if not _gate.activation_ok(nm, api, n_all, html=html, token=tok):",
+  "replace": "    if n_all < 0 and not _gate.activation_ok(nm, api, n_all, html=html, token=tok):",
   "why": "narrows the guard to an impossible job count",
   "must_be_killed_by_behavioural": true
  },
@@ -643,8 +643,8 @@
   "file": "auto_expand.py",
   "symbol": "_row_for_ats",
   "class": "M8-argument-transposition",
-  "find": "if not _gate.activation_ok(nm, api, n_all, html=html):",
-  "replace": "if not _gate.activation_ok(api, nm, n_all):",
+  "find": "if not _gate.activation_ok(nm, api, n_all, html=html, token=tok):",
+  "replace": "if not _gate.activation_ok(api, nm, n_all, token=tok):",
   "why": "wave-3 R2: while activation_ok carried a dead `platform` parameter, transposing (name, platform) at four call sites left 258 tests green -- the identity decision silently ran on the platform string. The parameter is gone; the transposition that remains puts a URL in the name slot, every predicate fails, and the positive-control row goes false.",
   "must_be_killed_by_behavioural": true
  },
@@ -683,8 +683,8 @@
   "file": "bd_rescue.py",
   "symbol": "main",
   "class": "M1-gate-removal",
-  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
-  "replace": "                if v and v[0] and not _gate.activation_ok(name, api, v[0], html=html):",
+  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html, token=tok)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+  "replace": "                if v and v[0] and not _gate.activation_ok(name, api, v[0], html=html, token=tok):",
   "why": "same drop at the 02:30 sibling: the unlocker page vouches for a board it merely embeds.",
   "must_be_killed_by_behavioural": true
  },
@@ -703,8 +703,8 @@
   "file": "auto_expand.py",
   "symbol": "_row_for_ats",
   "class": "M8-argument-mis-passing",
-  "find": "    if not _gate.activation_ok(nm, api, n_all, html=html):",
-  "replace": "    if not _gate.activation_ok(nm, api, 1):",
+  "find": "    if not _gate.activation_ok(nm, api, n_all, html=html, token=tok):",
+  "replace": "    if not _gate.activation_ok(nm, api, 1, token=tok):",
   "why": "wave-4 R2: the count argument replaced with a truthy literal -- the gate's zero-jobs clause is intact in source and inert at this call site; a 0/0 board activates.",
   "must_be_killed_by_behavioural": true
  },
@@ -723,8 +723,8 @@
   "file": "retry_unreachable.py",
   "symbol": "_row_for",
   "class": "M8-argument-mis-passing",
-  "find": "        if not _gate.activation_ok(nm, api, n_all):",
-  "replace": "        if not _gate.activation_ok(nm, api, 1):",
+  "find": "        if not _gate.activation_ok(nm, api, n_all, token=tok):",
+  "replace": "        if not _gate.activation_ok(nm, api, 1, token=tok):",
   "why": "wave-4 R2: the count argument replaced with a truthy literal -- the gate's zero-jobs clause is intact in source and inert at this call site; a 0/0 board activates.",
   "must_be_killed_by_behavioural": true
  },
@@ -743,8 +743,8 @@
   "file": "wayback_rescue.py",
   "symbol": "main",
   "class": "M8-argument-mis-passing",
-  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
-  "replace": "        if r and not (_gate.activation_ok(name, r[2], 1, html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "replace": "        if r and not (_gate.activation_ok(name, r[2], 1, html=r[5], token=r[1])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
   "why": "wave-4 R2: the count argument replaced with a truthy literal -- the gate's zero-jobs clause is intact in source and inert at this call site; a 0/0 board activates.",
   "must_be_killed_by_behavioural": true
  },
@@ -763,8 +763,8 @@
   "file": "bd_rescue.py",
   "symbol": "main",
   "class": "M8-argument-transposition",
-  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)",
-  "replace": "                if v and v[0] and not (_gate.activation_ok(api, name, v[0], html=html)",
+  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html, token=tok)",
+  "replace": "                if v and v[0] and not (_gate.activation_ok(api, name, v[0], html=html, token=tok)",
   "why": "wave-4 R2: name<->api_url transposed at a call site whose n_jobs slot is pre-guarded (a truthy-constant mutation is an equivalent mutant here); a URL in the name slot fails every predicate and the positive control goes red.",
   "must_be_killed_by_behavioural": true
  },
@@ -793,8 +793,8 @@
   "file": "bd_rescue.py",
   "symbol": "main",
   "class": "M8-argument-mis-passing",
-  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
-  "replace": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=best_html)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+  "find": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=html, token=tok)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
+  "replace": "                if v and v[0] and not (_gate.activation_ok(name, api, v[0], html=best_html, token=tok)\n                                       and _gate.embedded_board_ok(name, tok, api)):",
   "why": "wave-4 R2: the gate handed the LONGEST page seen across alts instead of the page the candidate was extracted from -- accept or refuse at random relative to the evidence. Survived while the fixture's single-alt constant-page population made the html argument informationless.",
   "must_be_killed_by_behavioural": true
  },
@@ -833,8 +833,8 @@
   "file": "wayback_rescue.py",
   "symbol": "main",
   "class": "M1-gate-removal",
-  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
-  "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])):",
+  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])):",
   "why": "wave-5 R1: drops the board-vouches-for-itself clause at the third extract_ats caller; an archived page's foreign embed resurrects (Panoply onto Riskified's board).",
   "must_be_killed_by_behavioural": true
  },
@@ -843,8 +843,8 @@
   "file": "wayback_rescue.py",
   "symbol": "main",
   "class": "M8-argument-mis-passing",
-  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
-  "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=\"\")\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "find": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=r[5], token=r[1])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
+  "replace": "        if r and not (_gate.activation_ok(name, r[2], r[3], html=\"\", token=r[1])\n                      and _gate.embedded_board_ok(name, r[1], r[2])):",
   "why": "wave-5 R1: drops the snapshot page from the gate -- the tenant clause (vacuous on path platforms) then decides, and a hijacked-domain snapshot with a name-matching embed resurrects.",
   "must_be_killed_by_behavioural": true
  },
@@ -4808,5 +4808,57 @@
   "replace": "                          log=lambda s: print(s, flush=True), probe_cell=probe_cell,\n                          renderer=renderer)",
   "why": "give the archived pass the 45-second rung as well. It has a quarter of the budget and forty times the rows, so the reserve that keeps archived roles moving at all would go on renders.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "activation-ok-token-dropped",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "activation_ok",
+  "class": "M8-argument-mis-passing",
+  "find": "    return activation_verdict(name, api_url, n_jobs, html=html, token=token) == \"ok\"",
+  "replace": "    return activation_verdict(name, api_url, n_jobs, html=html, token=\"\") == \"ok\"",
+  "why": "the three gate WRAPPERS are what a future tool reaches for -- `activation_ok`'s own docstring says *for tools that verified jobs first*, which is the adamtotal case exactly. With the token dropped, `checkable_token(\"\", api)` falls through to the last slug candidate of `career.adamtotal.co.il` (`'il'`) and `board_vouches` refuses a DECLARED row for \"carrying a tenant it did not declare\" -- `not-ours`, before any page is read, on the one row of the 14 declared today whose tenant lives in a query string. A silent refusal of a company's own board (`621`'s gate note).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_three_gate_wrappers_forward_the_rows_token"
+  ]
+ },
+ {
+  "id": "write-ok-token-dropped",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "ok_to_write",
+  "class": "M8-argument-mis-passing",
+  "find": "    return write_verdict(name, url, html=html, token=token) == \"ok\"",
+  "replace": "    return write_verdict(name, url, html=html, token=\"\") == \"ok\"",
+  "why": "the three gate WRAPPERS are what a future tool reaches for -- `activation_ok`'s own docstring says *for tools that verified jobs first*, which is the adamtotal case exactly. With the token dropped, `checkable_token(\"\", api)` falls through to the last slug candidate of `career.adamtotal.co.il` (`'il'`) and `board_vouches` refuses a DECLARED row for \"carrying a tenant it did not declare\" -- `not-ours`, before any page is read, on the one row of the 14 declared today whose tenant lives in a query string. A silent refusal of a company's own board (`621`'s gate note).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_three_gate_wrappers_forward_the_rows_token"
+  ]
+ },
+ {
+  "id": "identity-ok-token-dropped",
+  "file": "pipeline/identity_gate.py",
+  "symbol": "identity_ok",
+  "class": "M8-argument-mis-passing",
+  "find": "        return ok_to_write(name, url, html=html, token=token)",
+  "replace": "        return ok_to_write(name, url, html=html, token=\"\")",
+  "why": "the three gate WRAPPERS are what a future tool reaches for -- `activation_ok`'s own docstring says *for tools that verified jobs first*, which is the adamtotal case exactly. With the token dropped, `checkable_token(\"\", api)` falls through to the last slug candidate of `career.adamtotal.co.il` (`'il'`) and `board_vouches` refuses a DECLARED row for \"carrying a tenant it did not declare\" -- `not-ours`, before any page is read, on the one row of the 14 declared today whose tenant lives in a query string. A silent refusal of a company's own board (`621`'s gate note).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_the_three_gate_wrappers_forward_the_rows_token"
+  ]
+ },
+ {
+  "id": "auto-expand-ats-token-dropped",
+  "file": "auto_expand.py",
+  "symbol": "_row_for_ats",
+  "class": "M8-argument-mis-passing",
+  "find": "    if not _gate.activation_ok(nm, api, n_all, html=html, token=tok):",
+  "replace": "    if not _gate.activation_ok(nm, api, n_all, html=html, token=\"\"):",
+  "why": "the row builder has the resolved tenant in scope (`tok`, which it writes into column 2 on accept) and dropped it. This is the call-site half of `activation-ok-token-dropped`: the wrapper can forward only what it is given, so a correct wrapper and a forgetful caller refuse the same board. The other two ATS activators (`bd_rescue`, `wayback_rescue`) hand the SAME token to `embedded_board_ok` on the adjacent line, which is what makes the omission visible rather than arguable.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_every_ats_activator_hands_the_gate_the_rows_token"
+  ]
  }
 ]

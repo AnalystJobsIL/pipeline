@@ -595,18 +595,27 @@ def page_names_company(name, url, html=""):
     return False
 
 
-def ok_to_write(name, url, html=""):
+def ok_to_write(name, url, html="", token=""):
     """May this url be written into the row's `api_url`? Positive confirmation only: a
     readable page that names the company, on something that looks like a listing page, on a
     host `is_foreign` does not reject. Unreadable (`None`) is refused -- a persisted address
     is what the hunt's fast path later activates on, and "we could not look" is not
-    evidence. The tenant string is deliberately NOT a veto here, and the signature
-    deliberately has no `platform` parameter (a parameter the body never reads is a slot for
-    a transposition to hide in). See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
-    return write_verdict(name, url, html=html) == "ok"
+    evidence. The tenant string is NOT a veto here beyond what `board_vouches` already says,
+    and the signature deliberately has no `platform` parameter (a parameter the body never
+    reads is a slot for a transposition to hide in). See
+    docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements.
+
+    `token` is the ROW's column 2 and is forwarded to `write_verdict`, which is the only
+    thing this wrapper adds over it. It was absent until 2026-09-19 and that was a silent
+    refusal, not a safe default: on a DECLARED row whose tenant lives somewhere
+    `checkable_token` cannot derive it from the url -- `career.adamtotal.co.il`'s
+    `?token=<uuid>-harel`, the only such row of the 14 declared today -- an empty token makes
+    `board_vouches` answer False for "a tenant it did not declare" and the gate refuses
+    Harel's own board before any page is read (docs/BACKLOG.md 621)."""
+    return write_verdict(name, url, html=html, token=token) == "ok"
 
 
-def activation_ok(name, api_url, n_jobs=0, html=""):
+def activation_ok(name, api_url, n_jobs=0, html="", token=""):
     """May this row be ACTIVATED onto `api_url`? For tools that verified jobs first.
 
     Clauses, in order: zero `n_jobs` is the empty-board shape, refused; `is_foreign` (inert
@@ -623,14 +632,23 @@ def activation_ok(name, api_url, n_jobs=0, html=""):
     # board) and is the adjudicated resolution of a both-cells-non-empty dispute -- see
     # docs/decisions/2026-08-24-identity-gate-calibration.md. Do not tune; declare.
     # Since 2026-08-26 "the tenant cannot tell" no longer admits: `activation_verdict`.
-    return activation_verdict(name, api_url, n_jobs, html=html) == "ok"
+    #
+    # `token` is the row's column 2, forwarded to `activation_verdict` (2026-09-19). Every
+    # ATS caller of this wrapper HAS it in scope and used to drop it, so a DECLARED row whose
+    # tenant is not derivable from its url was refused `not-ours` before the page was read --
+    # see `ok_to_write`'s note and docs/BACKLOG.md 621.
+    return activation_verdict(name, api_url, n_jobs, html=html, token=token) == "ok"
 
 
-def identity_ok(name, url, html=""):
+def identity_ok(name, url, html="", token=""):
     """The gate for tools that hunt or repair an ordinary careers page, not just an ATS:
     `is_foreign` decides on ordinary domains (routing them through the page test would trade
     a real hole for silent exclusion -- measured at 358 rows); on an ATS host, `ok_to_write`.
-    See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements."""
+    See docs/decisions/2026-08-24-identity-gate-calibration.md for the measurements.
+
+    `token` (2026-09-19) reaches `ok_to_write` on the ATS branch only, which is the only
+    branch that reads it; the ordinary-domain branches never consulted a tenant. The hunt's
+    own calls pass two positional arguments and are unaffected."""
     host = (urllib.parse.urlparse(url or "").netloc or "").lower()
     # jobvite/taleo used to need their own branch here because `ATS_HOST` omitted them and
     # `is_foreign` refused their correct boards outright. `ATS_HOST` now names them
@@ -639,7 +657,7 @@ def identity_ok(name, url, html=""):
     if is_foreign(name, url):
         return False
     if host and ATS_HOST.search(host):
-        return ok_to_write(name, url, html=html)
+        return ok_to_write(name, url, html=html, token=token)
     if not _name_targets(name):
         # `is_foreign` judged nothing above: it has no ASCII form of this name to compare
         # against the domain, so it answers False for every url and the blanket `True`
