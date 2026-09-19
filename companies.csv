@@ -621,7 +621,7 @@ Dolby Laboratories,scrape,https://dolby.wd5.myworkdayjobs.com/Careers,https://jo
 BMW Group,scrape,https://www.bmwgroup.jobs/en.html,https://www.bmwgroup.jobs/en.html,false,deep-validated 2026-08-21: no ATS detected (rendered) | domain-dead 2026-09-18 (conn-dead (TimeoutError))
 Skyhawk Security,scrape,,https://skyhawk.security/join-us/,true,"dark-triage 2026-08-23: extract-gap (LLM found 4: Junior Backend Developer (GoLang\Java), Senior GoLang Backen) | repair 2026-08-23: extract-gap fixed via LLM tier; 4 IL"
 Base44,scrape,,https://careers.base44.com/,true,listing-hunt 2026-08-22: verified 14 IL via https://careers.base44.com/
-Matrix IT,breezy,matrix-technologies-inc,https://matrix-technologies-inc.breezy.hr/json,true,re-audit 2026-08-21: deep-verified 34/0 IL (was dark)
+Matrix IT,breezy,matrix-technologies-inc,,false,re-audit 2026-08-21: deep-verified 34/0 IL (was dark) | wrong-url 2026-09-19: board names Matrix Technologies; needs re-resolution
 Prophet Security,ashby,prophet-security,https://api.ashbyhq.com/posting-api/job-board/prophet-security,true,re-audit 2026-08-21: deep-verified 4/0 IL (was dark)
 StemRad,scrape,https://www.stemrad.com/company/careers,,false,scanned via brightdata; no open Israel roles now - monitored candidate | dark-triage 2026-09-12: no-url (no url on the row) | listing-hunt 2026-09-13: no pages reachable
 Steadicopter,scrape,https://steadicopter.com/careers,https://steadicopter.com/careers/,false,deep-validated 2026-08-21: no ATS detected (rendered) | dark-triage 2026-09-12: js-shell (job XHRs seen during render) | listing-hunt 2026-09-13: no IL listing; monitored candidate

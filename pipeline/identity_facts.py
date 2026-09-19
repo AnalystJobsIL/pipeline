@@ -267,6 +267,14 @@ DECLARED = {
         "why": "https://boards-api.greenhouse.io/v1/boards/ethoslife/jobs is Ethos Life's (US "
                "insurance) -- board_verify 2026-09-02 NOT-THEIRS; the re-audit 2026-09-13 "
                "counted 67/0 IL on it"},
+    "Matrix IT": {
+        "not_tenants": ("matrix-technologies-inc",),
+        "why": "https://matrix-technologies-inc.breezy.hr/ is Matrix Technologies Inc's "
+               "(Ohio engineering services; 46 jobs read 2026-09-19, 0 Israel, 10 of them "
+               "Maumee OH) -- board_verify 2026-09-19 NOT-THEIRS, "
+               "`belongs to Matrix Technologies`; the row is the Israeli "
+               "integrator Matrix IT and its own board is still unfound (three registry rows "
+               "carry `Matrix`, and all three read DIFFERENT boards -- docs/BACKLOG.md 622)"},
 
     # --- a QUERY-STRING tenant: the only thing on the address that names a company is the
     #     `?token=<uuid>-<tenant>` label, which no gate reads. The declaration is what makes

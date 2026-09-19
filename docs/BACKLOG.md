@@ -13373,9 +13373,33 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
        scripts>)` = `ok`. **No `identity_facts` declaration was added** — `tenants: ("ehsb",)`
        would change no behaviour today and would put a vendor pod in a table that is meant for
        company facts.
-     * `מטריקס` (ACTIVE, `matrixdna.ai`) ↔ `Matrix` (ACTIVE, comeet) ↔ `Matrix IT` (ACTIVE).
-       Possibly THREE REAL ENTITIES (Matrix IT is a large integrator; `Matrix` is also on
-       `recruiters`' radar as a staffing name) — do not fold without the boards.
+     * `מטריקס` (ACTIVE, `matrixdna.ai`) ↔ `Matrix` (ACTIVE, comeet) ↔ `Matrix IT`.
+       **Measured 2026-09-19 and it is NOT a fold: three names, three DIFFERENT boards, so the
+       crowning argument can never exist for any pair of them.** `מטריקס` reads
+       `matrixdna.ai/career/analytics-bi/` (Matrix DNA, 3/3 IL); `Matrix` reads comeet `19.00F`
+       — **23 jobs, 0 Israel**, USA/Toronto/Jersey City/Mumbai/Japan, `company_name` "Matrix" on
+       23 of 23, which is the group's own non-Israeli arm and stays exactly as `Pagaya`'s US
+       board would have (no write); `Matrix IT` was ACTIVE on a US NAMESAKE's board —
+       `matrix-technologies-inc.breezy.hr`, **46 jobs, 0 Israel**, ten of them Maumee OH, and
+       one seam read answers `NOT-THEIRS`, *"belongs to Matrix Technologies"*. That row is
+       parked `wrong-url 2026-09-19` through `queue_pipeline --park` (the ledger's own verdict,
+       never a hand-written one) and **declared**: `identity_facts.DECLARED["Matrix IT"]`
+       `not_tenants ("matrix-technologies-inc",)`, because a note segment is not durable memory
+       (Sckipio's was evicted by four routine stamps) and the row stays in the hunt pool, which
+       is where it needs to be — the Israeli integrator's own board is still unfound. Checked
+       after: `board_vouches` **False**, `embedded_board_ok` **False**,
+       `activation_verdict(..., 46, html=…)` **`not-ours`** even with a page in hand,
+       `identity_facts.validate` clean. Coverage traded: **0 IL**. The item stays OPEN for
+       `Matrix IT`'s real board, not for a fold.
+     * `IBI בית השקעות` (ACTIVE, `ibi.co.il/career/`, 25 cards) ↔ `IBI Investment House`
+       (parked, no address) — **asked 2026-09-19 and NOT folded, on the read.** The ledger had
+       no verdict under the Latin name, so one seam read was spent on `ibi.co.il/career/` for
+       it: **`UNVERIFIABLE`** — `route: plain`, 33,144 chars, 9,000 visible, `page_kind: error`,
+       *"a wall or an empty shell we could not read"*. A park needs a verdict and this is the
+       absence of one (`UNVERIFIABLE` may not stand in for a refusal OR for a vouch —
+       `board_verify.refuses`' own cut). The Latin row is left in the hunt pool; if it ever
+       re-finds the twin's board, `_active_twin` refuses the activation, so nothing is at risk
+       while the answer is missing.
      * ~~`Clal Insurance & Finance- כלל ביטוח ופיננסים` (a DISCOVERY name, not a row) ↔
        `Clal Insurance And Finance` (a row)~~ — **DONE 2026-09-19, and there is NO registry
        write in it**: `board_verify.json` reads `clalbit.co.il/careers/` **`ok` for both names**
