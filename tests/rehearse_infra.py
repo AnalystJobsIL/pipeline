@@ -51,7 +51,12 @@ def _check(cond, msg):
 def conflict():
     """The 2026-08-24 night, replayed: listing-hunt lands `repair` at 22:12; auto-expand,
     checked out at 20:00, pushes at 23:40 into a conflict. Origin must hold both stamps,
-    both registry rows and the deletion the refresh made on purpose."""
+    both registry rows and the deletion the refresh made on purpose.
+
+    Since 644 it also carries the two rows the ROW merge used to lose: `Gamma`, which the
+    hunt activated in place (the stale run must not park it again), and `Delta`, which the
+    hunt re-pointed to a new board (the stale run's verdict about the OLD address must not
+    follow it there, and must be reported as a conflict)."""
     print("== conflict: the 0b41823 night on temp repos")
     real_stamps = json.load(open(os.path.join(ROOT, "cloud_state", "pipeline_stages.json"), encoding="utf-8"))
     tmp = tempfile.mkdtemp(prefix="rehearse-infra-")
@@ -66,7 +71,9 @@ def conflict():
     hdr = "company_name,ats_platform,token,api_url,active,notes\n"
     open(os.path.join(hunt, "companies.csv"), "w", encoding="utf-8", newline="").write(
         hdr + "Alpha,scrape,,https://alpha/careers,false,monitored candidate\n"
-              "Beta,scrape,,https://beta/jobs,false,no listing found\n")
+              "Beta,scrape,,https://beta/jobs,false,no listing found\n"
+              "Gamma,scrape,,https://gamma/careers,false,monitored candidate\n"
+              "Delta,scrape,,https://delta/careers,false,monitored candidate\n")
     json.dump({"Alpha": [{"title": "old"}], "Gone": [{"title": "x"}]},
               open(os.path.join(hunt, "scraped_cache.json"), "w", encoding="utf-8"))
     _g(hunt, "add", "-A"); _g(hunt, "commit", "-q", "-m", "seed"); _g(hunt, "push", "-q", "origin", "HEAD:master")
@@ -76,7 +83,10 @@ def conflict():
     json.dump(st, open(os.path.join(hunt, "cloud_state", "pipeline_stages.json"), "w", encoding="utf-8"), indent=1, sort_keys=True)
     open(os.path.join(hunt, "companies.csv"), "w", encoding="utf-8", newline="").write(
         hdr + "Alpha,scrape,,https://alpha/careers,false,monitored candidate\n"
-              "Beta,scrape,,https://beta/jobs,true,no listing found | listing-hunt 2026-08-24: verified 2 IL\n")
+              "Beta,scrape,,https://beta/jobs,true,no listing found | listing-hunt 2026-08-24: verified 2 IL\n"
+              "Gamma,scrape,,https://gamma/careers,true,monitored candidate | listing-hunt 2026-08-24: verified 4 IL\n"
+              "Delta,comeet,delta,https://www.comeet.com/jobs/delta/1A.000,true,"
+              "monitored candidate | listing-hunt 2026-08-24: verified 3 IL via comeet\n")
     r = subprocess.run([sys.executable, PERSIST, "commit", "--cwd", hunt, "--as", "audit-bot", "-m", "listing-hunt 2026-08-24",
                         "--sleep", "0", "--gate", "", "--branch", "master",
                         "--own", "companies.csv", "scraped_cache.json", "cloud_state/pipeline_stages.json",
@@ -87,7 +97,9 @@ def conflict():
     json.dump(st2, open(os.path.join(expand, "cloud_state", "pipeline_stages.json"), "w", encoding="utf-8"), indent=1, sort_keys=True)
     open(os.path.join(expand, "companies.csv"), "w", encoding="utf-8", newline="").write(
         hdr + "Alpha,scrape,,https://alpha/careers,false,monitored candidate | dark-triage 2026-08-24: page-empty\n"
-              "Beta,scrape,,https://beta/jobs,false,no listing found\n")
+              "Beta,scrape,,https://beta/jobs,false,no listing found\n"
+              "Gamma,scrape,,https://gamma/careers,false,monitored candidate | dark-triage 2026-08-24: page-empty\n"
+              "Delta,scrape,,https://delta/careers,false,monitored candidate | dark-triage 2026-08-24: url-dead\n")
     json.dump({"Alpha": [{"title": "old"}]}, open(os.path.join(expand, "scraped_cache.json"), "w", encoding="utf-8"))
     r = subprocess.run([sys.executable, PERSIST, "commit", "--cwd", expand, "--as", "expand-bot", "-m", "auto-expand 2026-08-24",
                         "--sleep", "0", "--gate", "", "--branch", "master",
@@ -101,6 +113,26 @@ def conflict():
     csv = _g(origin, "show", "master:companies.csv")
     _check("dark-triage 2026-08-24: page-empty" in csv and "listing-hunt 2026-08-24: verified 2 IL" in csv
            and "Beta,scrape,,https://beta/jobs,true" in csv, "both registry writes survive, Beta stays activated")
+    # 644: the row BOTH runs wrote. Origin activated it; the stale run only stamped it.
+    gamma = next(l for l in csv.splitlines() if l.startswith("Gamma,"))
+    _check(gamma.startswith("Gamma,scrape,,https://gamma/careers,true,")
+           and "listing-hunt 2026-08-24: verified 4 IL" in gamma
+           and "dark-triage 2026-08-24: page-empty" in gamma,
+           "the row origin activated keeps its activation AND both segments: " + gamma[:120])
+    delta = next(l for l in csv.splitlines() if l.startswith("Delta,"))
+    _check(delta.startswith("Delta,comeet,delta,https://www.comeet.com/jobs/delta/1A.000,true,")
+           and "dark-triage 2026-08-24: url-dead" not in delta,
+           "the re-pointed row keeps its new board and drops the verdict about the old one: "
+           + delta[:120])
+    _check("2 origin-moved, 1 conflicts" in out,
+           "the merge counts what origin moved and what it could not reconcile")
+    plog = _g(origin, "show", "master:" + "cloud_state/persist_log.jsonl")
+    rec = [json.loads(l) for l in plog.splitlines() if l.strip()]
+    conf = [r for r in rec if r.get("kind") == "merge-conflict"]
+    _check(len(conf) == 1 and conf[0]["rows"][0]["row"] == "Delta"
+           and conf[0]["rows"][0]["col"] == "notes/dark-triage",
+           "the conflict is a committed record, so the morning mail can name it: "
+           + json.dumps(conf[0]["rows"][:1] if conf else []))
     cache = json.loads(_g(origin, "show", "master:scraped_cache.json"))
     _check("Gone" not in cache and "Alpha" in cache, "the deletion auto-expand made on purpose stands (BACKLOG 95)")
     log = _g(origin, "log", "--format=%s", "master")

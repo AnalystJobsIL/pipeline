@@ -1,6 +1,6 @@
 {
   "restore_only": {
-    "merge_csv_rows.py": "git-layer conflict resolution: restores the TARGET's already-repaired api_url onto our row. It proposes no new address."
+    "merge_csv_rows.py": "git-layer conflict resolution: per column, it keeps either our value or the TARGET's (docs/BACKLOG.md 644). Both already exist in a committed registry; it proposes no address, no platform and no activation of its own."
   },
   "legacy_unscheduled": {
     "comeet_resolve.py": "one-shot Comeet backfill probe, no workflow runs it",

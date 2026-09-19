@@ -17,6 +17,11 @@ The merge is per company key, against the checkout-time baseline:
                                (an empty scrape, an expired carry, a parked row) and origin
                                never touched it. Without this rule a night's deletions came
                                back on every push-conflict night (docs/BACKLOG.md 95).
+    key BOTH sides changed, differently -> ours still wins, and it is COUNTED and warned
+                               (`CONFLICTS`, 2026-09-19). `merge_csv_rows` resolves that
+                               class toward origin per column since docs/BACKLOG.md 644; a
+                               keyed cache has no measurement of how often it happens, so
+                               this round measures rather than moves.
     key in base and ours (untouched by us), absent from theirs -> DROP it: ORIGIN retired it
                                while we held an older checkout, and that deletion stands too
                                (2026-09-01, docs/BACKLOG.md 458). It used to be rescued
@@ -60,9 +65,33 @@ def load(path):
         return {}
 
 
+# Keys the LAST merge found changed by both sides to different values. `merge_csv_rows` now
+# resolves that class toward origin per column (docs/BACKLOG.md 644); here it is only
+# MEASURED, because nothing yet says how often it happens to a keyed cache. 13 paths go
+# through this function and six of them have a session writer: `cloud_state/firmographics.json`
+# (5 session writes since 2026-09-01) and `cloud_state/board_verify.json` (3) are the two to
+# watch. Filed with the counts as the item this detector exists to answer.
+CONFLICTS = []
+
+
 def merge(base, ours, theirs):
     out = dict(theirs)
     kept = changed = 0
+    both = sorted(str(k) for k, v in ours.items()
+                  if k in base and base[k] != v
+                  and k in theirs and theirs[k] != base[k] and theirs[k] != v)
+    # `.clear()` + `.extend()`, NOT `CONFLICTS[:] = both`: a slice assignment is one of the
+    # shapes `mutate._row_write` counts as a registry column write (`fr[3:4] = [url]`), so
+    # the spelling alone made this module an ungated registry writer to two derived guards.
+    CONFLICTS.clear()
+    CONFLICTS.extend(both)
+    if both:
+        # `ours` wins below, which is the rule 644 changed for companies.csv and deliberately
+        # did NOT change here. The warning is how the next fortnight learns whether it should:
+        # the path is named by the `merged <path>` line that follows this one.
+        print(f"::warning::merge_json_cache: {len(both)} key(s) changed by BOTH this run and "
+              f"origin; ours kept (no three-way rule here yet -- docs/BACKLOG.md 644): "
+              f"{', '.join(both[:5])}", flush=True)
     # Origin's deletions stand (458) -- but a side that lost a QUARTER of the keys did not
     # delete them, it broke (CLAUDE.md rule 2). `persist_state.s_company_dict` already refuses
     # that from OUR side; until 458 the unconditional rescue below was silently providing the

@@ -46,6 +46,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(REPO_ROOT, "out")
 LAST_RUN_PATH = os.path.join(REPO_ROOT, "cloud_state", "last_run.json")
 LAST_DELIVERED_PATH = os.path.join(REPO_ROOT, "cloud_state", "last_delivered.json")
+PERSIST_LOG_PATH = os.path.join(REPO_ROOT, "cloud_state", "persist_log.jsonl")
 
 # ---- the run's own legibility (lane: infra) ------------------------------------------
 # The Actions log of a digest is ~900 lines with no structure; a crash was a bare traceback
@@ -83,6 +84,52 @@ def _workflow_step_alarms(env=None):
             f"missing from this digest; see the run log"
             for k, v in steps.items()
             if isinstance(v, dict) and v.get("outcome") in ("failure", "cancelled")]
+
+
+def _merge_conflict_alarms(path=None, hours=24, now=None):
+    """Rows a push conflict could only resolve by preferring ORIGIN's value
+    (`merge_csv_rows`, `persist_state.log_merge_conflicts`, docs/BACKLOG.md 644).
+
+    Read from `persist_log.jsonl` rather than from a stage stamp on purpose: the conflict
+    path runs about 1.5 times a day and the NEXT clean commit would overwrite a stamp hours
+    before anyone read it, while a line in the append-only log is still there tomorrow
+    morning. 24 hours, so exactly one mail carries each conflict and no mail carries it twice.
+
+    A reporter never raises: a malformed line is silence, not a lost digest."""
+    path = path or PERSIST_LOG_PATH
+    now = now or dt.datetime.now(dt.timezone.utc)
+    out = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return []
+    for line in lines:
+        if not line.strip() or '"merge-conflict"' not in line:
+            continue
+        try:
+            rec = json.loads(line)
+            if not isinstance(rec, dict) or rec.get("kind") != "merge-conflict":
+                continue
+            at = dt.datetime.strptime(str(rec.get("at")), "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=dt.timezone.utc)
+        except (ValueError, TypeError):
+            continue
+        if (now - at).total_seconds() > hours * 3600:
+            continue
+        run = str(rec.get("run") or "")
+        for r in (rec.get("rows") or [])[:10]:
+            if not isinstance(r, dict):
+                continue
+            why = " ".join(str(r.get("why") or "").split())
+            out.append(f"persist merge-conflict {r.get('row')} {r.get('col')}"
+                       f"{' ' + why if why else ''} — this run's value was DROPPED for "
+                       f"origin's ({r.get('ours')} -> {r.get('origin')}); run {run}")
+        extra = int(rec.get("total") or 0) - len(rec.get("rows") or [])
+        if extra > 0:
+            out.append(f"persist merge-conflict: {extra} further row(s) in the same commit; "
+                       f"run {run}")
+    return out
 
 
 def _last_run_alarms(run_date, path=None):
@@ -274,6 +321,9 @@ def run(*, use_llm=True, limit=None, only=None, run_date=None, out_dir=OUT_DIR, 
                      + [a.replace("— the digest read stale input", "— yesterday's digest never completed")
                         for a in stages.alarms("publish", 1)]
                      + _workflow_step_alarms() + _last_run_alarms(run_date)
+                     # a row a push conflict resolved toward origin in the last 24 h: the
+                     # only reader-facing trace of a merge that dropped one side's value
+                     + _merge_conflict_alarms()
                      + _receipt_alarms(run_date) + ledger.alarms)
     for _line in _stage_alarms:
         print(f"::warning::stage {_line}", flush=True)

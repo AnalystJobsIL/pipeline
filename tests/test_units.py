@@ -324,7 +324,13 @@ def test_merge_never_reverts_a_repaired_url_to_a_dead_one(tmp_path):
     """A multi-hour run commits the address the row had at CHECKOUT. If another writer has
     since replaced an NXDOMAIN hostname with a verified one, applying the run's row hands
     the company back a URL that does not resolve — and every later tool then honestly
-    reports it as unreachable again."""
+    reports it as unreachable again.
+
+    Since 2026-09-19 (BACKLOG 644) this holds for a reason that does not depend on the
+    segment naming itself `url-repaired`: origin wins every column it moved. And the run's
+    `listing-hunt` verdict goes with the old address rather than following the row to the new
+    one — the hunt read the dead page, so its "no IL listing" is not a fact about the repaired
+    board. That last assertion is the one this test used to make the other way round."""
     import csv as _csv
     from merge_csv_rows import merge
 
@@ -345,7 +351,9 @@ def test_merge_never_reverts_a_repaired_url_to_a_dead_one(tmp_path):
     merge(base, ours, tgt)
     row = next(_csv.reader(open(tgt, encoding="utf-8")))
     assert row[3] == good, "merge reverted a verified URL to an NXDOMAIN one"
-    assert "listing-hunt" in row[5] and "url-repaired" in row[5]
+    assert "url-repaired" in row[5], "the repairing writer's own segment was dropped"
+    assert "listing-hunt" not in row[5], (
+        "a verdict about the dead address followed the row to the repaired one: %r" % row[5])
 
 
 def test_every_registry_platform_has_a_fetcher():
@@ -16196,6 +16204,208 @@ def test_abstaining_never_adopts_a_broken_copy_from_origin(tmp_path):
     assert landed == good, (
         "abstention adopted origin's malformed copy (%r) -- the gate then restores the same "
         "bytes and the step exits 1 every night, for ever" % landed[:40])
+
+
+# --- the git-layer merge is three-way, per column and per note segment (BACKLOG 644) ----
+# The real 2026-09-18/19 rows. `listing-hunt` ran 21:23Z->00:25Z; the session activated Harel
+# at 00:08Z; the merge copied the run's three-hour-old columns over it and nothing said so.
+_H = "Harel Insurance & Finance"
+_H_BASE = [_H, "scrape", "", "https://www.harel-group.co.il/careers", "false",
+           "dark-triage 2026-09-02: js-shell (job XHRs seen during render) | "
+           "listing-hunt 2026-09-02: no IL listing; monitored candidate | "
+           "chrome-verified 2026-09-18: board = career.adamtotal.co.il (23/23 IL); "
+           "identity gate refuses"]
+_H_TOKEN_URL = ("https://career.adamtotal.co.il/?token="
+                "6675d401-0dee-428a-a776-5d41885d16b0-harel")
+
+
+def _csv3(tmp_path, base_rows, ours_rows, target_rows):
+    """The three files `merge_csv_rows.merge` takes, written as real CSV (quoting matters:
+    a note holds commas)."""
+    import csv as _csv
+    out = []
+    for name, rows in (("base.csv", base_rows), ("ours.csv", ours_rows),
+                       ("t.csv", target_rows)):
+        p = tmp_path / name
+        with open(p, "w", newline="", encoding="utf-8") as f:
+            _csv.writer(f).writerows(rows)
+        out.append(str(p))
+    return out
+
+
+def _row(path, name):
+    import csv as _csv
+    with open(path, encoding="utf-8", newline="") as f:
+        for r in _csv.reader(f):
+            if r and r[0] == name:
+                return r
+    return None
+
+
+def test_a_row_origin_activated_survives_a_stale_stamp_from_the_cron(tmp_path, capsys):
+    """BACKLOG 644, the incident verbatim. The 19:00 hunt read Harel parked on
+    `www.harel-group.co.il/careers` (which really does scrape 0 cards) and pushed at 00:25Z
+    onto an origin that had carried the `adamtotal` activation since 00:08Z — 83 postings,
+    83 Israel. The merge applied the run's columns wholesale and the row went back to
+    `scrape,,<the shell page>,false`; `check_invariants` passed, because a parked row with a
+    pool token is a legal row.
+
+    Origin moved all four columns, so all four are origin's. The hunt's own `listing-hunt`
+    stamp is DROPPED rather than carried onto the new address: it is a verdict about the page
+    the row no longer points at (orchestrator ruling for `registry`, 2026-09-19). A segment
+    that is NOT about the address (`scrape rotted`) still lands, which is what makes that a
+    rule rather than "the merge ignores the run"."""
+    from merge_csv_rows import merge
+    ours = list(_H_BASE)
+    ours[5] = ("dark-triage 2026-09-02: js-shell (job XHRs seen during render) | "
+               "chrome-verified 2026-09-18: board = career.adamtotal.co.il (23/23 IL); "
+               "identity gate refuses | "
+               "listing-hunt 2026-09-18: no IL listing; monitored candidate | "
+               "scrape rotted (error 1d) 2026-09-18: extraction yields 0")
+    theirs = [_H, "adamtotal", "harel", _H_TOKEN_URL, "true",
+              "dark-triage 2026-09-02: js-shell (job XHRs seen during render) | "
+              "chrome-verified 2026-09-18: board = career.adamtotal.co.il (found via the "
+              "careers-page embed) | platform-fix 2026-09-19: adamtotal cards; 83/83 IL"]
+    b, o, t = _csv3(tmp_path, [_H_BASE], [ours], [theirs])
+    n, conflicts = merge(b, o, t)
+    row = _row(t, _H)
+    assert row[1:5] == ["adamtotal", "harel", _H_TOKEN_URL, "true"], (
+        "the cron's three-hour-old columns beat a newer activation: %r" % (row[1:5],))
+    assert "platform-fix 2026-09-19" in row[5], "origin's own new segment was evicted"
+    assert "listing-hunt 2026-09-18" not in row[5], (
+        "a verdict about the OLD address was carried onto the new one: %r" % row[5])
+    assert "scrape rotted (error 1d)" in row[5], (
+        "a segment that is not about the address must still land: %r" % row[5])
+    assert len(row[5]) <= 220 and "js-shell" in row[5]
+    assert [(c["row"], c["col"]) for c in conflicts] == [(_H, "notes/listing-hunt")], conflicts
+    assert "merge-conflict" in capsys.readouterr().out
+
+    # THE OTHER DIRECTION, folded in here because on its own it is a preservation test that
+    # the old code also passed (guard_kill: CANNOT-FAIL) -- and it is the reason this is a
+    # merge and not "origin always wins". The 19:00 hunt is what ACTIVATES most rows: on the
+    # real 09-12 `Bulwarx` row it found a live board for a dead smartrecruiters tenant, and
+    # origin had not touched the row since the checkout, so every column is the run's.
+    base = ["Bulwarx", "smartrecruiters", "bulwarx",
+            "https://api.smartrecruiters.com/v1/companies/bulwarx/postings", "false",
+            "auto-expand slug-probe; 3/3 IL"]
+    hunt = ["Bulwarx", "scrape", "", "https://www.bulwarx.com/careers", "true",
+            "auto-expand slug-probe; 3/3 IL | "
+            "listing-hunt 2026-09-12: verified 6 IL via www.bulwarx.com"]
+    b2, o2, t2 = _csv3(tmp_path, [base], [hunt], [list(base)])
+    merge(b2, o2, t2)
+    row2 = _row(t2, "Bulwarx")
+    assert row2[1:5] == ["scrape", "", "https://www.bulwarx.com/careers", "true"], row2
+    assert "verified 6 IL" in row2[5]
+
+
+def test_both_sides_changing_api_url_keeps_origin_and_says_so(tmp_path, capsys):
+    """A genuine conflict: both writers moved `api_url`, to different addresses. Origin wins
+    (a session writes with the later, fuller knowledge and a cron re-stamps the next night)
+    and the row is NAMED — on the run page, in `persist_log.jsonl`, and from there in the
+    morning mail. Resolved, never refused: the step stays green."""
+    import json as _json
+    from merge_csv_rows import merge
+    base = ["Cal", "scrape", "", "https://cal.example/careers", "false", "monitored candidate"]
+    ours = ["Cal", "scrape", "", "https://cal.example/jobs?loc=IL", "false",
+            "monitored candidate | listing-hunt 2026-09-19: verified 4 IL"]
+    theirs = ["Cal", "comeet", "cal", "https://www.comeet.com/jobs/cal/1A.000", "true",
+              "monitored candidate | platform-fix 2026-09-19: comeet board"]
+    b, o, t = _csv3(tmp_path, [base], [ours], [theirs])
+    _n, conflicts = merge(b, o, t)
+    row = _row(t, "Cal")
+    assert row[3] == "https://www.comeet.com/jobs/cal/1A.000", row
+    cols = sorted(c["col"] for c in conflicts)
+    assert "api_url" in cols and all(c["row"] == "Cal" for c in conflicts), conflicts
+    out = capsys.readouterr().out
+    assert "::warning::merge_csv_rows: merge-conflict Cal api_url" in out, out
+
+    # ...and the record that carries it out of a run page this repo deletes
+    ps = _ps()
+    d = str(tmp_path / "repo")
+    os.makedirs(os.path.join(d, "cloud_state"))
+    versions = {"BASE": open(b, "rb").read(), "OURS": open(o, "rb").read(),
+                "THEIRS": open(t, "rb").read()}
+    real_show = ps.git_show
+    ps.git_show = lambda rev, pth, cwd=None: versions.get(rev)
+    try:
+        ps.merge_conflicted(["companies.csv"], "BASE", "OURS", "THEIRS", d)
+    finally:
+        ps.git_show = real_show
+    lines = [_json.loads(l) for l in
+             open(os.path.join(d, ps.PERSIST_LOG), encoding="utf-8").read().splitlines() if l.strip()]
+    recs = [r for r in lines if r.get("kind") == "merge-conflict"]
+    assert len(recs) == 1 and recs[0]["rows"][0]["row"] == "Cal", lines
+    assert recs[0]["rows"][0]["origin"].startswith("https://www.comeet.com"), recs[0]
+
+
+def test_a_merge_conflict_reaches_the_morning_mails_stages_line(tmp_path):
+    """The alarm channel, end to end from the record. `persist_log.jsonl`, not a stage stamp:
+    the conflict path runs ~1.5 times a day and the next clean commit of the night would
+    overwrite a stamp hours before anyone read it. 24 hours, so one mail carries it once."""
+    import datetime as _dt
+    import json as _json
+    from pipeline import run as R
+    p = tmp_path / "persist_log.jsonl"
+    fresh = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    old = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=30)).strftime(
+        "%Y-%m-%dT%H:%M:%SZ")
+    with open(p, "w", encoding="utf-8") as f:
+        f.write('{"at": "%s", "kind": "merge-conflict", "run": "1", "total": 1, "rows": '
+                '[{"row": "Harel", "col": "active", "ours": "false", "origin": "true"}]}\n'
+                % old)
+        f.write("not json at all\n")
+        f.write(_json.dumps({"at": fresh, "kind": "deltas", "paths": []}) + "\n")
+        f.write('{"at": "%s", "kind": "merge-conflict", "run": "99", "total": 3, "rows": '
+                '[{"row": "Cal", "col": "api_url", "ours": "a", "origin": "b"}]}\n' % fresh)
+    lines = R._merge_conflict_alarms(path=str(p))
+    assert len(lines) == 2, lines
+    assert "Cal api_url" in lines[0] and "run 99" in lines[0], lines
+    assert "2 further row(s)" in lines[1], lines
+    assert R._merge_conflict_alarms(path=str(tmp_path / "nope.jsonl")) == []
+
+
+def test_two_writers_appending_different_segments_keep_both_under_the_cap(tmp_path):
+    """Eviction now spends the cap the way an in-process `notes.append` spends it — oldest
+    UNPROTECTED segment first, never a slice, a terminal fact never taken. The union it
+    replaces trimmed THEIRS' tail, and origin's newest segment is at that tail: on the real
+    09-19 row the uncapped union was 272 characters and the 220-cap evicted exactly the one
+    thing origin had added."""
+    from merge_csv_rows import merge
+    old = "listing-hunt 2026-09-01: no listing found (" + "q" * 60 + ")"
+    keep = "alias-of Kornit Digital 2026-08-25: identical board URL"
+    cols = ["A", "scrape", "", "https://a.example/careers", "false"]
+    base = cols + [keep + " | " + old]
+    ours = cols + [keep + " | " + old + " | repair 2026-09-19: re-pointed to /jobs"]
+    theirs = cols + [keep + " | " + old + " | self-heal 2026-09-19: board answers again"]
+    b, o, t = _csv3(tmp_path, [base], [ours], [theirs])
+    merge(b, o, t)
+    note = _row(t, "A")[5]
+    assert len(note) <= 220, note
+    assert "repair 2026-09-19" in note and "self-heal 2026-09-19" in note, (
+        "one writer's segment was dropped although the cap had room for both: %r" % note)
+    assert keep in note, "a terminal `alias-of` was evicted: %r" % note
+    assert "listing-hunt 2026-09-01: no listing found (qq" not in note or len(note) <= 220
+    assert not re.search(r"\d{4}-\d\d-\d\d:?\s*$", note), "a segment was sliced: %r" % note
+
+    # ...and the DEFECT THIS CHANGE INTRODUCED, folded in here for the same reason as above:
+    # on its own it is CANNOT-FAIL, because the union it replaces spent the cap on OURS' cell
+    # (which no longer held the deleted segment) and so never hit this. `Octup`, from the
+    # golden replay: the hunt consumes `probe-woken` and writes `listing-hunt` in its place --
+    # a SWAP -- and applying the addition first left the deleted segment in the cell, so
+    # `notes.append` evicted the row's `queue-hunt` receipt to make room the deletion was
+    # about to free. Deletions go first.
+    cols = ["Octup", "scrape", "", "https://www.comeet.com/jobs/octup/4A.003", "false"]
+    receipt = "queue-hunt 2026-09-15: careers page documented; monitored candidate"
+    triage = "dark-triage 2026-09-17: js-shell (job XHRs seen during render)"
+    w_base = cols + [f"{receipt} | {triage} | probe-woken 2026-09-18: re-hunt pending"]
+    w_ours = cols + [f"{receipt} | {triage} | "
+                     "listing-hunt 2026-09-18: no IL listing; monitored candidate"]
+    b2, o2, t2 = _csv3(tmp_path, [w_base], [w_ours], [list(w_base)])
+    merge(b2, o2, t2)
+    wake = _row(t2, "Octup")[5]
+    assert "probe-woken" not in wake, "the consumed wake came back: %r" % wake
+    assert receipt in wake, "the queue receipt was evicted for room it already had: %r" % wake
+    assert "listing-hunt 2026-09-18" in wake and len(wake) <= 220, wake
 
 
 def test_the_watchdog_only_alarms_when_it_can_prove_the_mail_did_not_happen():

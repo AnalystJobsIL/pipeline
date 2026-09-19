@@ -4913,5 +4913,45 @@
   "killers": [
    "tests/test_units.py::test_a_one_night_reading_buys_no_resolver_strike"
   ]
+ },
+ {
+  "id": "csv-threeway-origin-column",
+  "file": "merge_csv_rows.py",
+  "symbol": "_merge_cols",
+  "class": "M3-branch-narrowing",
+  "find": "        if ov == bv:\n            row[i] = tv                    # only ORIGIN moved: its knowledge is newer",
+  "replace": "        if ov == bv:\n            row[i] = ov                    # only ORIGIN moved: its knowledge is newer",
+  "why": "644: ours' columns were copied wholesale, so a three-hour cron's start-of-run snapshot reverted an activation pushed 17 minutes earlier (Harel, 83/83 IL). A column ours did not touch is origin's.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "csv-conflict-keeps-ours",
+  "file": "merge_csv_rows.py",
+  "symbol": "_merge_cols",
+  "class": "M2-gate-inversion",
+  "find": "        elif tv != bv:\n            row[i] = tv                    # both moved, differently",
+  "replace": "        elif tv != bv:\n            row[i] = ov                    # both moved, differently",
+  "why": "644: a column BOTH sides moved keeps ORIGIN's (a session writes with the later, fuller knowledge; a cron re-stamps the next night) and is reported. Flipping it keeps the report and loses the resolution -- the shape a warning hides.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "csv-note-append-unbounded",
+  "file": "merge_csv_rows.py",
+  "symbol": "_merge_notes_threeway",
+  "class": "M1-gate-removal",
+  "find": "        cell = N.replace_own(cell, key, seg, cap)",
+  "replace": "        cell = cell + \" | \" + seg",
+  "why": "the three-way note merge writes through `notes.replace_own`, which is what spends the 220-char cap by the append-log's own rule (oldest UNPROTECTED first, never a slice) and what stops a tool's own previous segment surviving beside its new one.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "csv-stale-address-verdict-kept",
+  "file": "merge_csv_rows.py",
+  "symbol": "_merge_notes_threeway",
+  "class": "M1-gate-removal",
+  "find": "        if address_moved and key in _ADDRESS_VERDICTS:",
+  "replace": "        if False and key in _ADDRESS_VERDICTS:",
+  "why": "644 / the 09-13 lesson that a ledger read is keyed by url: when origin has moved `api_url`, our `listing-hunt` / `dark-triage` verdict was made against a page this row no longer points at, and carrying it onto the new address re-arms a 14-day cooldown on a board nobody has read.",
+  "must_be_killed_by_behavioural": true
  }
 ]

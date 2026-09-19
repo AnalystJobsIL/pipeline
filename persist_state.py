@@ -324,20 +324,33 @@ def _keyed_list(keyfn):
     return strategy
 
 
+# Rows where this run and origin changed the same column or the same note segment to
+# different values. `s_csv_rows` cannot return them (it returns bytes), and they must reach
+# a human: `merge_conflicted` writes them to PERSIST_LOG and `pipeline/run.py` reads them
+# back into the morning mail's `Stages:` line for 24 hours (644).
+MERGE_CONFLICTS = []
+
+
 def s_csv_rows(base, ours, theirs):
-    """`companies.csv`: rows by company name, note segments unioned per tool, a segment ours
-    deliberately deleted stays deleted (merge_csv_rows.merge, base-aware)."""
+    """`companies.csv`: rows by company name; columns 1-4 and each note segment merged THREE
+    ways against the checkout (`merge_csv_rows.merge`), so origin's newer verdict about a
+    board survives a long run's snapshot and a segment ours deliberately deleted stays
+    deleted. A column both sides moved differently keeps origin's and is reported."""
     import merge_csv_rows as C
     if ours is None:
         return theirs
     if theirs is None or base is None:
+        # No base: this process cannot tell "changed" from "carried", so it must not pretend
+        # to. `commit` always has one (`git rev-parse HEAD` before the run), and the rows
+        # this arm would mis-merge are every row in the file.
         return ours
     with tempfile.TemporaryDirectory() as d:
         pb, po, pt = (os.path.join(d, n) for n in ("base.csv", "ours.csv", "target.csv"))
         for p, data in ((pb, base), (po, ours), (pt, theirs)):
             with open(p, "wb") as f:
                 f.write(data)
-        C.merge(pb, po, pt)
+        _, conflicts = C.merge(pb, po, pt)
+        MERGE_CONFLICTS.extend(conflicts)
         with open(pt, "rb") as f:
             return f.read()
 
@@ -352,7 +365,8 @@ def _name_key(e):
 
 # path -> (strategy, why). Exact paths only; anything else is `ours` with a warning.
 STRATEGY = {
-    "companies.csv": (s_csv_rows, "rows by name, note segments per tool (merge_csv_rows)"),
+    "companies.csv": (s_csv_rows, "rows by name; per column and per note segment, three ways "
+                                  "against the checkout (merge_csv_rows)"),
     "scraped_cache.json": (s_company_dict, "eight writers; per company key, deletions honoured"),
     "cloud_state/firmographics.json": (s_company_dict, "per company record; local chain + digest"),
     # Written by the 10:00 firmographics cron ONLY. `daily-digest.yml` owns `cloud_state`
@@ -560,8 +574,29 @@ def expand_owned(paths, cwd):
     return uniq
 
 
+MERGE_CONFLICT_MAX = 25         # a log LINE, not a report: the run page carries every one
+
+
+def log_merge_conflicts(cwd, rows, base=""):
+    """The rows a three-way merge could only resolve by preferring origin, appended to
+    `PERSIST_LOG` as one `merge-conflict` record.
+
+    The run page already names each one, and that is not a channel: this repo deletes run
+    records on purpose (`CLAUDE.local.md` §3) and the conflict path runs ~1.5x a day. A
+    record here reaches `pipeline/run.py::_merge_conflict_alarms` and the morning mail's
+    `Stages:` line for 24 hours -- no new stage key, nothing for a later clean commit to
+    overwrite, and `s_jsonl_union` merges it like every other line of this log."""
+    if not rows:
+        return False
+    rec = {"at": _now(), "base": (base or "")[:8], "run": _run_id(),
+           "kind": "merge-conflict", "rows": rows[:MERGE_CONFLICT_MAX],
+           "total": len(rows)}
+    return _append_persist_log(cwd, rec, "merge-conflict")
+
+
 def merge_conflicted(owned, base, ours_rev, theirs_rev, cwd):
     """After `reset --hard origin`: rebuild every owned path from the three versions."""
+    MERGE_CONFLICTS.clear()         # a second attempt must not re-report the first's rows
     for p in owned:
         strat, why = strategy_for(p)
         b, o, t = git_show(base, p, cwd), git_show(ours_rev, p, cwd), git_show(theirs_rev, p, cwd)
@@ -590,6 +625,12 @@ def merge_conflicted(owned, base, ours_rev, theirs_rev, cwd):
         else:
             _write_bytes(full, merged)
         print(f"  merged {p}: {why}", flush=True)
+    # AFTER the loop: the loop rebuilt PERSIST_LOG itself (the `reset --hard` had replaced it
+    # with origin's copy), so a record written earlier would be the one this merge discards.
+    if MERGE_CONFLICTS:
+        _log("warning", f"{len(MERGE_CONFLICTS)} row/column conflict(s) resolved toward ORIGIN: "
+                        + "; ".join(f"{r.get('row')} {r.get('col')}" for r in MERGE_CONFLICTS[:8]))
+        log_merge_conflicts(cwd, list(MERGE_CONFLICTS), base)
 
 
 def _identity(name):
@@ -680,12 +721,27 @@ def report_deltas(deltas, cwd, message="", base=""):
     # `base` is the tree the run checked out. On the conflict path `merge_conflicted` runs
     # AFTER this, so what finally lands can differ from what is recorded here -- stamping the
     # base makes the record interpretable instead of merely wrong (BACKLOG 365).
-    rec = {"at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-           "base": (base or "")[:8],
-           "run": os.environ.get("RUN_URL", "") or os.environ.get("GITHUB_RUN_ID", ""),
+    rec = {"at": _now(), "base": (base or "")[:8], "run": _run_id(),
            "msg": " ".join(str(message or "").split())[:120],
            "paths": [{k: d[k] for k in ("path", "before", "after", "lost", "gained")}
                      for d in deltas]}
+    _append_persist_log(cwd, rec, "deltas")
+
+
+def _now():
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _run_id():
+    return os.environ.get("RUN_URL", "") or os.environ.get("GITHUB_RUN_ID", "")
+
+
+def _append_persist_log(cwd, rec, who):
+    """One record at the tail of `PERSIST_LOG`, as ONE line, oldest lines dropped at the cap.
+
+    NOT `_dumps`: it indents, and an indented record is several lines, none of which is valid
+    JSON on its own -- `run_gates` parses a .jsonl line by line and would fail the very log it
+    is meant to keep."""
     full = os.path.join(cwd, PERSIST_LOG)
     try:
         os.makedirs(os.path.dirname(full), exist_ok=True)
@@ -694,14 +750,13 @@ def report_deltas(deltas, cwd, message="", base=""):
             with open(full, "rb") as f:
                 old = f.read()
         keep = [x for x in old.splitlines() if x.strip()][-(PERSIST_LOG_MAX - 1):]
-        # NOT _dumps: it indents, and an indented record is several lines, none of which is
-        # valid JSON on its own -- `run_gates` parses a .jsonl line by line and would fail
-        # the very log it is meant to keep. One record, one line.
         line = json.dumps(rec, ensure_ascii=False, sort_keys=True,
                           separators=(",", ":")).encode("utf-8")
         _write_bytes(full, b"\n".join(keep + [line]) + b"\n")
+        return True
     except OSError as e:                # an audit log never costs the commit it describes
-        print(f"  [deltas] {PERSIST_LOG} not written: {e}", flush=True)
+        print(f"  [{who}] {PERSIST_LOG} not written: {e}", flush=True)
+        return False
 
 
 def run_provenance(message, env=None):
