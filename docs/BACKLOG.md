@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**685 filed · 481 open · 204 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**685 filed · 480 open · 205 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -594,7 +594,7 @@ closure convention in the header.
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 - **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
 
-### render — 9 open
+### render — 8 open
 
 - **4** `4@render` **`pipeline/jdtext.py`**
 - **119** `119@render` **`digest._LOC_CANON` and the four seniority vocabularies are copies** *(half closed)*
@@ -604,7 +604,6 @@ closure convention in the header.
 - **212** `212@render` **A greenhouse location of the form `Remote (HQ Israel Beit Yanai, Central District,
 - **598** `598@render` **After a fold, a role filed under the ALIAS name loses its brand and its `firmo_match`
 - **614** `614@render` **The mail says `render: 1 role(s) hidden
-- **632** `632@render` **`blurb-names-other` has fired 7 times and not one is an impersonation; two three-line
 
 <!-- BACKLOG-INDEX:END -->
 
@@ -12986,6 +12985,18 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      SQL & Power BI`. **(a) is still open and is `roles`/`render`'s**: whether the canon should
      cut one ` | ` followed by a short skills segment so both layers agree.
 
+     **(a) measured 2026-09-19 (`render`) and left open, with the number that says why it is not
+     render's to build.** Over the whole ledger, **2 of 289** records carry a mangled title and
+     both are pipe-only — `ONE datAI | Business Data Analyst | SQL & Power BI` (closed) and
+     `Bank Leumi | Business Analyst | Corporate Banking Division Headquarters 3103` (withdrawn).
+     Split over today's surfaces from the committed store: board **0** hidden, email **0**,
+     archive **2** (the withdrawn row is still a `matched` row, so it renders in the archive).
+     So a render-only rule — "one ` | ` plus a short skills tail is not a blob" — would unhide
+     **2 archive cards and 0 open, board or email roles**, while changing what the board hides
+     the next time a LinkedIn title arrives with a pipe. The value is in the CANON agreeing with
+     the render gate (`roles.canonical_title` keeps the tail `585` would not cut), which is
+     `roles`'s file; render's half is already done (`(b)`, the alarm names the titles).
+
 615. **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
      place patterns have no Hebrew word edges** — lane: `classifier` (`pipeline/israel.py`).
      Filed 2026-09-13 by `scraper`, agreed live with that day's `classifier` session, which is
@@ -13487,8 +13498,8 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      `SURVIVING` line is the owning lane's.
 ## From the `company-intel` lane, 2026-09-18 (a guard with no true positives, and a group's shared board)
 
-632. **`blurb-names-other` has fired 7 times and not one is an impersonation; two three-line
-     changes take it to 2, and both survivors are real duplicate employers** — lane: `render`
+632. ~~**`blurb-names-other` has fired 7 times and not one is an impersonation; two three-line
+     changes take it to 2, and both survivors are real duplicate employers**~~ — lane: `render`
      (`pipeline/rolecard.py`), filed 2026-09-18 by `company-intel`, which owns the blurb but not
      the check. Measured over all **210** cached blurbs in `cloud_state/seen.db` against the
      **1,701**-record export as the victim set, first-match-per-blurb as `cross_check` counts:
@@ -13560,6 +13571,44 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
 
      Check: with both changes, `cross_check` over the published board+archive prints
      `blurb-names-other` **0** times, and the 210-blurb sweep prints exactly the two pairs above.
+
+     **CLOSED 2026-09-19 (`render`)**, on the split design and not on the diff above. The sweep
+     read **6**, not 7, before anything changed: `91b9676` (09-19, `registry`) put
+     `הראל ביטוח ופיננסים` in `ALIASES`, so `same_employer` already folded that pair. After the
+     change: **2**, both real registry duplicates — `Pagayais→Pagaya` (two Greenhouse rows) and
+     `בנק דיסקונט→Discount Bank` (`companies.csv:1304/1305/1404`, three rows). Both relayed to
+     `registry`; render does not fold a registry name. On the surfaces: board **1 → 0**, archive
+     **0 → 0**, email **0 → 0**, and every other `cross_check` issue byte-identical.
+     `python tests/rehearse_render.py --blurbs` is the command (landed with the fix).
+
+     **(a)+(b) as written were REJECTED, and the numbers are why.** (b) removes a two-word
+     brand from `tokens` altogether, and the me-check reads `me not in tokens`, so the same
+     removal silences that company as an ACCUSER: `Oak - Identity` (key `oak identity`, tokens
+     `['identity']`) stops accusing, and `test_cross_check_names_five_wrong_company_shapes_and_only_those`
+     — which has pinned `blurb-names-other Oak - Identity→Sckipio` since 2026-08-30 — fails on
+     the fixture. It also silences `בנק דיסקונט`, hiding the Discount Bank duplicate: **1 hit
+     where the split design measures 2**. So block (c) now keeps two dicts, `victims` (today's
+     rule plus "a two-word key is not its second noun") and `mine` (every named card, by every
+     spelling it writes), and the accuser filter is gone. The one-condition change to the
+     victim rule is (b)'s, unchanged.
+
+     Two things this item predicted that the measurement corrected. The second survivor is
+     **not** `הראל…→Harel Insurance & Finance` (folded before this session) but
+     `בנק דיסקונט→Discount Bank`: once `Air Products` stops being nameable, the next
+     first-match for that blurb is its own twin. And "board+archive prints 0" is **wrong as a
+     check** — the union prints **1**, because `בנק דיסקונט` renders on one surface and
+     `Discount Bank` on the other, and a pair no single product sees whole is a pair no product
+     alarms about. Each product cross-checks its own population: read `--cards` (the union) for
+     duplicates and `--blurbs` for the cache, and expect the mail to be the lowest of the three.
+
+     Residue, named because it is the next reader's trap and NOT fixed: three of the six hits
+     were a Hebrew-keyed row with an English blurb (`מטריקס`, `קבוצת כלמוביל`,
+     `בנק דיסקונט`), and they are silent now only because their VICTIMS became unnameable. The
+     accuser half still cannot find its own name in its own blurb — no spelling
+     `identity_key` knows transliterates `מטריקס` to `Matrix` — so the class returns the day a
+     Hebrew-keyed blurb names a single-token English company. A transliteration rung belongs to
+     whoever owns the names (`company-intel`: a `display_name`, or an `ALIASES` entry, makes
+     that blurb self-excusing today, which is the mechanism this change added).
 
 633. **The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data Analyst
      card carries a UAV/defence chip on a public-sector Power BI job** — lane: `registry`, filed

@@ -76,39 +76,30 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-20 | ats-fetch | first `event: schedule` digest whose headSha has `348811e`: every `stale.json` entry carries `nights`; `new:` names no `regressed to zero` at `nights 1`; standing carries `watching`. N/A if none ran | | |
 | 2026-09-21 | ats-fetch | two containing digests on: `new: ... regressed to zero` names at most the rows whose `nights` reached **2** that morning, and no name is announced twice in three days | | |
 | 2026-09-19 | ats-fetch | **the two pushes are green on a runner.** `gh run view 35407446121 --json jobs` (`2b59be3`, the fetcher) and `35408195028` (`348811e`, health) read **20 of 20** success at JOB level, `guard-kill` and every `mutation-gate` shard included - the seven records this branch filed or re-anchored live in those shards. Both were still `queued` behind five lanes at 00:10Z, which is why this is a row. A red naming `adamtotal-*`, `regression-*`, `a-blip-that-vanished-*`, `same-day-rewrite-*`, `declared-tenant-labels-*` or `identity-jobvite-open` is THIS lane's | | |
+| 2026-09-19 | render | **no `blurb-names-other` in the mail.** First `event: schedule` digest ⊇ this push; a `doitintl→Google Israel` fragment on the `Render:` line is **FAIL** | | |
 
-## State at handoff — 2026-09-18 ~20:00 UTC, every number re-derived
+## State at handoff — 2026-09-19 ~01:00 UTC, every number re-derived
 
 | | | how |
 |---|---|---|
-| registry | **2485 rows · 1429 active · 0 orphans** | `python check_invariants.py` |
+| registry | **2494 rows · 1432 active · 0 orphans** | `python check_invariants.py` |
 | last digest | **2026-09-18**, run `35330002476`, **186 rows / 3 new**; the 09-19 run is the first on today's eight lanes | `digests/latest.md` |
-| guards | **2,096 passed · 13 skipped · 0 failed** locally on `1375311` (`company-intel`); CI runs of 09-18 read 10/16 until `62eab37`'s twenty shards | `python -m pytest` (not `-q`) |
+| guards | **2,116 passed · 13 skipped · 0 failed** locally on `b2ce3a3` (`render`); CI runs of 09-18 read 10/16 until `62eab37`'s twenty shards | `python -m pytest` (not `-q`) |
 
 **Green here is not green in CI**, and on a commit master has moved past. Each lane's line names its run.
 
 ## Watch list for the next session
 
-0. **`digest_watchdog.py` is not installed** (`292@infra`, operator) — the only off-GitHub tripwire.
-
-0b. **A patch script that emits YAML**: the trap is
-   `test_no_workflow_run_block_fakes_a_line_continuation`.
+0. **`digest_watchdog.py` is not installed** (`292@infra`, operator) — the only off-GitHub tripwire. A patch script that emits YAML trips `test_no_workflow_run_block_fakes_a_line_continuation`.
 
 0. **Active rows with an all-time-high of ZERO are a COMMAND, not a number** (wrong five times): `python confirm_zero.py --scrape-only`; `cloud_state/zero_confirm.json` is the per-row answer; siblings `--regions` and `--stale-boards`. `docs/sessions/2026-08-28-registry-evening.md`; `399`, `406`, `407`.
 
 1. **`merge_key` should move onto `firmographics.identity_key`.** `ARCHITECTURE.md` §7c
    counts **13** identity groups where two active rows read one board (this said ~15). It is
    the `matched` PRIMARY KEY, so it needs a migration. `docs/BACKLOG.md` 132–139, `roles`.
-2. **`mark_sent` still records intent, not delivery.** `daily-digest.yml` runs it at step
-   `Mark digested roles as sent`, before `Persist state back to the repo` and long before the
-   06:17 relay. A role can still be burned unsent.
+2. **`mark_sent` still records intent, not delivery** — a role can be burned unsent (`6@infra`, `161`; CLAUDE.md rule 6 names the step).
 3. **`cloud_state/seen.db` is 1.54 MB**, duplicating `firmographics`; drop, VACUUM.
-4. **iCIMS is the only unsupported ATS left** — see Open items 2; `registry_health.py
-   --ats` is derived and correct. HiBob is at **1** active row, moving away from the
-   3-row trigger.
 6. **~24 active rows are re-checked by NOTHING** (`registry`, 2026-08-27): an ACTIVE `israel_scoped` fetcher returning 0 never enters `stale.json` (`health.zero_is_a_measurement()` exempts it), so no self-heal or parked pool reaches it; `ARCHITECTURE.md` §2's "every state is re-checked" overstates.
-
-5. **GitHub dispatches a cron when it feels like it** — a drop or lateness is a `cron …` clause on the mail's `Stages:` line.
 
 ## Open items — highest value first
 
@@ -117,16 +108,13 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
    registry_health.py` for today's pools** — the table that sat here was superseded within a day.
 2. **iCIMS** is the one platform with rows and no native fetcher (recipe: `ARCHITECTURE.md`
    §6). The old "3+ rows earns a fetcher" rule was replaced by the operator on 2026-08-26:
-   one row earns it.
+   one row earns it. `registry_health.py --ats` is derived; HiBob has **1** active row.
 3. **`CLAUDE_CODE_OAUTH_TOKEN` may expire**: `LLM calls this run: 0` with a large
    `llm_failed_fallback`. `claude setup-token`.
 4. **SerpApi did NOT reset on 2026-09-01** (`total_searches_left: 0`, Free Plan), whatever five
    docs imply. The working search stays `deep_validate.google_via_unlocker` (`4@discovery`).
 5. **`--census` rewrites its own baseline every digest run**, so a pool alarms at most once
    and a slow drift never alarms at all. `315@registry`.
-
-*Items (6)-(7), closed and verified 2026-08-27, pruned 2026-08-30 for the word cap — the
-verifications live in `docs/sessions/2026-08-2[6-7]-*.md`.*
 
 ## Session log — newest last
 
@@ -145,3 +133,4 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-09-18 `company-intel`** — three employers held two records each, and a new brand arrived with a blurb about a Canadian company. `ALIASES` flare/trivago, `alias_only_folds` (`618`), `DISPLAY_NAME_OVERRIDES["Holisto"]`; export **1,704→1,701**, +2 display names. Group19 sector CONFIRMED, its board is `633`. Seam **1**, BD **0**. CI `35366756545` queued. **NOT finished:** `632`, `633`. Record: `docs/sessions/2026-09-18-company-intel.md`.
 - **2026-09-18 `ats-fetch`** — six SuccessFactors boards timed out in one run (0.5 s from here: a blip), and `regressed to zero` was last night's reading. `fetch_adamtotal` + its declared query-string tenant (Harel **83/83 IL**, `621` half); `REGRESSION_NIGHTS` **2** on 81 runs / **41** one-night. 0 BD/seam. CI `35407446121`/`35408195028`. **NOT finished:** `621`, `635`, `606`. Record: `docs/sessions/2026-09-18-ats-fetch.md`.
 - **2026-09-18 `roles`** — 11 published rows shipped `class_decision=reject`, and a LinkedIn mirror's text outranked the own board on length. Reject→withdrawn sweep + tripwire; provenance rule; `_rename_record` shared; twin tie-break; `607` closed (4 groups re-ranked); gate 6/6. 0 BD/seam. CI `35362047730` **12/16** (4 shards on the CLOCK, `631@infra`); Sunday-audit red inherited (`registry`, calendar rot). **NOT finished:** `627`, `628`. Record: `docs/sessions/2026-09-18-roles.md`.
+- **2026-09-19 `render`** — `blurb-names-other` named **6** of 188 cached blurbs, 0 impersonations, 1 on the board. Block (c) asks two questions now: victims are filtered (a two-word key is not its second noun), accusers are not (`ALIASES`, `display_name`). **6→2**, both real duplicates; board **1→0**. `632` closed. 0 BD/seam. **NOT finished:** `614`(a). Record: `docs/sessions/2026-09-19-render.md`.
