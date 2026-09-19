@@ -7008,6 +7008,64 @@ def test_cross_check_names_five_wrong_company_shapes_and_only_those():
     assert rolecard._tenant("https://il.linkedin.com/jobs/view/1?x=greenhouse") == ""
 
 
+def test_blurb_names_other_reads_the_brand_and_refuses_a_two_word_noun():
+    """`632`: the check asked one question with one token dict, so the rule that decides who
+    may be NAMED also decided who may ACCUSE. Measured over all 188 cached blurbs on
+    2026-09-19: 6 hits, 4 of them a two-word brand reduced to its second noun (`Air
+    Products`→`products`, `Poc System`→`system`, `Capital One`→`capital`, `REE
+    Automotive`→`automotive`) and 2 a company that DOES name itself, in a spelling
+    `identity_key` folds into it (`DoiT` for the registry row `doitintl`) — the one that
+    reached the published board. Now 2, both real registry duplicates.
+
+    The split is the point: a two-word brand is no longer a victim of its own second word,
+    and is still an accuser under its own name (`Oak - Identity→Sckipio`, pinned above, dies
+    if the victim rule filters accusers too)."""
+    from pipeline import rolecard
+    build = lambda co, about="", firmo=None, **k: rolecard.build(
+        _job(company=co, **k), "2026-08-25", company_info={co: about} if about else {},
+        firmographics=firmo)
+    # (1) a blurb that names its company by the spelling ALIASES folds into the registry row
+    doit = [build("doitintl", "DoiT is a global technology company and a Google Cloud premier partner.",
+                  url="https://boards.greenhouse.io/doitintl/jobs/1"),
+            build("Google Israel", url="https://www.google.com/about/careers/applications/jobs/2")]
+    assert not any(i.startswith("blurb-names-other") for i in rolecard.cross_check(doit))
+    assert "doit" not in rolecard._COMMON_WORDS      # the fix is a rule, not a word-list edit
+    assert not {"products", "system", "capital", "automotive"} & rolecard._COMMON_WORDS
+    # (2) ...or by the brand company-intel evidenced, read off the CARD (a brand whose
+    # ALIASES entry has not landed yet is the normal case: the export is data, ALIASES is code)
+    brand = [build("Poc Widgets", "Sparkwidge builds analytics tooling. Acquired by Sckipio last year.",
+                   firmo={"Poc Widgets": {"display_name": "Sparkwidge"}},
+                   url="https://poc-widgets.breezy.hr/p/1"),
+             build("Sckipio", url="https://www.comeet.com/jobs/sckipio/1/x/AB.1")]
+    assert brand[0]["display_name"] == "Sparkwidge"
+    assert not any(i.startswith("blurb-names-other") for i in rolecard.cross_check(brand))
+    brand[0]["display_name"] = ""                    # ...and that value IS what excused it
+    assert "blurb-names-other Poc Widgets→Sckipio" in rolecard.cross_check(brand)
+    # (3) a two-word brand's second noun names nobody; the one-word victim beside it still does
+    matrix = [build("מטריקס", "Matrix is Israel's largest IT services group. Its Poc System "
+                              "division was acquired by Sckipio.", url="https://matrix.co.il/jobs/1"),
+              build("Poc System", url="https://pocsystem.com/careers/2"),
+              build("Sckipio", url="https://www.comeet.com/jobs/sckipio/1/x/AB.1")]
+    assert [i for i in rolecard.cross_check(matrix) if i.startswith("blurb-names-other")] == [
+        "blurb-names-other מטריקס→Sckipio"]
+    # (4) the two survivors, both registry duplicates render must NOT fold (handed to registry)
+    pagaya = [build("Pagayais", "Pagaya is an AI-driven credit analysis network.",
+                    url="https://boards.greenhouse.io/pagayais/jobs/1"),
+              build("Pagaya", url="https://boards.greenhouse.io/pagaya/jobs/2")]
+    assert "blurb-names-other Pagayais→Pagaya" in rolecard.cross_check(pagaya)
+    discount = [build("בנק דיסקונט", "Discount Bank is one of Israel's largest banking groups.",
+                      url="https://discountbank.co.il/careers/1"),
+                build("Discount Bank", url="https://jobs.discountbank.co.il/2")]
+    assert "blurb-names-other בנק דיסקונט→Discount Bank" in rolecard.cross_check(discount)
+    # (5) end to end: the published board's own hit is gone from the mail's Render: line
+    from pipeline import digest
+    r = digest.render_all([], [_job(company="doitintl", url="https://boards.greenhouse.io/doitintl/jobs/1"),
+                               _job(company="Google Israel", title="BI Analyst", url="https://google.com/jobs/2")],
+                          [], "2026-08-25", {"paths": {}},
+                          {"doitintl": "DoiT is a global technology company and a Google Cloud premier partner."})
+    assert "blurb-names-other" not in r["md_body"] and not any("blurb" in w for w in r["warnings"])
+
+
 def test_the_mail_subject_counts_every_role_bullet_the_mail_carries():
     """THE subject-line rule (2026-08-30). Inbox issue #14 was titled "🎯 6 new analytics
     roles — 2026-08-30" over a body of 13 role bullets; the H1 counted the 48h list and the

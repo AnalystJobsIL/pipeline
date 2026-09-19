@@ -4488,6 +4488,58 @@
   ]
  },
  {
+  "id": "render-blurb-me-check-ignores-aliases",
+  "file": "pipeline/rolecard.py",
+  "symbol": "cross_check",
+  "class": "M4-guard-removal",
+  "find": "        m = _toks(key) + [t for k, v in ALIASES.items() if v == key for t in _toks(k)]\n",
+  "replace": "        m = _toks(key)\n",
+  "why": "632: a blurb that names its company by the spelling identity_key folds into the registry row (`DoiT is a global technology company` on the row `doitintl`) read as naming somebody else, and that hit reached the published board on 2026-09-19 (render).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_blurb_names_other_reads_the_brand_and_refuses_a_two_word_noun"
+  ]
+ },
+ {
+  "id": "render-blurb-me-check-ignores-display-name",
+  "file": "pipeline/rolecard.py",
+  "symbol": "cross_check",
+  "class": "M4-guard-removal",
+  "find": "        if card.get(\"display_name\"):\n            m += _toks(identity_key(card[\"display_name\"]))\n",
+  "replace": "",
+  "why": "632: a company whose blurb names it by the brand company-intel evidenced (`display_name`, vetted and possibly revoked by block (b)) must excuse itself; the export is data and ALIASES is code, so a brand with no alias entry yet is the normal case (render, 2026-09-19).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_blurb_names_other_reads_the_brand_and_refuses_a_two_word_noun"
+  ]
+ },
+ {
+  "id": "render-blurb-two-word-victim-back-to-its-noun",
+  "file": "pipeline/rolecard.py",
+  "symbol": "cross_check",
+  "class": "M1-gate-removal",
+  "find": "        if len(toks) == 1 and (toks[0] in _COMMON_WORDS or len(toks[0]) < 5 or len(key.split()) > 1):\n",
+  "replace": "        if len(toks) == 1 and (toks[0] in _COMMON_WORDS or len(toks[0]) < 5):\n",
+  "why": "632: 4 of the 6 hits over all 188 cached blurbs were a two-word brand reduced to its second noun -- `Air Products`->`products`, `Poc System`->`system`, `Capital One`->`capital`, `REE Automotive`->`automotive`; the word is not the brand (render, 2026-09-19).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_blurb_names_other_reads_the_brand_and_refuses_a_two_word_noun"
+  ]
+ },
+ {
+  "id": "render-blurb-accuser-filtered-like-a-victim",
+  "file": "pipeline/rolecard.py",
+  "symbol": "cross_check",
+  "class": "M3-branch-narrowing",
+  "find": "        if not about or me not in mine:\n",
+  "replace": "        if not about or me not in victims:\n",
+  "why": "632: one token dict made the victim rule the accuser rule -- 632's own first diff silenced `Oak - Identity->Sckipio` (pinned since 2026-08-30) and hid the real `Discount Bank` duplicate: 1 hit where the split design measures 2 (render, 2026-09-19).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_blurb_names_other_reads_the_brand_and_refuses_a_two_word_noun"
+  ]
+ },
+ {
   "id": "member-rank-ignores-the-closure-line",
   "file": "pipeline/roles.py",
   "symbol": "_member_rank",

@@ -29,7 +29,7 @@ from urllib.parse import urlparse, parse_qsl, urlencode
 
 from . import jdtext, roleprofile
 from .company_info import _JUNK_OUT
-from .firmographics import STAGES, identity_key
+from .firmographics import ALIASES, STAGES, identity_key
 from .seniority import _HEBREW_SENIOR, _JUNIOR, _SENIOR
 
 # a failed `claude -p` (or similar CLI error) must never render as an About blurb — and
@@ -540,7 +540,12 @@ def cross_check(cards):
                             both now render their full name
       blurb-names-other A→B A's About text names employer B and not A — counted, never
                             dropped (acquirers and customers are named legitimately;
-                            company-intel owns the blurb)
+                            company-intel owns the blurb). A company may name ITSELF by any
+                            spelling `identity_key` folds into it (`DoiT` for `doitintl`) or
+                            by the brand company-intel evidenced (`display_name`), and that
+                            excuses the blurb. A two-word brand accuses nobody by its second
+                            word alone (`Air Products` is not every blurb saying "products"),
+                            but it is still an accuser under its own name.
     """
     issues = []
     cards = [c for c in cards if isinstance(c, dict)]
@@ -608,26 +613,54 @@ def cross_check(cards):
                 if c["company"] in ns:
                     c["display_company"] = c["company"]
                     c["display_name"] = ""      # the revert must win on EVERY surface
-    # (c) the About text names a different rendered employer, and not this one
-    tokens = {}
+    # (c) the About text names a different rendered employer, and not this one. The question
+    # is asymmetric and was one dict until 2026-09-19 (`632`), which made the victim rule the
+    # accuser rule too: who may be NAMED is "whose tokens mean only them", who may ACCUSE is
+    # every named card, by every spelling of its own name.
+    def _toks(key):
+        """A name's identity tokens — the ≥4-character ones, or the whole key when it has none."""
+        return [t for t in key.split() if len(t) >= 4] or ([key] if key else [])
+
+    victims = {}
     for n in names:
         key = identity_key(n)
-        toks = [t for t in key.split() if len(t) >= 4] or ([key] if key else [])
+        toks = _toks(key)
         # one token that is an ordinary English word (Global-e, Port, Bounce, Meta, Rise)
-        # would fire on every blurb that uses the word; such a company needs two tokens
-        if len(toks) == 1 and (toks[0] in _COMMON_WORDS or len(toks[0]) < 5):
+        # would fire on every blurb that uses the word; such a company needs two tokens.
+        # A two-word brand reduced to its second noun is that same shape and was 4 of the 6
+        # blurbs this fired on across the whole cache (`Air Products`→`products`, `Poc
+        # System`→`system`, `Capital One`→`capital`, `REE Automotive`→`automotive`): the
+        # word is not the brand, so it names nobody.
+        if len(toks) == 1 and (toks[0] in _COMMON_WORDS or len(toks[0]) < 5 or len(key.split()) > 1):
             continue
         if toks:
-            tokens[n] = toks
+            victims[n] = toks
+    mine = {}
+    for card in cards:
+        n = card.get("company")
+        if not n or n in mine:
+            continue
+        key = identity_key(n)
+        # ...plus the spellings `identity_key` folds INTO this company (`doit`→`doitintl`, so
+        # a blurb opening "DoiT is a global technology company" names itself), and the brand
+        # company-intel evidenced — read off the CARD, never re-derived from the firmographics
+        # record: the card's value already passed `display_name()`'s impersonation guard and
+        # block (b) has already revoked it where two employers collided, so that guard's scope
+        # stays the render dict.
+        m = _toks(key) + [t for k, v in ALIASES.items() if v == key for t in _toks(k)]
+        if card.get("display_name"):
+            m += _toks(identity_key(card["display_name"]))
+        if m:
+            mine[n] = m
     counted = Counter()
     for c in cards:
         about = (c.get("about") or "").lower()
         me = c.get("company")
-        if not about or me not in tokens:
+        if not about or me not in mine:
             continue
-        if any(re.search(r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])", about) for t in tokens[me]):
+        if any(re.search(r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])", about) for t in mine[me]):
             continue
-        for other, toks in tokens.items():
+        for other, toks in victims.items():
             if other != me and not same_employer(other, me) and all(
                     re.search(r"(?<![a-z0-9])" + re.escape(t) + r"(?![a-z0-9])", about) for t in toks):
                 counted[(me, other)] += 1
