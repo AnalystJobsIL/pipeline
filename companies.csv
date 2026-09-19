@@ -2494,3 +2494,7 @@ Panaya,scrape,,https://www.panaya.com/careers,false,queue-hunt 2026-09-19: caree
 The Apex Group Ltd,scrape,,https://www.apexgroup.com/careers,false,queue-hunt 2026-09-19: careers page documented; monitored candidate
 Group19,scrape,,https://www.group19.org.il/career,true,"resolved 2026-09-19: the group's own board, 8 listings across six subsidiary pages; board_verify ok names Group19"
 Thing or Two,scrape,https://thingortwo.com,https://thingortwo.com,false,scanned; no open Israel roles now | own-site 2026-09-19: thingortwo.com linkback
+Clickhouse,ashby,clickhouse,https://api.ashbyhq.com/posting-api/job-board/clickhouse,true,auto-expand slug-probe; 202/2 IL
+Tmf Group,scrape,https://www.tmf-group.com/,https://www.tmf-group.com/,false,scanned; no open Israel roles now | own-site 2026-09-19: www.tmf-group.com linkback
+Toonimo,scrape,https://www.toonimo.com/en/careers,https://www.toonimo.com/en/careers,true,auto-expand scrape; 8 IL
+Toriihq,scrape,https://www.toriihq.com/,https://www.toriihq.com/,false,scanned; no open Israel roles now | own-site 2026-09-19: www.toriihq.com linkback
