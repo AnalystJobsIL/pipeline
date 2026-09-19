@@ -2,6 +2,7 @@
 
     python tests/rehearse_render.py --golden <baseline_digest.py>   # every product byte-equal?
     python tests/rehearse_render.py --cards [--cards-golden cards.json]   # the card model, diffed
+    python tests/rehearse_render.py --blurbs                    # blurb-names-other, whole cache
     python tests/rehearse_render.py --real --only "Fiverr,Wix,Lightricks" # live scoped run, no LLM/BD
     python tests/rehearse_render.py --full                            # tomorrow's email, scratch copy
 
@@ -25,6 +26,7 @@ import importlib.util
 import json
 import os
 import shutil
+import sqlite3
 import subprocess
 import sys
 
@@ -36,6 +38,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--golden", metavar="BASELINE_PY", help="path to a snapshot of pipeline/digest.py")
 ap.add_argument("--cards", action="store_true", help="dump the card model for every store role")
 ap.add_argument("--cards-golden", metavar="JSON", help="compare --cards against this dump")
+ap.add_argument("--blurbs", action="store_true", help="blurb-names-other over every cached blurb")
 ap.add_argument("--real", action="store_true")
 ap.add_argument("--full", action="store_true")
 ap.add_argument("--only", default="Fiverr,Wix,Lightricks")
@@ -203,6 +206,39 @@ def cards():
         checks.append(("card golden compared (see counts above)", True))
 
 
+def blurbs():
+    """`blurb-names-other` over the WHOLE blurb cache — the offline universe, not a product.
+
+    One card per named blurb, carrying the brand that card would render, with distinct titles
+    and no urls so blocks (0), (a) and (a') stay silent; the hits come from the shipped
+    `rolecard.cross_check`, so this gauge cannot drift from the rule it measures (the 09-11
+    rule: a re-derivation is one command). 2026-09-19: 6 hits before `632`, 2 after, both real
+    registry duplicates.
+
+    A hit here is not a rendered hit. Each product cross-checks its OWN population, so an
+    accuser on the board with its victim in the archive is a pair nobody renders — which is
+    why `בנק דיסקונט`→`Discount Bank` is 1 of the 2 here and 0 in every product. `--cards`
+    reads the board+archive surface; this reads the cache behind them."""
+    W = _scratch("blurbs")
+    from pipeline import rolecard
+    con = sqlite3.connect("file:%s?mode=ro" % os.path.join(W, "seen.db").replace("\\", "/"), uri=True)
+    cache = {n: b for n, b in con.execute("select company, summary from company_info") if (b or "").strip()}
+    con.close()
+    firmo = json.load(open(os.path.join(REPO, "cloud_state", "firmographics.json"), encoding="utf-8"))
+    names = sorted(set(cache) | set(firmo))
+    cards_ = []
+    for i, n in enumerate(names):
+        dn = rolecard.display_name(firmo.get(n) or {}, company=n, firmographics=firmo)
+        cards_.append(dict(rolecard._LAST_RESORT, company=n, display_company=dn or n,
+                           display_name=dn, about=cache.get(n, ""), title="role %d" % i, url=""))
+    hits = [i for i in rolecard.cross_check(cards_) if i.startswith("blurb-names-other")]
+    print(f"blurbs: {len(cache)} cached blurb(s) · {len(names)} names · {len(hits)} blurb-names-other")
+    for h in hits:
+        print("   ", h)
+    # an empty cache is a broken measurement, not a clean board (CLAUDE.md rule 2)
+    checks.append(("blurb cache read (%d blurbs)" % len(cache), bool(cache)))
+
+
 def real():
     from pipeline import run as R, stages
     W = _scratch("real")
@@ -257,6 +293,8 @@ if a.golden:
     golden(a.golden)
 if a.cards:
     cards()
+if a.blurbs:
+    blurbs()
 if a.real:
     real()
 if a.full:
