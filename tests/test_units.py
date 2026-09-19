@@ -36749,3 +36749,245 @@ def test_the_matched_live_pass_walks_cooled_rows_on_the_free_rungs(monkeypatch, 
     e = stages._load()["enrich"]
     assert (e["matched_paid_cooldown"], e["matched_cooldown"], e["matched_archived"]) \
         == (1, 0, 0), e
+
+
+# ---------------------------------------------------------------------------
+# The FREE render, between the plain GET and the first credit (jd-text 2026-09-19).
+# Measured that day on 8 live addresses: Phoenix 685 characters/0 marker families plain
+# -> 1,672/3 rendered, Discount Bank's Oracle site 80/0 -> 3,088/4 at the posting and
+# 17,624/3 at the listing, Google unchanged (its SSR already carries the posting), Menora
+# WORSE rendered (4,438 -> 713) and secrethunter still a sign-in wall (776 -> 356).
+# ---------------------------------------------------------------------------
+class _FakeRenderer:
+    """`jdfill.Renderer`'s call signature, with nothing behind it."""
+
+    def __init__(self, html="", bodies=(), reason="", cap=5):
+        self.html, self.bodies, self.reason, self.cap = html, list(bodies), reason, cap
+        self.rendered = self.ok = 0
+        self.render_capped = False
+        self.unavailable = ""
+        self.urls = []
+
+    def __call__(self, url, timeout_ms=None):
+        self.urls.append(url)
+        if self.rendered >= self.cap:
+            self.render_capped = True
+            return None, "", [], "render-capped"
+        self.rendered += 1
+        if self.reason:
+            return None, "", [], self.reason
+        self.ok += 1
+        return 200, self.html, list(self.bodies), ""
+
+
+def test_fetch_jd_renders_a_shell_after_the_plain_get_and_before_bright_data(monkeypatch):
+    """The order is the whole point: a page the plain GET read as a shell is a JavaScript app,
+    and a free headless render answers it for 0 credits. Phoenix is the measured case - 685
+    characters and no marker family to a plain GET, 1,672 characters and three families
+    rendered.
+
+    Kills `render-rung-after-bd`."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    r, bd = _FakeRenderer(html=_jd_page()), _FakeBD(body=_jd_page())
+    jd = jdfill.fetch_jd("https://x/jobs/1", bd=bd, renderer=r)
+    assert (jd.via, bool(jd.text), r.rendered, bd.used) == ("render", True, 1, 0), (jd, bd.used)
+    # ...and with no renderer the ladder is exactly what it was
+    assert jdfill.fetch_jd("https://x/jobs/1", bd=bd).via == "bd" and bd.used == 1
+
+
+def test_a_render_is_only_bought_for_a_page_with_no_text_and_no_markers(monkeypatch):
+    """`_render_shaped` is the trigger, and it is a measurement: over 14 sampled own-site pages
+    whose text the plain GET already reads (776 to 1,342,451 characters) every short one carried
+    a marker family, so the rule fires on 0 of them. A page with 4,438 characters and one family
+    is Menora's - rendering it returns 713 characters, i.e. LESS than we already have."""
+    from pipeline import jdfill
+    from pipeline.jdfill import _render_shaped
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
+    assert _render_shaped("") and _render_shaped("x" * 900)
+    assert not _render_shaped("x" * 1200)
+    assert not _render_shaped("Requirements\n5+ years of experience\n" + "x" * 200)
+    # a page with text but no posting in it: `no-markers`, and short enough to be render-shaped
+    monkeypatch.setattr(jdfill, "plain_fetch",
+                        lambda u, **k: (200, "<html><body><p>%s</p></body></html>"
+                                             % ("word " * 90)))
+    r = _FakeRenderer(html=_jd_page())
+    assert jdfill.fetch_jd("https://x/jobs/1", renderer=r).via == "render"
+    assert r.rendered == 1
+    # ...and the same page with 2,000 characters of real sections is never rendered
+    monkeypatch.setattr(jdfill, "plain_fetch",
+                        lambda u, **k: (200, "<html><body><h2>Requirements</h2><p>%s</p>"
+                                             "</body></html>" % ("word " * 400)))
+    r2 = _FakeRenderer(html=_jd_page())
+    jdfill.fetch_jd("https://x/jobs/1", renderer=r2)
+    assert r2.rendered == 0, "a page that HAS text and markers is not what rendering is for"
+
+
+def test_a_page_that_renders_to_a_shell_still_fails_and_the_paid_rung_still_renders(monkeypatch):
+    """secrethunter's wall is the measured case: 776 characters plain, 356 rendered, 0 families
+    either way. The page was READ, twice, and holds no posting - that is `render-shell`, and it
+    is DEFINITIVE, so the 7/14/28 ladder starts. The paid rung's own decision to render must not
+    move with it: keying `render=` off the rewritten reason would buy unrendered copies of
+    exactly the JavaScript pages the credit is for."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    r = _FakeRenderer(html="<html><body><p>%s</p></body></html>" % ("no posting here " * 20))
+    jd = jdfill.fetch_jd("https://x/jobs/1", renderer=r)
+    assert (jd.text, jd.reason, jd.transient) == ("", "render-shell", False), jd
+    rendered_flags = []
+
+    class _BD(_FakeBD):
+        # `rendered` is what `_renders` looks for: a double without it is never ASKED to
+        # render, so this assertion would have passed on a fake that could not answer it
+        rendered = 0
+
+        def __call__(self, url, timeout=90, render=False):
+            rendered_flags.append(render)
+            return super().__call__(url, timeout=timeout)
+
+    jd = jdfill.fetch_jd("https://x/jobs/1", bd=_BD(body=_jd_page()),
+                         renderer=_FakeRenderer(html=_jd_shell()))
+    assert rendered_flags == [True], "the paid rung must still render a shell page"
+    assert jd.via == "bd"
+
+
+def test_a_capped_render_is_tomorrows_work_and_a_missing_playwright_is_todays_verdict(monkeypatch):
+    """Two reasons that must not be confused. `render-capped` is TRANSIENT: the rung that could
+    read this page did not run, and parking it for seven days would put the one class rendering
+    is FOR out of reach - the rule `bd-render-capped` already follows. `render-unavailable` is a
+    job without Chromium (`daily-digest.yml` installs none today, so it is the LIVE path until
+    `infra` lands the step) and leaves the page's standing verdict exactly as it was: `shell`,
+    definitive, unchanged from before this rung existed.
+
+    Kills `render-capped-definitive`."""
+    from pipeline import jdfill
+    monkeypatch.setattr(jdfill, "native_jd", lambda u, c="", sids="": ("", "not-native"))
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    spent = _FakeRenderer(html=_jd_page(), cap=0)
+    jd = jdfill.fetch_jd("https://x/jobs/1", renderer=spent)
+    assert (jd.reason, jd.transient) == ("render-capped", True), jd
+    assert spent.render_capped and spent.rendered == 0
+    gone = _FakeRenderer(reason="render-unavailable")
+    jd = jdfill.fetch_jd("https://x/jobs/1", renderer=gone)
+    assert (jd.reason, jd.transient) == ("shell", False), jd
+    # a goto timeout is no verdict either: the page's own reason stands
+    jd = jdfill.fetch_jd("https://x/jobs/1",
+                         renderer=_FakeRenderer(reason="render-goto:TimeoutError"))
+    assert (jd.reason, jd.transient) == ("shell", False), jd
+
+
+def test_the_renderer_latches_a_missing_browser_and_never_asks_twice():
+    """`_render` never raises - a missing Chromium arrives as `launch:<Exc>` - and that failure
+    is about the JOB, not the page: it will be true of every url tonight. Latched once, exactly
+    as `Unlocker` latches a 401, so a runner without the browser pays one launch attempt for the
+    whole run instead of one per row."""
+    from pipeline import jdfill
+    import scrape_universal
+    calls = []
+
+    class _R:
+        error = "launch:ModuleNotFoundError"
+        page_html, bodies, http_status, comeet = "", [], None, {}
+
+    def _fake(url, **k):
+        calls.append(url)
+        return _R()
+
+    saved = scrape_universal._render
+    try:
+        scrape_universal._render = _fake
+        r = jdfill.Renderer(cap=5)
+        assert r("https://x/jobs/1")[3] == "render-unavailable"
+        assert r("https://x/jobs/2")[3] == "render-unavailable"
+        assert calls == ["https://x/jobs/1"], calls
+        assert r.unavailable == "playwright-missing" and r.rendered == 1
+    finally:
+        scrape_universal._render = saved
+
+
+def _comeet_pos(uid, name, body):
+    return ('{"uid": "%s", "name": "%s", "details": [{"name": "Requirements", '
+            '"value": "<p>%s</p>"}]}' % (uid, name, body))
+
+
+def test_comeet_widget_positions_are_read_from_rendered_traffic_by_name_and_refuse_two():
+    """A Comeet WIDGET board renders to chrome and serves every position over XHR. The uid in
+    `?comeet=<uid>` names one; without a uid the position's own `name` must EQUAL the title we
+    are fetching for, and two equal claims yield NOTHING - `role_addresses_on`'s rule, for the
+    same reason: a coin flip publishes another opening's text on this role's card.
+
+    Kills `comeet-by-name-without-ambiguity-veto`."""
+    from pipeline.jdfill import comeet_widget_jd
+    board = "[" + ",".join([
+        _comeet_pos("D7.C29", "Senior Marketing Analyst", "five years of SQL"),
+        _comeet_pos("D7.C30", "Copywriter", "write things")]) + "]"
+    page = "https://mccann.co.il/careers/comeet/"
+    got = comeet_widget_jd([board], page + "?comeet=D7.C29", "Anything At All")
+    assert "five years of SQL" in got and "write things" not in got
+    assert "five years of SQL" in comeet_widget_jd([board], page, "Senior Marketing Analyst")
+    assert comeet_widget_jd([board], page, "Data Analyst") == "", "no position claims that title"
+    twins = "[" + ",".join([
+        _comeet_pos("A.1", "Senior Marketing Analyst", "first copy"),
+        _comeet_pos("A.2", "Senior Marketing Analyst", "second copy")]) + "]"
+    assert comeet_widget_jd([twins], page, "Senior Marketing Analyst") == "", \
+        "two positions equally claim this title: the traffic cannot say which is ours"
+    assert comeet_widget_jd([board], page + "?comeet=Z9.Z9", "Senior Marketing Analyst") == "", \
+        "the uid is an ADDRESS: a board our uid is not on is not our posting"
+    assert comeet_widget_jd([], page, "Senior Marketing Analyst") == ""
+
+
+def test_the_donor_pass_renders_a_linkless_listing_once(monkeypatch, tmp_path):
+    """Discount Bank's Oracle CE site answers a plain GET with 101,375 bytes and 80 characters of
+    text: no cards, so no posting addresses. Rendered it is 17,624 characters with all 67. One
+    render, under the ladder's own cap, and `role_addresses_on` re-run on the rendered HTML.
+
+    Kills `donor-never-renders-a-listing`."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    site = "https://ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/CX_3001/"
+    monkeypatch.setattr(jdfill, "_registry_rows", {})       # no registry read in this test
+    monkeypatch.setattr(jdfill, "plain_fetch", lambda u, **k: (200, _jd_shell()))
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda url, **k: jdfill.JD(_jd_of(2708), "render", "ok", False))
+    r = _FakeRenderer(html=_listing_page([site + "job/5108"]))
+    row = ("discount bank|analyst", "Discount Bank", "Job 5108", site + "requisitions", "",
+           "", "", 1, "2026-09-18")
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
+    conn.commit()
+    filled, _ref, _why = E._donor_pass(
+        conn, [row], {}, None, set(), SimpleNamespace(dry_run=False, archived_bd=False),
+        log=lambda s: None, renderer=r)
+    assert (filled, r.rendered, r.urls) == (1, 1, [site + "requisitions"]), (filled, r.urls)
+    assert conn.execute("SELECT jd_why FROM matched").fetchone()[0] \
+        == "ok:own-address:ehsb.fa.em2.oraclecloud.com"
+
+
+def test_the_archived_pass_gets_no_renderer(monkeypatch, tmp_path):
+    """A 45-second rung inside the pool that has a quarter of the budget and forty times the
+    rows would spend the reserve on roles nobody is waiting for. The split is deliberate and
+    filed; this is the assertion that says which pass got which.
+
+    Kills `archived-pass-renders-too`."""
+    import enrich_matched_jd as E
+    from pipeline import jdfill, stages, store
+    seen = []
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "stages.json"))
+    monkeypatch.setattr(jdfill, "Renderer", lambda cap=5: _FakeRenderer(html=_jd_page(), cap=cap))
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: (
+        seen.append((u, k.get("renderer") is not None))
+        or jdfill.JD("", "none", "shell", False)))
+    db = str(tmp_path / "seen.db")
+    st = store.SeenStore(db)
+    st.upsert_matched({"company": "ACME", "title": "Archived", "url": "https://a/jobs/9",
+                       "location": "TLV", "posted_date": "2026-09-18", "seniority": "mid",
+                       "sources": ["workday"], "description": ""}, "2026-09-18")
+    st.close()
+    # no ledger beside this db: liveness is unknown, so EVERY row is the archived pass's
+    assert E.main(["--db", db, "--cache", str(tmp_path / "c.json")]) == 0
+    assert seen and all(not has for _u, has in seen), seen

@@ -4754,9 +4754,59 @@
   "file": "enrich_matched_jd.py",
   "symbol": "_run",
   "class": "M8-argument-mis-passing",
-  "find": "                     probe_cell=probe_cell, free_rungs_ignore_cooldown=True)",
-  "replace": "                     probe_cell=probe_cell)",
+  "find": "                     probe_cell=probe_cell, free_rungs_ignore_cooldown=True,",
+  "replace": "                     probe_cell=probe_cell,",
   "why": "put the FREE rungs back inside the 7/14/28 cooldown on the live pass, so a row stamped once is not walked again for a week and every free rung added since that stamp waits out the whole ladder. 4 of the 6 rows this lane could not fill on 2026-09-19 were in that state.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "render-rung-after-bd",
+  "file": "pipeline/jdfill.py",
+  "symbol": "fetch_jd",
+  "class": "M3-branch-narrowing",
+  "find": "    if renderer is not None and reason in (\"shell\", \"no-markers\") and _render_shaped(",
+  "replace": "    if renderer is not None and bd is None and reason in (\"shell\", \"no-markers\") and _render_shaped(",
+  "why": "make the FREE render run only when the paid rung is absent, i.e. put the credit ahead of the free rung on every row that may spend. Measured 2026-09-19: Phoenix renders to 1,672 characters with 3 marker families for 0 credits.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "render-capped-definitive",
+  "file": "pipeline/jdfill.py",
+  "symbol": "fetch_jd",
+  "class": "M7-constant-drift",
+  "find": "            reason, transient = \"render-capped\", True",
+  "replace": "            reason, transient = \"render-capped\", False",
+  "why": "park a page for 7/14/28 days because OUR render budget was spent, not because anything was read. That is the defect `bd-render-capped` was already fixed for: it puts the one class of page rendering exists for out of reach.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "comeet-by-name-without-ambiguity-veto",
+  "file": "pipeline/jdfill.py",
+  "symbol": "comeet_widget_jd",
+  "class": "M5-population-widening",
+  "find": "        if len(hits) == 1:",
+  "replace": "        if hits:",
+  "why": "take the FIRST position whose name matches when two match, which is the coin flip `role_addresses_on` refuses: it publishes another opening's text on this role's card.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "donor-never-renders-a-listing",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_donor_candidates",
+  "class": "M6-fallback-removal",
+  "find": "            elif not found and renderer is not None and jdfill._render_shaped(",
+  "replace": "            elif False and renderer is not None and jdfill._render_shaped(",
+  "why": "never render a JavaScript listing whose plain body carries no cards. Discount Bank's Oracle site is 101,375 bytes and 80 characters of text plain; rendered it is 17,624 characters with all 67 cards, which is the only way a posting address on it can be found.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "archived-pass-renders-too",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_run",
+  "class": "M5-population-widening",
+  "find": "                          log=lambda s: print(s, flush=True), probe_cell=probe_cell,\n                          renderer=None)",
+  "replace": "                          log=lambda s: print(s, flush=True), probe_cell=probe_cell,\n                          renderer=renderer)",
+  "why": "give the archived pass the 45-second rung as well. It has a quarter of the budget and forty times the rows, so the reserve that keeps archived roles moving at all would go on renders.",
   "must_be_killed_by_behavioural": true
  }
 ]

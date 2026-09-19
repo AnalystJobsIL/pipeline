@@ -784,7 +784,7 @@ def _ensure_columns(conn):
 DONOR_BUDGET_MIN = 4.0
 
 
-def _donor_candidates(row, cache_by_key, log):
+def _donor_candidates(row, cache_by_key, log, renderer=None):
     """`([(kind, url, text)], complete)` — every copy of THIS role we could read, and whether
     the enumeration itself SUCCEEDED. `text` is set only for a donor we already hold (no
     fetch); the rest carry an address to try.
@@ -837,6 +837,21 @@ def _donor_candidates(row, cache_by_key, log):
             found = role_addresses_on(body, page, title, job_id) if body else []
             if not body:
                 complete = False           # the page did not answer: we did not look
+            elif not found and renderer is not None and jdfill._render_shaped(
+                    jdfill.html_to_text(body)):
+                # A listing that answered with no text and no markers is a JavaScript board: its
+                # cards — and therefore the postings' own addresses — exist only after a render.
+                # Discount Bank's Oracle site is 101,375 bytes and 80 characters of text; the
+                # rendered page is 17,624 characters with all 67 cards. One render, under the
+                # same cap as the ladder's, and `role_addresses_on` re-run on the rendered HTML
+                # (which honours that page's `<base href>` like any other).
+                _rs, r_html, _rb, r_reason = renderer(page)
+                if r_html:
+                    found = role_addresses_on(r_html, page, title, job_id)
+                elif r_reason in ("render-capped", "render-unavailable"):
+                    complete = False       # the rung that could read this page did not run
+                log(f"  [LST] {(comp + ' | ' + title)[:56]:<56} rendered the listing "
+                    f"({r_reason or 'ok'}) -> {len(found)} address(es)")
             log(f"  [LST] {(comp + ' | ' + title)[:56]:<56} listing page "
                 f"{status or 'no-answer'} -> {len(found)} address(es) naming this role"
                 f"{'' if asked == 0 else ' (registry url)'}")
@@ -892,7 +907,8 @@ def _donor_candidates(row, cache_by_key, log):
 
 
 def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
-                retry_days=RETRY_DAYS, count_cap=0, attempted_before=None, refuted=frozenset()):
+                retry_days=RETRY_DAYS, count_cap=0, attempted_before=None, refuted=frozenset(),
+                renderer=None):
     """Fill what the ladder could not, from another copy of the same role. Returns
     (filled, refused, Counter of `jd_why` values written).
 
@@ -940,7 +956,7 @@ def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
         # decides whether the replacement may land.
         if looks_like_jd(have) and mkey not in refuted:
             continue
-        cands, complete = _donor_candidates(row, cache_by_key, log)
+        cands, complete = _donor_candidates(row, cache_by_key, log, renderer=renderer)
         worked += 1
         text, why, seen_identity = "", "", 0
         for kind, addr, held in cands:
@@ -961,7 +977,7 @@ def _donor_pass(conn, rows, cache_by_key, bd, paid_keys, args, log, today=None,
             # bought a credit while the pool stood at 118 %) is a budget rule, and it is not
             # repealed by a new rung. The free rungs run for every row, whatever its status.
             jd = jdfill.fetch_jd(addr, bd=row_bd, company=comp, title=title,
-                                 want_identity=True)
+                                 want_identity=True, renderer=renderer)
             if not jd.text:
                 # A page we READ and found no posting in is evidence; a page we could not
                 # reach is not. `jd.transient` is the ladder's own word for the second — a
@@ -1281,6 +1297,13 @@ def _run(args, stamp):
     # `paid_only`, a rehearsal on an armed machine would buy real pages.
     bd = None if args.dry_run else Unlocker(cap=int(os.environ.get("MATCHED_JD_BD_CAP",
                                                                    str(BD_CAP))))
+    # THE FREE RENDER, one per run, capped in PAGES because what it spends is wall clock and not
+    # credits (`jdfill.Renderer`). `jdfill.Renderer` rather than a local import: the suite
+    # monkeypatches this layer on `pipeline.jdfill`, and a local binding escapes every patch --
+    # the trap the note above `fetch_jd` records. No renderer on a `--dry-run`, the rule the
+    # Unlocker follows one line up: a rehearsal makes no requests it does not have to.
+    renderer = None if args.dry_run else jdfill.Renderer(
+        cap=int(os.environ.get("MATCHED_JD_RENDER_CAP", "5")))
 
     have_by_key = {r[0]: r[6] for r in rows}
     # `run_backfill` fills this before it calls `save`; `save`'s three arguments carry no
@@ -1334,7 +1357,8 @@ def _run(args, stamp):
     c = run_backfill(items, save=save, minutes=live_minutes, reasons=fetch_reasons,
                      bd=bd, dry_run=args.dry_run, retry_days=args.cooldown_days,
                      count_cap=args.limit, log=lambda s: print(s, flush=True),
-                     probe_cell=probe_cell, free_rungs_ignore_cooldown=True)
+                     probe_cell=probe_cell, free_rungs_ignore_cooldown=True,
+                     renderer=renderer)
     left = None if minutes is None else max(0.0, minutes - (time.time() - t0) / 60)
     if items_archived:
         print(f"-- {len(items_archived)} archived roles, "
@@ -1342,11 +1366,16 @@ def _run(args, stamp):
               flush=True)
         # `--limit` is an operator saying "do N", not "do N and then all the archived ones"
         left_cap = max(0, args.limit - (c["tried"] - c["probe"])) if args.limit else 0
+        # `renderer=None` on purpose: the archived pool is the larger one by an order of
+        # magnitude and it has a quarter of the budget, so a 45-second rung inside it would
+        # spend the reserve on rows nobody is waiting for. Filed as this lane's follow-up, to
+        # be decided on the live pass's own numbers first (docs/BACKLOG.md).
         c += run_backfill(items_archived, save=save, minutes=left,
                           reasons=fetch_reasons,
                           bd=bd if args.archived_bd else None, dry_run=args.dry_run,
                           retry_days=args.cooldown_days, count_cap=left_cap,
-                          log=lambda s: print(s, flush=True), probe_cell=probe_cell)
+                          log=lambda s: print(s, flush=True), probe_cell=probe_cell,
+                          renderer=None)
 
     # THE LAST RUNG: the role's other copies of itself, for everything the ladder above could
     # not fill. It runs here, after the fetches, because that is what makes it a last resort
@@ -1373,7 +1402,7 @@ def _run(args, stamp):
         print(f"-- {len(donor_rows)} rows the ladder could not fill: asking the role's own "
               f"other copies ({len(paid_keys)} may reach the paid rung)", flush=True)
         from_donor, donor_refused, donor_why = _donor_pass(
-            conn, donor_rows, cache_by_key, bd, paid_keys, args,
+            conn, donor_rows, cache_by_key, bd, paid_keys, args, renderer=renderer,
             log=lambda s: print(s, flush=True), retry_days=args.cooldown_days,
             count_cap=max(0, args.limit - (c["tried"] - c["probe"])) if args.limit else 0,
             refuted=refuted)
@@ -1427,6 +1456,14 @@ def _run(args, stamp):
                       # scrape driver made exactly this move on 2026-08-29 and the diagnostic
                       # was LOST for two days because the key was documented and never emitted.
                       matched_paid_cooldown=c["paid_cooldown"],
+                      # the free render: pages ATTEMPTED, rows it FILLED, and whether the cap
+                      # bound (a gauge, the shape `scrape_render_capped` already has). A night
+                      # with `matched_rendered=0` on a runner that has Chromium means the
+                      # trigger never fired; `matched_render_capped=1` means there was more
+                      # work than the cap, which is tomorrow's, not a verdict.
+                      matched_rendered=getattr(renderer, "rendered", 0),
+                      matched_via_render=c["via:render"],
+                      matched_render_capped=int(bool(getattr(renderer, "render_capped", False))),
                       matched_unfillable=c["unfillable"], matched_todo=c["todo"],
                       matched_dead=n_dead, matched_from_cache=from_cache,
                       matched_foreign_sibling=foreign, matched_bd_calls=bd.used,

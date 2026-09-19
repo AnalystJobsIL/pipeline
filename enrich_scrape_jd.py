@@ -365,6 +365,12 @@ def _run(args, stamp):
         cap=int(os.environ.get("JD_ENRICH_BD_CAP", str(BD_CAP))),
         host_breaker=BD_HOST_SHELLS,
         render_cap=int(os.environ.get("JD_ENRICH_RENDER_CAP", str(RENDER_CAP))))
+    # The FREE render (2026-09-19), one per process and therefore one cap across both pools
+    # below: what it spends is wall clock, ~62 s worst case per page, so 5 pages is ~5 minutes
+    # of a 25-minute budget. `jd-archive.yml` installs no Chromium, so on the 12:30 pass this
+    # latches `render-unavailable` on its first call and costs nothing at all.
+    renderer = None if args.dry_run else jdfill.Renderer(
+        cap=int(os.environ.get("JD_ENRICH_FREE_RENDER_CAP", "5")))
     items, archive, gates = _todo(cache)
     # the gate canary is computed from what `_todo` SAW, before a flag empties a pool
     gate_alarm = ("scrape:jd-gate-swallowed(_relevance no longer accepts 'data analyst')"
@@ -436,7 +442,8 @@ def _run(args, stamp):
         # never-attempted cards would sort ahead of title cards that already carry a stamp.
         c = run_backfill(items, save=save, minutes=minutes, count_cap=cap,
                          bd=bd, dry_run=args.dry_run, retry_days=args.cooldown_days,
-                         probe_cell=probe_cell, free_rungs_ignore_cooldown=True)
+                         probe_cell=probe_cell, free_rungs_ignore_cooldown=True,
+                         renderer=renderer)
         if archive:
             left = max(0.0, minutes - (time.time() - t0) / 60)
             print(f"-- {len(archive)} archive cards, {left:.1f} min left", flush=True)
@@ -447,7 +454,7 @@ def _run(args, stamp):
                               count_cap=max(1, cap - (c["tried"] - c["probe"])) if cap else 0,
                               bd=bd, dry_run=args.dry_run, retry_days=args.cooldown_days,
                               timeout=15, probe_cell=probe_cell,
-                              free_rungs_ignore_cooldown=True)
+                              free_rungs_ignore_cooldown=True, renderer=renderer)
     finally:
         if not args.dry_run:                  # keep what was fetched even if the loop died
             write_json(args.cache, cache, sort_keys=True)
@@ -547,6 +554,10 @@ def _run(args, stamp):
                       scrape_bd_shell=c["bd_shell"] + ca["bd_shell"],
                       scrape_bd_rendered=getattr(bd, "rendered", 0),
                       scrape_render_capped=int(bool(getattr(bd, "render_capped", False))),
+                      scrape_rendered=getattr(renderer, "rendered", 0),
+                      scrape_via_render=c["via:render"] + ca["via:render"],
+                      scrape_free_render_capped=int(
+                          bool(getattr(renderer, "render_capped", False))),
                       scrape_bd_parked=c["bd_parked"] + ca["bd_parked"],
                       scrape_bd_calls=getattr(bd, "used", 0), scrape_bd_ok=getattr(bd, "ok", 0))
     print(f"=== JD enrichment: {c['filled']} filled ({c['bd']} via Bright Data), "

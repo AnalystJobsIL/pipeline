@@ -1993,6 +1993,143 @@ class Unlocker:
         return status, text, ""
 
 
+RENDER_TEXT_MAX = 1000       # above this a page HAS text; rendering it is not what it needs
+
+
+def _render_shaped(text):
+    """Is this the shape a free render is for — a page that answered with almost no text and no
+    section markers at all?
+
+    Measured 2026-09-19 over 14 sampled `ok:canonical` own-site pages whose text the plain GET
+    already reads: they run from 776 to 1,342,451 characters, and every one under `MIN_DESC`-ish
+    length carried at least one marker family. So the rule fires on 0 of 14 readable pages and
+    on 3 of the 3 rows this rung was built for — Phoenix (685 characters, 0 families), Universal
+    McCann (456/0) and Discount Bank's Oracle site (80/0).
+
+    Two rules that were REJECTED on the same sample: rendering every `no-markers` page (the
+    minimum readable text is 776 characters, so a length-only rule at 1,000 would render real
+    postings), and a byte-ratio rule (text under 0.5 % of bytes — Mobileye's readable posting is
+    0.40 %)."""
+    return len(text) < RENDER_TEXT_MAX and not _marker_families(text)
+
+
+class Renderer:
+    """A FREE headless render, the rung between the plain GET and the paid one.
+
+    It owns no browser code: `scrape_universal._render` is "the only Playwright touchpoint" and
+    is imported LAZILY inside `__call__`, so importing this module still pulls in no root script
+    (`test_jd_text_imports_no_root_module`) and a job without Chromium pays nothing at all.
+    `deep_validate.Renderer` is the second touchpoint; this is deliberately not a third.
+
+    Shaped like `Unlocker` because the caller's needs are the same: a per-run cap, a reason
+    string that says whether tonight's miss is a verdict about the page or about our own budget,
+    and one flag the alarm can read.
+
+      * `cap` (0 disables) bounds the WALL CLOCK, which is what binds here — not credits, of
+        which this rung spends none. Worst case per page is `RENDER_TIMEOUT` (45 s) for the goto
+        plus `_render`'s own networkidle wait (12 s) and 3 scrolls (~5 s): ~62 s, so the default
+        cap of 5 is ~5.2 minutes inside `MATCHED_JD_TIME_BUDGET_MIN` (20).
+      * `render-capped` is TRANSIENT: the one rung that could read this page did not run, and
+        parking it for seven days would put the class rendering is FOR out of reach. It mirrors
+        `bd-render-capped`, which `fetch_jd` already treats that way.
+      * `render-unavailable` is set once, on the ImportError/launch failure that means Chromium
+        is absent, and leaves the page's standing verdict exactly as it is — a step without the
+        browser behaves precisely as it did before this rung existed. `daily-digest.yml` has no
+        Playwright install step today (`infra`'s), so that is the live path until it lands."""
+
+    def __init__(self, cap=5):
+        self.cap = max(0, int(cap or 0))
+        self.rendered = 0                      # renders ATTEMPTED this run
+        self.ok = 0                            # ...that came back with a page
+        self.render_capped = False
+        self.unavailable = ""                  # "playwright-missing", once seen
+        self.errors = Counter()
+
+    def __call__(self, url, timeout_ms=None):
+        """`(status, html, bodies, reason)`; reason is "" on a page that came back."""
+        if self.unavailable:
+            return None, "", [], "render-unavailable"
+        if self.rendered >= self.cap:
+            self.render_capped = True
+            return None, "", [], "render-capped"
+        self.rendered += 1
+        try:
+            from scrape_universal import _render      # the ONE Playwright touchpoint
+        except Exception as e:                        # noqa: BLE001
+            self.unavailable = "playwright-missing"
+            self.errors["import:" + type(e).__name__] += 1
+            return None, "", [], "render-unavailable"
+        r = _render(url, timeout_ms=int(timeout_ms or RENDER_TIMEOUT * 1000))
+        if r.error:
+            self.errors[r.error] += 1
+            # `_render` never raises: a missing browser arrives here as `launch:<Exc>`. That is
+            # the ACCOUNT-shaped failure of this rung — it will be true of every page tonight —
+            # so it is latched, exactly as `Unlocker` latches a 401.
+            if r.error.startswith("launch:"):
+                self.unavailable = "playwright-missing"
+                return None, "", [], "render-unavailable"
+            if not r.page_html:
+                return r.http_status, "", list(r.bodies or []), "render-" + r.error
+        if r.page_html:
+            self.ok += 1
+        return r.http_status, r.page_html or "", list(r.bodies or []), ""
+
+
+def comeet_widget_jd(bodies, url, title):
+    """The ONE position a Comeet WIDGET board's own traffic carries, or "".
+
+    A widget board is a company page with Comeet embedded (`universal mccann israel` and 12
+    other rows): the PAGE renders to 472 characters of chrome and every position lives in an XHR
+    the widget makes. `_comeet_read` already reads a uid out of a comeet job PATH; here the path
+    is the careers page every position shares, so the position is identified by
+
+      * the uid in the query (`?comeet=<uid>`, which `url_active_page` writes and `is_job_url`
+        now accepts), or
+      * its own `name` field EQUALLING the title we are fetching for — and an ambiguous match
+        yields NOTHING. That is `role_addresses_on`'s rule and it is there for the same reason:
+        two positions that equally claim to be this role mean the traffic cannot tell us which
+        is ours, and a coin flip publishes another opening's text on this role's card."""
+    want = ""
+    try:
+        for v in parse_qs(urlsplit(url).query).get("comeet") or []:
+            want = str(v or "").strip()
+    except ValueError:
+        want = ""
+    t_words = _named_words(title)
+    for body in bodies or []:
+        positions = _comeet_positions(body)
+        if not positions:
+            continue
+        if want:
+            for uid, details in positions:
+                if str(uid).lower() == want.lower():
+                    return _comeet_sections(details)
+            continue                           # this body is a board our uid is not on
+        if not t_words:
+            continue
+        named = _comeet_names(body)
+        hits = [details for uid, details in positions
+                if _named_words(named.get(uid, "")) == t_words]
+        if len(hits) == 1:
+            return _comeet_sections(hits[0])
+    return ""
+
+
+_COMEET_NAME = re.compile(r'"uid":\s*"([0-9A-Za-z.\-]{2,24})"(.{0,400}?)"name":\s*"([^"]{1,200})"',
+                          re.S)
+
+
+def _comeet_names(body):
+    """`{uid: name}` for the positions in `body`. The name is the position's own title, and it
+    is read from the SAME block as the uid (the next `"name"` within 400 characters), the way
+    `_comeet_positions` reads `details` — a whole-body scan would pair a uid with the name of
+    whichever position happened to follow."""
+    out = {}
+    for m in _COMEET_NAME.finditer(body or ""):
+        out.setdefault(m.group(1), _html_mod.unescape(m.group(3)))
+    return out
+
+
 # A path segment that names a LIST, not a posting. Compared by EQUALITY, and only against the
 # last segment: a real slug can end in one of these words (".../senior-data-analyst-jobs").
 # `company_identity._NOT_A_SLUG` holds a similar vocabulary for a different question ("could
@@ -2758,8 +2895,8 @@ def _from_body(body):
 
 
 def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", seen_ids="",
-             native_only=False, want_identity=False):
-    """native JSON -> plain HTML (+ schema.org) -> Bright Data (only when `bd` is given).
+             native_only=False, want_identity=False, renderer=None):
+    """native JSON -> plain HTML (+ schema.org) -> free render -> Bright Data.
 
     The gate runs BEFORE the plain GET, not only before Bright Data. A search page and an
     auth-walled host used to cost a 15-second fetch every morning and were booked as failed
@@ -2826,6 +2963,41 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
         # the employer own board says the posting is deleted AND no other rung could read a
         # description: that is the one combination that makes a role finally unfillable
         reason, transient = "gone", False
+    # WHETHER THE PAID RUNG RENDERS IS DECIDED HERE, before the free render can rewrite
+    # `reason`. A page the plain GET read as a shell is a JavaScript app and its first paid call
+    # must execute the JavaScript (2026-08-29: every paid body from a JS site until then was the
+    # same shell). Keying that off `reason` after the rung below has set `render-shell` would
+    # have silently bought unrendered copies of exactly the pages rendering is for.
+    shell_page = reason == "shell"
+    # THE FREE RENDER, between the plain GET and the first credit. `_render_shaped` carries its
+    # own measurement; the reasons are the ones the cooldown reads.
+    if renderer is not None and reason in ("shell", "no-markers") and _render_shaped(
+            html_to_text(body) if body else ""):
+        r_status, r_html, r_bodies, r_reason = renderer(url)
+        if r_html or r_bodies:
+            jd, why = _from_body(r_html) if r_html else ("", "")
+            if not jd:
+                # ...and what the page's own traffic carried, for a board that renders to
+                # chrome and serves its positions over XHR (`comeet_widget_jd`)
+                jd = comeet_widget_jd(r_bodies, url, title)
+                why = "ok-comeet-widget" if jd else why
+            if jd:
+                return JD(jd, "render", why or "ok", False, native_why,
+                          decl=declared_identity(r_html) if want_identity else "")
+        if r_reason == "render-capped":
+            # the one rung that could read this page did not run: tomorrow's work, never a
+            # verdict about the page (the rule `bd-render-capped` already follows)
+            reason, transient = "render-capped", True
+        elif r_reason == "render-unavailable":
+            pass           # no browser on this runner: the page's standing verdict is unchanged
+        elif r_reason:
+            pass           # a goto timeout says nothing about the page either
+        elif not (r_html or r_bodies):
+            pass           # nothing came back and nothing was claimed: leave the verdict alone
+        else:
+            # the page RENDERED and still holds no posting. That is a statement about the page,
+            # and the free rungs have now done everything they can to it.
+            reason, transient = "render-shell", False
     if bd is None:
         return JD("", "none", reason, transient, native_why)
     # A page the plain GET read as a SHELL is a JavaScript app: an unrendered paid copy of it
@@ -2842,12 +3014,12 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
         # cap counts by jk, so a keyless card must not spend outside it — wave A, P2-2)
         return JD("", "none", reason, False, native_why)
     buy = indeed_fetch_url(jk) if jk else url
-    status, body, bd_reason = _bd_call(bd, buy, render=(reason == "shell"))
+    status, body, bd_reason = _bd_call(bd, buy, render=shell_page)
     empty_bought = bool(body) and len(html_to_text(body)) < MIN_DESC
     if empty_bought:
         _mark_shell(bd, url)                 # every bought body counts toward the host breaker
     capped_render = False
-    if empty_bought and reason != "shell" and _renders(bd):
+    if empty_bought and not shell_page and _renders(bd):
         # the raw copy of a bot-walled page came back empty: one rendered call may still open
         # it, and that second credit is the one the breaker above is counting
         _s2, body2, r2 = _bd_call(bd, buy, render=True)
@@ -2893,7 +3065,10 @@ def fetch_jd(url, *, bd=None, company="", timeout=15, probe=False, title="", see
     # ...but a page whose only unread rung is the RENDER, refused because this run's render
     # budget is spent, is not a verdict about the page at all: it is tomorrow's work. Parking
     # it for seven days would put the one class of page that rendering is FOR out of reach.
-    definitive_page = (never_sent and reason in ("shell", "no-markers")
+    # `render-shell` joins the definitive set: the page was READ, by two rungs, and held no
+    # posting. `render-capped` deliberately does NOT -- the free render is then in exactly the
+    # position `bd-render-capped` describes, tomorrow's work rather than a fact about the page.
+    definitive_page = (never_sent and reason in ("shell", "no-markers", "render-shell")
                        and bd_reason != "bd-render-capped")
     return JD("", "bd", bd_reason,
               (bd_reason in ("bd-unavailable", "bd-capped", "bd-parked", "bd-render-capped",
@@ -2972,7 +3147,7 @@ class Item(NamedTuple):
 
 def run_backfill(items, *, save, minutes, count_cap=0, bd=None, dry_run=False, today=None,
                  retry_days=RETRY_DAYS, timeout=25, log=print, probe_cell=None,
-                 free_rungs_ignore_cooldown=False, reasons=None):
+                 free_rungs_ignore_cooldown=False, reasons=None, renderer=None):
     """Walk `items` (already gated by the driver's own relevance/url rules) through `fetch_jd`
     inside a wall-clock budget (`minutes=None` for none; 0 attempts nothing).
     `save(item, text_or_None, stamp)` is the driver's one
@@ -3073,7 +3248,10 @@ def run_backfill(items, *, save, minutes, count_cap=0, bd=None, dry_run=False, t
         c["tried"] += 1
         jd = fetch_jd(item.url, bd=None if native_only else item_bd, company=item.company,
                       timeout=timeout, title=item.title, seen_ids=item.seen_ids,
-                      native_only=native_only)
+                      native_only=native_only,
+                      # the free render is free: a cooled row keeps it, exactly as it keeps the
+                      # plain GET (`free_rungs_ignore_cooldown`). Its own cap is the bound.
+                      renderer=None if native_only else renderer)
         c[f"via:{jd.via}"] += 1
         c[f"reason:{jd.reason}"] += 1
         if jd.via == "bd" and not jd.text and jd.reason.startswith(("bd-shell", "bd-no-markers")):
@@ -3536,6 +3714,8 @@ _FLOW_SUFFIXES = ("_filled", "_bd", "_bd_calls", "_bd_ok", "_fail", "_cooldown",
                   # the calls that asked for JavaScript; `_bd_parked` the calls refused
                   # because the host had already shelled three times this run.
                   "_bd_shell", "_bd_rendered", "_bd_parked", "_paid_cooldown",
+                  # the free render (2026-09-19): renders ATTEMPTED and rows FILLED by one
+                  "_rendered", "_via_render",
                   # the donor rung (2026-08-31 evening): both count EVENTS this run — copies
                   # admitted, and copies refused for not naming the role. `matched_structural`
                   # is deliberately NOT here: it is a gauge of rows standing on a written
