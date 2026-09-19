@@ -94,7 +94,8 @@ no server):
 
 **Both of those are produced by a run nobody watches**, and that is not a detail of the
 schedule — it is what "done" means here. The digest is a `schedule` event on a GitHub
-runner: no session is attached to it, 42 of its 87 named steps are `continue-on-error`, and
+runner: no session is attached to it, 51 of the workflows' 102 named steps are
+`continue-on-error` (re-measured 2026-09-19; 42 of 87 when this was written), and
 a step that does nothing at all finishes green in three seconds. So a change to a scheduled
 step is finished when an **unattended** run has produced a number and `HANDOFF.md` quotes
 it — `gh run view <id> --json event,headSha` says `event: schedule`, and
@@ -168,12 +169,13 @@ but not self-contained: `pipeline/run.py` imports `registry_health` and
 them executes them (`merge_research.py` rewrites `research_companies.json` on import).
 And **44+ of the workflow steps carry `continue-on-error: true`** — `docs/check_docs.py`
 fails if this sentence and the workflows disagree, as the registered `coe_ratio` fact.
-*Named* is load-bearing and was missing until 2026-08-27: there are **108** step lines in
-all, and the other 28 are bare `uses:` actions (checkout, setup-python) that are never
-continue-on-error. So the failure-tolerant share of everything a workflow does is 33 %,
-not the 45 % the sentence implied. 13
-of the 36 are stage-stamp or CLI-install steps, tolerated on purpose because their outcome
-is what the mail and the run page read and never the badge. So a hard failure in an audit
+*Named* is load-bearing and was missing until 2026-08-27: re-measured 2026-09-19 there are
+**137** step lines in all, and 35 of them are bare `uses:` actions (checkout, setup-python)
+that are never continue-on-error. So the failure-tolerant share of everything a workflow
+does is **51 of 137, 37 %**, not the 45 % the sentence implied — and it has grown, because
+every lane that adds a tolerated step moves it (36 of 108 on 2026-08-27). **15**
+of the 51 are stage-stamp or CLI/browser-install steps, tolerated on purpose because their
+outcome is what the mail and the run page read and never the badge. So a hard failure in an audit
 or hunt step still shows a green run — read the step log, not the badge. And note exactly
 how far the guarantee reaches: the linter holds the ratio, not the sentence around it,
 which read "nine of the 35" until 2026-08-27 and was wrong in both halves.
@@ -2796,7 +2798,7 @@ listed at all, and listing-hunt was written as 14:00 while its cron said 19:00.
 | `0 0 * * *` | scrape-refresh | re-render all scrape rows (JD carry-forward keeps enrichment) |
 | `30 12 * * *` | jd-archive | **first, `archive_evidence.py`** (2026-09-04): every posting url we have seen and the careers page of every active scrape row, submitted to the Internet Archive's Save Page Now — **authenticated since 2026-09-16** (`docs/decisions/2026-09-16-archive-authenticated.md`: the two `ARCHIVE_ORG_*` secrets; `POST /save` opens a job and `GET /save/status/<job_id>` reads it to `success` or `error`, so every job ends and `captured` is exact) — **`WAYBACK_DAY_CAP` 250** postings + 40 boards a day, 400 `requests` (POSTs, retries and the verify lookups; status polls are `polls`, not requests — until 2026-09-16 it was 150 + 25 and 220, and 140 until 2026-09-11: `577`), at most `WAYBACK_WORKERS` 6 threads bounded by the account's `available` slots (3 on 09-16) behind one 9-s gate (the archive allows an account 7 captures a minute), 60-min budget, `continue-on-error` with the outcome in the `wayback` stamp (a crash is a `Stages:` clause, not silence); one line per attempt in `cloud_state/wayback_ledger.jsonl`, never any text. Without the keys, or with the archive refusing them, the anonymous GET rung runs and the mail says `wayback unauthenticated: <why>`. Since 2026-09-15 (`582`): the archive's OWN failures (a connection error, a 5xx, a 429, its own `status_ext` words) never park a host and are not the address's attempts — only a refusal of the address does either; 8 archive-side requests in a row pause the day 90 s, a 429 pauses it for its Retry-After, and the third pause of either kind ends the day (`stop=archive-down` / `throttled`); boards go out one in six; the stamp's `captured` / `net` / `server` / `refused` tell the archive down from the archive refusing us, and `zero-produce` is a night that NAMED no capture (a timeout is not one). Then a job description for the cards the TITLE gate drops (the corpus, not the board): `enrich_scrape_jd.py --archive-only`, 90-min budget, `repo-state` group, no `continue-on-error`. *Recovering expired evidence* under §5 is the runbook |
 | `30 2 * * *` | retry-unreachable | Bright Data re-fetch of flaky endpoints |
-| `0 5 * * *` | daily-digest | discovery → telegram → liveness scan → probe candidates → JD-enrich → **company-intel drain (20 min, since 2026-08-30: the queue the `Company intel:` line measures is drained in the run that measures it)** → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** → report the run's outcome |
+| `0 5 * * *` | daily-digest | **install Playwright + Chromium (2026-09-19, `timeout-minutes: 5`, `continue-on-error`, +28 s measured)** → discovery → telegram → liveness scan → probe candidates → JD-enrich (**`MATCHED_JD_RENDER_CAP` 5** pages on the free render rung of §7a — without the browser step `jdfill.Renderer` latched `render-unavailable` on its first url and the rung filled 0 rows a night) → **company-intel drain (20 min, since 2026-08-30: the queue the `Company intel:` line measures is drained in the run that measures it)** → fetch ALL active rows → classify → persist state → **publish board (persist runs first, on purpose)** → report the run's outcome |
 | — `17 6,7,8,10 * * *` | inbox relay (private repo `AnalystJobsIL/inbox`, not this repo's crons) | **the BACKUP since 2026-08-28.** The relay's real trigger is now `on: push` to `receipts/**`, which `daily-digest`'s last step writes the moment a digest has landed — digest → email via issue+mention, content-hash dedup |
 | `0 6 * * *` | self-heal | re-resolve stale/rotted boards |
 | `17 10 * * *` | firmographics | company intel for registry rows with no facts (the digest's own hook stays as the same-day fast path for today's board). `:17`, the one cron off the `:00` minute (2026-08-30): its lag was +293..+662 min on every run, and the 09-06 morning check reads whether an off-minute slot arrives inside 180 min before any other cron moves (BACKLOG 305/450) |

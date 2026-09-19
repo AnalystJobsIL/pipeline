@@ -112,6 +112,26 @@ jobs:
           # the same bump as firmographics.yml, in the file that runs the CLI most (450d)
           node-version: "22"
 
+      # jd-text's free render rung (2026-09-19, ARCHITECTURE §7a): `pipeline/jdfill.Renderer`
+      # reads a JS shell with Chromium BEFORE the run spends a Bright Data credit on it. Without
+      # the browser the rung latches `render-unavailable` on its first url and the night costs
+      # nothing -- which is exactly what happened every night until this step existed, so
+      # `matched_rendered` was 0 by construction and only Google filled. Same shape as the five
+      # jobs that already install it (`scrape-refresh`, `self-heal`, `retry-unreachable`,
+      # `triage-dark`, `listing-hunt`); measured +28 s on the 09-18 `scrape-refresh` run
+      # 35298050641 (02:06:52 -> 02:07:20), which is why 5 minutes is a budget and not a guess.
+      # continue-on-error: a Chromium download that fails must cost the day its renders, never
+      # its mail. The timeout is REQUIRED, not decoration:
+      # `test_the_digest_step_budgets_fit_inside_the_job_that_runs_them` refuses a digest step
+      # with no budget, because a naked step can overrun to the job cap on its own.
+      - name: Install Playwright + Chromium
+        id: playwright
+        timeout-minutes: 5
+        run: |
+          python -m pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+        continue-on-error: true
+
       - name: Install Claude Code CLI (pinned — the classifier's flags are checked against this version)
         id: cli
         timeout-minutes: 10
@@ -193,6 +213,10 @@ jobs:
           BRIGHTDATA_API_KEY: ${{ secrets.BRIGHTDATA_API_KEY }}
           BRIGHTDATA_ZONE: ${{ secrets.BRIGHTDATA_ZONE }}
           MATCHED_JD_TIME_BUDGET_MIN: "20"
+          # PAGES this step may render with the free Chromium rung above, per process. 5 was
+          # jd-text's number (2026-09-19): the predicate fires on 3 of 3 known targets and the
+          # rung sits BELOW the paid one, so a cap is a clock bound, not a coverage one.
+          MATCHED_JD_RENDER_CAP: "5"
           # the jd-quality tier calls the Claude seam from THIS step. Without the token the
           # CLI 401s on every candidate and the mail reads `no verdict: llm-auth13` while the
           # classify step -- same secret, same job -- makes 372 successful calls (2026-08-30

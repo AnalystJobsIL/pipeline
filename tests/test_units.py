@@ -15240,9 +15240,11 @@ def test_the_push_contract_does_not_hide_its_own_verdict():
 
 
 def test_the_continue_on_error_sentence_says_which_steps_it_counted():
-    """`_coe_ratio` counts `^\s*- name:`, so 80 is the NAMED-step count; there are 108 step
-    lines in the workflows and the other 28 are bare `uses:` actions that are never
-    continue-on-error. Written as "36 of the 80 workflow steps" the sentence reads as 45% of
+    """`_coe_ratio` counts `^\s*- name:`, so 80 was the NAMED-step count; there were 108 step
+    lines in the workflows and the other 28 were bare `uses:` actions that are never
+    continue-on-error (2026-09-19: 102 named, 137 in all, 51 tolerated — the counts move every
+    time a lane adds a step, which is why only the WORDING is pinned here and the numbers live
+    in the `coe_steps` fact). Written as "36 of the 80 workflow steps" the sentence reads as 45% of
     the pipeline being failure-tolerant when the share of everything a workflow does is 33%.
     It is quoted in four documents and pinned by a fact check, so the wording is load-bearing."""
     cd = _cd()
@@ -23773,6 +23775,41 @@ def test_the_discovery_step_dies_instead_of_being_abandoned():
         "an overrun of discovery must not skip the pipeline step that mails the digest"
     assert "::error::discovery exited" in text, \
         "a non-zero rc must name itself in the log, not just set the step's outcome"
+
+
+def test_the_digest_installs_chromium_before_the_step_that_renders_with_it():
+    """`pipeline/jdfill.Renderer` shipped on 2026-09-19 as a FREE rung below the Bright Data
+    credit, and a rung whose browser is absent is not a rung: `_render` never raises, the
+    missing Chromium arrives as `launch:<Exc>`, the Renderer latches `render-unavailable` on
+    the first url and every following page keeps the verdict it already had. So the whole
+    mechanism was worth 0 rows a night for as long as `daily-digest.yml` installed no browser
+    -- silently, and green, because the latch is deliberate and prints one line.
+
+    Two halves, and each is a real failure on its own: the browser must be installed, and it
+    must be installed BEFORE `enrich_matched` (a step order this file is free to shuffle),
+    and the step must be TOLD its cap -- `MATCHED_JD_RENDER_CAP` defaults to 5 in the driver,
+    so a missing env var is invisible rather than broken, which is the harder bug to see.
+
+    The install is `continue-on-error` on purpose: a Chromium download that fails costs the
+    night its renders, never its mail."""
+    steps, _ = _digest_steps()
+    ids = [i for i, _t, _x in steps]
+    assert "playwright" in ids, (
+        "the digest job installs no Chromium, so `jdfill.Renderer` latches "
+        "`render-unavailable` every night and the free render rung is dead: %s" % ids)
+    assert ids.index("playwright") < ids.index("enrich_matched"), \
+        "Chromium must be installed BEFORE the step that renders with it: %s" % ids
+    _i, pw_timeout, pw = [s for s in steps if s[0] == "playwright"][0]
+    assert "python -m playwright install --with-deps chromium" in pw, pw
+    assert re.search(r"^\s+python -m pip install --quiet playwright$", pw, re.M), pw
+    assert "continue-on-error: true" in pw, \
+        "a failed browser download must not skip the steps that mail the digest"
+    assert pw_timeout, "a digest step with no timeout-minutes can overrun to the job cap"
+    _i, _t, em = [s for s in steps if s[0] == "enrich_matched"][0]
+    cap = re.search(r'^\s+MATCHED_JD_RENDER_CAP:\s*"(\d+)"', em, re.M)
+    assert cap and int(cap.group(1)) > 0, (
+        "`enrich_matched` must name its render cap in PAGES, or the browser is installed for "
+        "a step that was never told how much of it to use:\n%s" % em.strip()[:400])
 
 
 def test_persist_run_provenance_names_the_run_in_the_subject():
@@ -37037,9 +37074,9 @@ def test_a_capped_render_is_tomorrows_work_and_a_missing_playwright_is_todays_ve
     """Two reasons that must not be confused. `render-capped` is TRANSIENT: the rung that could
     read this page did not run, and parking it for seven days would put the one class rendering
     is FOR out of reach - the rule `bd-render-capped` already follows. `render-unavailable` is a
-    job without Chromium (`daily-digest.yml` installs none today, so it is the LIVE path until
-    `infra` lands the step) and leaves the page's standing verdict exactly as it was: `shell`,
-    definitive, unchanged from before this rung existed.
+    job without Chromium (`daily-digest.yml` installs it since 2026-09-19; `jd-archive.yml` does
+    not, `638`, so the 12:30 archive pass is the LIVE path) and leaves the page's standing
+    verdict exactly as it was: `shell`, definitive, unchanged from before this rung existed.
 
     Kills `render-capped-definitive`."""
     from pipeline import jdfill
