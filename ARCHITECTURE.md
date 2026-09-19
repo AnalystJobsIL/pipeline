@@ -4352,15 +4352,19 @@ Four rules, and each is the answer to one of the objections above:
   `AppSec Labs`/`AppSec` shape `roles._alias_fold_target` refuses by name, and the JPMorgan
   fold moved a rendered `founded` chip from **1799 to 2000**. The three came back the same
   evening, out of the runner's sqlite copy, which is what folding at every view buys.
-  `declared_aliases()` reads **7** pairs today of the 69 `alias-of` rows in the registry.
+  `declared_aliases()` reads **18** pairs today of the **78** `alias-of` rows in the
+  registry — 7 on 2026-09-11, and eleven more since, seven of them on 2026-09-19 alone.
 - **The survivor's facts win and the alias fills only its EMPTIES**, `as_of` stays the
   survivor's (a stub survivor inherits the alias's date, or `is_stale` re-buys it for ever),
-  `size_band` is re-derived. On the live export that filled nothing: all six survivors were
-  already complete.
+  `size_band` is re-derived. On the live export it filled nothing for a year of pairs — all
+  six 09-11 survivors were complete — and then **two cells on 2026-09-19**: `הפניקס` took
+  `employees_global` **5170** from `Phoenix Financial` and its `size_band` was re-derived
+  **L → XL**, and `Ram Aderet Engineering` took **150**. Nothing else moved in either
+  direction, which is the rule working rather than a coincidence.
 - **A site form is refused even when declared both ways**, because a site record carries the
   SITE's facts — the Microsoft-1989 sentence above. No declared pair is a site form today
   (the `ALIASES` requirement excludes them all), so this guard is prophylactic, and so is
-  the one below it: **an ACTIVE row is never an alias.** 0 of the 69 `alias-of` rows are
+  the one below it: **an ACTIVE row is never an alias.** 0 of the 78 `alias-of` rows are
   active; the rule exists because a fold keyed on `identity_key` groups instead of the
   registry's rulings would take the ACTIVE `AWS` row into `Amazon`.
 
@@ -4368,10 +4372,16 @@ It runs inside **`union_store` and `save_shared`** (through `settle_keys`, below
 `cloud_state/seen.db` is `SINGLE_WRITER: daily-digest`: a key deleted from the export comes
 back out of the runner's sqlite copy the next morning. Folding every view is what makes the
 deletion stick with no tombstone and no second writer — `242`'s two blockers, avoided rather
-than solved. `--export`'s superset guard subtracts **the folds that actually happened**
-(`fold_aliases` over a copy of the file), not the ones declared: the first version excused
-every declared alias, which excused 20 keys the fold refuses to touch — `Intel Israel` and
-its 19 site-form siblings could all have vanished and the guard would have printed nothing.
+than solved. `--export`'s superset guard subtracts **the folds that actually happened**, not
+the ones declared: the first version excused every declared alias, which excused 20 keys the
+fold refuses to touch — `Intel Israel` and its 19 site-form siblings could all have vanished
+and the guard would have printed nothing. It runs `settle_keys` over the UNION's own
+population and not over a copy of the file alone (2026-09-19): `fold_aliases` refuses a survivor with NO
+record, so a survivor bought in the SAME run was invisible to it and the guard refused a
+deletion the union had itself performed — `refusing to publish: the union DROPS 1 record(s)`
+for `Group19 Tech`, the first fold here whose survivor was a brand-new record. The widened
+population adds only survivors the export actually holds and lets the file win on value, so a
+key that vanished for a BAD reason still has no record to enable a fold and is still flagged.
 
 **A record the registry ruled is ANOTHER company's is dropped the same way** (`DISOWNED`,
 `drop_disowned`, 2026-09-13 — the mirror of `596`). Three records were bought while their row
@@ -4408,6 +4418,21 @@ It is applied THROUGH `fold_aliases`, so the four rules above still govern — i
 survivor with no record folds nothing, because moving the record to the survivor's key is
 the key migration `459` refuses. The export went **1,704 → 1,702**, and **1,701** once the
 parked-row arm took `Trivago` the same evening.
+
+**2026-09-19 is the day both arms ran at once**, on the seven declarations that completed the
+same day's registry parks. `1,701 → 1,695`: six keys folded — `Phoenix Financial`→`הפניקס`,
+`Pagaya`→`Pagayais`, `רם אדרת | Ram Aderet`→`Ram Aderet Engineering`,
+`בנק דיסקונט`→`Discount Bank`, `הראל ביטוח ופיננסים`→`Harel Insurance & Finance` (declared
+earlier the same day and foldable only once `registry` re-activated the Latin row), and
+`Clal Insurance & Finance- כלל ביטוח ופיננסים`→`Clal Insurance And Finance` through
+`alias_only_folds`, the only one of the seven the registry does not hold. `Discount Bank בנק
+דיסקונט` has no record, so its declaration folds nothing and waits. Two of the seven were
+**eighteen and twenty-two days old as parks** with no `ALIASES` half — the `571` shape, inert
+and invisible, which is why this lane now looks for the DECLARATIONS and not for the parks.
+`Group19 Tech`→`Group19` needed a survivor RECORD first (`633`): bought the same day from the
+group's own `group19.org.il/career`, **3 seam calls, 0 credits**, `it services / outsourcing`
+against the subsidiary's `defense & aerospace`, and the fold then moved **0 fields** because
+the new record was complete. Net `1,695 → 1,695`, one key for another.
 
 **The fold also makes an alias's page vouch for the survivor**, because it would otherwise
 delete a brand with the duplicate. `display_plan` (the ONE reading of `board_verify` that

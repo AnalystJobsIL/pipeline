@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**694 filed · 489 open · 205 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**695 filed · 489 open · 206 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 645.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 646.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 159 open
+### registry — 158 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -248,7 +248,6 @@ closure convention in the header.
 - **604** `604@registry` **No resolver can read a Workday PUBLIC site or a Teamtailor board off a careers page, so
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 - **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
-- **633** `633@registry` **The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data Analyst
 - **636** `636@registry` **`Discount Bank` is `ats_platform=scrape` on an Oracle CE site whose list API answers, so
 - **641** `641@registry` **`identity_gate.human_board_url` has no `oraclehcm` entry, so it hands the API endpoint
 - **642** `642@registry` **Four ACTIVE rows read `amazon.jobs`, and two of them read the SAME path under different
@@ -508,7 +507,7 @@ closure convention in the header.
 - **475** `475@docs` **Three shipped sentences say CI checks out one commit deep, and `daily-digest.yml` no
 - **563** `563@docs` **Nothing checks that a `NNN@lane` reference resolves to an item that still exists** —
 
-### company-intel — 22 open
+### company-intel — 23 open
 
 - **3** `3@company-intel` **One identity layer.** `_norm_company` existed but nothing used it for keys
 - **5** `5@company-intel` Company aliases: `Meta`+`Meta Israel`, `IBM`+`IBM Israel`, `Port`+`Port.io` are separate
@@ -532,6 +531,7 @@ closure convention in the header.
 - **550** `550@company-intel` **The board shows `Holisto` for a company that now calls itself trivago Innovation
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 - **618** `618@company-intel` **`DoiT` and `doitintl` are one employer with two firmographics records, and the fold
+- **645** `645@company-intel` **`employees_global` 23 was researched for `Group19 Tech` and then, independently, for
 
 ### jd-text — 22 open
 
@@ -13416,6 +13416,24 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      firmographics, the roles ledger, `matched` and the board). Each is a
      `firmographics.ALIASES` entry PLUS the parked row's own dated `alias-of <survivor>`
      verdict, in one commit, once its board evidence is in hand.
+
+     **Every `company-intel owns ...` clause above is ANSWERED, same day** (`a25e1c3`,
+     2026-09-19 02:21Z): seven `ALIASES` keys, six through `declared_aliases` and Clal through
+     `alias_only_folds`. Measured before writing, on the committed registry: one parked row per
+     pair carrying the verdict, exactly ONE ACTIVE survivor row on each identity, every value an
+     `identity_key` fixed point, and `identity_key` moving for exactly 7 of the 2,520 names in
+     the registry + export + roles ledger — the 7 declared and nothing else. Export
+     **1,701 → 1,695**: five of the seven folded a record, plus `הראל ביטוח ופיננסים` (declared
+     earlier the same day, foldable only once `registry` re-activated the Latin row, and this was
+     the first `--export` since). `Discount Bank בנק דיסקונט` has no record, so its declaration
+     folds nothing and waits for one. Two cells moved, both filling an EMPTY: `הפניקס`
+     `employees_global` **5170** (`size_band` re-derived L → XL) and `Ram Aderet Engineering`
+     **150**. Guards: three tests on the dated snapshot, and a clause added to the existing
+     fixed-point test — every alias VALUE must be an `identity_key` fixed point, or the map's raw
+     return means the two names never meet and the declaration is a silent no-op. What it cost
+     elsewhere: two standing tests' positive controls (render's `632` clause 4 went 2 hits → 0;
+     registry's `site_twins` control could no longer use the real Ram Aderet pair), both re-aimed
+     in `f036253`, neither weakened.
 ## From the `scraper` lane, 2026-09-18 (a card's bounds, a carry's key, a page's anchor)
 
 623. **A department heading and a role title inside ONE card anchor are read as two cards** —
@@ -13740,9 +13758,10 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      whoever owns the names (`company-intel`: a `display_name`, or an `ALIASES` entry, makes
      that blurb self-excusing today, which is the mechanism this change added).
 
-633. **The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data Analyst
-     card carries a UAV/defence chip on a public-sector Power BI job** — lane: `registry`, filed
-     2026-09-18 by `company-intel`. `Group19 Tech` was re-profiled from its own site this
+633. ~~**The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data
+     Analyst card carries a UAV/defence chip on a public-sector Power BI job**~~ —
+     **CLOSED 2026-09-19 (`registry` + `company-intel`, both halves; the evidence is below)** —
+     lane: `registry`, filed 2026-09-18 by `company-intel`. `Group19 Tech` was re-profiled from its own site this
      session (1 seam call): the record is RIGHT — the Yeruham engineering subsidiary of the
      Group19 social business, `defense & aerospace` / `UAV/space software and engineering
      services`, B2B and government customers. What is wrong is the board on the row.
@@ -13785,6 +13804,26 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      A local zero is not a measurement; what the test settles is that only the ROW name moved.
      The 00:00 UTC `scrape-refresh` re-scrapes every active scrape row, so `Group19` is cached
      before the 09-20 digest — that is the morning check.
+
+     **CLOSED 2026-09-19 on the `company-intel` half too, so the item is closed on both**
+     (`fdc9e70`). `ALIASES["group19 tech"] = "group19"` plus the survivor's own RECORD, bought
+     evidence-first from the group's own site through the evidence path (`board_url
+     https://www.group19.org.il/career`, the new row's own ACTIVE url): **3 seam calls, 62 s, 6
+     searches, 0 Bright Data credits**. `it services / outsourcing` /
+     `Peripheral-region tech, digital and back-office services`, `private-enterprise`, `S`,
+     `il_center` naming six towns of which five are the towns the site's own subsidiary pages
+     name. **0 of the 3 asks said defence, aerospace or UAV** — the record and the blurb now
+     agree, which is the tell this item was filed on. Three asks because the first answered
+     `stage: early-private` beside a `stage_note` reading "no public funding round or valuation
+     found", which is the FUNDING MODEL test and the exact correction 09-18 made for the
+     subsidiary; `private-enterprise` is 2 of 3. The published record is the third ask as the
+     seam wrote it — nothing hand-assembled, because a record edited to fit a board is the `596`
+     failure. Export `1,695 → 1,695`: `Group19` added, `Group19 Tech` folded away, and the fold
+     moved **0 fields** (the new record is complete but for `founded`, and the alias's is null
+     too), so nothing of the UAV profile survives on the key that publishes the analyst. No
+     `display_name`: `board_verify`'s 09-19 read names the employer `Group19`, the row's own
+     spelling, and an override equal to the name is one no reader ever sees. It also surfaced
+     `645` — the superset guard refused this very fold.
 
      **Rejected**: a RENAME (`459` — `company_name` is the join key for the firmographics, the
      roles ledger, `matched` and the board, and this row has 1 role record and 1 record);
@@ -14041,3 +14080,36 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      no longer matches origin's SKIPS that row and says so in its step log, which turns a silent
      revert into a line a reader sees. Measure over the 81 cron commits in the fortnight: how
      many rows differ between each run's base and the origin it commits onto.
+
+## From the `company-intel` lane, 2026-09-19 (a headcount two companies claim)
+
+645. **`employees_global` 23 was researched for `Group19 Tech` and then, independently, for
+     `Group19` — and it can be true of at most one of them** — lane: `company-intel`, filed
+     2026-09-19 by itself. The subsidiary's record (09-18, re-asked with evidence) reads 23 for a
+     Yeruham engineering company; the parent's record (09-19, three asks from the group's own
+     site) reads 23 for a group of six companies delivering from Sderot, Safed, Mitzpe Ramon,
+     Ofakim, Yeruham and Be'er Sheva. Two asks, two populations, one number: the likeliest cause
+     is a single LinkedIn company page that both reads found, which is exactly the
+     `is_division_name` hazard (a division record strong-matching the parent's page) arriving
+     from the other end — parent and subsidiary, not parent and division, and no parenthetical
+     for the guard to see.
+
+     It costs nothing today: `band_for(23)` is `S` either way and `S` is almost certainly right
+     for the group, so no rendered chip is wrong. What it costs tomorrow is the guard it disables
+     — a survivor with a headcount is `fresh`, so `fold_aliases` will not fill its
+     `_COUNT_COMPANIONS` from an alias, and a number nobody checked is now the thing protecting
+     the group's record from its own subsidiary's.
+
+     The general form, which is why this is an item and not a note: **a parent/subsidiary fold is
+     not a spelling fold, and `fold_aliases` cannot tell them apart.** Every pair it had folded
+     until 2026-09-19 was two names for ONE company, where "the alias fills the survivor's
+     empties" is free. `Group19 Tech`→`Group19` is the first where the alias is a DIFFERENT legal
+     entity whose facts are its own: had the parent's record come back without a headcount (the
+     first of the three asks did), the fold would have donated the subsidiary's 23 to the group
+     and `band_for` would have published a band derived from it. The fix is not a new refusal by
+     default — the registry's verdict is only `alias-of <R>`, and the subsidiary fact lives in
+     the row's note prose, which is not durable memory. Either the verdict learns to say
+     `subsidiary-of`, or `fold_aliases` refuses `_COUNT_COMPANIONS` and `founded` whenever the
+     two names are not one `_plain_norm` of each other. Measure first: how many of the 18
+     `declared_aliases` pairs are parent/subsidiary rather than spellings (this one, and
+     `Group19` is the only one I can name).
