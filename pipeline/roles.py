@@ -2152,12 +2152,16 @@ class Ledger:
                 # answers to the same question. `_rename_record` is the shared body, so the
                 # text line, the sqlite row and every `superseded_by` pointer move together;
                 # it refuses (and we fall through to `left`) when a row already owns the key.
-                # Measured empty on the committed store, and it stays empty until some
-                # pair carries BOTH declarations the `declared` gate needs. The Harel
-                # pair this was written for is NOT that pair: registry's `de531b1` left
-                # both rows PARKED, and `_alias_fold_target` needs exactly one ACTIVE
-                # row, so no `alias-of` verdict and no `ALIASES` entry were written.
-                # This branch is a mechanism, not a fix for one employer.
+                # Measured empty on the store this landed against, and LIVE within hours:
+                # `ats-fetch` built `fetch_adamtotal` (83/83 IL behind Harel's careers
+                # link) and `registry` then activated `Harel Insurance & Finance` and
+                # declared הראל ביטוח ופיננסים beside it, so
+                # `_alias_fold_target` resolves that name `declared` and the Hebrew
+                # record -- one open role under a title no Harel record shares -- takes
+                # THIS branch rather than a twin fold. Before the rename existed it
+                # would have been left in place, stopped being fed, closed as if the
+                # posting had gone, and been re-minted under the canonical key with a
+                # fresh `first_seen`: one posting published twice.
                 renamed.append(f"{r}<-{orig}")
             else:
                 # sqlite refused the key (a retired row owns it): leaving the record is the
