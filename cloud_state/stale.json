@@ -1,561 +1,724 @@
 {
  "4M Analytics": {
   "careers_url": "https://www.comeet.com/jobs/4manalytics/b6.00f",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "A.P. Moller - Maersk": {
   "careers_url": "https://www.maersk.com/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "ASML": {
   "careers_url": "https://www.asml.com/en/careers/find-your-job",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "ASTERRA": {
   "careers_url": "https://asterra.io/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "AU10TIX": {
   "careers_url": "https://www.au10tix.com/company/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "AWS": {
   "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Aeronautics": {
   "careers_url": "https://career.aeronautics-sys.com/open-positions/",
   "error": "scrape: http:403 (19 nights)",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "fetch-error"
  },
  "Airspan Networks": {
   "careers_url": "https://airspan.com/careers/airspan-careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "AlgoSec": {
   "careers_url": "https://www.algosec.com/company/careers/find-a-job",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Alstom": {
-  "careers_url": "https://jobsearch.alstom.com/tile-search-results/",
-  "error": "HttpError: network error for https://jobsearch.alstom.com/tile-search-results/ <u",
-  "platform": "successfactors",
-  "reason": "fetch-error"
- },
  "Amazon Israel": {
   "careers_url": "https://www.amazon.jobs/en/search",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Amazon Web Services (AWS)": {
   "careers_url": "https://www.amazon.jobs/en/business_categories/amazon-web-services",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Arm": {
   "careers_url": "https://careers.arm.com/location/israel-jobs/33099/6252001-5332921-5392171/4",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Axioma System Engineering and Integration": {
   "careers_url": "https://www.axioma-in.com/jobopenings",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Ayalon Highways": {
   "careers_url": "https://www.ayalonhw.co.il/career/jobs-page",
   "error": "scrape: http:403 (21 nights)",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "fetch-error"
  },
  "BeeHero": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/78.00E/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "BigPanda": {
   "careers_url": "https://www.bigpanda.io/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Bio Technology General": {
   "careers_url": "https://www.btgil.com/vacancies/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Boa Ideas": {
   "careers_url": "https://www.comeet.com/jobs/boaideas/EA.009",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Brandshield": {
   "careers_url": "https://www.comeet.com/jobs/brandshield/13.002",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Bridgewise": {
   "careers_url": "https://www.comeet.com/jobs/bridgewise/F9.009",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Bright Security": {
   "careers_url": "https://www.brightsec.com/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Bulwarx": {
   "careers_url": "https://www.bulwarx.com/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Cenevo": {
   "careers_url": "https://www.cenevo.com/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Challenge Group": {
   "careers_url": "https://career.challenge-group.com/go/Israel-Airlines-Jobs/9594055/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Citi": {
   "careers_url": "https://jobs.citi.com/search-jobs/Israel",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Comeet": {
   "careers_url": "https://www.comeet.com/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Coro": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/08.00A/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "Cyabra": {
   "careers_url": "https://cyabra.bamboohr.com/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Darrow": {
   "careers_url": "https://www.comeet.com/jobs/darrow-ai/D8.000",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Datos Health": {
   "careers_url": "https://www.datos-health.com/join-us/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "DealHub.ai": {
   "careers_url": "https://www.comeet.com/jobs/dealhub/86.005",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "DeepKeep": {
   "careers_url": "https://www.deepkeep.ai/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
- },
- "Dentsply Sirona": {
-  "careers_url": "https://careers.dentsplysirona.com/tile-search-results/",
-  "error": "HttpError: network error for https://careers.dentsplysirona.com/tile-search-resul",
-  "platform": "successfactors",
-  "reason": "fetch-error"
  },
  "Deutsche Telekom": {
   "careers_url": "https://telekom-growthhub.eightfold.ai/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Discount Bank": {
-  "careers_url": "https://ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/CX_3001/requisitions",
-  "platform": "scrape",
-  "reason": "misconfig-scrape-on-ats"
- },
  "ENI-ONE LTD": {
   "careers_url": "https://eni-one-ltd.breezy.hr",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "EPAM Systems, Inc.": {
   "careers_url": "https://careers.epam.com/en/jobs",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "EY": {
-  "careers_url": "https://careers.ey.com/ey/tile-search-results/",
-  "error": "HttpError: network error for https://careers.ey.com/ey/tile-search-results/ <urlo",
-  "platform": "successfactors",
-  "reason": "fetch-error"
- },
  "Echo": {
   "careers_url": "https://www.comeet.com/jobs/echo/9A.006",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Exodigo": {
   "careers_url": "https://www.comeet.com/jobs/exodigo/89.005",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Fairmatic": {
   "careers_url": "https://jobs.workable.com/company/w9nAMpewLQVYmxHXhj1TRS/jobs-at-fairmatic",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Fairtility": {
   "careers_url": "https://api.smartrecruiters.com/v1/companies/fairtility/postings",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Firefly": {
   "careers_url": "https://www.firefly.ai/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Gini Apps": {
   "careers_url": "https://www.comeet.com/jobs/gini-apps/66.000",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "HUB Security": {
   "careers_url": "https://www.comeet.com/jobs/hub-technologies/07.00F",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Hailo": {
   "careers_url": "https://hailo.ai/company-overview/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Harmonic": {
   "careers_url": "https://egmn.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/jobs",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Highcon": {
   "careers_url": "https://www.highcon.net/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Hilti Israel": {
   "careers_url": "https://careers.hilti.group/en/jobs/",
   "error": "scrape: http:429 (1 night)",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "fetch-error"
  },
  "IAI - Israel Aerospace Industries": {
   "careers_url": "https://jobs.iai.co.il/jobs/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "IEC - Israel Electric Corporation חברת החשמל לישראל בע\"מ": {
   "careers_url": "https://careers.iec.co.il/",
   "error": "scrape: http:403 (25 nights)",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "fetch-error"
  },
  "Jafi": {
   "careers_url": "https://www.comeet.com/jobs/jafi/C8.008",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Jeen.ai": {
   "careers_url": "https://www.comeet.com/jobs/jeenai/DA.008",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "K2view": {
   "careers_url": "https://www.k2view.com/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "L.Raphael": {
   "careers_url": "https://apply.workable.com/l-dot-r-aphael/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Lema AI": {
   "careers_url": "https://www.comeet.com/jobs/lemalabs/EA.001",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
+ "Logz.io": {
+  "careers_url": "https://api.lever.co/v0/postings/logz",
+  "last": "2026-09-19",
+  "nights": 1,
+  "platform": "lever",
+  "reason": "regressed-to-zero"
+ },
  "Ludeo": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/D7.008/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "Maelyscosmetics": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/68.002/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "Majestic Labs ai": {
   "careers_url": "https://www.comeet.com/jobs/majesticlabs/AA.004",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Mami": {
   "careers_url": "https://www.comeet.com/jobs/mami/BA.008",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Microsoft Israel": {
   "careers_url": "https://apply.careers.microsoft.com/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Moovit": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/63.007/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "NSO Group": {
   "careers_url": "https://www.nsogroup.com/job/web-security-researcher/",
   "error": "scrape: http:403 (22 nights)",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "fetch-error"
  },
  "NeuReality": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/89.002/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "Nexar": {
   "careers_url": "https://api.smartrecruiters.com/v1/companies/nexarinc/postings",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Nexite": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/37.000/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "Opswat": {
   "careers_url": "https://www.opswat.com/careers/open-positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "OurCrowd": {
   "careers_url": "https://www.comeet.com/jobs/ourcrowd/D3.00A",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "PAPAYA": {
   "careers_url": "https://www.papayaglobal.com/careers/",
   "error": "scrape: http:403 (22 nights)",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "fetch-error"
  },
  "Pipl": {
   "careers_url": "https://www.comeet.com/jobs/pipl/22.008",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Planview": {
   "careers_url": "https://careers.planview.com/careers-home/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Predicta Med": {
   "careers_url": "https://predicta-med.com/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Quantum Art": {
   "careers_url": "https://www.quantum-art.tech/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Regulus": {
   "careers_url": "https://www.comeet.com/jobs/regulus/9A.00D",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Revolut": {
   "careers_url": "https://www.revolut.com/en-US/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "SAP": {
-  "careers_url": "https://jobs.sap.com/tile-search-results/",
-  "error": "HttpError: network error for https://jobs.sap.com/tile-search-results/ <urlopen e",
-  "platform": "successfactors",
-  "reason": "fetch-error"
- },
  "SMARTECH - A Hexion Company": {
   "careers_url": "https://careers.hexion.com/job/Herzliya-QA-Lead-M/1426309900/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Sanofi": {
   "careers_url": "https://jobs.sanofi.com/en/search-jobs/Israel",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "Sapiens": {
-  "careers_url": "https://careers.sapiens.com/tile-search-results/",
-  "error": "HttpError: network error for https://careers.sapiens.com/tile-search-results/ <ur",
-  "platform": "successfactors",
-  "reason": "fetch-error"
- },
  "Sensos": {
   "careers_url": "https://www.sensos.io/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Shikun Binui": {
   "careers_url": "https://careers.shikunbinui.com/jobs/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Shortical": {
   "careers_url": "https://www.comeet.com/jobs/shortical/3B.00A",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Sola Security": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/A9.003/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "SolarEdge": {
   "careers_url": "https://www.solaredge.com/en/search",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "StarkWare": {
   "careers_url": "https://starkware.co/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Stigg": {
   "careers_url": "https://jobs.ashbyhq.com/stigg",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Strauss Water Ltd. שטראוס מים": {
   "careers_url": "https://www.strauss-group.co.il/career/jobs/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Swimm": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/56.007/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "Synopsys Israel": {
   "careers_url": "https://careers.synopsys.com/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "TLVTech": {
   "careers_url": "https://api.smartrecruiters.com/v1/companies/tlvtech/postings",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Talenya": {
   "careers_url": "https://www.talenya.com/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Tap": {
-  "age_days": 1341,
+  "age_days": 1342,
   "careers_url": "https://api.smartrecruiters.com/v1/companies/tapmobile/postings",
-  "error": "BoardAbandoned: newest posting 2023-01-16 (1341 days old), 1 posting",
+  "error": "BoardAbandoned: newest posting 2023-01-16 (1342 days old), 1 posting",
+  "last": "2026-09-19",
   "newest": "2023-01-16",
+  "nights": 2,
   "platform": "smartrecruiters",
   "reason": "abandoned-board"
  },
  "Teads": {
   "careers_url": "https://job-boards.eu.greenhouse.io/teads1",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Tripledot Studios": {
   "careers_url": "http://job-boards.eu.greenhouse.io/tripledotstudios",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "Valence Security": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/27.002/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
-  "reason": "regressed-to-zero"
- },
- "Vessel Technologies, Inc.": {
-  "careers_url": "https://www.vesseltechnologies.com/careers",
-  "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Volkswagen (CARIAD)": {
   "careers_url": "https://jobs.volkswagen-group.com/cariad/search/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
- "West Pharmaceutical Services": {
-  "careers_url": "https://careers.westpharma.com/tile-search-results/",
-  "error": "HttpError: network error for https://careers.westpharma.com/tile-search-results/ ",
-  "platform": "successfactors",
-  "reason": "fetch-error"
- },
  "Whalo": {
   "careers_url": "https://www.whalo.com/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Xtend": {
   "careers_url": "https://www.xtend.me/working-at-xtend",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "Zemingo": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/80.005/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "Zesty": {
   "careers_url": "https://www.comeet.com/careers-api/2.0/company/06.000/positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "comeet",
   "reason": "regressed-to-zero"
  },
  "aiOla": {
   "careers_url": "https://aiola.ai/careers/",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "aspectiva": {
   "careers_url": "https://www.comeet.com/jobs/walmart/35.000",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "entrypoint": {
   "careers_url": "https://entrypoint.co.il/he/careers",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  },
  "kueez": {
   "careers_url": "https://api.smartrecruiters.com/v1/companies/Kueez/postings",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "somekhchaikin": {
   "careers_url": "https://www.comeet.com/jobs/somekhchaikin/F3.007",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "misconfig-scrape-on-ats"
  },
  "הפניקס": {
   "careers_url": "https://www.fnx.co.il/career/open-positions",
+  "last": "2026-09-19",
+  "nights": 2,
   "platform": "scrape",
   "reason": "regressed-to-zero"
  }

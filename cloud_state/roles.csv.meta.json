@@ -3,28 +3,28 @@
  "download_url": "https://analystjobsil.github.io/board/roles.csv",
  "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles.csv",
  "published_on_pages": true,
- "generated_at": "2026-09-18T15:34:46Z",
- "run_date": "2026-09-18",
- "rows": 173,
+ "generated_at": "2026-09-19T12:16:34Z",
+ "run_date": "2026-09-19",
+ "rows": 170,
  "one_row_per": "role — an opening at one employer under one title, kept forever once seen",
  "window": {
   "days": 90,
   "basis": "last_seen",
-  "start": "2026-06-21",
-  "end": "2026-09-18",
-  "rule": "2026-06-21 <= last_seen <= 2026-09-18, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
+  "start": "2026-06-22",
+  "end": "2026-09-19",
+  "rule": "2026-06-22 <= last_seen <= 2026-09-19, both inclusive (90 days) — the role was seen open on its employer's own careers board on some day in that range",
   "fully_covered": false,
-  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-21. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
+  "note": "ASPIRATIONAL: this store's earliest observation is 2026-08-16, which is AFTER the window start 2026-06-22. Any absence of roles before 2026-08-16 is OUR blindness, not the market's — the pipeline was not yet watching. Do not read the shape of the first days as a trend."
  },
  "classifier_contract": {
   "live": "v3.0a439b16",
-  "rows_current": 0,
-  "rows_stale": 173,
+  "rows_current": 102,
+  "rows_stale": 68,
   "rows_unknown": 0,
   "note": "rows_unknown is not a defect in the row: it is a cell stamped before the contract was recorded (2026-09-11), or a verdict served from the classifier cache without the seam reporting which contract answered. It means 'we cannot say', which is the honest reading and not 'stale'."
  },
  "store": {
-  "records": 289,
+  "records": 292,
   "renamed": [
    {
     "role_id": "analytical factor|senior data analyst supply chain demand planning analytics",
@@ -39,6 +39,34 @@
      "aqurate|data analyst aqurate data"
     ],
     "on": "2026-09-12"
+   },
+   {
+    "role_id": "clal insurance and finance|אנליסט ית אשראי",
+    "from": [
+     "clal insurance finance כלל ביטוח ופיננסים|אנליסט ית אשראי"
+    ],
+    "on": "2026-09-19"
+   },
+   {
+    "role_id": "group19|data analyst",
+    "from": [
+     "group19 tech|data analyst"
+    ],
+    "on": "2026-09-19"
+   },
+   {
+    "role_id": "harel insurance finance|אנליסט ית תחקור ובקרה",
+    "from": [
+     "הראל ביטוח ופיננסים|אנליסט ית תחקור ובקרה"
+    ],
+    "on": "2026-09-19"
+   },
+   {
+    "role_id": "menora mivtachim|אנליסט ית סיכונים פיננסיים",
+    "from": [
+     "מנורה מבטחים החזקות|אנליסט ית סיכונים פיננסיים"
+    ],
+    "on": "2026-09-19"
    },
    {
     "role_id": "points location intelligence|אנליסט ית עסקי ת bi data",
@@ -60,24 +88,45 @@
      "practical vision|we re hiring web analyst practical vision"
     ],
     "on": "2026-09-12"
+   },
+   {
+    "role_id": "הפניקס|business analyst 50400095",
+    "from": [
+     "phoenix financial|business analyst 50400095"
+    ],
+    "on": "2026-09-19"
+   },
+   {
+    "role_id": "הפניקס|digital analytics team lead 50061453",
+    "from": [
+     "phoenix financial|digital analytics team lead 50061453"
+    ],
+    "on": "2026-09-19"
+   },
+   {
+    "role_id": "הפניקס|marketing data analyst 50400118",
+    "from": [
+     "phoenix financial|marketing data analyst 50400118"
+    ],
+    "on": "2026-09-19"
    }
   ],
   "renamed_note": "a role_id changes only when a card-blob title is canonicalised into the role's name; the record keeps its first_seen, episodes, emailed history and classifier verdict",
   "by_status": {
-   "closed": 59,
-   "open": 135,
+   "closed": 49,
+   "open": 129,
    "purged": 17,
-   "superseded": 18,
-   "withdrawn": 60
+   "superseded": 21,
+   "withdrawn": 76
   },
   "earliest_first_seen": "2026-08-16",
   "earliest_recorded_run": "2026-08-27",
   "retention": "nothing is ever deleted; a wrong row becomes superseded or purged and keeps its line"
  },
  "excluded": {
-  "superseded": 18,
+  "superseded": 21,
   "purged": 17,
-  "withdrawn": 60,
+  "withdrawn": 76,
   "outside_window": 0,
   "undatable": 0,
   "note": "superseded = the same posting also fetched under a second company name, kept once. purged = the COMPANY was never an employer (a registry row that points at an aggregator; a name intake rejected as an agency). withdrawn = the employer is real but THIS posting was never in scope (not in Israel, or not this employer's) — it was published in error and is listed under `withdrawn` with its reason and the days it was public. Rows that aged out of the window are not excluded: they are in roles_archive.csv."
@@ -146,6 +195,19 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "amitim pension funds|data analyst",
+   "company": "Amitim Pension Funds",
+   "title": "Data analyst",
+   "status": "withdrawn",
+   "reason": "classifier llm_cache under v3.0f84ab84: cached LLM verdict (superseded contract)",
+   "on": "2026-09-19",
+   "by": "classifier",
+   "published_in_roles_csv": {
+    "from": "2026-09-04",
+    "to": "2026-09-19"
    }
   },
   {
@@ -279,6 +341,19 @@
    }
   },
   {
+   "role_id": "clal insurance and finance|אנליסט ית אשראי",
+   "company": "Clal Insurance And Finance",
+   "title": "אנליסט.ית אשראי",
+   "status": "withdrawn",
+   "reason": "out of scope (conditions 1 and 5): the output is a credit recommendation on financial statements presented to a credit committee, not analysis of measured data; no SQL, BI, dashboard or metric appears anywhere in the posting.",
+   "on": "2026-09-18",
+   "by": "human",
+   "published_in_roles_csv": {
+    "from": "2026-09-01",
+    "to": "2026-09-18"
+   }
+  },
+  {
    "role_id": "comblack|business intelligence developer",
    "company": "comblack",
    "title": "Business Intelligence Developer",
@@ -409,6 +484,19 @@
    }
   },
   {
+   "role_id": "edikted|retail analyst team lead",
+   "company": "Edikted",
+   "title": "Retail Analyst, Team Lead",
+   "status": "withdrawn",
+   "reason": "classifier llm under v3.0a439b16: LLM verdict: The role centers on owning and executing the replenishment process-product allocation, discount planning, warehouse coordination-with analysis serving that exec",
+   "on": "2026-09-19",
+   "by": "classifier",
+   "published_in_roles_csv": {
+    "from": "2026-08-31",
+    "to": "2026-09-19"
+   }
+  },
+  {
    "role_id": "edikted|retail data analyst",
    "company": "Edikted",
    "title": "Retail Data Analyst",
@@ -487,6 +575,19 @@
    }
   },
   {
+   "role_id": "gamida cell|senior business analyst commercial data analytics",
+   "company": "Gamida Cell",
+   "title": "Senior Business Analyst, Commercial Data & Analytics",
+   "status": "withdrawn",
+   "reason": "out of scope: the posting places itself outside Israel. Its own page says `Office: usa | Location: US - Remote` and, under `Company Gamida Cell, Inc.`, `Location: US - Remote` again; no Israeli place is named anywhere in it. On scope alone the role would be IN.",
+   "on": "2026-09-18",
+   "by": "human",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-18"
+   }
+  },
+  {
    "role_id": "global e|data analyst chargeback",
    "company": "Global-e",
    "title": "Data Analyst (Chargeback)",
@@ -510,6 +611,32 @@
    "published_in_roles_csv": {
     "from": "2026-09-01",
     "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "glow|data analyst",
+   "company": "Glow",
+   "title": "Data Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope (condition 2): the posting says it is not a BI or product-analytics role; the person designs the data model and modifies production system logic as regular delivery, consumed by engineering and data science.",
+   "on": "2026-09-18",
+   "by": "human",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-18"
+   }
+  },
+  {
+   "role_id": "google israel|research data scientist ii waze",
+   "company": "Google Israel",
+   "title": "Research Data Scientist II, Waze",
+   "status": "withdrawn",
+   "reason": "classifier llm under v3.0a439b16: LLM verdict: Insufficient detail, but \"Data Scientist\" at Waze/Google typically involves product/business analytics using data; description mentions using ML and data engine",
+   "on": "2026-09-19",
+   "by": "classifier",
+   "published_in_roles_csv": {
+    "from": "2026-09-18",
+    "to": "2026-09-19"
    }
   },
   {
@@ -578,6 +705,19 @@
    }
   },
   {
+   "role_id": "jazz|senior bi developer",
+   "company": "Jazz",
+   "title": "Senior BI Developer",
+   "status": "withdrawn",
+   "reason": "out of scope under the 2026-09-14 operator ruling (data-platform leadership is out): the posting's own stated core is standing up and owning Jazz's data platform end to end; the executive dashboards are the second half.",
+   "on": "2026-09-18",
+   "by": "human",
+   "published_in_roles_csv": {
+    "from": "2026-09-06",
+    "to": "2026-09-18"
+   }
+  },
+  {
    "role_id": "jobgether|team lead product analyst",
    "company": "Jobgether",
    "title": "Team Lead Product Analyst",
@@ -588,6 +728,19 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-08-31"
+   }
+  },
+  {
+   "role_id": "jti|commercial planning data analysis manager",
+   "company": "JTI",
+   "title": "Commercial Planning & Data Analysis Manager",
+   "status": "withdrawn",
+   "reason": "classifier llm under v3.0a439b16: LLM verdict: This is a commercial/sales planning and forecasting-heavy role tied to business strategy execution, closer to FP&A/commercial planning than pure quantitative an",
+   "on": "2026-09-19",
+   "by": "classifier",
+   "published_in_roles_csv": {
+    "from": "2026-09-05",
+    "to": "2026-09-19"
    }
   },
   {
@@ -614,6 +767,32 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "madanes insurance agency|manager bi",
+   "company": "Madanes Insurance Agency",
+   "title": "Manager Bi",
+   "status": "withdrawn",
+   "reason": "classifier llm_cache under v3.0f84ab84: cached LLM verdict (superseded contract)",
+   "on": "2026-09-19",
+   "by": "classifier",
+   "published_in_roles_csv": {
+    "from": "2026-09-01",
+    "to": "2026-09-19"
+   }
+  },
+  {
+   "role_id": "menora mivtachim|אנליסט ית סיכונים פיננסיים",
+   "company": "Menora Mivtachim Group",
+   "title": "אנליסט.ית סיכונים פיננסיים",
+   "status": "withdrawn",
+   "reason": "classifier llm_cache under v3.0f84ab84: cached LLM verdict (superseded contract)",
+   "on": "2026-09-19",
+   "by": "classifier",
+   "published_in_roles_csv": {
+    "from": "2026-09-04",
+    "to": "2026-09-19"
    }
   },
   {
@@ -799,6 +978,19 @@
    }
   },
   {
+   "role_id": "play perfect|fraud analyst",
+   "company": "Play Perfect",
+   "title": "Fraud Analyst",
+   "status": "withdrawn",
+   "reason": "classifier llm_cache under v3.0f84ab84: cached LLM verdict (superseded contract)",
+   "on": "2026-09-19",
+   "by": "classifier",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-19"
+   }
+  },
+  {
    "role_id": "qlik israel|bi developer qlik specialist",
    "company": "Qlik Israel",
    "title": "BI Developer (Qlik Specialist)",
@@ -874,6 +1066,19 @@
    "published_in_roles_csv": {
     "from": "2026-08-30",
     "to": "2026-09-01"
+   }
+  },
+  {
+   "role_id": "sunflower|marketing analyst",
+   "company": "Sunflower",
+   "title": "Marketing Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope on the execution boundary (condition 5): the responsibilities lead with managing and optimising the marketing campaigns the analysis steers.",
+   "on": "2026-09-18",
+   "by": "human",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-18"
    }
   },
   {
@@ -1012,6 +1217,19 @@
    }
   },
   {
+   "role_id": "upwind|head of data",
+   "company": "Upwind",
+   "title": "Head Of Data",
+   "status": "withdrawn",
+   "reason": "out of scope under the 2026-09-14 operator ruling (data-platform leadership is out): the role leads a team of data engineers and builds the data platform, with a BI organisation on top — the ruling's first arm.",
+   "on": "2026-09-18",
+   "by": "human",
+   "published_in_roles_csv": {
+    "from": "2026-09-02",
+    "to": "2026-09-18"
+   }
+  },
+  {
    "role_id": "yael korentec|bi developer defense company northern israel",
    "company": "Yael Korentec Technologies",
    "title": "BI Developer – Defense Company, Northern Israel",
@@ -1038,6 +1256,32 @@
    }
   },
   {
+   "role_id": "zipher|senior data analyst",
+   "company": "Zipher",
+   "title": "Senior Data Analyst",
+   "status": "withdrawn",
+   "reason": "out of scope (condition 2): production-grade pipelines and models on enterprise telemetry, with direct ownership of the core data infrastructure.",
+   "on": "2026-09-18",
+   "by": "human",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-18"
+   }
+  },
+  {
+   "role_id": "אסם|אנליסט ית בקרת מכירות לקבוצת אסם נסטלה",
+   "company": "אסם",
+   "title": "אנליסט/ית בקרת מכירות לקבוצת אסם נסטלה",
+   "status": "withdrawn",
+   "reason": "out of scope (condition 2, the named FP&A and budgeting exclusion): the responsibilities lead with sales-versus-budget control and the management of trade budgets, commercial discounts and variable spend.",
+   "on": "2026-09-18",
+   "by": "human",
+   "published_in_roles_csv": {
+    "from": "2026-09-10",
+    "to": "2026-09-18"
+   }
+  },
+  {
    "role_id": "בנק דיסקונט|אנליסט ית אשראי ראש ת צוות ענף אנליזת אשראי וחיתום חטיבה עסקית",
    "company": "בנק דיסקונט",
    "title": "אנליסט.ית אשראי ראש.ת צוות- ענף אנליזת אשראי וחיתום- חטיבה עסקית",
@@ -1048,6 +1292,19 @@
    "published_in_roles_csv": {
     "from": "2026-09-01",
     "to": "2026-09-02"
+   }
+  },
+  {
+   "role_id": "הפניקס|business analyst 50400095",
+   "company": "הפניקס",
+   "title": "Business Analyst - 50400095",
+   "status": "withdrawn",
+   "reason": "classifier llm_cache under v3.0f84ab84: cached LLM verdict",
+   "on": "2026-09-19",
+   "by": "classifier",
+   "published_in_roles_csv": {
+    "from": "2026-08-30",
+    "to": "2026-09-19"
    }
   },
   {
@@ -1067,25 +1324,24 @@
  "archive": {
   "file": "roles_archive.csv",
   "rows": 0,
-  "rule": "status open or closed AND last_seen < 2026-06-21 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
+  "rule": "status open or closed AND last_seen < 2026-06-22 — every role the window has aged out, same columns, regenerated whole from the ledger each run",
   "raw_url": "https://raw.githubusercontent.com/AnalystJobsIL/pipeline/master/cloud_state/roles_archive.csv",
   "download_url": "https://analystjobsil.github.io/board/roles_archive.csv",
   "published_on_pages": true
  },
  "reconciliation": {
-  "rows": 173,
+  "rows": 170,
   "archived": 0,
-  "superseded": 18,
+  "superseded": 21,
   "purged": 17,
-  "withdrawn": 60,
+  "withdrawn": 76,
   "outside_window": 0,
   "undatable": 0,
   "unreadable": 0,
   "blocked_excluded": 6,
-  "pending_excluded": 3,
-  "reject_refused": 12,
-  "store_records": 289,
-  "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable + blocked_excluded + pending_excluded + reject_refused == store_records",
+  "pending_excluded": 2,
+  "store_records": 292,
+  "identity": "rows + archived + superseded + purged + withdrawn + outside_window + undatable + unreadable + blocked_excluded + pending_excluded == store_records",
   "holds": true
  },
  "conventions": {
@@ -1127,7 +1383,7 @@
    "description_blocker"
   ],
   "quality": {
-   "jd": 173,
+   "jd": 170,
    "snippet": 0,
    "none": 0,
    "unmeasured": 0,
@@ -1136,9 +1392,8 @@
   "blocked": {
    "policy": "exclude",
    "structural": 6,
-   "pending": 3,
-   "structural:not-a-job-url(donors:0)": 3,
-   "listing-page": 1,
+   "pending": 2,
+   "structural:not-a-job-url(donors:0)": 4,
    "structural:js-shell(donors:0)": 1,
    "structural:gone(donors:1)": 1
   }
@@ -1211,7 +1466,7 @@
   },
   "closed_on": {
    "doc": "The day we recorded it closed. Empty while open.",
-   "nulls": 129
+   "nulls": 124
   },
   "emailed": {
    "doc": "true if this role went out in a daily digest email.",
@@ -1219,7 +1474,7 @@
   },
   "emailed_on": {
    "doc": "The date it was first emailed. Empty if never emailed.",
-   "nulls": 38
+   "nulls": 40
   },
   "episodes": {
    "doc": "How many separate spells we have seen this role open (a reappearance after an absence starts a new one).",
@@ -1231,7 +1486,7 @@
   },
   "repost_dates": {
    "doc": "The posted_date values those bumps landed on, separated by ';'.",
-   "nulls": 129
+   "nulls": 126
   },
   "sources": {
    "doc": "Which fetchers saw it (greenhouse, comeet, scrape, ...), separated by ';'.",
@@ -1252,7 +1507,7 @@
   },
   "years_experience": {
    "doc": "Years of experience asked for, read from the DESCRIPTION text. Empty when the text does not say.",
-   "nulls": 23
+   "nulls": 22
   },
   "family": {
    "doc": "Role family, from title first and the opening of the description second.",
@@ -1279,7 +1534,7 @@
   },
   "degree_level": {
    "doc": "Highest degree the posting requires or prefers.",
-   "nulls": 97,
+   "nulls": 96,
    "enum": {
     "PhD": "highest degree the posting names",
     "MSc": "highest degree the posting names",
@@ -1288,7 +1543,7 @@
   },
   "degree_status": {
    "doc": "Whether that degree is required or merely preferred.",
-   "nulls": 97,
+   "nulls": 96,
    "enum": {
     "required": "stated as a requirement",
     "preferred": "stated as an advantage"
@@ -1296,7 +1551,7 @@
   },
   "degree_fields": {
    "doc": "Fields of study named alongside it, separated by ';'.",
-   "nulls": 123,
+   "nulls": 121,
    "enum": {
     "CS": "field of study named alongside the degree",
     "Industrial Eng.": "field of study named alongside the degree",
@@ -1312,7 +1567,7 @@
   },
   "ai": {
    "doc": "How the posting expects AI to be used, separated by ';'. Empty when AI is not mentioned.",
-   "nulls": 123,
+   "nulls": 126,
    "enum": {
     "AI for efficiency": "Expected to use AI tools (Copilot, ChatGPT, Cursor…) to work faster",
     "AI for automation": "Using AI to automate processes and workflows",
@@ -1322,7 +1577,7 @@
   },
   "skills": {
    "doc": "Every skill found in title+description, separated by ';', in extraction order.",
-   "nulls": 3
+   "nulls": 2
   },
   "class_decision": {
    "doc": "The classifier's verdict on the role when it was last judged.",
@@ -1363,19 +1618,19 @@
   },
   "description_blocker": {
    "doc": "Why a weak text (description_quality snippet/none) is structurally hard to complete, or empty. Recorded verdicts (jd-text's matched.jd_why, 'structural:*') verbatim; else derived: 'gone' (the posting 404s on the employer's own board), 'unfillable:<why>' (a host no rung we own can read), 'listing-page' (the only address we hold is a shared listing, not the posting's own). Under the live policy (meta description_text.blocked.policy — 'exclude' since the operator's 2026-09-01 ruling) a blocked row is excluded from this file with its reason counted in the meta; a weak row with NO blocker is pending a fill and stays; the archive keeps history either way.",
-   "nulls": 173
+   "nulls": 170
   },
   "sector": {
    "doc": "Company sector (firmographics).",
-   "nulls": 0
+   "nulls": 1
   },
   "sub_sector": {
    "doc": "Narrower niche (firmographics, free text).",
-   "nulls": 0
+   "nulls": 1
   },
   "stage": {
    "doc": "Company stage (firmographics).",
-   "nulls": 0,
+   "nulls": 1,
    "enum": {
     "acquired-by-bigtech": "company stage, as researched (firmographics)",
     "early-private": "company stage, as researched (firmographics)",
@@ -1386,11 +1641,11 @@
   },
   "stage_note": {
    "doc": "Ticker or acquisition note behind that stage.",
-   "nulls": 0
+   "nulls": 1
   },
   "size_band": {
    "doc": "Headcount band (firmographics).",
-   "nulls": 0,
+   "nulls": 1,
    "enum": {
     "S": "under 200 employees globally",
     "M": "200-1,000",
@@ -1400,7 +1655,7 @@
   },
   "employees_global": {
    "doc": "Global headcount, all sites (firmographics).",
-   "nulls": 20
+   "nulls": 18
   },
   "founded": {
    "doc": "Year founded (firmographics).",
@@ -1408,19 +1663,19 @@
   },
   "business_model": {
    "doc": "How the company earns money (firmographics, free text).",
-   "nulls": 0
+   "nulls": 1
   },
   "customer_type": {
    "doc": "Who buys from it (firmographics, free text).",
-   "nulls": 0
+   "nulls": 1
   },
   "il_center": {
    "doc": "Its main Israeli site(s) (firmographics).",
-   "nulls": 0
+   "nulls": 1
   },
   "firmo_as_of": {
    "doc": "The date those company facts were researched.",
-   "nulls": 0
+   "nulls": 1
   },
   "firmo_match": {
    "doc": "How the company facts were matched to this row's company_registry (the brand in `company` renders only on an exact match).",
@@ -1433,35 +1688,35 @@
   },
   "skills_bi": {
    "doc": "Skills of category 'bi' only, separated by ';' — group by this without parsing.",
-   "nulls": 48
+   "nulls": 47
   },
   "skills_query": {
    "doc": "Skills of category 'query' only, separated by ';' — group by this without parsing.",
-   "nulls": 23
+   "nulls": 19
   },
   "skills_de": {
    "doc": "Skills of category 'de' only, separated by ';' — group by this without parsing.",
-   "nulls": 102
+   "nulls": 103
   },
   "skills_pa": {
    "doc": "Skills of category 'pa' only, separated by ';' — group by this without parsing.",
-   "nulls": 147
+   "nulls": 144
   },
   "skills_prog": {
    "doc": "Skills of category 'prog' only, separated by ';' — group by this without parsing.",
-   "nulls": 99
+   "nulls": 98
   },
   "skills_method": {
    "doc": "Skills of category 'method' only, separated by ';' — group by this without parsing.",
-   "nulls": 42
+   "nulls": 43
   },
   "skills_cloud": {
    "doc": "Skills of category 'cloud' only, separated by ';' — group by this without parsing.",
-   "nulls": 156
+   "nulls": 153
   },
   "skills_lang": {
    "doc": "Skills of category 'lang' only, separated by ';' — group by this without parsing.",
-   "nulls": 124
+   "nulls": 123
   }
  }
 }
