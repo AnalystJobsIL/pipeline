@@ -4708,5 +4708,35 @@
   "killers": [
    "tests/test_units.py::test_a_second_write_on_the_same_date_is_not_another_night"
   ]
+ },
+ {
+  "id": "base-href-ignored",
+  "file": "pipeline/jdfill.py",
+  "symbol": "_page_links",
+  "class": "M8-argument-mis-passing",
+  "find": "absolute = urljoin(base_url, raw)",
+  "replace": "absolute = urljoin(page_url, raw)",
+  "why": "resolve relative hrefs against the PAGE instead of its declared <base href>. Measured live 2026-09-19 on Google's results page: this produces .../jobs/results/jobs/results/120188... , a doubled path the host answers 404 to, and role_addresses_on hands it back as this role's own address.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "cx-site-label-overrides-list",
+  "file": "pipeline/jdfill.py",
+  "symbol": "is_job_url",
+  "class": "M4-guard-removal",
+  "find": "for p in parts if not _SITE_LABEL.match(p)):",
+  "replace": "for p in parts):",
+  "why": "let an Oracle CE site label (CX_3001) prove a listing is a posting again. That is how Discount Bank's 67-requisition listing was fetched as one posting, read as an 80-character shell and stamped a definitive miss.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "comeet-query-key-dropped",
+  "file": "pipeline/jdfill.py",
+  "symbol": "is_job_url",
+  "class": "M1-gate-narrowed",
+  "find": "r\"(^|&)(jk|jobid|job_id|id|req|comeet)=[\\w.-]+\"",
+  "replace": "r\"(^|&)(jk|jobid|job_id|id|req)=[\\w.-]+\"",
+  "why": "drop the comeet uid from the posting-id query keys, so the one address a Comeet widget board gives a single position (?comeet=D7.C29) is refused as a search page before a byte is fetched.",
+  "must_be_killed_by_behavioural": true
  }
 ]

@@ -1978,6 +1978,10 @@ _LIST_SEGMENT = {"search-results", "search", "results", "jobs", "job", "careers"
                  "opportunities", "all-jobs", "job-search"}
 # a filter query carrying no posting id. `location=` is NOT here: real job URLs carry it.
 _LIST_QUERY = re.compile(r"(^|&)(keywords?|q|query|search|offices(\[|%5[Bb])[^=]*)=", re.I)
+# A path segment that names the careers SITE rather than a posting: Oracle CE's `CX_1` /
+# `CX_3001`, SAP's `SF_1`. Two or three letters, an underscore, digits — a shape no posting id
+# in the caches has (see the measurement at `is_job_url`).
+_SITE_LABEL = re.compile(r"^[A-Za-z]{1,3}_\d{1,8}$")
 
 
 # Hebrew is a WORD here, not a stray byte. This was `[a-z0-9]+` until 2026-08-31, so every
@@ -2056,7 +2060,12 @@ def is_job_url(url, title=""):
     ARE data-analyst postings."""
     u = urlsplit(url)
     parts = [p for p in u.path.split("/") if p]
-    if "gh_jid" in u.query or re.search(r"(^|&)(jk|jobid|job_id|id|req)=[\w.-]+", u.query, re.I):
+    # `comeet=` joined the list on 2026-09-19: a Comeet WIDGET board selects one position by
+    # uid in the query (`…/careers/comeet/?comeet=D7.C29`), so that url identifies exactly one
+    # posting even though its path is the careers page every position shares. `_comeet_read`
+    # already reads a uid out of a path; `url_active_page` puts it here.
+    if "gh_jid" in u.query or re.search(r"(^|&)(jk|jobid|job_id|id|req|comeet)=[\w.-]+",
+                                        u.query, re.I):
         return True
     # The LIST rules come first. They used to sit BELOW the digit rule, so any path segment
     # carrying a single digit short-circuited the refusal this gate exists for:
@@ -2073,7 +2082,19 @@ def is_job_url(url, title=""):
     last = parts[-1].lower() if parts else ""
     is_list = (last in _LIST_SEGMENT or last.endswith((".html", ".htm"))
                or bool(_LIST_QUERY.search(u.query)))
-    if is_list and not any(len(re.findall(r"\d", p)) >= 2 for p in parts):
+    # ...and a SITE LABEL is not a posting id, however many digits it carries. Oracle CE names
+    # the careers site in the path (`CX_1`, `CX_3001`), so `.../sites/CX_3001/requisitions` —
+    # a LISTING of 67 requisitions — overrode the list rule on the `3001` and was admitted as
+    # one posting. Discount Bank's row did exactly that: the plain GET read an 80-character
+    # shell and stamped a definitive miss on it, and the donor pass (which reads a listing for
+    # the posting that names this role) never ran, because the url already "was" a posting.
+    # `CX_1` was already refused, on one digit, by accident (the Harmonic case); this makes the
+    # refusal about the SHAPE of the segment. Measured over the 2,548 distinct urls in
+    # `scraped_cache.json` + `cloud_state/seen.db`: 8 end in a list word and pass on an earlier
+    # 2+-digit segment, and this flips exactly 1 of them — the 7 Siemens `/<32-hex>/job/`
+    # postings keep their admission.
+    if is_list and not any(len(re.findall(r"\d", p)) >= 2
+                           for p in parts if not _SITE_LABEL.match(p)):
         return False
     if any(re.search(r"\d", p) for p in parts):
         return True                      # a digit anywhere in the path can identify a posting
@@ -2278,6 +2299,19 @@ def _from_paid_body(body, jk=""):
 _SHARE_PARAMS = ("u", "url", "text", "link", "body")
 _HREF = re.compile(r"""href\s*=\s*["']([^"']{1,2000})["']""", re.I)
 MAX_PAGE_LINKS = 4000            # a listing page is links; a bomb is not worth the scan
+# `<base href>` is what a relative href on this page is relative TO, and ignoring it does not
+# produce a wrong-looking address — it produces a plausible one that 404s. Measured 2026-09-19
+# on `google.com/about/careers/applications/jobs/results/?location=Israel`, which declares
+# `<base href=".../about/careers/applications/">` and links its postings as
+# `jobs/results/120188596949787334-research-data-scientist-ii-waze`: without the base,
+# `urljoin` against the page produced `.../jobs/results/jobs/results/120188…` — a doubled path
+# that the host answers 404 to, so `role_addresses_on` found the Waze posting and handed back
+# an address no rung could read. Oracle CE does the same (`<base href="…/sites/CX_3001">`).
+# The first 64 KB only: `<base>` is a `<head>` element by spec, and scanning a 1.2 MB listing
+# for it buys nothing. HEAD is also where a page puts the ONE that counts — the first wins,
+# which is the browser's own rule.
+_BASE_HREF = re.compile(r"""<base[^>]{0,300}?href\s*=\s*["']([^"']{1,1000})["']""", re.I)
+_BASE_SCAN = 64_000
 
 
 def _page_links(body, page_url):
@@ -2285,11 +2319,26 @@ def _page_links(body, page_url):
 
     Includes the ones only a share widget carries (see `_SHARE_PARAMS`). Same-origin is the
     whole trust model here: this function is used to find a posting on the EMPLOYER'S OWN
-    board, so a link that leaves that origin is not a candidate for anything."""
+    board, so a link that leaves that origin is not a candidate for anything.
+
+    Relative hrefs are resolved against the page's own `<base href>` when it declares one
+    (`_BASE_HREF`), exactly as a browser does."""
     from urllib.parse import urljoin
     origin = _host_of(page_url)
     if not origin:
         return []
+    base_url = page_url
+    m_base = _BASE_HREF.search((body or "")[:_BASE_SCAN])
+    if m_base:
+        try:
+            cand = urljoin(page_url, _html_mod.unescape(m_base.group(1)).strip())
+        except ValueError:                  # a malformed base is no base at all
+            cand = ""
+        # A base that leaves this origin cannot make an address on the employer's own board:
+        # the same-origin trust model above is the point of the function, and honouring a
+        # foreign base would resolve every relative posting link off it.
+        if cand.lower().startswith("http") and _host_of(cand) == origin:
+            base_url = cand
     out, seen = [], set()
 
     def _keep(u):
@@ -2313,7 +2362,7 @@ def _page_links(body, page_url):
         # nothing (wave A). A page is arbitrary bytes from the internet; one bad link is
         # skipped, not fatal.
         try:
-            absolute = urljoin(page_url, raw)
+            absolute = urljoin(base_url, raw)
             q = parse_qs(urlsplit(absolute).query)
         except ValueError:
             continue

@@ -36500,3 +36500,100 @@ def test_a_second_write_on_the_same_date_is_not_another_night(tmp_path):
     assert s1["Row"]["nights"] == 1 and s2["Row"]["nights"] == 1, s2
     assert s2["Row"]["last"] == "2026-09-14"
     assert not any("new:" in l for l in m1 + m2), (m1, m2)
+
+
+# ---------------------------------------------------------------------------
+# jd-text 2026-09-19. What a page says a relative link is relative TO, and what a
+# path segment that carries digits is allowed to prove. Both were measured on live
+# pages (docs/sessions/2026-09-19-jd-text.md); neither is taste.
+# ---------------------------------------------------------------------------
+_G_BASE = "https://www.google.com/about/careers/applications/"
+_G_PAGE = _G_BASE + "jobs/results/?location=Israel"
+_G_WAZE = (_G_BASE + "jobs/results/120188596949787334-research-data-scientist-ii-waze"
+           "?location=Israel")
+
+
+def _base_page(base, hrefs):
+    """A listing page declaring `<base href=base>` and linking `hrefs` relatively."""
+    head = '<base href="%s">' % base if base else ""
+    return ("<html><head>%s</head><body>%s</body></html>"
+            % (head, "".join('<a href="%s">x</a>' % h for h in hrefs)))
+
+
+def test_page_links_honour_a_base_href():
+    """Google's results page declares `<base href=".../applications/">` and links its postings
+    as `jobs/results/<id>-<slug>`. Resolved against the PAGE instead, `urljoin` produced
+    `.../jobs/results/jobs/results/120188…` — measured live 2026-09-19: that address answers
+    404, the right one answers 200 with 3,761 characters of posting. The bug was not a
+    wrong-LOOKING address; it was a plausible one that no rung could read, and
+    `role_addresses_on` handed it back as this role's own.
+
+    Kills `base-href-ignored`."""
+    from pipeline.jdfill import _page_links, role_addresses_on
+    body = _base_page(_G_BASE, ["jobs/results/120188596949787334-research-data-scientist-ii-waze"
+                                "?location=Israel",
+                                "jobs/results/998-data-analyst"])
+    links = _page_links(body, _G_PAGE)
+    assert _G_WAZE in links, links
+    assert not any("results/jobs/results" in u for u in links), links
+    assert role_addresses_on(body, _G_PAGE, "Research Data Scientist II, Waze") == [_G_WAZE]
+
+
+def test_a_base_href_cannot_move_an_absolute_path_link_or_reach_off_this_origin():
+    """Two properties the fix must not cost. Oracle CE declares a root-relative base
+    (`/hcmUI/CandidateExperience/he/sites/CX_3001`, measured on Discount Bank's site) and links
+    its cards by absolute path: honouring the base must leave those exactly where they were —
+    live, that page's link list is 6 addresses before and after. And a base on ANOTHER origin
+    is ignored, because same-origin is the whole trust model of this function: a careers page
+    that declares `<base href="https://cdn.example/">` must not have every relative posting
+    link resolved off the employer's own board."""
+    from pipeline.jdfill import _page_links
+    orc = "https://ehsb.fa.em2.oraclecloud.com"
+    body = _base_page("/hcmUI/CandidateExperience/he/sites/CX_3001",
+                      ["/hcmUI/CandidateExperience/he/sites/CX_3001/job/5108"])
+    assert orc + "/hcmUI/CandidateExperience/he/sites/CX_3001/job/5108" \
+        in _page_links(body, orc + "/hcmUI/CandidateExperience/he/sites/CX_3001/requisitions")
+    foreign = _base_page("https://cdn.example/x/", ["careers/position/36"])
+    assert _page_links(foreign, "https://www.bylith.com/careers") == \
+        ["https://www.bylith.com/careers/position/36"]
+    # a malformed base is no base at all, never an exception: a page is arbitrary bytes
+    assert _page_links(_base_page("http://[", ["careers/position/36"]),
+                       "https://www.bylith.com/careers") == \
+        ["https://www.bylith.com/careers/position/36"]
+
+
+def test_is_job_url_refuses_an_oracle_site_listing_and_keeps_siemens():
+    """`.../sites/CX_3001/requisitions` is a LISTING of 67 requisitions, and it was admitted as
+    one posting because `CX_3001` carries two digits — so Discount Bank's row fetched it, read
+    an 80-character shell (measured live: 101,375 bytes, 0 marker families) and stamped a
+    definitive miss, while the donor pass that reads a listing FOR the posting naming this role
+    never ran: the url already "was" a posting. A site label is not a posting id.
+
+    Measured over the 2,548 distinct urls in `scraped_cache.json` + `cloud_state/seen.db`:
+    8 end in a list word and pass on an earlier 2+-digit segment, and this flips exactly 1 —
+    the 7 Siemens `/<32-hex>/job/` postings keep their admission, which is the clause the
+    2+-digit override was measured into existence for.
+
+    Kills `cx-site-label-overrides-list`."""
+    from pipeline.jdfill import is_job_url
+    orc = "https://ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/"
+    assert not is_job_url(orc + "CX_3001/requisitions")
+    assert not is_job_url("https://x.oraclecloud.com/hcmUI/CandidateExperience/en/sites/"
+                          "CX_1/jobs")
+    assert is_job_url(orc + "CX_3001/job/5108"), "the posting itself is still a posting"
+    assert is_job_url("https://jobs.sw.siemens.com/tel-aviv-isr/ai-research-student/"
+                      "AC4B314B85FD4A47BD6580749E4DFF57/job/")
+
+
+def test_a_comeet_widget_uid_in_the_query_is_a_posting_address():
+    """A Comeet WIDGET board publishes every position at the careers page it is embedded on and
+    selects one by uid in the query (`…/careers/comeet/?comeet=D7.C29`, Universal McCann's 13
+    cards). The path is the listing's; the query identifies exactly one posting, and
+    `_comeet_read` already knows how to read a uid. Without this the address `url_active_page`
+    produces is refused as a search page before a byte is fetched.
+
+    Kills `comeet-query-key-dropped`."""
+    from pipeline.jdfill import is_job_url
+    assert is_job_url("https://www.mccann.co.il/careers/comeet/?comeet=D7.C29")
+    assert not is_job_url("https://www.mccann.co.il/careers/comeet/"), \
+        "the board itself names no posting"
