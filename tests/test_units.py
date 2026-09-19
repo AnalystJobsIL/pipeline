@@ -19057,6 +19057,84 @@ def test_the_cross_script_census_pairs_two_spellings_and_refuses_a_shared_generi
     assert RH.cross_script_twins([row("Fiverr"), row("חברה כלשהי")]) == []
 
 
+def test_the_cross_script_census_drops_a_pair_the_registry_already_ruled_on():
+    """The census reported its own answers back as work: 3 of the 6 pairs on 2026-09-18 had
+    ALREADY been folded -- Harel that day, both Discount pairs since 08-28/09-01 -- so a
+    reader had to re-derive which were live every time.
+
+    Two shapes, and the second is the one the first cut missed: one row naming the other, and
+    two rows that were both folded onto the same THIRD row (`בנק דיסקונט` and
+    `Discount Bank בנק דיסקונט` are each `alias-of Discount Bank`, and neither names the
+    other). What silences a pair is the FOLD, read through the same `verdicts.alias_target`
+    that writes it -- never a substring, and no other park: a row parked `wrong-url` is still
+    a live candidate, which is exactly what `Phoenix Financial` was for six days."""
+    import registry_health as RH
+
+    def row(name, note=""):
+        return [name, "scrape", "", "https://x.example/careers", "false", note]
+
+    folded = [row("Discount Bank"),
+              row("בנק דיסקונט", "alias-of Discount Bank 2026-09-01: the Hebrew name"),
+              row("Discount Bank בנק דיסקונט", "alias-of Discount Bank 2026-08-28: same board")]
+    assert RH.cross_script_twins(folded) == [], RH.cross_script_twins(folded)
+    # the same three rows WITHOUT the folds are three candidates, so the drop is the rule and
+    # not the fixture
+    bare = [row("Discount Bank"), row("בנק דיסקונט"), row("Discount Bank בנק דיסקונט")]
+    assert len(RH.cross_script_twins(bare)) == 2, RH.cross_script_twins(bare)
+    # a NON-fold park does not silence anything: this is the Phoenix shape
+    parked = [row("Discount Bank"),
+              row("בנק דיסקונט", "wrong-url 2026-09-18: board names someone else")]
+    assert RH.cross_script_twins(parked) == [("בנק דיסקונט", "Discount Bank")], \
+        RH.cross_script_twins(parked)
+    # ...and neither does an alias naming a THIRD, unrelated row
+    other = [row("Discount Bank"), row("בנק דיסקונט", "alias-of Bank Leumi 2026-09-01: x")]
+    assert RH.cross_script_twins(other) == [("בנק דיסקונט", "Discount Bank")], \
+        RH.cross_script_twins(other)
+
+
+def test_the_site_census_sees_two_active_rows_on_one_site_that_the_exact_key_gate_cannot():
+    """`check_invariants.shared_boards` keys on `identity_key` + the EXACT path, so it could
+    not see `Ram Aderet Engineering` on `ram-aderet.co.il/careers/252` -- a POSTING page that
+    lists its five siblings -- beside `רם אדרת | Ram Aderet` on `/ram-aderet-group/careers`,
+    the board those six postings are on. Two ACTIVE rows, one employer, one site, and every
+    clause of the exact-key gate passed (2026-09-19; the pair was found by hand).
+
+    Three things must NOT be reported, or the census is noise: a parked row, a multi-tenant ATS
+    host (which is SUPPOSED to carry hundreds of rows), and a site whose rows all share one
+    `identity_key` -- that last one is already `shared_boards`' business."""
+    import check_invariants as CI
+    import registry_health as RH
+
+    def row(name, url, active="true", note=""):
+        return [name, "scrape", "", url, active, note]
+
+    rows = [row("Ram Aderet Engineering", "https://www.ram-aderet.co.il/careers/252"),
+            row("רם אדרת | Ram Aderet", "https://www.ram-aderet.co.il/ram-aderet-group/careers"),
+            # the registrable fold reaches a subdomain, the way the ledger's does
+            row("Massivit 3D", "https://www.massivit3d.com/career/"),
+            row("Massivit 3D Printing Technologies Ltd.", "https://jobs.massivit3d.com/x/"),
+            # one identity on one url: shared_boards' own founding case, not this one
+            row("JPMorgan Chase", "https://jpmc.example.com/careers/a"),
+            row("JPMorganChase", "https://jpmc.example.com/careers/a"),
+            # a multi-tenant ATS host is not a shared SITE
+            row("Fiverr", "https://boards-api.greenhouse.io/v1/boards/fiverr/jobs"),
+            row("Wix", "https://boards-api.greenhouse.io/v1/boards/wix/jobs"),
+            # and a parked row is not coverage anybody is duplicating
+            row("Ram Aderet Holdings", "https://www.ram-aderet.co.il/other", active="false")]
+    got = RH.site_twins(rows)
+    assert sorted(got) == ["massivit3d.com", "ram-aderet.co.il"], got
+    assert got["ram-aderet.co.il"] == ["Ram Aderet Engineering", "רם אדרת | Ram Aderet"], got
+    # the gate that cannot see it, on the same rows: it finds NEITHER pair this one finds --
+    # the positive control is that it does find the one-identity-one-path pair it owns
+    seen = CI.shared_boards(rows)
+    assert ["JPMorgan Chase", "JPMorganChase"] in list(seen.values()), seen
+    assert not [n for v in seen.values() for n in v if "Aderet" in n or "Massivit" in n], seen
+    # once the pair is FOLDED the question is answered and the site drops out
+    rows[1][5] = "alias-of Ram Aderet Engineering 2026-09-19: one board"
+    rows[1][4] = "false"
+    assert sorted(RH.site_twins(rows)) == ["massivit3d.com"], RH.site_twins(rows)
+
+
 def test_the_hunt_will_not_activate_a_row_onto_a_host_the_ledger_already_refused(tmp_path,
                                                                                  monkeypatch):
     """The gate that was missing when `Kima` and `PayPlus` came back, on BOTH arms.

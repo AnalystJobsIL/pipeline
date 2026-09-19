@@ -956,7 +956,25 @@ def cross_script_twins(rows, names=()):
     declaration (`firmographics.ALIASES` + the parked row's own dated `alias-of <name>`
     verdict) once its two names are shown to read ONE BOARD, and never before -- `Phoenix
     Financial`'s address was `arizonafinancial.org`, another company's, which is a park and
-    not a fold. 2026-09-18: 6 registry-internal pairs, 2 discovery names."""
+    not a fold. 2026-09-18: 6 registry-internal pairs, 2 discovery names.
+
+    A pair the registry has ALREADY RULED ON is dropped (2026-09-19): if either row's note
+    carries `alias-of <the other name>`, the census is reporting its own answer back as work.
+    Three of the six on 2026-09-18 were in that state -- the Harel pair folded that day, both
+    Discount pairs since 08-28/09-01 -- so a reader had to re-derive which of the six were live
+    every time. It reads the predicate a fold is WRITTEN with (`verdicts.alias_target`), never a
+    substring, so a `wrong-url` or `redundant` park does NOT silence a pair: only the fold does.
+    """
+    from pipeline.verdicts import alias_target
+    note_of = {r[0]: (r[5] or "") for r in rows if r and len(r) >= 6}
+
+    def already_ruled(a, b):
+        ta, tb = alias_target(note_of.get(a, "")), alias_target(note_of.get(b, ""))
+        # one names the other, OR both were folded onto the same third row -- `בנק דיסקונט`
+        # and `Discount Bank בנק דיסקונט` are both `alias-of Discount Bank` and neither names
+        # the other, so the pair outlived the first cut of this rule by one measurement
+        return ta == b or tb == a or (ta is not None and ta == tb)
+
     flat = {}
     for r in rows:
         if r and len(r) >= 6:
@@ -977,7 +995,53 @@ def cross_script_twins(rows, names=()):
                 if pair[::-1] in seen or pair in seen:
                     continue
                 seen.add(pair)
+                if already_ruled(*pair):
+                    continue
                 out.append(pair)
+    return out
+
+
+def site_twins(rows):
+    """ACTIVE non-ATS rows that read one SITE under two identities and no declared alias:
+    {registrable_site: [names]}, more than one name each.
+
+    `check_invariants.shared_boards` cannot see these and is right not to try: its key is
+    `identity_key` + the EXACT path, which is what catches `JPMorgan Chase` beside
+    `JPMorganChase` on one url. But `Ram Aderet Engineering` sat on
+    `ram-aderet.co.il/careers/252` -- a POSTING page that lists its five siblings -- while
+    `רם אדרת | Ram Aderet` sat on `/ram-aderet-group/careers`, the board those six are on. Two
+    ACTIVE rows, one employer, one site, different paths and different `identity_key`s: every
+    clause of the exact-key gate passed and the pair was found by hand (2026-09-19).
+
+    Non-ATS only, because a multi-tenant vendor host is SUPPOSED to carry hundreds of rows;
+    `board_verify.site` is the registrable fold (`careers.mars.com` -> `mars.com`), the same one
+    the ledger uses, so the two cannot drift. A site whose rows all share one `identity_key` is
+    a deliberate form group (Amazon/AWS, 7 of the 10 sites on 2026-09-19), and a pair either of
+    whose rows names the other in an `alias-of` verdict has already been ruled on -- both are
+    dropped. Report-only: a hit is a QUESTION (a group and its subsidiary may legitimately hold
+    two rows), and the answer is a fold, a repoint, or nothing."""
+    import urllib.parse
+    from pipeline.board_verify import site
+    from pipeline.company_identity import ATS_HOST
+    from pipeline.firmographics import identity_key
+    from pipeline.verdicts import alias_target
+    note_of = {r[0]: (r[5] or "") for r in rows if r and len(r) >= 6}
+    by = {}
+    for r in rows:
+        if not r or len(r) < 6 or (r[4] or "").strip().lower() != "true":
+            continue
+        host = urllib.parse.urlsplit((r[3] or "").strip()).netloc.lower()
+        if not host or ATS_HOST.search(host):
+            continue
+        by.setdefault(site(host), []).append(r[0])
+    out = {}
+    for s, names in by.items():
+        if len({identity_key(n) for n in names}) < 2:
+            continue
+        if any(alias_target(note_of.get(a, "")) == b
+               for a in names for b in names if a != b):
+            continue
+        out[s] = sorted(names)
     return out
 
 
@@ -1049,6 +1113,15 @@ def _report(rows, live=False, want_ats=False, ladder=True):
         print("   nothing. Each pair needs the crowning argument -- both names reading ONE BOARD")
         print("   -- and is then a `firmographics.ALIASES` entry PLUS the parked row's own dated")
         print("   `alias-of <surviving name>` verdict. Never fold on the names alone.)")
+
+    st = site_twins(rows)
+    print(f"\nACTIVE ROWS SHARING ONE SITE UNDER TWO IDENTITIES: {len(st)}")
+    for s, names in sorted(st.items()):
+        print(f"  {s}: {', '.join(names)}")
+    if st:
+        print("  (`check_invariants.shared_boards` cannot see these -- its key is identity_key +")
+        print("   the EXACT path. A hit is a QUESTION: one employer on two paths of its own site")
+        print("   (fold or repoint), or a group and a subsidiary that legitimately hold two rows.)")
 
     print("\nre-check ownership (recomputed from each tool's own filter):")
     for label, members in pools(rows).items():

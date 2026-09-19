@@ -1839,6 +1839,27 @@ the verdict, the employer it names and its date are already on disk. The 09-13 r
 stands and is the reason this is not in `identity_ok`: the gates are pure and offline, the
 WRITERS read state files.
 
+**A census that reports its own answers back is a census nobody reads** (2026-09-19). Two arms
+of `registry_health`'s bare report changed, both still report-only:
+`cross_script_twins` now DROPS a pair the registry has already ruled on — either row's note
+naming the other in an `alias-of` verdict, or both folded onto the same THIRD row (`בנק דיסקונט`
+and `Discount Bank בנק דיסקונט` are each `alias-of Discount Bank`, and neither names the other,
+which is how that pair outlived the first cut). It reads `verdicts.alias_target`, the predicate
+a fold is WRITTEN with, so no other park silences a pair: a row parked `wrong-url` is still a
+live candidate, which is exactly what `Phoenix Financial` was. **6 → 3 on the same rows, and 2
+after the day's folds** (the two `מטריקס` pairs, correctly unresolved — three names, three
+different boards). And `site_twins(rows)` is new: ACTIVE **non-ATS** rows sharing
+`board_verify.site(host)` under two `identity_key`s with no alias between them — **4 today**.
+`check_invariants.shared_boards` cannot see them and is right not to try, because its key is
+`identity_key` + the EXACT path, which is what catches `JPMorgan Chase` beside `JPMorganChase`
+on one url; `Ram Aderet Engineering` on `ram-aderet.co.il/careers/252` (a POSTING page listing
+its five siblings) beside `רם אדרת | Ram Aderet` on `/ram-aderet-group/careers` passed every
+clause of it and was found by hand. A hit is a QUESTION, never a verdict: one employer on two
+paths of its own site (fold or repoint), or a group and a subsidiary that legitimately hold two
+rows. The four today are that pair (now folded), `massivit3d.com`, `xtra-mile.co`, and
+`amazon.jobs`, where FOUR rows sit on one site and two of them read the same
+`business_categories/amazon-web-services` path under different query strings.
+
 The same day: a social page and a VC's portfolio-jobs page joined `aggregators.HOSTS`
 (`facebook.com`, `instagram.com`, `greylock.com/jobs` — each named the company correctly, so
 only the host list could refuse it), and three placement firms' own boards with them
