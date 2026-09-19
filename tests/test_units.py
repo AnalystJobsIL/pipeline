@@ -7019,7 +7019,8 @@ def test_blurb_names_other_reads_the_brand_and_refuses_a_two_word_noun():
     Products`→`products`, `Poc System`→`system`, `Capital One`→`capital`, `REE
     Automotive`→`automotive`) and 2 a company that DOES name itself, in a spelling
     `identity_key` folds into it (`DoiT` for the registry row `doitintl`) — the one that
-    reached the published board. Now 2, both real registry duplicates.
+    reached the published board. Now 2, both real registry duplicates -- and 0 since
+    2026-09-19, when both were declared one employer each (see clause 4).
 
     The split is the point: a two-word brand is no longer a victim of its own second word,
     and is still an accuser under its own name (`Oak - Identity→Sckipio`, pinned above, dies
@@ -7052,15 +7053,25 @@ def test_blurb_names_other_reads_the_brand_and_refuses_a_two_word_noun():
               build("Sckipio", url="https://www.comeet.com/jobs/sckipio/1/x/AB.1")]
     assert [i for i in rolecard.cross_check(matrix) if i.startswith("blurb-names-other")] == [
         "blurb-names-other מטריקס→Sckipio"]
-    # (4) the two survivors, both registry duplicates render must NOT fold (handed to registry)
+    # (4) the two survivors are CLOSED, and not by this file: they were handed to `registry`,
+    # which parked both on 2026-09-19, and `company-intel` wrote the `ALIASES` half the same
+    # day. `identity_key` now answers ONE employer for each pair, so the me-check returns on
+    # `its == mine` before the victim scan runs and `632`'s residue is 0 rather than 2. The
+    # identity equality is asserted beside the absence, because that equality IS the reason --
+    # drop either declaration and these two hits come back (company-intel, 2026-09-19).
+    from pipeline.firmographics import identity_key as _ik
     pagaya = [build("Pagayais", "Pagaya is an AI-driven credit analysis network.",
                     url="https://boards.greenhouse.io/pagayais/jobs/1"),
               build("Pagaya", url="https://boards.greenhouse.io/pagaya/jobs/2")]
-    assert "blurb-names-other Pagayais→Pagaya" in rolecard.cross_check(pagaya)
+    assert _ik("Pagaya") == _ik("Pagayais") == "pagayais"
+    assert not any(i.startswith("blurb-names-other") for i in rolecard.cross_check(pagaya))
     discount = [build("בנק דיסקונט", "Discount Bank is one of Israel's largest banking groups.",
                       url="https://discountbank.co.il/careers/1"),
                 build("Discount Bank", url="https://jobs.discountbank.co.il/2")]
-    assert "blurb-names-other בנק דיסקונט→Discount Bank" in rolecard.cross_check(discount)
+    assert _ik("בנק דיסקונט") == _ik("Discount Bank") == "discount bank"
+    assert not any(i.startswith("blurb-names-other") for i in rolecard.cross_check(discount))
+    # ...and the clause still ACCUSES where nothing is declared: clauses (2) and (3) above are
+    # that control, and they are two undeclared pairs, not a word list.
     # (5) end to end: the published board's own hit is gone from the mail's Render: line
     from pipeline import digest
     r = digest.render_all([], [_job(company="doitintl", url="https://boards.greenhouse.io/doitintl/jobs/1"),
@@ -19108,8 +19119,14 @@ def test_the_site_census_sees_two_active_rows_on_one_site_that_the_exact_key_gat
     def row(name, url, active="true", note=""):
         return [name, "scrape", "", url, active, note]
 
+    # The real pair is `Ram Aderet Engineering` beside `רם אדרת | Ram Aderet`, and it can no
+    # longer be the fixture: `company-intel` declared the two one identity on 2026-09-19
+    # (`ALIASES["רם אדרת ram aderet"]`), which is the OTHER half of the same answer, and a
+    # site whose rows share one `identity_key` is `shared_boards`' business by this function's
+    # own third rule. So the control keeps the site and the shape and takes two names the map
+    # does not fold; the real pair is asserted below, as the case that is now answered twice.
     rows = [row("Ram Aderet Engineering", "https://www.ram-aderet.co.il/careers/252"),
-            row("רם אדרת | Ram Aderet", "https://www.ram-aderet.co.il/ram-aderet-group/careers"),
+            row("Ram Aderet Group", "https://www.ram-aderet.co.il/ram-aderet-group/careers"),
             # the registrable fold reaches a subdomain, the way the ledger's does
             row("Massivit 3D", "https://www.massivit3d.com/career/"),
             row("Massivit 3D Printing Technologies Ltd.", "https://jobs.massivit3d.com/x/"),
@@ -19123,7 +19140,14 @@ def test_the_site_census_sees_two_active_rows_on_one_site_that_the_exact_key_gat
             row("Ram Aderet Holdings", "https://www.ram-aderet.co.il/other", active="false")]
     got = RH.site_twins(rows)
     assert sorted(got) == ["massivit3d.com", "ram-aderet.co.il"], got
-    assert got["ram-aderet.co.il"] == ["Ram Aderet Engineering", "רם אדרת | Ram Aderet"], got
+    assert got["ram-aderet.co.il"] == ["Ram Aderet Engineering", "Ram Aderet Group"], got
+    # the REAL pair, on the same two urls: declared one identity, so this arm is silent and
+    # the question belongs to `shared_boards` -- which the exact-path key still misses, which
+    # is why the declaration and not this census is what answered it
+    declared = [row("Ram Aderet Engineering", "https://www.ram-aderet.co.il/careers/252"),
+                row("רם אדרת | Ram Aderet",
+                    "https://www.ram-aderet.co.il/ram-aderet-group/careers")]
+    assert RH.site_twins(declared) == {}, RH.site_twins(declared)
     # the gate that cannot see it, on the same rows: it finds NEITHER pair this one finds --
     # the positive control is that it does find the one-identity-one-path pair it owns
     seen = CI.shared_boards(rows)
