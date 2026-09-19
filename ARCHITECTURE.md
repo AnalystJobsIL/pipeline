@@ -5701,6 +5701,114 @@ changes **46 of 272 rows (16.9 %)** against `RECLEAN_MAX_SHARE` 0.15 — 2 cut, 
 the one-off re-bound the module attribute in-session (the 09-11 precedent) and the nightly is
 ~0 after. The cache pass needed no lift: **274 of 2,154 cards (12.7 %)**, 60,843 characters.
 
+### A free render before the paid one — 2026-09-19
+
+*lane: `jd-text`. The ladder grew a rung between the plain GET and the first credit, and three
+gates above it stopped refusing addresses that were readable all along.*
+
+**The ladder is now five rungs**: native JSON → plain HTML (+ schema.org) → **free headless
+render** → Unlocker raw → Unlocker rendered. The new one is `jdfill.Renderer`, shaped like
+`Unlocker` and owning no browser code: `scrape_universal._render` remains "the only Playwright
+touchpoint" (`deep_validate.Renderer` is the second) and is imported LAZILY inside `__call__`,
+so `pipeline.jdfill` still imports no root module and a job without Chromium pays nothing.
+
+**What it spends is wall clock, not credits**, so the cap counts PAGES:
+`MATCHED_JD_RENDER_CAP` / `JD_ENRICH_FREE_RENDER_CAP`, default **5**, `0` disables. Worst case
+per page is `RENDER_TIMEOUT` (45 s) for the goto plus `_render`'s own networkidle wait (12 s)
+and three scrolls (~5 s) — ~62 s, so 5 pages is ~5.2 minutes inside
+`MATCHED_JD_TIME_BUDGET_MIN` (20). One Renderer per process, so the cap bounds the whole run.
+
+**The trigger is `_render_shaped`**: under `RENDER_TEXT_MAX` (1,000) characters of text AND no
+marker family at all. Over 14 sampled `ok:canonical` own-site pages whose text the plain GET
+already reads (776 to 1,342,451 characters) every short one carried a family, so the rule fires
+on **0 of 14** readable pages and on **3 of the 3** rows it was built for. Rejected on the same
+sample: rendering every `no-markers` page (the minimum readable text is 776 characters), and a
+byte-ratio rule — Mobileye's readable posting is 0.40 % text.
+
+**The gate is `reason` AND the predicate, and a re-measurement on 2026-09-19 says why.** Over 14
+`ok:canonical` rows re-fetched that day, `_render_shaped` alone answers True on **2** of them —
+`amitim pension funds|data analyst` (776 characters, 0 families) and
+`diageo|performance analytics analyst` (HTTP 401, no body). Neither reaches the rung:
+the first is on `secrethunter.io`, which `unfillable` turns back above the plain GET, and the
+second has no body at all, so its reason is `http-401` rather than `shell`/`no-markers`. With
+the full gate applied the sample fires **0 of 14**. Read as "the predicate is not the gate":
+keying the rung on the predicate alone would render a refused host and a 401.
+
+**Eight addresses, plain against rendered** (measured 2026-09-19 from this machine; `text` is
+`html_to_text`, `fam` is `_marker_families`, `jd` is `extract_jd`):
+
+| address | plain | rendered | render s | verdict |
+|---|---|---|---|---|
+| `fnx.co.il/career/open-positions/50400118` | 685 ch / 0 fam | 1,672 / 3 | 9.4 | **fills**, 1,672 ch |
+| `secrethunter.io/jobz/b2341402c6` | 776 / 0 | 356 / 0 | 10.1 | sign-in wall, `609` stands |
+| `mccann.co.il/careers/comeet/` | 456 / 0 | 472 / 0 | 19.8 | no posting, and no widget either (below) |
+| `menoramivt.co.il/job-posting/open-position` | 4,438 / 1 | 713 / 0 | 20.6 | never triggered — rendering LOSES text here |
+| Discount Bank `…/CX_3001/requisitions` | 80 / 0 | 17,624 / 3 | 13.1 | the 67 cards, i.e. the listing |
+| Discount Bank `…/CX_3001/job/5108` | 80 / 0 | 3,088 / 4 | 10.2 | **fills**, 2,708 ch — needs the repoint |
+| Google `…/jobs/results/?location=Israel` | 17,123 / 5 | 17,115 / 5 | 11.4 | never triggered — SSR already carries it |
+| Google `…/120188596949787334-research-…-waze` | 7,333 / 5 | 7,325 / 5 | 10.0 | **fills plain**, 3,761 ch |
+
+**Three reasons, and the difference between them is the cooldown.** `render-shell` is
+DEFINITIVE — the page was read by two rungs and holds no posting, so the 7/14/28 ladder starts.
+`render-capped` is TRANSIENT, the rule `bd-render-capped` already follows: parking a page for
+seven days because OUR budget was spent puts the one class rendering exists for out of reach.
+`render-unavailable` latches on the first `launch:<Exc>` (a missing Chromium is a fact about the
+JOB, not the page, exactly as a 401 is for `Unlocker`) and leaves the page's standing verdict
+untouched — so a runner without the browser behaves precisely as it did before this rung, at a
+cost of one launch attempt per run.
+
+**Whether the PAID rung renders is decided BEFORE the free rung can rewrite the reason**
+(`shell_page` in `fetch_jd`). Keying `render=` off `reason` after a `render-shell` would have
+bought unrendered copies of exactly the JavaScript pages a credit is for — the 2026-08-29
+lesson, re-armed and caught by its own test.
+
+**Google needed no render at all, and two other things instead.** `_page_links` ignored
+`<base href>`, so the Waze posting's address came back as
+`…/jobs/results/jobs/results/120188…` — a doubled path the host answers **404** to, handed back
+by `role_addresses_on` as this role's own address. And the row's `url` is the BARE results page,
+which lists nothing: the listing that names Waze is the one `companies.csv` holds
+(`?location=Israel`, 20 posting hrefs). The donor pass now asks the registry's page too, and
+only when the row's own page ANSWERED and named nothing.
+
+**`is_job_url` no longer lets a site label prove a posting.** Oracle CE names the careers site
+in the path, so `…/sites/CX_3001/requisitions` — a listing of 67 requisitions — overrode the
+list rule on the `3001`, was fetched, read as an 80-character shell and stamped a definitive
+miss, while the donor class that reads a listing FOR the posting naming this role never ran:
+the url already "was" a posting. `_SITE_LABEL` (`^[A-Za-z]{1,3}_\d{1,8}$`) is excluded from the
+2+-digit override. Measured over the **2,548** distinct urls in `scraped_cache.json` +
+`cloud_state/seen.db`: **8** end in a list word and pass on an earlier 2+-digit segment, and
+this flips exactly **1** — the 7 Siemens `/<32-hex>/job/` postings keep their admission.
+
+**The Comeet WIDGET class is built and has no proven beneficiary today.**
+`comeet_widget_jd` reads the one position a widget board's own XHR traffic carries, by uid from
+`?comeet=<uid>` (now a posting-id query key) or by a `name` that EQUALS the title, with the
+two-claims veto `role_addresses_on` uses. But re-measured on 2026-09-19,
+`mccann.co.il/careers/comeet/` serves **no Comeet widget at all** — 0 `comeetvar`, 0
+`comeet.co` requests, 22 XHR bodies every one of them a Lottie animation or an accessibility
+widget — on both the `www` and bare hosts, while `scraped_cache.json` still holds its **13**
+titles with no `url_active_page`. So the rung fills 0 rows today and those cards are a
+`scraper` question, not this lane's. Stated here because the plan this session executed
+asserted the opposite from a 09-18 reading.
+
+**`matched_cooldown` is structurally 0 from today.** The live pass passes
+`free_rungs_ignore_cooldown=True` — the split the scrape driver has had since 2026-08-29 — so a
+cooled row walks the free rungs every night with `bd=None` while the paid rung keeps its
+7/14/28 ladder. 4 of the 6 rows this lane could not fill were inside that cooldown, one of them
+stamped three days before `_stamp_failed` existed. The diagnostic moves to
+`matched_paid_cooldown` rather than vanishing, which is what went wrong for two days when the
+scrape driver made the same move. Cost: ≤ `matched_cooldown` free GETs a night (11 on 09-18).
+The ARCHIVED pass keeps the old behaviour and gets no renderer: a quarter of the budget and
+forty times the rows.
+
+**New stamp keys**: `matched_rendered` / `scrape_rendered` (pages attempted),
+`matched_via_render` / `scrape_via_render` (rows filled by one), `matched_render_capped` /
+`scrape_free_render_capped` (0/1, the gauge shape `scrape_render_capped` already has).
+
+**Until `infra` adds the install step this rung is a no-op.** Neither job that runs these
+drivers has Chromium (`grep -i playwright .github/workflows/daily-digest.yml` → 0 hits), five
+other jobs install it, and the step took 28 s on the 09-18 `scrape-refresh` run
+`35298050641`. The exact diff is in `docs/sessions/2026-09-19-jd-text.md`.
+
 ### Which mechanism fills what — read this before believing a cache is empty
 
 *Corrected 2026-08-30. Both the orchestrator and this lane misread it, and a session reading
@@ -5900,12 +6008,13 @@ and past it the cycle stretches rather than the tail starving in silence.
 **One ladder, three callers** (`pipeline.jdfill.fetch_jd`):
 
 ```
-native JSON ─▶ [gate] ─▶ plain HTML ─▶ Bright Data Web Unlocker   (each rung only if the previous failed)
- workday cxs             extract_jd     drivers only; never inline
- smartrecruiters         jsonld_jd
+native JSON ─▶ [gate] ─▶ plain HTML ─▶ free render ─▶ Bright Data Web Unlocker
+ workday cxs             extract_jd     Playwright,     drivers only; never inline
+ smartrecruiters         jsonld_jd      0 credits       (each rung only if the previous failed)
  bamboohr                (two parsers   every outcome carries a REASON: ok · ok-jsonld · ok-indeed · shell ·
  comeet                   over ONE      no-markers · http-NNN · timeout · not-a-job-url ·
- greenhouse               body)         auth-walled · js-shell · bd-unavailable · bd-capped
+ greenhouse               body)         auth-walled · js-shell · bd-unavailable · bd-capped ·
+                                        render-shell · render-capped · render-unavailable
                                         transient (timeout / 5xx / bd-*) ⇒ retry tomorrow, else in 7 days
 ```
 

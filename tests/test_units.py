@@ -36541,17 +36541,14 @@ def test_page_links_honour_a_base_href():
     assert _G_WAZE in links, links
     assert not any("results/jobs/results" in u for u in links), links
     assert role_addresses_on(body, _G_PAGE, "Research Data Scientist II, Waze") == [_G_WAZE]
-
-
-def test_a_base_href_cannot_move_an_absolute_path_link_or_reach_off_this_origin():
-    """Two properties the fix must not cost. Oracle CE declares a root-relative base
-    (`/hcmUI/CandidateExperience/he/sites/CX_3001`, measured on Discount Bank's site) and links
-    its cards by absolute path: honouring the base must leave those exactly where they were —
-    live, that page's link list is 6 addresses before and after. And a base on ANOTHER origin
-    is ignored, because same-origin is the whole trust model of this function: a careers page
-    that declares `<base href="https://cdn.example/">` must not have every relative posting
-    link resolved off the employer's own board."""
-    from pipeline.jdfill import _page_links
+    # ...and three properties the fix must not cost, folded in here because every one of them
+    # holds of the code that ignored `<base href>` too: on its own this was a test that could
+    # not fail (`tools/guard_kill.py`). Oracle CE declares a ROOT-RELATIVE base
+    # (`/hcmUI/CandidateExperience/he/sites/CX_3001`, measured on Discount Bank's site) and
+    # links its cards by absolute path, so honouring the base must leave those exactly where
+    # they were — live, that page's link list is 6 addresses before and after. A base on
+    # ANOTHER origin is ignored, because same-origin is the whole trust model of this function.
+    # And a malformed base is no base at all, never an exception: a page is arbitrary bytes.
     orc = "https://ehsb.fa.em2.oraclecloud.com"
     body = _base_page("/hcmUI/CandidateExperience/he/sites/CX_3001",
                       ["/hcmUI/CandidateExperience/he/sites/CX_3001/job/5108"])
@@ -36560,7 +36557,6 @@ def test_a_base_href_cannot_move_an_absolute_path_link_or_reach_off_this_origin(
     foreign = _base_page("https://cdn.example/x/", ["careers/position/36"])
     assert _page_links(foreign, "https://www.bylith.com/careers") == \
         ["https://www.bylith.com/careers/position/36"]
-    # a malformed base is no base at all, never an exception: a page is arbitrary bytes
     assert _page_links(_base_page("http://[", ["careers/position/36"]),
                        "https://www.bylith.com/careers") == \
         ["https://www.bylith.com/careers/position/36"]
@@ -36800,7 +36796,10 @@ def test_fetch_jd_renders_a_shell_after_the_plain_get_and_before_bright_data(mon
 def test_a_render_is_only_bought_for_a_page_with_no_text_and_no_markers(monkeypatch):
     """`_render_shaped` is the trigger, and it is a measurement: over 14 sampled own-site pages
     whose text the plain GET already reads (776 to 1,342,451 characters) every short one carried
-    a marker family, so the rule fires on 0 of them. A page with 4,438 characters and one family
+    a marker family, so the PREDICATE fires on 2 of 14 and the GATE on 0 — the two are
+    `amitim pension funds` (776 characters, 0 families) on the refused `secrethunter.io` host,
+    turned back above the plain GET, and `diageo` answering 401 with no body, whose reason is
+    `http-401` and not `shell`/`no-markers`. A page with 4,438 characters and one family
     is Menora's - rendering it returns 713 characters, i.e. LESS than we already have."""
     from pipeline import jdfill
     from pipeline.jdfill import _render_shaped

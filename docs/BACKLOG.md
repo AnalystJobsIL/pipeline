@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**685 filed · 480 open · 205 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**690 filed · 485 open · 205 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 636.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 641.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 155 open
+### registry — 156 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -249,8 +249,9 @@ closure convention in the header.
 - **613** `613@registry` **`--retire-settled` never prunes a queue name whose `covered-by-row` record the live
 - **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
 - **633** `633@registry` **The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data Analyst
+- **636** `636@registry` **`Discount Bank` is `ats_platform=scrape` on an Oracle CE site whose list API answers, so
 
-### infra — 120 open
+### infra — 121 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -372,8 +373,9 @@ closure convention in the header.
 - **630** `630@infra` **Bright Data's Unlocker cannot fetch `google.com` at all, so a Google Careers posting is
 - **634** `634@infra` **Every LinkedIn copy we hand the archive is synthesized as `www.linkedin.com/jobs/view/<id>`,
 - **635** `635@infra` **The self-heal and the targeted discovery sweep still spend a strike on a ONE-NIGHT
+- **638** `638@infra` **`jd-archive.yml` installs no Chromium, so the 12:30 pass cannot reach the free render it
 
-### scraper — 33 open
+### scraper — 35 open
 
 - **80** `80@scraper` **Greenhouse EU boards are unreadable without a renderer**
 - **89** `89@scraper` **Two scraper costs nobody has measured, and one silent cap**
@@ -408,6 +410,8 @@ closure convention in the header.
 - **616** `616@scraper` **A Hebrew careers board whose postings have their own links is still read only by the
 - **623** `623@scraper` **A department heading and a role title inside ONE card anchor are read as two cards** —
 - **624** `624@scraper` **Logica-IT is unreadable from the runner and readable from a laptop, and its position
+- **639** `639@scraper` **Menora Mivtachim publishes its positions as click-open accordions with no address, so no
+- **640** `640@scraper` **`Universal McCann Israel` holds 13 cache cards from a board that no longer serves a
 
 ### discovery — 31 open
 
@@ -525,6 +529,31 @@ closure convention in the header.
 - **562** `562@company-intel` **Seven company-intel mutations survive the whole suite, and the anchor test was
 - **618** `618@company-intel` **`DoiT` and `doitintl` are one employer with two firmographics records, and the fold
 
+### jd-text — 22 open
+
+- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
+- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
+- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
+- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
+- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
+- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
+- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
+- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
+- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
+- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
+- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
+- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
+- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
+- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
+- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
+- **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
+- **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
+- **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
+- **625** `625@jd-text` **28 cache cards hold one shell page's text under two titles, and both cards own their
+- **627** `627@jd-text` **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
+- **629** `629@jd-text` **A capture can carry the page's own inline module script as its last 657 characters** —
+- **637** `637@jd-text` **The matched driver's ARCHIVED pass gets no free renderer, so the pool that is forty times
+
 ### ats-fetch — 21 open
 
 - **1** `1@ats-fetch` `pipeline/ats.py` registry: adding an ATS platform still touches ~22 sites in 14 files;
@@ -548,30 +577,6 @@ closure convention in the header.
 - **508** `508@ats-fetch` **The eightfold fetcher stamps the query's location on postings that carry none** —
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
 - **621** `621@ats-fetch` **`career.adamtotal.co.il` is an Israeli ATS this repo has never heard of, Harel's board
-
-### jd-text — 21 open
-
-- **155** `155@jd-text` **The two JD cooldowns never see each other, so a failed scrape-source JD is paid for *(half closed)*
-- **341** `341@jd-text` **`DESC_MAX` = 6,000 truncates one open role's requirements, and the constant is shared by
-- **342** `342@jd-text` **`jobs.techbiz.global` stores its JD as escaped HTML inside a JSON API payload**
-- **370** `370@jd-text` **One careers PAGE is stored as the description of every posting on it, and the *(half closed)*
-- **374** `374@jd-text` **`enrich_scrape_jd` has neither the quality tier nor the re-clean, so a careers page is
-- **376** `376@jd-text` **Two archived LinkedIn postings return `no-markers` to the plain GET *and* to a
-- **398** `398@jd-text` **A Workday row whose cxs tenant differs from its host label cannot round-trip
-- **432** `432@jd-text` **A rendered Bright Data call times out at 90 s often enough to open the breaker** —
-- **437** `437@jd-text` **The enrich alarm cannot fire on the failure that produced the production clause** —
-- **443** `443@jd-text` **Two lanes' numbers exist only inside a run, so nobody can check them between runs** —
-- **445** `445@jd-text` **`jd-archive.yml` serves nothing the classifier reads, and the digest step it was built
-- **464** `464@jd-text` **175 superseded verdicts cannot be re-judged by any cap**
-- **480** `480@jd-text` **Ten of the day's 184 new tests pass with their fix reverted**
-- **553** `553@jd-text` **A pane we have PROVED serves another role is re-bought for ever**
-- **554** `554@jd-text` **The echo suspicion puts rows that HAVE text at the front of the fetch queue**
-- **600** `600@jd-text` **`JDFiller`'s `Unlocker` honours neither `BD_RUN_CAP` nor a per-call timeout**
-- **602** `602@jd-text` **`indeed_tried` is printed nowhere, and it is about to be the majority of the credits** —
-- **611** `611@jd-text` **A WordPress careers post keeps its site navigation and footer, and HTML entities are
-- **625** `625@jd-text` **28 cache cards hold one shell page's text under two titles, and both cards own their
-- **627** `627@jd-text` **Two published rows carry a LinkedIn mirror's text while their own board lists the role,
-- **629** `629@jd-text` **A capture can carry the page's own inline module script as its last 657 characters** —
 
 ### classifier — 18 open
 
@@ -12787,6 +12792,19 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      for whoever tries: the results page is fully client-rendered (1,017,871 bytes of HTML
      → 1,662 characters of text, 0 posting links) and Bright Data's Unlocker refuses
      `google.com` outright (`630`).
+     **Corrected 2026-09-19 (`jd-text`): that reading does not reproduce.** The same page
+     answers a plain GET with **17,123** characters and **20** posting hrefs, one of them the
+     Waze posting — so a card CAN carry its posting's link, and the address to write is the
+     one `role_addresses_on` now returns with `<base href>` honoured. The registry's url
+     (`?location=Israel`) is the listing that names it; the bare results page does not.
+     (e) **the 13 `Universal McCann Israel` cards carry the careers page and no
+     `url_active_page`, and that page no longer serves a Comeet widget at all** — measured
+     2026-09-19 on both `mccann.co.il` and `www.mccann.co.il`: 0 `window.comeetvar`, 1 request
+     containing `comeet` (a stylesheet), 0 `"uid":` in the rendered HTML, and 22 XHR bodies all
+     of them Lottie animations or accessibility widgets. `jdfill.comeet_widget_jd` reads a
+     widget board's positions out of that traffic when it exists, and `?comeet=<uid>` is now a
+     posting address — so a card that carried `url_active_page` would fill. Where those 13
+     titles came from is this lane's question (`640`).
 
 609. **Every accepted Telegram role is held off the board by construction** — lane:
      `discovery` (`discovery_telegram.py`), filed 2026-09-13 by `jd-text`. All 145
@@ -12889,6 +12907,19 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      io.open('cloud_state/roles.jsonl',encoding='utf-8') if l.strip() and 'google' in
      json.loads(l).get('company','').lower() and json.loads(l).get('status')=='open'))"`
      reads `1` on 2026-09-18.
+
+     **ANSWERED 2026-09-19 (`jd-text`) — no zone, and no credit either.** Google's own SSR
+     carries the posting: a plain `jdfill.plain_fetch` of the REGISTRY listing
+     (`…/jobs/results/?location=Israel`, which is not the row's url) returns 1,261,901 bytes →
+     **17,123** characters with **20** posting hrefs, and a plain GET of the Waze posting
+     returns 1,137,259 bytes → `extract_jd` **3,761** characters, 4 marker families,
+     `looks_like_jd` True. What held the row was two defects of ours, both fixed: `_page_links`
+     ignored the page's `<base href>` and produced a doubled path that 404s, and the row's url
+     is the BARE results page, which lists nothing. The 09-18 reading (1,662 characters, 0
+     links) is not reproducible from this machine — treat Google's SSR as intermittent, with
+     the free render as the fallback (the same page rendered reads 17,115/5, i.e. no better).
+     **0 credits.** The reversal figures above stand for any FUTURE google.com class; they are
+     not what this row needed.
 
 634. **Every LinkedIn copy we hand the archive is synthesized as `www.linkedin.com/jobs/view/<id>`,
      the one form LinkedIn answers the archive's crawler with a 404** — lane: `infra`
@@ -13676,3 +13707,77 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      here, not to 1: an entry written before the field existed must not be skipped. The check
      is the `resolve_attempts.json` strike counts one week after it lands — Workiz must not
      have moved, and the names struck on a single reading must be absent from the log.
+
+## From the `jd-text` lane, 2026-09-19 (a free render, and three gates that refused readable addresses)
+
+636. **`Discount Bank` is `ats_platform=scrape` on an Oracle CE site whose list API answers, so
+     its analyst posting has an address nothing in the registry knows** — lane: `registry`,
+     filed 2026-09-19 by `jd-text` and relayed to that lane's live session. The row's url is
+     `ehsb.fa.em2.oraclecloud.com/hcmUI/CandidateExperience/he/sites/CX_3001/requisitions`, a
+     LISTING of 67 requisitions: 101,375 bytes → **80** characters of text and **0** marker
+     families to a plain GET, and rendered it is **17,624** characters carrying all 67 cards but
+     **0** posting addresses (`role_addresses_on` → 0; the DOM title map hits nothing, the ids
+     are numeric and the slugs are numbers, so no rule of ours can pick the analyst's card out
+     of the listing). The recipe exists:
+     `…/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=CX_3001`
+     answers **200 with 67 requisitions**, and `fetchers.fetch_oraclehcm` (`pipeline/fetchers.py`)
+     already builds `/job/<Id>` per card. Repoint the row to `oraclehcm`. `ShortDescriptionStr`
+     is 55 characters, so the description still comes from the page — and the page needs the
+     free render: `…/CX_3001/job/5108` (the analyst) is 80 characters plain and **3,088 / 4
+     marker families** rendered, `extract_jd` **2,708**. The detail endpoint
+     `recruitingCEJobRequisitionDetails` 400'd on three finder forms and is not a rung. Until
+     the repoint, `structural:not-a-job-url` on that row is CORRECT — `is_job_url` stopped
+     admitting the listing on 2026-09-19 — and the row is held with a written reason, which the
+     dataset bar accepts.
+
+637. **The matched driver's ARCHIVED pass gets no free renderer, so the pool that is forty times
+     larger never reaches the rung** — lane: `jd-text` (`enrich_matched_jd._run`), filed
+     2026-09-19 by the session that built the rung. `renderer=None` is deliberate and
+     documented at the call: the archived pass has `ARCHIVED_BUDGET_SHARE` (a quarter) of
+     `MATCHED_JD_TIME_BUDGET_MIN`, and one page can cost ~62 s, so five renders would be a
+     third of its whole allowance spent on roles nobody is waiting for. Decide it on the LIVE
+     pass's own numbers first: after a week of `matched_via_render`, if the live pass is
+     spending fewer than 3 of its 5 renders a night the spare capacity is real and the archived
+     pass can have a cap of its own (`MATCHED_ARCHIVED_RENDER_CAP`, default 0). The number that
+     would justify it is the count of ARCHIVED rows whose `jd_why` is `failed:shell:*` or
+     `failed:no-markers:*` — those are the render-shaped ones. Check: `matched_rendered` and
+     `matched_via_render` in the enrich stamp.
+
+638. **`jd-archive.yml` installs no Chromium, so the 12:30 pass cannot reach the free render it
+     now asks for** — lane: `infra`, filed 2026-09-19 by `jd-text`. `enrich_scrape_jd.py
+     --archive-only` builds a `jdfill.Renderer` like the digest pass, so on that job it latches
+     `render-unavailable` on its first call and costs one launch attempt — correct, but it means
+     the **109 attempted scrape cards still under 200 characters** (`581`) never get the rung
+     that is built for exactly their shape. The step is the same four lines as the digest's
+     (`docs/sessions/2026-09-19-jd-text.md` has it verbatim, +28 s measured on the 09-18
+     `scrape-refresh` run `35298050641`), plus `JD_ENRICH_FREE_RENDER_CAP: "5"`. Do the digest
+     one first and read `matched_via_render` before paying 28 s twice a day; a render that fills
+     nothing on the live pool will fill nothing here either.
+
+639. **Menora Mivtachim publishes its positions as click-open accordions with no address, so no
+     rung that fetches a url can ever read one** — lane: `scraper`, filed 2026-09-19 by
+     `jd-text`. `menoramivt.co.il/job-posting/open-position` is the url of
+     `menora mivtachim|מנתח ת מערכות bi`. Plain: 890,243 bytes → **4,438** characters, 1 marker
+     family. Rendered it is **WORSE**: 18,797 bytes → **713** characters, 0 families, 223 links
+     and **0** posting addresses, because every position is a `#` accordion. The free render
+     therefore never triggers on it (`_render_shaped` needs < 1,000 characters AND 0 families,
+     and the plain read has 4,438), which is the right answer for this lane and leaves the row
+     held with its existing reason. The only route is a capture-time CLICK in
+     `scrape_universal`: open each accordion and store its text as that card's description.
+     Measure first — how many active rows are this shape — because a click loop is a new
+     failure mode on 400 boards to fix one.
+
+640. **`Universal McCann Israel` holds 13 cache cards from a board that no longer serves a
+     Comeet widget** — lane: `scraper`, filed 2026-09-19 by `jd-text`. `scraped_cache.json`
+     holds 13 titles for that company, every one with `url` = the careers page and
+     `url_active_page: None`. Measured 2026-09-19 on BOTH hosts: that page carries **0**
+     `window.comeetvar`, exactly **1** request whose url contains `comeet` (a stylesheet), **0**
+     `"uid":` in the rendered HTML, `_comeet_positions(page_html)` = 0, and **22** XHR bodies
+     every one a Lottie animation, an accessibility widget or an image list; the page renders to
+     **472** characters of chrome. So either those 13 titles are stale (the widget was there
+     when they were swept, and the board has since emptied — which `health`'s
+     regressed-to-zero rule should be saying) or they came from a rung that does not need the
+     widget. Find out which before this lane's `jdfill.comeet_widget_jd` is blamed for filling
+     nothing: the rung reads a widget board's positions out of the rendered traffic, and there
+     is no traffic to read. `?comeet=<uid>` is a posting address as of today, so a card that
+     carried `url_active_page` would fill. Check: `python -c "import json;c=json.load(open('scraped_cache.json',encoding='utf-8'));v=[x for k,x in c.items() if 'mccann' in k.lower()][0];print(len(v), sum(1 for j in v if j.get('url_active_page')))"`.
