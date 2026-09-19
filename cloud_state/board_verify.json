@@ -37390,5 +37390,61 @@
   "url": "https://tigbur.co.il/career",
   "verdict": "UNVERIFIABLE",
   "why": "two reads disagreed (not-a-board then NOT-THEIRS); a verdict that does not reproduce is not a verdict"
+ },
+ "ibi investment house|https://www.ibi.co.il/career/": {
+  "date": "2026-09-19",
+  "url": "https://www.ibi.co.il/career/",
+  "name": "IBI Investment House",
+  "model": "opus",
+  "route": "plain",
+  "chars": 33144,
+  "text_chars": 9000,
+  "verdict": "UNVERIFIABLE",
+  "why": "a wall or an empty shell we could not read",
+  "employer_named": "",
+  "page_kind": "error",
+  "states_no_openings": false
+ },
+ "matrix it|https://matrix-technologies-inc.breezy.hr/": {
+  "date": "2026-09-19",
+  "url": "https://matrix-technologies-inc.breezy.hr/",
+  "name": "Matrix IT",
+  "model": "opus",
+  "route": "plain",
+  "chars": 62611,
+  "text_chars": 8933,
+  "verdict": "NOT-THEIRS",
+  "why": "belongs to Matrix Technologies",
+  "employer_named": "Matrix Technologies",
+  "page_kind": "board",
+  "states_no_openings": false
+ },
+ "group19|https://www.group19.org.il/career": {
+  "date": "2026-09-19",
+  "url": "https://www.group19.org.il/career",
+  "name": "Group19",
+  "model": "opus",
+  "route": "plain",
+  "chars": 399960,
+  "text_chars": 483,
+  "verdict": "ok",
+  "why": "The page is Group19's own careers page on its Israeli domain (.org.il), titled \"קריירה | Group19\". Only the Wix page code loaded, so no job listings were visible and nothing on the page says there are",
+  "employer_named": "Group19",
+  "page_kind": "careers-landing",
+  "states_no_openings": false
+ },
+ "ram aderet engineering|https://www.ram-aderet.co.il/ram-aderet-group/careers": {
+  "date": "2026-09-19",
+  "url": "https://www.ram-aderet.co.il/ram-aderet-group/careers",
+  "name": "Ram Aderet Engineering",
+  "model": "opus",
+  "route": "plain",
+  "chars": 107307,
+  "text_chars": 6126,
+  "verdict": "ok",
+  "why": "This is Ram Aderet Group's own careers page on ram-aderet.co.il, and Ram Aderet Engineering is one of the group's divisions. The office is in Rosh HaAyin, Israel. The page lists open jobs, including a",
+  "employer_named": "קבוצת רם אדרת / Ram Aderet",
+  "page_kind": "board",
+  "states_no_openings": false
  }
 }

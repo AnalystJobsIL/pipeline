@@ -13321,9 +13321,37 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
        `ALIASES["הראל ביטוח ופיננסים"] = "harel insurance finance"` beside Menora — the two
        declarations `firmographics._declared` requires, so `declared_aliases` resolves the pair
        and exactly ONE row is active on the identity. Unblocked by `621`.
-     * `הפניקס` (ACTIVE, `fnx.co.il`, 10 IL) ↔ `Phoenix Financial` (parked 2026-09-18,
-       `arizonafinancial.org` was another company's). Same insurer, almost certainly; needs
-       the Latin row shown to have no board of its own before it is folded, not merely parked.
+     * ~~`הפניקס` ↔ `Phoenix Financial`~~ — **DONE 2026-09-19.** The crowning argument was in
+       the ROLES ledger, not on a page: the Latin row's three LinkedIn records carry the
+       insurer's own requisition ids in their titles (`Business Analyst - 50400095`,
+       `Digital Analytics Team Lead - 50061453`, `Marketing Data Analyst - 50400118`), and
+       `www.fnx.co.il/career/open-positions` carries **all three** today (measured, a free GET;
+       the Hebrew row publishes `דאטה אנליסט/ית` at `.../open-positions/50400118`). Same
+       requisition ids on one board is the two-names-one-board proof. Parked
+       `alias-of הפניקס 2026-09-19` — the cell was at 219 of 220 characters, so the alias
+       evicted the unprotected `listing-hunt` and `wrong-url` segments and kept `dark-triage`;
+       the 09-18 NOT-THEIRS read of `arizonafinancial.org` is durable in `board_verify.json`
+       either way. `company-intel` owns `ALIASES["phoenix financial"] = "הפניקס"`.
+     * ~~`Pagaya` ↔ `Pagayais`~~ — **NEW and DONE 2026-09-19**, not one of the original seven
+       and not a cross-script pair at all: two greenhouse boards of one employer, both ACTIVE.
+       Measured through the production fetcher, 0 credits: `pagayais` **8 jobs / 8 Israel**,
+       every one `Tel Aviv, Israel` (it publishes `BI Team Lead`); `pagaya` **14 jobs / 0
+       Israel**, twelve `New York, NY (Pagaya US New York)`. The IL board decides the direction
+       (the Trivago shape), so `Pagayais` survives and `Pagaya` is parked `alias-of Pagayais
+       2026-09-19` **with its address kept** — its own US board is evidence, not a wrong write.
+       0 role records to fold. `ALIASES["pagaya"] = "pagayais"`.
+     * ~~`רם אדרת | Ram Aderet` ↔ `Ram Aderet Engineering`~~ — **NEW and DONE 2026-09-19**: two
+       ACTIVE rows on one site that `check_invariants.shared_boards` cannot see, because its
+       key is `identity_key` + the EXACT path and these two differed. The direction was forced
+       twice over: the Hebrew name contains ` | `, which is the notes separator, so
+       `notes.split` and `verdicts.alias_target` can never parse it as a survivor. Crowning a
+       row that reads fewer cards was refused, so the survivor was REPOINTED first:
+       `/careers/252` scrapes **5** cards and is itself the sixth posting on
+       `/ram-aderet-group/careers`, which scrapes **6** (measured live through the production
+       `scrape_universal`, 0 credits). One seam read of the group page under the Latin name
+       answers `ok`, `employer_named: "קבוצת רם אדרת / Ram Aderet"`, why: *"Ram Aderet
+       Engineering is one of the group's divisions"*. **Coverage traded: 0** (the class was a
+       card LOST before, not after). `ALIASES["רם אדרת ram aderet"] = "ram aderet engineering"`.
      * ~~`בנק דיסקונט` ↔ `Discount Bank` ↔ `Discount Bank בנק דיסקונט`~~ — **DONE 2026-09-19,
        and the registry half was never the gap.** Both Hebrew rows have carried
        `alias-of Discount Bank` since 2026-09-01 and 2026-08-28; what was missing is the
@@ -13348,8 +13376,13 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      * `מטריקס` (ACTIVE, `matrixdna.ai`) ↔ `Matrix` (ACTIVE, comeet) ↔ `Matrix IT` (ACTIVE).
        Possibly THREE REAL ENTITIES (Matrix IT is a large integrator; `Matrix` is also on
        `recruiters`' radar as a staffing name) — do not fold without the boards.
-     * `Clal Insurance & Finance- כלל ביטוח ופיננסים` (a DISCOVERY name, not a row) ↔
-       `Clal Insurance And Finance` (a row). The cheapest of the seven: one name, one row.
+     * ~~`Clal Insurance & Finance- כלל ביטוח ופיננסים` (a DISCOVERY name, not a row) ↔
+       `Clal Insurance And Finance` (a row)~~ — **DONE 2026-09-19, and there is NO registry
+       write in it**: `board_verify.json` reads `clalbit.co.il/careers/` **`ok` for both names**
+       (08-29 under the row, 09-01 under the discovery name) and the queue disposition is
+       `covered-by-row`. A name that is not a row takes the `alias_only_folds` path, which needs
+       exactly one ACTIVE row on the identity — true. `company-intel` owns
+       `ALIASES["clal insurance finance כלל ביטוח ופיננסים"] = "clal insurance and finance"`.
 
      None of these is a rename (`459`'s rule: `company_name` is the join key for the
      firmographics, the roles ledger, `matched` and the board). Each is a

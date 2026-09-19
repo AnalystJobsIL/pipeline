@@ -151,7 +151,7 @@ Augury,greenhouse,augury,https://boards-api.greenhouse.io/v1/boards/augury/jobs,
 Snyk,workday,snyk/External,https://snyk.wd103.myworkdayjobs.com/wday/cxs/snyk/External/jobs,true,listing-hunt 2026-08-29: no IL listing; monitored candidate | dark-triage 2026-08-29: extract-gap (24 role phrases after render) | re-audit 2026-08-30: deep-verified 1/0 IL (was dark)
 Oligo Security,ashby,oligo,https://api.ashbyhq.com/posting-api/job-board/oligo,true,"2026-08-14 probe-verified; board real, 0 Israel now, keep-poll"
 Pinecone,ashby,pinecone,https://api.ashbyhq.com/posting-api/job-board/pinecone,true,"2026-08-14 probe-verified; board real, 0 Israel now, keep-poll"
-Pagaya,greenhouse,pagaya,https://boards-api.greenhouse.io/v1/boards/pagaya/jobs,true,"2026-08-14 probe-verified; board real, 0 Israel now, keep-poll"
+Pagaya,greenhouse,pagaya,https://boards-api.greenhouse.io/v1/boards/pagaya/jobs,false,"2026-08-14 probe-verified; board real, 0 Israel now, keep-poll | alias-of Pagayais 2026-09-19: one employer, two greenhouse boards; pagaya 14/0 IL (New York), pagayais 8/8 IL (Tel Aviv)"
 Torii,greenhouse,toriihq,https://boards-api.greenhouse.io/v1/boards/toriihq/jobs,true,2026-08-15 probe-verified; 1 Israel (SaaS management)
 Silverfort,comeet,54.007,https://www.comeet.com/careers-api/2.0/company/54.007/positions?token=45715B315B38AE22B8D051A0A457D051E61,true,resolved via Playwright/comeetvar; 28 jobs / 10 Israel
 LSports,comeet,26.002,https://www.comeet.com/careers-api/2.0/company/26.002/positions?token=62224CC031102AEE373237321EAA31103732,true,resolved via Playwright/comeetvar; 3 jobs / 1 Israel
@@ -1128,7 +1128,7 @@ Guidde,greenhouse,guidde,https://boards-api.greenhouse.io/v1/boards/guidde/jobs,
 expressvpn,scrape,https://www.expressvpn.com/jobs,https://www.expressvpn.com/jobs,false,dark-triage 2026-09-12: url-dead (http 404) | scanned via brightdata; no open Israel roles now - monitored candidate | retry 2026-09-18: scanned; no open Israel roles now
 Engineering team lead- data & AI platform - everc,greenhouse,ever,https://boards-api.greenhouse.io/v1/boards/ever/jobs,false,"alias-of everc 2026-08-23: a leaked job TITLE, not a company; everc has its own row"
 doitintl,greenhouse,doitintl,https://boards-api.greenhouse.io/v1/boards/doitintl/jobs,true,auto-expand; 84/7 IL
-Phoenix Financial,scrape,,,false,dark-triage 2026-09-12: js-shell (job XHRs seen during render) | listing-hunt 2026-09-13: another company's board; no listing found | wrong-url 2026-09-18: board names Arizona Financial Credit Union; needs re-resolution
+Phoenix Financial,scrape,,,false,"dark-triage 2026-09-12: js-shell (job XHRs seen during render) | alias-of הפניקס 2026-09-19: fnx.co.il/career/open-positions carries the LinkedIn cards' own ids 50400118, 50061453, 50400095"
 Shufersal,scrape,https://secrethunter.io/jobz/7446ee070b,https://www.shufersal.co.il/corp/jobs,true,"deep-validated 2026-08-21: unsupported ATS phenom | crack-walled 2026-08-22: host documented, 0 IL now | listing-hunt | dark-triage 2026-08-22: page-empty | activated 2026-08-23: validated page, scanned daily"
 helfy,comeet,3A.008,https://www.comeet.com/careers-api/2.0/company/3A.008/positions?token=A38478828E001EA8A381EA8033183D50,true,auto-expand; 21/16 IL
 Artlist,comeet,85.003,https://www.comeet.com/careers-api/2.0/company/85.003/positions?token=5831B8F2C185832C182C181B8F319BB061089&details=true,true,re-audit 2026-08-21: deep-verified 10/8 IL (was dark)
@@ -2241,7 +2241,7 @@ Pvml,scrape,https://pvml.com/careers/,https://pvml.com/careers/,true,auto-expand
 Qima,smartrecruiters,qima,https://api.smartrecruiters.com/v1/companies/qima/postings,true,auto-expand slug-probe; 729/1 IL
 Radix Eng,scrape,https://radix-eng.com,https://radix-eng.com,false,"dark-triage 2026-09-17: wrong-page (LLM: not Radix Eng's careers page (This is the company's homepage with a ""ק)) | listing-hunt 2026-09-18: not a listings page; no listing found"
 Accenture España,scrape,,https://www.accenture.com/es-es/careers,true,queue-drain 2026-09-08 search-llm; 9/9 IL
-Ram Aderet Engineering,scrape,,https://www.ram-aderet.co.il/careers/252,true,queue-drain 2026-09-08 search-llm; 5/5 IL
+Ram Aderet Engineering,scrape,https://www.ram-aderet.co.il/ram-aderet-group/careers,https://www.ram-aderet.co.il/ram-aderet-group/careers,true,"queue-drain 2026-09-08 search-llm; 5/5 IL | platform-fix 2026-09-19: the group board /ram-aderet-group/careers; 6 IL (was /careers/252, itself one of the 6)"
 Menlo Security Inc.,ashby,menlosecurity,https://api.ashbyhq.com/posting-api/job-board/menlosecurity,true,queue-drain 2026-09-08 search-llm; 1/1 IL | self-heal 2026-09-09: re-resolved to ashby
 Limy AI,scrape,,https://limy.ai/careers,true,queue-drain 2026-09-08 search-llm; 3/3 IL
 Qarakal Quantum,scrape,,https://qarakal.ai/careers/,true,queue-drain 2026-09-08 search-llm; 4/4 IL
@@ -2261,7 +2261,7 @@ Marvell Technology,scrape,https://www.marvell.com/company/careers.html,https://w
 EffectivBIZ,scrape,https://effectivbiz.co.il,,false,scanned; no open Israel roles now | wrong-url 2026-09-09: not a job board; needs re-resolution | dark-triage 2026-09-09: no-url (no url on the row) | listing-hunt 2026-09-10: another company's board; no listing found
 Converge Bio,scrape,,https://converge-bio.com/careers,true,scanned; no open Israel roles now | wrong-url 2026-09-09: not a job board; needs re-resolution | dark-triage 2026-09-09: no-url (no url on the row) | listing-hunt 2026-09-10: verified 1 IL via converge-bio.com
 Lizzy AI,scrape,https://lizzyai.com,https://www.lizzy-ai.com/jobs,false,"scanned; no open Israel roles now | dark-triage 2026-09-09: extract-gap (LLM found 6: Sales Development Representative (SDR), Backend Engineer) | deep-validated 2026-09-13: no ATS detected (rendered)"
-רם אדרת | Ram Aderet,scrape,https://www.ram-aderet.co.il/ram-aderet-group/careers,https://www.ram-aderet.co.il/ram-aderet-group/careers,true,auto-expand scrape; 6 IL
+רם אדרת | Ram Aderet,scrape,https://www.ram-aderet.co.il/ram-aderet-group/careers,https://www.ram-aderet.co.il/ram-aderet-group/careers,false,"auto-expand scrape; 6 IL | alias-of Ram Aderet Engineering 2026-09-19: one board, /ram-aderet-group/careers, which the survivor now reads (6 cards); ledger 09-19 names קבוצת רם אדרת / Ram Aderet"
 TechAviv,scrape,https://techaviv.com,,false,scanned; no open Israel roles now | scanned via brightdata; no open Israel roles now - monitored candidate | retry 2026-09-16: scanned; no open Israel roles now | needs re-resolution
 Rapaport,scrape,,https://rapaport.com/careers/,true,scanned; no open Israel roles now | wrong-url 2026-09-09: not a job board; needs re-resolution | dark-triage 2026-09-09: no-url (no url on the row) | listing-hunt 2026-09-10: verified 1 IL via rapaport.com
 Razorlabs,comeet,A5.002,https://www.comeet.com/careers-api/2.0/company/A5.002/positions?token=5A21C2A32B25A2B4421CC5A21C2A1C2A21CC,true,scanned; no open Israel roles now | dark-triage 2026-09-09: no-url (no url on the row) | empty-but-suspect 2026-09-13; 5 IL but the board is not this company's | re-audit 2026-09-13: verified 8/5 IL (was false-empty)
