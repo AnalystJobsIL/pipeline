@@ -4761,6 +4761,10 @@ def test_matched_backfill_driver_fills_stamps_and_records(tmp_path, monkeypatch)
     e = stages._load()["enrich"]
     assert (e["matched_filled"], e["matched_fail"]) == (1, 1)
     assert emj.main(["--db", db]) == 0                                  # second run: all cooling
+    # There is no `roles.jsonl` beside this db, so liveness is UNKNOWN and every row is worked
+    # by the archived pass — which keeps the cooldown over all its rungs on purpose. The LIVE
+    # pass stopped doing that on 2026-09-19 (`free_rungs_ignore_cooldown`), and the test that
+    # pins it writes a ledger for exactly that reason.
     assert stages._load()["enrich"]["matched_cooldown"] == 1
     # --limit caps ATTEMPTS: a cooling row must not consume it (the old driver filtered first)
     outcomes["https://a/jobs/2"] = jdfill.JD(_jd_of(500), "html", "ok", False)
@@ -36597,3 +36601,151 @@ def test_a_comeet_widget_uid_in_the_query_is_a_posting_address():
     assert is_job_url("https://www.mccann.co.il/careers/comeet/?comeet=D7.C29")
     assert not is_job_url("https://www.mccann.co.il/careers/comeet/"), \
         "the board itself names no posting"
+
+
+def test_the_own_address_donor_tries_the_registry_listing(monkeypatch, tmp_path):
+    """A row's url is not always the listing that names its posting. `google israel|research
+    data scientist ii waze` carries the BARE `…/applications/jobs/results/`, which lists nothing
+    at all; `companies.csv` holds `…/jobs/results/?location=Israel` — the address the scraper
+    walks nightly — and that page links the Waze posting. Measured live 2026-09-19: the registry
+    listing is 1,261,901 bytes with 20 posting hrefs, and the address it names answers 200 with
+    3,761 characters that `looks_like_jd` accepts. `jd_why` records the class and the host, so
+    `ok:own-address:www.google.com` is the line the next morning can be checked by.
+
+    The row's OWN url is asked first and the second GET only happens when it named nothing:
+    one extra free request, on the rows that have no other hope.
+
+    Kills `donor-skips-the-registry-listing`."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    page = _G_BASE + "jobs/results/"
+    reg = page + "?location=Israel"
+    asked, fetched = [], []
+
+    def _plain(url, *a, **k):
+        asked.append(url)
+        if url == reg:
+            return 200, _base_page(_G_BASE, ["jobs/results/120188596949787334-"
+                                             "research-data-scientist-ii-waze"])
+        return 200, "<html><body>a results page that lists nothing</body></html>"
+
+    def _fetch(url, **k):
+        fetched.append(url)
+        return jdfill.JD(_jd_of(3761), "html", "ok", False)
+
+    monkeypatch.setattr(jdfill, "plain_fetch", _plain)
+    monkeypatch.setattr(jdfill, "fetch_jd", _fetch)
+    monkeypatch.setattr(jdfill, "registry_page_url",
+                        lambda c: reg if c == "Google Israel" else "")
+    row = ("google israel|research data scientist ii waze", "Google Israel",
+           "Research Data Scientist II, Waze", page, "", "", "", 1, "2026-09-18")
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
+    conn.commit()
+    filled, _refused, _why = E._donor_pass(
+        conn, [row], {}, None, set(), SimpleNamespace(dry_run=False, archived_bd=False),
+        log=lambda s: None)
+    assert filled == 1, (asked, fetched)
+    assert asked == [page, reg], asked
+    assert fetched == [_G_BASE + "jobs/results/120188596949787334-"
+                       "research-data-scientist-ii-waze"], fetched
+    assert conn.execute("SELECT jd_why FROM matched").fetchone()[0] \
+        == "ok:own-address:www.google.com"
+
+
+def test_the_registry_listing_is_not_asked_when_the_rows_own_url_answers(monkeypatch, tmp_path):
+    """The second GET is a fallback, not a habit: a row whose own listing names its posting
+    costs exactly one request, as it did before. Bylith's nine cards are that shape."""
+    import sqlite3
+    from types import SimpleNamespace
+    import enrich_matched_jd as E
+    from pipeline import jdfill
+    asked = []
+
+    def _plain(url, *a, **k):
+        asked.append(url)
+        return 200, _listing_page(["https://www.bylith.com/careers/position/36"])
+
+    monkeypatch.setattr(jdfill, "plain_fetch", _plain)
+    monkeypatch.setattr(jdfill, "fetch_jd",
+                        lambda url, **k: jdfill.JD(_jd_of(900), "html", "ok", False))
+    monkeypatch.setattr(jdfill, "registry_page_url", lambda c: "https://www.bylith.com/jobs")
+    row = ("bylith|product analyst", "Bylith", "Product Analyst",
+           "https://www.bylith.com/careers", "", "scrape:36", "", 0, "2026-09-18")
+    conn = sqlite3.connect(str(tmp_path / "s.db"))
+    conn.execute("CREATE TABLE matched (mkey TEXT PRIMARY KEY, description TEXT, jd_why TEXT)")
+    conn.execute("INSERT INTO matched VALUES (?,?,?)", (row[0], "", ""))
+    conn.commit()
+    E._donor_pass(conn, [row], {}, None, set(),
+                  SimpleNamespace(dry_run=False, archived_bd=False), log=lambda s: None)
+    assert asked == ["https://www.bylith.com/careers"], asked
+
+
+def test_registry_page_url_reads_the_registrys_own_careers_address():
+    """...and only an http one. The suite monkeypatches `_registry_rows` with the BOARD triple,
+    so the reader must survive a row that carries no url at all — `_registry_board` keeps
+    returning exactly three fields whatever the cache holds."""
+    from pipeline import jdfill
+    rows = {"google israel": ("scrape", "", "", _G_PAGE),
+            "acme": ("greenhouse", "acme", "", ""),
+            "old": ("greenhouse", "old", "")}
+    saved = jdfill._registry_rows
+    try:
+        jdfill._registry_rows = rows
+        assert jdfill.registry_page_url("Google Israel") == _G_PAGE
+        assert jdfill.registry_page_url("ACME") == ""
+        assert jdfill.registry_page_url("old") == ""
+        assert jdfill.registry_page_url("nobody") == ""
+        assert jdfill._registry_board("google israel") == ("scrape", "", "")
+        assert jdfill._registry_board("old") == ("greenhouse", "old", "")
+    finally:
+        jdfill._registry_rows = saved
+
+
+def test_the_matched_live_pass_walks_cooled_rows_on_the_free_rungs(monkeypatch, tmp_path):
+    """The cooldown protects the rung that COSTS something, and on this driver it parked the
+    free ones too: 4 of the 6 rows this lane could not fill on 2026-09-19 were inside it, one
+    stamped three days before the code that would have explained it was written. The scrape
+    driver split the two on 2026-08-29; this is the same split, so a row walks the free rungs
+    every night (`bd=None`) and the paid rung keeps its 7/14/28 ladder.
+
+    The ARCHIVED pass keeps the old behaviour on purpose — it has a quarter of the budget and
+    a pool forty times the size (`docs/BACKLOG.md`, the archived-pass follow-up).
+
+    Kills `cooled-rows-keep-bd`."""
+    import enrich_matched_jd as E
+    from pipeline import jdfill, stages, store
+    (tmp_path / "cloud_state").mkdir()
+    db = str(tmp_path / "cloud_state" / "seen.db")
+    monkeypatch.setattr(stages, "PATH", str(tmp_path / "cloud_state" / "seen.db.stages.json"))
+    # a READABLE ledger that lists nothing as dead: without one liveness is unknown, every row
+    # goes to the archived pass, and this test would pass a layer below the change it guards
+    (tmp_path / "cloud_state" / "roles.jsonl").write_text("\n".join(
+        _j6_json.dumps({"role_id": "other|%d" % i, "status": "open", "updated": "2026-09-18",
+                        "company": "C", "title": "t", "url": "https://x/1"})
+        for i in range(3)), encoding="utf-8")
+    st = store.SeenStore(db)
+    st.upsert_matched({"company": "ACME", "title": "Cooled", "url": "https://a/jobs/1",
+                       "location": "TLV", "posted_date": "2026-09-18", "seniority": "mid",
+                       "sources": ["workday"], "description": ""}, "2026-09-18")
+    st.close()
+    import sqlite3
+    conn = sqlite3.connect(db)
+    E._ensure_columns(conn)                 # the driver's own migration: jd_tries lives there
+    conn.execute("UPDATE matched SET jd_attempted=?, jd_tries=1",
+                 (_jd_dt.date.today().isoformat(),))   # stamped TODAY: inside every cooldown
+    conn.commit()
+    conn.close()
+    seen = []
+    monkeypatch.setattr(jdfill, "fetch_jd", lambda u, **k: (
+        seen.append((u, k.get("bd"), k.get("native_only"))) or
+        jdfill.JD("", "none", "no-markers", False)))
+    assert E.main(["--db", db, "--cache", str(tmp_path / "c.json")]) == 0
+    assert [(u, bd) for u, bd, _n in seen] == [("https://a/jobs/1", None)], seen
+    assert seen[0][2] is not True, "the free WALK is every free rung, not the native one alone"
+    e = stages._load()["enrich"]
+    assert (e["matched_paid_cooldown"], e["matched_cooldown"], e["matched_archived"]) \
+        == (1, 0, 0), e

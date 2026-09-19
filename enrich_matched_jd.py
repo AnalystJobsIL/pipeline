@@ -817,19 +817,40 @@ def _donor_candidates(row, cache_by_key, log):
     # 2. the employer's own listing page names this posting. Only for a canonical that cannot
     #    identify a posting on its own — that is exactly the `not-a-job-url` class, 9 Bylith
     #    cards and 3 G Stat cards sharing one address each.
+    #    TWO pages may be asked, and the second is the point (2026-09-19): a row's url is not
+    #    always the listing that names its posting. `google israel|research data scientist ii
+    #    waze` carries the BARE `…/applications/jobs/results/`, which lists nothing at all,
+    #    while `companies.csv` holds `…/jobs/results/?location=Israel` — the address the
+    #    scraper walks nightly — and that page links the Waze posting (measured: 20 postings,
+    #    3,761 characters of JD at the one it names). The registry row is this repo's own answer
+    #    to which board belongs to whom, so it is the second listing and never a third party's.
+    #    It costs one extra free GET, and only for a row whose own url named nothing.
     if str(url or "").startswith("http") and not is_job_url(url, title):
         job_id = ""
         for sid in str(seen_ids or "").split("+"):
             if ":" in sid and not sid.split(":", 1)[1].lower().startswith("http"):
                 job_id = sid.split(":", 1)[1]
                 break
-        status, body = jdfill.plain_fetch(url, timeout=25)
-        found = role_addresses_on(body, url, title, job_id) if body else []
-        if not body:
-            complete = False               # the page did not answer: we did not look
-        log(f"  [LST] {(comp + ' | ' + title)[:56]:<56} listing page {status or 'no-answer'}"
-            f" -> {len(found)} address(es) naming this role")
-        out.extend(("own-address", a, "") for a in found)
+        page, asked = url, 0
+        while page:
+            status, body = jdfill.plain_fetch(page, timeout=25)
+            found = role_addresses_on(body, page, title, job_id) if body else []
+            if not body:
+                complete = False           # the page did not answer: we did not look
+            log(f"  [LST] {(comp + ' | ' + title)[:56]:<56} listing page "
+                f"{status or 'no-answer'} -> {len(found)} address(es) naming this role"
+                f"{'' if asked == 0 else ' (registry url)'}")
+            out.extend(("own-address", a, "") for a in found)
+            asked += 1
+            # The registry listing is asked only when the row's own page ANSWERED and named
+            # nothing. A page that did not answer at all is already `complete=False` — the
+            # ladder retries it tomorrow — and a second GET on a night when the host is
+            # unreachable buys nothing but a request.
+            page = ""
+            if asked == 1 and body and not found:
+                reg = jdfill.registry_page_url(comp)
+                if reg and reg.rstrip("/") != str(url).rstrip("/"):
+                    page = reg
     # 3. the copies this role's own seen_ids name. The http ones come through
     #    `sibling_urls`, which carries the lossy-column guard this used to re-implement
     #    without it — a `+` inside a url is indistinguishable from the store's own `+` join,
@@ -1300,10 +1321,20 @@ def _run(args, stamp):
     live_minutes = minutes * (1 - ARCHIVED_BUDGET_SHARE) if items_archived else minutes
     probe_cell = set()
     t0 = time.time()
+    # THE COOLDOWN IS THE PAID RUNG'S, and on this driver it parked the free ones too. The
+    # scrape driver has had this split since 2026-08-29 (`free_rungs_ignore_cooldown`) and this
+    # one did not, so a row stamped once sat untouched for 7, 14 then 28 days — and every free
+    # rung ADDED since that stamp (the native JSON ladder, schema.org, and from tonight the
+    # render) waited out the whole ladder before it was ever tried on the rows it was built
+    # for. Measured 2026-09-19: 4 of the 6 rows this lane cannot fill were in cooldown, one of
+    # them stamped three days before the code that would have explained it existed. The paid
+    # rung keeps its 7/14/28 ladder exactly (`item_bd = None` inside the loop); the stamp
+    # becomes an ORDERING key, oldest first. Cost: `matched_cooldown` free GETs a night, 11 on
+    # the 09-18 run.
     c = run_backfill(items, save=save, minutes=live_minutes, reasons=fetch_reasons,
                      bd=bd, dry_run=args.dry_run, retry_days=args.cooldown_days,
                      count_cap=args.limit, log=lambda s: print(s, flush=True),
-                     probe_cell=probe_cell)
+                     probe_cell=probe_cell, free_rungs_ignore_cooldown=True)
     left = None if minutes is None else max(0.0, minutes - (time.time() - t0) / 60)
     if items_archived:
         print(f"-- {len(items_archived)} archived roles, "
@@ -1389,6 +1420,13 @@ def _run(args, stamp):
         record_enrich(alarm=alarm, path=stamp, matched_ran=1,
                       matched_filled=c["filled"], matched_bd=c["bd"], matched_fail=c["fail"],
                       matched_bd_unavailable=c["bd_unavailable"], matched_cooldown=c["cooldown"],
+                      # `matched_cooldown` is structurally 0 from 2026-09-19: the free rungs
+                      # walk a cooled row (`free_rungs_ignore_cooldown`), so the number that
+                      # used to mean "not worked at all" now means "worked, but the PAID rung
+                      # stayed parked" — and it moves to its own key rather than vanishing. The
+                      # scrape driver made exactly this move on 2026-08-29 and the diagnostic
+                      # was LOST for two days because the key was documented and never emitted.
+                      matched_paid_cooldown=c["paid_cooldown"],
                       matched_unfillable=c["unfillable"], matched_todo=c["todo"],
                       matched_dead=n_dead, matched_from_cache=from_cache,
                       matched_foreign_sibling=foreign, matched_bd_calls=bd.used,

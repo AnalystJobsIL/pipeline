@@ -4738,5 +4738,25 @@
   "replace": "r\"(^|&)(jk|jobid|job_id|id|req)=[\\w.-]+\"",
   "why": "drop the comeet uid from the posting-id query keys, so the one address a Comeet widget board gives a single position (?comeet=D7.C29) is refused as a search page before a byte is fetched.",
   "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "donor-skips-the-registry-listing",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_donor_candidates",
+  "class": "M6-fallback-removal",
+  "find": "            if asked == 1 and body and not found:",
+  "replace": "            if False:",
+  "why": "never ask the company's registry listing when the row's own url named no posting. Measured 2026-09-19: google israel|research data scientist ii waze carries the BARE results page, which lists nothing; the registry url lists 20 postings including the Waze one, whose page answers with 3,761 characters of JD.",
+  "must_be_killed_by_behavioural": true
+ },
+ {
+  "id": "cooled-rows-keep-bd",
+  "file": "enrich_matched_jd.py",
+  "symbol": "_run",
+  "class": "M8-argument-mis-passing",
+  "find": "                     probe_cell=probe_cell, free_rungs_ignore_cooldown=True)",
+  "replace": "                     probe_cell=probe_cell)",
+  "why": "put the FREE rungs back inside the 7/14/28 cooldown on the live pass, so a row stamped once is not walked again for a week and every free rung added since that stamp waits out the whole ladder. 4 of the 6 rows this lane could not fill on 2026-09-19 were in that state.",
+  "must_be_killed_by_behavioural": true
  }
 ]

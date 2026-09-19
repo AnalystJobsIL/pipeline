@@ -1459,6 +1459,13 @@ def _registry_board(company):
     own addresses (`nift|data analyst` carries five other employers' postings), so a stray id
     must not be able to name a board. It can only ever be asked of the board this company's
     own registry row points at, and a foreign id 404s there. See `native_from_seen_ids`."""
+    row = _registry_row(company)
+    return tuple(row[:3]) if row else None
+
+
+def _registry_row(company):
+    """The cached `(ats_platform, token, api_url, url)` tuple, or None. One loader for both
+    readers: `_registry_board` wants the board, `registry_page_url` wants the careers page."""
     global _registry_rows
     if _registry_rows is None:
         _registry_rows = {}
@@ -1469,10 +1476,28 @@ def _registry_board(company):
                 if name and name not in _registry_rows:
                     _registry_rows[name] = ((r.get("ats_platform") or "").strip().lower(),
                                             (r.get("token") or "").strip(),
-                                            (r.get("api_url") or "").strip())
+                                            (r.get("api_url") or "").strip(),
+                                            (r.get("url") or "").strip())
         except Exception:  # noqa: BLE001 - a scratch run without the registry still works
             pass
     return _registry_rows.get((company or "").strip().lower())
+
+
+def registry_page_url(company):
+    """The careers page `companies.csv` holds for `company`, or "".
+
+    The registry's `url` is the address the scraper walks every night, and it is not always the
+    address a matched row carries: Google Israel's row url is the BARE
+    `google.com/about/careers/applications/jobs/results/`, which lists nothing, while the
+    registry holds `…/jobs/results/?location=Israel`, which listed 20 postings including the
+    Waze one this lane could not fill (measured 2026-09-19). A listing we may read FOR a role
+    has to be the employer's own board, and the registry row is this repo's answer to which
+    board is whose — the same reason `_registry_board` is the only source of a token.
+
+    Tolerant of a 3-tuple: the suite monkeypatches `_registry_rows` with the board triple."""
+    row = _registry_row(company)
+    u = (row[3] if row and len(row) > 3 else "") or ""
+    return u if u.startswith("http") else ""
 
 
 def _registry_wd_tenant(company, host):
