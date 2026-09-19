@@ -93,13 +93,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 0b. **A patch script that emits YAML**: the trap is
    `test_no_workflow_run_block_fakes_a_line_continuation`.
 
-0. **Active rows with an all-time-high of ZERO — a COMMAND, not a number** (it has been wrong
-   five times): `python confirm_zero.py --scrape-only` audits the pool and
-   `cloud_state/zero_confirm.json` is the durable per-row answer (2026-08-29: 215 at the start,
-   ~139 answered, none recorded empty without a rendered page and an LLM read). Two sibling
-   classes it cannot see, needing a baseline of exactly 0: region variants (`--regions`, 32 rows,
-   1 real) and abandoned tenants (`--stale-boards`, 18 rows over a year old, one EMAILED).
-   `docs/sessions/2026-08-28-registry-evening.md`; `399`, `406`, `407`.
+0. **Active rows with an all-time-high of ZERO are a COMMAND, not a number** (wrong five times): `python confirm_zero.py --scrape-only`; `cloud_state/zero_confirm.json` is the per-row answer; siblings `--regions` and `--stale-boards`. `docs/sessions/2026-08-28-registry-evening.md`; `399`, `406`, `407`.
 
 1. **`merge_key` should move onto `firmographics.identity_key`.** `ARCHITECTURE.md` §7c
    counts **13** identity groups where two active rows read one board (this said ~15). It is
@@ -111,13 +105,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 4. **iCIMS is the only unsupported ATS left** — see Open items 2; `registry_health.py
    --ats` is derived and correct. HiBob is at **1** active row, moving away from the
    3-row trigger.
-6. **~24 active rows are re-checked by NOTHING, which falsifies `ARCHITECTURE.md` §2's headline
-   claim that every state but `defunct:`/`domain-dead` is re-checked** (`registry`, 2026-08-27).
-   An ACTIVE `israel_scoped` fetcher returning 0 never enters `stale.json` —
-   `health.zero_is_a_measurement()` exempts it for a documented reason (25 healthy Workday boards
-   clogged the self-heal on 08-24) — so it never reaches `resolve_broken.candidates()`, and every
-   parked pool excludes it on `active == false`. `repair_dead_urls` has no active filter but
-   selects on a hostname that stops resolving, which a live Workday tenant's does not.
+6. **~24 active rows are re-checked by NOTHING** (`registry`, 2026-08-27): an ACTIVE `israel_scoped` fetcher returning 0 never enters `stale.json` (`health.zero_is_a_measurement()` exempts it), so no self-heal or parked pool reaches it; `ARCHITECTURE.md` §2's "every state is re-checked" overstates.
 
 5. **GitHub dispatches a cron when it feels like it** — a drop or lateness is a `cron …` clause on the mail's `Stages:` line.
 
