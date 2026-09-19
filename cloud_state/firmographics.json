@@ -3995,19 +3995,6 @@
     "stage_note": "$7.5M Series A led by AlleyCorp (announced July 2025), with Bobcat Co. and ff Venture Capital; $12.5M raised to date",
     "sub_sector": "autonomous ground robots (CivDot UGVs) that automate land surveying, staking and layout marking on large construction sites"
   },
-  "Clal Insurance & Finance- כלל ביטוח ופיננסים": {
-    "as_of": "2026-09-01",
-    "business_model": "B2C/B2B insurance and financial services (life, health, property, credit insurance, pensions, investments)",
-    "customer_type": "B2C",
-    "employees_global": 4200,
-    "founded": 1962,
-    "il_center": "Tel Aviv (HQ)",
-    "sector": "insurance & financial services",
-    "size_band": "L",
-    "stage": "public",
-    "stage_note": "Traded on Tel Aviv Stock Exchange (TASE: CLIS)",
-    "sub_sector": "Insurance, credit intermediation, pensions & investments"
-  },
   "Clal Insurance And Finance": {
     "as_of": "2026-09-02",
     "business_model": "B2C/B2B Insurance and financial services (life, non-life, health insurance, pension and provident funds)",
@@ -14139,19 +14126,6 @@
     "stage_note": "NASDAQ: PTC, listed US company headquartered in Boston",
     "sub_sector": "CAD, PLM and IoT software for product design and lifecycle management (Creo, Windchill, ThingWorx, Onshape)"
   },
-  "Pagaya": {
-    "as_of": "2026-08-21",
-    "business_model": "Fees on loans originated through its AI network (partner lenders keep the customer; Pagaya funds via ABS sold to institutional investors)",
-    "customer_type": "banks, fintech lenders and institutional investors",
-    "employees_global": 514,
-    "founded": 2016,
-    "il_center": "Tel Aviv (R&D co-HQ); dual HQ in New York",
-    "sector": "fintech",
-    "size_band": "M",
-    "stage": "public",
-    "stage_note": "NASDAQ: PGY since June 2022 (SPAC merger with EJF Acquisition Corp)",
-    "sub_sector": "AI-driven consumer credit underwriting network connecting lenders and institutional investors (personal loans, auto, POS)"
-  },
   "Pagayais": {
     "as_of": "2026-09-03",
     "business_model": "AI-driven consumer credit and financial network platform (B2B2C, provides ML-based underwriting to lending partners)",
@@ -14688,19 +14662,6 @@
     "stage": "public",
     "stage_note": "Listed on the Tel Aviv Stock Exchange since 2021, ticker TASE:PNRG (OTC: PHNGF)",
     "sub_sector": "aluminum-air and zinc-air metal-air battery systems for backup power, off-grid energy and EV range extension"
-  },
-  "Phoenix Financial": {
-    "as_of": "2026-08-24",
-    "business_model": "Earns insurance premiums, pension/asset management fees, and investment income across insurance, retirement, wealth and financing segments",
-    "customer_type": "consumers, businesses and institutional clients in Israel",
-    "employees_global": 5170,
-    "founded": 1949,
-    "il_center": "Givatayim / Tel Aviv area (HQ)",
-    "sector": "insurance / financial services",
-    "size_band": "XL",
-    "stage": "public",
-    "stage_note": "TASE: PHOE; renamed from The Phoenix Holdings to Phoenix Financial in Aug 2024",
-    "sub_sector": "Israel's largest insurance, pension and asset-management group (life, P&C, health, retirement, wealth, credit)"
   },
   "Phytech": {
     "as_of": "2026-09-06",
@@ -15781,7 +15742,7 @@
     "as_of": "2026-09-08",
     "business_model": "Real estate development, civil engineering & construction (contracting)",
     "customer_type": "B2B/B2G - government, security entities, private real estate clients",
-    "employees_global": null,
+    "employees_global": 150,
     "founded": 2000,
     "il_center": "Rosh HaAyin (HQ)",
     "sector": "construction & real estate",
@@ -20326,6 +20287,7 @@
     "as_of": "2026-09-06",
     "business_model": "B2B",
     "customer_type": "Real estate developers/builders",
+    "display_name": "Vessel",
     "employees_global": null,
     "founded": null,
     "il_center": "Israel (design/engineering innovation hub); HQ in New York",
@@ -22463,19 +22425,6 @@
     "stage_note": "Israeli arm of Experis, the IT brand of ManpowerGroup (NYSE: MAN); local registrar entity אקספריס איי.טי.אס. בע\"מ (512869124), formerly Manpower Information Technology Ltd.",
     "sub_sector": "IT professional resourcing, outsourcing and managed services; its Experis Academy arm retrains degree-holders as developers/BI/QA/embedded engineers and places them with clients"
   },
-  "בנק דיסקונט": {
-    "as_of": "2026-09-01",
-    "business_model": "B2C/B2B banking and financial services",
-    "customer_type": "enterprise",
-    "employees_global": 6800,
-    "founded": 1935,
-    "il_center": "Tel Aviv (HQ)",
-    "sector": "financial services",
-    "size_band": "XL",
-    "stage": "public",
-    "stage_note": "Traded on TASE under ticker DSCT (also OTC as ISDAY)",
-    "sub_sector": "Banking"
-  },
   "בנק לאומי": {
     "as_of": "2026-08-29",
     "business_model": "Banking and financial services",
@@ -22493,27 +22442,14 @@
     "as_of": "2026-08-28",
     "business_model": "B2C/B2B insurance, pensions, asset management and financial services",
     "customer_type": "Both",
-    "employees_global": null,
+    "employees_global": 5170,
     "founded": 1949,
     "il_center": "Tel Aviv / Rishon LeZion (HQ)",
     "sector": "insurance / financial services",
-    "size_band": "L",
+    "size_band": "XL",
     "stage": "public",
     "stage_note": "Traded on Tel Aviv Stock Exchange (TASE: PHOE); largest insurer in Israel by assets, ~$100B AUM",
     "sub_sector": "Insurance, Pensions, Asset & Investment Management"
-  },
-  "הראל ביטוח ופיננסים": {
-    "as_of": "2026-09-16",
-    "business_model": "B2C/B2B insurance and financial services",
-    "customer_type": "B2C & B2B",
-    "employees_global": 7000,
-    "founded": 1935,
-    "il_center": "Ramat Gan (HQ - Bursa complex)",
-    "sector": "insurance & financial services",
-    "size_band": "XL",
-    "stage": "public",
-    "stage_note": "Public company traded on Tel Aviv Stock Exchange (TASE: HARL), part of TA-35 index",
-    "sub_sector": "Insurance, Pension & Investment Management"
   },
   "מטריקס": {
     "as_of": "2026-08-28",
@@ -22540,18 +22476,5 @@
     "stage": "private-enterprise",
     "stage_note": "Family-owned private automotive importer/distributor (Mercedes-Benz, Hyundai, Mitsubishi, etc.), market leader in Israel",
     "sub_sector": "Vehicle import, distribution and services"
-  },
-  "רם אדרת | Ram Aderet": {
-    "as_of": "2026-09-08",
-    "business_model": "Real estate development & construction",
-    "customer_type": "B2C/B2B (homebuyers, tenants committees, municipalities)",
-    "employees_global": 150,
-    "founded": null,
-    "il_center": "Israel (HQ)",
-    "sector": "real estate & construction",
-    "size_band": "S",
-    "stage": "private-enterprise",
-    "stage_note": "Privately held; Menora Mivtachim (institutional investor) took 20% stake in 2022",
-    "sub_sector": "Development, urban renewal, and civil engineering"
   }
 }

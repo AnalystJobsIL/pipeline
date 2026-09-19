@@ -3667,3 +3667,126 @@ def test_holisto_is_trivago_both_ways_and_the_override_survives_the_render_guard
     assert rolecard.display_name(recs["Holisto"], "Holisto", victims) == "", \
         "an override that cannot render is worse than none (the Landacorp lesson)"
     assert "trivago" in ALIASES, "the declaration is the second half of the fold"
+
+
+# =====================================================================================
+# company-intel, 2026-09-19 -- the seven declarations that complete the `registry` parks of
+# the same day (BACKLOG 621/622/633). Record: docs/sessions/2026-09-19-company-intel.md
+# =====================================================================================
+
+_0919_DECLARED = {
+    # parked row                                  -> the ACTIVE survivor it was declared OF
+    "Phoenix Financial": "הפניקס",
+    "Pagaya": "Pagayais",
+    "רם אדרת | Ram Aderet": "Ram Aderet Engineering",
+    "Group19 Tech": "Group19",
+    "בנק דיסקונט": "Discount Bank",
+    "Discount Bank בנק דיסקונט": "Discount Bank",
+}
+_0919_CLAL = ("Clal Insurance & Finance- "
+              "כלל ביטוח ופיננסים")
+
+
+def _0919_rows():
+    """The dated registry snapshot, as `_declared` reads it (never the live file)."""
+    import csv as _c
+    import live_state as _LS   # a dated snapshot, never the live file (infra, 2026-09-13)
+    return list(_c.DictReader(open(_LS.snapshot("companies.csv"), encoding="utf-8")))
+
+
+def _0919_plain(name):
+    """`_declared`'s own normal form of a row name -- the string an ALIASES key must be."""
+    import re as _r
+    return " ".join(_r.sub(r"[^0-9a-zא-׿]+", " ", name.lower()).split())
+
+
+def test_the_six_parks_of_2026_09_19_fold_only_because_both_halves_are_declared(monkeypatch):
+    """LIVE-SNAPSHOT DATA. Six employers were each publishing under two names, and `registry`
+    parked one side of each with a dated `alias-of <R>` verdict on 2026-09-19. That half alone
+    folds NOTHING -- the 2026-09-11 rule is two independently dated declarations -- and two of
+    these six are what forgetting the other half costs: the first Discount twin has carried
+    `alias-of Discount Bank` since 2026-09-01 and the second since 2026-08-28, so their fold
+    sat inert for eighteen days with a park nobody could see was doing nothing. The `571`
+    shape, and the reason this lane looks for the DECLARATIONS rather than for the parks.
+
+    Asserts the OUTCOME on the shipped snapshot, so it reds if a row is re-activated, renamed
+    or loses its verdict segment -- and, one key at a time, if the declaration is dropped."""
+    rows = _0919_rows()
+    declared = F.declared_aliases(rows)
+    active = {}
+    for r in rows:
+        if str(r.get("active") or "").strip().lower() == "true":
+            active.setdefault(F.identity_key(r["company_name"]), set()).add(r["company_name"])
+    for alias, survivor in _0919_DECLARED.items():
+        plain = _0919_plain(alias)
+        assert F.ALIASES.get(plain) == F.identity_key(survivor), \
+            "%s: the ALIASES half of the declaration is gone" % alias
+        assert declared.get(alias) == survivor, \
+            "%s: the registry's `alias-of %s` verdict no longer folds it" % (alias, survivor)
+        # `roles._alias_fold_target`'s precondition, and `alias_only_folds`': exactly ONE
+        # ACTIVE row on the survivor's identity, or the pair folds onto neither
+        assert active.get(F.identity_key(survivor)) == {survivor}, \
+            "%s: no longer the only ACTIVE row on its identity" % survivor
+        # ...and the ALIASES half is load-bearing, per key
+        monkeypatch.setattr(F, "ALIASES",
+                            {k: v for k, v in F.ALIASES.items() if k != plain})
+        assert F.declared_aliases(rows).get(alias) is None, \
+            "%s folded with its own declaration removed" % alias
+        monkeypatch.undo()
+
+
+def test_the_2026_09_19_folds_fill_only_the_survivors_empties():
+    """`fold_aliases`' direction is the registry's ruling and never `newer()` (BACKLOG 242
+    measured 3 of 5 pairs backwards). Measured on the pair that actually moved a field in the
+    09-19 export: the Hebrew Phoenix row took `employees_global` 5170 from the Latin record
+    because its own cell was empty, `size_band` was RECOMPUTED by `band_for` from that count
+    (L -> XL, not copied), and every cell it already had it kept.
+
+    And the refusal that left `Group19 Tech` in the export after the declaration commit: a
+    survivor with NO record folds nothing, because moving the record to the survivor's key is
+    the key migration `459` refuses. That is why the `Group19` record had to be bought."""
+    declared = F.declared_aliases(_0919_rows())
+    ph = "הפניקס"
+    recs = {
+        "Phoenix Financial": {**REC, "employees_global": 5170, "size_band": "XL",
+                              "sector": "the parked row's sector", "founded": 1949},
+        ph: {**REC, "employees_global": None, "size_band": "L", "founded": None,
+             "sector": "insurance & financial services"},
+        "Group19 Tech": dict(REC),
+    }
+    folded = F.fold_aliases(recs, declared)
+    assert ("Phoenix Financial", ph) in folded and "Phoenix Financial" not in recs
+    surv = recs[ph]
+    assert surv["employees_global"] == 5170        # an EMPTY filled from the alias
+    assert surv["founded"] == 1949                 # ...and so is this one
+    assert surv["size_band"] == F.band_for(5170) == "XL"   # recomputed, not copied
+    assert surv["sector"] == "insurance & financial services"   # a full cell is untouched
+    # the survivor with no record: nothing folded, nothing renamed
+    assert ("Group19 Tech", "Group19") not in folded
+    assert "Group19 Tech" in recs and "Group19" not in recs
+
+
+def test_clal_is_the_discovery_spelling_so_it_folds_without_a_registry_row():
+    """LIVE-SNAPSHOT DATA. The seventh declaration of 2026-09-19 is the only one the registry
+    does not hold in any state: the long `Clal Insurance & Finance- ...` string is the
+    DISCOVERY net's spelling, so there is no parked row to carry an `alias-of` verdict and it
+    folds through `alias_only_folds` (BACKLOG 618) instead. `board_verify` read
+    `clalbit.co.il/careers` `ok` for BOTH names (2026-08-29 and 2026-09-01), which is the
+    board evidence this arm asks for in place of the prose.
+
+    The two refusals that stop this pass being the cheaper way in are asserted as well: a name
+    the registry holds in ANY state is left to `declared_aliases`, and an identity that two
+    ACTIVE rows answer to folds onto neither."""
+    rows = _0919_rows()
+    held = {str(r.get("company_name") or "").strip() for r in rows}
+    assert _0919_CLAL not in held, "a registry row took the string: this pass now refuses it"
+    assert "Clal Insurance And Finance" in held
+    recs = {_0919_CLAL: dict(REC), "Clal Insurance And Finance": dict(REC)}
+    assert F.alias_only_folds(recs, rows)[_0919_CLAL] == "Clal Insurance And Finance"
+    assert F.declared_aliases(rows).get(_0919_CLAL) is None, \
+        "it is not a parked row, so the other arm must not claim it"
+    # ...the registry-holds-the-name refusal
+    assert F.alias_only_folds(recs, rows + _rows((_0919_CLAL, "false", ""))) == {}
+    # ...and the two-ACTIVE-rows refusal
+    assert F.alias_only_folds(
+        recs, rows + _rows(("Clal Insurance and Finance Ltd", "true", ""))) == {}

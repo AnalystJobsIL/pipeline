@@ -388,6 +388,64 @@ ALIASES = {  # spelling/brand forms the suffix rules can't derive; grow as found
     # the greenhouse `trivago` board it held reads 11/0 IL (Düsseldorf), so neither Trivago
     # role ever came from it -- both were discovered on Indeed.
     "trivago": "holisto",
+    # --- 2026-09-19, `registry` (BACKLOG 621/622/633). Seven declarations, each the second
+    # half of a park the registry landed the SAME DAY (`docs/sessions/2026-09-19-registry.md`):
+    # both halves are dated and both are required, so removing either stops the fold.
+    #
+    # `Phoenix Financial` is `הפניקס`, and the crowning evidence is the insurer's own
+    # REQUISITION IDS. The Latin row has no address at all; its three role records are
+    # LinkedIn cards whose titles carry the ids `Business Analyst - 50400095`,
+    # `Digital Analytics Team Lead - 50061453` and `Marketing Data Analyst - 50400118`, and
+    # `www.fnx.co.il/career/open-positions` -- the Hebrew row's own board -- carries all
+    # three (free GET, 512,363 chars, each id verified individually, registry 2026-09-19).
+    # Same requisition ids on one board is the two-names-ONE-BOARD argument; the Hebrew row
+    # is the survivor because it is the one that holds the board.
+    "phoenix financial": "הפניקס",
+    # `Pagaya` is `Pagayais`: two greenhouse boards of one employer, and the IL board decides
+    # the direction (the Trivago shape). Tenant `pagayais` reads 8 jobs / 8 Israel, every one
+    # `Tel Aviv, Israel` (it publishes `BI Team Lead`); tenant `pagaya` reads 14 jobs / 0
+    # Israel, twelve of them `New York, NY (Pagaya US New York)`. The US board is kept on the
+    # parked row as evidence, not removed as a wrong write, and 0 role records move either
+    # side. The registry park is `alias-of Pagayais 2026-09-19`.
+    "pagaya": "pagayais",
+    # `רם אדרת | Ram Aderet` is `Ram Aderet Engineering` -- two ACTIVE rows on ONE SITE with
+    # different paths, which every clause of `check_invariants.shared_boards` passes because
+    # its key is `identity_key` plus the EXACT path. The direction is forced twice over: the
+    # Hebrew name contains ` | `, which is the `notes` separator, so `verdicts.alias_target`
+    # can never parse it as a SURVIVOR. The survivor was repointed first, to the group page
+    # `/ram-aderet-group/careers` (6 cards through the production scraper) from `/careers/252`
+    # (5 cards, and itself the sixth posting), so coverage traded is 0. One seam read of the
+    # group page names `קבוצת רם אדרת / Ram Aderet` and calls Ram Aderet Engineering one of
+    # its divisions.
+    "רם אדרת ram aderet": "ram aderet engineering",
+    # `Group19 Tech` is `Group19`, and this one is a SUBSIDIARY fold the board forced: the row
+    # read `group19.org.il/career`, the GROUP's shared page, whose 8 listings belong to
+    # several companies inside a social-business group in the Negev/Galilee. That is how a
+    # public-sector Power BI `Data Analyst` (אופקים) came to publish under a UAV/defence
+    # profile -- `633`, filed by this lane on 09-18 when the record and the blurb disagreed
+    # about the same name. No subsidiary page lists jobs (`/data` and `/tech` carry 0 posting
+    # links), so `registry` crowned the GROUP on the board's own evidence and the analyst
+    # posting names `Group19 Data` 11 times against `Group19 Tech` 8 (navigation only). The
+    # 09-18 `defense & aerospace` record stays TRUE of Group19 Tech and stops sitting on the
+    # row that publishes the analyst; `Group19` gets its own record from the group's own site.
+    "group19 tech": "group19",
+    # The two Hebrew `Discount Bank` twins, whose parks are eighteen and twenty-two days old:
+    # `בנק דיסקונט` has carried `alias-of Discount Bank` since 2026-09-01 and
+    # `Discount Bank בנק דיסקונט` since 2026-08-28, and the `ALIASES` half was never written,
+    # so **the fold had been inert for eighteen days** -- the `571` shape exactly, found by
+    # looking for the declarations rather than for the parks. The survivor holds the bank's
+    # own Oracle board (`oraclehcm`, site `CX_3001`: 67 jobs, 67 Israel, repointed off the JS
+    # shell on 2026-09-19), and the first twin's withdrawn role record is character-for-
+    # character the survivor's OPEN one.
+    "בנק דיסקונט": "discount bank",
+    "discount bank בנק דיסקונט": "discount bank",
+    # `Clal Insurance & Finance- כלל ביטוח ופיננסים` is the DISCOVERY net's spelling of
+    # `Clal Insurance And Finance`, and it is the one key here that is NOT a registry row in
+    # any state -- so it folds through `alias_only_folds` (`618`), not `declared_aliases`.
+    # `board_verify` read `clalbit.co.il/careers` `ok` for both names (2026-08-29 and
+    # 2026-09-01), which is the board evidence this arm asks for; the registry holds exactly
+    # ONE ACTIVE row on the identity, which is the other half of that gate.
+    "clal insurance finance כלל ביטוח ופיננסים": "clal insurance and finance",
     "habana labs intel": "habana",  # alias VALUES must be post-suffix-strip forms
     "vmware broadcom": "vmware",
     "simply joytunes": "simply",

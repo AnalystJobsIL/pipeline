@@ -29777,6 +29777,16 @@ def test_alias_fold_declaration_is_the_alias_key_not_the_stripped_stem():
     assert _fold("NVIDIA Labs") is None
     assert all(roles._plain_norm(a) == a for a in ALIASES), \
         "an ALIASES key is not normal-form; roles._plain_norm can no longer match it"
+    # ...and every alias VALUE must be a fixed point of `identity_key` ITSELF, or the two
+    # names never meet: the map is consulted AFTER the suffix strip and its value is returned
+    # RAW, so `ALIASES["x"] = "Demo Ltd"` makes `identity_key("x")` `Demo Ltd` while
+    # `identity_key("Demo Ltd")` is `demo`. The declaration would fold nothing, silently, and
+    # `firmographics._declared`'s `ALIASES.get(plain) == identity_key(target)` test could
+    # never pass for it. The comment beside `habana labs intel` has said "post-suffix-strip
+    # forms" since the map was written; this is the assertion (seven keys landed at once on
+    # 2026-09-19, and one mis-cased value would have been a silent no-op).
+    assert all(identity_key(v) == v for v in set(ALIASES.values())), \
+        "an alias VALUE is not a fixed point of identity_key, so its declaration folds nothing"
 
 
 def test_alias_fold_has_no_board_gate_because_same_origin_never_checks_the_host():
