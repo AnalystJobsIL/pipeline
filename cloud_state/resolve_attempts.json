@@ -724,8 +724,8 @@
   "last": "2026-08-28"
  },
  "Hailo": {
-  "fails": 3,
-  "last": "2026-09-12"
+  "fails": 4,
+  "last": "2026-09-19"
  },
  "4M Analytics": {
   "fails": 4,
@@ -820,8 +820,8 @@
   "last": "2026-09-14"
  },
  "Dentsply Sirona": {
-  "fails": 2,
-  "last": "2026-09-07"
+  "fails": 3,
+  "last": "2026-09-19"
  },
  "Gini Apps": {
   "fails": 3,
@@ -920,40 +920,40 @@
   "last": "2026-09-12"
  },
  "A.P. Moller - Maersk": {
-  "fails": 2,
-  "last": "2026-09-12"
+  "fails": 3,
+  "last": "2026-09-19"
  },
  "Axioma System Engineering and Integration": {
   "fails": 2,
   "last": "2026-09-13"
  },
  "OurCrowd": {
-  "fails": 2,
-  "last": "2026-09-12"
+  "fails": 3,
+  "last": "2026-09-19"
  },
  "Regulus": {
-  "fails": 2,
-  "last": "2026-09-12"
+  "fails": 3,
+  "last": "2026-09-19"
  },
  "Siemens Digital Industries Software": {
   "fails": 2,
   "last": "2026-09-13"
  },
  "Xtend": {
-  "fails": 2,
-  "last": "2026-09-12"
+  "fails": 3,
+  "last": "2026-09-19"
  },
  "aiOla": {
-  "fails": 2,
-  "last": "2026-09-12"
+  "fails": 3,
+  "last": "2026-09-19"
  },
  "airHaifa": {
   "fails": 1,
   "last": "2026-09-05"
  },
  "entrypoint": {
-  "fails": 2,
-  "last": "2026-09-12"
+  "fails": 3,
+  "last": "2026-09-19"
  },
  "Zesty": {
   "fails": 2,
@@ -1144,20 +1144,20 @@
   "last": "2026-09-18"
  },
  "הפניקס": {
-  "fails": 1,
-  "last": "2026-09-11"
+  "fails": 2,
+  "last": "2026-09-19"
  },
  "Castro Hoodies Group": {
   "fails": 1,
   "last": "2026-09-12"
  },
  "NSO Group": {
-  "fails": 1,
-  "last": "2026-09-12"
+  "fails": 2,
+  "last": "2026-09-19"
  },
  "PAPAYA": {
-  "fails": 1,
-  "last": "2026-09-12"
+  "fails": 2,
+  "last": "2026-09-19"
  },
  "Weizmann Institute of Science": {
   "fails": 1,
@@ -1258,5 +1258,33 @@
  "TCM Technologies LTD": {
   "fails": 1,
   "last": "2026-09-18"
+ },
+ "Alstom": {
+  "fails": 1,
+  "last": "2026-09-19"
+ },
+ "DeepKeep": {
+  "fails": 1,
+  "last": "2026-09-19"
+ },
+ "EY": {
+  "fails": 1,
+  "last": "2026-09-19"
+ },
+ "SAP": {
+  "fails": 1,
+  "last": "2026-09-19"
+ },
+ "Sapiens": {
+  "fails": 1,
+  "last": "2026-09-19"
+ },
+ "Tap": {
+  "fails": 1,
+  "last": "2026-09-19"
+ },
+ "West Pharmaceutical Services": {
+  "fails": 1,
+  "last": "2026-09-19"
  }
 }
