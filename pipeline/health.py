@@ -310,6 +310,50 @@ def _nights_of(entry):
     return _int((entry or {}).get("nights"), REGRESSION_NIGHTS)
 
 
+# A transient `fetch-error` is one the FETCH called a network error -- a socket that never
+# answered, not a board that answered something. `retry_unreachable`/`scrape_rot` write the
+# text; the word is theirs and this only reads it.
+_TRANSIENT_ERROR = "network error"
+
+
+def one_night_reading(entry):
+    """Is this `stale.json` entry a SINGLE night's reading of a class that usually clears?
+
+    The mail has waited for `REGRESSION_NIGHTS` since 2026-09-18 (`_watchful`, `_announce`);
+    its two machine consumers did not, and a reading they act on costs a STRIKE. Over the
+    fortnight to 2026-09-18: Workiz reached **4** of the 5 strikes `resolve_broken._skip`
+    allows over four separate one-night regressions -- one flap from `give_up_after`, after
+    which "discovery covers it" and nothing re-resolves the row -- while Dell, Highcon and
+    SMARTECH were struck `attempt 1 - no working ATS` on a single night's reading, and 41 of
+    the 81 runs that began in the window lasted exactly one night. The six SuccessFactors rows
+    that timed out on 2026-09-18 are the same shape arriving by the other reason, and they
+    cleared next night 5 of 5 times in the fortnight before.
+
+    Two classes only, and each for its own reason:
+
+    * `regressed-to-zero` -- a board that produced yesterday and produces nothing today is the
+      claim `REGRESSION_NIGHTS` exists to make, and one night is not that claim.
+    * `fetch-error` whose recorded text says `network error` -- a socket that never answered
+      says nothing about the ADDRESS, which is the only thing a resolver can change.
+
+    Everything else is taken on its first night and always was: `empty-board` and
+    `misconfig-scrape-on-ats` are readings of a SHAPE (an endpoint that answers 200 with `[]`;
+    a scrape row on an ATS host) and a second night tells you nothing new, `abandoned-board`
+    is a date arithmetic, and a `fetch-error` that is an HTTP status is the board answering.
+
+    An entry with no `nights` at all is never skipped: `_nights_of` defaults to the SETTLED
+    value, so a `stale.json` written before 2026-09-18 -- and every older test that builds an
+    entry by hand -- keeps exactly the behaviour it had. That is the same rule the 09-18
+    filing wrote as `int(v.get("nights", 99))`; 99 and `REGRESSION_NIGHTS` are one answer here,
+    and one default in one place beats two spellings of it in three files."""
+    if not isinstance(entry, dict) or _nights_of(entry) >= REGRESSION_NIGHTS:
+        return False
+    reason = entry.get("reason")
+    return (reason == "regressed-to-zero"
+            or (reason == "fetch-error"
+                and _TRANSIENT_ERROR in (entry.get("error") or "")))
+
+
 def _scrape_with_empty_cache(r):
     """The one kind of row the rot file has anything to say about."""
     return (r.get("platform") or "").strip().lower() == "scrape" and r.get("status") == "empty"

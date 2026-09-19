@@ -3434,9 +3434,9 @@ all-time high, so this latches) → `empty-board` (0 postings, no baseline).
 
 **`regressed-to-zero` is a board read empty for `health.REGRESSION_NIGHTS` (2) CONSECUTIVE
 nights, not last night's reading (2026-09-18, `ats-fetch`).** The ROW still enters
-`stale.json` on the first such reading — `resolve_broken.candidates` and the targeted
-discovery sweep read that flag and neither may lose a row because the mail is not ready to
-name it — but the entry now carries `nights` (and `last`, the date it was counted on), and
+`stale.json` on the first such reading — every OTHER reader of the file (the health census,
+the rot accounting, `registry_health`) still sees it — but the entry now carries `nights`
+(and `last`, the date it was counted on), and
 the MAIL waits: `new:` names the row on the morning its streak reaches 2 (`health._announce`),
 `cleared:` never names one that left the file below 2 because it was never announced, and the
 standing line prints the rest as a quiet `k watching (first night)` (`health._watchful`).
@@ -3452,9 +3452,23 @@ The counter is a FIELD and not the scraper's rot `n` because 2 of those 20 are n
 either; a same-date second write does not bump it, because the digest and the Monday
 self-heal both commit this file (4 of 18 snapshots) and together they would otherwise reach
 the threshold inside one morning. An entry with no `nights` at all counts as SETTLED, so the
-first morning on the new code announces and clears exactly as the old rule did. The
-consumers still act on a one-night reading — `docs/BACKLOG.md` 635 is that diff, and it is
-`infra`'s.
+first morning on the new code announces and clears exactly as the old rule did.
+
+**The two machine consumers wait for the same bar since 2026-09-19 (`infra`, `635` closed).**
+`health.one_night_reading(entry)` is the one predicate, and both
+`resolve_broken.candidates()` and `discovery_daily._targeted_inputs` apply it: a
+`regressed-to-zero` entry at `nights 1`, or a `fetch-error` whose recorded text says
+`network error`, is skipped for one night. Nothing else is — `empty-board` and
+`misconfig-scrape-on-ats` are readings of a SHAPE where a second night says nothing new,
+`abandoned-board` is date arithmetic, and a `fetch-error` that is an HTTP status is the board
+answering, which is the evidence a resolver acts on. Why those two consumers and not the
+file: a candidate costs a STRIKE in `resolve_attempts.json` (`_skip` abandons a row to
+discovery at `give_up_after` 5 — Workiz reached 4 on four separate single nights) and a
+targeted name costs one of ~10 LinkedIn inputs a day for a 22-day rotation. An entry with no
+`nights` is never skipped, so the change was a NO-OP on the 109 entries in the file on
+2026-09-19 (0 carried the field) and begins to bite from the first digest that writes it; had
+`nights` read 1 on every entry of that snapshot, 63 of the 109 are in the two classes (57
+`regressed-to-zero`, 6 `fetch-error … network error`, the SuccessFactors timeouts of 09-18).
 
 **`abandoned-board` — a board is judged on its own freshness, never a role on its age
 (2026-08-30, measured again and landed 2026-09-11, `ats-fetch`).** Nineteen ACTIVE native

@@ -1326,6 +1326,92 @@ def test_targeted_discovery_skips_rows_whose_board_is_not_actually_broken():
     assert set(discovery_daily._TARGETABLE) == {"empty-board", "regressed-to-zero", "fetch-error"}
 
 
+def _stale_fixture():
+    """One `stale.json` covering every case `health.one_night_reading` must separate."""
+    return {
+        # skipped: one night of each transient class
+        "Workiz": {"reason": "regressed-to-zero", "nights": 1, "careers_url": "https://w/x"},
+        "EY": {"reason": "fetch-error", "nights": 1, "careers_url": "https://ey/x",
+               "error": "HttpError: network error for https://careers.ey.com/ <urlopen error>"},
+        # taken: the streak reached the bar, whatever the reason
+        "Dell": {"reason": "regressed-to-zero", "nights": 2, "careers_url": "https://d/x"},
+        "Alstom": {"reason": "fetch-error", "nights": 2, "careers_url": "https://al/x",
+                   "error": "HttpError: network error for https://jobsearch.alstom.com/"},
+        # taken: no `nights` field at all (every file written before 2026-09-18)
+        "Highcon": {"reason": "regressed-to-zero", "careers_url": "https://h/x"},
+        # taken: one night, but the board ANSWERED -- an HTTP status is not a network error
+        "Aeronautics": {"reason": "fetch-error", "nights": 1, "careers_url": "https://ae/x",
+                        "error": "scrape: http:403 (19 nights)"},
+        # taken: one night of a SHAPE reading, where a second night says nothing new
+        "Comcast": {"reason": "misconfig-scrape-on-ats", "nights": 1, "careers_url": "https://c/x"},
+        "Houzz": {"reason": "empty-board", "nights": 1, "careers_url": "https://ho/x"},
+    }
+
+
+_STALE_TAKEN = {"Dell", "Alstom", "Highcon", "Aeronautics", "Comcast", "Houzz"}
+
+
+def test_a_one_night_reading_buys_no_resolver_strike(tmp_path, monkeypatch):
+    """`635`, filed by `ats-fetch` 2026-09-18. `health.record` has written `nights` since
+    2026-09-18 and the MAIL waits for `REGRESSION_NIGHTS` before it calls a board regressed
+    (`_watchful`, `_announce`) — `resolve_broken.candidates()` did not, and every candidate it
+    yields costs a strike in `resolve_attempts.json` whether or not anything was ever broken.
+    Over the fortnight to 2026-09-18 that put Workiz at **4** of the 5 `give_up_after` allows,
+    on four separate one-night regressions: one more flap and the row is abandoned to discovery
+    for good. Dell, Highcon and SMARTECH were each struck `attempt 1 — no working ATS` on a
+    single night's reading, and 41 of the 81 runs in the window lasted exactly one night.
+
+    Three things must stay true, and each is a different bug:
+
+    * a one-night `regressed-to-zero` and a one-night transient `fetch-error` are SKIPPED;
+    * `nights 2` is taken — the skip is a wait, not a new exemption;
+    * an entry with NO `nights` is taken, so a `stale.json` written before the field existed
+      (109 of 109 entries on 2026-09-19) keeps exactly the behaviour it had.
+
+    Kills `stale-one-night-strike-in-resolve-broken`, `stale-nights-default-to-a-first-night`
+    and `stale-transient-error-word-dropped`."""
+    from pipeline import health
+    import resolve_broken
+    (tmp_path / "cloud_state").mkdir()
+    (tmp_path / "cloud_state" / "stale.json").write_text(
+        _af_json.dumps(_stale_fixture()), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert {n for n, _u in resolve_broken.candidates()} == _STALE_TAKEN
+    # the predicate itself, so a failure names WHICH clause moved
+    st = _stale_fixture()
+    assert [n for n, v in st.items() if health.one_night_reading(v)] == ["Workiz", "EY"]
+    assert health.one_night_reading({}) is False and health.one_night_reading(None) is False
+    assert health.one_night_reading("regressed-to-zero") is False, "a non-dict entry is taken"
+    # `nights` arrives as a string from a hand-edited file
+    assert health.one_night_reading({"reason": "regressed-to-zero", "nights": "1"}) is True
+    assert health.one_night_reading({"reason": "regressed-to-zero", "nights": 9}) is False
+    # 0 and junk are "cannot tell", and `_int`'s default takes the row — `_nights` never
+    # returns 0, so a 0 is a malformed field and suppressing on it is the expensive direction
+    assert health.one_night_reading({"reason": "regressed-to-zero", "nights": 0}) is False
+    assert health.one_night_reading({"reason": "regressed-to-zero", "nights": "?"}) is False
+
+
+def test_a_one_night_reading_buys_no_targeted_linkedin_input(tmp_path, monkeypatch):
+    """The other half of `635`, and the reason it was filed as ONE item: `discovery_daily`'s
+    targeted rotation reads the SAME file with the same blind spot, so fixing the self-heal
+    alone would leave a one-night reading buying a Bright Data LinkedIn input instead of a
+    strike. `TARGETED_MIN_CAP` is 10 a day over ~88 targetable rows, so a name taken on a
+    single night's reading displaces a real one for a 22-day rotation.
+
+    `misconfig-scrape-on-ats` was already excluded by `_TARGETABLE` (the test above); this is
+    the narrower question of an entry whose reason IS targetable and whose evidence is one
+    night old.
+
+    Kills `stale-one-night-input-in-discovery`."""
+    import discovery_daily
+    stale = _stale_fixture()
+    monkeypatch.setattr(discovery_daily, "_load_json",
+                        lambda path: stale if "stale" in path else {})
+    got = {q["company"] for q in discovery_daily._targeted_inputs(cap=100, day=1)}
+    # `Comcast` is dropped by `_TARGETABLE`, `Workiz`/`EY` by the one-night skip
+    assert got == _STALE_TAKEN - {"Comcast"}, got
+
+
 def test_indeed_source_health_counts_raw_records_like_every_other_source():
     """`per_source["indeed"]` held post-filter, post-dedup jobs while the dataset sources
     held raw records, so one number meant two things — and an Indeed page whose cards were

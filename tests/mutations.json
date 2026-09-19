@@ -4861,5 +4861,57 @@
    "tests/test_units.py::test_every_ats_activator_hands_the_gate_the_rows_token",
    "tests/test_registry.py::test_the_mutation_coverage_demand_is_pinned"
   ]
+ },
+ {
+  "id": "stale-one-night-strike-in-resolve-broken",
+  "file": "resolve_broken.py",
+  "symbol": "candidates",
+  "class": "M5-population-widening",
+  "find": "                        if v.get(\"careers_url\") and not one_night_reading(v)]",
+  "replace": "                        if v.get(\"careers_url\")]",
+  "why": "the pool every strike is spent from. `_skip` abandons a row at `give_up_after` 5 and hands it to discovery for good, so a candidate is not free even when the resolve fails cheaply: over the fortnight to 2026-09-18 Workiz reached 4 of the 5 on four separate ONE-NIGHT regressions, and Dell, Highcon and SMARTECH were struck `attempt 1 - no working ATS` on a single night's reading. With the conjunct gone the self-heal is back to acting on a reading the MAIL itself refuses to call a regression (`health._watchful`), and it is invisible: a strike is a line in `resolve_attempts.json`, not a failure.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_one_night_reading_buys_no_resolver_strike"
+  ]
+ },
+ {
+  "id": "stale-one-night-input-in-discovery",
+  "file": "discovery_daily.py",
+  "symbol": "_targeted_inputs",
+  "class": "M5-population-widening",
+  "find": "                  and not one_night_reading(e)]",
+  "replace": "                  ]",
+  "why": "the other consumer of the same file, which is why `635` was filed as ONE item: a fix to the self-heal alone leaves a one-night reading buying a Bright Data LinkedIn input instead of a strike. `TARGETED_MIN_CAP` is 10 a day over ~88 targetable rows, so each name taken displaces a real one for a 22-day rotation, and the row it displaces is one whose board really has moved - the largest open coverage class in the repo.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_one_night_reading_buys_no_targeted_linkedin_input"
+  ]
+ },
+ {
+  "id": "stale-nights-default-to-a-first-night",
+  "file": "pipeline/health.py",
+  "symbol": "one_night_reading",
+  "class": "M7-constant-drift",
+  "find": "    if not isinstance(entry, dict) or _nights_of(entry) >= REGRESSION_NIGHTS:",
+  "replace": "    if not isinstance(entry, dict) or _int(entry.get(\"nights\"), 1) >= REGRESSION_NIGHTS:",
+  "why": "the default is the whole safety of this skip. `_nights_of` answers with the SETTLED value when the field is absent, so an entry that cannot tell us its streak is TAKEN; read as a first night instead, the skip silences every entry written before 2026-09-18 - 109 of 109 on 2026-09-19, i.e. the self-heal and the targeted sweep would both have gone quiet on their first morning and a real regression would wait for a field nothing had written yet. Suppressing a true regression is the expensive direction, which is the rule `_nights_of` and `_fetched_none` already state.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_one_night_reading_buys_no_resolver_strike"
+  ]
+ },
+ {
+  "id": "stale-transient-error-word-dropped",
+  "file": "pipeline/health.py",
+  "symbol": "one_night_reading",
+  "class": "M5-population-widening",
+  "find": "            or (reason == \"fetch-error\"\n                and _TRANSIENT_ERROR in (entry.get(\"error\") or \"\")))",
+  "replace": "            or reason == \"fetch-error\")",
+  "why": "`fetch-error` is TWO classes in one reason. `network error ... timed out` is a socket that never answered and says nothing about the address (the six SuccessFactors rows of 2026-09-18, cleared next night 5 of 5 times in the preceding fortnight); `scrape: http:403 (19 nights)` and `http:404` are the board ANSWERING, which is exactly the evidence a resolver acts on. Drop the word and a 403 or a 404 waits a second night before anything re-resolves it - a delay bought for the class that needs no delay, on a row whose address has demonstrably changed.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_one_night_reading_buys_no_resolver_strike"
+  ]
  }
 ]

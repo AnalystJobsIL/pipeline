@@ -27,6 +27,7 @@ import urllib.request
 
 from bd_rescue import _load_secrets
 from pipeline.companies import load_companies
+from pipeline.health import one_night_reading   # one definition; `resolve_broken` reads the same one
 
 # stdout may be a cp1252 pipe (Windows, or a runner with an odd locale). These scripts print
 # company names and arrows in their summaries, and an UnicodeEncodeError there kills the
@@ -1036,9 +1037,14 @@ def _targeted_inputs(cap=100, day=None):
     import datetime as _d
     stale = _load_json("cloud_state/stale.json")
     resolved = _load_json("out/resolved_configs.json")
+    # ...and not on a SINGLE night's reading of a class that usually clears: this rotation
+    # burns one of ~10 LinkedIn inputs a day on each name it takes, and a board that was
+    # unreadable once has not moved (`635`; `health.one_night_reading` is the same predicate
+    # `resolve_broken.candidates` applies to its strikes).
     unresolved = [n for n, e in stale.items()
                   if n not in resolved
-                  and (not isinstance(e, dict) or e.get("reason") in _TARGETABLE)]
+                  and (not isinstance(e, dict) or e.get("reason") in _TARGETABLE)
+                  and not one_night_reading(e)]
     if not unresolved:
         return []
     day = _d.date.today().timetuple().tm_yday if day is None else day

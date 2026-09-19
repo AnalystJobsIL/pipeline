@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**695 filed · 489 open · 206 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**695 filed · 488 open · 207 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -253,7 +253,7 @@ closure convention in the header.
 - **642** `642@registry` **Four ACTIVE rows read `amazon.jobs`, and two of them read the SAME path under different
 - **643** `643@registry` **`breezy.hr` is a subdomain-tenant host that `identity_gate._SUBDOMAIN_TENANT_HOST` does
 
-### infra — 122 open
+### infra — 121 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -374,7 +374,6 @@ closure convention in the header.
 - **620** `620@infra` **The Internet Archive names ~9 captures a night for us, against a backlog of 6,193 and
 - **630** `630@infra` **Bright Data's Unlocker cannot fetch `google.com` at all, so a Google Careers posting is
 - **634** `634@infra` **Every LinkedIn copy we hand the archive is synthesized as `www.linkedin.com/jobs/view/<id>`,
-- **635** `635@infra` **The self-heal and the targeted discovery sweep still spend a strike on a ONE-NIGHT
 - **638** `638@infra` **`jd-archive.yml` installs no Chromium, so the 12:30 pass cannot reach the free render it
 - **644** `644@infra` **A cron that runs for three hours writes `companies.csv` from its START-OF-RUN snapshot,
 
@@ -13835,8 +13834,19 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      free, because `alias-of` is terminal and no pool reads the row again.
 ## From the `ats-fetch` lane, 2026-09-18 (a regression is two nights, and the consumers do not know)
 
-635. **The self-heal and the targeted discovery sweep still spend a strike on a ONE-NIGHT
-     reading of `stale.json`** — lane: `infra` (`resolve_broken.py`, `discovery_daily.py`),
+635. ~~**The self-heal and the targeted discovery sweep still spend a strike on a ONE-NIGHT
+     reading of `stale.json`**~~ — **CLOSED 2026-09-19 (`infra`)**: `health.one_night_reading`
+     is ONE predicate beside `_nights_of`/`REGRESSION_NIGHTS` (not the filed copy in two
+     files), and `resolve_broken.candidates()` and `discovery_daily._targeted_inputs` both
+     apply it. The default is `_nights_of`'s SETTLED value rather than a second spelling of
+     99 — the same answer, one place. Measured on the file as it stands: **0 of 109** entries
+     carry `nights` today, so the change is a NO-OP until the first digest writes the field
+     (`health.record`, 348811e), and 63 of those 109 are in the two classes if their streak
+     reads 1 (57 `regressed-to-zero`, 6 `fetch-error … network error` — the SuccessFactors
+     timeouts). ARCHITECTURE §5a carries the rule; the check the item asked for is the
+     2026-09-21 `HANDOFF.md` row (no `attempt 1 — no working ATS` on a `nights 1` row, and
+     Workiz still at 4). Original filing follows —
+     lane: `infra` (`resolve_broken.py`, `discovery_daily.py`),
      filed 2026-09-18 by `ats-fetch`. One item on purpose: the two consumers read the same
      file with the same blind spot and a fix to one alone leaves the other buying strikes.
 

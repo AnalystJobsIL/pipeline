@@ -24,7 +24,7 @@ from pipeline import fetchers, israel
 from resolve_deep import _capture, _detect_ats
 
 from pipeline.aggregators import is_aggregator
-from pipeline.health import ATS_HOST   # one definition (was a char-for-char copy)
+from pipeline.health import ATS_HOST, one_night_reading   # one definition (was a char-for-char copy)
 
 # ATS endpoints discoverable straight from a page's HTML/JS (used on the Bright Data path,
 # for anti-bot sites like Workday where a headless browser gets a maintenance page).
@@ -154,13 +154,19 @@ def resolve_one(name, careers_url):
 
 def candidates():
     """Rows to (re)resolve. Prefer the health module's stale list (error/regressed/misconfig/
-    empty-board); fall back to scanning companies.csv for scrape-on-a-real-ATS-host."""
+    empty-board); fall back to scanning companies.csv for scrape-on-a-real-ATS-host.
+
+    A reading is not a verdict: `health.one_night_reading` drops the one-night `regressed-to-
+    zero` and transient-network entries, because every candidate here costs a strike in
+    `resolve_attempts.json` whether or not the board was ever broken (`635`, 2026-09-18 —
+    Workiz at 4 of the 5 `give_up_after` allows, on four separate single nights)."""
     for stale_path in ("cloud_state/stale.json", "out/stale.json"):
         if os.path.exists(stale_path):
             try:
                 stale = json.load(open(stale_path, encoding="utf-8"))
                 return [(name, _public_url(v.get("platform", ""), "", v.get("careers_url", "")))
-                        for name, v in stale.items() if v.get("careers_url")]
+                        for name, v in stale.items()
+                        if v.get("careers_url") and not one_night_reading(v)]
             except ValueError:
                 pass
     rows = list(csv.reader(open("companies.csv", encoding="utf-8")))
