@@ -77,6 +77,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 | 2026-09-21 | ats-fetch | two containing digests on: `new: ... regressed to zero` names at most the rows whose `nights` reached **2** that morning, and no name is announced twice in three days | | |
 | 2026-09-19 | ats-fetch | **the two pushes are green on a runner.** `gh run view 35407446121 --json jobs` (`2b59be3`, the fetcher) and `35408195028` (`348811e`, health) read **20 of 20** success at JOB level, `guard-kill` and every `mutation-gate` shard included - the seven records this branch filed or re-anchored live in those shards. Both were still `queued` behind five lanes at 00:10Z, which is why this is a row. A red naming `adamtotal-*`, `regression-*`, `a-blip-that-vanished-*`, `same-day-rewrite-*`, `declared-tenant-labels-*` or `identity-jobvite-open` is THIS lane's | | |
 | 2026-09-19 | render | **no `blurb-names-other` in the mail.** First `event: schedule` digest ⊇ this push; a `doitintl→Google Israel` fragment on the `Render:` line is **FAIL** | | |
+| 2026-09-19 | render | **the push is green on a runner.** `gh run view 35413055599 --json jobs` (`93cf720`): **28 of 28** `success` at JOB level. All 28 read `queued` at 01:35Z | | |
 
 ## State at handoff — 2026-09-19 ~01:00 UTC, every number re-derived
 
@@ -84,9 +85,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 |---|---|---|
 | registry | **2494 rows · 1432 active · 0 orphans** | `python check_invariants.py` |
 | last digest | **2026-09-18**, run `35330002476`, **186 rows / 3 new**; the 09-19 run is the first on today's eight lanes | `digests/latest.md` |
-| guards | **2,116 passed · 13 skipped · 0 failed** locally on `b2ce3a3` (`render`); CI runs of 09-18 read 10/16 until `62eab37`'s twenty shards | `python -m pytest` (not `-q`) |
-
-**Green here is not green in CI**, and on a commit master has moved past. Each lane's line names its run.
+| guards | **2,116 passed · 13 skipped · 0 failed** locally on `93cf720` (`render`); CI runs of 09-18 read 10/16 until `62eab37`'s twenty shards | `python -m pytest` (not `-q`) |
 
 ## Watch list for the next session
 
@@ -94,9 +93,7 @@ A verdict is `PASS`, `FAIL — <what actually happened>`, or `N/A — <why>`, an
 
 0. **Active rows with an all-time-high of ZERO are a COMMAND, not a number** (wrong five times): `python confirm_zero.py --scrape-only`; `cloud_state/zero_confirm.json` is the per-row answer; siblings `--regions` and `--stale-boards`. `docs/sessions/2026-08-28-registry-evening.md`; `399`, `406`, `407`.
 
-1. **`merge_key` should move onto `firmographics.identity_key`.** `ARCHITECTURE.md` §7c
-   counts **13** identity groups where two active rows read one board (this said ~15). It is
-   the `matched` PRIMARY KEY, so it needs a migration. `docs/BACKLOG.md` 132–139, `roles`.
+1. **`merge_key` should move onto `firmographics.identity_key`** — the `matched` PRIMARY KEY, so a migration (`132`–`139`, `roles`; §7c counts **13** such identity groups).
 2. **`mark_sent` still records intent, not delivery** — a role can be burned unsent (`6@infra`, `161`; CLAUDE.md rule 6 names the step).
 3. **`cloud_state/seen.db` is 1.54 MB**, duplicating `firmographics`; drop, VACUUM.
 6. **~24 active rows are re-checked by NOTHING** (`registry`, 2026-08-27): an ACTIVE `israel_scoped` fetcher returning 0 never enters `stale.json` (`health.zero_is_a_measurement()` exempts it), so no self-heal or parked pool reaches it; `ARCHITECTURE.md` §2's "every state is re-checked" overstates.
@@ -132,5 +129,5 @@ One line per session, in the shape at the top of this file. The long version is 
 - **2026-09-18 `infra`** - `WAYBACK_TIMEOUT_S` applied twice a job: 240 meant 480, and 09-17 spent 11,199 worker-seconds on 34 jobs and 15 captures (p90 305 s). One budget, remaining-clock bound, 180. `bad-request` -> 30 days. Shards 8 -> **20**. `614`(b) names the title. 0 BD/seam. CI `35366136014` **28/28**; `35406466497` 09-19. **NOT finished:** `634`. Record: `docs/sessions/2026-09-18-infra.md`.
 - **2026-09-18 `company-intel`** — three employers held two records each, and a new brand arrived with a blurb about a Canadian company. `ALIASES` flare/trivago, `alias_only_folds` (`618`), `DISPLAY_NAME_OVERRIDES["Holisto"]`; export **1,704→1,701**, +2 display names. Group19 sector CONFIRMED, its board is `633`. Seam **1**, BD **0**. CI `35366756545` queued. **NOT finished:** `632`, `633`. Record: `docs/sessions/2026-09-18-company-intel.md`.
 - **2026-09-18 `ats-fetch`** — six SuccessFactors boards timed out in one run (0.5 s from here: a blip), and `regressed to zero` was last night's reading. `fetch_adamtotal` + its declared query-string tenant (Harel **83/83 IL**, `621` half); `REGRESSION_NIGHTS` **2** on 81 runs / **41** one-night. 0 BD/seam. CI `35407446121`/`35408195028`. **NOT finished:** `621`, `635`, `606`. Record: `docs/sessions/2026-09-18-ats-fetch.md`.
-- **2026-09-19 `render`** — `blurb-names-other` named **6** of 188 cached blurbs, 0 impersonations, 1 on the board. Block (c) asks two questions now: victims are filtered (a two-word key is not its second noun), accusers are not (`ALIASES`, `display_name`). **6→2**, both real duplicates; board **1→0**. `632` closed. 0 BD/seam. **NOT finished:** `614`(a). Record: `docs/sessions/2026-09-19-render.md`.
 - **2026-09-18 `roles`** — 11 published rows shipped `class_decision=reject`, and a LinkedIn mirror's text outranked the own board on length. Reject→withdrawn sweep + tripwire; provenance rule; `_rename_record` shared; twin tie-break; `607` closed (4 groups re-ranked); gate 6/6. 0 BD/seam. CI `35407135797` **27/28**, sole red the Sunday-audit calendar rot (`registry`, fixed upstream by `8b1e33e`). **NOT finished:** `627`, `628`. Record: `docs/sessions/2026-09-18-roles.md`.
+- **2026-09-19 `render`** — `blurb-names-other` named **6** of 188 cached blurbs, 0 impersonations, 1 on the board. Block (c) asks two questions now: victims are filtered (a two-word key is not its second noun), accusers are not (`ALIASES`, `display_name`). **6→2**, both real duplicates; board **1→0**. `632` closed. 0 BD/seam. CI `35413055599`. **NOT finished:** `614`(a). Record: `docs/sessions/2026-09-19-render.md`.

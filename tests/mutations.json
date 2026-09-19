@@ -4536,7 +4536,8 @@
   "why": "632: one token dict made the victim rule the accuser rule -- 632's own first diff silenced `Oak - Identity->Sckipio` (pinned since 2026-08-30) and hid the real `Discount Bank` duplicate: 1 hit where the split design measures 2 (render, 2026-09-19).",
   "must_be_killed_by_behavioural": true,
   "killers": [
-   "tests/test_units.py::test_blurb_names_other_reads_the_brand_and_refuses_a_two_word_noun"
+   "tests/test_units.py::test_blurb_names_other_reads_the_brand_and_refuses_a_two_word_noun",
+   "tests/test_units.py::test_cross_check_names_five_wrong_company_shapes_and_only_those"
   ]
  },
  {
