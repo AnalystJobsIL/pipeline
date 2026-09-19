@@ -28323,6 +28323,81 @@ def test_a_live_contract_no_still_withdraws_and_still_beats_the_backfill(tmp_pat
     assert "class-rejected 1" in lines[0] and "re-keyed" not in lines[0], lines
 
 
+def test_a_machine_withdrawal_is_re_offered_and_a_hand_one_is_never(tmp_path):
+    """`626` was closed on the reversal ARM existing; the POOL that feeds it did not, because
+    `class_backfill.candidates` only ever looked at `open`/`closed` records and a withdrawal
+    is neither. So `_withdraw_rejected`'s "reversible by the verdict alone" was true of a
+    record the run fetches and false of every other — which is all three rows the first
+    unattended sweep deleted on no live vote (2026-09-19, `647`).
+
+    `re_offerable` is the one extra pool and every clause of it is a refusal: the machine's
+    own withdrawals only, `reject_owed` only, and never one the live contract has already
+    said NO to — `Madanes` and `Play Perfect` went out on the same sweep with genuine
+    live-contract `|jd` NOs bought that morning, and re-offering them would buy the same two
+    calls every night for ever."""
+    from pipeline import class_backfill, roles, seniority, store
+    live = "v3.0a439b16"
+    recs = _ledger(4, description=_JD_TEXT)
+    mine, hand, live_no, published = sorted(recs)
+    stale = {"decision": "reject", "path": "llm_cache", "contract": "v3.0f84ab84",
+             "reason": "cached LLM verdict (superseded contract)"}
+    for rid in (mine, hand, live_no):
+        recs[rid].update(status="withdrawn", withdrawn_on="2026-09-19",
+                         withdraw_reason="classifier llm_cache under v3.0f84ab84: x",
+                         closed_on="2026-09-10", **{"class": dict(stale)})
+        recs[rid]["withdrawn_by"] = "classifier"
+    recs[hand].pop("withdrawn_by")                # a human's line, not the seam's
+    recs[hand]["withdraw_reason"] = "the operator said so"
+    recs[published]["status"] = "closed"          # the pool candidates always had
+    recs[published]["class"] = dict(stale)
+    _here, jd_key, bare_key, _lg = seniority.cache_keys(
+        class_backfill._job(live_no, recs[live_no]), True, live)
+    cache = {jd_key: False, bare_key: False}      # the Madanes / Play Perfect shape
+    got = dict(class_backfill.candidates(recs, cache=cache, contract=live))
+    assert sorted(got) == sorted([mine, published]), sorted(got)
+    assert class_backfill.re_offerable(mine, recs[mine], cache, live) is True
+    assert class_backfill.re_offerable(hand, recs[hand], cache, live) is False
+    assert class_backfill.re_offerable(live_no, recs[live_no], cache, live) is False
+    # a `|jd` YES is the authority and beats a `|bare` NO (the split `reject_owed` documents)
+    _h2, jd2, bare2, _l2 = seniority.cache_keys(
+        class_backfill._job(mine, recs[mine]), True, live)
+    assert class_backfill.re_offerable(mine, recs[mine], {jd2: True, bare2: False}, live) is True
+    assert class_backfill.re_offerable(mine, recs[mine], {bare2: False}, live) is False
+    # ...and a cell that already names the live contract has left the pool for good
+    settled = dict(recs[mine], **{"class": {"decision": "reject", "path": "llm",
+                                           "contract": live, "reason": "out"}})
+    assert class_backfill.re_offerable(mine, settled, cache, live) is False
+
+    # ...and the whole way through: the accept lands, the stamps come off, the total drops
+    st = store.SeenStore(str(tmp_path / "t.db"))
+    _retract_file(tmp_path, {"role_id": hand, "status": "withdrawn", "on": "2026-09-19",
+                             "reason": "the operator said so"})
+    recs[hand]["retracted_on"] = "2026-09-19"     # the line, already applied
+    lg = roles.Ledger(st, "2026-09-20")
+    lg.records = recs
+    roles.dump(lg.path, recs)
+    for rid in recs:
+        st.insert_matched({**recs[rid], "mkey": rid})
+    lg._open_sync()
+    accept = {"decision": "accept", "path": "llm_cache", "contract": live,
+              "reason": "cached LLM verdict"}
+    lg.record_run("2026-09-20", board_jobs=[], merged=[], scanned_ok=set(), failed=set(),
+                  paths={}, scoped=True, contract=live,
+                  class_backfill={mine: dict(accept), published: dict(accept)})
+    st.close()
+    assert lg.records[mine]["status"] == "closed" and lg.records[mine]["closed_on"] == "2026-09-10"
+    for k in ("withdrawn_by", "withdrawn_on", "withdraw_reason"):
+        assert k not in lg.records[mine], k
+    assert lg.records[published]["status"] == "closed", "the published pool still works"
+    assert lg.records[hand]["status"] == "withdrawn", "a human line is untouched"
+    assert lg.records[hand]["withdraw_reason"] == "the operator said so"
+    assert lg.records[live_no]["status"] == "withdrawn"
+    assert lg.counts["withdrawn_total"] == 2, lg.counts      # 3 standing, 1 returned
+    assert [r for r in lg.records.values() if r["status"] == "withdrawn"].__len__() == 2
+    rows, _c = roles.build_rows(lg.records, run_date="2026-09-20")
+    assert sorted(r["role_id"] for r in rows) == sorted([mine, published])
+
+
 def test_the_export_refuses_a_leaked_reject_and_the_meta_still_reconciles(tmp_path):
     """The tripwire, not the mechanism: `_withdraw_rejected` should have emptied this class
     before a file was ever built, so a row reaching the export with a `reject` cell — or

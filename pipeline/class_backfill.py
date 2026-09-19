@@ -103,6 +103,51 @@ def _seniority():
     return seniority
 
 
+def re_offerable(rid, rec, cache=None, contract=None):
+    """Is this record's MACHINE withdrawal owed the re-judge that would undo it?
+
+    `roles.Ledger._withdraw_rejected` is reversible by design — a cell that no longer says
+    `reject` returns the record to `closed`/`open` with the three stamps popped — but until
+    2026-09-19 nothing could write that cell, because `candidates` only ever looked at
+    `PUBLISHED` records and a withdrawal is not one. `626` was closed on the strength of the
+    reversal arm existing; the pool that feeds it did not. Measured that morning: the first
+    unattended sweep withdrew 8 roles by machine verdict and **3 rested on no live vote at
+    all** (`roles.reject_map` counted a served-stale NO; an alias rename orphaned the
+    backfill's accept). Nothing in the system could have brought those three back.
+
+    So the one extra pool, and it is narrow on purpose — the 2026-08-31 measurement that
+    excluded `withdrawn` from `candidates` in the first place stands (9 of 42 candidates were
+    purged or withdrawn, all 9 `strong`, 21 % of the pass for cells no reader can see):
+
+    * `withdrawn_by == roles.WITHDRAWN_BY_CLASSIFIER`. A HAND line's withdrawal is a human's
+      adjudication and is never re-offered — that is `roles_retractions.jsonl`'s whole point,
+      and a `purged` record is out for a reason no verdict touches;
+    * `reject_owed` holds, so it is the same one-way, self-draining predicate the published
+      pool uses. A withdrawal whose cell already names the live contract is not in here;
+    * and the live contract has not ALREADY said NO. Without this the pool would re-buy a
+      call for every machine withdrawal every morning for ever: `Madanes` and `Play Perfect`
+      were withdrawn on the same sweep and their live-contract `|jd` rows are genuine NOs
+      bought that run, so they must not be selected. A `|jd` YES is the authority and beats a
+      `|bare` NO (the split `reject_owed` documents); a bare NO with no `|jd` row is the only
+      thing a bare row is allowed to decide here, and it decides it in the cheap direction.
+
+    Pool on the morning it landed: 3 of the 8 machine withdrawals, costing at most 2 calls
+    (Amitim is a live `|jd` cache YES), and 0 the morning after."""
+    if (rec.get("status") or "open") != "withdrawn":
+        return False
+    if rec.get("withdrawn_by") != _roles.WITHDRAWN_BY_CLASSIFIER:
+        return False
+    if not reject_owed(rid, rec, cache, contract):
+        return False
+    if not cache:
+        return True
+    _here, jd_key, bare_key, _legacy = _seniority().cache_keys(
+        _job(rid, rec), True, contract or _seniority().CONTRACT)
+    if cache.get(jd_key) is True:
+        return True                        # the authority for this record, whatever bare says
+    return not (cache.get(jd_key) is False or cache.get(bare_key) is False)
+
+
 def candidates(records, *, cache=None, contract=None):
     """[(role_id, record)] — every record the backfill may judge, in a stable order.
 
@@ -110,10 +155,13 @@ def candidates(records, *, cache=None, contract=None):
     them keeps the first pool alone, which is what every caller that has no store in hand
     gets (and what `--dry-run` shows).
 
-    Only `open` and `closed` records: those are the ones `roles.build_rows` publishes, in
+    Mostly `open` and `closed` records: those are the ones `roles.build_rows` publishes, in
     `roles.csv` and in `roles_archive.csv`. `superseded` is the second copy of a posting
-    kept under another company name; `purged` and `withdrawn` are rows a human or a
-    predicate has already taken out of every product.
+    kept under another company name; `purged` and a HAND-withdrawn row are out for a reason
+    no verdict touches. The one exception since 2026-09-19 is `re_offerable` — a record this
+    seam's own machine verdict withdrew, and only while the live contract has said nothing
+    against it. That pool is what makes `_withdraw_rejected`'s reversal reachable at all; see
+    that predicate for why the 2026-08-31 measurement below still holds.
 
     The first draft of this function kept those three, on the reasoning that they would be
     "cheap (a keyword reject or a cache hit for most)" and that a record returning from a
@@ -135,7 +183,11 @@ def candidates(records, *, cache=None, contract=None):
     nothing drained them."""
     out = []
     for rid, rec in sorted(records.items()):
-        if not rec.get("title") or (rec.get("status") or "open") not in PUBLISHED:
+        if not rec.get("title"):
+            continue
+        if (rec.get("status") or "open") not in PUBLISHED:
+            if re_offerable(rid, rec, cache, contract):
+                out.append((rid, rec))
             continue
         if _roles.class_unjudged(rec) or reject_owed(rid, rec, cache, contract):
             out.append((rid, rec))
@@ -168,9 +220,15 @@ def backfill_verdicts(ledger, clf, *, verbose=True):
     """
     out = {}
     records = getattr(ledger, "records", {}) or {}
-    rows = candidates(records, cache=getattr(clf, "cache", None), contract=clf.contract)
+    _cache = getattr(clf, "cache", None)
+    rows = candidates(records, cache=_cache, contract=clf.contract)
+    # Counted apart because they mean different things to a reader: a `refill` is a row IN the
+    # file carrying a NO nobody can check, a `re-offer` is a row the machine already deleted.
+    # The second is the number that says the 2026-09-19 reversal pool is draining.
+    reoffers = sum(1 for rid, rec in rows if re_offerable(rid, rec, _cache, clf.contract))
     refills = sum(1 for rid, rec in rows
-                  if reject_owed(rid, rec, getattr(clf, "cache", None), clf.contract))
+                  if (rec.get("status") or "open") in PUBLISHED
+                  and reject_owed(rid, rec, _cache, clf.contract))
     for rid, rec in rows:
         r = clf.judge_backfill(_job(rid, rec),
                                published=(rec.get("status") or "open") in PUBLISHED)
@@ -195,6 +253,7 @@ def backfill_verdicts(ledger, clf, *, verbose=True):
     line = (f"backfill: {len(rows)} verdict-less record(s) "
             f"({unknown} of them an unknown-contract decision"
             + (f", {refills} a published reject owed a live verdict" if refills else "")
+            + (f", {reoffers} a machine withdrawal owed one" if reoffers else "")
             + f"), {clf.backfill_judged} judged "
             f"({clf.backfill_yes} yes, {clf.backfill_no} no) + {clf.backfill_cached} cached "
             f"+ {clf.backfill_keyword} keyword, {clf.backfill_held} held")
@@ -263,7 +322,13 @@ def main(argv=None):
         for rid, rec in rows:
             why = (" | reject owed a re-judge"
                    if reject_owed(rid, rec, cache, clf.contract) else "")
-            print(f"  {rec.get('company')} | {rec.get('title')} "
+            # `_ascii`, like every other print in this seam — and this one CRASHED on the
+            # first run of the widened pool (2026-09-19): `הפניקס | Business Analyst -
+            # 50400095` and `Menora Mivtachim Group | אנליסט.ית סיכונים פיננסיים` are two of
+            # its three members, and a bare print of either raises `UnicodeEncodeError` on a
+            # cp1252 console — after the listing has already printed part of itself, which is
+            # the shape a reader mistakes for "the pool is one row".
+            print(f"  {_ascii(rec.get('company'), 40)} | {_ascii(rec.get('title'), 60)} "
                   f"| {len(rec.get('description') or '')} chars | {rec.get('status')}{why}")
         return 0
     verdicts, line = backfill_verdicts(ledger, clf)

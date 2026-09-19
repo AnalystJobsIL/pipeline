@@ -4345,6 +4345,32 @@
   ]
  },
  {
+  "id": "withdrawn-by-classifier-is-never-re-offered",
+  "file": "pipeline/class_backfill.py",
+  "symbol": "candidates",
+  "class": "M3-branch-narrowing",
+  "find": "        if (rec.get(\"status\") or \"open\") not in PUBLISHED:\n            if re_offerable(rid, rec, cache, contract):\n                out.append((rid, rec))\n            continue\n",
+  "replace": "        if (rec.get(\"status\") or \"open\") not in PUBLISHED:\n            continue\n",
+  "why": "647: this IS the pool that makes `roles.Ledger._withdraw_rejected`'s reversal reachable. `626` was closed on the reversal arm existing while `candidates` still looked only at `open`/`closed` records, so 'reversible by the verdict alone' was true of a record the run fetches and false of every other -- which is all three rows the first unattended sweep deleted on no live vote (Amitim, Menora, הפניקס 50400095). Without this branch nothing in the system can write the cell that brings one back.",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_machine_withdrawal_is_re_offered_and_a_hand_one_is_never"
+  ]
+ },
+ {
+  "id": "re-offer-ignores-the-live-cached-no",
+  "file": "pipeline/class_backfill.py",
+  "symbol": "re_offerable",
+  "class": "M4-guard-removal",
+  "find": "    if cache.get(jd_key) is True:\n        return True                        # the authority for this record, whatever bare says\n    return not (cache.get(jd_key) is False or cache.get(bare_key) is False)\n",
+  "replace": "    return True\n",
+  "why": "647: the clause that makes the re-offer self-draining. `Madanes` and `Play Perfect` were withdrawn on the same 2026-09-19 sweep with GENUINE live-contract `|jd` NOs bought that morning; without this guard both are selected again every night for ever, buying the same two calls to reach the same NO -- which is exactly the cost `candidates` was narrowed to avoid on 2026-08-31 (9 of 42 candidates, 21 % of the pass, for cells no reader can see).",
+  "must_be_killed_by_behavioural": true,
+  "killers": [
+   "tests/test_units.py::test_a_machine_withdrawal_is_re_offered_and_a_hand_one_is_never"
+  ]
+ },
+ {
   "id": "rename-overwrites-an-occupied-key",
   "file": "pipeline/roles.py",
   "symbol": "_rename_record",
