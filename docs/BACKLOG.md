@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**693 filed · 488 open · 205 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**694 filed · 489 open · 205 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 644.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 645.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -254,7 +254,7 @@ closure convention in the header.
 - **642** `642@registry` **Four ACTIVE rows read `amazon.jobs`, and two of them read the SAME path under different
 - **643** `643@registry` **`breezy.hr` is a subdomain-tenant host that `identity_gate._SUBDOMAIN_TENANT_HOST` does
 
-### infra — 121 open
+### infra — 122 open
 
 - **1** `1@infra` **One state layer, not two.** The local/cloud split (`state/` vs `cloud_state/`) forced
 - **1** `1@infra` **A company can leave `companies.csv` and nothing anywhere says so.** *(lane: `infra`,
@@ -377,6 +377,7 @@ closure convention in the header.
 - **634** `634@infra` **Every LinkedIn copy we hand the archive is synthesized as `www.linkedin.com/jobs/view/<id>`,
 - **635** `635@infra` **The self-heal and the targeted discovery sweep still spend a strike on a ONE-NIGHT
 - **638** `638@infra` **`jd-archive.yml` installs no Chromium, so the 12:30 pass cannot reach the free render it
+- **644** `644@infra` **A cron that runs for three hours writes `companies.csv` from its START-OF-RUN snapshot,
 
 ### scraper — 35 open
 
@@ -13986,3 +13987,45 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      the table — and a subdomain-shaped host outside the pattern is a THIRD case it could not
      express; it now computes `_SUBDOMAIN_TENANT_HOST.search(host)`. Positive control kept:
      `Riskified`/novartis and `Bancor`/bancorpbank are in scope and still assert False.
+644. **A cron that runs for three hours writes `companies.csv` from its START-OF-RUN snapshot,
+     so the row-level merge lets a STALE verdict beat a newer push — measured, one row lost the
+     same night** — lane: `infra` (`persist_state.merge_csv_rows`) with `registry`, filed
+     2026-09-19 by `registry` after finding its own previous session's work gone.
+
+     The incident, from the commits: `91b9676` (registry, pushed **00:08:04Z**) activated
+     `Harel Insurance & Finance` on the `adamtotal` board — 83 postings, 83 Israel through the
+     production fetcher, six analyst titles including `Data Analyst` — and parked the Hebrew
+     twin `alias-of` it. The 19:00 `listing-hunt` run `35396505564` **started 2026-09-18
+     21:23:18Z**, read the row as it then was (parked, on `www.harel-group.co.il/careers`, which
+     really does scrape 0 cards), stamped `listing-hunt 2026-09-18: no IL listing; monitored
+     candidate` on it, and committed at **00:25:14Z** as `7f960cd … (row-merged)` on top of
+     `5dbec81`, which already contained the activation.
+
+     Of the two rows `91b9676` wrote, **one SURVIVED and one was REVERTED** — and the reverted
+     one is exactly the row the hunt had also touched:
+
+     ```
+     REVERTED  'Harel Insurance & Finance'      (platform, token, api_url, active, note)
+     SURVIVED  'הראל ביטוח ופיננסים'             (the hunt did not touch it)
+     ```
+
+     So the merge is per ROW and the last writer for a row wins. That is not a bug in the hunt's
+     own logic — its read was true of the row it read — and it is not a bug in the merge's
+     row keying either. It is the missing THIRD input: the merge compares OURS against ORIGIN
+     with no BASE, so "changed from a snapshot that is now three hours old" and "changed
+     authoritatively" look identical. Every `registry` session that pushes between 19:00 and
+     00:30 UTC is exposed, and the exposure is silent — `check_invariants` passes either way,
+     because a parked row with a pool token is a legal row.
+
+     What this session did about it: re-applied the row (`platform-fix 2026-09-19: adamtotal
+     cards; 83/83 IL (re-applied; the 19:00 hunt reverted 91b9676)`, re-measured 83/83 today,
+     `board_vouches('harel')` True, `activation_verdict` `ok`). That is a hand-drain and it will
+     happen again the next night a session pushes inside a cron's window.
+
+     What would fix it, and it is `infra`'s file: `persist_state` already stashes the run's
+     starting rows for its own diffing, so a three-way merge is reachable — when ORIGIN's row
+     differs from the run's BASE row, origin wins unless the tool's change is on a field the
+     tool owns (its own note segment). Failing that, the cheap half: a tool whose snapshot row
+     no longer matches origin's SKIPS that row and says so in its step log, which turns a silent
+     revert into a line a reader sees. Measure over the 81 cron commits in the fortnight: how
+     many rows differ between each run's base and the origin it commits onto.
