@@ -7103,9 +7103,19 @@ The queue is the records the dataset PUBLISHES (`open`/`closed`). `superseded`, 
 2026-08-31 pool, **9 of the 42 candidates were purged or withdrawn and all 9 were `strong`
 relevance** — every one needed a paid call, 21 % of the pass, for a cell no reader can see.
 
-A `reject` does not remove a row by itself: the record keeps its line and its reason, and it
-leaves the public file only when a human writes into `cloud_state/roles_retractions.jsonl`
-(§7c). The seam prints `classify dataset backfill judged N published record(s) NO …`,
+**Since 2026-09-18 a `reject` cell DOES remove the row** — `roles.Ledger._withdraw_rejected`
+withdraws it the same run (§7c) — which is why this queue has a second pool, and since
+2026-09-19 a third: `re_offerable` re-offers a record the seam's OWN machine verdict
+withdrew, while `reject_owed` still holds for its cell and the live contract has not already
+said NO to it. That pool is what makes §7c's reversal reachable for a record the run does not
+fetch; without it, `626` was closed on an arm nothing could reach, and the three rows the
+first unattended sweep deleted on no live vote would have stayed deleted for ever. It is
+narrow by the same 2026-08-31 measurement: a HAND withdrawal and a `purged` record are never
+re-offered, and a live-contract `|jd` NO (Madanes, Play Perfect) keeps a row out rather than
+buying the same call every night. It counts `N a machine withdrawal owed one` on the
+`backfill:` line, apart from the published refills — a refill is a row IN the file carrying a
+NO nobody can check; a re-offer is a row the machine has already taken out.
+The seam prints `classify dataset backfill judged N published record(s) NO …`,
 counting **every tier** — a keyword or cached reject needs the same human act as a paid one.
 First pass, 2026-08-31: **42 verdict-less records, 41 judged (17 YES, 24 NO) + 1 keyword,
 0 held; empty `class_decision` 33 → 0.** Of the 24 rejects, 18 were on published rows; each
@@ -7968,9 +7978,11 @@ the 90-day window. Twelve rows were in that state on 2026-09-01, and the only ch
 correcting one was a human writing a line in `cloud_state/roles_retractions.jsonl` — **32 of
 its 48 lines were written by hand between 09-01 and 09-11**.
 
-`roles.reject_map(jobs)` reads the same candidate lists `classify_grouped` judged (every copy
-still carries the `_class` it was stamped with) and returns `{role_id: class}` for the
-rejects. `run.py` hands it to `record_run(class_rejects=…)` beside the backfill map, under
+`roles.reject_map(jobs, contract=clf.contract)` reads the same candidate lists
+`classify_grouped` judged (every copy still carries the `_class` it was stamped with) and
+returns `{role_id: class}` for the rejects **whose cell names the run's own contract** — a
+served-stale NO is the drain's queue, not today's verdict (`647`, below).
+`run.py` hands it to `record_run(class_rejects=…)` beside the backfill map, under
 the same quarantine rule — a seam this run has declared broken writes nothing — and
 `_record_run` applies it **after** the status ladder and **before** the backfill map. Three
 refusals, and each is a rule rather than a precaution:
@@ -8011,9 +8023,37 @@ longer says `reject` returns the record to `closed`, or to `open` if the run put
 the board, with the three stamps popped. That is the whole re-admission path — the classifier
 re-judges and the row comes back, with no hand line either way, because
 `roles_retractions.jsonl` is where human adjudications live and must not fill with machine
-traffic. (`class_backfill.candidates` cannot yet re-offer a `reject` cell, so today the
-classifier has to purge its cache to produce the flip: `docs/BACKLOG.md 626`, lane
-`classifier`.)
+traffic. **And since 2026-09-19 something can actually produce that flip**: a record
+`withdrawn_by == "classifier"` whose cell `reject_owed` still holds for is re-offered to
+`class_backfill.candidates` (§7b), so the reversal drains itself on the next morning's run
+instead of waiting for the classifier to purge a cache row by hand.
+
+**Two rules the first UNATTENDED sweep cost, 2026-09-19 (`647`).** It withdrew **16** roles,
+8 of them machine verdicts, and **3 of those 8 rested on no live vote at all**:
+
+* **a served-stale NO is not the run's own reject.** `seniority._classify` returns
+  `decision: reject` for a verdict it merely SERVED from the cache under a RETIRED contract
+  (`path: llm_cache`, `contract: prior[4]`, reason "cached LLM verdict (superseded
+  contract)") — **254 verdicts were served stale that morning, 40 of them unreachable**
+  because the card carried no description — and `reject_map` took any `decision == "reject"`.
+  `Amitim Pension Funds | Data Analyst` was deleted on one while the live contract's own
+  `|jd` cache row said YES the same morning, and `Menora Mivtachim | אנליסט.ית סיכונים
+  פיננסיים` on a 09-14 `|bare` NO against a published `accept` cell. So `reject_map(jobs,
+  contract=…)` keeps only the cells whose `contract` IS the run's, which covers a retired
+  prefix and the legacy `""`; the keyword head and a paid `llm` verdict both stamp the live
+  contract and are unaffected, and an `llm_cache` hit under the live contract still counts,
+  because that is the live contract's answer. Read from the `contract` KEY, never the reason
+  string (`_class_of`'s own rule). The ACCEPT direction is untouched, so a stale YES still
+  keeps a row published — `648`, lane `classifier`, and the right side to fail on.
+* **both verdict maps are re-keyed through this run's renames** (`Ledger._current_id`, a
+  bounded fixed point over `self.renamed`). `class_backfill.candidates` reads
+  `ledger.records` at `run.py:553`, `fold_aliases` renames records at 636, and `record_run`
+  applies the maps at 948 — so on the morning `phoenix financial|data analyst 50400095`
+  became `הפניקס|…`, `records.get(old)` returned None and the backfill's `accept` for it was
+  dropped **silently**, leaving the stale `reject` cell for this sweep to delete the row on.
+  `self.renamed` had held the answer since 585 and only `flush` read it. The counter is
+  `re-keyed N` on the `Roles:` line, and `by_key` is refused under BOTH spellings so a live
+  accept wins whichever side of the fold the run's own jobs were folded to.
 
 It carries no `judged` gate, unlike the page-closure arm beside it. That gate exists because
 "the posting was gone from the board" is a claim only a run that FETCHED the board may make.
@@ -8027,7 +8067,11 @@ sweep did not run, not that a row was correctly excluded.
 
 The counter is `class-rejected N` on the `Roles:` line, and it is a DELTA: a steady morning
 prints nothing. On a store with no prior reject cells it equals the `withdrawn N` beside it,
-and `roles withdrawn N role(s)` names each row and its reason on `Stages:`. A keyword-rule change never enters `Classifier.quarantine()` (that reads the
+and `roles withdrawn N role(s)` names each row and its reason on `Stages:` — or, when the
+reasons no longer fit 400 characters, **every row by NAME, grouped by author** (`classifier
+N: …; retraction line N: …`) with the reasons left to `roles.csv.meta.json`'s `removed`. The
+single `[:400]` slice it replaced named **2** of the 16 withdrawals of 2026-09-19 in a
+470-character clause and cut the second's reason mid-word (`roles.withdrawn_clause`, `647`). A keyword-rule change never enters `Classifier.quarantine()` (that reads the
 LLM tier only), so a scope edit could in principle flip many rows at once — `roles
 mass-reject (N of M open roles re-judged NO in one run)` is an alarm, deliberately not a
 hold, because holding would republish the very accepts this exists to stop.

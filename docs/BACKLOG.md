@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**696 filed · 488 open · 208 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**699 filed · 490 open · 209 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 647.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 650.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -581,7 +581,7 @@ closure convention in the header.
 - **606** `606@ats-fetch` **A native board that answers 200 with no postings keeps `regressed to zero` for ever, so
 - **621** `621@ats-fetch` **`career.adamtotal.co.il` is an Israeli ATS this repo has never heard of, Harel's board
 
-### classifier — 18 open
+### classifier — 20 open
 
 - **116** `116@classifier` **Legacy `llm_cache` rows are never purged, and the cache now grows without bound** —
 - **122** `122@classifier` **The cap and the budget bite the same companies every day**
@@ -601,6 +601,8 @@ closure convention in the header.
 - **557** `557@classifier` **LTX has not flipped to its own board
 - **568** `568@classifier` **The title gate decides on the TITLE alone, so no description marker can ever reach the
 - **615** `615@classifier` **`אזור` (Azor) is in the town list and is also the word for "area", and the gate's Hebrew
+- **648** `648@classifier` **A card with no description is judged bare, while the ledger holds that role's own
+- **649** `649@classifier` **Three verdict cells whose decision and its own reason disagree, and one adjudication
 
 ### render — 8 open
 
@@ -13506,7 +13508,14 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      or that names a retired contract, or that the live contract's own `|jd` cache row
      contradicts — a `|bare` row is not an authority) and `roles.class_refillable`, one one-way
      predicate for three callers, running BEFORE `_withdraw_rejected` so a cell refilled this
-     morning is never withdrawn the same morning. Their commit cites this item as `621`, the
+     morning is never withdrawn the same morning. **One half of it was closed early** (`647`,
+     2026-09-19): both predicates were right and `candidates` still required
+     `status in PUBLISHED`, so a WITHDRAWN record was offered to nothing and the reverse arm
+     stayed reachable only through a live `by_key` accept — §7c's "reversible by the verdict
+     alone" was false for every record the run does not fetch, and the three rows the first
+     unattended sweep deleted on no live vote could not have come back.
+     `class_backfill.re_offerable` is the pool that was missing.
+     Their commit cites this item as `621`, the
      number it was filed under before a same-evening rebase moved it to 623. Filed and closed
      within hours; kept for the reasoning. — lane: `classifier` (their file), filed 2026-09-18
      by `roles` alongside the withdrawal sweep. `Ledger._withdraw_rejected` (2026-09-18, §7c) withdraws a
@@ -14189,3 +14198,119 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      two names are not one `_plain_norm` of each other. Measure first: how many of the 18
      `declared_aliases` pairs are parent/subsidiary rather than spellings (this one, and
      `Group19` is the only one I can name).
+
+## From the `roles` lane, 2026-09-19 (the first unattended reject sweep)
+
+647. ~~**The first unattended reject→withdrawn sweep withdrew three rows the same run had no
+     live NO for**~~ — **CLOSED 2026-09-19 (`roles`)**: three mechanisms, two fixes and a
+     pool. — lane: `roles`, filed and closed 2026-09-19 by itself.
+
+     The sweep (`626`/§7c, landed 2026-09-18) ran unattended for the first time on 2026-09-19
+     and withdrew **16** roles: 8 machine verdicts and 8 hand lines dated 09-18 applied that
+     morning. **3 of the 8 machine withdrawals rested on no live vote at all.**
+
+     * **A served-stale NO counted as the run's own reject.** `seniority._classify` returns
+       `decision: reject` for a verdict it merely SERVED from the cache under a RETIRED
+       contract (`path: llm_cache`, `contract: prior[4]`, reason "cached LLM verdict
+       (superseded contract)"), and `roles.reject_map` took any `decision == "reject"`. That
+       morning **254 verdicts were served stale, 40 of them unreachable** for want of a
+       description. `Amitim Pension Funds | Data Analyst` was deleted on one while the live
+       contract's own `|jd` cache row said YES the same morning
+       (`v3.0a439b16|amitim pension funds|data analyst|jd` = 1, dated 09-19), and
+       `Menora Mivtachim Group | אנליסט.ית סיכונים פיננסיים` on a 09-14 `|bare` NO against a
+       published `accept` cell. FIX: `reject_map(jobs, contract=…)` keeps only the cells whose
+       `contract` IS the run's, read from the `contract` KEY and never the reason string
+       (`_class_of`'s own rule). `run.py:537` passes `clf.contract`.
+     * **A same-run alias rename orphaned the backfill's accept.**
+       `class_backfill.candidates` reads `ledger.records` at `run.py:553`, `fold_aliases`
+       renames records at 636, `record_run` applies the maps at 948 — so when
+       `phoenix financial|business analyst 50400095` became `הפניקס|…`,
+       `self.records.get(old)` returned None and the `accept` was dropped **silently**,
+       leaving the stale `reject` cell for the sweep. `Ledger.renamed` had held the answer
+       since `585` and only `flush` read it. FIX: `Ledger._current_id` (a bounded fixed
+       point) re-keys both maps; counter `re-keyed N` on the `Roles:` line.
+     * **Nothing could undo a machine withdrawal.** `626` was closed on `_withdraw_rejected`'s
+       reversal arm existing, but `class_backfill.candidates` required `status in PUBLISHED`,
+       so a withdrawn record was offered to nothing and the reverse arm was reachable only
+       through a live `by_key` accept. §7c's "reversible by the verdict alone" was false for
+       every record the run does not fetch. FIX: `class_backfill.re_offerable` — the machine's
+       own withdrawals, `reject_owed` still holding, and the live contract not already saying
+       NO (a `|jd` YES is the authority and beats a `|bare` NO). Measured on a scratch copy of
+       `cloud_state`: the pool is **exactly 3** records (Amitim, Menora, הפניקס 50400095), no
+       Madanes and no Play Perfect (both carry genuine live-contract `|jd` NOs bought that
+       run), at most **2** calls and 0 the morning after.
+
+     Rehearsed end to end on a scratch copy: both rows return to `closed` with
+     `class_decision=accept` / `class_contract=v3.0a439b16`, `roles.csv` **170 → 172**, meta
+     `excluded.withdrawn` **76 → 74**, neither in `removed`, reconciliation holds.
+
+     **Rejected: a two-consecutive-live-NO rule.** It would have changed the TIMING for 2 of
+     the 12 published reject cells (Play Perfect, Madanes) and the certain outcome for **0 of
+     12**, while keeping a live-NO row public for an extra day. Of the 8 machine withdrawals,
+     5 rest on exactly one live NO and 3 on zero; this closes the 3 without the rule
+     (orchestrator ruling, 2026-09-19). **Rejected: reordering the `543` loop after the
+     backfill** — order is not the fault, the membership test is, and moving it past
+     `clf.commit()` at `run.py:588` would lose the paid cache rows. **Rejected: a hand edit of
+     `cloud_state`** — it races the crons, and the code path is the thing being proven.
+
+     **Still open in the same family:** `648` (a card with no description judged on the
+     ledger's stored text) and `649` (three cells whose verdict and reason disagree). The
+     ACCEPT direction is deliberately untouched by this item.
+
+648. **A card with no description is judged bare, while the ledger holds that role's own
+     captured text** — lane: `classifier`, filed 2026-09-19 by `roles`.
+
+     `seniority._classify` reads `job["description"]`, which for a run that fetched only a
+     listing card is empty — so the verdict is `|bare`, or a superseded `|jd` verdict is
+     served stale and counted **unreachable**: **40 of the 254 stale verdicts served on
+     2026-09-19** print `superseded verdict cannot be re-judged (no description this run)`.
+     The text is usually not missing. `class_backfill._job` already hydrates `description`
+     from the ledger (`Ledger._open_sync` reads `roles_text.jsonl` or sqlite for every
+     record), so the backfill path can judge exactly the rows the live path cannot — and
+     `Menora Mivtachim Group | אנליסט.ית סיכונים פיננסיים` carries **859 characters** in the
+     ledger while the run that withdrew it judged it on a bare title.
+
+     Two consequences, and the second is the one that costs data: the drain cannot move (the
+     `|bare`/`|jd` split forbids re-judging a JD-backed verdict on an empty description, and
+     rightly), and a published row can stand for ever on an `accept` under a retired contract
+     — the subclass `647` deliberately left open, since a served-stale NO now leaves the cell
+     alone. **73 of the published cells name a non-live contract today (43 of them `closed`).**
+
+     The shape of the fix is not "widen the live path": a run that did not fetch the posting
+     must not claim it did. It is to let the run's own classify site ask the ledger for the
+     stored text when the card has none, the way the backfill already does, and to stamp the
+     provenance so a reader can tell a verdict judged on a captured text from one judged on
+     today's page.
+
+     Check (published cells under a contract that is not the live one):
+     `python -c "import csv,sys;sys.path.insert(0,'.');from pipeline.seniority import CONTRACT;r=list(csv.DictReader(open('cloud_state/roles.csv',encoding='utf-8')));print(sum(1 for x in r if x['class_contract'] != CONTRACT),'of',len(r))"`
+     — and the flow behind it is the `(N unreachable without a description)` figure on the
+     digest's own `classify:` line.
+
+649. **Three verdict cells whose decision and its own reason disagree, and one adjudication
+     nobody has written** — lane: `classifier`, filed 2026-09-19 by `roles`.
+
+     Found while auditing the 16 withdrawals of 2026-09-19. None is a `roles` defect; all
+     three need a judgement and a decision record, which is this lane's.
+
+     * **`Google Israel | Research Data Scientist II, Waze`** — withdrawn on a NO whose cached
+       reason argues the opposite. Read the reason against `docs/decisions/` and either
+       re-judge it or write the record that settles it.
+     * **`Zipher | Senior Data Analyst` and `אסם | אנליסט/ית בקרת מכירות…`** — both now read
+       `class_decision=accept` on a `withdrawn` row. The 09-18 hand retraction line wins the
+       status (condition 2 of the status ladder, and it must), while the live LLM judged the
+       same posting IN. A hand line outranking a live verdict is correct; a cell that
+       contradicts the line beside it is not documented anywhere, and a reader of the dataset
+       sees an `accept` in `removed`. Either the line is wrong, or the seam is, or the
+       contradiction needs a name.
+     * **`Play Perfect | Fraud Analyst`** — 09-18 attended NO/YES/YES, ruled "a flap keeps";
+       09-19 one unattended NO, now cached at the live `|jd` key, and the row is out. The
+       two-vote rule that would have held it was REJECTED on 2026-09-19 (it moves the outcome
+       for 0 of 12 and keeps a live-NO row public a day longer), so what is owed is an
+       adjudication: `seniority.ADJUDICATED` with a decision record, or an accepted NO.
+
+     And a trap for whoever writes that adjudication: **`ADJUDICATED` is keyed by `role_id`
+     (`seniority.py:826`), so an alias or title rename orphans it exactly as `647`'s second
+     mechanism orphaned the backfill map.** `migdal|data analyst` and `team8|briya- medical
+     data analyst` are both live adjudications today and neither was renamed this run. Give
+     the map a test over `renamed_from`, or have `adjudicated()` consult it.
