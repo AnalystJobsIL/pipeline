@@ -1896,7 +1896,8 @@ read the row is **`unverified`**: activation deferred, no `not this company's bo
 the re-check tokens untouched. Negative declarations (`identity_facts.not_tenants`, with
 evidence: Sckipio/87.00C, Bancor/bancorpbank, Riskified/novartis, Similarweb↔SimilarTech,
 Lili/elililly, Cogniteam/riskified, NanoLock/gen, Sight Diagnostics/sightsciences, Bit/
-bitdefender) are the only thing that refuses a path-tenant board without a page; the tenant
+bitdefender, Matrix IT/matrix-technologies-inc) are the only thing that refuses a
+path-tenant board without a page; the tenant
 string still never vetoes an undeclared row (a veto refused 81 of 460 active rows). Census
 2026-08-25: 360 active path-platform rows = 187 near · 120 Comeet uid · 2 declared · 51 not
 near (24 of them `scrape` rows whose slug comes from the URL); `check_invariants` C3b lists

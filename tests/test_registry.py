@@ -1784,6 +1784,9 @@ _NEGATIVE_IDENTITY = [
     ("Ethos", "ethoslife", "https://boards-api.greenhouse.io/v1/boards/ethoslife/jobs"),
     ("Bdo International", "ebqb", "https://ebqb.fa.us2.oraclecloud.com/hcmRestApi/resources/"
      "latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=BDOEntryLevelCareers"),
+    # 2026-09-19 (BACKLOG 622): ACTIVE on a US NAMESAKE's board -- 46 jobs, 0 Israel, ten of
+    # them Maumee OH, and `board_verify` reads it NOT-THEIRS, "belongs to Matrix Technologies"
+    ("Matrix IT", "matrix-technologies-inc", "https://matrix-technologies-inc.breezy.hr/json"),
 ]
 
 # The ordinary-host half (identity_facts `not_domains`, 2026-09-13, BACKLOG 596): every one
@@ -1862,7 +1865,17 @@ def test_a_recorded_wrong_write_is_neither_declared_nor_admitted(name, tok, api)
     assert F._norm(ctok) in F.not_tenants(name), "a recorded incident is not a NEGATIVE declaration"
     assert not G.embedded_board_ok(name, tok, api)
     assert G.board_vouches(name, tok, api) is False
-    assert not G.tenant_is_this_company(name, api) or "greenhouse" in api or "comeet" in api, (
+    # `tenant_is_this_company` answers True by DESIGN wherever it is out of scope: on a
+    # path-tenant platform (the tenant is the row's token, `embedded_board_ok`'s business) and
+    # on any host outside `_SUBDOMAIN_TENANT_HOST`, which is the list the mismatch clause is
+    # gated on. This exemption used to be the two strings `greenhouse` and `comeet` -- the two
+    # path platforms that happened to be in the table -- and `matrix-technologies-inc.breezy.hr`
+    # (2026-09-19) is neither: breezy is subdomain-SHAPED and absent from that pattern, so the
+    # primitive scopes out and the string list could not say so. Ask the predicate, not a proxy
+    # string. The durable refusal for an out-of-scope host is `board_vouches`, asserted above.
+    import urllib.parse as _up
+    in_scope = bool(G._SUBDOMAIN_TENANT_HOST.search(_up.urlparse(api).netloc.lower()))
+    assert not G.tenant_is_this_company(name, api) or not in_scope, (
         "a subdomain negative refuses in tenant_is_this_company too")
 
 

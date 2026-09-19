@@ -39,7 +39,7 @@ is claimed — if you take one, say so in `HANDOFF.md`.
 
 `python docs/backlog.py --write` regenerates this block; `docs/check_docs.py` fails if it is stale. A merge conflict inside it is resolved by re-running that command.
 
-**690 filed · 485 open · 205 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
+**693 filed · 488 open · 205 closed · 9 half · 38 numbers name more than one item · 0 items name no lane.**
 
 *"Open" is an upper bound on work remaining, not a count of it.* A confirmer reading
 ten of them by hand on 2026-08-27 found several that are resolved in their own body and
@@ -47,7 +47,7 @@ never stamped, plus the items below that a later section closed by bullet with t
 original untouched. The parse is exact; the state it reports is only as good as the
 closure convention in the header.
 
-**Next free number: 641.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
+**Next free number: 644.** Run `python docs/backlog.py next` after `git pull --rebase`, right before you push — it reads origin/master's file too, and `check` refuses a collision your branch introduces. 241 through 246 each name three items because three lanes filed within an hour on 2026-08-26 and none of them knew, and 445, 446, 461 and 462 each name two because `next` read only the local file until 2026-08-30. Numbers 171, 172, 173, 174, 175, 176, 251, 252, 253, 254, 255, 256, 257, 258, 259, 457, 588 were never used; do not reuse them, because an old citation would then resolve to new text.
 
 ### Numbers that name more than one item — cite these by key, never bare
 
@@ -92,7 +92,7 @@ closure convention in the header.
 | 461 | `461@docs` **open** · `461@registry` **open** |
 | 462 | `462@classifier` closed · `462@registry` **open** |
 
-### registry — 156 open
+### registry — 159 open
 
 - **2** `2@registry` **Collapse the 23 resolvers into one ladder with pluggable strategies.** They already
 - **9** `9@registry` **`company_identity.verdict()` is the single unguarded door**
@@ -250,6 +250,9 @@ closure convention in the header.
 - **622** `622@registry` **Seven registry pairs are one employer under two scripts, and only the census exists** —
 - **633** `633@registry` **The `Group19 Tech` row reads the parent GROUP's shared careers page, so its Data Analyst
 - **636** `636@registry` **`Discount Bank` is `ats_platform=scrape` on an Oracle CE site whose list API answers, so
+- **641** `641@registry` **`identity_gate.human_board_url` has no `oraclehcm` entry, so it hands the API endpoint
+- **642** `642@registry` **Four ACTIVE rows read `amazon.jobs`, and two of them read the SAME path under different
+- **643** `643@registry` **`breezy.hr` is a subdomain-tenant host that `identity_gate._SUBDOMAIN_TENANT_HOST` does
 
 ### infra — 121 open
 
@@ -13905,3 +13908,81 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      nothing: the rung reads a widget board's positions out of the rendered traffic, and there
      is no traffic to read. `?comeet=<uid>` is a posting address as of today, so a card that
      carried `url_active_page` would fill. Check: `python -c "import json;c=json.load(open('scraped_cache.json',encoding='utf-8'));v=[x for k,x in c.items() if 'mccann' in k.lower()][0];print(len(v), sum(1 for j in v if j.get('url_active_page')))"`.
+
+## From the `registry` lane, 2026-09-19 (a human page nothing can reach, and four rows on one site)
+
+641. **`identity_gate.human_board_url` has no `oraclehcm` entry, so it hands the API endpoint
+     back to itself and the last-resort page read can never fire for any Oracle row** — lane:
+     `registry`, filed 2026-09-19 by itself, MEASURED.
+
+     `activation_verdict`'s final clause reads `human_board_url(api_url) or api_url` when the
+     tenant cannot vouch. For `oraclehcm` there is no mapping, so it reads the JSON endpoint,
+     and `page_names_company` on a `hcmRestApi/...` response is `None` -> `unverified`. Oracle
+     pods are opaque (`ehsb`, `hctz`, `edel`, `ebqb`), so `tenant_is_this_company` is False on
+     every one of them and this IS the deciding clause for the class: **7 `oraclehcm` rows**
+     today (onsemi, Fortinet, JPMorganChase x2, Verint, Dell, and `Discount Bank` as of
+     2026-09-19), each one activated only because a session happened to hold the human page.
+
+     The human page exists and is readable: for `Discount Bank` it is
+     `hcmUI/CandidateExperience/he/sites/CX_3001/requisitions` — **101,375 chars, 200, plain
+     GET, naming the bank in both scripts** — and the transform is mechanical,
+     `hcmRestApi/.../recruitingCEJobRequisitions?...siteNumber=<S>` ->
+     `hcmUI/CandidateExperience/<lang>/sites/<S>/requisitions`.
+
+     What it needs before it lands: the `<lang>` segment is per-tenant (`he` on `Discount
+     Bank`, `en` on the url the fetcher builds for the same site), so the entry must either try
+     one and fall back or read the language out of the row's own address. **Measure over all 7
+     rows first** — a mapping that 404s for six of them replaces `unverified` with `not-ours`,
+     which is a verdict callers are allowed to STAMP, and that is strictly worse than no
+     mapping at all. One entry in `_HUMAN_URL`, one test per row.
+
+642. **Four ACTIVE rows read `amazon.jobs`, and two of them read the SAME path under different
+     query strings** — lane: `registry`, filed 2026-09-19 by itself, found by the new
+     `registry_health.site_twins`.
+
+     `Amazon` (`/en/search.json?country=ISR`), `Amazon Israel` (`/en/search?loc_query=Israel&
+     country=ISR`), `AWS` (`/en/business_categories/amazon-web-services?loc_query=Israel`) and
+     `Amazon Web Services (AWS)` (`/en/business_categories/amazon-web-services?cmpid=...`).
+     `check_invariants.shared_boards` keys on `identity_key` + netloc + path + QUERY, so the
+     last two differ by one parameter and the first two by `identity_key` as well — every
+     clause passes and four rows scan one employer's site.
+
+     Why it matters and why it is not obviously a fold: this is the shape memory
+     `board-data-issues` records (one BI-developer posting fanned across five companies), and
+     the AWS pair in particular is one board under two names. But `Amazon` and `Amazon Israel`
+     are deliberate FORM rows — two different searches of one site, which is how this registry
+     covers a site with no per-country board — so the answer is a measurement, not a rule: read
+     all four, count the distinct posting urls, and fold only the rows whose sets are equal.
+     `siemens.com` (`?location=Israel` vs `/locations/isr/jobs/`) is the same question on two
+     rows, and `massivit3d.com` / `xtra-mile.co` are two paths of one small company's own site.
+643. **`breezy.hr` is a subdomain-tenant host that `identity_gate._SUBDOMAIN_TENANT_HOST` does
+     not name, so `tenant_is_this_company` scopes out of every breezy row** — lane: `registry`,
+     filed 2026-09-19 by itself, found when a negative declaration would not bite in the
+     primitive.
+
+     A breezy board is `<tenant>.breezy.hr`, which is the shape that pattern exists for
+     (`icims.com`, `myworkdayjobs.com`, `eightfold.ai`, `oraclecloud.com`, … fourteen hosts).
+     It is absent, so `tenant_is_this_company` returns True on `matrix-technologies-inc.breezy.hr`
+     for `Matrix IT` even though `identity_facts.not_tenants("Matrix IT")` names that exact
+     token — the `not_tenants` clause sits BELOW the scope test. Nothing is unsafe today:
+     `board_vouches` reads `not_tenants` unconditionally and answers **False**,
+     `embedded_board_ok` False, and `activation_verdict` `not-ours` with a page in hand. What
+     is wrong is that a declaration does not reach one of the four primitives, and a reader of
+     `--explain` sees `tenant_is_this_company = True` on a board the registry has proven is
+     someone else's.
+
+     Measured before proposing it, which is why this is an item and not a patch: **5 breezy
+     rows, 2 active**, and adding `breezy\.hr` to the pattern flips `PLAYSTUDIOS` (ACTIVE) from
+     True to **False** in the primitive while `board_vouches` stays `None` for it — so the gate
+     does not move, but `check_invariants` C3b's "tenant cannot vouch" warn list gains a row and
+     `--explain` changes its answer for a row nobody has complained about. `Velox` (the other
+     active one) is unaffected, and 0 of the 2 score `verdict() == "mismatch"`. That is the
+     BACKLOG 21 trade in miniature: in-scope means the `mismatch` clause can veto a legitimate
+     acquirer board, which is why the list is short and hand-picked.
+
+     What landed instead, today: the guard that found it now asks the PREDICATE rather than a
+     proxy string. `test_a_recorded_wrong_write_is_neither_declared_nor_admitted` exempted
+     `"greenhouse" in api or "comeet" in api` — the two path platforms that happened to be in
+     the table — and a subdomain-shaped host outside the pattern is a THIRD case it could not
+     express; it now computes `_SUBDOMAIN_TENANT_HOST.search(host)`. Positive control kept:
+     `Riskified`/novartis and `Bancor`/bancorpbank are in scope and still assert False.

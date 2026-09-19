@@ -55,7 +55,11 @@ LIVE_DIRS = ("cloud_state", "digests")
 # The dated snapshots the converted tests read instead. One place, so a re-cut is one line and
 # a reader can see every frozen copy of live state the suite carries.
 SNAPSHOTS = {
-    "companies.csv": os.path.join(ROOT, "tests", "fixtures", "registry", "2026-09-13-companies.csv"),
+    # re-cut 2026-09-19 by `registry`: `identity_facts.validate` refuses a `not_tenants`
+    # declaration for a row the snapshot still calls ACTIVE, so a park and its declaration
+    # cannot land in one commit against a six-day-old photo (`Matrix IT`). The 09-13 file
+    # stays on disk -- a dated snapshot is evidence, not a slot.
+    "companies.csv": os.path.join(ROOT, "tests", "fixtures", "registry", "2026-09-19-companies.csv"),
 }
 
 
