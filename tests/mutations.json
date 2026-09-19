@@ -4858,7 +4858,8 @@
   "why": "the row builder has the resolved tenant in scope (`tok`, which it writes into column 2 on accept) and dropped it. This is the call-site half of `activation-ok-token-dropped`: the wrapper can forward only what it is given, so a correct wrapper and a forgetful caller refuse the same board. The other two ATS activators (`bd_rescue`, `wayback_rescue`) hand the SAME token to `embedded_board_ok` on the adjacent line, which is what makes the omission visible rather than arguable.",
   "must_be_killed_by_behavioural": true,
   "killers": [
-   "tests/test_units.py::test_every_ats_activator_hands_the_gate_the_rows_token"
+   "tests/test_units.py::test_every_ats_activator_hands_the_gate_the_rows_token",
+   "tests/test_registry.py::test_the_mutation_coverage_demand_is_pinned"
   ]
  }
 ]

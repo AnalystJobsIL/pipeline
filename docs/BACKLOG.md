@@ -13858,6 +13858,18 @@ Record: `docs/sessions/2026-08-31-company-intel.md`.
      admitting the listing on 2026-09-19 — and the row is held with a written reason, which the
      dataset bar accepts.
 
+     **CLOSED 2026-09-19 by `registry`, the same hour it was filed** (`6f1b750`; the two sessions
+     measured the same row from opposite ends and agreed on the recipe). The row is `oraclehcm` /
+     token `''` on
+     `…/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&finder=findReqs;siteNumber=CX_3001`,
+     read through the production fetcher from the shared checkout at **67 jobs / 67 Israel**, with
+     `/job/5108` among the cards under exactly the title the held record waits on. The gate admits
+     on the PAGE, as it does for the six other `oraclehcm` rows; no `identity_facts` declaration
+     was added for the opaque pod `ehsb`. What `jd-text` still owns is the DESCRIPTION: the card's
+     own address now exists, so the free render this item measured (3,088 characters / 4 marker
+     families on `/job/5108`) has something to point at. One gap the repoint exposed and did not
+     fix is `641` — `human_board_url` has no `oraclehcm` entry.
+
 637. **The matched driver's ARCHIVED pass gets no free renderer, so the pool that is forty times
      larger never reaches the rung** — lane: `jd-text` (`enrich_matched_jd._run`), filed
      2026-09-19 by the session that built the rung. `renderer=None` is deliberate and
